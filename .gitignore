@@ -9,8 +9,49 @@ vite.config.ts.*
 .env
 .env.*
 !.env.example
-# Exclude documentation files
+
+# Documentation & personal files (not needed for deployment)
 *.md
 !README.md
 !LICENSE.md
 *.sql
+*.txt
+*.bak
+pwds*
+
+# Scripts & utilities (not needed for deployment)
+*.sh
+*.py
+*.cjs
+server.cjs
+skills-lock.json
+check_*.js
+verify_*.js
+generate_*.js
+generate_*.ts
+get_db_report.js
+query_businesses.ts
+cleanup_and_check.ts
+seed_businesses.js
+ADMIN_CLEANUP_ENDPOINTS.ts
+
+# Non-essential folders
+scripts/
+db/
+docs/
+migrations/
+attached_assets/
+.claude/
+.hintrc
+.replit
+nodemon.json
+
+# Backup & duplicate configs
+client/postcss.config.cjs
+client/postcss.config.js
+client/vite.config.ts
+client/package.json
+client/package-lock.json
+client/pages/
+tailwind.config.cjs
+postcss.config.cjs
