@@ -7,19 +7,33 @@ import * as schema from "@shared/schema";
 
 dotenv.config();
 
-// Use versoair database credentials
-export const pool = new Pool({
-  user: process.env.PGUSER || "versoair",
-  password: process.env.PGPASSWORD || "versoair2025",
-  host: process.env.PGHOST || "localhost",
-  port: parseInt(process.env.PGPORT || "5432"),
-  database: process.env.PGDATABASE || "versoair_business_intelligence",
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-  // Add SSL option if needed for production
-  // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+// Use DATABASE_URL in production (Neon, Render Postgres, etc.)
+// Fall back to individual PG* env vars for local dev
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+      ssl: { rejectUnauthorized: false },
+    }
+  : {
+      user: process.env.PGUSER || "versoair",
+      password: process.env.PGPASSWORD || "versoair2025",
+      host: process.env.PGHOST || "localhost",
+      port: parseInt(process.env.PGPORT || "5432"),
+      database: process.env.PGDATABASE || "versoair_business_intelligence",
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    };
+
+console.log(
+  "🔌 [DB] Using",
+  process.env.DATABASE_URL ? "DATABASE_URL (remote)" : "local PG* env vars",
+);
+
+export const pool = new Pool(poolConfig);
 
 // Create Drizzle ORM instance
 export const db = drizzle(pool, { schema });
