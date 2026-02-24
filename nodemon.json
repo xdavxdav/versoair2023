@@ -1,0 +1,11 @@
+{
+  "watch": ["server", "shared"],
+  "ext": "ts,js,json",
+  "ignore": ["node_modules", "dist", "client"],
+  "exec": "tsx server/index.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 500,
+  "verbose": true
+}

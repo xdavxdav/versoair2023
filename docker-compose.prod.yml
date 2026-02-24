@@ -1,0 +1,101 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: verso_air_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-verso_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-verso_password}
+      POSTGRES_DB: ${DB_NAME:-versoair_business_intelligence}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-verso_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - verso_air_network
+
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: verso_air_api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-5003}
+      DATABASE_URL: postgresql://${DB_USER:-verso_user}:${DB_PASSWORD:-verso_password}@postgres:5432/${DB_NAME:-versoair_business_intelligence}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5003}
+    ports:
+      - "${PORT:-5003}:5003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./server:/app/server
+      - ./shared:/app/shared
+      - /app/node_modules
+    networks:
+      - verso_air_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend Application (development)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: development
+    container_name: verso_air_ui
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://backend:5003}
+      VITE_APP_NAME: ${VITE_APP_NAME:-Verso Air Dashboard}
+    ports:
+      - "${VITE_PORT:-5003}:5003"
+    depends_on:
+      - backend
+    volumes:
+      - ./client/src:/app/src
+      - ./client/public:/app/public
+      - /app/node_modules
+    networks:
+      - verso_air_network
+
+  # Nginx Reverse Proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: verso_air_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - verso_air_network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  verso_air_network:
+    driver: bridge

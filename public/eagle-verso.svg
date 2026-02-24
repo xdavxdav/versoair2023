@@ -1,0 +1,160 @@
+<svg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background (transparent, so it works on any site background) -->
+  <rect x="0" y="0" width="320" height="180" fill="none"/>
+
+  <!-- Smoky screen / portal -->
+  <defs>
+    <radialGradient id="smokeGradient" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.0"/>
+      <stop offset="40%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="80%" stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.8"/>
+    </radialGradient>
+
+    <!-- Soft smoke blur -->
+    <filter id="smokeBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+
+    <!-- Feather texture gradient -->
+    <linearGradient id="featherGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#dcdcdc"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Smoke oval / screen -->
+  <ellipse cx="160" cy="95" rx="130" ry="70"
+           fill="url(#smokeGradient)"
+           filter="url(#smokeBlur)"
+           opacity="0.9"/>
+
+  <!-- Left wing (deploying, almost flapping) -->
+  <g transform="translate(160,90) scale(1,1)">
+    <path d="
+      M -10 -5
+      C -60 -40, -95 -60, -120 -70
+      C -100 -45, -80 -25, -70 -10
+      C -90 -15, -110 -10, -125 0
+      C -105 0, -85 5, -70 10
+      C -90 10, -110 20, -125 35
+      C -100 30, -80 25, -60 20
+      C -75 35, -60 45, -40 50
+      C -35 30, -25 10, -10 -5
+      Z"
+      fill="url(#featherGradient)"
+      stroke="#000000"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+      opacity="0.95"/>
+  </g>
+
+  <!-- Right wing (mirrored) -->
+  <g transform="translate(160,90) scale(-1,1)">
+    <path d="
+      M -10 -5
+      C -60 -40, -95 -60, -120 -70
+      C -100 -45, -80 -25, -70 -10
+      C -90 -15, -110 -10, -125 0
+      C -105 0, -85 5, -70 10
+      C -90 10, -110 20, -125 35
+      C -100 30, -80 25, -60 20
+      C -75 35, -60 45, -40 50
+      C -35 30, -25 10, -10 -5
+      Z"
+      fill="url(#featherGradient)"
+      stroke="#000000"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+      opacity="0.95"/>
+  </g>
+
+  <!-- Eagle head popping out of the smoke -->
+  <g transform="translate(160,90)">
+    <!-- Neck / chest -->
+    <path d="
+      M -15 10
+      C -5 25, 5 30, 20 32
+      C 5 35, -5 40, -20 38
+      C -25 30, -25 20, -15 10
+      Z"
+      fill="#f5f5f5"
+      stroke="#000000"
+      stroke-width="1.2"
+      opacity="0.95"/>
+
+    <!-- Head -->
+    <path d="
+      M -25 -5
+      C -10 -25, 15 -25, 30 -10
+      C 20 -8, 10 -5, 5 0
+      C 0 5, -5 8, -12 8
+      C -20 7, -25 2, -25 -5
+      Z"
+      fill="#ffffff"
+      stroke="#000000"
+      stroke-width="1.4"
+      opacity="0.98"/>
+
+    <!-- Eye -->
+    <circle cx="5" cy="-7" r="2.4" fill="#000000"/>
+    <circle cx="4.5" cy="-7.4" r="0.9" fill="#ffffff" opacity="0.7"/>
+
+    <!-- Beak -->
+    <path d="
+      M 15 -2
+      C 28 -5, 40 -2, 48 4
+      C 40 5, 32 8, 24 10
+      C 22 6, 19 2, 15 -2
+      Z"
+      fill="#000000"
+      stroke="#000000"
+      stroke-width="1.2"/>
+
+    <!-- Beak inner line -->
+    <path d="M 24 3 C 32 4, 38 5, 44 5"
+          stroke="#ffffff"
+          stroke-width="0.8"
+          stroke-linecap="round"
+          opacity="0.7"/>
+
+    <!-- Feather detail on head -->
+    <path d="
+      M -10 0
+      C -5 -3, 0 -4, 6 -3
+      C 0 -1, -4 1, -9 2
+      Z"
+      fill="#e0e0e0"
+      opacity="0.7"/>
+
+    <!-- Smoke wisps overlapping neck -->
+    <path d="
+      M -35 15
+      C -20 10, -5 12, 10 18
+      C -5 20, -20 22, -35 20
+      Z"
+      fill="#000000"
+      opacity="0.25"
+      filter="url(#smokeBlur)"/>
+
+    <path d="
+      M -10 25
+      C 5 23, 20 25, 35 30
+      C 20 32, 5 34, -10 32
+      Z"
+      fill="#000000"
+      opacity="0.2"
+      filter="url(#smokeBlur)"/>
+  </g>
+
+  <!-- Brand text: Verso Air -->
+  <text x="160" y="165"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="22"
+        fill="#000000"
+        letter-spacing="4">
+    VERSO AIR
+  </text>
+</svg>
