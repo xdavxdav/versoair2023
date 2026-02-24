@@ -31,7 +31,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./vite";
 import { setupCategoryIntegrityCheck } from "./services/category-integrity-check";
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
@@ -176,8 +176,9 @@ app.use((req, res, next) => {
   initializeSocket(server);
   console.log("✅ [SERVER] Socket.io initialized for real-time notifications");
 
-  // Setup Vite only in dev
+  // Setup Vite only in dev (lazy import to avoid bundling vite in production)
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
     serveStatic(app);
