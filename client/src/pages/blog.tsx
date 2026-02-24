@@ -1,0 +1,455 @@
+// Blog/Social Feed Page - Phase 2 Implementation
+// Features: Scroll-aware navbar, authentication flow, view-only mode for guests
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Zap, Search, Filter } from "lucide-react";
+import ScrollToTop from "@/components/ScrollToTop";
+import PostCard from "@/components/PostCard";
+import UserProfileCard from "@/components/UserProfileCard";
+import CreatePostModal from "@/components/CreatePostModal";
+import UserConnectionModal from "@/components/UserConnectionModal";
+import BlogNavbar from "@/components/BlogNavbar";
+import AuthModal from "@/components/AuthModal";
+import ViewOnlyGate from "@/components/ViewOnlyGate";
+import AdBanner from "@/components/AdBanner";
+import { useSocialFeed } from "@/hooks/use-social-feed";
+
+// Mock data generator
+const generateMockPosts = (count: number) => {
+  const posts = [];
+  const names = [
+    "Sarah Chen",
+    "Marcus Johnson",
+    "Elena Rodriguez",
+    "James Wilson",
+    "Priya Patel",
+  ];
+  const professions = [
+    "Business Analyst",
+    "Data Scientist",
+    "Product Manager",
+    "Strategy Consultant",
+    "Marketing Director",
+  ];
+  const contents = [
+    "Just launched our new analytics dashboard - the engagement metrics are incredible! Seeing 300% improvement in user satisfaction scores.",
+    "Thinking about the future of small business intelligence... The gap between data-rich enterprises and SMBs is widening. What solutions are you seeing?",
+    "Hot take: Real-time analytics should be the default, not a premium feature. Your customers deserve better visibility.",
+    "Our team just hit 1000+ businesses in the network! So proud of what we're building together.",
+    "Industry insight: 78% of business decisions are still made on gut feeling. That needs to change. Here's how we're tackling it.",
+  ];
+  const hashtags = [
+    ["#Analytics", "#DataDriven", "#BusinessIntelligence"],
+    ["#SmallBusiness", "#Startups", "#Growth"],
+    ["#RealTime", "#Innovation", "#FutureOfWork"],
+    ["#Community", "#Collaboration", "#Success"],
+    ["#DataDecisions", "#Analytics", "#AI"],
+  ];
+
+  for (let i = 0; i < count; i++) {
+    posts.push({
+      id: i + 1,
+      authorId: Math.floor(Math.random() * 5) + 1,
+      content: contents[i % contents.length],
+      tags: hashtags[i % hashtags.length],
+      likeCount: Math.floor(Math.random() * 500),
+      commentCount: Math.floor(Math.random() * 100),
+      shareCount: Math.floor(Math.random() * 50),
+      engagementScore: Math.random() * 100,
+      isTrending: Math.random() > 0.7,
+      createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+      author: {
+        id: Math.floor(Math.random() * 5) + 1,
+        displayName: names[i % names.length],
+        profession: professions[i % professions.length],
+        profileImageUrl: `https://images.unsplash.com/photo-${
+          1494790108755 + i * 100
+        }?ixlib=rb-4.0.3&w=100&h=100&fit=crop&crop=face`,
+        verifiedBadge: Math.random() > 0.7,
+        premiumMember: Math.random() > 0.5,
+      },
+    });
+  }
+
+  return posts;
+};
+
+const generateMockUsers = (count: number) => {
+  const names = [
+    "Sarah Chen",
+    "Marcus Johnson",
+    "Elena Rodriguez",
+    "James Wilson",
+    "Priya Patel",
+  ];
+  const professions = [
+    "Business Analyst",
+    "Data Scientist",
+    "Product Manager",
+    "Strategy Consultant",
+    "Marketing Director",
+  ];
+
+  const users = [];
+  for (let i = 0; i < count; i++) {
+    users.push({
+      id: i + 1,
+      displayName: names[i % names.length],
+      profession: professions[i % professions.length],
+      profileImageUrl: `https://images.unsplash.com/photo-${
+        1494790108755 + i * 100
+      }?ixlib=rb-4.0.3&w=400&h=400&fit=crop&crop=face`,
+      coverImageUrl: `https://images.unsplash.com/photo-${
+        1557821552 + i * 100
+      }?ixlib=rb-4.0.3&w=600&h=300&fit=crop`,
+      bio: "Passionate about business intelligence and data-driven decisions",
+      verifiedBadge: Math.random() > 0.7,
+      premiumMember: Math.random() > 0.5,
+      followerCount: Math.floor(Math.random() * 5000),
+      followingCount: Math.floor(Math.random() * 1000),
+      postCount: Math.floor(Math.random() * 200),
+      satisfactionRating: Math.random() * 2 + 3.5,
+      engagementScore: Math.random() * 50,
+    });
+  }
+
+  return users;
+};
+
+export default function BlogPage() {
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Blog state
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
+  const [posts, setPosts] = useState(generateMockPosts(10));
+  const [suggestedUsers] = useState(generateMockUsers(3));
+  const [likedPosts, setLikedPosts] = useState<number[]>([]);
+  const [connectedUsers, setConnectedUsers] = useState<number[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Authentication handlers
+  const handleAuthenticate = async (
+    email: string,
+    password: string,
+    isSignUp: boolean,
+  ) => {
+    setIsAuthLoading(true);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Extract name from email for display
+      const name =
+        email.split("@")[0].charAt(0).toUpperCase() +
+        email.split("@")[0].slice(1);
+      setUserName(name);
+      setIsAuthenticated(true);
+      setIsAuthModalOpen(false);
+
+      console.log(isSignUp ? "Account created!" : "Logged in successfully!");
+    } catch (error) {
+      console.error("Auth error:", error);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserName("User");
+    setIsCreatePostOpen(false);
+  };
+
+  // Define loadMorePosts FIRST (needed by useEffect)
+  const loadMorePosts = useCallback(() => {
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setPosts((prev) => [...prev, ...generateMockPosts(5)]);
+      setIsLoadingMore(false);
+    }, 800);
+  }, []);
+
+  // ALL HOOKS MUST BE CALLED BEFORE CONDITIONAL LOGIC
+  // Simulate infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoadingMore, loadMorePosts]);
+
+  const handleToggleLike = useCallback((postId: number) => {
+    setLikedPosts((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
+    );
+  }, []);
+
+  const handleShowUserModal = (user: any) => {
+    setSelectedUser(user);
+    setIsConnectionModalOpen(true);
+  };
+
+  const handleConnectUser = (userId: number) => {
+    setConnectedUsers((prev) => [...prev, userId]);
+    console.log(`Connected with user ${userId}`);
+  };
+
+  const handleMessageUser = (userId: number) => {
+    console.log(`Messaging user ${userId}`);
+  };
+
+  const handleShareUser = (userId: number) => {
+    console.log(`Sharing user ${userId}`);
+  };
+
+  const handleCreatePost = (postData: {
+    content: string;
+    imageUrls?: string[];
+    tags?: string[];
+  }) => {
+    const newPost = {
+      id: Math.max(...posts.map((p) => p.id)) + 1,
+      authorId: 1,
+      content: postData.content,
+      tags: postData.tags || [],
+      likeCount: 0,
+      commentCount: 0,
+      shareCount: 0,
+      engagementScore: 0,
+      isTrending: false,
+      createdAt: new Date(),
+      author: {
+        id: 1,
+        displayName: "You",
+        profession: "Business Owner",
+        profileImageUrl:
+          "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&w=100&h=100&fit=crop&crop=face",
+        verifiedBadge: true,
+        premiumMember: true,
+      },
+    };
+
+    setPosts((prev) => [newPost, ...prev]);
+    setIsCreatePostOpen(false);
+  };
+
+  // CONDITIONAL LOGIC AFTER ALL HOOKS
+  // If not authenticated, show view-only gate
+  if (!isAuthenticated) {
+    return (
+      <>
+        <BlogNavbar
+          isAuthenticated={false}
+          onLogin={() => setIsAuthModalOpen(true)}
+        />
+        <ViewOnlyGate
+          onSignIn={() => setIsAuthModalOpen(true)}
+          onSignUp={() => setIsAuthModalOpen(true)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onAuthenticate={handleAuthenticate}
+          isLoading={isAuthLoading}
+        />
+      </>
+    );
+  }
+
+  const displayPosts =
+    sortBy === "trending"
+      ? [...posts].sort((a, b) => b.engagementScore - a.engagementScore)
+      : posts;
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
+      <ScrollToTop />
+
+      {/* Blog Navbar - Hides on Scroll */}
+      <BlogNavbar
+        isAuthenticated={isAuthenticated}
+        userName={userName}
+        onLogout={handleLogout}
+        onLogin={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Feed Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Sort Controls */}
+            <div className="flex items-center gap-2 pb-4 border-b border-white/10">
+              <Filter className="w-4 h-4 text-slate-400" />
+              <button
+                onClick={() => setSortBy("recent")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-handstyle ${
+                  sortBy === "recent"
+                    ? "bg-cyan-500/20 text-cyan-400"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Recent
+              </button>
+              <button
+                onClick={() => setSortBy("trending")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-handstyle ${
+                  sortBy === "trending"
+                    ? "bg-cyan-500/20 text-cyan-400"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Trending
+              </button>
+            </div>
+
+            {/* Posts */}
+            {displayPosts.map((post, idx) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <PostCard
+                  post={post as any}
+                  liked={likedPosts.includes(post.id)}
+                  onLike={() => handleToggleLike(post.id)}
+                />
+              </motion.div>
+            ))}
+
+            {/* Infinite Scroll Trigger */}
+            <div ref={observerTarget} className="py-8 text-center">
+              {isLoadingMore && (
+                <div className="flex justify-center items-center gap-2">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                  <span className="text-slate-400 text-sm font-handstyle">
+                    Loading more posts...
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Who to Follow */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+            >
+              <h2 className="text-lg font-semibold text-white mb-3 font-handstyle">
+                Who to Follow
+              </h2>
+              <div className="space-y-3">
+                {suggestedUsers.map((user, index) => (
+                  <motion.div
+                    key={user.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => handleShowUserModal(user)}
+                    className="cursor-pointer"
+                  >
+                    <UserProfileCard
+                      user={user as any}
+                      onFollow={() => handleShowUserModal(user)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Trending Topics */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-white mb-3 font-handstyle">
+                Trends
+              </h3>
+              <div className="space-y-2">
+                {[
+                  { tag: "#RealTimeAnalytics", posts: "2.3K" },
+                  { tag: "#DataDriven", posts: "1.8K" },
+                  { tag: "#BusinessIntelligence", posts: "1.5K" },
+                  { tag: "#SmallBizGrowth", posts: "987" },
+                ].map((trend, idx) => (
+                  <motion.button
+                    key={trend.tag}
+                    whileHover={{ x: 4 }}
+                    className="w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors font-handstyle"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-cyan-400 font-medium">
+                        {trend.tag}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {trend.posts}
+                      </span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <CreatePostModal
+        isOpen={isCreatePostOpen}
+        onClose={() => setIsCreatePostOpen(false)}
+        onSubmit={handleCreatePost}
+      />
+
+      <UserConnectionModal
+        isOpen={isConnectionModalOpen}
+        user={selectedUser}
+        isConnected={
+          selectedUser ? connectedUsers.includes(selectedUser.id) : false
+        }
+        onClose={() => {
+          setIsConnectionModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onConnect={handleConnectUser}
+        onMessage={handleMessageUser}
+        onShare={handleShareUser}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthenticate={handleAuthenticate}
+        isLoading={isAuthLoading}
+      />
+    </div>
+  );
+}

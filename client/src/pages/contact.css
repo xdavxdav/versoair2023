@@ -1,0 +1,115 @@
+/* Contact Panel Layout */
+#contact-1750 {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+}
+
+.contact-wrapper {
+  display: flex;
+  width: 90%;
+  max-width: 1400px;
+  height: 80vh;
+  background: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Left card: form + info */
+.contact-card {
+  flex: 1.2;
+  display: flex;
+  justify-content: space-between;
+  padding: 2.5rem;
+  gap: 2rem;
+}
+
+.cs-form-group {
+  flex: 1.5;
+}
+
+.cs-info-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: flex-start;
+}
+
+.cs-info .cs-topper {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #e94e1b; /* orange-red */
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.cs-detail {
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+/* Form styles */
+.cs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-row.two-col {
+  display: flex;
+  gap: 1rem;
+}
+
+.cs-label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #111;
+  flex: 1;
+}
+
+.cs-input,
+.cs-textarea {
+  margin-top: 0.4rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: #f9fafb;
+}
+
+.cs-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.cs-button-solid {
+  background: #f2572c;
+  color: #fff;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s;
+}
+
+.cs-button-solid:hover {
+  background: #d9471e;
+}
+
+/* Map styles */
+.cs-picture-group {
+  flex: 1;
+}
+
+.cs-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}

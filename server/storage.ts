@@ -1,117 +1,401 @@
 import {
-  users, type User, type InsertUser,
-  businesses, type Business, type InsertBusiness,
-  businessCategories, type BusinessCategory,
-  analytics, type Analytics,
-  reservations, type Reservation, type InsertReservation,
-  musicArtists, type MusicArtist,
-  musicTracks, type MusicTrack,
-  musicAnalytics, type MusicAnalytics,
+  users,
+  businesses,
+  businessCategories,
+  analytics,
+  reservations,
+  musicArtists,
+  musicTracks,
+  musicAnalytics,
+  countries,
+  regions,
+  cities,
+  type User,
+  type InsertUser,
+  type Business,
+  type InsertBusiness,
+  type BusinessCategory,
+  type Analytics,
+  type Reservation,
+  type InsertReservation,
+  type MusicArtist,
+  type MusicTrack,
+  type MusicAnalytics,
+  type Country,
+  type Region,
+  type City,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  // Categories
+  createUser(insertUser: InsertUser): Promise<User>;
+
+  // Business Categories
   getBusinessCategories(): Promise<BusinessCategory[]>;
-  getBusinessCategoryBySlug(slug: string): Promise<BusinessCategory | undefined>;
+  getBusinessCategoryBySlug(
+    slug: string
+  ): Promise<BusinessCategory | undefined>;
+
   // Businesses
   getBusinesses(categoryId?: number): Promise<Business[]>;
-  createBusiness(business: InsertBusiness): Promise<Business>;
+  createBusiness(insertBusiness: InsertBusiness): Promise<Business>;
+
   // Analytics
-  getAnalyticsByCategory(categorySlug: string): Promise<Analytics[]>;
-  getAnalyticsByBusiness(businessId: number): Promise<Analytics[]>;
+  getAnalyticsByCategory(categorySlug: string): Promise<Analytics>;
+  getAnalyticsByBusiness(businessId: number): Promise<Analytics>;
+
   // Reservations
   getReservations(): Promise<Reservation[]>;
-  createReservation(reservation: InsertReservation): Promise<Reservation>;
+  createReservation(insertReservation: InsertReservation): Promise<Reservation>;
+
   // Music
   getMusicArtists(): Promise<MusicArtist[]>;
   getMusicTracks(): Promise<MusicTrack[]>;
-  getMusicAnalytics(): Promise<MusicAnalytics[]>;
+  getMusicAnalytics(): Promise<MusicAnalytics>;
+
+  // Location Data
+  getCountries(): Promise<Country[]>;
+  getRegions(countryId?: number): Promise<Region[]>;
+  getCities(regionId?: number): Promise<City[]>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // ── Users ──
+  // =======================
+  // USERS
+  // =======================
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error("Error getting user:", error);
+      throw error;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username));
+      return user;
+    } catch (error) {
+      console.error("Error getting user by username:", error);
+      throw error;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email));
+      return user;
+    } catch (error) {
+      console.error("Error getting user by email:", error);
+      throw error;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-
-  // ── Categories ──
-  async getBusinessCategories(): Promise<BusinessCategory[]> {
-    return db.select().from(businessCategories);
-  }
-
-  async getBusinessCategoryBySlug(slug: string): Promise<BusinessCategory | undefined> {
-    const [cat] = await db.select().from(businessCategories).where(eq(businessCategories.slug, slug));
-    return cat || undefined;
-  }
-
-  // ── Businesses ──
-  async getBusinesses(categoryId?: number): Promise<Business[]> {
-    if (categoryId) {
-      return db.select().from(businesses).where(eq(businesses.categoryId, categoryId));
+    try {
+      // Drizzle's insert typing is strict about required fields. Cast to any here
+      // because upstream validation ensures required fields are present at runtime.
+      const [user] = await db
+        .insert(users)
+        .values(insertUser as any)
+        .returning();
+      return user;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
     }
-    return db.select().from(businesses);
   }
 
-  async createBusiness(business: InsertBusiness): Promise<Business> {
-    const [biz] = await db.insert(businesses).values(business).returning();
-    return biz;
+  // =======================
+  // BUSINESS CATEGORIES
+  // =======================
+  async getBusinessCategories(): Promise<BusinessCategory[]> {
+    try {
+      return await db.select().from(businessCategories);
+    } catch (error) {
+      console.error("Error getting business categories:", error);
+      throw error;
+    }
   }
 
-  // ── Analytics ──
-  async getAnalyticsByCategory(categorySlug: string): Promise<Analytics[]> {
-    const cat = await this.getBusinessCategoryBySlug(categorySlug);
-    if (!cat) return [];
-    return db.select().from(analytics).where(eq(analytics.categoryId, cat.id));
+  async getBusinessCategoryBySlug(
+    slug: string
+  ): Promise<BusinessCategory | undefined> {
+    try {
+      const [category] = await db
+        .select()
+        .from(businessCategories)
+        .where(eq(businessCategories.slug, slug));
+      return category;
+    } catch (error) {
+      console.error("Error getting business category by slug:", error);
+      throw error;
+    }
   }
 
-  async getAnalyticsByBusiness(businessId: number): Promise<Analytics[]> {
-    return db.select().from(analytics).where(eq(analytics.businessId, businessId));
+  // =======================
+  // BUSINESSES
+  // =======================
+  async getBusinesses(categoryId?: number): Promise<Business[]> {
+    try {
+      // DEBUG: Check current database user and permissions
+      const userResult = await db.execute(
+        sql`SELECT current_user, current_database()`
+      );
+      console.log(
+        "=== DEBUG: Current DB User:",
+        userResult.rows[0].current_user
+      );
+      console.log(
+        "=== DEBUG: Current Database:",
+        userResult.rows[0].current_database
+      );
+
+      if (categoryId) {
+        return await db
+          .select()
+          .from(businesses)
+          .where(eq(businesses.categoryId, categoryId));
+      }
+      return await db.select().from(businesses);
+    } catch (error) {
+      console.error("Error getting businesses:", error);
+      throw error;
+    }
   }
 
-  // ── Reservations ──
+  async createBusiness(insertBusiness: InsertBusiness): Promise<Business> {
+    try {
+      const [business] = await db
+        .insert(businesses)
+        .values(insertBusiness as any)
+        .returning();
+      return business;
+    } catch (error) {
+      console.error("Error creating business:", error);
+      throw error;
+    }
+  }
+
+  // =======================
+  // ANALYTICS
+  // =======================
+  async getAnalyticsByCategory(categorySlug: string): Promise<Analytics> {
+    try {
+      const category = await this.getBusinessCategoryBySlug(categorySlug);
+
+      if (!category) {
+        return {
+          id: 0,
+          categoryId: 0,
+          businessId: null,
+          totalReservations: 0,
+          revenue: "0",
+          recordedAt: new Date(),
+        };
+      }
+
+      const result = await db
+        .select()
+        .from(analytics)
+        .where(eq(analytics.categoryId, category.id))
+        .orderBy(desc(analytics.recordedAt))
+        .limit(1);
+
+      const analyticsData = result[0];
+
+      return (
+        analyticsData || {
+          id: 0,
+          categoryId: category.id,
+          businessId: null,
+          totalReservations: 0,
+          revenue: "0",
+          recordedAt: new Date(),
+        }
+      );
+    } catch (error) {
+      console.error("Error getting analytics by category:", error);
+      throw error;
+    }
+  }
+
+  async getAnalyticsByBusiness(businessId: number): Promise<Analytics> {
+    try {
+      const result = await db
+        .select()
+        .from(analytics)
+        .where(eq(analytics.businessId, businessId))
+        .orderBy(desc(analytics.recordedAt))
+        .limit(1);
+
+      const analyticsData = result[0];
+
+      return (
+        analyticsData || {
+          id: 0,
+          categoryId: 0,
+          businessId,
+          totalReservations: 0,
+          revenue: "0",
+          recordedAt: new Date(),
+        }
+      );
+    } catch (error) {
+      console.error("Error getting analytics by business:", error);
+      throw error;
+    }
+  }
+
+  // =======================
+  // RESERVATIONS
+  // =======================
   async getReservations(): Promise<Reservation[]> {
-    return db.select().from(reservations);
+    try {
+      return await db
+        .select()
+        .from(reservations)
+        .orderBy(desc(reservations.createdAt));
+    } catch (error) {
+      console.error("Error getting reservations:", error);
+      throw error;
+    }
   }
 
-  async createReservation(reservation: InsertReservation): Promise<Reservation> {
-    const [res] = await db.insert(reservations).values(reservation).returning();
-    return res;
+  async createReservation(
+    insertReservation: InsertReservation
+  ): Promise<Reservation> {
+    try {
+      const [reservation] = await db
+        .insert(reservations)
+        .values(insertReservation as any)
+        .returning();
+      return reservation;
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      throw error;
+    }
   }
 
-  // ── Music ──
+  // =======================
+  // MUSIC
+  // =======================
   async getMusicArtists(): Promise<MusicArtist[]> {
-    return db.select().from(musicArtists);
+    try {
+      return await db
+        .select()
+        .from(musicArtists)
+        .orderBy(desc(musicArtists.totalStreams));
+    } catch (error) {
+      console.error("Error getting music artists:", error);
+      throw error;
+    }
   }
 
   async getMusicTracks(): Promise<MusicTrack[]> {
-    return db.select().from(musicTracks);
+    try {
+      return await db
+        .select()
+        .from(musicTracks)
+        .orderBy(desc(musicTracks.streams));
+    } catch (error) {
+      console.error("Error getting music tracks:", error);
+      throw error;
+    }
   }
 
-  async getMusicAnalytics(): Promise<MusicAnalytics[]> {
-    return db.select().from(musicAnalytics);
+  async getMusicAnalytics(): Promise<MusicAnalytics> {
+    try {
+      const result = await db
+        .select()
+        .from(musicAnalytics)
+        .orderBy(desc(musicAnalytics.recordedAt))
+        .limit(1);
+
+      const analyticsData = result[0];
+
+      return (
+        analyticsData || {
+          id: 0,
+          totalArtists: 0,
+          totalTracks: 0,
+          totalStreams: 0,
+          recordedAt: new Date(),
+        }
+      );
+    } catch (error) {
+      console.error("Error getting music analytics:", error);
+      throw error;
+    }
+  }
+
+  // =======================
+  // LOCATION DATA
+  // =======================
+  async getCountries(): Promise<Country[]> {
+    try {
+      const dbCountries = await db
+        .select()
+        .from(countries)
+        .orderBy(countries.name);
+
+      console.log("✅ [DEBUG] Countries length:", dbCountries.length);
+      return dbCountries;
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+      // Return mock data as fallback ONLY for countries since we know this works
+      console.log("Using mock countries data as fallback");
+      return [
+        { id: 1, name: "United States", code: "US", createdAt: new Date() },
+        { id: 2, name: "Canada", code: "CA", createdAt: new Date() },
+        { id: 3, name: "France", code: "FR", createdAt: new Date() },
+        { id: 4, name: "Germany", code: "DE", createdAt: new Date() },
+        { id: 5, name: "United Kingdom", code: "GB", createdAt: new Date() },
+      ] as Country[];
+    }
+  }
+
+  async getRegions(countryId?: number): Promise<Region[]> {
+    try {
+      if (countryId) {
+        return await db
+          .select()
+          .from(regions)
+          .where(eq(regions.countryId, countryId));
+      }
+      return await db.select().from(regions);
+    } catch (error) {
+      console.error("Error fetching regions:", error);
+      throw error;
+    }
+  }
+
+  async getCities(regionId?: number): Promise<City[]> {
+    try {
+      if (regionId) {
+        return await db
+          .select()
+          .from(cities)
+          .where(eq(cities.regionId, regionId));
+      }
+      return await db.select().from(cities);
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+      throw error;
+    }
   }
 }
 

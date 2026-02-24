@@ -1,77 +1,446 @@
-import { Link } from "wouter";
-import { ChevronDown, Music, MapPin } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import {
+  ChevronDown,
+  Music,
+  MapPin,
+  Search,
+  Globe,
+  Lock,
+  LogOut,
+} from "lucide-react";
 import { Button } from "./button";
+import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
+import { useState, useEffect } from "react";
+import Logo from "../attached_assets/logo.png";
+import { useSubscription } from "@/hooks/use-subscription";
+import { useAuthContext } from "@/contexts/AuthContext";
+import styles from "./versoair-logo.module.css";
 
 interface NavbarProps {
   onMusicPortalToggle: () => void;
   onLocationPanelToggle: () => void;
+  isMusicPortalOpen?: boolean;
+  isLocationPanelOpen?: boolean;
 }
 
-export default function Navbar({ onMusicPortalToggle, onLocationPanelToggle }: NavbarProps) {
-  return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <img 
-              src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&w=120&h=40&fit=crop" 
-              alt="Plan V4 Logo" 
-              className="navbar-logo"
-            />
-            <span className="ml-3 text-xl font-bold text-gray-800">Plan V4</span>
-          </div>
+export default function Navbar({
+  onMusicPortalToggle,
+  onLocationPanelToggle,
+  isMusicPortalOpen,
+  isLocationPanelOpen,
+}: NavbarProps) {
+  // Call ALL hooks FIRST before any conditional logic
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [brandHovered, setBrandHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [location, navigate] = useLocation();
+  const { isAuthenticated, loading: authLoading } = useSubscription();
+  const { user, logout } = useAuthContext();
 
-          {/* Main Navigation */}
-          <div className="hidden md:flex space-x-8">
-            <Link href="/" className="text-gray-600 hover:text-primary transition-colors">
+  useEffect(() => {
+    const handler = (e: Event) => {
+      // @ts-ignore
+      const open = Boolean((e as CustomEvent).detail?.open);
+      setMobileMenuOpen(open);
+    };
+    window.addEventListener("mobile-menu-toggle", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "mobile-menu-toggle",
+        handler as EventListener,
+      );
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const controlNavbar = () => {
+      if (typeof window !== "undefined") {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY < lastScrollY || currentScrollY < 10) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+        setLastScrollY(currentScrollY);
+      }
+    };
+
+    window.addEventListener("scroll", controlNavbar);
+    return () => window.removeEventListener("scroll", controlNavbar);
+  }, [lastScrollY, isMobile]);
+
+  // Don't render navbar on /blog page (AFTER all hooks)
+  if (location === "/blog") {
+    return null;
+  }
+
+  const isPanelOpen =
+    isMusicPortalOpen || isLocationPanelOpen || mobileMenuOpen;
+
+  const navbarClasses = `bg-white shadow-lg sticky top-0 z-[99997] transition-all duration-300 ${
+    isPanelOpen ? "opacity-60 pointer-events-none" : "opacity-100"
+  } ${
+    isMobile
+      ? isVisible
+        ? "transform translate-y-0"
+        : "transform -translate-y-full"
+      : ""
+  }`;
+
+  return (
+    <nav className={navbarClasses}>
+      <div className="max-w-full mx-auto px-4">
+        <div className="flex items-center justify-between h-16 min-w-0">
+          {/* 🔥 LOGO + BRAND (Clickable) - UPDATED */}
+          <Link
+            href="/"
+            className="flex items-center flex-shrink-0"
+            onMouseEnter={() => setBrandHovered(true)}
+            onMouseLeave={() => setBrandHovered(false)}
+          >
+            <div className="relative group">
+              <div
+                className="
+                absolute -inset-1
+                bg-gradient-to-r from-yellow-500 via-yellow-800 to-yellow-500
+                rounded-lg blur-md opacity-0 
+                group-hover:opacity-70 
+                transition-all duration-500
+              "
+              />
+              <img
+                src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
+                alt="Verso Air Logo"
+                className="
+                  relative h-16 w-auto
+                  transition-all duration-500
+                  filter grayscale brightness-0
+                  group-hover:grayscale-0
+                  group-hover:brightness-110
+                  group-hover:scale-105
+                  group-hover:drop-shadow-[0_0_12px_rgba(0,0,0,0.0)]
+                "
+              />
+            </div>
+
+            <span className="ml-2 text-base md:text-lg font-bold whitespace-nowrap">
+              <AnimatedKeyboardText
+                text={isMobile ? "versoair™" : "versoair™"}
+                variant="default"
+                delay={100}
+                className="text-amber-500"
+              />
+            </span>
+          </Link>
+
+          {/* Main Navigation - Desktop */}
+          <div className="hidden lg:flex items-center space-x-4 flex-1 justify-center">
+            <Link
+              href="/"
+              className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
+            >
               Home
             </Link>
-            
-            {/* Entreprises Dropdown */}
+
+            <Link
+              href="/about"
+              className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
+            >
+              About
+            </Link>
+
+            {/* 🌍 Geo Admin Portal Link */}
+            {isAuthenticated ? (
+              <Link
+                href="/geo-admin"
+                className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap flex items-center"
+              >
+                <Globe className="mr-1 h-3 w-3" />
+                Geo Admin
+              </Link>
+            ) : (
+              <Link
+                href="/geo-admin"
+                className="text-gray-400 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
+              >
+                <Lock className="h-3 w-3 text-gray-400" />
+                <span className="text-gray-400">Geo Admin</span>
+                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  Sign in to access
+                </span>
+              </Link>
+            )}
+
+            {/* Services Dropdown */}
             <div className="relative group">
-              <button className="text-gray-600 hover:text-primary transition-colors flex items-center">
-                Entreprises <ChevronDown className="ml-1 h-4 w-4" />
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
+                Services <ChevronDown className="ml-1 h-3 w-3" />
               </button>
-              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-2 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <Link href="/commerce" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Commerce
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99998] min-w-max">
+                <Link
+                  href="/services"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  All Services
                 </Link>
-                <Link href="/hotellerie" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Hotellerie
+                <div className="border-t border-gray-200 my-1"></div>
+                <Link
+                  href="/services/news"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  News & Updates
                 </Link>
-                <Link href="/batiment" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Bâtiment
+                <Link
+                  href="/services/careers"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  Careers
                 </Link>
-                <Link href="/automobile" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Automobile
-                </Link>
-                <Link href="/finances" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Finances
-                </Link>
-                <Link href="/divertissement" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
-                  Divertissement
+                <Link
+                  href="/services/contractors"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  Contractors
                 </Link>
               </div>
             </div>
 
-            <Link href="/reservations" className="text-gray-600 hover:text-primary transition-colors">
+            {/* Entreprises Dropdown */}
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
+                Entreprises <ChevronDown className="ml-1 h-3 w-3" />
+              </button>
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99998]">
+                <div className="grid grid-cols-2 gap-x-1">
+                  <Link
+                    href="/sante"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Santé
+                  </Link>
+                  <Link
+                    href="/finances"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Finance
+                  </Link>
+                  <Link
+                    href="/batiment"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Bâtiment
+                  </Link>
+                  <Link
+                    href="/hotellerie"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Hôtellerie
+                  </Link>
+                  <Link
+                    href="/automobile"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Automobile
+                  </Link>
+                  <Link
+                    href="/commerce"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Commerce
+                  </Link>
+                  <Link
+                    href="/logement"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    🏠 Logement
+                  </Link>
+                  <Link
+                    href="/divertissement"
+                    className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Divertissement
+                  </Link>
+                  <Link
+                    href="/businesses-directory"
+                    className="col-span-2 block px-4 py-2 text-gray-600 hover:bg-gray-100 text-center border-t border-gray-100 mt-1 pt-2 font-medium"
+                  >
+                    📒 Annuaire
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/reservations"
+              className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
+            >
               Reservations
-            </Link>
-            <Link href="/logement" className="text-gray-600 hover:text-primary transition-colors">
-              Logements
             </Link>
 
             {/* Assistance Dropdown */}
             <div className="relative group">
-              <button className="text-gray-600 hover:text-primary transition-colors flex items-center">
-                Assistance <ChevronDown className="ml-1 h-4 w-4" />
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
+                Assistance <ChevronDown className="ml-1 h-3 w-3" />
               </button>
-              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-2 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <Link href="/sav" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99998] min-w-max">
+                <Link
+                  href="/sav"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
                   SAV 24/7
                 </Link>
-                <Link href="/versoai" className="block px-4 py-2 text-gray-600 hover:bg-gray-100">
+                <Link
+                  href="/versoai"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  VersoAI
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet Navigation */}
+          <div className="hidden md:flex lg:hidden items-center space-x-2 flex-1 justify-center">
+            <Link
+              href="/"
+              className="text-gray-600 hover:text-primary text-xs px-1"
+            >
+              Home
+            </Link>
+            <Link
+              href="/about"
+              className="text-gray-600 hover:text-primary text-xs px-1"
+            >
+              About
+            </Link>
+
+            {/* 🌍 Geo Admin Portal Link - Tablet */}
+            {isAuthenticated ? (
+              <Link
+                href="/geo-admin"
+                className="text-gray-600 hover:text-primary text-xs px-1 flex items-center"
+              >
+                <Globe className="mr-1 h-2 w-2" />
+                Geo Admin
+              </Link>
+            ) : (
+              <Link
+                href="/geo-admin"
+                className="text-gray-400 text-xs px-1 flex items-center gap-1 relative group cursor-pointer"
+              >
+                <Lock className="h-2 w-2 text-gray-400" />
+                <span className="text-gray-400">Geo Admin</span>
+                <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  Sign in
+                </span>
+              </Link>
+            )}
+
+            <Link
+              href="/services"
+              className="text-gray-600 hover:text-primary text-xs px-1"
+            >
+              Services
+            </Link>
+
+            {/* Entreprises Dropdown - Tablet */}
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center text-xs px-1">
+                Entreprises <ChevronDown className="ml-1 h-2 w-2" />
+              </button>
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99998]">
+                <div className="grid grid-cols-2 gap-x-1">
+                  <Link
+                    href="/sante"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Santé
+                  </Link>
+                  <Link
+                    href="/finances"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Finance
+                  </Link>
+                  <Link
+                    href="/batiment"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Bâtiment
+                  </Link>
+                  <Link
+                    href="/hotellerie"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Hôtellerie
+                  </Link>
+                  <Link
+                    href="/automobile"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Automobile
+                  </Link>
+                  <Link
+                    href="/commerce"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Commerce
+                  </Link>
+                  <Link
+                    href="/logement"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    🏠 Logement
+                  </Link>
+                  <Link
+                    href="/divertissement"
+                    className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    Divertissement
+                  </Link>
+                  <Link
+                    href="/businesses-directory"
+                    className="col-span-2 block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 text-center border-t border-gray-100 mt-1 pt-1 font-medium"
+                  >
+                    📒 Annuaire
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/reservations"
+              className="text-gray-600 hover:text-primary text-xs px-1"
+            >
+              Reservations
+            </Link>
+
+            {/* Assistance Dropdown - Tablet */}
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center text-xs px-1">
+                Assistance <ChevronDown className="ml-1 h-2 w-2" />
+              </button>
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-32 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[99998] min-w-max">
+                <Link
+                  href="/sav"
+                  className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  SAV 24/7
+                </Link>
+                <Link
+                  href="/versoai"
+                  className="block px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
                   VersoAI
                 </Link>
               </div>
@@ -79,32 +448,61 @@ export default function Navbar({ onMusicPortalToggle, onLocationPanelToggle }: N
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {/* Music Portal Toggle */}
             <Button
               onClick={onMusicPortalToggle}
-              className="portal-toggle bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-600"
+              className="portal-toggle bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 md:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <Music className="mr-2 h-4 w-4" />
-              Verso Air
+              <Music className="mr-1 h-3 w-3" />
+              <span className="hidden sm:inline">Verso Air</span>
+              <span className="sm:hidden">VA</span>
             </Button>
-            
+
             {/* Location Panel Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onLocationPanelToggle}
-              className="text-gray-600 hover:text-primary"
+              className="text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
             >
-              <MapPin className="h-5 w-5" />
+              <MapPin className="h-4 w-4" />
             </Button>
-            
-            {/* Sign In Button */}
-            <Link href="/signin">
-              <Button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors">
-                Sign In/Up
-              </Button>
-            </Link>
+
+            {/* Search Input - Hidden on small screens */}
+            <div className="hidden md:block flex-shrink-0">
+              <label className="search relative" htmlFor="inpt_search">
+                <input
+                  id="inpt_search"
+                  type="text"
+                  placeholder="Search..."
+                  className="w-28 lg:w-36 px-3 py-2 pl-8 pr-3 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all duration-300"
+                />
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+              </label>
+            </div>
+
+            {/* Sign In Button or Logout - Always visible */}
+            {user ? (
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}
+                className="flex-shrink-0 flex items-center gap-1 bg-red-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
+              >
+                <LogOut className="h-3 w-3" />
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Logout</span>
+              </button>
+            ) : (
+              <Link href="/auth/signin" className="flex-shrink-0">
+                <Button className="bg-primary text-white px-3 md:px-4 py-2 rounded-md hover:bg-primary/90 transition-colors text-xs font-medium whitespace-nowrap">
+                  <span className="hidden sm:inline">Sign In/Up</span>
+                  <span className="sm:hidden">Sign In</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

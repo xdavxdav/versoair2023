@@ -55,3 +55,19 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Diagnostic: ensure compatibility with runtime which may call `defaultMutationOptions`
+// (protects against edge cases where the method might be missing on the instance).
+if (!(queryClient as any).defaultMutationOptions) {
+  console.warn(
+    "⚠️ queryClient missing defaultMutationOptions; adding compatibility shim",
+  );
+  (queryClient as any).defaultMutationOptions = function (options?: any) {
+    // Merge instance defaults (if available) with provided options
+    const defaults =
+      typeof (this as any).getDefaultOptions === "function"
+        ? (this as any).getDefaultOptions().mutations || {}
+        : {};
+    return { ...defaults, ...(options || {}) } as any;
+  };
+}

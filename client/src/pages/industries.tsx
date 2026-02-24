@@ -1,0 +1,153 @@
+import {
+  Zap,
+  TrendingUp,
+  BarChart3,
+  PieChart,
+  LineChart,
+  Activity,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import ScrollToTop from "@/components/ScrollToTop";
+
+export default function Industries() {
+  const industries = [
+    {
+      icon: <Activity className="h-8 w-8" />,
+      name: "Healthcare",
+      description:
+        "Patient analytics, operational efficiency, market intelligence",
+      features: [
+        "Patient Data Analytics",
+        "Hospital Operations",
+        "Insurance Insights",
+      ],
+    },
+    {
+      icon: <BarChart3 className="h-8 w-8" />,
+      name: "Retail & E-Commerce",
+      description: "Sales analytics, inventory management, customer insights",
+      features: [
+        "Sales Performance",
+        "Inventory Tracking",
+        "Customer Behavior",
+      ],
+    },
+    {
+      icon: <LineChart className="h-8 w-8" />,
+      name: "Finance & Banking",
+      description:
+        "Transaction analysis, risk management, compliance reporting",
+      features: [
+        "Transaction Analytics",
+        "Risk Assessment",
+        "Compliance Reports",
+      ],
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8" />,
+      name: "Manufacturing",
+      description:
+        "Production metrics, quality control, supply chain optimization",
+      features: ["Production Tracking", "Quality Control", "Supply Chain"],
+    },
+    {
+      icon: <PieChart className="h-8 w-8" />,
+      name: "Technology",
+      description: "Development metrics, user analytics, platform performance",
+      features: ["Development Metrics", "User Analytics", "Performance Data"],
+    },
+    {
+      icon: <Zap className="h-8 w-8" />,
+      name: "Energy & Utilities",
+      description:
+        "Consumption analytics, grid management, sustainability tracking",
+      features: ["Usage Analytics", "Grid Optimization", "Sustainability"],
+    },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Hero Section */}
+      <div className="relative pt-20 pb-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+            Industries We Serve
+          </h1>
+          <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
+            Verso Air powers intelligent decision-making across every sector
+          </p>
+        </div>
+      </div>
+
+      {/* Industries Grid */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {industries.map((industry, idx) => (
+            <div
+              key={idx}
+              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group hover:bg-slate-800/70"
+            >
+              <div className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+                {industry.icon}
+              </div>
+
+              <h3 className="text-xl font-bold text-white mb-2">
+                {industry.name}
+              </h3>
+              <p className="text-slate-400 text-sm mb-4">
+                {industry.description}
+              </p>
+
+              <div className="space-y-2 mb-6">
+                {industry.features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full"></span>
+                    <span className="text-slate-300 text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+              >
+                Learn More
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Your Industry, Optimized
+          </h2>
+          <p className="text-slate-300 mb-8">
+            Don't see your industry? Verso Air is designed to adapt to any
+            sector. Get in touch to discuss your specific needs.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/contact">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+                Contact Sales
+              </Button>
+            </Link>
+            <Link href="/demo">
+              <Button
+                variant="outline"
+                className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
+              >
+                Schedule Demo
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <ScrollToTop />
+    </div>
+  );
+}

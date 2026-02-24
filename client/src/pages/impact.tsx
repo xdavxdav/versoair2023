@@ -1,0 +1,169 @@
+import { TrendingUp, BarChart3, PieChart, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import ScrollToTop from "@/components/ScrollToTop";
+
+export default function Impact() {
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Hero Section */}
+      <div className="relative pt-20 pb-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+            Our Impact
+          </h1>
+          <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
+            Measuring the value we create for businesses and communities
+          </p>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {[
+            {
+              icon: <TrendingUp className="h-8 w-8" />,
+              label: "Revenue Growth",
+              value: "156%",
+              desc: "Average client increase",
+            },
+            {
+              icon: <BarChart3 className="h-8 w-8" />,
+              label: "Time Saved",
+              value: "40hrs/wk",
+              desc: "Per organization",
+            },
+            {
+              icon: <PieChart className="h-8 w-8" />,
+              label: "Efficiency Gain",
+              value: "78%",
+              desc: "Operations optimization",
+            },
+            {
+              icon: <Target className="h-8 w-8" />,
+              label: "Accuracy",
+              value: "99.9%",
+              desc: "Data quality standard",
+            },
+          ].map((metric, idx) => (
+            <div
+              key={idx}
+              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-6"
+            >
+              <div className="text-emerald-400 mb-4">{metric.icon}</div>
+              <p className="text-slate-400 text-sm mb-2">{metric.label}</p>
+              <p className="text-4xl font-bold text-white mb-2">
+                {metric.value}
+              </p>
+              <p className="text-slate-500 text-xs">{metric.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Case Studies */}
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-8">
+            Client Success Stories
+          </h2>
+
+          <div className="space-y-6">
+            {[
+              {
+                company: "Global Retail Co.",
+                metric: "250% ROI",
+                description:
+                  "Increased sales by 156% within 6 months using Verso Air analytics",
+              },
+              {
+                company: "Enterprise Healthcare",
+                metric: "40% Cost Reduction",
+                description:
+                  "Optimized operations and reduced overhead through data insights",
+              },
+              {
+                company: "Tech Innovations Inc.",
+                metric: "3x Faster Decisions",
+                description:
+                  "Real-time dashboards enabled 3x faster decision-making",
+              },
+            ].map((study, idx) => (
+              <div
+                key={idx}
+                className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-8"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {study.company}
+                    </h3>
+                    <p className="text-emerald-400 font-semibold mt-1">
+                      {study.metric}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-slate-300">{study.description}</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 border-emerald-500/50 text-emerald-400"
+                >
+                  Read Case Study →
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Industry Impact */}
+        <div className="mt-16 bg-slate-800/30 border border-slate-700 rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Industry Impact
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {[
+              {
+                sector: "Retail & Commerce",
+                impact: "+$1.2B revenue generated",
+              },
+              { sector: "Hospitality", impact: "+45% booking efficiency" },
+              { sector: "Finance", impact: "+$250M in optimized operations" },
+              { sector: "Manufacturing", impact: "+35% production efficiency" },
+              { sector: "Technology", impact: "+2.5x faster development" },
+              { sector: "Healthcare", impact: "+$800M savings across systems" },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-4 bg-slate-900/30 rounded-lg"
+              >
+                <p className="font-semibold text-white">{item.sector}</p>
+                <p className="text-emerald-400 text-sm font-bold">
+                  {item.impact}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Create Impact?
+          </h2>
+          <p className="text-slate-300 mb-8">
+            Join thousands of organizations transforming with Verso Air
+          </p>
+          <Link href="/demo">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+              Schedule Demo
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <ScrollToTop />
+    </div>
+  );
+}
