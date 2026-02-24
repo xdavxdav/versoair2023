@@ -24,6 +24,24 @@ export function setupCategoryIntegrityCheck() {
     "🔧 Setting up category integrity check (runs daily at 2 AM UTC)",
   );
 
+  // Allow disabling integrity checks via env var for deployments without DB
+  const disableChecks = process.env.DISABLE_DB_CHECK === "true";
+  const dbUrl = process.env.DATABASE_URL || "";
+
+  if (disableChecks) {
+    console.log(
+      "⚠️ DISABLE_DB_CHECK is true — skipping category integrity checks",
+    );
+    return;
+  }
+
+  if (!dbUrl) {
+    console.log(
+      "⚠️ No DATABASE_URL provided — skipping category integrity checks until a database is configured",
+    );
+    return;
+  }
+
   cron.schedule("0 2 * * *", async () => {
     console.log("🔍 Running automated category integrity check...");
 
@@ -57,7 +75,11 @@ export function setupCategoryIntegrityCheck() {
   });
 
   // Also run on server startup
-  runIntegrityCheck();
+  try {
+    runIntegrityCheck();
+  } catch (err) {
+    console.error("Initial integrity check skipped due to error:", err);
+  }
 }
 
 /**
