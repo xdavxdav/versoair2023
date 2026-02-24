@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface BusinessType {
   id: number;

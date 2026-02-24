@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ScrollToTop from "@/components/ScrollToTop";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 

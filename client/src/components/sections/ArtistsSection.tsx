@@ -39,8 +39,8 @@ export function ArtistsSection() {
   const [success, setSuccess] = useState("");
   const API_BASE_URL =
     typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003"
-      : "http://localhost:5003";
+      ? process.env.NEXT_PUBLIC_API_URL || ""
+      : "";
 
   // Fetch artists
   const {

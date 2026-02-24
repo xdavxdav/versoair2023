@@ -66,7 +66,7 @@ export function AnalyticsSection() {
     queryKey: ["gtm-stats", hoursBack],
     queryFn: async () => {
       const res = await authenticatedFetch(
-        `http://localhost:5003/api/v1/admin/gtm-events/stats?hoursBack=${hoursBack}`,
+        `/api/v1/admin/gtm-events/stats?hoursBack=${hoursBack}`,
         {},
       );
       if (!res.ok) throw new Error("Failed to fetch GTM stats");
@@ -81,7 +81,7 @@ export function AnalyticsSection() {
     queryKey: ["analytics", period],
     queryFn: async () => {
       const res = await authenticatedFetch(
-        `http://localhost:5003/api/v1/admin/analytics?period=${period}`,
+        `/api/v1/admin/analytics?period=${period}`,
         {},
       );
       if (!res.ok) throw new Error("Failed to fetch analytics");
@@ -104,7 +104,7 @@ export function AnalyticsSection() {
     queryKey: ["activity-log", period],
     queryFn: async () => {
       const res = await authenticatedFetch(
-        `http://localhost:5003/api/v1/admin/activity-log?period=${period}`,
+        `/api/v1/admin/activity-log?period=${period}`,
         {},
       );
       if (!res.ok) throw new Error("Failed to fetch activity log");

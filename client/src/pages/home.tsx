@@ -284,7 +284,7 @@ function calculateDistance(
 }
 
 // API Configuration
-const API_BASE_URL = "http://localhost:5003";
+const API_BASE_URL = "";
 
 // API Search Function - DATABASE ONLY (uses public endpoint)
 async function searchBusinessesAPI(params: SearchParams): Promise<{

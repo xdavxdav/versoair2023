@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { generateAccessCode, validateAdminAccess } from "@/lib/admin-auth";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 interface AdminAccessGateProps {
   onAccessGranted: (username: string) => void;

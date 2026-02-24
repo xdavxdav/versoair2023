@@ -122,7 +122,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 // Database API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 interface Property {
   id: string;

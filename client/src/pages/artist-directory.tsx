@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // Types
 interface Artist {
