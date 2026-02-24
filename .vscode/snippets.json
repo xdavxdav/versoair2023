@@ -1,0 +1,68 @@
+{
+  "React Functional Component": {
+    "prefix": "rfc",
+    "body": [
+      "import { ${2} } from 'react';",
+      "",
+      "interface ${1:ComponentName}Props {",
+      "  ${3}",
+      "}",
+      "",
+      "export default function ${1:ComponentName}({ ${4} }: ${1:ComponentName}Props) {",
+      "  return (",
+      "    <div className=\"${5}\">",
+      "      ${6}",
+      "    </div>",
+      "  );",
+      "}"
+    ],
+    "description": "React functional component with TypeScript"
+  },
+  "React Hook": {
+    "prefix": "rhook",
+    "body": [
+      "import { useState, useEffect } from 'react';",
+      "",
+      "export function use${1:HookName}(${2}) {",
+      "  const [${3:state}, set${3/(.*)/${3:/capitalize}/}] = useState(${4});",
+      "",
+      "  useEffect(() => {",
+      "    ${5}",
+      "  }, [${6}]);",
+      "",
+      "  return { ${3:state}, set${3/(.*)/${3:/capitalize}/} };",
+      "}"
+    ],
+    "description": "Custom React hook with TypeScript"
+  },
+  "API Route Handler": {
+    "prefix": "apihandler",
+    "body": [
+      "app.${1:get}('${2:/api/endpoint}', ${3:isAuthenticated, }async (req, res) => {",
+      "  try {",
+      "    ${4:// Implementation}",
+      "    res.json(${5:result});",
+      "  } catch (error) {",
+      "    console.error('Error in ${2:/api/endpoint}:', error);",
+      "    res.status(500).json({ message: 'Internal server error' });",
+      "  }",
+      "});"
+    ],
+    "description": "Express API route handler"
+  },
+  "Drizzle Schema": {
+    "prefix": "drizzletable",
+    "body": [
+      "export const ${1:tableName} = pgTable('${1:tableName}', {",
+      "  id: serial('id').primaryKey(),",
+      "  ${2:name}: varchar('${2:name}', { length: 255 }).notNull(),",
+      "  createdAt: timestamp('created_at').defaultNow().notNull(),",
+      "  updatedAt: timestamp('updated_at').defaultNow().notNull(),",
+      "});",
+      "",
+      "export type ${1/(.*)/${1:/capitalize}/} = typeof ${1:tableName}.\\$inferSelect;",
+      "export type Insert${1/(.*)/${1:/capitalize}/} = typeof ${1:tableName}.\\$inferInsert;"
+    ],
+    "description": "Drizzle table schema with TypeScript types"
+  }
+}
