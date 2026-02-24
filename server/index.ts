@@ -198,11 +198,9 @@ app.use((req, res, next) => {
       console.log("   - http://localhost:" + port + "/api/simple-test");
       console.log("   - http://localhost:" + port + "/api/status");
       console.log("   - http://localhost:" + port + "/api/countries");
-      console.log("🔒 [SERVER] CORS enabled for:", [
-        "http://localhost:5003",
-        "http://localhost:3000",
-        "http://localhost:8080",
-      ]);
+      console.log("🔒 [SERVER] CORS enabled for:", allowedOrigins);
+      console.log("🌍 [SERVER] NODE_ENV:", process.env.NODE_ENV);
+      console.log("🔑 [SERVER] CORS_ORIGIN env:", process.env.CORS_ORIGIN);
       log(`serving on port ${port}`);
     },
   );
