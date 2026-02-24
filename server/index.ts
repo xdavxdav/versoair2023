@@ -31,7 +31,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
-import { serveStatic, log } from "./vite";
+import { serveStatic, log } from "./prod-static";
 import { setupCategoryIntegrityCheck } from "./services/category-integrity-check";
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
