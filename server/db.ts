@@ -41,7 +41,7 @@ export const db = drizzle(pool, { schema });
 // Test the connection on startup
 pool.on("connect", () => {
   console.log(
-    "✅ Connected to PostgreSQL database: versoair_business_intelligence"
+    "✅ Connected to PostgreSQL database: versoair_business_intelligence",
   );
 });
 
@@ -53,7 +53,7 @@ export const testConnection = async () => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      "SELECT NOW() as time, current_database() as db"
+      "SELECT NOW() as time, current_database() as db",
     );
     client.release();
     console.log("✅ Database connection test successful:", result.rows[0]);
