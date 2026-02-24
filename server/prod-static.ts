@@ -1,11 +1,6 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-
-// ESM-safe __dirname (import.meta.dirname is undefined in esbuild bundles)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -19,9 +14,20 @@ export function log(message: string, source = "express") {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "..", "dist", "public");
+  // Use process.cwd() which is always /app in Docker (WORKDIR /app)
+  const distPath = path.join(process.cwd(), "dist", "public");
+
+  console.log(`[STATIC] Serving static files from: ${distPath}`);
+  console.log(`[STATIC] Directory exists: ${fs.existsSync(distPath)}`);
 
   if (!fs.existsSync(distPath)) {
+    // Log all available dirs to help debug
+    console.error(`[STATIC] dist/public not found. Contents of cwd (${process.cwd()}):`);
+    try {
+      console.error(fs.readdirSync(process.cwd()).join(", "));
+    } catch (e) {
+      console.error("Could not read cwd");
+    }
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
@@ -29,8 +35,8 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // SPA fallback — serve index.html for any route not matched by static files
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
   });
 }
