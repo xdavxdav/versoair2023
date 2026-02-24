@@ -123,7 +123,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const THEME = {
   primary: "from-slate-700 to-slate-900",

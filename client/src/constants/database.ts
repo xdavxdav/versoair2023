@@ -8,7 +8,7 @@
 // ========================
 
 export const DB_CONFIG = {
-  API_BASE_URL: process.env.REACT_APP_API_URL || "http://localhost:5003",
+  API_BASE_URL: process.env.REACT_APP_API_URL || "",
   DEFAULT_TIMEOUT: 30000,
   MAX_RETRIES: 3,
   RECONNECT_INTERVAL: 5000,

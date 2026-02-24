@@ -59,7 +59,7 @@ import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Business {
   id: number;

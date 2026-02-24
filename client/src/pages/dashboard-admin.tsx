@@ -201,7 +201,7 @@ import { ArtistsSection } from "@/components/sections/ArtistsSection";
 import { UsersSection } from "@/components/sections/UsersSection";
 import { AnalyticsSection } from "@/components/sections/AnalyticsSection";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // Business categories mapping with styling (used for icons and colors)
 // Database has 20 total categories - these mappings provide visual styling
@@ -3859,7 +3859,7 @@ export default function AdminDashboard() {
       );
     } else if (isAdminGateAuthenticated && authenticatedAdminUsername) {
       // Session restored from localStorage but no JWT — re-authenticate via admin gate
-      const API = import.meta.env.VITE_API_URL || "http://localhost:5003";
+      const API = import.meta.env.VITE_API_URL || "";
       fetch(`${API}/auth/admin-gate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

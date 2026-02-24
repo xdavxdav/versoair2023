@@ -48,7 +48,7 @@ import {
   typeGuards,
 } from "@/types/database-dashboard";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5003";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 
 export const DatabaseDashboard = memo(() => {
   // Search and Filter State

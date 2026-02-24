@@ -3,7 +3,7 @@
  * Uses the public /api/businesses endpoint (no auth required)
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export interface Business {
   business_type?: any;

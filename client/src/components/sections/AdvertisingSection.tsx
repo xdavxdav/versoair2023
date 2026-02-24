@@ -4,7 +4,7 @@ import { Plus, X, AlertCircle, Check, TrendingUp } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { authenticatedFetch } from "@/lib/auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Campaign {
   id: number;

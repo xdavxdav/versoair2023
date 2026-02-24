@@ -36,8 +36,8 @@ export function UsersSection() {
     typeof window !== "undefined"
       ? process.env.REACT_APP_API_URL ||
         import.meta.env.VITE_API_URL ||
-        "http://localhost:5003"
-      : "http://localhost:5003";
+        ""
+      : "";
 
   // Fetch users
   const { data: users = [], isLoading } = useQuery({

@@ -66,7 +66,7 @@ import {
 import { SettingsModal } from "@/components/SettingsModal";
 
 // Database API configuration - EXACT SAME AS HOSPITALITY
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // Database types - Construction & Building focused
 interface BatimentFacility {

@@ -38,7 +38,7 @@ export function CMSSection() {
   const { data: pages = [], isLoading } = useQuery({
     queryKey: ["pages"],
     queryFn: async () => {
-      const res = await authenticatedFetch("http://localhost:5003/api/v1/admin/pages", {});
+      const res = await authenticatedFetch("/api/v1/admin/pages", {});
       if (!res.ok) throw new Error("Failed to fetch pages");
       const json = await res.json();
       return json.data || [];
@@ -50,8 +50,8 @@ export function CMSSection() {
   const mutation = useMutation({
     mutationFn: async (data: CreatePageInput & { id?: number }) => {
       const url = data.id
-        ? `http://localhost:5003/api/v1/admin/pages/${data.id}`
-        : "http://localhost:5003/api/v1/admin/pages";
+        ? `/api/v1/admin/pages/${data.id}`
+        : "/api/v1/admin/pages";
       const method = data.id ? "PUT" : "POST";
 
       const res = await authenticatedFetch(url, {
@@ -87,7 +87,7 @@ export function CMSSection() {
   const deleteMutation = useMutation({
     mutationFn: async (pageId: number) => {
       const res = await authenticatedFetch(
-        `http://localhost:5003/api/v1/admin/pages/${pageId}`,
+        `/api/v1/admin/pages/${pageId}`,
         {
           method: "DELETE",
         },
