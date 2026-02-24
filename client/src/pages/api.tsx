@@ -25,31 +25,32 @@ export default function APIDocumentation() {
 
   // Test API connection on mount
   const [mounted, setMounted] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5003";
 
   const endpoints = [
     {
       method: "GET",
       endpoint: "/api/status",
       description: "Health check - Returns server status",
-      fullUrl: "http://localhost:5003/api/status",
+      fullUrl: `${API_BASE_URL}/api/status`,
     },
     {
       method: "GET",
       endpoint: "/api/countries",
       description: "Get all countries",
-      fullUrl: "http://localhost:5003/api/countries",
+      fullUrl: `${API_BASE_URL}/api/countries`,
     },
     {
       method: "GET",
       endpoint: "/api/v1/businesses",
       description: "List all businesses with pagination",
-      fullUrl: "http://localhost:5003/api/v1/businesses?page=1&limit=10",
+      fullUrl: `${API_BASE_URL}/api/v1/businesses?page=1&limit=10`,
     },
     {
       method: "GET",
       endpoint: "/api/v1/categories",
       description: "Get all business categories",
-      fullUrl: "http://localhost:5003/api/v1/categories",
+      fullUrl: `${API_BASE_URL}/api/v1/categories`,
     },
   ];
 
@@ -62,7 +63,7 @@ export default function APIDocumentation() {
   }
 
   async function testEndpoint(endpoint: string, key: string) {
-    const fullUrl = `http://localhost:5003${endpoint}`;
+    const fullUrl = `${API_BASE_URL}${endpoint}`;
     setTestingEndpoint(key);
     try {
       const startTime = performance.now();
@@ -532,7 +533,7 @@ export default function APIDocumentation() {
                 Make Your First Request
               </h3>
               <code className="bg-slate-900/50 p-3 rounded text-emerald-400 text-sm block font-mono overflow-x-auto">
-                curl http://localhost:5003/api/countries \<br />
+                curl {API_BASE_URL}/api/countries \<br />
                 &nbsp;&nbsp;-H "Content-Type: application/json"
               </code>
             </div>
