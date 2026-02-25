@@ -40,9 +40,7 @@ function setAuthCookie(res: Response, token: string): void {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    // In development, don't specify domain to make cookie work across localhost ports
-    // In production, you should set domain appropriately for your domain
-    ...(process.env.NODE_ENV === "production" && { domain: ".versoair.com" }),
+    // Don't set domain — browser defaults to exact current host (works on any deployment)
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
   });
