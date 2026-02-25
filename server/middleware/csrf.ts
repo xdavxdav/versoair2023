@@ -71,8 +71,7 @@ export function csrfSetCookie(
       httpOnly: false, // must be readable by JS
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      // In development, don't specify domain to make cookie work across localhost ports
-      ...(process.env.NODE_ENV === "production" && { domain: ".versoair.com" }),
+      // Don't set domain — browser defaults to exact current host (works on any deployment)
       maxAge: CSRF_TTL_MS,
       path: "/",
     });
