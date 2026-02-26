@@ -71,9 +71,9 @@ export default function SignIn() {
         await initializeCsrfToken();
         setSuccess(true);
 
-        // Redirect to dashboard after 1 second
+        // Redirect to admin dashboard after 1 second
         setTimeout(() => {
-          navigate("/dashboard/admin");
+          navigate("/geo-admin/dashboard");
         }, 1000);
       } else if (response.status === 423) {
         // Account locked — extract unlock time from message

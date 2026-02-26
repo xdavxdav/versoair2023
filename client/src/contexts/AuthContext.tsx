@@ -56,12 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Try to verify token with backend
       try {
-        const response = await fetch("/api/user", {
+        const response = await fetch("/auth/verify", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${storedToken}`,
             "Content-Type": "application/json",
           },
+          credentials: "include",
         });
 
         if (response.ok) {
