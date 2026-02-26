@@ -1426,191 +1426,210 @@ export async function registerRoutes(app: Express) {
   });
 
   // Create a new record in a table
-  app.post("/api/admin/table/:tableName", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { tableName } = req.params;
-      const data = req.body;
+  app.post(
+    "/api/admin/table/:tableName",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { tableName } = req.params;
+        const data = req.body;
 
-      // Validate table name
-      const validTables = Object.keys(TABLE_NAME_MAP);
+        // Validate table name
+        const validTables = Object.keys(TABLE_NAME_MAP);
 
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
+        if (!validTables.includes(tableName)) {
+          return res.status(400).json({
+            success: false,
+            error: "Invalid table name",
+          });
+        }
+
+        const schemaName = TABLE_NAME_MAP[tableName];
+        const table = schemaName ? (schema as any)[schemaName] : null;
+        if (!table) {
+          return res.status(400).json({
+            success: false,
+            error: "Table not found in schema",
+          });
+        }
+
+        // Insert the data
+        const result = await db.insert(table).values(data).returning();
+
+        res.json({
+          success: true,
+          data: (result as any[])[0],
+        });
+      } catch (error: any) {
+        console.error(`❌ Failed to create in ${req.params.tableName}:`, error);
+        res.status(500).json({
           success: false,
-          error: "Invalid table name",
+          error: error.message,
         });
       }
-
-      const schemaName = TABLE_NAME_MAP[tableName];
-      const table = schemaName ? (schema as any)[schemaName] : null;
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema",
-        });
-      }
-
-      // Insert the data
-      const result = await db.insert(table).values(data).returning();
-
-      res.json({
-        success: true,
-        data: (result as any[])[0],
-      });
-    } catch (error: any) {
-      console.error(`❌ Failed to create in ${req.params.tableName}:`, error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+    },
+  );
 
   // Update a record in a table
-  app.put("/api/admin/table/:tableName/:id", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { tableName, id } = req.params;
-      const data = req.body;
+  app.put(
+    "/api/admin/table/:tableName/:id",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { tableName, id } = req.params;
+        const data = req.body;
 
-      // Validate table name
-      const validTables = Object.keys(TABLE_NAME_MAP);
+        // Validate table name
+        const validTables = Object.keys(TABLE_NAME_MAP);
 
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
+        if (!validTables.includes(tableName)) {
+          return res.status(400).json({
+            success: false,
+            error: "Invalid table name",
+          });
+        }
+
+        const schemaName = TABLE_NAME_MAP[tableName];
+        const table = schemaName ? (schema as any)[schemaName] : null;
+        if (!table) {
+          return res.status(400).json({
+            success: false,
+            error: "Table not found in schema",
+          });
+        }
+
+        // Remove id from data as we use it in the where clause
+        const { id: _, ...updateData } = data;
+
+        // Update the data
+        const result = await db
+          .update(table)
+          .set(updateData)
+          .where(eq(table.id, parseInt(id)))
+          .returning();
+
+        if ((result as any[]).length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: "Record not found",
+          });
+        }
+
+        res.json({
+          success: true,
+          data: (result as any[])[0],
+        });
+      } catch (error: any) {
+        console.error(`❌ Failed to update in ${req.params.tableName}:`, error);
+        res.status(500).json({
           success: false,
-          error: "Invalid table name",
+          error: error.message,
         });
       }
-
-      const schemaName = TABLE_NAME_MAP[tableName];
-      const table = schemaName ? (schema as any)[schemaName] : null;
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema",
-        });
-      }
-
-      // Remove id from data as we use it in the where clause
-      const { id: _, ...updateData } = data;
-
-      // Update the data
-      const result = await db
-        .update(table)
-        .set(updateData)
-        .where(eq(table.id, parseInt(id)))
-        .returning();
-
-      if ((result as any[]).length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: "Record not found",
-        });
-      }
-
-      res.json({
-        success: true,
-        data: (result as any[])[0],
-      });
-    } catch (error: any) {
-      console.error(`❌ Failed to update in ${req.params.tableName}:`, error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+    },
+  );
 
   // Delete a record from a table
-  app.delete("/api/admin/table/:tableName/:id", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { tableName, id } = req.params;
+  app.delete(
+    "/api/admin/table/:tableName/:id",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { tableName, id } = req.params;
 
-      // Validate table name
-      const validTables = Object.keys(TABLE_NAME_MAP);
+        // Validate table name
+        const validTables = Object.keys(TABLE_NAME_MAP);
 
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
+        if (!validTables.includes(tableName)) {
+          return res.status(400).json({
+            success: false,
+            error: "Invalid table name",
+          });
+        }
+
+        const schemaName = TABLE_NAME_MAP[tableName];
+        const table = schemaName ? (schema as any)[schemaName] : null;
+        if (!table) {
+          return res.status(400).json({
+            success: false,
+            error: "Table not found in schema",
+          });
+        }
+
+        // Delete the record
+        const result = await db
+          .delete(table)
+          .where(eq(table.id, parseInt(id)))
+          .returning();
+
+        if ((result as any[]).length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: "Record not found",
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Record deleted successfully",
+        });
+      } catch (error: any) {
+        console.error(
+          `❌ Failed to delete from ${req.params.tableName}:`,
+          error,
+        );
+        res.status(500).json({
           success: false,
-          error: "Invalid table name",
+          error: error.message,
         });
       }
-
-      const schemaName = TABLE_NAME_MAP[tableName];
-      const table = schemaName ? (schema as any)[schemaName] : null;
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema",
-        });
-      }
-
-      // Delete the record
-      const result = await db
-        .delete(table)
-        .where(eq(table.id, parseInt(id)))
-        .returning();
-
-      if ((result as any[]).length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: "Record not found",
-        });
-      }
-
-      res.json({
-        success: true,
-        message: "Record deleted successfully",
-      });
-    } catch (error: any) {
-      console.error(`❌ Failed to delete from ${req.params.tableName}:`, error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+    },
+  );
 
   // Execute arbitrary SQL query (ADMIN ONLY — runs raw SQL)
-  app.post("/api/admin/execute-query", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { query: sqlQuery } = req.body;
+  app.post(
+    "/api/admin/execute-query",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { query: sqlQuery } = req.body;
 
-      if (!sqlQuery || typeof sqlQuery !== "string") {
-        return res.status(400).json({
+        if (!sqlQuery || typeof sqlQuery !== "string") {
+          return res.status(400).json({
+            success: false,
+            error: "Query is required",
+          });
+        }
+
+        console.log("🔍 Executing query:", sqlQuery.substring(0, 100) + "...");
+
+        const startTime = Date.now();
+        const result = await db.execute(sql.raw(sqlQuery));
+        const duration = Date.now() - startTime;
+
+        // Get column names from the result
+        const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
+
+        res.json({
+          success: true,
+          data: result.rows,
+          columns,
+          rowCount: result.rows.length,
+          duration,
+        });
+      } catch (error: any) {
+        console.error("❌ Query execution failed:", error);
+        res.status(500).json({
           success: false,
-          error: "Query is required",
+          error: error.message || "Query execution failed",
+          data: [],
+          columns: [],
+          rowCount: 0,
+          duration: 0,
         });
       }
-
-      console.log("🔍 Executing query:", sqlQuery.substring(0, 100) + "...");
-
-      const startTime = Date.now();
-      const result = await db.execute(sql.raw(sqlQuery));
-      const duration = Date.now() - startTime;
-
-      // Get column names from the result
-      const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
-
-      res.json({
-        success: true,
-        data: result.rows,
-        columns,
-        rowCount: result.rows.length,
-        duration,
-      });
-    } catch (error: any) {
-      console.error("❌ Query execution failed:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message || "Query execution failed",
-        data: [],
-        columns: [],
-        rowCount: 0,
-        duration: 0,
-      });
-    }
-  });
+    },
+  );
 
   // Admin: Get database health metrics
   app.get("/api/admin/health", async (req, res) => {
@@ -1734,10 +1753,13 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Preview mapping of businesses -> categories by business_type -> category.name
-  app.post("/api/admin/preview-category-mapping", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const result = await db.execute(
-        sql.raw(`
+  app.post(
+    "/api/admin/preview-category-mapping",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const result = await db.execute(
+          sql.raw(`
         SELECT b.id AS business_id, b.name AS business_name, b.business_type,
                c.id AS category_id, c.name AS category_name
         FROM businesses b
@@ -1746,25 +1768,29 @@ export async function registerRoutes(app: Express) {
         AND c.parent_id IS NULL
         LIMIT 200
       `),
-      );
+        );
 
-      res.json({
-        success: true,
-        samples: result.rows,
-        count: result.rows.length,
-      });
-    } catch (error: any) {
-      console.error("❌ Preview mapping failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+        res.json({
+          success: true,
+          samples: result.rows,
+          count: result.rows.length,
+        });
+      } catch (error: any) {
+        console.error("❌ Preview mapping failed:", error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    },
+  );
 
   // Admin: Apply mapping (safe, transactional)
-  app.post("/api/admin/apply-category-mapping", requireAuth(["admin"]), async (req, res) => {
-    try {
-      await db.execute(sql.raw(`BEGIN`));
-      const result = await db.execute(
-        sql.raw(`
+  app.post(
+    "/api/admin/apply-category-mapping",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        await db.execute(sql.raw(`BEGIN`));
+        const result = await db.execute(
+          sql.raw(`
         UPDATE businesses b
         SET category_id = c.id
         FROM categories c
@@ -1773,21 +1799,22 @@ export async function registerRoutes(app: Express) {
           AND c.parent_id IS NULL
         RETURNING b.id
       `),
-      );
-      await db.execute(sql.raw(`COMMIT`));
+        );
+        await db.execute(sql.raw(`COMMIT`));
 
-      const affected = Array.isArray(result.rows) ? result.rows.length : 0;
-      res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
-    } catch (error: any) {
-      console.error("❌ Apply mapping failed, rolling back:", error);
-      try {
-        await db.execute(sql.raw(`ROLLBACK`));
-      } catch (rbErr) {
-        console.error("❌ Rollback failed:", rbErr);
+        const affected = Array.isArray(result.rows) ? result.rows.length : 0;
+        res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
+      } catch (error: any) {
+        console.error("❌ Apply mapping failed, rolling back:", error);
+        try {
+          await db.execute(sql.raw(`ROLLBACK`));
+        } catch (rbErr) {
+          console.error("❌ Rollback failed:", rbErr);
+        }
+        res.status(500).json({ success: false, error: error.message });
       }
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+    },
+  );
 
   // Admin: Get full hierarchical categories (for management)
   app.get("/api/admin/categories", async (req, res) => {
@@ -1809,83 +1836,95 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Create category (name required)
-  app.post("/api/admin/categories", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { name, description, parent_id, category_type } = req.body;
-      if (!name)
-        return res
-          .status(400)
-          .json({ success: false, error: "name is required" });
+  app.post(
+    "/api/admin/categories",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { name, description, parent_id, category_type } = req.body;
+        if (!name)
+          return res
+            .status(400)
+            .json({ success: false, error: "name is required" });
 
-      const insert = await db.execute(
-        sql`INSERT INTO categories (name, description, category_type, parent_id)
+        const insert = await db.execute(
+          sql`INSERT INTO categories (name, description, category_type, parent_id)
           VALUES (${name}, ${description ?? null}, ${category_type ?? "business"}, ${parent_id ?? null}) RETURNING *`,
-      );
+        );
 
-      res.json({ success: true, category: insert.rows[0] });
-    } catch (error: any) {
-      console.error("❌ Create category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+        res.json({ success: true, category: insert.rows[0] });
+      } catch (error: any) {
+        console.error("❌ Create category failed:", error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    },
+  );
 
   // Admin: Update category
-  app.put("/api/admin/categories/:id", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { name, description, parent_id, category_type } = req.body;
+  app.put(
+    "/api/admin/categories/:id",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { name, description, parent_id, category_type } = req.body;
 
-      const update = await db.execute(
-        sql`UPDATE categories
+        const update = await db.execute(
+          sql`UPDATE categories
           SET name = ${name}, description = ${description ?? null}, parent_id = ${parent_id ?? null}, category_type = ${category_type ?? null}
           WHERE id = ${id}
           RETURNING *`,
-      );
+        );
 
-      res.json({ success: true, category: update.rows[0] });
-    } catch (error: any) {
-      console.error("❌ Update category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+        res.json({ success: true, category: update.rows[0] });
+      } catch (error: any) {
+        console.error("❌ Update category failed:", error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    },
+  );
 
   // Admin: Delete category (safe, optional force)
-  app.delete("/api/admin/categories/:id", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { id: idStr } = req.params;
-      const { force } = req.query;
-      const id = parseInt(idStr, 10);
+  app.delete(
+    "/api/admin/categories/:id",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { id: idStr } = req.params;
+        const { force } = req.query;
+        const id = parseInt(idStr, 10);
 
-      const countResult = await db.execute(
-        sql`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`,
-      );
-      const cnt = parseInt(
-        String((countResult.rows[0] as any)?.cnt ?? "0"),
-        10,
-      );
-
-      if (cnt > 0 && String(force) !== "true") {
-        return res.status(400).json({
-          success: false,
-          error:
-            "Category in use; pass ?force=true to unset references and delete.",
-        });
-      }
-
-      if (cnt > 0 && String(force) === "true") {
-        await db.execute(
-          sql`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`,
+        const countResult = await db.execute(
+          sql`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`,
         );
+        const cnt = parseInt(
+          String((countResult.rows[0] as any)?.cnt ?? "0"),
+          10,
+        );
+
+        if (cnt > 0 && String(force) !== "true") {
+          return res.status(400).json({
+            success: false,
+            error:
+              "Category in use; pass ?force=true to unset references and delete.",
+          });
+        }
+
+        if (cnt > 0 && String(force) === "true") {
+          await db.execute(
+            sql`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`,
+          );
+        }
+
+        await db.execute(sql`DELETE FROM categories WHERE id = ${id}`);
+
+        res.json({ success: true, deleted: true, unmapped: cnt });
+      } catch (error: any) {
+        console.error("❌ Delete category failed:", error);
+        res.status(500).json({ success: false, error: error.message });
       }
-
-      await db.execute(sql`DELETE FROM categories WHERE id = ${id}`);
-
-      res.json({ success: true, deleted: true, unmapped: cnt });
-    } catch (error: any) {
-      console.error("❌ Delete category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+    },
+  );
 
   // ========== COMMERCE BUSINESS ADS ENDPOINTS ==========
 

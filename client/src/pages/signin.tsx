@@ -10,6 +10,9 @@ import {
   EyeOff,
   Phone,
   ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -72,11 +75,15 @@ const businessTypes = [
 ];
 
 export default function SignIn() {
-  const [step, setStep] = useState("select-type"); // 'select-type', 'login', 'register', 'forgot-password', 'reset-sent', 'mfa'
+  const [step, setStep] = useState("select-type"); // 'select-type', 'login', 'register', 'forgot-password', 'reset-sent', 'mfa', 'verify-sent'
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
   const [resetError, setResetError] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [, navigate] = useLocation();
   const { login: authLogin } = useAuthContext();
   const [formData, setFormData] = useState({
@@ -110,6 +117,7 @@ export default function SignIn() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError("");
     try {
       const response = await fetch("/auth/login", {
         method: "POST",
@@ -122,6 +130,14 @@ export default function SignIn() {
       });
 
       const data = await response.json();
+
+      // Handle unverified email
+      if (data.requiresVerification) {
+        setVerificationEmail(data.email || formData.email);
+        setStep("verify-sent");
+        return;
+      }
+
       if (data.success && data.token && data.user) {
         // Use AuthContext to persist login across page refreshes
         authLogin(data.token, {
@@ -139,11 +155,11 @@ export default function SignIn() {
           navigate("/dashboard");
         }
       } else {
-        alert(data.message || "Invalid credentials");
+        setLoginError(data.message || "Invalid credentials");
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      alert("Sign in failed. Please try again.");
+      setLoginError("Sign in failed. Please try again.");
     }
   };
 
@@ -171,8 +187,13 @@ export default function SignIn() {
       });
 
       const data = await response.json();
-      if (data.success && data.token && data.user) {
-        // Use AuthContext to persist registration/login
+
+      if (data.requiresVerification) {
+        // Show "check your email" screen
+        setVerificationEmail(formData.email);
+        setStep("verify-sent");
+      } else if (data.success && data.token && data.user) {
+        // Fallback: if server auto-logged in (shouldn't happen with new flow)
         authLogin(data.token, {
           id: data.user.id,
           email: data.user.email,
@@ -180,13 +201,7 @@ export default function SignIn() {
           role: data.user.role,
         });
         localStorage.setItem("signin_timestamp", new Date().toISOString());
-
-        const redirectTarget = getQueryParam("redirect");
-        if (redirectTarget === "sponsor") {
-          navigate("/sponsor");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate("/dashboard");
       } else {
         alert(data.message || "Registration failed");
       }
@@ -195,6 +210,92 @@ export default function SignIn() {
       alert("Registration failed. Please try again.");
     }
   };
+
+  const handleResendVerification = async () => {
+    if (!verificationEmail) return;
+    setResendLoading(true);
+    setResendMessage("");
+    try {
+      const response = await fetch("/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+      const data = await response.json();
+      setResendMessage(data.message || "Verification email sent!");
+    } catch {
+      setResendMessage("Failed to resend. Please try again.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Check for verification status from URL (after clicking email link)
+  const verificationStatus = getQueryParam("verification");
+
+  // Show "Check Your Email" screen
+  if (step === "verify-sent") {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-full flex items-center justify-center mx-auto mb-6">
+                <Mail className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Check Your Email
+              </h2>
+              <p className="text-gray-600 mb-2">
+                We sent a verification link to:
+              </p>
+              <p className="text-[#bf831c] font-semibold text-lg mb-6">
+                {verificationEmail}
+              </p>
+              <div className="bg-[#fff9e5] border border-[#bf831c]/20 rounded-lg p-4 mb-6 text-left">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>📧 Next steps:</strong>
+                </p>
+                <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <li>Open your email inbox</li>
+                  <li>
+                    Click the <strong>"Verify My Email"</strong> button
+                  </li>
+                  <li>Come back here and sign in</li>
+                </ol>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Didn't receive the email? Check your spam folder or click below
+                to resend.
+              </p>
+              <Button
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                variant="outline"
+                className="border-[#bf831c] text-[#bf831c] hover:bg-[#bf831c] hover:text-white mb-3 w-full"
+              >
+                {resendLoading ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {resendLoading ? "Sending..." : "Resend Verification Email"}
+              </Button>
+              {resendMessage && (
+                <p className="text-sm text-green-600 mb-3">{resendMessage}</p>
+              )}
+              <Button
+                onClick={() => setStep("login")}
+                className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white"
+              >
+                Go to Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === "select-type") {
     return (
@@ -482,6 +583,67 @@ export default function SignIn() {
                 </h2>
                 <p className="text-gray-600 mt-2">Sign in to your account</p>
               </div>
+
+              {/* Verification status banners */}
+              {verificationStatus === "success" && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-green-800 font-semibold">
+                      Email verified! ✅
+                    </p>
+                    <p className="text-green-700 text-sm">
+                      Your account is now active. Sign in below.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {verificationStatus === "expired" && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-orange-800 font-semibold">
+                      Verification link expired
+                    </p>
+                    <p className="text-orange-700 text-sm">
+                      Try logging in — you'll be prompted to resend a new link.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {verificationStatus === "invalid" && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-red-800 font-semibold">
+                      Invalid verification link
+                    </p>
+                    <p className="text-red-700 text-sm">
+                      The link may have already been used. Try signing in.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {verificationStatus === "already" && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-blue-800 font-semibold">
+                      Already verified
+                    </p>
+                    <p className="text-blue-700 text-sm">
+                      Your email is already verified. Sign in below.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Login error */}
+              {loginError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{loginError}</p>
+                </div>
+              )}
 
               <form onSubmit={handleSignIn} className="space-y-6">
                 <div>
