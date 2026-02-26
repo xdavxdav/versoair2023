@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db";
@@ -11,7 +12,10 @@ import {
   registerLimiter,
   forgotPasswordLimiter,
 } from "../middleware/rate-limiter";
-import { sendPasswordResetEmail } from "../services/email-service";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from "../services/email-service";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -157,21 +161,35 @@ router.post(
         role: schema.users.role,
       });
 
-    const token = jwt.sign(
-      {
-        userId: String(newUser.id),
-        email: newUser.email,
-        role: newUser.role || "user",
-      },
-      getJwtSecret(),
-      { expiresIn: JWT_EXPIRES_IN },
-    );
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    setAuthCookie(res, token);
+    await db.insert(schema.verificationTokens).values({
+      userId: newUser.id,
+      token: verificationToken,
+      type: "email_verification",
+      expiresAt: tokenExpiry,
+    });
 
+    // Send verification email (non-blocking — don't fail registration if email fails)
+    sendVerificationEmail(email.toLowerCase(), verificationToken)
+      .then((sent) => {
+        if (sent) {
+          console.log(`[AUTH] Verification email sent to ${email}`);
+        } else {
+          console.warn(`[AUTH] Failed to send verification email to ${email}`);
+        }
+      })
+      .catch((err) => {
+        console.error(`[AUTH] Verification email error for ${email}:`, err);
+      });
+
+    // Do NOT auto-login — user must verify email first
     res.status(201).json({
       success: true,
-      token,
+      requiresVerification: true,
+      message: "Account created! Check your email for a verification link.",
       user: {
         id: String(newUser.id),
         email: newUser.email,
@@ -248,6 +266,18 @@ router.post(
       return;
     }
 
+    // Check email verification — block unverified users
+    if (!user.is_verified) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message:
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+        email: user.email,
+      });
+      return;
+    }
+
     // Successful login — reset failure counters
     await db
       .update(schema.users)
@@ -283,6 +313,153 @@ router.post(
   asyncHandler(async (_req: Request, res: Response) => {
     res.clearCookie("auth_token", { path: "/" });
     res.json({ success: true });
+  }),
+);
+
+/**
+ * GET /auth/verify-email
+ * Verifies user's email via token from the verification email link.
+ * Marks user as verified, deletes token, redirects to login page.
+ */
+router.get(
+  "/verify-email",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== "string") {
+      // Redirect to signin with error
+      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      res.redirect(`${appUrl}/signin?verification=invalid`);
+      return;
+    }
+
+    // Find token in database
+    const result = await db.execute(
+      sql`SELECT vt.id, vt.user_id, vt.expires_at, u.email, u.is_verified 
+          FROM verification_tokens vt 
+          JOIN users u ON u.id = vt.user_id 
+          WHERE vt.token = ${token} AND vt.type = 'email_verification' 
+          LIMIT 1`,
+    );
+
+    const tokenRecord = result.rows?.[0] as any;
+
+    if (!tokenRecord) {
+      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      res.redirect(`${appUrl}/signin?verification=invalid`);
+      return;
+    }
+
+    // Check if already verified
+    if (tokenRecord.is_verified) {
+      // Delete the token and redirect to login
+      await db.execute(
+        sql`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`,
+      );
+      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      res.redirect(`${appUrl}/signin?verification=already`);
+      return;
+    }
+
+    // Check token expiry
+    if (new Date(tokenRecord.expires_at) < new Date()) {
+      await db.execute(
+        sql`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`,
+      );
+      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      res.redirect(`${appUrl}/signin?verification=expired`);
+      return;
+    }
+
+    // Mark user as verified
+    await db
+      .update(schema.users)
+      .set({ isVerified: true, verifiedAt: new Date() })
+      .where(eq(schema.users.id, tokenRecord.user_id));
+
+    // Delete used token
+    await db.execute(
+      sql`DELETE FROM verification_tokens WHERE user_id = ${tokenRecord.user_id} AND type = 'email_verification'`,
+    );
+
+    console.log(`[AUTH] Email verified for user ${tokenRecord.email}`);
+
+    // Redirect to signin with success message
+    const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+    res.redirect(`${appUrl}/signin?verification=success`);
+  }),
+);
+
+/**
+ * POST /auth/resend-verification
+ * Resends the verification email for unverified accounts
+ */
+router.post(
+  "/resend-verification",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ success: false, message: "Email is required" });
+      return;
+    }
+
+    // Find user
+    const result = await db.execute(
+      sql`SELECT id, email, is_verified FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
+    );
+    const user = result.rows?.[0] as any;
+
+    if (!user) {
+      // Generic message to prevent user enumeration
+      res.json({
+        success: true,
+        message:
+          "If that email is registered, a verification link has been sent.",
+      });
+      return;
+    }
+
+    if (user.is_verified) {
+      res.json({
+        success: true,
+        message: "This email is already verified. You can log in.",
+      });
+      return;
+    }
+
+    // Delete old verification tokens for this user
+    await db.execute(
+      sql`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'email_verification'`,
+    );
+
+    // Generate new token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await db.insert(schema.verificationTokens).values({
+      userId: user.id,
+      token: verificationToken,
+      type: "email_verification",
+      expiresAt: tokenExpiry,
+    });
+
+    // Send verification email
+    const sent = await sendVerificationEmail(user.email, verificationToken);
+
+    if (sent) {
+      console.log(`[AUTH] Verification email resent to ${user.email}`);
+    } else {
+      console.warn(
+        `[AUTH] Failed to resend verification email to ${user.email}`,
+      );
+    }
+
+    res.json({
+      success: true,
+      message:
+        "If that email is registered, a verification link has been sent.",
+    });
   }),
 );
 

@@ -10,7 +10,10 @@ dotenv.config();
 // Use DATABASE_URL in production (Neon, Render Postgres, etc.)
 // Fall back to individual PG* env vars for local dev
 const databaseUrl = process.env.DATABASE_URL;
-const isRemoteDb = databaseUrl && !databaseUrl.includes("localhost") && !databaseUrl.includes("127.0.0.1");
+const isRemoteDb =
+  databaseUrl &&
+  !databaseUrl.includes("localhost") &&
+  !databaseUrl.includes("127.0.0.1");
 
 const poolConfig = isRemoteDb
   ? {

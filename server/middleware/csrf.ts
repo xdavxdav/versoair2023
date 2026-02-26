@@ -31,6 +31,8 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/admin-gate", // admin gate login — must be exempt so it can bootstrap the token
   "/api/users/heartbeat", // public presence-tracking ping — no CSRF needed
   "/api/v1/admin/gtm-events", // GTM analytics — fire-and-forget tracking, no CSRF needed
+  "/auth/verify-email", // email verification link from inbox — GET, no CSRF needed
+  "/auth/resend-verification", // resend verification email — must be exempt for unverified users
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────

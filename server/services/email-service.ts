@@ -255,6 +255,71 @@ export async function sendConnectionAcceptedEmail(
 }
 
 /**
+ * Send email verification link to newly registered user
+ */
+export async function sendVerificationEmail(
+  toEmail: string,
+  verificationToken: string,
+): Promise<boolean> {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+  const verifyUrl = `${appUrl}/auth/verify-email?token=${encodeURIComponent(verificationToken)}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #bf831c 0%, #d4a037 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; }
+          .header h1 { margin: 0; font-size: 28px; }
+          .header p { margin: 10px 0 0; opacity: 0.9; font-size: 16px; }
+          .body { background: white; padding: 40px 30px; }
+          .button { display: inline-block; background: linear-gradient(135deg, #bf831c, #d4a037); color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: bold; font-size: 18px; letter-spacing: 0.5px; }
+          .info-box { background: #fff9e5; border-left: 4px solid #bf831c; padding: 16px 20px; margin: 24px 0; font-size: 14px; color: #555; border-radius: 0 8px 8px 0; }
+          .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
+          .footer a { color: #bf831c; text-decoration: none; }
+          .url { word-break: break-all; color: #bf831c; font-size: 13px; }
+          .welcome-icon { font-size: 48px; margin-bottom: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="welcome-icon">✨</div>
+            <h1>Welcome to Verso Air!</h1>
+            <p>Verify your email to get started</p>
+          </div>
+          <div class="body">
+            <p style="font-size: 16px; color: #333;">Thank you for creating your <strong>Verso Air</strong> account!</p>
+            <p style="font-size: 16px; color: #333;">Click the button below to verify your email address and activate your account. This link expires in <strong>24 hours</strong>.</p>
+            <div style="text-align: center;">
+              <a href="${verifyUrl}" class="button">Verify My Email</a>
+            </div>
+            <div class="info-box">
+              <strong>🔒 Security Note:</strong> If you didn't create a Verso Air account, you can safely ignore this email. No account will be activated.
+            </div>
+            <p style="font-size: 14px; color: #666;">If the button doesn't work, copy and paste this URL into your browser:</p>
+            <p class="url">${verifyUrl}</p>
+          </div>
+          <div class="footer">
+            <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
+            <p>Connecting African businesses with global opportunities</p>
+            <p>&copy; ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(toEmail, "Verify your Verso Air email", htmlContent);
+}
+
+/**
  * Send password reset email
  */
 export async function sendPasswordResetEmail(

@@ -38,7 +38,7 @@ export interface IStorage {
   // Business Categories
   getBusinessCategories(): Promise<BusinessCategory[]>;
   getBusinessCategoryBySlug(
-    slug: string
+    slug: string,
   ): Promise<BusinessCategory | undefined>;
 
   // Businesses
@@ -132,7 +132,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBusinessCategoryBySlug(
-    slug: string
+    slug: string,
   ): Promise<BusinessCategory | undefined> {
     try {
       const [category] = await db
@@ -153,15 +153,15 @@ export class DatabaseStorage implements IStorage {
     try {
       // DEBUG: Check current database user and permissions
       const userResult = await db.execute(
-        sql`SELECT current_user, current_database()`
+        sql`SELECT current_user, current_database()`,
       );
       console.log(
         "=== DEBUG: Current DB User:",
-        userResult.rows[0].current_user
+        userResult.rows[0].current_user,
       );
       console.log(
         "=== DEBUG: Current Database:",
-        userResult.rows[0].current_database
+        userResult.rows[0].current_database,
       );
 
       if (categoryId) {
@@ -287,7 +287,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReservation(
-    insertReservation: InsertReservation
+    insertReservation: InsertReservation,
   ): Promise<Reservation> {
     try {
       const [reservation] = await db

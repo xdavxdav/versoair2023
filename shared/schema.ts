@@ -66,6 +66,21 @@ export const users = pgTable("users", {
   passwordResetToken: text("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
 
+  // Email verification
+  verifiedAt: timestamp("verified_at"),
+
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- EMAIL VERIFICATION TOKENS ---
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  token: text("token").notNull().unique(),
+  type: text("type").notNull().default("email_verification"), // 'email_verification' | 'password_reset'
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

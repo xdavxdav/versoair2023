@@ -132,7 +132,7 @@ export function AdminTicketManagement() {
       ticketId: number;
       assigneeId: number;
     }) => {
-      const res = await fetch(`/api/tickets/${ticketId}/assign`, {
+      const res = await authenticatedFetch(`/api/tickets/${ticketId}/assign`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assigneeId }),
@@ -154,7 +154,7 @@ export function AdminTicketManagement() {
       ticketId: number;
       status: string;
     }) => {
-      const res = await fetch(`/api/tickets/${ticketId}`, {
+      const res = await authenticatedFetch(`/api/tickets/${ticketId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -170,7 +170,7 @@ export function AdminTicketManagement() {
   // Create new user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: typeof newUserData) => {
-      const res = await fetch("/api/users", {
+      const res = await authenticatedFetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -238,19 +238,19 @@ export function AdminTicketManagement() {
         <div className="flex justify-end gap-3">
           {hasActiveAdminSession && (
             <Button
-              onClick={() => navigate("/dashboard/admin")}
+              onClick={() => navigate("/tickets")}
               className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 gap-2"
             >
               <LayoutDashboard className="h-4 w-4" />
-              Dashboard
+              Tickets
             </Button>
           )}
           <Button
-            onClick={() => navigate("/tickets")}
+            onClick={() => navigate("/geo-admin/dashboard")}
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tickets
+            Back to Dashboard
           </Button>
         </div>
       </div>
