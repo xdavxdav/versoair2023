@@ -210,7 +210,18 @@ router.post("/test-business", async (req, res) => {
     const [result] = await (db
       .insert(businesses)
       .values(testBusiness as any)
-      .returning() as any);
+      .returning({
+        id: businesses.id,
+        name: businesses.name,
+        categoryId: businesses.categoryId,
+        description: businesses.description,
+        email: businesses.email,
+        phone: businesses.phone,
+        address: businesses.address,
+        isActive: businesses.isActive,
+        rating: businesses.rating,
+        createdAt: businesses.createdAt,
+      }) as any);
 
     res.json({
       success: true,

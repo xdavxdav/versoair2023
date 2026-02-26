@@ -155,7 +155,18 @@ router.post(
         description,
         address,
       })
-      .returning();
+      .returning({
+        id: businesses.id,
+        name: businesses.name,
+        categoryId: businesses.categoryId,
+        description: businesses.description,
+        email: businesses.email,
+        phone: businesses.phone,
+        address: businesses.address,
+        isActive: businesses.isActive,
+        rating: businesses.rating,
+        createdAt: businesses.createdAt,
+      });
 
     // Audit log
     try {
@@ -275,7 +286,18 @@ router.put(
         address: address || oldBusiness.address,
       })
       .where(eq(businesses.id, businessId))
-      .returning();
+      .returning({
+        id: businesses.id,
+        name: businesses.name,
+        categoryId: businesses.categoryId,
+        description: businesses.description,
+        email: businesses.email,
+        phone: businesses.phone,
+        address: businesses.address,
+        isActive: businesses.isActive,
+        rating: businesses.rating,
+        createdAt: businesses.createdAt,
+      });
 
     // Audit log
     try {

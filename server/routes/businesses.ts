@@ -354,7 +354,18 @@ router.put("/api/businesses/:id", async (req: Request, res: Response) => {
         .update(businesses)
         .set({ ...updatePayload, updatedAt: new Date() })
         .where(eq(businesses.id, businessId))
-        .returning();
+        .returning({
+          id: businesses.id,
+          name: businesses.name,
+          categoryId: businesses.categoryId,
+          description: businesses.description,
+          email: businesses.email,
+          phone: businesses.phone,
+          address: businesses.address,
+          isActive: businesses.isActive,
+          rating: businesses.rating,
+          createdAt: businesses.createdAt,
+        });
 
       // 4. Log the change to auditLogs
       await tx.insert(auditLogs).values({
