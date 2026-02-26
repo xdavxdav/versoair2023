@@ -182,7 +182,18 @@ export class DatabaseStorage implements IStorage {
       const [business] = await db
         .insert(businesses)
         .values(insertBusiness as any)
-        .returning();
+        .returning({
+          id: businesses.id,
+          name: businesses.name,
+          categoryId: businesses.categoryId,
+          description: businesses.description,
+          email: businesses.email,
+          phone: businesses.phone,
+          address: businesses.address,
+          isActive: businesses.isActive,
+          rating: businesses.rating,
+          createdAt: businesses.createdAt,
+        });
       return business;
     } catch (error) {
       console.error("Error creating business:", error);

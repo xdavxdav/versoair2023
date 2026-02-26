@@ -84,7 +84,6 @@ export const businesses = pgTable(
   {
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
-    slug: text("slug"), // Optional - column may not exist in all DB instances
     ownerId: integer("owner_id").references(() => users.id),
     categoryId: integer("category_id").references(() => businessCategories.id),
     cityId: integer("city_id").references(() => cities.id),
@@ -97,19 +96,29 @@ export const businesses = pgTable(
     location: text("location"),
     latitude: decimal("latitude", { precision: 10, scale: 8 }),
     longitude: decimal("longitude", { precision: 11, scale: 8 }),
+    countryCode: varchar("country_code"),
+    countryId: integer("country_id"),
+    regionId: integer("region_id"),
+    cityName: varchar("city_name"),
 
     // Performance Indexing
     rating: decimal("rating").default("0.0"),
+    reviewsCount: integer("reviews_count").default(0),
+    popularityScore: integer("popularity_score").default(0),
     isAdvertiser: boolean("is_advertiser").default(false),
     isVerified: boolean("is_verified").default(false),
-    verificationStatus: varchar("verification_status", { length: 50 }).default(
-      "unverified",
-    ), // 'unverified' | 'verified' | 'rejected'
-    verificationReason: text("verification_reason"), // Reason for rejection or notes
-    verificationDate: timestamp("verification_date"),
-    verifiedBy: integer("verified_by").references(() => users.id), // Admin who verified
-    isActive: boolean("is_active").default(true), // For soft deletes/hiding
+    verifiedAt: timestamp("verified_at"),
+    isActive: boolean("is_active").default(true),
+    isPremium: boolean("is_premium").default(false),
+    featured: boolean("featured").default(false),
     adBalance: decimal("ad_balance").default("0"),
+    adStatus: varchar("ad_status"),
+
+    // Contact & Web
+    contactInfo: jsonb("contact_info"),
+    website: text("website"),
+    socialLinks: jsonb("social_links"),
+    openingHours: jsonb("opening_hours"),
 
     // Flexible Sector Data (JSONB)
     attributes: jsonb("attributes")
@@ -125,13 +134,13 @@ export const businesses = pgTable(
       }>()
       .default({}),
     tags: jsonb("tags").default([]),
+    keywords: jsonb("keywords"),
 
-    // Sector-specific fields (Hospitality, Entertainment, etc.)
-    amenities: jsonb("amenities").$type<string[]>().default([]), // e.g., ['WiFi', 'Parking', 'Pool']
-    starRating: integer("star_rating"), // For hotels: 1-5 star rating
-    reviews: integer("reviews").default(0), // Count of reviews
-    artists: jsonb("artists").$type<string[]>().default([]), // For entertainment venues
-    genres: jsonb("genres").$type<string[]>().default([]), // For music venues
+    // Sector-specific fields
+    amenities: jsonb("amenities").$type<string[]>().default([]),
+    reviews: integer("reviews").default(0),
+    businessType: varchar("business_type"),
+    migratedFromTable: varchar("migrated_from_table"),
 
     // Search Engine Vector
     searchVector: text("search_vector"),
