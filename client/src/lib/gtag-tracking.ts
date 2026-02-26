@@ -3,6 +3,8 @@
  * Sends events to GTM and backend for tracking
  */
 
+import { authenticatedFetch } from "./auth";
+
 declare global {
   interface Window {
     dataLayer: any[];
@@ -191,14 +193,12 @@ export function trackAddToFavorites(businessId: number, businessName: string) {
  * Log event to backend
  */
 function logEventToBackend(eventData: any) {
-  const token = localStorage.getItem("token");
   const apiUrl = import.meta.env.VITE_API_URL || "";
 
-  fetch(`${apiUrl}/api/v1/admin/gtm-events`, {
+  authenticatedFetch(`${apiUrl}/api/v1/admin/gtm-events`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify(eventData),
   }).catch((err) => {

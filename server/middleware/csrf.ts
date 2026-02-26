@@ -30,6 +30,7 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/geo-admin", // geo-admin login — must be exempt so it can bootstrap the token
   "/auth/admin-gate", // admin gate login — must be exempt so it can bootstrap the token
   "/api/users/heartbeat", // public presence-tracking ping — no CSRF needed
+  "/api/v1/admin/gtm-events", // GTM analytics — fire-and-forget tracking, no CSRF needed
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────
