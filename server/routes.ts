@@ -11,6 +11,7 @@ import propertiesRouter from "./routes/properties";
 import apiV1Router from "./routes/api-v1";
 import authRouter from "./routes/auth";
 import socialApiRoutes from "./routes/social-api";
+import { requireAuth } from "./middleware/auth";
 
 // Map snake_case table names to camelCase schema exports
 const TABLE_NAME_MAP: Record<string, string> = {
@@ -1425,7 +1426,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Create a new record in a table
-  app.post("/api/admin/table/:tableName", async (req, res) => {
+  app.post("/api/admin/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     try {
       const { tableName } = req.params;
       const data = req.body;
@@ -1466,7 +1467,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Update a record in a table
-  app.put("/api/admin/table/:tableName/:id", async (req, res) => {
+  app.put("/api/admin/table/:tableName/:id", requireAuth(["admin"]), async (req, res) => {
     try {
       const { tableName, id } = req.params;
       const data = req.body;
@@ -1521,7 +1522,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Delete a record from a table
-  app.delete("/api/admin/table/:tableName/:id", async (req, res) => {
+  app.delete("/api/admin/table/:tableName/:id", requireAuth(["admin"]), async (req, res) => {
     try {
       const { tableName, id } = req.params;
 
@@ -1570,8 +1571,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Execute arbitrary SQL query
-  app.post("/api/admin/execute-query", async (req, res) => {
+  // Execute arbitrary SQL query (ADMIN ONLY — runs raw SQL)
+  app.post("/api/admin/execute-query", requireAuth(["admin"]), async (req, res) => {
     try {
       const { query: sqlQuery } = req.body;
 
@@ -1678,7 +1679,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Create database backup
-  app.post("/api/admin/backup", async (req, res) => {
+  app.post("/api/admin/backup", requireAuth(["admin"]), async (req, res) => {
     try {
       const { type = "full" } = req.body;
 
@@ -1733,7 +1734,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Preview mapping of businesses -> categories by business_type -> category.name
-  app.post("/api/admin/preview-category-mapping", async (req, res) => {
+  app.post("/api/admin/preview-category-mapping", requireAuth(["admin"]), async (req, res) => {
     try {
       const result = await db.execute(
         sql.raw(`
@@ -1759,7 +1760,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Apply mapping (safe, transactional)
-  app.post("/api/admin/apply-category-mapping", async (req, res) => {
+  app.post("/api/admin/apply-category-mapping", requireAuth(["admin"]), async (req, res) => {
     try {
       await db.execute(sql.raw(`BEGIN`));
       const result = await db.execute(
@@ -1808,7 +1809,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Create category (name required)
-  app.post("/api/admin/categories", async (req, res) => {
+  app.post("/api/admin/categories", requireAuth(["admin"]), async (req, res) => {
     try {
       const { name, description, parent_id, category_type } = req.body;
       if (!name)
@@ -1829,7 +1830,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Update category
-  app.put("/api/admin/categories/:id", async (req, res) => {
+  app.put("/api/admin/categories/:id", requireAuth(["admin"]), async (req, res) => {
     try {
       const { id } = req.params;
       const { name, description, parent_id, category_type } = req.body;
@@ -1849,7 +1850,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Delete category (safe, optional force)
-  app.delete("/api/admin/categories/:id", async (req, res) => {
+  app.delete("/api/admin/categories/:id", requireAuth(["admin"]), async (req, res) => {
     try {
       const { id: idStr } = req.params;
       const { force } = req.query;

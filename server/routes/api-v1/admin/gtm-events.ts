@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../../../middleware/auth";
+import { requireAuth, optionalAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import * as gtmService from "../../../services/gtm-events";
 
@@ -7,11 +7,11 @@ const router = Router();
 
 /**
  * POST /api/v1/admin/gtm-events
- * Log a GTM event from frontend
+ * Log a GTM event from frontend (works for both authenticated and anonymous users)
  */
 router.post(
   "/",
-  requireAuth(["user", "admin", "moderator"]),
+  optionalAuth,
   asyncHandler(async (req, res) => {
     const {
       eventName,
