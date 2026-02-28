@@ -67,7 +67,9 @@ export default function Pricing() {
   const highlightTier = (params.get("tier") as TierKey) || null;
   const source = params.get("source") || null;
   const [, setLocation] = useLocation();
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    "monthly",
+  );
 
   const handleSelectPlan = (tier: TierKey) => {
     if (tier === "free") {
@@ -89,7 +91,8 @@ export default function Pricing() {
             Grow Your Visibility
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-8">
-            Choose the tier that matches your ambition. Every upgrade multiplies your reach.
+            Choose the tier that matches your ambition. Every upgrade multiplies
+            your reach.
           </p>
 
           {/* Billing toggle */}
@@ -172,19 +175,24 @@ export default function Pricing() {
                     <span className="text-3xl font-bold text-white">Free</span>
                   ) : tierKey === "enterprise" ? (
                     <>
-                      <span className="text-3xl font-bold text-white">${price}</span>
+                      <span className="text-3xl font-bold text-white">
+                        ${price}
+                      </span>
                       <span className="text-slate-400 text-sm ml-1">/mo</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-3xl font-bold text-white">${price}</span>
+                      <span className="text-3xl font-bold text-white">
+                        ${price}
+                      </span>
                       <span className="text-slate-400 text-sm ml-1">/mo</span>
                     </>
                   )}
                 </div>
                 {billingCycle === "annual" && tier.monthlyPrice > 0 && (
                   <p className="text-xs text-emerald-400 mb-4">
-                    ${tier.annualPrice}/yr (save ${tier.monthlyPrice * 12 - tier.annualPrice})
+                    ${tier.annualPrice}/yr (save $
+                    {tier.monthlyPrice * 12 - tier.annualPrice})
                   </p>
                 )}
                 {(billingCycle === "monthly" || tier.monthlyPrice === 0) && (

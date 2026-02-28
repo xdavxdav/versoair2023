@@ -48,18 +48,13 @@ export interface UseAccessControlReturn {
 }
 
 export function useAccessControl(): UseAccessControlReturn {
-  const {
-    isAuthenticated,
-    user,
-    tier,
-    tierName,
-    hasTierAccess,
-    loading,
-  } = useSubscription();
+  const { isAuthenticated, user, tier, tierName, hasTierAccess, loading } =
+    useSubscription();
 
   return useMemo(() => {
     const role = user?.role || "user";
-    const isAdmin = role === "admin" || role === "superuser" || role === "moderator";
+    const isAdmin =
+      role === "admin" || role === "superuser" || role === "moderator";
     const isSubscriber = tier !== "free" && isAuthenticated;
     const isArtist = role === "artist";
     const isEnterprise = tier === "enterprise";
@@ -88,11 +83,10 @@ export function useAccessControl(): UseAccessControlReturn {
     // Everyone authenticated can view pricing
     const canViewPricing = true;
 
-    // Can start trial: authenticated, free tier, never had a trial before
+    // Can start trial: only non-admin subscribers on free tier who haven't trialed before
+    // Admins/geoAdmins never need trials — they have full access by role
     const canStartTrial =
-      isAuthenticated &&
-      tier === "free" &&
-      !user?.trialTier;
+      isAuthenticated && !isAdmin && tier === "free" && !user?.trialTier;
 
     const requiresTier = (minTier: TierKey): boolean => {
       return hasTierAccess(minTier);

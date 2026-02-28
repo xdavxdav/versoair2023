@@ -557,7 +557,11 @@ router.get(
           id: userId,
           email: dbUser?.email || decoded.email || "",
           username: dbUser?.username || null,
-          name: dbUser?.username || decoded.name || decoded.email?.split("@")[0] || "User",
+          name:
+            dbUser?.username ||
+            decoded.name ||
+            decoded.email?.split("@")[0] ||
+            "User",
           isAdmin,
           role: dbUser?.role || decoded.role || "user",
           subscriptionTier: dbUser?.subscription_tier || "free",
@@ -835,7 +839,9 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const token = getTokenFromRequest(req);
     if (!token) {
-      res.status(401).json({ success: false, message: "Authentication required" });
+      res
+        .status(401)
+        .json({ success: false, message: "Authentication required" });
       return;
     }
 
@@ -843,7 +849,9 @@ router.post(
     try {
       decoded = jwt.verify(token, getJwtSecret());
     } catch {
-      res.status(401).json({ success: false, message: "Invalid or expired token" });
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired token" });
       return;
     }
 
@@ -855,7 +863,12 @@ router.post(
 
     const parsed = startTrialSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ success: false, message: "Valid tier required (essential, verified, max, enterprise)" });
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Valid tier required (essential, verified, max, enterprise)",
+        });
       return;
     }
 
@@ -891,7 +904,9 @@ router.post(
       })
       .where(eq(schema.users.id, userId));
 
-    console.log(`[AUTH] Trial started: user ${userId} → tier ${parsed.data.tier} until ${expiresAt.toISOString()}`);
+    console.log(
+      `[AUTH] Trial started: user ${userId} → tier ${parsed.data.tier} until ${expiresAt.toISOString()}`,
+    );
 
     res.json({
       success: true,
