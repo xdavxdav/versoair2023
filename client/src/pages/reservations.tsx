@@ -203,7 +203,16 @@ export default function HousingReservations() {
     [],
   );
   const [minRating, setMinRating] = useState(0);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    // Restore favorites from localStorage keyed by clientName
+    const name = localStorage.getItem("clientName") || "";
+    if (name) {
+      try {
+        return JSON.parse(localStorage.getItem(`favorites_${name}`) || "[]");
+      } catch { return []; }
+    }
+    return [];
+  });
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingProperty, setBookingProperty] = useState<Property | null>(null);
   const [clientName, setClientName] = useState<string>(
@@ -229,6 +238,78 @@ export default function HousingReservations() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("recommended");
   const [bookings, setBookings] = useState<Booking[]>([]);
+
+  // ─── Search History & Suggestions ──────────────────────────────────────────
+  const SEARCH_HISTORY_KEY = "reservations_search_history";
+  const MAX_HISTORY = 10;
+
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]");
+    } catch { return []; }
+  });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const addToSearchHistory = useCallback((query: string) => {
+    if (!query.trim()) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((q) => q.toLowerCase() !== query.toLowerCase());
+      const updated = [query, ...filtered].slice(0, MAX_HISTORY);
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  const clearSearchHistory = useCallback(() => {
+    setSearchHistory([]);
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  }, []);
+
+  const searchSuggestions = searchQuery.trim()
+    ? searchHistory.filter((h) =>
+        h.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : searchHistory.slice(0, 5);
+
+  // ─── Browse Time Limit for unauthenticated users ──────────────────────────
+  const BROWSE_LIMIT_SECONDS = 10 * 60; // 10 minutes
+  const BROWSE_START_KEY = "reservations_browse_start";
+
+  const isAuthenticated = !!localStorage.getItem("auth_token") || !!localStorage.getItem("authToken");
+
+  const [browseTimeLeft, setBrowseTimeLeft] = useState<number>(() => {
+    if (isAuthenticated) return Infinity;
+    const start = localStorage.getItem(BROWSE_START_KEY);
+    if (!start) {
+      localStorage.setItem(BROWSE_START_KEY, String(Date.now()));
+      return BROWSE_LIMIT_SECONDS;
+    }
+    const elapsed = Math.floor((Date.now() - Number(start)) / 1000);
+    return Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
+  });
+  const [browseExpired, setBrowseExpired] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const interval = setInterval(() => {
+      const start = Number(localStorage.getItem(BROWSE_START_KEY) || Date.now());
+      const elapsed = Math.floor((Date.now() - start) / 1000);
+      const remaining = Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
+      setBrowseTimeLeft(remaining);
+      if (remaining <= 0) {
+        setBrowseExpired(true);
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  // Persist favorites to localStorage whenever they change
+  useEffect(() => {
+    if (clientName) {
+      localStorage.setItem(`favorites_${clientName}`, JSON.stringify(favorites));
+    }
+  }, [favorites, clientName]);
 
   // New state variables for enhanced search
   const [dwellingType, setDwellingType] = useState<string>("all");
@@ -671,6 +752,11 @@ export default function HousingReservations() {
     if (tempClientName.trim()) {
       localStorage.setItem("clientName", tempClientName);
       setClientName(tempClientName);
+      // Load persisted favorites for this user
+      try {
+        const saved = JSON.parse(localStorage.getItem(`favorites_${tempClientName}`) || "[]");
+        setFavorites(saved);
+      } catch { /* ignore */ }
       setShowClientNameDialog(false);
       setTempClientName("");
       if (requestingTabType) {
@@ -843,6 +929,8 @@ export default function HousingReservations() {
   // Handle search
   const handleSearch = () => {
     setIsSearching(true);
+    if (searchQuery.trim()) addToSearchHistory(searchQuery.trim());
+    setShowSuggestions(false);
     const results = sortedProperties();
     setDisplayedProperties(results.slice(0, 6));
     setCurrentPage(1);
@@ -1264,9 +1352,48 @@ export default function HousingReservations() {
                     id="search-query"
                     placeholder="Search properties..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
+                    }}
                     className="pl-10"
                   />
+
+                  {/* Search suggestions dropdown */}
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
+                      <div className="flex items-center justify-between px-3 py-1.5 border-b">
+                        <span className="text-xs text-gray-500 font-medium">Recent Searches</span>
+                        <button
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={clearSearchHistory}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      {searchSuggestions.map((suggestion, i) => (
+                        <button
+                          key={i}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setSearchQuery(suggestion);
+                            setShowSuggestions(false);
+                            handleSearch();
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                        >
+                          <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1444,6 +1571,44 @@ export default function HousingReservations() {
       </motion.nav>
 
       {/* Main Content */}
+
+      {/* Browse time limit banner for unauthenticated users */}
+      {!isAuthenticated && !browseExpired && browseTimeLeft < 300 && (
+        <div className="bg-amber-500/90 text-white text-center py-2 px-4 text-sm sticky top-0 z-40">
+          <Clock className="inline h-4 w-4 mr-1" />
+          Browse time remaining: {Math.floor(browseTimeLeft / 60)}:{String(browseTimeLeft % 60).padStart(2, "0")}
+          {" — "}
+          <a href="/auth/signin" className="underline font-semibold">Sign in</a> for unlimited access
+        </div>
+      )}
+
+      {/* Browse expired overlay */}
+      {browseExpired && !isAuthenticated && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+            <Clock className="h-16 w-16 mx-auto text-amber-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Browse Time Expired</h2>
+            <p className="text-gray-600 mb-6">
+              Your 10-minute preview has ended. Sign in to continue browsing, save favorites, and make reservations.
+            </p>
+            <div className="space-y-3">
+              <a
+                href="/auth/signin"
+                className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                Sign In to Continue
+              </a>
+              <a
+                href="/pricing"
+                className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                View Plans
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="container mx-auto px-4 py-8">
         {/* Results Header */}
         <div className="flex items-center justify-between mb-6">

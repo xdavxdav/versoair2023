@@ -9,11 +9,13 @@ import { initializeCsrfToken } from "@/lib/auth";
 import { Loader2, TrendingUp, Lock, Zap, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
 
 export default function GeoAdminPage() {
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
     useSubscription();
   const [, setLocation] = useLocation();
+  const [startingTrial, setStartingTrial] = useState(false);
 
   // Initialize CSRF token on component mount
   useEffect(() => {
@@ -96,6 +98,55 @@ export default function GeoAdminPage() {
     localStorage.removeItem("geo_admin_redirect_intended");
   };
 
+  // Start a free trial via API
+  const handleStartTrial = async () => {
+    const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+    if (!token) {
+      setLocation("/auth/signin?redirect=/geo-admin");
+      return;
+    }
+
+    setStartingTrial(true);
+    try {
+      const res = await fetch("/auth/start-trial", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tier: "essential" }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        toast({
+          title: "🎉 Trial activated!",
+          description: "Your 7-day Essential trial is now active. Enjoy full analytics!",
+        });
+        // Refresh subscription state
+        await refetch();
+      } else {
+        toast({
+          title: "Trial unavailable",
+          description: data.message || "Could not start trial. You may need to upgrade.",
+          variant: "destructive",
+        });
+        if (res.status === 409) {
+          // Already used trial → show pricing
+          setLocation("/pricing?tier=essential&source=geo-admin");
+        }
+      }
+    } catch {
+      toast({
+        title: "Connection error",
+        description: "Could not reach the server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setStartingTrial(false);
+    }
+  };
+
   // Show loading spinner while checking auth
   if (loading) {
     return (
@@ -155,12 +206,18 @@ export default function GeoAdminPage() {
                 </div>
               </div>
               <Button
-                onClick={() =>
-                  setLocation("/pricing?tier=essential&source=geo-admin")
-                }
+                onClick={handleStartTrial}
+                disabled={startingTrial}
                 className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 text-sm"
               >
-                Start Free Trial
+                {startingTrial ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Activating…
+                  </>
+                ) : (
+                  "Start Free Trial"
+                )}
               </Button>
             </div>
           </div>

@@ -219,7 +219,9 @@ router.post(
 
     // Bypass Drizzle type issues with parameterized raw SQL query
     const result = await db.execute(
-      sql`SELECT id, username, email, password, role, is_verified, failed_login_attempts, locked_until FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
+      sql`SELECT id, username, email, password, role, is_verified, failed_login_attempts, locked_until,
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
+          FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
     );
 
     const user = result.rows?.[0] as any;
@@ -285,7 +287,12 @@ router.post(
       .where(eq(schema.users.id, user.id));
 
     const token = jwt.sign(
-      { userId: String(user.id), email: user.email, role: user.role || "user" },
+      {
+        userId: String(user.id),
+        email: user.email,
+        role: user.role || "user",
+        subscriptionTier: user.subscription_tier || "free",
+      },
       getJwtSecret(),
       { expiresIn: JWT_EXPIRES_IN },
     );
@@ -298,7 +305,12 @@ router.post(
       user: {
         id: String(user.id),
         email: user.email,
+        username: user.username || null,
         role: user.role || "user",
+        subscriptionTier: user.subscription_tier || "free",
+        subscriptionStatus: user.subscription_status || "active",
+        trialTier: user.trial_tier || null,
+        trialExpiresAt: user.trial_expires_at || null,
       },
     });
   }),
@@ -524,19 +536,35 @@ router.get(
 
       // Try to verify as JWT
       const decoded: any = jwt.verify(token, getJwtSecret());
+      const userId = decoded.userId || decoded.sub;
+
+      // Query DB for up-to-date subscription fields
+      const dbResult = await db.execute(
+        sql`SELECT id, username, email, role, subscription_tier, subscription_status,
+                   trial_tier, trial_started_at, trial_expires_at
+            FROM users WHERE id = ${Number(userId)} LIMIT 1`,
+      );
+      const dbUser = dbResult.rows?.[0] as any;
+
       const isAdmin =
-        decoded.role === "admin" ||
-        decoded.role === "superuser" ||
-        decoded.role === "moderator";
+        (dbUser?.role || decoded.role) === "admin" ||
+        (dbUser?.role || decoded.role) === "superuser" ||
+        (dbUser?.role || decoded.role) === "moderator";
 
       res.json({
         success: true,
         user: {
-          id: decoded.userId || decoded.sub,
-          email: decoded.email || "",
-          name: decoded.name || decoded.email?.split("@")[0] || "User",
+          id: userId,
+          email: dbUser?.email || decoded.email || "",
+          username: dbUser?.username || null,
+          name: dbUser?.username || decoded.name || decoded.email?.split("@")[0] || "User",
           isAdmin,
-          role: decoded.role || "user",
+          role: dbUser?.role || decoded.role || "user",
+          subscriptionTier: dbUser?.subscription_tier || "free",
+          subscriptionStatus: dbUser?.subscription_status || "active",
+          trialTier: dbUser?.trial_tier || null,
+          trialStartedAt: dbUser?.trial_started_at || null,
+          trialExpiresAt: dbUser?.trial_expires_at || null,
         },
       });
     } catch {
@@ -788,6 +816,90 @@ router.post(
     res.json({
       success: true,
       message: "Password has been reset. Please sign in.",
+    });
+  }),
+);
+
+/**
+ * POST /auth/start-trial
+ * Start a 7-day free trial for the authenticated user.
+ * Body: { tier: "essential" | "verified" | "max" | "enterprise" }
+ * Only one trial is allowed — re-trials are blocked.
+ */
+const startTrialSchema = z.object({
+  tier: z.enum(["essential", "verified", "max", "enterprise"]),
+});
+
+router.post(
+  "/start-trial",
+  asyncHandler(async (req: Request, res: Response) => {
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, getJwtSecret());
+    } catch {
+      res.status(401).json({ success: false, message: "Invalid or expired token" });
+      return;
+    }
+
+    const userId = Number(decoded.userId);
+    if (!userId || isNaN(userId)) {
+      res.status(400).json({ success: false, message: "Invalid user session" });
+      return;
+    }
+
+    const parsed = startTrialSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, message: "Valid tier required (essential, verified, max, enterprise)" });
+      return;
+    }
+
+    // Check if user already used a trial
+    const userResult = await db.execute(
+      sql`SELECT id, trial_tier, trial_started_at, subscription_tier FROM users WHERE id = ${userId} LIMIT 1`,
+    );
+    const user = userResult.rows?.[0] as any;
+
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    if (user.trial_started_at) {
+      res.status(409).json({
+        success: false,
+        message: "You have already used your free trial. Upgrade to continue.",
+      });
+      return;
+    }
+
+    // Activate 7-day trial
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    await db
+      .update(schema.users)
+      .set({
+        trialTier: parsed.data.tier,
+        trialStartedAt: now,
+        trialExpiresAt: expiresAt,
+      })
+      .where(eq(schema.users.id, userId));
+
+    console.log(`[AUTH] Trial started: user ${userId} → tier ${parsed.data.tier} until ${expiresAt.toISOString()}`);
+
+    res.json({
+      success: true,
+      trial: {
+        tier: parsed.data.tier,
+        startedAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      },
     });
   }),
 );
