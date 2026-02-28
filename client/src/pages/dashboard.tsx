@@ -879,7 +879,7 @@ export default function PublicDashboard() {
                     {userSession!.user.isAdmin && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/admin">
+                          <Link href="/admin/tickets">
                             <BarChart3 className="h-4 w-4 mr-2" />
                             TAM (Ticket Assignment Management)
                           </Link>

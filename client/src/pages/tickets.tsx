@@ -410,13 +410,13 @@ export function Tickets() {
                 🌍 Geo Admin
               </Button>
             </a>
-            <a href="/dashboard/admin">
+            <a href="/geo-admin/dashboard">
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-2 border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
               >
-                🛡️ Admin Panel
+                🛡️ Admin Dashboard
               </Button>
             </a>
             {isAdmin && (

@@ -84,13 +84,13 @@ export default function PasswordPage() {
                 🌍 Geo Admin
               </Button>
             </a>
-            <a href="/dashboard/admin">
+            <a href="/geo-admin/dashboard">
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-2 border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
               >
-                🛡️ Admin Panel
+                🛡️ Admin Dashboard
               </Button>
             </a>
           </div>
@@ -393,7 +393,7 @@ export default function PasswordPage() {
             <p className="text-slate-300 mb-4">
               <strong>URL:</strong>{" "}
               <code className="bg-slate-900 px-2 py-1 rounded">
-                /dashboard/admin
+                /geo-admin/dashboard
               </code>
             </p>
             <p className="text-slate-300 mb-4">
