@@ -235,23 +235,48 @@ export function AdminTicketManagement() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Navigation Bar - Right under Navbar */}
       <div className="sticky top-16 z-40 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-8 py-3 shadow-sm">
-        <div className="flex justify-end gap-3">
-          {hasActiveAdminSession && (
+        <div className="flex items-center justify-between gap-3">
+          {/* Identity indicator */}
+          <div className="flex items-center gap-2 min-w-0">
+            {user?.role === "admin" || user?.role === "superuser" || user?.role === "moderator" ? (
+              <>
+                <Shield className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
+                  GeoAdmin{user?.name ? ` · ${user.name}` : user?.email ? ` · ${user.email}` : ""}
+                </span>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                  Full Access
+                </span>
+              </>
+            ) : (
+              <>
+                <Users className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {user?.name || user?.email || "Subscriber"}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {hasActiveAdminSession && (
+              <Button
+                onClick={() => navigate("/tickets")}
+                className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 gap-2"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Tickets
+              </Button>
+            )}
             <Button
-              onClick={() => navigate("/tickets")}
-              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 gap-2"
+              onClick={() => navigate("/geo-admin/dashboard")}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
             >
-              <LayoutDashboard className="h-4 w-4" />
-              Tickets
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
             </Button>
-          )}
-          <Button
-            onClick={() => navigate("/geo-admin/dashboard")}
-            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
+          </div>
         </div>
       </div>
 
