@@ -209,7 +209,9 @@ export default function HousingReservations() {
     if (name) {
       try {
         return JSON.parse(localStorage.getItem(`favorites_${name}`) || "[]");
-      } catch { return []; }
+      } catch {
+        return [];
+      }
     }
     return [];
   });
@@ -246,14 +248,18 @@ export default function HousingReservations() {
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]");
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   });
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const addToSearchHistory = useCallback((query: string) => {
     if (!query.trim()) return;
     setSearchHistory((prev) => {
-      const filtered = prev.filter((q) => q.toLowerCase() !== query.toLowerCase());
+      const filtered = prev.filter(
+        (q) => q.toLowerCase() !== query.toLowerCase(),
+      );
       const updated = [query, ...filtered].slice(0, MAX_HISTORY);
       localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
       return updated;
@@ -275,7 +281,8 @@ export default function HousingReservations() {
   const BROWSE_LIMIT_SECONDS = 10 * 60; // 10 minutes
   const BROWSE_START_KEY = "reservations_browse_start";
 
-  const isAuthenticated = !!localStorage.getItem("auth_token") || !!localStorage.getItem("authToken");
+  const isAuthenticated =
+    !!localStorage.getItem("auth_token") || !!localStorage.getItem("authToken");
 
   const [browseTimeLeft, setBrowseTimeLeft] = useState<number>(() => {
     if (isAuthenticated) return Infinity;
@@ -292,7 +299,9 @@ export default function HousingReservations() {
   useEffect(() => {
     if (isAuthenticated) return;
     const interval = setInterval(() => {
-      const start = Number(localStorage.getItem(BROWSE_START_KEY) || Date.now());
+      const start = Number(
+        localStorage.getItem(BROWSE_START_KEY) || Date.now(),
+      );
       const elapsed = Math.floor((Date.now() - start) / 1000);
       const remaining = Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
       setBrowseTimeLeft(remaining);
@@ -307,7 +316,10 @@ export default function HousingReservations() {
   // Persist favorites to localStorage whenever they change
   useEffect(() => {
     if (clientName) {
-      localStorage.setItem(`favorites_${clientName}`, JSON.stringify(favorites));
+      localStorage.setItem(
+        `favorites_${clientName}`,
+        JSON.stringify(favorites),
+      );
     }
   }, [favorites, clientName]);
 
@@ -754,9 +766,13 @@ export default function HousingReservations() {
       setClientName(tempClientName);
       // Load persisted favorites for this user
       try {
-        const saved = JSON.parse(localStorage.getItem(`favorites_${tempClientName}`) || "[]");
+        const saved = JSON.parse(
+          localStorage.getItem(`favorites_${tempClientName}`) || "[]",
+        );
         setFavorites(saved);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setShowClientNameDialog(false);
       setTempClientName("");
       if (requestingTabType) {
@@ -1357,7 +1373,9 @@ export default function HousingReservations() {
                       setShowSuggestions(true);
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 200)
+                    }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSearch();
                     }}
@@ -1368,7 +1386,9 @@ export default function HousingReservations() {
                   {showSuggestions && searchSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
                       <div className="flex items-center justify-between px-3 py-1.5 border-b">
-                        <span className="text-xs text-gray-500 font-medium">Recent Searches</span>
+                        <span className="text-xs text-gray-500 font-medium">
+                          Recent Searches
+                        </span>
                         <button
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={clearSearchHistory}
@@ -1576,9 +1596,13 @@ export default function HousingReservations() {
       {!isAuthenticated && !browseExpired && browseTimeLeft < 300 && (
         <div className="bg-amber-500/90 text-white text-center py-2 px-4 text-sm sticky top-0 z-40">
           <Clock className="inline h-4 w-4 mr-1" />
-          Browse time remaining: {Math.floor(browseTimeLeft / 60)}:{String(browseTimeLeft % 60).padStart(2, "0")}
+          Browse time remaining: {Math.floor(browseTimeLeft / 60)}:
+          {String(browseTimeLeft % 60).padStart(2, "0")}
           {" — "}
-          <a href="/auth/signin" className="underline font-semibold">Sign in</a> for unlimited access
+          <a href="/auth/signin" className="underline font-semibold">
+            Sign in
+          </a>{" "}
+          for unlimited access
         </div>
       )}
 
@@ -1589,7 +1613,8 @@ export default function HousingReservations() {
             <Clock className="h-16 w-16 mx-auto text-amber-500 mb-4" />
             <h2 className="text-2xl font-bold mb-2">Browse Time Expired</h2>
             <p className="text-gray-600 mb-6">
-              Your 10-minute preview has ended. Sign in to continue browsing, save favorites, and make reservations.
+              Your 10-minute preview has ended. Sign in to continue browsing,
+              save favorites, and make reservations.
             </p>
             <div className="space-y-3">
               <a

@@ -17,6 +17,13 @@ export default function GeoAdminPage() {
   const [, setLocation] = useLocation();
   const [startingTrial, setStartingTrial] = useState(false);
 
+  // GeoAdmins are tech agents / managers — full access, no subscription needed
+  const isGeoAdmin =
+    user?.isAdmin ||
+    user?.role === "admin" ||
+    user?.role === "superuser" ||
+    user?.role === "moderator";
+
   // Initialize CSRF token on component mount
   useEffect(() => {
     initializeCsrfToken().catch((error) => {
@@ -100,7 +107,8 @@ export default function GeoAdminPage() {
 
   // Start a free trial via API
   const handleStartTrial = async () => {
-    const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+    const token =
+      localStorage.getItem("auth_token") || localStorage.getItem("authToken");
     if (!token) {
       setLocation("/auth/signin?redirect=/geo-admin");
       return;
@@ -121,14 +129,16 @@ export default function GeoAdminPage() {
       if (data.success) {
         toast({
           title: "🎉 Trial activated!",
-          description: "Your 7-day Essential trial is now active. Enjoy full analytics!",
+          description:
+            "Your 7-day Essential trial is now active. Enjoy full analytics!",
         });
         // Refresh subscription state
         await refetch();
       } else {
         toast({
           title: "Trial unavailable",
-          description: data.message || "Could not start trial. You may need to upgrade.",
+          description:
+            data.message || "Could not start trial. You may need to upgrade.",
           variant: "destructive",
         });
         if (res.status === 409) {
@@ -164,8 +174,9 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  // Signed in as Free tier → show upgrade banner + limited dashboard
-  if (tier === "free" && isAuthenticated && gateBypass) {
+  // Signed in as Free tier (non-admin subscribers only) → show upgrade banner
+  // GeoAdmins (admins/managers) always get full access — no tier required
+  if (tier === "free" && !isGeoAdmin && isAuthenticated && gateBypass) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
         {/* Connection status dot */}
@@ -251,8 +262,17 @@ export default function GeoAdminPage() {
         </div>
       )}
 
-      {/* Optional: Show tier indicator */}
-      {tier && tier !== "free" && (
+      {/* Role / tier indicator */}
+      {isGeoAdmin ? (
+        <div className="bg-indigo-500/10 border-b border-indigo-500/20">
+          <div className="max-w-7xl mx-auto px-4 py-2">
+            <p className="text-indigo-300 text-xs sm:text-sm">
+              <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
+              Geo Admin — full access granted{username ? ` (${username})` : ""}
+            </p>
+          </div>
+        </div>
+      ) : tier && tier !== "free" ? (
         <div className="bg-emerald-500/10 border-b border-emerald-500/20">
           <div className="max-w-7xl mx-auto px-4 py-2">
             <p className="text-emerald-300 text-xs sm:text-sm">
@@ -262,7 +282,7 @@ export default function GeoAdminPage() {
             </p>
           </div>
         </div>
-      )}
+      ) : null}
       <GeoAdmin username={username} />
     </div>
   );
