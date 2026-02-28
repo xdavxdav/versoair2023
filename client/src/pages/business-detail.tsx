@@ -998,7 +998,7 @@ export default function BusinessDetailPage() {
                     <Globe className="h-4 w-4" /> Geo Admin Observer
                   </Button>
                 </Link>
-                <Link href="/dashboard/admin">
+                <Link href="/geo-admin/dashboard">
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-2 text-amber-400/80 hover:text-amber-300 hover:bg-white/5"

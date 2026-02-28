@@ -358,7 +358,7 @@ export default function GeoAdminAuthGate({
             <div className="flex items-center justify-center gap-4 text-sm text-slate-500">
               <span>Don't have an account?</span>
               <Link
-                href="/signin"
+                href="/auth/signin"
                 className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
               >
                 Create one →
@@ -612,14 +612,14 @@ export default function GeoAdminAuthGate({
 
               <div className="flex items-center justify-center gap-4 text-xs text-slate-600">
                 <Link
-                  href="/signin"
+                  href="/auth/signin"
                   className="text-emerald-400/70 hover:text-emerald-400"
                 >
                   Create account
                 </Link>
                 <span>·</span>
                 <Link
-                  href="/support"
+                  href="/sav"
                   className="text-slate-500 hover:text-slate-300"
                 >
                   Need help?

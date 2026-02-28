@@ -238,11 +238,18 @@ export function AdminTicketManagement() {
         <div className="flex items-center justify-between gap-3">
           {/* Identity indicator */}
           <div className="flex items-center gap-2 min-w-0">
-            {user?.role === "admin" || user?.role === "superuser" || user?.role === "moderator" ? (
+            {user?.role === "admin" ||
+            user?.role === "superuser" ||
+            user?.role === "moderator" ? (
               <>
                 <Shield className="h-4 w-4 text-indigo-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
-                  GeoAdmin{user?.name ? ` · ${user.name}` : user?.email ? ` · ${user.email}` : ""}
+                  GeoAdmin
+                  {user?.name
+                    ? ` · ${user.name}`
+                    : user?.email
+                      ? ` · ${user.email}`
+                      : ""}
                 </span>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                   Full Access
@@ -270,11 +277,11 @@ export function AdminTicketManagement() {
               </Button>
             )}
             <Button
-              onClick={() => navigate("/geo-admin/dashboard")}
+              onClick={() => window.history.length > 1 ? window.history.back() : navigate("/geo-admin/dashboard")}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Back
             </Button>
           </div>
         </div>
