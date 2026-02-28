@@ -63,7 +63,9 @@ import CulturalPrograms from "@/pages/programs";
 import Communities from "@/pages/communities";
 import CommunityDetail from "@/pages/community";
 import ArtisanWorkshops from "@/pages/artisan-workshops";
-import ArtistPortal from "@/pages/artist-portal";
+import ArtistPortalWelcome from "@/pages/artist-portal-welcome";
+import ArtistPortalSignIn from "@/pages/artist-portal-signin";
+import ArtistPortalDashboard from "@/pages/artist-portal";
 import ArtistDirectory from "@/pages/artist-directory";
 import OngCulturelle from "@/pages/ong-culturelle";
 
@@ -205,7 +207,12 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal" component={ArtistPortal} />
+      <Route path="/artist-portal" component={ArtistPortalWelcome} />
+      <Route path="/artist-portal/signin" component={ArtistPortalSignIn} />
+      <Route
+        path="/artist-portal/dashboard"
+        component={ArtistPortalDashboard}
+      />
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
