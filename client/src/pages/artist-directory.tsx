@@ -279,25 +279,13 @@ export default function ArtistDirectory() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
       {/* Database Connection Status */}
-      <div className="fixed top-20 right-4 z-50">
-        <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg bg-purple-900/30 text-purple-300 border-purple-500/30"
-        >
-          <Music className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Annuaire Musicale ({totalResults})
-          </span>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-            {databaseConnected ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-            <span>{databaseConnected ? "Connecté" : "Déconnecté"}</span>
-          </div>
-        </motion.div>
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Connecté" : "Déconnecté"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
       </div>
 
       {/* Hero Section */}

@@ -348,23 +348,14 @@ export default function Logement() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-cyan-900 to-slate-900 text-white">
-      <div className="fixed top-20 right-4 z-50">
-        <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg bg-cyan-900/30 text-cyan-300 border-cyan-500/30"
-        >
-          <Database className="h-4 w-4" />
-          <span className="text-sm font-medium">Logement (Real Estate)</span>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-            {databaseConnected ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-            <span>{databaseConnected ? "Connected" : "Offline"}</span>
-          </div>
-        </motion.div>
+      {/* Database Connection Status */}
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Database connected" : "Database offline"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
       </div>
 
       <div className="relative h-[400px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
