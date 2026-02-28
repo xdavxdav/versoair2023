@@ -2586,6 +2586,9 @@ const JobManagement = () => {
 // Role Management Section Component
 const RoleManagementSection = () => {
   const [roles, setRoles] = useState<any[]>([]);
+  const [availablePermissions, setAvailablePermissions] = useState<string[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<any>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -2596,6 +2599,17 @@ const RoleManagementSection = () => {
     description: "",
     permissions: [] as string[],
   });
+
+  // Group permissions by domain (e.g. "businesses.read" → "businesses")
+  const groupPermissions = (perms: string[]) => {
+    const groups: Record<string, string[]> = {};
+    for (const p of perms) {
+      const [domain] = p.split(".");
+      if (!groups[domain]) groups[domain] = [];
+      groups[domain].push(p);
+    }
+    return groups;
+  };
 
   useEffect(() => {
     fetchRoles();
@@ -2610,6 +2624,9 @@ const RoleManagementSection = () => {
       const data = await response.json();
       if (data.success) {
         setRoles(data.data || []);
+        if (data.metadata?.availablePermissions) {
+          setAvailablePermissions(data.metadata.availablePermissions);
+        }
         if (data.data && data.data.length > 0) {
           setSelectedRole(data.data[0]);
         }
@@ -2623,6 +2640,18 @@ const RoleManagementSection = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const togglePermission = (
+    permList: string[],
+    perm: string,
+    setter: (perms: string[]) => void,
+  ) => {
+    if (permList.includes(perm)) {
+      setter(permList.filter((p) => p !== perm));
+    } else {
+      setter([...permList, perm]);
     }
   };
 
@@ -2677,7 +2706,10 @@ const RoleManagementSection = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(selectedRole),
+          body: JSON.stringify({
+            description: selectedRole.description,
+            permissions: selectedRole.permissions,
+          }),
         },
       );
       const data = await response.json();
@@ -2716,7 +2748,7 @@ const RoleManagementSection = () => {
         setSelectedRole(null);
         toast({
           title: "Success",
-          description: "Role deleted successfully",
+          description: `Role deleted. ${data.data?.reassignedUsers || 0} users reassigned to 'user'.`,
         });
       }
     } catch (error) {
@@ -2730,6 +2762,74 @@ const RoleManagementSection = () => {
       setLoading(false);
     }
   };
+
+  const permissionGroups = groupPermissions(availablePermissions);
+
+  // Permission checkbox grid component
+  const PermissionGrid = ({
+    selected,
+    onToggle,
+  }: {
+    selected: string[];
+    onToggle: (perm: string) => void;
+  }) => (
+    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+      {Object.entries(permissionGroups).map(([domain, perms]) => (
+        <div key={domain}>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            {domain}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {perms.map((perm) => {
+              const action = perm.split(".")[1];
+              const isChecked = selected.includes(perm);
+              return (
+                <label
+                  key={perm}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs cursor-pointer border transition-colors ${
+                    isChecked
+                      ? "bg-blue-100 border-blue-300 text-blue-800"
+                      : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => onToggle(perm)}
+                    className="sr-only"
+                  />
+                  <span
+                    className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
+                      isChecked
+                        ? "bg-blue-500 border-blue-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {isChecked && (
+                      <svg
+                        className="w-2 h-2 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={4}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  {action}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <Card className="border-0 shadow-lg">
@@ -2754,92 +2854,140 @@ const RoleManagementSection = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Roles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {roles.map((role) => (
-            <div
-              key={role.id}
-              onClick={() => setSelectedRole(role)}
-              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                selectedRole.id === role.id
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{role.name}</h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {role.description}
-                  </p>
-                </div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${role.color}`}
+        {loading && roles.length === 0 ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+          </div>
+        ) : (
+          <>
+            {/* Roles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {roles.map((role) => (
+                <div
+                  key={role.id}
+                  onClick={() => setSelectedRole(role)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedRole?.id === role.id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
                 >
-                  {role.userCount} users
-                </span>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-1"
-                  onClick={() => setShowEditModal(true)}
-                >
-                  <EditIcon className="h-3 w-3" />
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1 gap-1"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Selected Role Details */}
-        {selectedRole && (
-          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50">
-            <CardHeader>
-              <CardTitle>{selectedRole.name}</CardTitle>
-              <CardDescription>{selectedRole.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">Permissions</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRole.permissions &&
-                    selectedRole.permissions.length > 0 ? (
-                      selectedRole.permissions.map(
-                        (perm: string, i: number) => (
-                          <Badge key={i} variant="secondary">
-                            {perm}
-                          </Badge>
-                        ),
-                      )
-                    ) : (
-                      <span className="text-sm text-gray-500">
-                        No permissions assigned
-                      </span>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 capitalize">
+                        {role.name.replace(/_/g, " ")}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {role.description}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${role.color || "bg-gray-100 text-gray-700"}`}
+                    >
+                      {role.userCount} users
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mb-3">
+                    {role.permissions?.length || 0} permissions
+                    {role.isSystem && (
+                      <span className="ml-2 text-amber-600">• System</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedRole(role);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      <EditIcon className="h-3 w-3" />
+                      Edit
+                    </Button>
+                    {!role.isSystem && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1 gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRole(role);
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </Button>
                     )}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+
+            {/* Selected Role Details */}
+            {selectedRole && (
+              <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50">
+                <CardHeader>
+                  <CardTitle className="capitalize">
+                    {selectedRole.name.replace(/_/g, " ")}
+                  </CardTitle>
+                  <CardDescription>{selectedRole.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span>👥 {selectedRole.userCount} users</span>
+                      <span>
+                        🔑 {selectedRole.permissions?.length || 0} permissions
+                      </span>
+                      {selectedRole.isSystem && (
+                        <Badge
+                          variant="outline"
+                          className="text-amber-600 border-amber-300"
+                        >
+                          System Role
+                        </Badge>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">
+                        Permissions
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedRole.permissions &&
+                        selectedRole.permissions.length > 0 ? (
+                          selectedRole.permissions.map(
+                            (perm: string, i: number) => (
+                              <Badge
+                                key={i}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {perm}
+                              </Badge>
+                            ),
+                          )
+                        ) : (
+                          <span className="text-sm text-gray-500">
+                            No permissions assigned
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
       </CardContent>
 
       {/* Add Role Dialog */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Create New Role</DialogTitle>
             <DialogDescription>
@@ -2851,7 +2999,7 @@ const RoleManagementSection = () => {
               <Label htmlFor="role-name">Role Name *</Label>
               <Input
                 id="role-name"
-                placeholder="e.g., Editor, Moderator"
+                placeholder="e.g., Editor, Analyst"
                 value={newRole.name}
                 onChange={(e) =>
                   setNewRole({ ...newRole, name: e.target.value })
@@ -2866,6 +3014,17 @@ const RoleManagementSection = () => {
                 value={newRole.description}
                 onChange={(e) =>
                   setNewRole({ ...newRole, description: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label className="mb-2 block">Permissions</Label>
+              <PermissionGrid
+                selected={newRole.permissions}
+                onToggle={(perm) =>
+                  togglePermission(newRole.permissions, perm, (p) =>
+                    setNewRole({ ...newRole, permissions: p }),
+                  )
                 }
               />
             </div>
@@ -2892,10 +3051,14 @@ const RoleManagementSection = () => {
 
       {/* Edit Role Dialog */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Role</DialogTitle>
-            <DialogDescription>Update role information</DialogDescription>
+            <DialogTitle>
+              Edit Role: {selectedRole?.name?.replace(/_/g, " ")}
+            </DialogTitle>
+            <DialogDescription>
+              Update role description and permissions
+            </DialogDescription>
           </DialogHeader>
           {selectedRole && (
             <div className="space-y-4">
@@ -2904,6 +3067,7 @@ const RoleManagementSection = () => {
                 <Input
                   id="edit-role-name"
                   value={selectedRole.name}
+                  disabled={selectedRole.isSystem}
                   onChange={(e) =>
                     setSelectedRole({
                       ...selectedRole,
@@ -2911,6 +3075,11 @@ const RoleManagementSection = () => {
                     })
                   }
                 />
+                {selectedRole.isSystem && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    System role names cannot be changed
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="edit-role-desc">Description</Label>
@@ -2922,6 +3091,22 @@ const RoleManagementSection = () => {
                       ...selectedRole,
                       description: e.target.value,
                     })
+                  }
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">
+                  Permissions ({selectedRole.permissions?.length || 0} selected)
+                </Label>
+                <PermissionGrid
+                  selected={selectedRole.permissions || []}
+                  onToggle={(perm) =>
+                    togglePermission(
+                      selectedRole.permissions || [],
+                      perm,
+                      (p) =>
+                        setSelectedRole({ ...selectedRole, permissions: p }),
+                    )
                   }
                 />
               </div>
@@ -2954,8 +3139,13 @@ const RoleManagementSection = () => {
             <DialogTitle>Delete Role</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete the role{" "}
-              <span className="font-semibold">{selectedRole?.name}</span>? This
-              action cannot be undone.
+              <span className="font-semibold">{selectedRole?.name}</span>?
+              {selectedRole?.userCount > 0 && (
+                <span className="block mt-2 text-amber-600">
+                  ⚠️ {selectedRole.userCount} users will be reassigned to the
+                  "user" role.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

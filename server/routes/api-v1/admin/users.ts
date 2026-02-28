@@ -8,15 +8,26 @@ import bcrypt from "bcryptjs";
 
 const router = Router();
 
+// Helper: derive isActive from lock/verification status
+function deriveUserStatus(user: any) {
+  const now = new Date();
+  const isLocked = user.lockedUntil && new Date(user.lockedUntil) > now;
+  return {
+    ...user,
+    isActive: !isLocked,
+    isLocked: !!isLocked,
+  };
+}
+
 /**
  * GET /api/v1/admin/users
- * List all users with pagination and filtering
+ * List all users with pagination, filtering, and role filter
  */
 router.get(
   "/",
-  requireAuth(["admin", "moderator"]),
+  requireAuth(["admin", "moderator", "superuser"]),
   asyncHandler(async (req, res) => {
-    const { page = "1", limit = "20", search } = req.query;
+    const { page = "1", limit = "20", search, role } = req.query;
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
     const limitNum = Math.min(100, parseInt(limit as string, 10) || 20);
     const offset = (pageNum - 1) * limitNum;
@@ -33,6 +44,10 @@ router.get(
       );
     }
 
+    if (role && typeof role === "string") {
+      conditions.push(eq(users.role, role));
+    }
+
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Fetch total count and paginated data
@@ -45,7 +60,11 @@ router.get(
           email: users.email,
           role: users.role,
           isVerified: users.isVerified,
+          verifiedAt: users.verifiedAt,
           subscriptionTier: users.subscriptionTier,
+          subscriptionStatus: users.subscriptionStatus,
+          failedLoginAttempts: users.failedLoginAttempts,
+          lockedUntil: users.lockedUntil,
           createdAt: users.createdAt,
         })
         .from(users)
@@ -56,11 +75,12 @@ router.get(
     ]);
 
     const total = totalResult[0]?.total || 0;
+    const enriched = data.map(deriveUserStatus);
 
     res.json({
       success: true,
       status: 200,
-      data,
+      data: enriched,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -166,7 +186,7 @@ router.post(
  */
 router.get(
   "/:id",
-  requireAuth(["admin", "moderator"]),
+  requireAuth(["admin", "moderator", "superuser"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = parseInt(id, 10);
@@ -178,7 +198,11 @@ router.get(
         email: users.email,
         role: users.role,
         isVerified: users.isVerified,
+        verifiedAt: users.verifiedAt,
         subscriptionTier: users.subscriptionTier,
+        subscriptionStatus: users.subscriptionStatus,
+        failedLoginAttempts: users.failedLoginAttempts,
+        lockedUntil: users.lockedUntil,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -199,7 +223,7 @@ router.get(
     res.json({
       success: true,
       status: 200,
-      data: user[0],
+      data: deriveUserStatus(user[0]),
       metadata: {
         timestamp: new Date().toISOString(),
       },
@@ -213,10 +237,11 @@ router.get(
  */
 router.put(
   "/:id",
-  requireAuth(["admin"]),
+  requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { email, role, isVerified, password } = req.body;
+    const { username, email, role, isVerified, password, subscriptionTier } =
+      req.body;
     const userId = parseInt(id, 10);
 
     // Check if user exists
@@ -238,9 +263,15 @@ router.put(
     }
 
     const updates: Record<string, any> = {};
+    if (username !== undefined) updates.username = username;
     if (email !== undefined) updates.email = email;
     if (role !== undefined) updates.role = role;
-    if (isVerified !== undefined) updates.isVerified = isVerified;
+    if (isVerified !== undefined) {
+      updates.isVerified = isVerified;
+      if (isVerified) updates.verifiedAt = new Date();
+    }
+    if (subscriptionTier !== undefined)
+      updates.subscriptionTier = subscriptionTier;
     if (password !== undefined) {
       updates.password = await bcrypt.hash(password, 10);
     }
@@ -266,6 +297,9 @@ router.put(
         email: users.email,
         role: users.role,
         isVerified: users.isVerified,
+        verifiedAt: users.verifiedAt,
+        subscriptionTier: users.subscriptionTier,
+        lockedUntil: users.lockedUntil,
         createdAt: users.createdAt,
       });
 
@@ -284,7 +318,7 @@ router.put(
     res.json({
       success: true,
       status: 200,
-      data: updated,
+      data: deriveUserStatus(updated),
       metadata: {
         timestamp: new Date().toISOString(),
       },
@@ -294,16 +328,15 @@ router.put(
 
 /**
  * DELETE /api/v1/admin/users/:id
- * Delete a user
+ * Delete a user (prevents deleting admin/superuser accounts)
  */
 router.delete(
   "/:id",
-  requireAuth(["admin"]),
+  requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = parseInt(id, 10);
 
-    // Prevent deleting admin
     const user = await db
       .select()
       .from(users)
@@ -321,13 +354,13 @@ router.delete(
       });
     }
 
-    if (user[0].role === "admin") {
+    if (user[0].role === "admin" || user[0].role === "superuser") {
       return res.status(403).json({
         success: false,
         status: 403,
         error: {
           code: "FORBIDDEN",
-          message: "Cannot delete admin users",
+          message: "Cannot delete admin or superuser accounts",
         },
       });
     }
@@ -342,7 +375,7 @@ router.delete(
         action: "DELETE",
         entityType: "users",
         entityId: String(userId),
-        changes: { deleted: true },
+        changes: { deleted: true, username: user[0].username },
       })
       .catch(() => null);
 

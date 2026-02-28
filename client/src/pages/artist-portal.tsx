@@ -1204,7 +1204,7 @@ export default function ArtistPortal() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={(artist as any).avatar || ""} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                        {artist.stageName.charAt(0)}
+                        {artist.stageName?.charAt(0) ?? "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div>

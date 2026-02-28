@@ -623,30 +623,14 @@ export default function Sante() {
         </div>
       </div>
 
-      {/* Database Connection Status - Top Right */}
-      <div className="fixed top-20 right-4 z-50">
-        <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg bg-red-900/30 text-red-300 border-red-500/30"
-        >
-          <Database className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Healthcare PostgreSQL Database
-          </span>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-            {databaseConnected ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-            <span>
-              {databaseConnected
-                ? "Connected to versoair_business_intelligence"
-                : "Database Disconnected"}
-            </span>
-          </div>
-        </motion.div>
+      {/* Database Connection Status */}
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Database connected" : "Database offline"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
       </div>
 
       {/* Hero + Carousel Container */}
