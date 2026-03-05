@@ -64,6 +64,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SettingsModal } from "@/components/SettingsModal";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 // Database API configuration - EXACT SAME AS HOSPITALITY
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -254,6 +256,7 @@ async function searchBatimentFacilities(params: {
   min_projects?: number;
   min_workers?: number;
   equipment?: string;
+  countryCode?: string;
 }): Promise<{ data: BatimentFacility[]; total: number; success: boolean }> {
   try {
     const queryParams = new URLSearchParams();
@@ -280,6 +283,7 @@ async function searchBatimentFacilities(params: {
       query: params.query,
       sectorId: 2,
       location: params.location,
+      countryCode: params.countryCode,
       limit: params.limit || 50,
     })) as any[];
     return {
@@ -462,6 +466,7 @@ export default function BatimentDashboard() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [searchResults, setSearchResults] = useState<BatimentFacility[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -483,6 +488,7 @@ export default function BatimentDashboard() {
   const [selectedFacility, setSelectedFacility] =
     useState<BatimentFacility | null>(null);
   const [showFacilityDetails, setShowFacilityDetails] = useState(false);
+  useScrollLock(showFacilityDetails);
 
   // Database connection test - SAME AS HOSPITALITY
   useEffect(() => {
@@ -564,7 +570,7 @@ export default function BatimentDashboard() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery, locationQuery, activeFilters]);
+  }, [searchQuery, locationQuery, selectedCountry, activeFilters]);
 
   // Search handler - Construction projects
   const handleSearch = async (page: number = 1) => {
@@ -579,6 +585,7 @@ export default function BatimentDashboard() {
     };
 
     if (locationQuery) params.location = locationQuery;
+    if (selectedCountry) params.countryCode = selectedCountry;
     if (activeFilters.category) params.category = activeFilters.category;
     if (activeFilters.minRating)
       params.min_rating = parseFloat(activeFilters.minRating);

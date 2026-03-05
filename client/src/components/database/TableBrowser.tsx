@@ -450,7 +450,7 @@ export const TableBrowser = memo(
             </div>
           </Card>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTables.map((table: TableMetadata) => (
               <TableGridItem
                 key={table.name}
@@ -465,7 +465,7 @@ export const TableBrowser = memo(
             ))}
           </div>
         ) : (
-          <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+          <div className="space-y-3">
             {filteredTables.map((table: TableMetadata) => (
               <TableRowItem
                 key={table.name}

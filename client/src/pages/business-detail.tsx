@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -160,6 +161,7 @@ export default function BusinessDetailPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showProfitModal, setShowProfitModal] = useState(false);
+  useScrollLock(showProfitModal);
 
   const businessId = params?.id;
 

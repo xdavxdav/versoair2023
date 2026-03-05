@@ -73,11 +73,14 @@ export const socialPosts = pgTable(
     authorId: integer("author_id")
       .notNull()
       .references(() => socialUsers.id),
+    title: text("title"), // Required for FAQ posts, optional for blog
     content: text("content").notNull(),
     imageUrls: text("image_urls").array(), // Array of image URLs
     videoUrl: text("video_url"),
     mediaType: text("media_type"), // text, image, video, link
-    postType: text("post_type").default("discussion"), // discussion, job, trend, announcement
+    postType: text("post_type").default("discussion"), // discussion, job, trend, announcement, faq
+    faqCategory: text("faq_category"), // For FAQ posts: general, account, billing, technical, business, platform
+    isResolved: boolean("is_resolved").default(false), // For FAQ: mark as answered
     tags: text("tags").array(), // Searchable tags
     mentionedUsers: integer("mentioned_users").array(), // User IDs mentioned
     likeCount: integer("like_count").default(0),
@@ -109,8 +112,25 @@ export const socialPosts = pgTable(
     ),
     isTrendingIdx: index("social_posts_is_trending_idx").on(t.isTrending),
     tagsIdx: index("social_posts_tags_idx").on(t.tags),
+    postTypeIdx: index("social_posts_post_type_idx").on(t.postType),
+    faqCategoryIdx: index("social_posts_faq_category_idx").on(t.faqCategory),
   }),
 );
+
+// ============================================
+// FAQ CATEGORIES
+// ============================================
+export const faqCategories = pgTable("faq_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // general, account, billing, technical, business, platform
+  label: text("label").notNull(), // Display name: "General", "Account & Profile", etc.
+  description: text("description"),
+  icon: text("icon"), // Lucide icon name
+  color: text("color"), // Tailwind color class
+  sortOrder: integer("sort_order").default(0),
+  postCount: integer("post_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // ============================================
 // COMMENTS
@@ -475,3 +495,11 @@ export const insertAiRecommendationSchema =
   createInsertSchema(aiRecommendations);
 export const insertTrendingTopicSchema = createInsertSchema(trendingTopics);
 export const insertSavedPostSchema = createInsertSchema(savedPosts);
+export const insertFaqCategorySchema = createInsertSchema(faqCategories);
+
+// Type exports
+export type SocialUser = typeof socialUsers.$inferSelect;
+export type SocialPost = typeof socialPosts.$inferSelect;
+export type SocialComment = typeof socialComments.$inferSelect;
+export type FaqCategory = typeof faqCategories.$inferSelect;
+export type InsertFaqCategory = typeof faqCategories.$inferInsert;

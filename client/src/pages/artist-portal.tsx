@@ -726,11 +726,11 @@ export default function ArtistPortal() {
     return displayTracks.filter((track) => {
       const matchesSearch =
         searchQuery === "" ||
-        track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
         displayArtists
           .find((a) => a.id === track.artistId)
           ?.stageName.toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .startsWith(searchQuery.toLowerCase());
       const matchesGenre =
         selectedGenre === "all" || (track as any).genre === selectedGenre;
       return matchesSearch && matchesGenre;

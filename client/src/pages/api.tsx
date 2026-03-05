@@ -440,7 +440,7 @@ export default function APIDocumentation() {
                             ✓ Status: {result.status} | Response Time:{" "}
                             {result.time}
                           </div>
-                          <div className="text-xs max-h-32 overflow-y-auto">
+                          <div className="text-xs">
                             {JSON.stringify(result.data).substring(0, 200)}
                             {JSON.stringify(result.data).length > 200
                               ? "..."

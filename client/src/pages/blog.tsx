@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Zap, Search, Filter } from "lucide-react";
+import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
 import UserProfileCard from "@/components/UserProfileCard";
@@ -118,9 +119,13 @@ const generateMockUsers = (count: number) => {
 };
 
 export default function BlogPage() {
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState("User");
+  // Authentication state — persist via localStorage so user stays connected across navigation
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("blog_community_auth") === "true";
+  });
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem("blog_community_user") || "User";
+  });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
@@ -155,6 +160,10 @@ export default function BlogPage() {
       setIsAuthenticated(true);
       setIsAuthModalOpen(false);
 
+      // Persist blog community session
+      localStorage.setItem("blog_community_auth", "true");
+      localStorage.setItem("blog_community_user", name);
+
       console.log(isSignUp ? "Account created!" : "Logged in successfully!");
     } catch (error) {
       console.error("Auth error:", error);
@@ -167,6 +176,9 @@ export default function BlogPage() {
     setIsAuthenticated(false);
     setUserName("User");
     setIsCreatePostOpen(false);
+    // Clear persisted blog community session
+    localStorage.removeItem("blog_community_auth");
+    localStorage.removeItem("blog_community_user");
   };
 
   // Define loadMorePosts FIRST (needed by useEffect)
@@ -417,6 +429,50 @@ export default function BlogPage() {
                   </motion.button>
                 ))}
               </div>
+            </motion.div>
+
+            {/* FAQ Section */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-white mb-3 font-handstyle flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-cyan-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <path d="M12 17h.01" />
+                </svg>
+                FAQ & Help
+              </h3>
+              <p className="text-slate-400 text-sm mb-3 font-handstyle">
+                Got questions? Browse topics or ask the community.
+              </p>
+              <Link href="/faq">
+                <button className="w-full py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-400 rounded-lg text-sm font-medium transition-all font-handstyle flex items-center justify-center gap-2">
+                  Browse FAQ
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 17l9.2-9.2M17 17V7H7" />
+                  </svg>
+                </button>
+              </Link>
             </motion.div>
           </div>
         </div>

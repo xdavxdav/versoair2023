@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
+import VersoAIChat from "@/components/VersoAIChat";
 import {
   Zap,
   Globe,
@@ -20,10 +21,6 @@ import {
   ExternalLink,
   CheckCircle,
   Star,
-  MessageSquare,
-  Send,
-  Minimize2,
-  Bot,
   Calendar,
   ChevronDown,
 } from "lucide-react";
@@ -37,16 +34,6 @@ import {
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hello! I'm VersoAI, your intelligent business assistant. How can I help you optimize your enterprise today?",
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [timePeriod, setTimePeriod] = useState("week");
   const [isSolarSystemPaused, setIsSolarSystemPaused] = useState(false);
   const solarSystemRef = useRef<HTMLDivElement>(null);
@@ -705,36 +692,6 @@ export default function Home() {
     };
   }, []);
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
-
-    const userMessage = { role: "user", content: inputMessage };
-    setChatMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Based on our analytics, I can help you optimize that workflow by 35%.",
-        "Our predictive models show strong growth potential in that sector. Would you like detailed insights?",
-        "I've analyzed your data patterns and found several actionable opportunities.",
-        "Let me pull up the real-time metrics for that department...",
-        "Our AI suggests implementing a hybrid approach for optimal results. Here's why...",
-        "I can generate a comprehensive report on that topic. When would you need it?",
-        "Interesting question! Let me process that through our neural networks...",
-      ];
-
-      const aiResponse = {
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-      };
-
-      setChatMessages((prev) => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
   const features = [
     {
       icon: <BarChart3 className="h-8 w-8" />,
@@ -842,122 +799,7 @@ export default function Home() {
 
       {/* Time period control (metrics selector) */}
 
-      {/* VersoAI Chat Interface */}
-      {isChatOpen && (
-        <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-slate-900/95 backdrop-blur-xl border border-blue-500/30 rounded-2xl shadow-2xl z-50 flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-blue-500/20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center relative">
-                <Bot className="h-6 w-6 text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-              <div>
-                <h3 className="text-white font-semibold">VersoAI</h3>
-                <p className="text-xs text-green-400 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Online • AI Assistant
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsChatOpen(false);
-              }}
-              type="button"
-              className="text-blue-200 hover:text-white transition-colors"
-            >
-              <Minimize2 className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatMessages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
-                    msg.role === "user"
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                      : "bg-slate-800/50 text-blue-100 border border-blue-500/20"
-                  }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-slate-800/50 border border-blue-500/20 p-3 rounded-2xl">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 border-t border-blue-500/20">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder="Ask VersoAI anything..."
-                className="flex-1 bg-slate-800/50 border border-blue-500/20 rounded-xl px-4 py-2 text-white placeholder-blue-300/50 focus:outline-none focus:border-blue-500/50"
-              />
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSendMessage();
-                }}
-                type="button"
-                className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-xl hover:shadow-lg transition-all"
-              >
-                <Send className="h-5 w-5 text-white" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Floating VersoAI Button - Improved with better positioning */}
-      <div className="fixed bottom-6 right-6 z-50 pointer-events-none">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsChatOpen(!isChatOpen);
-          }}
-          type="button"
-          className="pointer-events-auto w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-2xl hover:shadow-blue-500/50 flex items-center justify-center hover:scale-110 transition-all group"
-        >
-          {isChatOpen ? (
-            <X className="h-6 w-6 text-white" />
-          ) : (
-            <>
-              <MessageSquare className="h-6 w-6 text-white" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            </>
-          )}
-        </button>
-      </div>
+      {/* VersoAI Chat — handled globally via App.tsx */}
 
       {/* Hero Section */}
       <div className="relative pt-32 pb-20 overflow-hidden">
@@ -2161,6 +2003,9 @@ export default function Home() {
           }
         }
       `}</style>
+
+      {/* VersoAI Chat Bubble - only on this page */}
+      <VersoAIChat />
     </div>
   );
 }

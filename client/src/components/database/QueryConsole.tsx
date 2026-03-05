@@ -230,7 +230,7 @@ export const QueryConsole = memo(
                 </div>
 
                 {/* Results Table */}
-                <div className="bg-gray-50 rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
+                <div className="bg-gray-50 rounded-lg overflow-x-auto">
                   {queryResult.columns.length > 0 ? (
                     <table className="w-full text-sm">
                       <thead className="bg-gray-100 sticky top-0">

@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 // -------------------------------------------------------------------
 // Types
@@ -127,6 +128,7 @@ export function UsersSection() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
+  useScrollLock(isModalOpen || !!viewingUser || !!deleteConfirm);
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
     email: "",

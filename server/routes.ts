@@ -11,7 +11,16 @@ import propertiesRouter from "./routes/properties";
 import apiV1Router from "./routes/api-v1";
 import authRouter from "./routes/auth";
 import socialApiRoutes from "./routes/social-api";
+import faqApiRoutes from "./routes/faq-api";
+import ticketsRouter from "./routes/tickets";
+import jobsRouter from "./routes/jobs";
+import musicRouter from "./routes/music";
+import artistsRouter from "./routes/artists";
+import dataDispatchRouter from "./routes/data-dispatch";
+import settingsRouter from "./routes/settings";
+import aiChatRouter from "./routes/ai-chat";
 import { requireAuth } from "./middleware/auth";
+import { notifyReservationUpdate } from "./services/notification-service";
 
 // Map snake_case table names to camelCase schema exports
 const TABLE_NAME_MAP: Record<string, string> = {
@@ -62,6 +71,12 @@ export async function registerRoutes(app: Express) {
   // Register social blog API routes
   app.use("/api/social", socialApiRoutes);
 
+  // Register FAQ API routes
+  app.use("/api/faq", faqApiRoutes);
+
+  // Register VersoAI chat routes
+  app.use("/api/ai", aiChatRouter);
+
   // Register database management routes
   app.use("/api", databaseManagementRouter);
 
@@ -70,6 +85,14 @@ export async function registerRoutes(app: Express) {
 
   // Register properties routes
   app.use("/", propertiesRouter);
+
+  // Register extracted domain routers
+  app.use("/api/tickets", ticketsRouter);
+  app.use("/api/jobs", jobsRouter);
+  app.use("/api/music", musicRouter);
+  app.use("/api/artists", artistsRouter);
+  app.use("/api/data/dispatch", dataDispatchRouter);
+  app.use("/api/settings", settingsRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {
@@ -247,6 +270,207 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ========== PUBLIC JOBS SEARCH ==========
+  // Public endpoint for the Career Portal — reads from the same `jobs` table
+  // that Admin Dashboard writes to. No auth required.
+  app.get("/api/jobs/search", async (req, res) => {
+    try {
+      const {
+        search,
+        type,
+        department,
+        experience_level,
+        is_remote,
+        sector,
+        countryCode,
+        status: jobStatus,
+        page = "1",
+        limit = "50",
+      } = req.query;
+
+      const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
+      const limitNum = Math.min(100, parseInt(limit as string, 10) || 50);
+      const offset = (pageNum - 1) * limitNum;
+
+      // Build WHERE conditions
+      const conditions: any[] = [];
+
+      // Only show active jobs by default
+      if (jobStatus && typeof jobStatus === "string") {
+        conditions.push(eq(schema.jobs.status, jobStatus));
+      } else {
+        conditions.push(eq(schema.jobs.status, "active"));
+      }
+
+      if (search && typeof search === "string") {
+        const searchCond = or(
+          ilike(schema.jobs.title, `${search}%`),
+          ilike(schema.jobs.company, `${search}%`),
+        );
+        if (searchCond) conditions.push(searchCond);
+      }
+
+      if (type && typeof type === "string") {
+        conditions.push(eq(schema.jobs.type, type));
+      }
+
+      if (sector && typeof sector === "string" && sector !== "all") {
+        conditions.push(eq(schema.jobs.sector, sector));
+      }
+
+      if (department && typeof department === "string") {
+        conditions.push(ilike(schema.jobs.department, `${department}%`));
+      }
+
+      if (experience_level && typeof experience_level === "string") {
+        conditions.push(eq(schema.jobs.experienceLevel, experience_level));
+      }
+
+      if (is_remote === "true") {
+        conditions.push(eq(schema.jobs.isRemote, true));
+      }
+
+      if (
+        countryCode &&
+        typeof countryCode === "string" &&
+        countryCode !== "all"
+      ) {
+        conditions.push(eq(schema.jobs.countryCode, countryCode.toUpperCase()));
+      }
+
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Total count
+      const [{ value: total }] = await db
+        .select({ value: count() })
+        .from(schema.jobs)
+        .where(where);
+
+      // Fetch jobs
+      const rows = await db
+        .select()
+        .from(schema.jobs)
+        .where(where)
+        .orderBy(desc(schema.jobs.createdAt))
+        .limit(limitNum)
+        .offset(offset);
+
+      // Map DB snake_case fields to camelCase for the frontend Job interface
+      const mapped = rows.map((r) => {
+        // Parse skills/requirements/benefits which may be stored as text or JSON
+        const parseField = (val: any): string[] => {
+          if (!val) return [];
+          if (Array.isArray(val)) return val;
+          try {
+            return JSON.parse(val);
+          } catch {
+            return val
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean);
+          }
+        };
+
+        return {
+          id: r.id,
+          title: r.title,
+          company: r.company,
+          location: r.location || "Remote",
+          type: r.type || "full-time",
+          sector: r.sector || "general",
+          salary_min: r.salaryMin || 0,
+          salary_max: r.salaryMax || 0,
+          currency: r.currency || "USD",
+          description: r.description || "",
+          requirements: parseField(r.requirements),
+          benefits: parseField(r.benefits),
+          skills: parseField(r.skills),
+          experience_level: r.experienceLevel || "entry",
+          education_level: r.educationLevel || "bachelor",
+          department: r.department || "General",
+          posted_date:
+            r.postedDate ||
+            r.createdAt?.toISOString() ||
+            new Date().toISOString(),
+          application_deadline: r.applicationDeadline || null,
+          is_featured: r.isFeatured || false,
+          is_remote: r.isRemote || false,
+          application_count: r.applicationCount || 0,
+          view_count: r.viewCount || 0,
+          status: r.status || "active",
+          company_logo: r.companyLogo || null,
+          company_description: r.companyDescription || null,
+          apply_url: r.applyUrl || null,
+          created_at: r.createdAt?.toISOString() || new Date().toISOString(),
+          updated_at: r.updatedAt?.toISOString() || new Date().toISOString(),
+          business_id: r.businessId || null,
+          country_code: r.countryCode || null,
+        };
+      });
+
+      // If we have businessIds, fetch review counts for those companies
+      const businessIds = [
+        ...new Set(rows.filter((r) => r.businessId).map((r) => r.businessId!)),
+      ] as number[];
+      let reviewMap: Record<
+        number,
+        { avg_rating: number; review_count: number }
+      > = {};
+
+      if (businessIds.length > 0) {
+        try {
+          const reviewData = await db.execute(
+            sql`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+             FROM business_reviews
+             WHERE business_id = ANY(${businessIds})
+             GROUP BY business_id`,
+          );
+          for (const row of reviewData.rows as any[]) {
+            reviewMap[row.business_id] = {
+              avg_rating: parseFloat(row.avg_rating) || 0,
+              review_count: parseInt(row.review_count) || 0,
+            };
+          }
+        } catch (e) {
+          console.error("Reviews lookup skipped:", e);
+        }
+      }
+
+      // Attach review data to mapped jobs
+      const result = mapped.map((job) => ({
+        ...job,
+        company_rating:
+          job.business_id && reviewMap[job.business_id]
+            ? reviewMap[job.business_id].avg_rating
+            : null,
+        company_review_count:
+          job.business_id && reviewMap[job.business_id]
+            ? reviewMap[job.business_id].review_count
+            : 0,
+      }));
+
+      console.log(`✅ Public jobs search: ${result.length} jobs returned`);
+
+      res.json({
+        success: true,
+        data: result,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(Number(total) / limitNum),
+        },
+      });
+    } catch (error: any) {
+      console.error("🔴 Public jobs search error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch jobs",
+        data: [],
+      });
+    }
+  });
+
   // ========== PUBLIC DASHBOARD STATS ==========
   // Get public dashboard statistics (no auth required)
   // Supports optional category filter to show industry-relevant stats
@@ -296,7 +520,7 @@ export async function registerRoutes(app: Express) {
       // If category filter provided, show platform stats for that category
       if (category) {
         const categoryData = await db.execute(
-          sql`SELECT id FROM business_categories WHERE name ILIKE ${`%${category}%`}`,
+          sql`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`,
         );
         const categoryIds = categoryData.rows.map((r: any) => r.id);
 
@@ -1413,7 +1637,7 @@ export async function registerRoutes(app: Express) {
         // This is a simple search - you can enhance it based on table structure
         const nameField = (table as any).name;
         if (nameField) {
-          query = query.where(ilike(nameField, `%${search}%`));
+          query = query.where(ilike(nameField, `${search}%`));
         }
       }
     } catch (error: any) {
@@ -1501,11 +1725,12 @@ export async function registerRoutes(app: Express) {
         // Remove id from data as we use it in the where clause
         const { id: _, ...updateData } = data;
 
-        // Update the data
+        // Update the data — use raw id (supports both integer and UUID pks)
+        const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
         const result = await db
           .update(table)
           .set(updateData)
-          .where(eq(table.id, parseInt(id)))
+          .where(eq(table.id, idValue))
           .returning();
 
         if ((result as any[]).length === 0) {
@@ -1513,6 +1738,52 @@ export async function registerRoutes(app: Express) {
             success: false,
             error: "Record not found",
           });
+        }
+
+        // 📬 Trigger reservation notification when status changes
+        if (tableName === "reservations" && updateData.status) {
+          const updated = (result as any[])[0];
+          // Guard: skip notification if reservation has no linked user (walk-in/guest)
+          const resUserId = updated.userId ?? updated.user_id;
+          if (resUserId) {
+            try {
+              const bizResult = await pool.query(
+                `SELECT b.name FROM businesses b WHERE b.id = $1`,
+                [updated.businessId ?? updated.business_id],
+              );
+              const businessName = bizResult.rows[0]?.name || "Business";
+              const price = updated.totalPrice ?? updated.total_price;
+              notifyReservationUpdate({
+                id: updated.id,
+                userId: resUserId,
+                businessName,
+                date:
+                  (
+                    updated.startDate ?? updated.start_date
+                  )?.toLocaleDateString?.() || new Date().toLocaleDateString(),
+                time: (
+                  updated.startDate ?? updated.start_date
+                )?.toLocaleTimeString?.([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                status: updated.status,
+                totalPrice: price ? `$${price}` : undefined,
+              }).catch((err: any) =>
+                console.error("[RESERVATION] Notification error:", err),
+              );
+            } catch (notifyErr) {
+              console.error(
+                "[RESERVATION] Notification lookup error:",
+                notifyErr,
+              );
+            }
+          } else {
+            console.log(
+              "[RESERVATION] Skipped notification — no userId on reservation",
+              updated.id,
+            );
+          }
         }
 
         res.json({
@@ -1556,10 +1827,11 @@ export async function registerRoutes(app: Express) {
           });
         }
 
-        // Delete the record
+        // Delete the record — use raw id (supports both integer and UUID pks)
+        const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
         const result = await db
           .delete(table)
-          .where(eq(table.id, parseInt(id)))
+          .where(eq(table.id, idValue))
           .returning();
 
         if ((result as any[]).length === 0) {
@@ -1963,8 +2235,8 @@ export async function registerRoutes(app: Express) {
       // Text search
       if (query && typeof query === "string") {
         const searchCondition = or(
-          ilike(schema.businesses.name, `%${query}%`),
-          ilike(schema.businesses.description, `%${query}%`),
+          ilike(schema.businesses.name, `${query}%`),
+          ilike(schema.businesses.description, `${query}%`),
         );
         if (searchCondition) {
           conditions.push(searchCondition);
@@ -2892,8 +3164,8 @@ export async function registerRoutes(app: Express) {
       if (query && typeof query === "string") {
         conditions.push(
           or(
-            ilike(schema.businesses.name, `%${query}%`),
-            ilike(schema.businesses.description, `%${query}%`),
+            ilike(schema.businesses.name, `${query}%`),
+            ilike(schema.businesses.description, `${query}%`),
           ),
         );
       }
@@ -3029,13 +3301,13 @@ export async function registerRoutes(app: Express) {
         whereConditions.push(
           `(b.name ILIKE $${paramIndex} OR b.description ILIKE $${paramIndex + 1})`,
         );
-        params.push(`%${query}%`, `%${query}%`);
+        params.push(`${query}%`, `${query}%`);
         paramIndex += 2;
       }
 
       if (location && typeof location === "string") {
         whereConditions.push(`b.location ILIKE $${paramIndex}`);
-        params.push(`%${location}%`);
+        params.push(`${location}%`);
         paramIndex += 1;
       }
 
@@ -3266,353 +3538,11 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ========== TICKETING ENDPOINTS ==========
-  // Tickets CRUD stored in `tickets` table with SLA management
-  let inMemoryTickets: any[] = [];
+  // ========== TICKETING ENDPOINTS (EXTRACTED → server/routes/tickets.ts) ==========
+  // Handled by ticketsRouter registered above
 
-  // Helper to ensure tickets table exists (best-effort)
-  async function ensureTicketsTable() {
-    try {
-      await db.execute(sql`SELECT 1 FROM tickets LIMIT 1`);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  // SLA calculation helper: map priority to target hours
-  function calculateSLATargetHours(priority: string): number {
-    const slaMap: Record<string, number> = {
-      critical: 2,
-      high: 8,
-      medium: 24,
-      low: 72,
-    };
-    return slaMap[priority.toLowerCase()] || 24;
-  }
-
-  // Calculate SLA percentage and breach status
-  function calculateSLAStatus(
-    createdAt: Date | string,
-    slaTargetHours: number,
-  ): { percentage: number; breached: boolean } {
-    const created = new Date(createdAt);
-    const now = new Date();
-    const elapsedMs = now.getTime() - created.getTime();
-    const elapsedHours = elapsedMs / (1000 * 60 * 60);
-    const percentage = Math.round((elapsedHours / slaTargetHours) * 100);
-    return {
-      percentage: Math.min(percentage, 100),
-      breached: elapsedHours > slaTargetHours,
-    };
-  }
-
-  app.get("/api/tickets", async (req, res) => {
-    try {
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        const rows = await db.execute(
-          sql`SELECT * FROM tickets ORDER BY created_at DESC`,
-        );
-        return res.json(rows.rows || []);
-      }
-
-      // fallback
-      res.json(inMemoryTickets);
-    } catch (error: any) {
-      console.error("❌ Get tickets failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  app.post("/api/tickets", async (req, res) => {
-    try {
-      const payload = req.body || {};
-      const priority = payload.priority || "medium";
-      const slaTargetHours = calculateSLATargetHours(priority);
-      const now = new Date().toISOString();
-      const ticket = {
-        id: payload.id || Math.floor(Math.random() * 1000000).toString(),
-        title: payload.title || "Untitled",
-        description: payload.description || "",
-        status: payload.status || "open",
-        priority,
-        category: payload.category || "general",
-        reporter: payload.reporter || null,
-        requester_email: payload.requesterEmail || null,
-        assignee_id: payload.assigneeId || null,
-        team: payload.team || null,
-        source: payload.source || "portal",
-        sla_target_hours: slaTargetHours,
-        sla_breached: false,
-        created_at: now,
-        updated_at: now,
-      };
-
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const inserted = await db.execute(
-            sql`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
-                VALUES (${payload.title || "Untitled"}, ${payload.description || ""}, ${payload.status || "open"}, ${priority}, ${payload.category || "general"}, ${payload.reporter || null}, ${payload.requesterEmail || null}, ${payload.assigneeId || null}, ${payload.team || null}, ${payload.source || "portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
-                RETURNING *`,
-          );
-          return res.json(inserted.rows[0]);
-        } catch (dbError: any) {
-          console.error("❌ Database insert error:", dbError);
-        }
-      }
-
-      inMemoryTickets.unshift(ticket);
-      res.json(ticket);
-    } catch (error: any) {
-      console.error("❌ Create ticket failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  app.put("/api/tickets/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const payload = req.body || {};
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const updated = await db.execute(
-            sql`UPDATE tickets 
-                SET title=${payload.title || ""}, 
-                    description=${payload.description || ""}, 
-                    status=${payload.status || "open"},
-                    priority=${payload.priority},
-                    category=${payload.category},
-                    assignee_id=${payload.assigneeId || null},
-                    team=${payload.team || null},
-                    resolved_at=${payload.status === "resolved" ? new Date().toISOString() : null},
-                    updated_at=NOW()
-                WHERE id=${parseInt(id)} 
-                RETURNING *`,
-          );
-          return res.json(updated.rows[0]);
-        } catch (dbError: any) {
-          console.error("❌ Database update error:", dbError);
-        }
-      }
-
-      const idx = inMemoryTickets.findIndex((t) => t.id === id);
-      if (idx === -1) return res.status(404).json({ error: "Not found" });
-      inMemoryTickets[idx] = {
-        ...inMemoryTickets[idx],
-        ...payload,
-        updated_at: new Date().toISOString(),
-      };
-      res.json(inMemoryTickets[idx]);
-    } catch (error: any) {
-      console.error("❌ Update ticket failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  app.delete("/api/tickets/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          await db.execute(sql`DELETE FROM tickets WHERE id = ${parseInt(id)}`);
-          return res.json({ success: true });
-        } catch (dbError: any) {
-          console.error("❌ Database delete error:", dbError);
-        }
-      }
-      inMemoryTickets = inMemoryTickets.filter((t) => t.id !== id);
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error("❌ Delete ticket failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Assign a ticket to a user
-  app.put("/api/tickets/:id/assign", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { assigneeId, team } = req.body;
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const updated = await db.execute(
-            sql`UPDATE tickets SET assignee_id=${assigneeId}, team=${team || null}, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`,
-          );
-          return res.json(updated.rows[0]);
-        } catch (dbError: any) {
-          console.error("❌ Database assignment error:", dbError);
-        }
-      }
-
-      const idx = inMemoryTickets.findIndex((t) => t.id === id);
-      if (idx === -1) return res.status(404).json({ error: "Not found" });
-      inMemoryTickets[idx] = {
-        ...inMemoryTickets[idx],
-        assignee_id: assigneeId,
-        team,
-      };
-      res.json(inMemoryTickets[idx]);
-    } catch (error: any) {
-      console.error("❌ Assign ticket failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Escalate a ticket
-  app.post("/api/tickets/:id/escalate", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const updated = await db.execute(
-            sql`UPDATE tickets SET priority='critical', sla_target_hours=2, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`,
-          );
-          return res.json(updated.rows[0]);
-        } catch (dbError: any) {
-          console.error("❌ Database escalation error:", dbError);
-        }
-      }
-
-      const idx = inMemoryTickets.findIndex((t) => t.id === id);
-      if (idx === -1) return res.status(404).json({ error: "Not found" });
-      inMemoryTickets[idx] = {
-        ...inMemoryTickets[idx],
-        priority: "critical",
-        sla_target_hours: 2,
-      };
-      res.json(inMemoryTickets[idx]);
-    } catch (error: any) {
-      console.error("❌ Escalate ticket failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Get ticket statistics
-  app.get("/api/tickets/stats/summary", async (req, res) => {
-    try {
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const statsRows = await db.execute(
-            sql`SELECT 
-                  COUNT(*) as total,
-                  SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) as open,
-                  SUM(CASE WHEN status='in-progress' THEN 1 ELSE 0 END) as in_progress,
-                  SUM(CASE WHEN status='resolved' THEN 1 ELSE 0 END) as resolved,
-                  SUM(CASE WHEN status='closed' THEN 1 ELSE 0 END) as closed,
-                  SUM(CASE WHEN sla_breached=true THEN 1 ELSE 0 END) as sla_breaches
-                FROM tickets`,
-          );
-
-          const stats = statsRows.rows[0];
-          const total = parseInt(stats?.total || "0");
-          const slaBreaches = parseInt(stats?.sla_breaches || "0");
-          const slaCompliance =
-            total > 0 ? Math.round(((total - slaBreaches) / total) * 100) : 100;
-
-          return res.json({
-            total,
-            open: parseInt(stats?.open || "0"),
-            inProgress: parseInt(stats?.in_progress || "0"),
-            resolved: parseInt(stats?.resolved || "0"),
-            closed: parseInt(stats?.closed || "0"),
-            slaBreaches,
-            avgResolutionTime: 24,
-            slaCompliance,
-          });
-        } catch (dbError: any) {
-          console.error("❌ Database stats error:", dbError);
-        }
-      }
-
-      // Fallback to in-memory stats
-      const total = inMemoryTickets.length;
-      const slaBreaches = inMemoryTickets.filter((t) => t.sla_breached).length;
-      const stats = {
-        total,
-        open: inMemoryTickets.filter((t) => t.status === "open").length,
-        inProgress: inMemoryTickets.filter((t) => t.status === "in-progress")
-          .length,
-        resolved: inMemoryTickets.filter((t) => t.status === "resolved").length,
-        closed: inMemoryTickets.filter((t) => t.status === "closed").length,
-        slaBreaches,
-        avgResolutionTime: 24,
-        slaCompliance:
-          total > 0 ? Math.round(((total - slaBreaches) / total) * 100) : 100,
-      };
-      res.json(stats);
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Get SLA breaches
-  app.get("/api/tickets/sla/breaches", async (req, res) => {
-    try {
-      const exists = await ensureTicketsTable();
-      if (exists) {
-        try {
-          const breaches = await db.execute(
-            sql`SELECT * FROM tickets WHERE sla_breached=true ORDER BY created_at DESC`,
-          );
-          return res.json(breaches.rows || []);
-        } catch (dbError: any) {
-          console.error("❌ Database SLA query error:", dbError);
-        }
-      }
-
-      const breaches = inMemoryTickets.filter((t) => t.sla_breached);
-      res.json(breaches);
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Get tickets by status
-  app.get("/api/tickets/status/:status", async (req, res) => {
-    try {
-      const { status } = req.params;
-      const filtered = inMemoryTickets.filter((t) => t.status === status);
-      res.json(filtered);
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Get high priority tickets
-  app.get("/api/tickets/priority/critical", async (req, res) => {
-    try {
-      const critical = inMemoryTickets.filter(
-        (t) => t.priority === "critical" || t.priority === "high",
-      );
-      res.json(critical);
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Batch update tickets
-  app.post("/api/tickets/batch/update", async (req, res) => {
-    try {
-      const { ids, updates } = req.body;
-      const updated = inMemoryTickets.map((t) =>
-        ids.includes(t.id) ? { ...t, ...updates } : t,
-      );
-      inMemoryTickets = updated;
-      res.json({
-        success: true,
-        updated: updated.filter((t) => ids.includes(t.id)),
-      });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+  // ========== JOBS / CAREERS ENDPOINTS (EXTRACTED → server/routes/jobs.ts) ==========
+  // Handled by jobsRouter registered above
 
   // Test database connection
   app.get("/api/business/test-connection", async (req, res) => {
@@ -3724,1383 +3654,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ========== JOBS / CAREERS ENDPOINTS ==========
-
-  // Get all jobs
-  app.get("/api/jobs", async (req, res) => {
-    try {
-      const {
-        type,
-        department,
-        remote,
-        featured,
-        status = "active",
-      } = req.query;
-
-      console.log("📋 [JOBS] Fetching jobs from database...");
-
-      // Build conditions using only valid columns in jobs schema
-      const conditions: any[] = [];
-
-      // Valid columns: id, businessId, title, type, salaryRange, isActive, createdAt
-      if (type && typeof type === "string") {
-        conditions.push(eq(schema.jobs.type, type));
-      }
-
-      const jobResults = await db
-        .select()
-        .from(schema.jobs)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(schema.jobs.createdAt);
-
-      console.log(`✅ [JOBS] Found ${jobResults.length} jobs from database`);
-      if (jobResults.length > 0) {
-        console.log(
-          "🔍 [JOBS] Sample job:",
-          JSON.stringify(jobResults[0], null, 2),
-        );
-      }
-
-      // Helper function to safely format dates
-      const formatDate = (
-        dateValue: any,
-        defaultValue: string | null = null,
-      ): string | null => {
-        if (!dateValue) return defaultValue;
-        try {
-          const date = new Date(dateValue);
-          if (isNaN(date.getTime())) {
-            console.warn(`⚠️ [JOBS] Invalid date value: ${dateValue}`);
-            return defaultValue;
-          }
-          return date.toISOString();
-        } catch (error) {
-          console.error(`❌ [JOBS] Date parsing error:`, error);
-          return defaultValue;
-        }
-      };
-
-      // Format the response using only valid job properties
-      const formattedJobs = jobResults.map((job) => ({
-        id: job.id.toString(),
-        businessId: job.businessId,
-        title: job.title,
-        type: job.type || "Full-time",
-        salaryRange: job.salaryRange || "Negotiable",
-        isActive: job.isActive !== false,
-        created_at:
-          formatDate(job.createdAt, new Date().toISOString()) ||
-          new Date().toISOString(),
-      }));
-
-      console.log(`✅ [JOBS] Found ${formattedJobs.length} jobs`);
-
-      res.json(formattedJobs);
-    } catch (error: any) {
-      console.error("❌ Jobs fetch error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch jobs",
-        details: error.message,
-        data: [],
-      });
-    }
-  });
-
-  // Search jobs (with filters and pagination)
-  app.get("/api/jobs/search", async (req, res) => {
-    try {
-      const {
-        query = "",
-        type = "",
-        remote = "",
-        featured = "",
-        page = "1",
-        limit = "20",
-      } = req.query;
-
-      console.log("🔍 [JOBS/SEARCH] Searching jobs...", {
-        query,
-        type,
-        remote,
-        featured,
-      });
-
-      const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-      const limitNum = Math.min(100, parseInt(limit as string, 10) || 20);
-      const offset = (pageNum - 1) * limitNum;
-
-      // Build search conditions
-      const conditions: any[] = [];
-
-      if (query && typeof query === "string" && query.trim()) {
-        conditions.push(
-          or(
-            ilike(schema.jobs.title, `%${query}%`),
-            ilike(schema.jobs.company, `%${query}%`),
-            ilike(schema.jobs.description, `%${query}%`),
-          ),
-        );
-      }
-
-      if (type && typeof type === "string") {
-        conditions.push(eq(schema.jobs.type, type));
-      }
-
-      if (featured === "true") {
-        conditions.push(eq(schema.jobs.isFeatured, true));
-      }
-
-      if (remote === "true") {
-        conditions.push(eq(schema.jobs.isRemote, true));
-      }
-
-      // Get total count
-      const [{ value: total }] = await db
-        .select({ value: count() })
-        .from(schema.jobs)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-      // Get paginated results - select all columns from jobs table
-      const jobResults = await db
-        .select()
-        .from(schema.jobs)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(schema.jobs.postedDate))
-        .limit(limitNum)
-        .offset(offset);
-
-      // Transform camelCase to snake_case for frontend compatibility
-      const formattedJobs = jobResults.map((job) => ({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        location: job.location,
-        type: job.type,
-        salary_min: job.salaryMin,
-        salary_max: job.salaryMax,
-        currency: job.currency,
-        description: job.description,
-        requirements: Array.isArray(job.requirements)
-          ? job.requirements
-          : JSON.parse(job.requirements || "[]"),
-        benefits: Array.isArray(job.benefits)
-          ? job.benefits
-          : JSON.parse(job.benefits || "[]"),
-        skills: Array.isArray(job.skills)
-          ? job.skills
-          : JSON.parse(job.skills || "[]"),
-        experience_level: job.experienceLevel,
-        education_level: job.educationLevel,
-        department: job.department,
-        posted_date: job.postedDate,
-        application_deadline: job.applicationDeadline,
-        is_featured: job.isFeatured,
-        is_remote: job.isRemote,
-        application_count: job.applicationCount || 0,
-        view_count: job.viewCount || 0,
-        status: job.status,
-        company_logo: job.companyLogo,
-        company_description: job.companyDescription,
-        apply_url: job.applyUrl,
-        created_at: job.createdAt,
-        updated_at: job.updatedAt,
-      }));
-
-      console.log(
-        `✅ [JOBS/SEARCH] Found ${formattedJobs.length} jobs matching search`,
-      );
-
-      res.json({
-        success: true,
-        data: formattedJobs,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum),
-        },
-        metadata: { timestamp: new Date().toISOString() },
-      });
-    } catch (error: any) {
-      console.error("❌ Jobs search error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to search jobs",
-        details: error.message,
-        data: [],
-      });
-    }
-  });
-
-  // Generate random jobs
-  app.post("/api/jobs/generate-random", async (req, res) => {
-    try {
-      const { count = 3 } = req.body;
-
-      console.log(`🎲 [JOBS] Generating ${count} random jobs...`);
-
-      const companies = [
-        "TechNova Solutions",
-        "DataFlow Analytics",
-        "CloudNine Systems",
-        "AI Innovations Lab",
-        "NextGen Tech Corp",
-        "Digital Future Inc",
-        "Smart Systems Ltd",
-        "InnovateX Group",
-        "Quantum Labs",
-        "ByteWorks Studio",
-      ];
-
-      const titles = [
-        "Senior Software Engineer",
-        "Data Analyst",
-        "DevOps Specialist",
-        "UX/UI Designer",
-        "Product Manager",
-        "Machine Learning Engineer",
-        "Cloud Architect",
-        "Security Analyst",
-        "Mobile Developer",
-        "QA Engineer",
-        "Full Stack Developer",
-        "Backend Engineer",
-      ];
-
-      const locations = [
-        "Remote (Global)",
-        "San Francisco, CA",
-        "New York, NY",
-        "Austin, TX",
-        "Seattle, WA",
-        "Boston, MA",
-        "Denver, CO",
-        "Chicago, IL",
-      ];
-
-      const departments = [
-        "Engineering",
-        "Data Science",
-        "Product",
-        "Design",
-        "Operations",
-        "Security",
-        "Quality Assurance",
-      ];
-
-      const newJobs = [];
-
-      for (let i = 0; i < count; i++) {
-        const company = companies[Math.floor(Math.random() * companies.length)];
-        const title = titles[Math.floor(Math.random() * titles.length)];
-        const location =
-          locations[Math.floor(Math.random() * locations.length)];
-        const department =
-          departments[Math.floor(Math.random() * departments.length)];
-
-        const salaryMin = 80000 + Math.floor(Math.random() * 70000);
-        const salaryMax = salaryMin + 30000 + Math.floor(Math.random() * 50000);
-
-        const jobData = {
-          title,
-          company,
-          location,
-          type: Math.random() > 0.3 ? "full-time" : "contract",
-          salaryMin,
-          salaryMax,
-          currency: "USD",
-          description: `Join ${company} as a ${title}. We're looking for talented individuals to help us build the future of technology.`,
-          requirements: [
-            "5+ years experience",
-            "Strong technical skills",
-            "Team player",
-          ],
-          benefits: [
-            "Health insurance",
-            "401k matching",
-            "Flexible hours",
-            "Remote work",
-          ],
-          skills: ["JavaScript", "Python", "React", "Node.js", "AWS"].slice(
-            0,
-            Math.floor(Math.random() * 3) + 2,
-          ),
-          experienceLevel: ["entry", "mid", "senior"][
-            Math.floor(Math.random() * 3)
-          ],
-          educationLevel: "bachelor",
-          department,
-          isFeatured: Math.random() > 0.7,
-          isRemote: location.includes("Remote") || Math.random() > 0.6,
-          status: "active",
-          companyLogo: `https://api.dicebear.com/7.x/shapes/svg?seed=${company}`,
-          applicationCount: Math.floor(Math.random() * 20),
-          viewCount: Math.floor(Math.random() * 200) + 50,
-        };
-
-        // Only insert valid job properties that exist in schema
-        const result = await db
-          .insert(schema.jobs)
-          .values({
-            businessId: Math.floor(Math.random() * 34) + 1,
-            title: jobData.title,
-            type: jobData.type,
-            salaryRange: `${jobData.salaryMin}-${jobData.salaryMax} ${jobData.currency}`,
-            isActive: true,
-          })
-          .returning();
-        newJobs.push(result[0]);
-      }
-
-      console.log(`✅ [JOBS] Generated ${newJobs.length} new jobs`);
-
-      res.json({
-        success: true,
-        count: newJobs.length,
-        jobs: newJobs,
-      });
-    } catch (error: any) {
-      console.error("❌ Generate jobs error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to generate jobs",
-        details: error.message,
-      });
-    }
-  });
-
-  // Apply to a job
-  app.post("/api/jobs/:id/apply", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { userId, applied_date } = req.body;
-
-      console.log(`📝 [JOBS] Application for job ${id}`);
-
-      // Increment application count - applicationCount column doesn't exist in jobs table
-      // Skip this update
-      /*
-      await db
-        .update(schema.jobs)
-        .set({
-          applicationCount: sql`${schema.jobs.applicationCount} + 1`,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.jobs.id, id as string));
-      */
-
-      res.json({
-        success: true,
-        message: "Application submitted successfully",
-        jobId: id,
-      });
-    } catch (error: any) {
-      console.error("❌ Job application error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to submit application",
-        details: error.message,
-      });
-    }
-  });
-
-  // Save a job
-  app.post("/api/jobs/:id/save", async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`💾 [JOBS] Saving job ${id}`);
-
-      res.json({
-        success: true,
-        message: "Job saved successfully",
-        jobId: id,
-      });
-    } catch (error: any) {
-      console.error("❌ Save job error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to save job",
-        details: error.message,
-      });
-    }
-  });
-
-  // Unsave a job
-  app.post("/api/jobs/:id/unsave", async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`🗑️ [JOBS] Unsaving job ${id}`);
-
-      res.json({
-        success: true,
-        message: "Job removed from saved list",
-        jobId: id,
-      });
-    } catch (error: any) {
-      console.error("❌ Unsave job error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to unsave job",
-        details: error.message,
-      });
-    }
-  });
-
-  // ========== ARTIST DIRECTORY (PUBLIC) ==========
-
-  // Search artists with filters, pagination, sorting
-  app.get("/api/artists/search", async (req, res) => {
-    try {
-      const {
-        query = "",
-        genre = "",
-        sort_by = "monthly_listeners_desc",
-        page = "1",
-        limit = "12",
-      } = req.query as Record<string, string>;
-
-      const pageNum = Math.max(1, parseInt(page) || 1);
-      const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 12));
-      const offset = (pageNum - 1) * limitNum;
-
-      console.log(
-        `🎵 [ARTISTS] Search: query="${query}" genre="${genre}" sort="${sort_by}" page=${pageNum}`,
-      );
-
-      // Build WHERE clauses
-      const conditions: string[] = [];
-      const params: any[] = [];
-      let paramIdx = 1;
-
-      if (query.trim()) {
-        conditions.push(
-          `(ma.name ILIKE $${paramIdx} OR ma.biography ILIKE $${paramIdx})`,
-        );
-        params.push(`%${query.trim()}%`);
-        paramIdx++;
-      }
-
-      if (genre.trim()) {
-        conditions.push(`ma.genre = $${paramIdx}`);
-        params.push(genre.trim());
-        paramIdx++;
-      }
-
-      const whereClause =
-        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-      // Sort
-      let orderClause = "ORDER BY ma.monthly_listeners DESC NULLS LAST";
-      switch (sort_by) {
-        case "name_asc":
-          orderClause = "ORDER BY ma.name ASC";
-          break;
-        case "name_desc":
-          orderClause = "ORDER BY ma.name DESC";
-          break;
-        case "streams_desc":
-          orderClause = "ORDER BY ma.total_streams DESC NULLS LAST";
-          break;
-        case "streams_asc":
-          orderClause = "ORDER BY ma.total_streams ASC NULLS LAST";
-          break;
-        case "monthly_listeners_desc":
-          orderClause = "ORDER BY ma.monthly_listeners DESC NULLS LAST";
-          break;
-        case "monthly_listeners_asc":
-          orderClause = "ORDER BY ma.monthly_listeners ASC NULLS LAST";
-          break;
-        case "recent":
-          orderClause = "ORDER BY ma.created_at DESC";
-          break;
-      }
-
-      // Count query
-      const countQuery = `SELECT COUNT(*) as total FROM music_artists ma ${whereClause}`;
-      const countResult = await pool.query(countQuery, params);
-      const total = parseInt(countResult.rows[0]?.total || "0");
-
-      // Data query with track count
-      const dataQuery = `
-        SELECT 
-          ma.id, ma.name, ma.genre, ma.biography, ma.image_url,
-          ma.total_streams, ma.monthly_listeners, ma.created_at,
-          COALESCE(tc.track_count, 0) AS track_count
-        FROM music_artists ma
-        LEFT JOIN (
-          SELECT artist_id, COUNT(*) AS track_count 
-          FROM music_tracks 
-          GROUP BY artist_id
-        ) tc ON tc.artist_id = ma.id
-        ${whereClause}
-        ${orderClause}
-        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
-      `;
-
-      const dataResult = await pool.query(dataQuery, [
-        ...params,
-        limitNum,
-        offset,
-      ]);
-
-      res.json({
-        success: true,
-        data: dataResult.rows,
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(total / limitNum),
-      });
-    } catch (error: any) {
-      console.error("❌ Artist search error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to search artists",
-        details: error.message,
-      });
-    }
-  });
-
-  // Get all distinct genres
-  app.get("/api/artists/genres", async (_req, res) => {
-    try {
-      const result = await pool.query(
-        "SELECT DISTINCT genre FROM music_artists WHERE genre IS NOT NULL ORDER BY genre ASC",
-      );
-      res.json({
-        success: true,
-        data: result.rows.map((r: any) => r.genre),
-      });
-    } catch (error: any) {
-      console.error("❌ Get genres error:", error);
-      res.status(500).json({ success: false, error: "Failed to fetch genres" });
-    }
-  });
-
-  // Get single artist with full details + tracks
-  app.get("/api/artists/:id/details", async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`🎵 [ARTISTS] Fetching artist details for ID ${id}`);
-
-      const artistResult = await pool.query(
-        "SELECT * FROM music_artists WHERE id = $1",
-        [parseInt(id)],
-      );
-
-      if (artistResult.rows.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, error: "Artist not found" });
-      }
-
-      const tracksResult = await pool.query(
-        "SELECT * FROM music_tracks WHERE artist_id = $1 ORDER BY streams DESC NULLS LAST",
-        [parseInt(id)],
-      );
-
-      // Get analytics summary if available
-      let analytics = null;
-      try {
-        const analyticsResult = await pool.query(
-          `SELECT 
-            SUM(streams) as total_streams, 
-            SUM(downloads) as total_downloads,
-            SUM(shares) as total_shares,
-            SUM(revenue::numeric) as total_revenue
-          FROM music_analytics WHERE artist_id = $1`,
-          [parseInt(id)],
-        );
-        if (analyticsResult.rows[0]?.total_streams) {
-          analytics = analyticsResult.rows[0];
-        }
-      } catch {
-        /* analytics table may not have data */
-      }
-
-      res.json({
-        success: true,
-        data: {
-          ...artistResult.rows[0],
-          tracks: tracksResult.rows,
-          analytics,
-        },
-      });
-    } catch (error: any) {
-      console.error("❌ Artist details error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch artist details",
-        details: error.message,
-      });
-    }
-  });
-
-  // ========== MUSIC & ARTIST ENDPOINTS ==========
-
-  // Get all music artists
-  app.get("/api/music/artists", async (req, res) => {
-    try {
-      console.log("🎵 [MUSIC] Fetching all artists");
-      const artists = await db
-        .select()
-        .from(schema.musicArtists)
-        .orderBy(schema.musicArtists.id);
-
-      res.json({
-        success: true,
-        data: artists,
-        count: artists.length,
-      });
-    } catch (error: any) {
-      console.error("❌ Get music artists error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch music artists",
-        details: error.message,
-      });
-    }
-  });
-
-  // Get all music tracks
-  app.get("/api/music/tracks", async (req, res) => {
-    try {
-      console.log("🎵 [MUSIC] Fetching all tracks");
-      const tracks = await db
-        .select()
-        .from(schema.musicTracks)
-        .orderBy(schema.musicTracks.id);
-
-      res.json({
-        success: true,
-        data: tracks,
-        count: tracks.length,
-      });
-    } catch (error: any) {
-      console.error("❌ Get music tracks error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch music tracks",
-        details: error.message,
-      });
-    }
-  });
-
-  // Get music analytics
-  app.get("/api/music/analytics", async (req, res) => {
-    try {
-      console.log("📊 [MUSIC] Fetching music analytics");
-      const analytics = await db
-        .select()
-        .from(schema.musicAnalytics)
-        .orderBy(schema.musicAnalytics.recordedAt)
-        .limit(1);
-
-      const analyticsData = analytics[0] || {
-        id: 0,
-        totalArtists: 0,
-        totalTracks: 0,
-        totalStreams: 0,
-        recordedAt: new Date(),
-      };
-
-      res.json({
-        success: true,
-        data: analyticsData,
-      });
-    } catch (error: any) {
-      console.error("❌ Get music analytics error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch music analytics",
-        details: error.message,
-      });
-    }
-  });
-
-  // Get artist by ID with tracks
-  app.get("/api/music/artists/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`🎵 [MUSIC] Fetching artist ${id}`);
-
-      const artist = await db
-        .select()
-        .from(schema.musicArtists)
-        .where(eq(schema.musicArtists.id, parseInt(id)))
-        .limit(1);
-
-      if (!artist.length) {
-        return res.status(404).json({
-          success: false,
-          error: "Artist not found",
-        });
-      }
-
-      const tracks = await db
-        .select()
-        .from(schema.musicTracks)
-        .where(eq(schema.musicTracks.artistId, parseInt(id)))
-        .orderBy(schema.musicTracks.id);
-
-      res.json({
-        success: true,
-        data: {
-          ...artist[0],
-          tracks,
-        },
-      });
-    } catch (error: any) {
-      console.error("❌ Get artist error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch artist",
-        details: error.message,
-      });
-    }
-  });
-
-  // Generate random artists (for testing)
-  app.post("/api/music/artists/generate-random", async (req, res) => {
-    try {
-      const { count = 10 } = req.body;
-      console.log(`🎵 [MUSIC] Generating ${count} random artists`);
-
-      const genres = [
-        "Pop",
-        "Rock",
-        "Hip Hop",
-        "Electronic",
-        "Jazz",
-        "R&B",
-        "Country",
-        "Reggae",
-        "Latin",
-        "Classical",
-      ];
-      const firstNames = [
-        "Alex",
-        "Jordan",
-        "Taylor",
-        "Morgan",
-        "Casey",
-        "Riley",
-        "Drew",
-        "Sage",
-      ];
-      const lastNames = [
-        "Storm",
-        "Phoenix",
-        "Rivers",
-        "Knight",
-        "Azure",
-        "Blaze",
-        "Nova",
-      ];
-
-      const artists = [];
-      for (let i = 0; i < count; i++) {
-        const firstName =
-          firstNames[Math.floor(Math.random() * firstNames.length)];
-        const lastName =
-          lastNames[Math.floor(Math.random() * lastNames.length)];
-        const genre = genres[Math.floor(Math.random() * genres.length)];
-        const totalStreams = Math.floor(Math.random() * 5000000) + 100000;
-        const monthlyListeners = Math.floor(totalStreams * 0.3);
-
-        const [artist] = await db
-          .insert(schema.musicArtists)
-          .values({
-            stageName: `${firstName} ${lastName}`,
-            genre,
-          })
-          .returning();
-
-        artists.push(artist);
-      }
-
-      res.json({
-        success: true,
-        data: artists,
-        count: artists.length,
-      });
-    } catch (error: any) {
-      console.error("❌ Generate artists error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to generate artists",
-        details: error.message,
-      });
-    }
-  });
-
-  // =====================================================================
-  // DATA DISPATCH ENDPOINTS - Businesses Directory
-  // =====================================================================
-
-  /**
-   * POST /api/data/dispatch/categories
-   * Syncs all 17 business categories to the database
-   */
-  app.post("/api/data/dispatch/categories", async (req, res) => {
-    try {
-      console.log("🚀 Dispatching business categories...");
-
-      const categories = [
-        {
-          name: "Communication & Publicité",
-          slug: "communication",
-          description:
-            "Agences de communication, médias, imprimeries, événementiel et cadeaux d'entreprise.",
-        },
-        {
-          name: "IT & Internet",
-          slug: "it-internet",
-          description:
-            "Services informatiques, développement web, hébergement cloud et solutions digitales.",
-        },
-        {
-          name: "Immobilier",
-          slug: "immobilier",
-          description:
-            "Agences immobilières, promoteurs et gestion de propriétés.",
-        },
-        {
-          name: "Conseil, Audit & Juridique",
-          slug: "conseil-juridique",
-          description:
-            "Experts-comptables, avocats, notaires et services de conseil aux entreprises.",
-        },
-        {
-          name: "Santé",
-          slug: "sante",
-          description:
-            "Médecins, cliniques, hôpitaux, pharmacies et laboratoires d'analyses.",
-        },
-        {
-          name: "Alimentation & Restauration",
-          slug: "alimentation",
-          description:
-            "Restaurants, traiteurs, commerces alimentaires et services culinaires.",
-        },
-        {
-          name: "Animaux",
-          slug: "animaux",
-          description:
-            "Vétérinaires, animaleries, toilettage et soins pour animaux.",
-        },
-        {
-          name: "Artisans",
-          slug: "artisans",
-          description:
-            "Plombiers, électriciens, menuisiers et artisans qualifiés.",
-        },
-        {
-          name: "Maison & Décoration",
-          slug: "maison-deco",
-          description:
-            "Mobilier, décoration intérieure, électroménager et design.",
-        },
-        {
-          name: "Mode & Textile",
-          slug: "mode-textile",
-          description: "Vêtements, tissus, accessoires et créateurs de mode.",
-        },
-        {
-          name: "Télécommunications",
-          slug: "telecom",
-          description:
-            "Opérateurs téléphoniques, fournisseurs internet et équipements réseau.",
-        },
-        {
-          name: "Agroalimentaire",
-          slug: "agroalimentaire",
-          description:
-            "Agriculture, élevage, transformation alimentaire et agribusiness.",
-        },
-        {
-          name: "Administrations",
-          slug: "administrations",
-          description:
-            "Services publics, ambassades, consulats et institutions gouvernementales.",
-        },
-        {
-          name: "Associations Professionnelles",
-          slug: "associations",
-          description:
-            "Syndicats, fédérations et organisations professionnelles.",
-        },
-        {
-          name: "Bien-être & Beauté",
-          slug: "bien-etre",
-          description:
-            "Spas, salons de beauté, coiffeurs et soins esthétiques.",
-        },
-        {
-          name: "Emploi & RH",
-          slug: "emploi",
-          description:
-            "Cabinets de recrutement, agences d'intérim et formation professionnelle.",
-        },
-        {
-          name: "Autres Services",
-          slug: "autres",
-          description: "Services divers et spécialisés.",
-        },
-      ];
-
-      let synced = 0;
-      for (const category of categories) {
-        try {
-          await db
-            .insert(schema.businessCategories)
-            .values({
-              name: category.name,
-              slug: category.slug,
-            })
-            .onConflictDoNothing()
-            .execute();
-          synced++;
-        } catch (error) {
-          console.warn(`Warning syncing category ${category.name}:`, error);
-        }
-      }
-
-      console.log(`✅ Synced ${synced}/${categories.length} categories`);
-      res.json({
-        success: true,
-        message: `Successfully synced ${synced} categories`,
-        count: synced,
-        total: categories.length,
-      });
-    } catch (error) {
-      console.error("Error dispatching categories:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to dispatch categories",
-      });
-    }
-  });
-
-  /**
-   * GET /api/data/dispatch/status
-   * Get statistics about dispatched data
-   */
-  app.get("/api/data/dispatch/status", async (req, res) => {
-    try {
-      const categoryCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.businessCategories)
-        .execute();
-
-      const businessCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.businesses)
-        .execute();
-
-      const categoryStats = await db
-        .select({
-          categoryName: schema.businessCategories.name,
-          categorySlug: schema.businessCategories.slug,
-          businessCount: sql<number>`count(${schema.businesses.id})`,
-        })
-        .from(schema.businessCategories)
-        .leftJoin(
-          schema.businesses,
-          eq(schema.businessCategories.id, schema.businesses.categoryId),
-        )
-        .groupBy(
-          schema.businessCategories.id,
-          schema.businessCategories.name,
-          schema.businessCategories.slug,
-        )
-        .orderBy(sql`count(${schema.businesses.id}) DESC`)
-        .execute();
-
-      res.json({
-        success: true,
-        statistics: {
-          totalCategories: categoryCount[0].count,
-          totalBusinesses: businessCount[0].count,
-          categoriesByBusiness: categoryStats,
-        },
-      });
-    } catch (error) {
-      console.error("Error getting dispatch status:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to get dispatch status",
-      });
-    }
-  });
-
-  /**
-   * POST /api/data/dispatch/seed-businesses
-   * Seed sample businesses into the database
-   */
-  app.post("/api/data/dispatch/seed-businesses", async (req, res) => {
-    try {
-      console.log("🚀 Seeding sample businesses...");
-
-      // Get all active categories
-      const categories = await db
-        .select({
-          id: schema.businessCategories.id,
-          name: schema.businessCategories.name,
-        })
-        .from(schema.businessCategories)
-        .execute();
-
-      if (categories.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: "No categories found. Please seed categories first.",
-        });
-      }
-
-      const sampleNames = [
-        "Elite Solutions",
-        "Prime Services",
-        "Global Partners",
-        "United Ventures",
-        "Smart Innovations",
-        "Tech Leaders",
-        "Business Hub",
-        "Market Masters",
-        "Growth Partners",
-        "Success Academy",
-        "Digital Dynamics",
-        "Future First",
-        "Alliance Group",
-        "Excellence Co",
-        "Top Tier Services",
-        "Professional Plus",
-      ];
-
-      const sampleDescriptions = [
-        "Leading provider of professional services",
-        "Innovative solutions for modern businesses",
-        "Trusted partner for growth and success",
-        "Expert team with years of experience",
-        "Premium quality and exceptional service",
-        "Dedicated to your business success",
-        "Industry-leading expertise and support",
-        "Your go-to solution provider",
-      ];
-
-      let seeded = 0;
-
-      // Seed 3-5 businesses per category (up to ~400 total)
-      for (const category of categories) {
-        const businessCount = Math.floor(Math.random() * 3) + 3; // 3-5 per category
-
-        for (let i = 0; i < businessCount; i++) {
-          const name = `${sampleNames[Math.floor(Math.random() * sampleNames.length)]} - ${category.name} #${i + 1}`;
-          const description =
-            sampleDescriptions[
-              Math.floor(Math.random() * sampleDescriptions.length)
-            ];
-          const rating = (Math.random() * 2 + 3).toFixed(1); // 3.0-5.0
-          const reviews = Math.floor(Math.random() * 200) + 10;
-
-          try {
-            await db
-              .insert(schema.businesses)
-              .values({
-                name,
-                categoryId: category.id,
-                description,
-                location: `City ${Math.floor(Math.random() * 100)}`,
-                phone: `+225 27 22 ${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`,
-                email: `contact@${name.toLowerCase().replace(/\s+/g, "-")}.ci`,
-                rating,
-                reviews,
-                countryCode: "CI",
-                isAdvertiser: Math.random() > 0.7,
-              })
-              .execute();
-            seeded++;
-          } catch (error) {
-            // Skip duplicates
-          }
-        }
-      }
-
-      console.log(`✅ Seeded ${seeded} businesses`);
-
-      res.json({
-        success: true,
-        message: `Successfully seeded ${seeded} businesses`,
-        count: seeded,
-      });
-    } catch (error) {
-      console.error("Error seeding businesses:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to seed businesses",
-        details: (error as Error).message,
-      });
-    }
-  });
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // SETTINGS API ENDPOINTS
-  // ══════════════════════════════════════════════════════════════════════════
-
-  /**
-   * GET /api/settings/:sector
-   * Retrieve all settings for a specific sector
-   */
-  app.get("/api/settings/:sector", async (req, res) => {
-    try {
-      const { sector } = req.params;
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader) {
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized",
-        });
-      }
-
-      const token = authHeader.replace("Bearer ", "");
-      let userId: number | null = null;
-
-      // Decode JWT to get user ID
-      try {
-        const decoded: any = jwt.verify(
-          token,
-          process.env.JWT_SECRET || "your-secret-key",
-        );
-        userId = decoded.userId || decoded.sub;
-      } catch {
-        // Token invalid
-        return res.status(401).json({
-          success: false,
-          message: "Invalid token",
-        });
-      }
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: "User not found in token",
-        });
-      }
-
-      // Fetch all settings for this user/sector
-      const settings = await db
-        .select()
-        .from(schema.userSettings)
-        .where(
-          and(
-            eq(schema.userSettings.userId, userId),
-            eq(schema.userSettings.sector, sector),
-          ),
-        )
-        .execute();
-
-      // Convert to key-value object
-      const settingsObj: Record<string, any> = {};
-      settings.forEach((setting) => {
-        try {
-          // Try to parse JSON value
-          const parsed = JSON.parse(
-            setting.settingValue || setting.defaultValue || "false",
-          );
-          settingsObj[setting.settingKey] = parsed;
-        } catch {
-          // Fall back to string value
-          settingsObj[setting.settingKey] =
-            setting.settingValue || setting.defaultValue;
-        }
-      });
-
-      res.json({
-        success: true,
-        sector,
-        settings: settingsObj,
-      });
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch settings",
-        details: (error as Error).message,
-      });
-    }
-  });
-
-  /**
-   * POST /api/settings/:sector
-   * Update settings for a specific sector
-   */
-  app.post("/api/settings/:sector", async (req, res) => {
-    try {
-      const { sector } = req.params;
-      const { settings } = req.body;
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader) {
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized",
-        });
-      }
-
-      const token = authHeader.replace("Bearer ", "");
-      let userId: number | null = null;
-
-      // Decode JWT to get user ID
-      try {
-        const decoded: any = jwt.verify(
-          token,
-          process.env.JWT_SECRET || "your-secret-key",
-        );
-        userId = decoded.userId || decoded.sub;
-      } catch {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid token",
-        });
-      }
-
-      if (!userId || !settings || typeof settings !== "object") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid request",
-        });
-      }
-
-      const updated: string[] = [];
-
-      // Update each setting
-      for (const [key, value] of Object.entries(settings)) {
-        const settingValue = JSON.stringify(value);
-
-        // Upsert (insert or update)
-        await db
-          .insert(schema.userSettings)
-          .values({
-            userId,
-            sector,
-            settingKey: key,
-            settingValue,
-            dataType: typeof value,
-          })
-          .onConflictDoUpdate({
-            target: [
-              schema.userSettings.userId,
-              schema.userSettings.sector,
-              schema.userSettings.settingKey,
-            ],
-            set: {
-              settingValue,
-              dataType: typeof value,
-              updatedAt: new Date(),
-            },
-          })
-          .execute();
-
-        updated.push(key);
-      }
-
-      res.json({
-        success: true,
-        sector,
-        updated,
-        message: `Updated ${updated.length} settings`,
-      });
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to update settings",
-        details: (error as Error).message,
-      });
-    }
-  });
-
-  /**
-   * GET /api/settings
-   * Retrieve all settings for all sectors for a user
-   */
-  app.get("/api/settings", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader) {
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized",
-        });
-      }
-
-      const token = authHeader.replace("Bearer ", "");
-      let userId: number | null = null;
-
-      // Decode JWT to get user ID
-      try {
-        const decoded: any = jwt.verify(
-          token,
-          process.env.JWT_SECRET || "your-secret-key",
-        );
-        userId = decoded.userId || decoded.sub;
-      } catch {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid token",
-        });
-      }
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: "User not found in token",
-        });
-      }
-
-      // Fetch all settings for this user across all sectors
-      const settings = await db
-        .select()
-        .from(schema.userSettings)
-        .where(eq(schema.userSettings.userId, userId))
-        .execute();
-
-      // Organize by sector
-      const settingsBySector: Record<string, Record<string, any>> = {};
-
-      settings.forEach((setting) => {
-        if (!settingsBySector[setting.sector]) {
-          settingsBySector[setting.sector] = {};
-        }
-
-        try {
-          const parsed = JSON.parse(
-            setting.settingValue || setting.defaultValue || "false",
-          );
-          settingsBySector[setting.sector][setting.settingKey] = parsed;
-        } catch {
-          settingsBySector[setting.sector][setting.settingKey] =
-            setting.settingValue || setting.defaultValue;
-        }
-      });
-
-      res.json({
-        success: true,
-        settings: settingsBySector,
-      });
-    } catch (error) {
-      console.error("Error fetching all settings:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch settings",
-        details: (error as Error).message,
-      });
-    }
-  });
-
+  // ========== ARTIST DIRECTORY (EXTRACTED → server/routes/music.ts) ==========
+  // Handled by musicRouter registered above
   // 404 handler
   app.use("/api/*", (req, res) => {
     res.status(404).json({

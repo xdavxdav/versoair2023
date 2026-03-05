@@ -10,6 +10,7 @@ import {
   staggerItem,
   defaultViewport,
 } from "@/lib/animations";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 // Community activities data
 const COMMUNITY_ACTIVITIES = [
@@ -262,6 +263,7 @@ export default function GetInvolved() {
     (typeof COMMUNITY_ACTIVITIES)[0] | null
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  useScrollLock(isModalOpen);
 
   const openModal = (activity: (typeof COMMUNITY_ACTIVITIES)[0]) => {
     setSelectedActivity(activity);

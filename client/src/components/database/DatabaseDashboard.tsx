@@ -213,9 +213,9 @@ export const DatabaseDashboard = memo(() => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (table: TableMetadata) =>
-          table.name.toLowerCase().includes(query) ||
-          table.displayName.toLowerCase().includes(query) ||
-          table.description.toLowerCase().includes(query),
+          table.name.toLowerCase().startsWith(query) ||
+          table.displayName.toLowerCase().startsWith(query) ||
+          table.description.toLowerCase().startsWith(query),
       );
     }
 

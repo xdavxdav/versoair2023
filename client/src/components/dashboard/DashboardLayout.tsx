@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, RefreshCw, LogOut } from "lucide-react";
+import { Search, RefreshCw, LogOut, Menu } from "lucide-react";
 import { DashboardSidebar, NavSection } from "./DashboardSidebar";
 
 export interface DashboardLayoutProps {
@@ -36,8 +36,8 @@ export function DashboardLayout({
   };
 
   return (
-    <div className="flex flex-1 bg-slate-950 text-white h-full">
-      {/* Sidebar */}
+    <div className="flex flex-1 bg-slate-950 text-white min-h-screen">
+      {/* Sidebar — fixed overlay on mobile/tablet, sticky on desktop */}
       <DashboardSidebar
         sections={sections}
         activeSection={activeSection}
@@ -47,16 +47,24 @@ export function DashboardLayout({
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Top Bar */}
         <header className="bg-slate-900 border-b border-slate-700 px-6 py-4 lg:ml-0 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             {/* Left Section */}
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white">{title}</h2>
-              {subtitle && (
-                <p className="text-sm text-slate-400 mt-1">{subtitle}</p>
-              )}
+            <div className="flex items-center gap-3 flex-1">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-white">{title}</h2>
+                {subtitle && (
+                  <p className="text-sm text-slate-400 mt-1">{subtitle}</p>
+                )}
+              </div>
             </div>
 
             {/* Right Section */}
@@ -117,8 +125,8 @@ export function DashboardLayout({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">{children}</div>
+        <main className="flex-1 min-h-0 overflow-y-auto">
+          <div className="p-4 md:p-6 space-y-6">{children}</div>
         </main>
       </div>
     </div>

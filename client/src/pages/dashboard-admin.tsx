@@ -152,6 +152,19 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import {
   Table,
   TableBody,
   TableCell,
@@ -179,14 +192,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -570,6 +575,8 @@ const BusinessManagement = ({
   const [categories, setCategories] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
+  const [countriesList, setCountriesList] = useState<any[]>([]);
   const [categorySearch, setCategorySearch] = useState("");
   const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -590,10 +597,26 @@ const BusinessManagement = ({
     phone: "",
     address: "",
     description: "",
+    // Location
+    cityName: "",
+    countryCode: "",
+    latitude: "",
+    longitude: "",
+    // Contact & Web
+    website: "",
+    // Discoverability
+    businessType: "",
+    tags: "",
+    openingHours: "",
   });
 
   const fetchBusinesses = useCallback(
-    async (searchTerm = "", categoryFilter = "all", pageNum = 1) => {
+    async (
+      searchTerm = "",
+      categoryFilter = "all",
+      pageNum = 1,
+      countryFilter = "all",
+    ) => {
       setLoading(true);
       try {
         const params = new URLSearchParams({
@@ -602,16 +625,27 @@ const BusinessManagement = ({
         });
         if (searchTerm.trim()) params.set("search", searchTerm.trim());
         if (categoryFilter !== "all") params.set("category", categoryFilter);
+        if (countryFilter && countryFilter !== "all")
+          params.set("countryCode", countryFilter);
 
-        const businessRes = await authenticatedFetch(
-          `${API_BASE_URL}/api/businesses?${params.toString()}`,
-        );
+        const url = `${API_BASE_URL}/api/businesses?${params.toString()}`;
+        console.log("[Business Filter] Fetching from:", url, {
+          searchTerm,
+          categoryFilter,
+          countryFilter,
+        });
+
+        const businessRes = await authenticatedFetch(url);
         const businessData = await businessRes.json();
 
         if (businessData.success || businessData.data) {
           setBusinesses(businessData.data || []);
           if (businessData.pagination) {
-            setTotalPages(businessData.pagination.totalPages || 1);
+            setTotalPages(
+              businessData.pagination.totalPages ||
+                businessData.pagination.pages ||
+                1,
+            );
             setTotalCount(businessData.pagination.total || 0);
           } else {
             setTotalPages(1);
@@ -652,8 +686,24 @@ const BusinessManagement = ({
 
   // Initial load — fetch businesses once
   useEffect(() => {
-    fetchBusinesses("", "all", 1);
+    fetchBusinesses("", "all", 1, selectedCountry);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load countries list
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/countries`);
+        if (res.ok) {
+          const data = await res.json();
+          setCountriesList(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (err) {
+        console.warn("Failed to load countries:", err);
+      }
+    };
+    loadCountries();
   }, []);
 
   // Load categories independently (always fetch from API)
@@ -708,13 +758,13 @@ const BusinessManagement = ({
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
       setPage(1);
-      fetchBusinesses(search, selectedCategory, 1);
+      fetchBusinesses(search, selectedCategory, 1, selectedCountry);
     }, 400);
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, selectedCategory]);
+  }, [search, selectedCategory, selectedCountry]);
 
   // Re-fetch when page changes (but not on initial mount, initial load handles that)
   const isInitialMount = useRef(true);
@@ -723,7 +773,7 @@ const BusinessManagement = ({
       isInitialMount.current = false;
       return;
     }
-    fetchBusinesses(search, selectedCategory, page);
+    fetchBusinesses(search, selectedCategory, page, selectedCountry);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
@@ -759,7 +809,7 @@ const BusinessManagement = ({
       const data = await response.json();
       if (data.success) {
         setPage(1);
-        await fetchBusinesses("", "all", 1);
+        await fetchBusinesses("", "all", 1, selectedCountry);
         toast({
           title: "Success",
           description: `${data.count} sample businesses added 🎉`,
@@ -803,7 +853,7 @@ const BusinessManagement = ({
       const data = await response.json();
 
       if (data.success) {
-        await fetchBusinesses(search, selectedCategory, page);
+        await fetchBusinesses(search, selectedCategory, page, selectedCountry);
         setShowAddDialog(false);
         setNewBusiness({
           name: "",
@@ -812,6 +862,14 @@ const BusinessManagement = ({
           phone: "",
           address: "",
           description: "",
+          cityName: "",
+          countryCode: "",
+          latitude: "",
+          longitude: "",
+          website: "",
+          businessType: "",
+          tags: "",
+          openingHours: "",
         });
         toast({
           title: "Success",
@@ -850,7 +908,7 @@ const BusinessManagement = ({
       );
       const data = await response.json();
       if (data.success) {
-        await fetchBusinesses(search, selectedCategory, page);
+        await fetchBusinesses(search, selectedCategory, page, selectedCountry);
         setShowEditDialog(false);
         setCurrentBusiness(null);
         toast({
@@ -880,7 +938,7 @@ const BusinessManagement = ({
       );
       const data = await response.json();
       if (data.success) {
-        await fetchBusinesses(search, selectedCategory, page);
+        await fetchBusinesses(search, selectedCategory, page, selectedCountry);
         setShowDeleteDialog(false);
         setCurrentBusiness(null);
         toast({
@@ -914,11 +972,23 @@ const BusinessManagement = ({
             <CardDescription className="text-base mt-2">
               Manage{" "}
               <span className="font-semibold text-gray-700">{totalCount}</span>{" "}
-              active businesses across{" "}
-              <span className="font-semibold text-gray-700">
-                {categories.filter((c: any) => !c.parentId).length}
-              </span>{" "}
-              main categories ({categories.length} total)
+              {selectedCountry !== "all" ? (
+                <>
+                  businesses in{" "}
+                  <span className="font-semibold text-amber-600">
+                    {countriesList.find((c: any) => c.code === selectedCountry)
+                      ?.name || selectedCountry}
+                  </span>
+                </>
+              ) : (
+                <>
+                  active businesses across{" "}
+                  <span className="font-semibold text-gray-700">
+                    {categories.filter((c: any) => !c.parentId).length}
+                  </span>{" "}
+                  main categories ({categories.length} total)
+                </>
+              )}
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -936,7 +1006,16 @@ const BusinessManagement = ({
               {seedingLoading ? "Loading..." : "Load Sample Data"}
             </Button>
             <Button
-              onClick={() => setShowAddDialog(true)}
+              onClick={() => {
+                setShowAddDialog(true);
+                // Pre-fill countryCode with selected country (if not "all")
+                if (selectedCountry && selectedCountry !== "all") {
+                  setNewBusiness((prev) => ({
+                    ...prev,
+                    countryCode: selectedCountry,
+                  }));
+                }
+              }}
               className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
             >
               <Plus className="h-4 w-4" />
@@ -951,6 +1030,46 @@ const BusinessManagement = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
+          {/* Country Filter */}
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">
+                Country
+              </span>
+            </div>
+            <select
+              value={selectedCountry}
+              onChange={(e) => {
+                const newCountry = e.target.value;
+                setSelectedCountry(newCountry);
+                setPage(1);
+                // Fetch immediately with new country
+                fetchBusinesses(search, selectedCategory, 1, newCountry);
+              }}
+              className="flex-1 min-w-[140px] sm:min-w-[180px] md:max-w-xs h-9 px-3 rounded-md border border-amber-300 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            >
+              <option value="all">🌍 All Countries</option>
+              {countriesList.map((c: any) => (
+                <option key={c.code || c.id} value={c.code}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
+            {selectedCountry !== "all" && (
+              <button
+                onClick={() => {
+                  setSelectedCountry("all");
+                  setPage(1);
+                  fetchBusinesses(search, selectedCategory, 1, "all");
+                }}
+                className="text-xs text-amber-600 hover:text-amber-800 underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           {/* Stats Row */}
           {businesses.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -962,13 +1081,20 @@ const BusinessManagement = ({
               </div>
               <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                 <div className="text-2xl font-bold text-green-700">
-                  {businesses.filter((b: any) => b.isVerified).length}
+                  {
+                    businesses.filter((b: any) => b.isVerified || b.is_verified)
+                      .length
+                  }
                 </div>
                 <div className="text-xs text-green-600">Verified</div>
               </div>
               <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="text-2xl font-bold text-purple-700">
-                  {businesses.filter((b: any) => b.isAdvertiser).length}
+                  {
+                    businesses.filter(
+                      (b: any) => b.isAdvertiser || b.is_advertiser,
+                    ).length
+                  }
                 </div>
                 <div className="text-xs text-purple-600">Advertisers</div>
               </div>
@@ -1018,7 +1144,7 @@ const BusinessManagement = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+                      className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto overscroll-contain"
                     >
                       <button
                         onClick={() => {
@@ -1053,7 +1179,7 @@ const BusinessManagement = ({
                               ? subs.filter((s: any) =>
                                   s.name
                                     .toLowerCase()
-                                    .includes(categorySearch.toLowerCase()),
+                                    .startsWith(categorySearch.toLowerCase()),
                                 )
                               : subs;
 
@@ -1304,99 +1430,283 @@ const BusinessManagement = ({
 
       {/* Add Business Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Add New Business</DialogTitle>
             <DialogDescription>
-              Create a new business listing in the directory
+              Create a new business listing with full discovery metrics
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="overflow-y-auto overscroll-contain flex-1 pr-2 space-y-6">
+            {/* ── Identity ── */}
             <div>
-              <Label htmlFor="name">Business Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter business name"
-                value={newBusiness.name}
-                onChange={(e) =>
-                  setNewBusiness({ ...newBusiness, name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Category *</Label>
-              <Select
-                value={
-                  newBusiness.categoryId
-                    ? String(newBusiness.categoryId)
-                    : undefined
-                }
-                onValueChange={(value) =>
-                  setNewBusiness({
-                    ...newBusiness,
-                    categoryId: parseInt(value),
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.length === 0 ? (
-                    <SelectItem value="__loading" disabled>
-                      Loading categories...
-                    </SelectItem>
-                  ) : (
-                    categories
-                      .filter((c: any) => !c.parentId)
-                      .map((cat: any) => (
-                        <SelectItem key={cat.id} value={String(cat.id)}>
-                          {cat.name}
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Building className="h-4 w-4" /> Identity
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Business Name *</Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter business name"
+                    value={newBusiness.name}
+                    onChange={(e) =>
+                      setNewBusiness({ ...newBusiness, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Category *</Label>
+                  <Select
+                    value={
+                      newBusiness.categoryId
+                        ? String(newBusiness.categoryId)
+                        : undefined
+                    }
+                    onValueChange={(value) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        categoryId: parseInt(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.length === 0 ? (
+                        <SelectItem value="__loading" disabled>
+                          Loading categories...
                         </SelectItem>
-                      ))
-                  )}
-                </SelectContent>
-              </Select>
+                      ) : (
+                        categories
+                          .filter((c: any) => !c.parentId)
+                          .map((cat: any) => (
+                            <SelectItem key={cat.id} value={String(cat.id)}>
+                              {cat.name}
+                            </SelectItem>
+                          ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="businessType">Business Type</Label>
+                  <Select
+                    value={newBusiness.businessType || undefined}
+                    onValueChange={(value) =>
+                      setNewBusiness({ ...newBusiness, businessType: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="restaurant">Restaurant</SelectItem>
+                      <SelectItem value="hotel">Hotel</SelectItem>
+                      <SelectItem value="retail">Retail / Shop</SelectItem>
+                      <SelectItem value="service">Service Provider</SelectItem>
+                      <SelectItem value="construction">Construction</SelectItem>
+                      <SelectItem value="automotive">Automotive</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                      <SelectItem value="entertainment">
+                        Entertainment
+                      </SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
+
+            <Separator />
+
+            {/* ── Location ── */}
             <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="business@example.com"
-                value={newBusiness.email}
-                onChange={(e) =>
-                  setNewBusiness({ ...newBusiness, email: e.target.value })
-                }
-              />
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <MapPin className="h-4 w-4" /> Location
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="address">Street Address</Label>
+                  <Input
+                    id="address"
+                    placeholder="123 Main Street, Suite 4"
+                    value={newBusiness.address}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        address: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cityName">City</Label>
+                  <Input
+                    id="cityName"
+                    placeholder="Paris"
+                    value={newBusiness.cityName}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        cityName: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="countryCode">Country Code</Label>
+                  <Input
+                    id="countryCode"
+                    placeholder="FR"
+                    maxLength={2}
+                    value={newBusiness.countryCode}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        countryCode: e.target.value.toUpperCase(),
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="latitude">Latitude</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="48.8566"
+                    value={newBusiness.latitude}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        latitude: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="longitude">Longitude</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="2.3522"
+                    value={newBusiness.longitude}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        longitude: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
             </div>
+
+            <Separator />
+
+            {/* ── Contact & Web ── */}
             <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                placeholder="+33123456789"
-                value={newBusiness.phone}
-                onChange={(e) =>
-                  setNewBusiness({ ...newBusiness, phone: e.target.value })
-                }
-              />
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Phone className="h-4 w-4" /> Contact & Web
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="business@example.com"
+                    value={newBusiness.email}
+                    onChange={(e) =>
+                      setNewBusiness({ ...newBusiness, email: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    placeholder="+33 1 23 45 67 89"
+                    value={newBusiness.phone}
+                    onChange={(e) =>
+                      setNewBusiness({ ...newBusiness, phone: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    placeholder="https://www.example.com"
+                    value={newBusiness.website}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        website: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
             </div>
+
+            <Separator />
+
+            {/* ── Discoverability ── */}
             <div>
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                placeholder="Business address"
-                value={newBusiness.address}
-                onChange={(e) =>
-                  setNewBusiness({ ...newBusiness, address: e.target.value })
-                }
-              />
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Search className="h-4 w-4" /> Discoverability
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="tags">Tags / Keywords</Label>
+                  <Input
+                    id="tags"
+                    placeholder="pizza, italian, delivery, family-friendly"
+                    value={newBusiness.tags}
+                    onChange={(e) =>
+                      setNewBusiness({ ...newBusiness, tags: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Comma-separated search keywords
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="openingHours">Opening Hours</Label>
+                  <Input
+                    id="openingHours"
+                    placeholder="Mon-Fri 9:00-18:00, Sat 10:00-16:00"
+                    value={newBusiness.openingHours}
+                    onChange={(e) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        openingHours: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
             </div>
+
+            <Separator />
+
+            {/* ── Description ── */}
             <div>
-              <Label htmlFor="description">Description</Label>
+              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Description
+              </h4>
               <Textarea
                 id="description"
-                placeholder="Business description"
+                placeholder="Describe what makes this business unique..."
+                rows={3}
                 value={newBusiness.description}
                 onChange={(e) =>
                   setNewBusiness({
@@ -1407,7 +1717,7 @@ const BusinessManagement = ({
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4 border-t">
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
@@ -1429,71 +1739,192 @@ const BusinessManagement = ({
 
       {/* Edit Business Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Business</DialogTitle>
             <DialogDescription>Update business information</DialogDescription>
           </DialogHeader>
           {currentBusiness && (
-            <div className="space-y-4">
+            <div className="overflow-y-auto overscroll-contain flex-1 pr-2 space-y-6">
+              {/* ── Identity ── */}
               <div>
-                <Label htmlFor="edit-name">Business Name</Label>
-                <Input
-                  id="edit-name"
-                  value={currentBusiness.name}
-                  onChange={(e) =>
-                    setCurrentBusiness({
-                      ...currentBusiness,
-                      name: e.target.value,
-                    })
-                  }
-                />
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Building className="h-4 w-4" /> Identity
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-name">Business Name</Label>
+                    <Input
+                      id="edit-name"
+                      value={currentBusiness.name || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-businessType">Business Type</Label>
+                    <Input
+                      id="edit-businessType"
+                      value={currentBusiness.businessType || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          businessType: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
+
+              <Separator />
+
+              {/* ── Location ── */}
               <div>
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={currentBusiness.email}
-                  onChange={(e) =>
-                    setCurrentBusiness({
-                      ...currentBusiness,
-                      email: e.target.value,
-                    })
-                  }
-                />
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" /> Location
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="edit-address">Street Address</Label>
+                    <Input
+                      id="edit-address"
+                      value={currentBusiness.address || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          address: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-cityName">City</Label>
+                    <Input
+                      id="edit-cityName"
+                      value={currentBusiness.cityName || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          cityName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-countryCode">Country Code</Label>
+                    <Input
+                      id="edit-countryCode"
+                      maxLength={2}
+                      value={currentBusiness.countryCode || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          countryCode: e.target.value.toUpperCase(),
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-latitude">Latitude</Label>
+                    <Input
+                      id="edit-latitude"
+                      type="number"
+                      step="any"
+                      value={currentBusiness.latitude || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          latitude: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-longitude">Longitude</Label>
+                    <Input
+                      id="edit-longitude"
+                      type="number"
+                      step="any"
+                      value={currentBusiness.longitude || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          longitude: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
+
+              <Separator />
+
+              {/* ── Contact & Web ── */}
               <div>
-                <Label htmlFor="edit-phone">Phone</Label>
-                <Input
-                  id="edit-phone"
-                  value={currentBusiness.phone}
-                  onChange={(e) =>
-                    setCurrentBusiness({
-                      ...currentBusiness,
-                      phone: e.target.value,
-                    })
-                  }
-                />
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Phone className="h-4 w-4" /> Contact & Web
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-email">Email</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={currentBusiness.email || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-phone">Phone</Label>
+                    <Input
+                      id="edit-phone"
+                      value={currentBusiness.phone || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          phone: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="edit-website">Website</Label>
+                    <Input
+                      id="edit-website"
+                      type="url"
+                      value={currentBusiness.website || ""}
+                      onChange={(e) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          website: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
+
+              <Separator />
+
+              {/* ── Description ── */}
               <div>
-                <Label htmlFor="edit-address">Address</Label>
-                <Input
-                  id="edit-address"
-                  value={currentBusiness.address}
-                  onChange={(e) =>
-                    setCurrentBusiness({
-                      ...currentBusiness,
-                      address: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Description
+                </h4>
                 <Textarea
                   id="edit-description"
-                  value={currentBusiness.description}
+                  rows={3}
+                  value={currentBusiness.description || ""}
                   onChange={(e) =>
                     setCurrentBusiness({
                       ...currentBusiness,
@@ -1504,7 +1935,7 @@ const BusinessManagement = ({
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="pt-4 border-t">
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
               Cancel
             </Button>
@@ -1755,7 +2186,7 @@ const CategoryManagement = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
           <div className="px-4 py-2 bg-emerald-50 rounded-lg border border-emerald-200">
             <span className="text-lg font-bold text-emerald-700">
               {categories.filter((c: any) => !c.parentId).length}
@@ -2131,6 +2562,139 @@ const CategoryManagement = ({
 };
 
 // Job Management Component
+const SECTOR_META: Record<
+  string,
+  { label: string; color: string; gradient: string }
+> = {
+  all: {
+    label: "All Sectors",
+    color: "bg-gray-200 text-gray-900 border-gray-400",
+    gradient: "from-gray-600 to-gray-700",
+  },
+  communication: {
+    label: "Communication & Publicité",
+    color: "bg-orange-200 text-orange-900 border-orange-400",
+    gradient: "from-orange-600 to-amber-600",
+  },
+  tech: {
+    label: "Tech / IT",
+    color: "bg-cyan-200 text-cyan-900 border-cyan-400",
+    gradient: "from-cyan-600 to-blue-600",
+  },
+  immobilier: {
+    label: "Immobilier",
+    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
+    gradient: "from-emerald-600 to-green-600",
+  },
+  "conseil-juridique": {
+    label: "Conseil & Juridique",
+    color: "bg-indigo-200 text-indigo-900 border-indigo-400",
+    gradient: "from-indigo-600 to-violet-600",
+  },
+  sante: {
+    label: "Santé",
+    color: "bg-rose-200 text-rose-900 border-rose-400",
+    gradient: "from-rose-600 to-pink-600",
+  },
+  alimentation: {
+    label: "Alimentation & Restauration",
+    color: "bg-red-200 text-red-900 border-red-400",
+    gradient: "from-red-600 to-orange-600",
+  },
+  animaux: {
+    label: "Animaux",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-yellow-600",
+  },
+  artisans: {
+    label: "Artisans",
+    color: "bg-slate-200 text-slate-900 border-slate-400",
+    gradient: "from-slate-600 to-gray-600",
+  },
+  "maison-deco": {
+    label: "Maison & Décoration",
+    color: "bg-teal-200 text-teal-900 border-teal-400",
+    gradient: "from-teal-600 to-emerald-600",
+  },
+  "mode-textile": {
+    label: "Mode & Textile",
+    color: "bg-fuchsia-200 text-fuchsia-900 border-fuchsia-400",
+    gradient: "from-fuchsia-600 to-pink-600",
+  },
+  telecom: {
+    label: "Télécommunications",
+    color: "bg-blue-200 text-blue-900 border-blue-400",
+    gradient: "from-blue-600 to-indigo-600",
+  },
+  agroalimentaire: {
+    label: "Agroalimentaire",
+    color: "bg-lime-200 text-lime-900 border-lime-400",
+    gradient: "from-lime-600 to-green-600",
+  },
+  administrations: {
+    label: "Administrations",
+    color: "bg-sky-200 text-sky-900 border-sky-400",
+    gradient: "from-sky-600 to-blue-600",
+  },
+  associations: {
+    label: "Associations",
+    color: "bg-violet-200 text-violet-900 border-violet-400",
+    gradient: "from-violet-600 to-purple-600",
+  },
+  "bien-etre": {
+    label: "Bien-être & Beauté",
+    color: "bg-pink-200 text-pink-900 border-pink-400",
+    gradient: "from-pink-600 to-rose-600",
+  },
+  emploi: {
+    label: "Emploi & RH",
+    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
+    gradient: "from-emerald-600 to-teal-600",
+  },
+  commerce: {
+    label: "Commerce",
+    color: "bg-orange-200 text-orange-900 border-orange-400",
+    gradient: "from-orange-700 to-yellow-600",
+  },
+  hotellerie: {
+    label: "Hôtellerie & Tourisme",
+    color: "bg-purple-200 text-purple-900 border-purple-400",
+    gradient: "from-purple-600 to-violet-600",
+  },
+  batiment: {
+    label: "Bâtiment & Construction",
+    color: "bg-yellow-200 text-yellow-900 border-yellow-400",
+    gradient: "from-yellow-600 to-amber-700",
+  },
+  automobile: {
+    label: "Automobile & Transport",
+    color: "bg-red-200 text-red-900 border-red-400",
+    gradient: "from-red-700 to-rose-600",
+  },
+  finances: {
+    label: "Finances & Assurances",
+    color: "bg-green-200 text-green-900 border-green-400",
+    gradient: "from-green-600 to-emerald-600",
+  },
+  divertissement: {
+    label: "Divertissement & Sport",
+    color: "bg-pink-200 text-pink-900 border-pink-400",
+    gradient: "from-pink-600 to-fuchsia-600",
+  },
+  autres: {
+    label: "Autres Services",
+    color: "bg-gray-200 text-gray-800 border-gray-400",
+    gradient: "from-gray-600 to-slate-600",
+  },
+  general: {
+    label: "General",
+    color: "bg-neutral-200 text-neutral-900 border-neutral-400",
+    gradient: "from-neutral-600 to-gray-600",
+  },
+};
+
+const getSectorMeta = (s: string) => SECTOR_META[s] || SECTOR_META.general;
+
 const JobManagement = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -2138,6 +2702,11 @@ const JobManagement = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentJob, setCurrentJob] = useState<any>(null);
+  const [filterSector, setFilterSector] = useState("all");
+  const [sectorOpen, setSectorOpen] = useState(false);
+  const [jobSearch, setJobSearch] = useState("");
+  const [selectedJobCountry, setSelectedJobCountry] = useState("all");
+  const [jobCountriesList, setJobCountriesList] = useState<any[]>([]);
   const [newJob, setNewJob] = useState({
     title: "",
     company: "",
@@ -2147,26 +2716,58 @@ const JobManagement = () => {
     salaryMax: "",
     currency: "USD",
     description: "",
+    sector: "general",
+    department: "",
+    experienceLevel: "entry",
+    educationLevel: "bachelor",
+    skills: "",
+    requirements: "",
+    benefits: "",
+    isRemote: false,
+    isFeatured: false,
+    countryCode: "",
   });
 
+  const fetchJobs = useCallback(async (countryFilter = "all") => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: "500" });
+      if (countryFilter && countryFilter !== "all") {
+        params.set("countryCode", countryFilter);
+      }
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/jobs?${params.toString()}`,
+      );
+      const data = await response.json();
+      if (data.success) {
+        setJobs(data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load + reload on country change
   useEffect(() => {
-    const fetchJobs = async () => {
-      setLoading(true);
+    fetchJobs(selectedJobCountry);
+  }, [selectedJobCountry, fetchJobs]);
+
+  // Load countries list for filter
+  useEffect(() => {
+    const loadCountries = async () => {
       try {
-        const response = await authenticatedFetch(
-          `${API_BASE_URL}/api/v1/admin/jobs?limit=100`,
-        );
-        const data = await response.json();
-        if (data.success) {
-          setJobs(data.data || []);
+        const res = await fetch(`${API_BASE_URL}/api/countries`);
+        if (res.ok) {
+          const data = await res.json();
+          setJobCountriesList(Array.isArray(data) ? data : data.data || []);
         }
-      } catch (error) {
-        console.error("Failed to fetch jobs:", error);
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.warn("Failed to load countries for jobs:", err);
       }
     };
-    fetchJobs();
+    loadCountries();
   }, []);
 
   const handleAddJob = async () => {
@@ -2186,12 +2787,32 @@ const JobManagement = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newJob),
+          body: JSON.stringify({
+            ...newJob,
+            skills: newJob.skills
+              ? newJob.skills
+                  .split(",")
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : [],
+            requirements: newJob.requirements
+              ? newJob.requirements
+                  .split(",")
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : [],
+            benefits: newJob.benefits
+              ? newJob.benefits
+                  .split(",")
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              : [],
+          }),
         },
       );
       const data = await response.json();
       if (data.success) {
-        setJobs([...jobs, data.data]);
+        await fetchJobs(selectedJobCountry);
         setShowAddDialog(false);
         setNewJob({
           title: "",
@@ -2202,6 +2823,15 @@ const JobManagement = () => {
           salaryMax: "",
           currency: "USD",
           description: "",
+          sector: "general",
+          department: "",
+          experienceLevel: "entry",
+          educationLevel: "bachelor",
+          skills: "",
+          requirements: "",
+          benefits: "",
+          isRemote: false,
+          isFeatured: false,
         });
         toast({
           title: "Success",
@@ -2240,7 +2870,7 @@ const JobManagement = () => {
       );
       const data = await response.json();
       if (data.success) {
-        setJobs(jobs.map((j) => (j.id === currentJob.id ? data.data : j)));
+        await fetchJobs(selectedJobCountry);
         setShowEditDialog(false);
         setCurrentJob(null);
         toast({
@@ -2270,7 +2900,7 @@ const JobManagement = () => {
       );
       const data = await response.json();
       if (data.success) {
-        setJobs(jobs.filter((j) => j.id !== currentJob.id));
+        await fetchJobs(selectedJobCountry);
         setShowDeleteDialog(false);
         setCurrentJob(null);
         toast({
@@ -2300,11 +2930,31 @@ const JobManagement = () => {
               Job Management
             </CardTitle>
             <CardDescription>
-              Manage job listings and applications
+              {selectedJobCountry !== "all" ? (
+                <>
+                  Manage jobs in{" "}
+                  <span className="font-semibold text-amber-600">
+                    {jobCountriesList.find(
+                      (c: any) => c.code === selectedJobCountry,
+                    )?.name || selectedJobCountry}
+                  </span>
+                </>
+              ) : (
+                "Manage job listings and applications"
+              )}
             </CardDescription>
           </div>
           <Button
-            onClick={() => setShowAddDialog(true)}
+            onClick={() => {
+              setShowAddDialog(true);
+              // Pre-fill countryCode with selected country (if not "all")
+              if (selectedJobCountry && selectedJobCountry !== "all") {
+                setNewJob((prev) => ({
+                  ...prev,
+                  countryCode: selectedJobCountry,
+                }));
+              }
+            }}
             className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500"
           >
             <Plus className="h-4 w-4" />
@@ -2313,105 +2963,407 @@ const JobManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {jobs.map((job) => (
-              <Card
-                key={job.id}
-                className="border-0 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{job.title}</CardTitle>
-                    <Badge variant="secondary">{job.type}</Badge>
-                  </div>
-                  <CardDescription>{job.company}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      {job.location}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Banknote className="h-4 w-4" />
-                      {job.salary}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="h-4 w-4" />
-                      {job.applications || 0} applicants
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-2">
-                  <div className="flex gap-2 w-full">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setCurrentJob(job);
-                        setShowEditDialog(true);
-                      }}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => {
-                        setCurrentJob(job);
-                        setShowDeleteDialog(true);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+        {/* Country Filter */}
+        <div className="flex flex-wrap items-center gap-3 p-3 mb-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-amber-600" />
+            <span className="text-sm font-medium text-amber-800">Country</span>
           </div>
+          <select
+            value={selectedJobCountry}
+            onChange={(e) => setSelectedJobCountry(e.target.value)}
+            className="flex-1 min-w-[140px] sm:min-w-[180px] md:max-w-xs h-9 px-3 rounded-md border border-amber-300 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          >
+            <option value="all">🌍 All Countries</option>
+            {jobCountriesList.map((c: any) => (
+              <option key={c.code || c.id} value={c.code}>
+                {c.code} — {c.name}
+              </option>
+            ))}
+          </select>
+          {selectedJobCountry !== "all" && (
+            <button
+              onClick={() => setSelectedJobCountry("all")}
+              className="text-xs text-amber-600 hover:text-amber-800 underline"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {/* Search & Sector Filter Bar */}
+        <div className="space-y-4 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search jobs by title, company, or location…"
+              value={jobSearch}
+              onChange={(e) => setJobSearch(e.target.value)}
+              className="pl-10"
+            />
+            {loading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Popover open={sectorOpen} onOpenChange={setSectorOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 min-w-[220px] justify-between ${
+                    filterSector !== "all"
+                      ? `bg-gradient-to-r ${getSectorMeta(filterSector).gradient} text-white border-transparent shadow-md`
+                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    {filterSector !== "all" && (
+                      <span className="h-2.5 w-2.5 rounded-full bg-white/40" />
+                    )}
+                    {getSectorMeta(filterSector).label}
+                  </span>
+                  <ChevronRight
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                      sectorOpen ? "rotate-90" : ""
+                    } ${filterSector !== "all" ? "text-white/70" : "text-gray-400"}`}
+                  />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[260px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search sector…" className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>No sector found.</CommandEmpty>
+                    <CommandGroup>
+                      {Object.entries(SECTOR_META).map(([key, meta]) => {
+                        const count =
+                          key === "all"
+                            ? jobs.length
+                            : jobs.filter(
+                                (j) => (j.sector || "general") === key,
+                              ).length;
+                        const isActive = filterSector === key;
+                        return (
+                          <CommandItem
+                            key={key}
+                            value={meta.label}
+                            onSelect={() => {
+                              setFilterSector(key);
+                              setSectorOpen(false);
+                            }}
+                            className="flex items-center justify-between gap-2 cursor-pointer"
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              <span
+                                className={`inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r ${meta.gradient} shrink-0`}
+                              />
+                              <span className={isActive ? "font-semibold" : ""}>
+                                {meta.label}
+                              </span>
+                            </span>
+                            <span
+                              className={`text-[11px] tabular-nums ${
+                                isActive
+                                  ? "font-bold text-gray-900"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {count}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full ${jobs.length > 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${jobs.length > 0 ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`}
+              />
+              {jobs.length > 0
+                ? `${jobs.length} jobs live`
+                : loading
+                  ? "Loading…"
+                  : "No jobs loaded"}
+            </span>
+          </div>
+        </div>
+
+        {/* Jobs list */}
+        <div className="pr-1">
+          {(() => {
+            // Filter jobs
+            const filtered = jobs.filter((job) => {
+              const matchesSector =
+                filterSector === "all" ||
+                (job.sector || "general") === filterSector;
+              const q = jobSearch.toLowerCase().trim();
+              const matchesSearch =
+                !q ||
+                (job.title || "").toLowerCase().includes(q) ||
+                (job.company || "").toLowerCase().includes(q) ||
+                (job.location || "").toLowerCase().includes(q);
+              return matchesSector && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+              return (
+                <div className="text-center py-12 text-gray-400">
+                  <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">No jobs found</p>
+                  <p className="text-sm mt-1">
+                    Try adjusting your filters or post a new job.
+                  </p>
+                </div>
+              );
+            }
+
+            // Group by sector
+            const grouped: Record<string, any[]> = {};
+            filtered.forEach((job) => {
+              const s = job.sector || "general";
+              if (!grouped[s]) grouped[s] = [];
+              grouped[s].push(job);
+            });
+
+            // Sort sectors: sectors with more jobs first
+            const sortedSectors = Object.keys(grouped).sort(
+              (a, b) => grouped[b].length - grouped[a].length,
+            );
+
+            return (
+              <div className="space-y-8">
+                {sortedSectors.map((sector) => {
+                  const meta = getSectorMeta(sector);
+                  const sectorJobs = grouped[sector];
+                  return (
+                    <div key={sector}>
+                      {/* Sector heading */}
+                      <div className="flex items-center gap-3 mb-4 sticky top-0 bg-white/95 backdrop-blur-sm z-10 py-2 -mx-1 px-1">
+                        <span
+                          className={`inline-block h-3 w-3 rounded-full bg-gradient-to-r ${meta.gradient}`}
+                        />
+                        <h4 className="font-semibold text-gray-800">
+                          {meta.label}
+                        </h4>
+                        <Badge variant="secondary" className="text-xs">
+                          {sectorJobs.length}
+                        </Badge>
+                        <Separator className="flex-1" />
+                      </div>
+                      {/* Sector jobs grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {sectorJobs.map((job: any) => (
+                          <Card
+                            key={job.id}
+                            className="border shadow-sm hover:shadow-md transition-all duration-200 group"
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <CardTitle className="text-sm font-semibold leading-tight line-clamp-2">
+                                  {job.title}
+                                </CardTitle>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] whitespace-nowrap shrink-0 ${meta.color}`}
+                                >
+                                  {meta.label}
+                                </Badge>
+                              </div>
+                              <CardDescription className="text-xs flex items-center gap-1.5 mt-1">
+                                <Building className="h-3 w-3" />
+                                {job.company}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-1 pb-3">
+                              <div className="space-y-1.5 text-xs text-gray-500">
+                                {job.location && (
+                                  <div className="flex items-center gap-1.5">
+                                    <MapPin className="h-3 w-3" />
+                                    {job.location}
+                                    {(job.isRemote || job.is_remote) && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[9px] ml-1 bg-blue-50 text-blue-600 border-blue-200"
+                                      >
+                                        Remote
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <Banknote className="h-3 w-3" />
+                                  {job.salaryMin || job.salary_min
+                                    ? `${job.currency || "USD"} ${(job.salaryMin || job.salary_min || 0).toLocaleString()} – ${(job.salaryMax || job.salary_max || 0).toLocaleString()}`
+                                    : job.salary || "Salary not set"}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {job.type || "full-time"}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    {job.applicationCount ||
+                                      job.application_count ||
+                                      job.applications ||
+                                      0}{" "}
+                                    applied
+                                  </span>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="pt-0 pb-3 px-4">
+                              <div className="flex gap-2 w-full">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 h-7 text-xs"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 h-7 text-xs"
+                                  onClick={() => {
+                                    setCurrentJob(job);
+                                    setShowEditDialog(true);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="flex-1 h-7 text-xs"
+                                  onClick={() => {
+                                    setCurrentJob(job);
+                                    setShowDeleteDialog(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                </Button>
+                              </div>
+                            </CardFooter>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </CardContent>
 
       {/* Add Job Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Post New Job</DialogTitle>
-            <DialogDescription>Create a new job listing</DialogDescription>
+            <DialogDescription>
+              Create a new job listing with sector classification
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="job-title">Job Title *</Label>
-              <Input
-                id="job-title"
-                placeholder="e.g., Senior Developer"
-                value={newJob.title}
-                onChange={(e) =>
-                  setNewJob({ ...newJob, title: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="job-company">Company *</Label>
-              <Input
-                id="job-company"
-                placeholder="Company name"
-                value={newJob.company}
-                onChange={(e) =>
-                  setNewJob({ ...newJob, company: e.target.value })
-                }
-              />
-            </div>
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="job-title">Job Title *</Label>
+                <Input
+                  id="job-title"
+                  placeholder="e.g., Senior Developer"
+                  value={newJob.title}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, title: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-company">Company *</Label>
+                <Input
+                  id="job-company"
+                  placeholder="Company name"
+                  value={newJob.company}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, company: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="job-sector">Sector</Label>
+                <Select
+                  value={newJob.sector}
+                  onValueChange={(value) =>
+                    setNewJob({ ...newJob, sector: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="communication">
+                      Communication & Publicité
+                    </SelectItem>
+                    <SelectItem value="tech">Tech / IT</SelectItem>
+                    <SelectItem value="immobilier">Immobilier</SelectItem>
+                    <SelectItem value="conseil-juridique">
+                      Conseil & Juridique
+                    </SelectItem>
+                    <SelectItem value="sante">Santé</SelectItem>
+                    <SelectItem value="alimentation">
+                      Alimentation & Restauration
+                    </SelectItem>
+                    <SelectItem value="animaux">Animaux</SelectItem>
+                    <SelectItem value="artisans">Artisans</SelectItem>
+                    <SelectItem value="maison-deco">
+                      Maison & Décoration
+                    </SelectItem>
+                    <SelectItem value="mode-textile">Mode & Textile</SelectItem>
+                    <SelectItem value="telecom">Télécommunications</SelectItem>
+                    <SelectItem value="agroalimentaire">
+                      Agroalimentaire
+                    </SelectItem>
+                    <SelectItem value="administrations">
+                      Administrations
+                    </SelectItem>
+                    <SelectItem value="associations">Associations</SelectItem>
+                    <SelectItem value="bien-etre">
+                      Bien-être & Beauté
+                    </SelectItem>
+                    <SelectItem value="emploi">Emploi & RH</SelectItem>
+                    <SelectItem value="commerce">Commerce</SelectItem>
+                    <SelectItem value="hotellerie">
+                      Hôtellerie & Tourisme
+                    </SelectItem>
+                    <SelectItem value="batiment">
+                      Bâtiment & Construction
+                    </SelectItem>
+                    <SelectItem value="automobile">
+                      Automobile & Transport
+                    </SelectItem>
+                    <SelectItem value="finances">
+                      Finances & Assurances
+                    </SelectItem>
+                    <SelectItem value="divertissement">
+                      Divertissement & Sport
+                    </SelectItem>
+                    <SelectItem value="autres">Autres Services</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="job-type">Job Type</Label>
                 <Select
@@ -2427,6 +3379,7 @@ const JobManagement = () => {
                     <SelectItem value="full-time">Full-time</SelectItem>
                     <SelectItem value="part-time">Part-time</SelectItem>
                     <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="internship">Internship</SelectItem>
                     <SelectItem value="remote">Remote</SelectItem>
                   </SelectContent>
                 </Select>
@@ -2443,16 +3396,189 @@ const JobManagement = () => {
                 />
               </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="job-department">Department</Label>
+                <Input
+                  id="job-department"
+                  placeholder="e.g., Engineering"
+                  value={newJob.department}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, department: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-country">Country Code</Label>
+                <Input
+                  id="job-country"
+                  placeholder="e.g., US, FR, CI"
+                  value={newJob.countryCode}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      countryCode: e.target.value.toUpperCase(),
+                    })
+                  }
+                  maxLength={2}
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-exp">Experience Level</Label>
+                <Select
+                  value={newJob.experienceLevel}
+                  onValueChange={(value) =>
+                    setNewJob({ ...newJob, experienceLevel: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entry">Entry</SelectItem>
+                    <SelectItem value="mid">Mid</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="executive">Executive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="job-edu">Education Level</Label>
+                <Select
+                  value={newJob.educationLevel}
+                  onValueChange={(value) =>
+                    setNewJob({ ...newJob, educationLevel: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high_school">High School</SelectItem>
+                    <SelectItem value="bachelor">Bachelor's</SelectItem>
+                    <SelectItem value="master">Master's</SelectItem>
+                    <SelectItem value="phd">PhD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="job-salary-min">Salary Min</Label>
+                <Input
+                  id="job-salary-min"
+                  type="number"
+                  placeholder="40000"
+                  value={newJob.salaryMin}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, salaryMin: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-salary-max">Salary Max</Label>
+                <Input
+                  id="job-salary-max"
+                  type="number"
+                  placeholder="80000"
+                  value={newJob.salaryMax}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, salaryMax: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-currency">Currency</Label>
+                <Select
+                  value={newJob.currency}
+                  onValueChange={(value) =>
+                    setNewJob({ ...newJob, currency: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="CAD">CAD</SelectItem>
+                    <SelectItem value="XOF">XOF</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="job-skills">Skills (comma-separated)</Label>
+              <Input
+                id="job-skills"
+                placeholder="React, TypeScript, Node.js, PostgreSQL"
+                value={newJob.skills}
+                onChange={(e) =>
+                  setNewJob({ ...newJob, skills: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="job-requirements">
+                Requirements (comma-separated)
+              </Label>
+              <Input
+                id="job-requirements"
+                placeholder="3+ years experience, CS degree"
+                value={newJob.requirements}
+                onChange={(e) =>
+                  setNewJob({ ...newJob, requirements: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="job-benefits">Benefits (comma-separated)</Label>
+              <Input
+                id="job-benefits"
+                placeholder="Health insurance, Remote work, 401k"
+                value={newJob.benefits}
+                onChange={(e) =>
+                  setNewJob({ ...newJob, benefits: e.target.value })
+                }
+              />
+            </div>
             <div>
               <Label htmlFor="job-desc">Description</Label>
               <Textarea
                 id="job-desc"
-                placeholder="Job description and requirements"
+                placeholder="Job description and responsibilities"
                 value={newJob.description}
                 onChange={(e) =>
                   setNewJob({ ...newJob, description: e.target.value })
                 }
               />
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="job-remote"
+                  checked={newJob.isRemote}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, isRemote: e.target.checked })
+                  }
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="job-remote">Remote</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="job-featured"
+                  checked={newJob.isFeatured}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, isFeatured: e.target.checked })
+                  }
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="job-featured">Featured</Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -2473,40 +3599,211 @@ const JobManagement = () => {
 
       {/* Edit Job Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Job</DialogTitle>
-            <DialogDescription>Update job listing</DialogDescription>
+            <DialogDescription>
+              Update job listing and classification
+            </DialogDescription>
           </DialogHeader>
           {currentJob && (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-job-title">Job Title</Label>
-                <Input
-                  id="edit-job-title"
-                  value={currentJob.title}
-                  onChange={(e) =>
-                    setCurrentJob({ ...currentJob, title: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-job-title">Job Title</Label>
+                  <Input
+                    id="edit-job-title"
+                    value={currentJob.title}
+                    onChange={(e) =>
+                      setCurrentJob({ ...currentJob, title: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-job-company">Company</Label>
+                  <Input
+                    id="edit-job-company"
+                    value={currentJob.company}
+                    onChange={(e) =>
+                      setCurrentJob({ ...currentJob, company: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="edit-job-sector">Sector</Label>
+                  <Select
+                    value={currentJob.sector || "general"}
+                    onValueChange={(value) =>
+                      setCurrentJob({ ...currentJob, sector: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="communication">
+                        Communication & Publicité
+                      </SelectItem>
+                      <SelectItem value="tech">Tech / IT</SelectItem>
+                      <SelectItem value="immobilier">Immobilier</SelectItem>
+                      <SelectItem value="conseil-juridique">
+                        Conseil & Juridique
+                      </SelectItem>
+                      <SelectItem value="sante">Santé</SelectItem>
+                      <SelectItem value="alimentation">
+                        Alimentation & Restauration
+                      </SelectItem>
+                      <SelectItem value="animaux">Animaux</SelectItem>
+                      <SelectItem value="artisans">Artisans</SelectItem>
+                      <SelectItem value="maison-deco">
+                        Maison & Décoration
+                      </SelectItem>
+                      <SelectItem value="mode-textile">
+                        Mode & Textile
+                      </SelectItem>
+                      <SelectItem value="telecom">
+                        Télécommunications
+                      </SelectItem>
+                      <SelectItem value="agroalimentaire">
+                        Agroalimentaire
+                      </SelectItem>
+                      <SelectItem value="administrations">
+                        Administrations
+                      </SelectItem>
+                      <SelectItem value="associations">Associations</SelectItem>
+                      <SelectItem value="bien-etre">
+                        Bien-être & Beauté
+                      </SelectItem>
+                      <SelectItem value="emploi">Emploi & RH</SelectItem>
+                      <SelectItem value="commerce">Commerce</SelectItem>
+                      <SelectItem value="hotellerie">
+                        Hôtellerie & Tourisme
+                      </SelectItem>
+                      <SelectItem value="batiment">
+                        Bâtiment & Construction
+                      </SelectItem>
+                      <SelectItem value="automobile">
+                        Automobile & Transport
+                      </SelectItem>
+                      <SelectItem value="finances">
+                        Finances & Assurances
+                      </SelectItem>
+                      <SelectItem value="divertissement">
+                        Divertissement & Sport
+                      </SelectItem>
+                      <SelectItem value="autres">Autres Services</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-job-type">Job Type</Label>
+                  <Select
+                    value={currentJob.type || "full-time"}
+                    onValueChange={(value) =>
+                      setCurrentJob({ ...currentJob, type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-time">Full-time</SelectItem>
+                      <SelectItem value="part-time">Part-time</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="internship">Internship</SelectItem>
+                      <SelectItem value="remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-job-location">Location</Label>
+                  <Input
+                    id="edit-job-location"
+                    value={currentJob.location || ""}
+                    onChange={(e) =>
+                      setCurrentJob({ ...currentJob, location: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="edit-job-department">Department</Label>
+                  <Input
+                    id="edit-job-department"
+                    value={currentJob.department || ""}
+                    onChange={(e) =>
+                      setCurrentJob({
+                        ...currentJob,
+                        department: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-job-exp">Experience Level</Label>
+                  <Select
+                    value={
+                      currentJob.experience_level ||
+                      currentJob.experienceLevel ||
+                      "entry"
+                    }
+                    onValueChange={(value) =>
+                      setCurrentJob({ ...currentJob, experienceLevel: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="entry">Entry</SelectItem>
+                      <SelectItem value="mid">Mid</SelectItem>
+                      <SelectItem value="senior">Senior</SelectItem>
+                      <SelectItem value="executive">Executive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-job-edu">Education Level</Label>
+                  <Select
+                    value={
+                      currentJob.education_level ||
+                      currentJob.educationLevel ||
+                      "bachelor"
+                    }
+                    onValueChange={(value) =>
+                      setCurrentJob({ ...currentJob, educationLevel: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high_school">High School</SelectItem>
+                      <SelectItem value="bachelor">Bachelor's</SelectItem>
+                      <SelectItem value="master">Master's</SelectItem>
+                      <SelectItem value="phd">PhD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
-                <Label htmlFor="edit-job-company">Company</Label>
+                <Label htmlFor="edit-job-skills">
+                  Skills (comma-separated)
+                </Label>
                 <Input
-                  id="edit-job-company"
-                  value={currentJob.company}
-                  onChange={(e) =>
-                    setCurrentJob({ ...currentJob, company: e.target.value })
+                  id="edit-job-skills"
+                  placeholder="React, TypeScript, Node.js"
+                  value={
+                    Array.isArray(currentJob.skills)
+                      ? currentJob.skills.join(", ")
+                      : currentJob.skills || ""
                   }
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-job-location">Location</Label>
-                <Input
-                  id="edit-job-location"
-                  value={currentJob.location}
                   onChange={(e) =>
-                    setCurrentJob({ ...currentJob, location: e.target.value })
+                    setCurrentJob({ ...currentJob, skills: e.target.value })
                   }
                 />
               </div>
@@ -2522,6 +3819,42 @@ const JobManagement = () => {
                     })
                   }
                 />
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-job-remote"
+                    checked={
+                      currentJob.is_remote || currentJob.isRemote || false
+                    }
+                    onChange={(e) =>
+                      setCurrentJob({
+                        ...currentJob,
+                        isRemote: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="edit-job-remote">Remote</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-job-featured"
+                    checked={
+                      currentJob.is_featured || currentJob.isFeatured || false
+                    }
+                    onChange={(e) =>
+                      setCurrentJob({
+                        ...currentJob,
+                        isFeatured: e.target.checked,
+                      })
+                    }
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="edit-job-featured">Featured</Label>
+                </div>
               </div>
             </div>
           )}
@@ -2773,7 +4106,7 @@ const RoleManagementSection = () => {
     selected: string[];
     onToggle: (perm: string) => void;
   }) => (
-    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+    <div className="space-y-4 pr-2">
       {Object.entries(permissionGroups).map(([domain, perms]) => (
         <div key={domain}>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
@@ -3300,8 +4633,8 @@ const SecuritySection = () => {
   const filtered = users.filter((u) => {
     const matchesSearch =
       !searchQuery ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (u.username || "").toLowerCase().includes(searchQuery.toLowerCase());
+      u.email.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+      (u.username || "").toLowerCase().startsWith(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
     if (filterMode === "locked") return u.isLocked;
     if (filterMode === "reset") return u.hasResetPending;
@@ -4280,10 +5613,10 @@ export default function AdminDashboard() {
         onLogout={handleLogout}
       >
         {/* Wrap all children in a flex column that takes full height of the main content area */}
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col min-h-full">
           {/* Fixed top section (non-scrolling) */}
           <div className="flex-none space-y-4">
-            <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 rounded-lg shadow-sm flex justify-end gap-3">
+            <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 rounded-lg shadow-sm flex flex-wrap justify-end gap-3">
               <Button
                 onClick={() => setLocation("/geo-admin")}
                 className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-800 gap-2"
@@ -4351,8 +5684,8 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-6 pb-6">
+          {/* Content area — scroll handled by DashboardLayout */}
+          <div className="flex-1 space-y-6 pb-6">
             {/* Fixed Status Indicator (absolute positioned, but kept here for visibility) */}
             <div className="fixed top-4 right-4 z-50">
               <div
@@ -4574,7 +5907,7 @@ export default function AdminDashboard() {
             </div>
             {queryResult && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <pre className="text-sm overflow-auto max-h-64">
+                <pre className="text-sm whitespace-pre-wrap break-words">
                   {JSON.stringify(queryResult, null, 2)}
                 </pre>
               </div>

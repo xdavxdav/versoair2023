@@ -5,6 +5,7 @@ import { asyncHandler } from "../../../middleware/asyncHandler";
 import { jobs, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, count, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { notifyNewJobPosted } from "../../../services/notification-service";
 
 const router = Router();
 
@@ -17,15 +18,22 @@ router.get(
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
     try {
-      const { page = "1", limit = "20", search } = req.query;
+      const { page = "1", limit = "20", search, countryCode } = req.query;
       const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-      const limitNum = Math.min(100, parseInt(limit as string, 10) || 20);
+      const limitNum = Math.min(500, parseInt(limit as string, 10) || 50);
       const offset = (pageNum - 1) * limitNum;
 
-      // Build where clause for search
+      // Build where clause for search and country filter
       const whereConditions = [];
       if (search) {
-        whereConditions.push(ilike(jobs.title, `%${search}%`));
+        whereConditions.push(ilike(jobs.title, `${search}%`));
+      }
+      if (
+        countryCode &&
+        typeof countryCode === "string" &&
+        countryCode.length === 2
+      ) {
+        whereConditions.push(eq(jobs.countryCode, countryCode.toUpperCase()));
       }
       const where =
         whereConditions.length > 0 ? and(...whereConditions) : undefined;
@@ -95,6 +103,15 @@ router.post(
         salaryRange,
         description,
         isActive,
+        sector,
+        department,
+        experienceLevel,
+        educationLevel,
+        skills,
+        requirements,
+        benefits,
+        isRemote,
+        isFeatured,
       } = req.body;
 
       // Validate required fields — accept either company or businessId
@@ -113,6 +130,13 @@ router.post(
 
       const jobId = randomUUID();
 
+      // Serialize arrays to JSON strings for text columns
+      const serializeArray = (val: any): string | null => {
+        if (!val) return null;
+        if (Array.isArray(val)) return JSON.stringify(val);
+        return String(val);
+      };
+
       const [job] = await db
         .insert(jobs)
         .values({
@@ -122,11 +146,21 @@ router.post(
           businessId: businessId || null,
           type: type || "full-time",
           location: location || null,
+          sector: sector || "general",
           salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
           salaryMax: salaryMax ? parseInt(salaryMax, 10) : null,
           currency: currency || "USD",
           description: description || null,
+          department: department || null,
+          experienceLevel: experienceLevel || null,
+          educationLevel: educationLevel || null,
+          skills: serializeArray(skills),
+          requirements: serializeArray(requirements),
+          benefits: serializeArray(benefits),
+          isRemote: isRemote === true || isRemote === "true" || false,
+          isFeatured: isFeatured === true || isFeatured === "true" || false,
           status: isActive === false ? "inactive" : "active",
+          postedDate: new Date().toISOString().split("T")[0],
           createdAt: new Date(),
           updatedAt: new Date(),
         })
@@ -144,6 +178,22 @@ router.post(
         entityType: "job",
         entityId: job.id,
       });
+
+      // 📬 Trigger email notifications for matching job_alerts subscribers
+      notifyNewJobPosted({
+        id: parseInt(job.id) || 0,
+        title: job.title,
+        company: job.company,
+        location: job.location || "Remote",
+        salary:
+          job.salaryMin && job.salaryMax
+            ? `${job.currency || "USD"} ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}`
+            : undefined,
+        type: job.type || "Full-time",
+        sector: job.sector || undefined,
+      }).catch((err) =>
+        console.error("[JOB] Notification trigger error:", err),
+      );
 
       res.status(201).json({
         success: true,
@@ -220,6 +270,15 @@ router.put(
         salaryRange,
         description,
         isActive,
+        sector,
+        department,
+        experienceLevel,
+        educationLevel,
+        skills,
+        requirements,
+        benefits,
+        isRemote,
+        isFeatured,
       } = req.body;
 
       // Validate required fields
@@ -254,18 +313,41 @@ router.put(
 
       console.log("📝 Updating job ID:", id);
 
+      // Serialize arrays to JSON strings for text columns
+      const serializeArray = (val: any): string | null => {
+        if (val === undefined) return undefined as any; // keep existing
+        if (!val) return null;
+        if (Array.isArray(val)) return JSON.stringify(val);
+        return String(val);
+      };
+
       const [updatedJob] = await db
         .update(jobs)
         .set({
           title,
           company: company || existing.company,
-          businessId: businessId || existing.businessId,
+          businessId: businessId ?? existing.businessId,
           type: type || existing.type || "full-time",
-          location: location || existing.location,
+          location: location ?? existing.location,
+          sector: sector || existing.sector || "general",
           salaryMin: salaryMin ? parseInt(salaryMin, 10) : existing.salaryMin,
           salaryMax: salaryMax ? parseInt(salaryMax, 10) : existing.salaryMax,
           currency: currency || existing.currency || "USD",
-          description: description || existing.description,
+          description: description ?? existing.description,
+          department: department ?? existing.department,
+          experienceLevel: experienceLevel ?? existing.experienceLevel,
+          educationLevel: educationLevel ?? existing.educationLevel,
+          skills: serializeArray(skills) ?? existing.skills,
+          requirements: serializeArray(requirements) ?? existing.requirements,
+          benefits: serializeArray(benefits) ?? existing.benefits,
+          isRemote:
+            isRemote !== undefined
+              ? isRemote === true || isRemote === "true"
+              : existing.isRemote,
+          isFeatured:
+            isFeatured !== undefined
+              ? isFeatured === true || isFeatured === "true"
+              : existing.isFeatured,
           status: isActive === false ? "inactive" : "active",
           updatedAt: new Date(),
         })

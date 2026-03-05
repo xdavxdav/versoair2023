@@ -16,6 +16,7 @@ import AnimatedHeading from "@/components/AnimatedHeading";
 import GoldenAnimatedHeading from "@/components/GoldenAnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
 import { AnimatedButton } from "@/components/AnimatedButton";
+import { useCountry } from "@/contexts/CountryContext";
 /* webhint-disable hint-no-inline-styles */
 import {
   Search,
@@ -85,9 +86,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ScrollToTop from "@/components/ScrollToTop";
-import { useMusicArtists, useMusicAnalytics } from "@/hooks/use-music";
+import { useMusicArtists } from "@/hooks/use-music";
 import { searchBusinesses, Business } from "@/lib/business-data";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -261,6 +263,7 @@ interface SearchParams {
   lng?: number;
   page?: number;
   limit?: number;
+  countryCode?: string;
 }
 
 // Calculate distance between coordinates
@@ -305,6 +308,8 @@ async function searchBusinessesAPI(params: SearchParams): Promise<{
     if (params.query) queryParams.append("search", params.query);
     if (params.location) queryParams.append("location", params.location);
     if (params.category) queryParams.append("categoryId", params.category);
+    if (params.countryCode)
+      queryParams.append("countryCode", params.countryCode);
 
     const response = await fetch(
       `${API_BASE_URL}/api/businesses?${queryParams.toString()}`,
@@ -494,6 +499,8 @@ const CulturalProgramsModal = ({
   isOpen,
   onClose,
 }: CulturalProgramsModalProps) => {
+  useScrollLock(isOpen);
+
   const programs = [
     {
       id: "agriculture",
@@ -568,6 +575,7 @@ const CulturalProgramsModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          style={{ overscrollBehavior: "contain" }}
         >
           <motion.div
             className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
@@ -575,6 +583,7 @@ const CulturalProgramsModal = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
+            style={{ overscrollBehavior: "contain" }}
           >
             <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-4 md:p-6 text-white">
               <div className="flex justify-between items-center">
@@ -593,8 +602,8 @@ const CulturalProgramsModal = ({
                 culture
               </p>
             </div>
-            <div className="flex flex-col md:flex-row h-[400px] md:h-[500px]">
-              <div className="md:w-1/3 bg-gray-50 p-4 md:p-6 border-r border-gray-200 overflow-y-auto">
+            <div className="flex flex-col md:flex-row">
+              <div className="md:w-1/3 bg-gray-50 p-4 md:p-6 border-r border-gray-200">
                 <div className="space-y-2 md:space-y-3">
                   {programs.map((program) => (
                     <button
@@ -629,7 +638,7 @@ const CulturalProgramsModal = ({
                   ))}
                 </div>
               </div>
-              <div className="md:w-2/3 p-4 md:p-6 overflow-y-auto">
+              <div className="md:w-2/3 p-4 md:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <selectedProgram.icon
                     size={20}
@@ -978,13 +987,6 @@ const rangeOptions: FilterOption[] = [
 // Music Artists Grid Component
 function MusicArtistsGrid() {
   const { data: artists, isLoading } = useMusicArtists();
-  const { data: analytics } = useMusicAnalytics();
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
 
   if (isLoading) {
     return (
@@ -1008,7 +1010,7 @@ function MusicArtistsGrid() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {artists.slice(0, 8).map((artist, i) => (
+      {artists.slice(0, 8).map((artist: any, i: number) => (
         <motion.div
           key={artist.id}
           initial={{ opacity: 0, y: 30 }}
@@ -1024,12 +1026,14 @@ function MusicArtistsGrid() {
               const initials = stageName
                 .split(/\s+/)
                 .filter(Boolean)
-                .map((n: string) => n)
-                .join("");
+                .map((n: string) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
 
               return (
                 <>
-                  {/* Artist Image/Avatar */}
+                  {/* Artist Avatar */}
                   <div className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow">
                     {initials}
                   </div>
@@ -1041,32 +1045,48 @@ function MusicArtistsGrid() {
 
                   {/* Genre */}
                   <p className="text-purple-300 text-sm mb-3">
-                    {artist.genre || "Various Genres"}
+                    {artist.genre || "Artiste"}
                   </p>
 
-                  {/* Stats */}
+                  {/* Label Status */}
                   <div className="grid grid-cols-2 gap-3 w-full mt-3 pt-3 border-t border-white/10">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-white">
-                        {artist.createdAt ? "Active" : "Pending"}
+                      <div className="text-sm font-bold text-white">
+                        {artist.label_status === "signed"
+                          ? "🏷️ Signé"
+                          : artist.label_status === "independent"
+                            ? "🎯 Indép."
+                            : "🆓 Libre"}
                       </div>
-                      <div className="text-xs text-purple-200">Status</div>
+                      <div className="text-xs text-purple-200">Label</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-white">
-                        {artist.genre
-                          ? artist.genre.slice(0, 1).toUpperCase()
-                          : "—"}
+                      <div className="text-sm font-bold text-white">
+                        {artist.genre ? artist.genre.slice(0, 8) : "—"}
                       </div>
                       <div className="text-xs text-purple-200">Genre</div>
                     </div>
                   </div>
 
-                  {/* Listen Button */}
-                  <button className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/50">
-                    <Play className="w-4 h-4" />
-                    Listen Now
-                  </button>
+                  {/* Spotify / View Button */}
+                  {artist.spotify_url ? (
+                    <a
+                      href={artist.spotify_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-500 text-white py-2 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-green-500/30"
+                    >
+                      <Play className="w-4 h-4" />
+                      Écouter
+                    </a>
+                  ) : (
+                    <Link to="/artistes" className="w-full">
+                      <button className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/50">
+                        <Music className="w-4 h-4" />
+                        Voir le profil
+                      </button>
+                    </Link>
+                  )}
                 </>
               );
             })()}
@@ -1304,8 +1324,10 @@ export default function Home() {
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [isCulturalModalOpen, setIsCulturalModalOpen] = useState(false);
+  useScrollLock(isCulturalModalOpen);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
 
@@ -1439,6 +1461,8 @@ export default function Home() {
       const ZOOM_DURATION = 0.8; // Duration for zoom animations
       const SLIDE_DURATION = 1.4; // Duration for slide animations
       const TOTAL_TRANSITION = ZOOM_DURATION * 2 + SLIDE_DURATION; // Total time per transition
+      // Use percentage of container width for slides (container is NUM_PANELS * 100% wide)
+      const SLIDE_STEP = `${-100 / NUM_PANELS}%`;
 
       // Create master timeline
       const masterTimeline = gsap.timeline({
@@ -1472,7 +1496,7 @@ export default function Home() {
         .to(
           panelsContainerRef.current,
           {
-            x: "-100vw",
+            x: SLIDE_STEP,
             duration: SLIDE_DURATION,
             ease: "power2.inOut",
           },
@@ -1503,7 +1527,7 @@ export default function Home() {
         .to(
           panelsContainerRef.current,
           {
-            x: "-200vw",
+            x: `${(-2 * 100) / NUM_PANELS}%`,
             duration: SLIDE_DURATION,
             ease: "power2.inOut",
           },
@@ -1533,7 +1557,7 @@ export default function Home() {
         .to(
           panelsContainerRef.current,
           {
-            x: "-300vw",
+            x: `${(-3 * 100) / NUM_PANELS}%`,
             duration: SLIDE_DURATION,
             ease: "power2.inOut",
           },
@@ -1662,6 +1686,10 @@ export default function Home() {
       searchParams.location = debouncedLocationQuery.toLowerCase();
     }
 
+    if (selectedCountry) {
+      searchParams.countryCode = selectedCountry;
+    }
+
     activeFilters.forEach((filter) => {
       if (filter.id.startsWith("category-")) {
         searchParams.category = filter.value;
@@ -1698,6 +1726,7 @@ export default function Home() {
     debouncedLocationQuery,
     activeFilters,
     userLocation,
+    selectedCountry,
     databaseConnected,
   ]);
 
@@ -1857,7 +1886,7 @@ export default function Home() {
     try {
       const params = new URLSearchParams({
         limit: "12",
-        sort_by: "monthly_listeners_desc",
+        sort_by: "name_asc",
       });
       if (artistAnnuaireQuery.trim())
         params.set("query", artistAnnuaireQuery.trim());
@@ -1895,7 +1924,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-x-clip">
       {/* Hero Section */}
       <div className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/80 via-emerald-700/80 to-emerald-800/80" />
@@ -2288,11 +2317,13 @@ export default function Home() {
                   </p>
                 </motion.div>
 
-                <div className="database-viewport">
+                <div className="database-viewport relative overflow-hidden">
                   <div
                     className={`transition-all duration-300 ${
-                      showAllResults ? "max-h-[2000px]" : "max-h-[600px]"
-                    }`}
+                      showAllResults
+                        ? "max-h-[4000px]"
+                        : "max-h-[650px] sm:max-h-[700px] lg:max-h-[600px]"
+                    } overflow-hidden`}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                       {searchResults
@@ -2451,15 +2482,15 @@ export default function Home() {
               },
               {
                 icon: Palette,
-                text: "Art Programs",
-                desc: "Cultural initiatives",
-                href: "/programs",
+                text: "Art & Crafts",
+                desc: "Shop handmade creations",
+                href: "/marketplace",
               },
               {
                 icon: ShoppingBag,
                 text: "Marketplace",
-                desc: "Handcrafted goods",
-                href: "/commerce",
+                desc: "Artisan storefront",
+                href: "/marketplace",
               },
               {
                 icon: Users,
@@ -2469,15 +2500,15 @@ export default function Home() {
               },
               {
                 icon: Heart,
-                text: "Support",
-                desc: "Donate & help",
-                href: "/sav",
+                text: "Support Us",
+                desc: "Fund & sponsor the mission",
+                href: "/sponsorship",
               },
               {
                 icon: Calendar,
                 text: "Events",
                 desc: "Workshops & shows",
-                href: "/reservations",
+                href: "/divertissement",
               },
             ].map((item, i) => (
               <Link key={i} to={item.href}>
@@ -2501,19 +2532,29 @@ export default function Home() {
 
       {/* FIXED PANELS SECTION - Smooth zoom-out → slide → zoom-in */}
       <div
-        className="panels-wrapper relative h-screen overflow-hidden"
+        className="panels-wrapper relative h-[100dvh] overflow-hidden"
         ref={panelsWrapperRef}
+        style={{ overscrollBehavior: "contain" }}
       >
-        <div className="h-screen w-full overflow-hidden">
+        <div
+          className="h-[100dvh] w-full overflow-hidden"
+          style={{
+            overscrollBehavior: "contain",
+            touchAction: "pan-y pinch-zoom",
+          }}
+        >
           <div
             ref={panelsContainerRef}
-            className="flex h-screen"
+            className="flex h-[100dvh]"
             style={{
-              width: `${NUM_PANELS * 100}vw`,
+              width: `${NUM_PANELS * 100}%`,
             }}
           >
             {/* PANEL 1: ArtiHuman Foundation - Emerald Gradient */}
-            <div className="panel w-screen h-screen flex-shrink-0 relative overflow-hidden">
+            <div
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+            >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -2693,7 +2734,10 @@ export default function Home() {
             </div>
 
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
-            <div className="panel w-screen h-screen flex-shrink-0 relative overflow-hidden">
+            <div
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+            >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
@@ -2859,7 +2903,10 @@ export default function Home() {
             </div>
 
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
-            <div className="panel w-screen h-screen flex-shrink-0 relative overflow-hidden">
+            <div
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+            >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-1/4 right-1/3 w-96 h-96 bg-green-300 rounded-full blur-3xl animate-pulse"></div>
@@ -3075,7 +3122,10 @@ export default function Home() {
             </div>
 
             {/* PANEL 4: Get Involved - Teal Gradient */}
-            <div className="panel w-screen h-screen flex-shrink-0 relative overflow-hidden">
+            <div
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+            >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-cyan-300 rounded-full blur-3xl"></div>
@@ -3461,6 +3511,13 @@ export default function Home() {
                         (artist: any, index: number) => {
                           const name = artist?.name || "Artiste inconnu";
                           const genre = artist?.genre || "Divers";
+                          const initials = name
+                            .split(/\s+/)
+                            .filter(Boolean)
+                            .map((w: string) => w[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase();
                           return (
                             <motion.div
                               key={artist.id || index}
@@ -3470,24 +3527,11 @@ export default function Home() {
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-purple-600 to-fuchsia-600" />
-                              {/* Image / placeholder */}
-                              <div className="relative h-40 bg-gradient-to-br from-purple-800/40 to-slate-800 overflow-hidden">
-                                {artist.image_url ? (
-                                  <img
-                                    src={artist.image_url}
-                                    alt={name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    onError={(e) => {
-                                      (
-                                        e.target as HTMLImageElement
-                                      ).style.display = "none";
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <Music className="h-16 w-16 text-purple-400/30" />
-                                  </div>
-                                )}
+                              {/* Avatar */}
+                              <div className="relative h-40 bg-gradient-to-br from-purple-800/40 to-slate-800 overflow-hidden flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl">
+                                  {initials}
+                                </div>
                                 <div className="absolute top-3 right-3">
                                   <Badge className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white border-0 shadow-lg text-xs">
                                     🎵 {genre}
@@ -3498,53 +3542,29 @@ export default function Home() {
                                 <h4 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
                                   {name}
                                 </h4>
-                                {artist.biography && (
-                                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                                    {artist.biography}
-                                  </p>
-                                )}
                                 <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-3">
-                                    {artist.monthly_listeners != null && (
-                                      <div
-                                        className="flex items-center gap-1 text-purple-300"
-                                        title="Auditeurs mensuels"
-                                      >
-                                        <Users className="h-3.5 w-3.5" />
-                                        <span className="font-semibold">
-                                          {artist.monthly_listeners >= 1_000_000
-                                            ? `${(artist.monthly_listeners / 1_000_000).toFixed(1)}M`
-                                            : artist.monthly_listeners >= 1_000
-                                              ? `${(artist.monthly_listeners / 1_000).toFixed(1)}K`
-                                              : artist.monthly_listeners}
-                                        </span>
-                                      </div>
-                                    )}
-                                    {artist.total_streams != null && (
-                                      <div
-                                        className="flex items-center gap-1 text-fuchsia-300"
-                                        title="Streams totaux"
-                                      >
-                                        <Headphones className="h-3.5 w-3.5" />
-                                        <span className="font-semibold">
-                                          {artist.total_streams >= 1_000_000
-                                            ? `${(artist.total_streams / 1_000_000).toFixed(1)}M`
-                                            : artist.total_streams >= 1_000
-                                              ? `${(artist.total_streams / 1_000).toFixed(1)}K`
-                                              : artist.total_streams}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs">
-                                    <Disc3 className="h-3 w-3" />
-                                    <span>
-                                      {artist.track_count ?? 0} titre
-                                      {Number(artist.track_count ?? 0) !== 1
-                                        ? "s"
-                                        : ""}
-                                    </span>
-                                  </div>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs border-purple-500/40 text-purple-300"
+                                  >
+                                    {artist.label_status === "signed"
+                                      ? "🏷️ Signé"
+                                      : artist.label_status === "independent"
+                                        ? "🎯 Indépendant"
+                                        : "🆓 Unsigned"}
+                                  </Badge>
+                                  {artist.spotify_url && (
+                                    <a
+                                      href={artist.spotify_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="flex items-center gap-1 text-green-400 hover:text-green-300 transition-colors text-xs"
+                                    >
+                                      <Music className="h-3.5 w-3.5" />
+                                      Spotify
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             </motion.div>

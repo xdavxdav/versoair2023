@@ -50,6 +50,10 @@ import {
   HardDrive,
   Network,
   Activity,
+  Star,
+  Calendar,
+  MessageCircle,
+  HardHat,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -73,11 +77,30 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
+import EmailSubscribeCTA from "@/components/EmailSubscribeCTA";
+import {
+  JobApplicationModal,
+  type ApplicationJob,
+} from "@/components/job-application-modal";
 
 // Database API configuration - Use the same as other pages
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -98,6 +121,7 @@ interface Job {
   company: string;
   location: string;
   type: string; // full-time, part-time, contract, internship, remote
+  sector: string; // commerce, hotellerie, batiment, automobile, finances, divertissement, sante, tech, general
   salary_min: number;
   salary_max: number;
   currency: string;
@@ -120,6 +144,9 @@ interface Job {
   apply_url?: string;
   created_at: string;
   updated_at: string;
+  business_id?: number | null;
+  company_rating?: number | null;
+  company_review_count?: number;
 }
 
 interface JobApplication {
@@ -183,9 +210,175 @@ const experienceLevels = ["Entry", "Mid", "Senior", "Executive"];
 // TRACE: Education levels
 const educationLevels = ["High School", "Bachelor's", "Master's", "PhD"];
 
+// TRACE: Sector definitions with labels, colors and icons
+const SECTORS = [
+  {
+    value: "all",
+    label: "All Sectors",
+    color: "bg-gray-200 text-gray-900 border-gray-400",
+    gradient: "from-gray-600 to-gray-700",
+  },
+  {
+    value: "communication",
+    label: "Communication & Publicité",
+    color: "bg-orange-200 text-orange-900 border-orange-400",
+    gradient: "from-orange-600 to-amber-600",
+  },
+  {
+    value: "tech",
+    label: "Tech / IT",
+    color: "bg-cyan-200 text-cyan-900 border-cyan-400",
+    gradient: "from-cyan-600 to-blue-600",
+  },
+  {
+    value: "immobilier",
+    label: "Immobilier",
+    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
+    gradient: "from-emerald-600 to-green-600",
+  },
+  {
+    value: "conseil-juridique",
+    label: "Conseil & Juridique",
+    color: "bg-indigo-200 text-indigo-900 border-indigo-400",
+    gradient: "from-indigo-600 to-violet-600",
+  },
+  {
+    value: "sante",
+    label: "Santé",
+    color: "bg-rose-200 text-rose-900 border-rose-400",
+    gradient: "from-rose-600 to-pink-600",
+  },
+  {
+    value: "alimentation",
+    label: "Alimentation & Restauration",
+    color: "bg-red-200 text-red-900 border-red-400",
+    gradient: "from-red-600 to-orange-600",
+  },
+  {
+    value: "animaux",
+    label: "Animaux",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-yellow-600",
+  },
+  {
+    value: "artisans",
+    label: "Artisans",
+    color: "bg-slate-200 text-slate-900 border-slate-400",
+    gradient: "from-slate-600 to-gray-600",
+  },
+  {
+    value: "maison-deco",
+    label: "Maison & Décoration",
+    color: "bg-teal-200 text-teal-900 border-teal-400",
+    gradient: "from-teal-600 to-emerald-600",
+  },
+  {
+    value: "mode-textile",
+    label: "Mode & Textile",
+    color: "bg-fuchsia-200 text-fuchsia-900 border-fuchsia-400",
+    gradient: "from-fuchsia-600 to-pink-600",
+  },
+  {
+    value: "telecom",
+    label: "Télécommunications",
+    color: "bg-blue-200 text-blue-900 border-blue-400",
+    gradient: "from-blue-600 to-indigo-600",
+  },
+  {
+    value: "agroalimentaire",
+    label: "Agroalimentaire",
+    color: "bg-lime-200 text-lime-900 border-lime-400",
+    gradient: "from-lime-600 to-green-600",
+  },
+  {
+    value: "administrations",
+    label: "Administrations",
+    color: "bg-sky-200 text-sky-900 border-sky-400",
+    gradient: "from-sky-600 to-blue-600",
+  },
+  {
+    value: "associations",
+    label: "Associations",
+    color: "bg-violet-200 text-violet-900 border-violet-400",
+    gradient: "from-violet-600 to-purple-600",
+  },
+  {
+    value: "bien-etre",
+    label: "Bien-être & Beauté",
+    color: "bg-pink-200 text-pink-900 border-pink-400",
+    gradient: "from-pink-600 to-rose-600",
+  },
+  {
+    value: "emploi",
+    label: "Emploi & RH",
+    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
+    gradient: "from-emerald-600 to-teal-600",
+  },
+  {
+    value: "commerce",
+    label: "Commerce",
+    color: "bg-orange-200 text-orange-900 border-orange-400",
+    gradient: "from-orange-700 to-yellow-600",
+  },
+  {
+    value: "hotellerie",
+    label: "Hôtellerie & Tourisme",
+    color: "bg-purple-200 text-purple-900 border-purple-400",
+    gradient: "from-purple-600 to-violet-600",
+  },
+  {
+    value: "batiment",
+    label: "Bâtiment & Construction",
+    color: "bg-yellow-200 text-yellow-900 border-yellow-400",
+    gradient: "from-yellow-600 to-amber-700",
+  },
+  {
+    value: "automobile",
+    label: "Automobile & Transport",
+    color: "bg-red-200 text-red-900 border-red-400",
+    gradient: "from-red-700 to-rose-600",
+  },
+  {
+    value: "finances",
+    label: "Finances & Assurances",
+    color: "bg-green-200 text-green-900 border-green-400",
+    gradient: "from-green-600 to-emerald-600",
+  },
+  {
+    value: "divertissement",
+    label: "Divertissement & Sport",
+    color: "bg-pink-200 text-pink-900 border-pink-400",
+    gradient: "from-pink-600 to-fuchsia-600",
+  },
+  {
+    value: "autres",
+    label: "Autres Services",
+    color: "bg-gray-200 text-gray-800 border-gray-400",
+    gradient: "from-gray-600 to-slate-600",
+  },
+  {
+    value: "general",
+    label: "General",
+    color: "bg-neutral-200 text-neutral-900 border-neutral-400",
+    gradient: "from-neutral-600 to-gray-600",
+  },
+] as const;
+
+const getSectorDef = (sector: string) =>
+  SECTORS.find((s) => s.value === sector) || SECTORS[SECTORS.length - 1];
+
 export default function Careers() {
+  /* ── Main Platform auth ── */
+  const { user: platformUser, token: authToken } = useAuthContext();
+
+  /* ── Application modal state ── */
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applyingJob, setApplyingJob] = useState<ApplicationJob | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSector, setSelectedSector] = useState("all");
+  const [sectorOpen, setSectorOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
   const [salaryRange, setSalaryRange] = useState([0, 300000]);
@@ -194,6 +387,52 @@ export default function Careers() {
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [blogAuth, setBlogAuth] = useState(() => ({
+    connected: localStorage.getItem("blog_community_auth") === "true",
+    user: localStorage.getItem("blog_community_user") || "",
+  }));
+  // Shared auth with Contractors page
+  const [careersAuth, setCareersAuth] = useState(() => ({
+    on: localStorage.getItem("careers_auth") === "true",
+    user: localStorage.getItem("careers_auth_user") || "",
+    role: (localStorage.getItem("careers_auth_role") || "job-seeker") as
+      | "job-seeker"
+      | "contractor",
+  }));
+  const [showCareersAuth, setShowCareersAuth] = useState(false);
+  const [careersForm, setCareersForm] = useState({
+    name: "",
+    email: "",
+    role: "job-seeker" as "job-seeker" | "contractor",
+  });
+
+  const handleCareersSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem("careers_auth", "true");
+    localStorage.setItem("careers_auth_user", careersForm.name);
+    localStorage.setItem("careers_auth_role", careersForm.role);
+    setCareersAuth({
+      on: true,
+      user: careersForm.name,
+      role: careersForm.role,
+    });
+    setShowCareersAuth(false);
+  };
+  const handleCareersSignOut = () => {
+    localStorage.removeItem("careers_auth");
+    localStorage.removeItem("careers_auth_user");
+    localStorage.removeItem("careers_auth_role");
+    setCareersAuth({ on: false, user: "", role: "job-seeker" });
+  };
+  const flipCareersRole = () => {
+    const nr =
+      careersAuth.role === "job-seeker"
+        ? ("contractor" as const)
+        : ("job-seeker" as const);
+    localStorage.setItem("careers_auth_role", nr);
+    setCareersAuth((p) => ({ ...p, role: nr }));
+  };
+
   const [databaseHealth, setDatabaseHealth] = useState<DatabaseHealth | null>(
     null,
   );
@@ -267,7 +506,8 @@ export default function Careers() {
           throw new Error(data.message || "Failed to fetch jobs");
         }
 
-        return Array.isArray(data) ? data : data.data || [];
+        const jobs = Array.isArray(data) ? data : data.data || [];
+        return jobs;
       } catch (error) {
         console.error("Error fetching jobs from database:", error);
         throw error;
@@ -387,11 +627,11 @@ export default function Careers() {
       // Search query filter
       const matchesSearch =
         searchQuery === "" ||
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+        job.company.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+        job.description.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
         job.skills.some((skill) =>
-          skill.toLowerCase().includes(searchQuery.toLowerCase()),
+          skill.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
 
       // Category filter
@@ -401,6 +641,11 @@ export default function Careers() {
           job.department
             .toLowerCase()
             .includes(selectedCategory.toLowerCase()));
+
+      // Sector filter
+      const matchesSector =
+        selectedSector === "all" ||
+        (job.sector && job.sector === selectedSector);
 
       // Type filter
       const matchesType =
@@ -433,6 +678,7 @@ export default function Careers() {
       return (
         matchesSearch &&
         matchesCategory &&
+        matchesSector &&
         matchesType &&
         matchesExperience &&
         matchesSalary &&
@@ -445,6 +691,7 @@ export default function Careers() {
     jobs,
     searchQuery,
     selectedCategory,
+    selectedSector,
     selectedType,
     selectedExperience,
     salaryRange,
@@ -454,9 +701,29 @@ export default function Careers() {
     savedJobs,
   ]);
 
-  // TRACE: Handle job application
-  const handleApply = (jobId: string) => {
-    applyMutation.mutate(jobId);
+  // TRACE: Handle job application — auth-gated, opens multi-step modal
+  const handleApply = (job: Job) => {
+    if (!platformUser || !authToken) {
+      toast({
+        title: "Authentication Required",
+        description: (
+          <span>
+            You need to sign in to your account before applying for jobs.{" "}
+            <a
+              href="/signin?redirect=/services/careers"
+              className="underline font-semibold hover:text-white"
+            >
+              Create an account or sign in
+            </a>{" "}
+            to get started.
+          </span>
+        ),
+        variant: "destructive",
+      });
+      return;
+    }
+    setApplyingJob(job as ApplicationJob);
+    setShowApplyModal(true);
   };
 
   // TRACE: Handle save/unsave job
@@ -466,14 +733,57 @@ export default function Careers() {
   };
 
   // TRACE: Format salary display
-  const formatSalary = (min: number, max: number, currency: string) => {
-    const formatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    return `${formatter.format(min)} - ${formatter.format(max)}`;
+  const formatSalary = (
+    min: number | null | undefined,
+    max: number | null | undefined,
+    currency: string | null | undefined,
+  ) => {
+    // Handle missing salary data gracefully
+    if ((!min && !max) || (min === 0 && max === 0)) {
+      return "Salary Negotiable";
+    }
+    const cur = currency || "USD";
+    try {
+      const formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: cur,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
+      if (min && !max) return `From ${formatter.format(min)}`;
+      if (!min && max) return `Up to ${formatter.format(max)}`;
+      return `${formatter.format(min!)} - ${formatter.format(max!)}`;
+    } catch {
+      // Fallback for invalid currency codes
+      if (min && max)
+        return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
+      return "Salary Negotiable";
+    }
+  };
+
+  // TRACE: Format experience level for display
+  const formatExperienceLevel = (level: string | null | undefined): string => {
+    if (!level || level.trim() === "") return "All Levels";
+    const map: Record<string, string> = {
+      entry: "Entry",
+      mid: "Mid",
+      senior: "Senior",
+      executive: "Executive",
+      junior: "Junior",
+      lead: "Lead",
+    };
+    return (
+      map[level.toLowerCase()] || level.charAt(0).toUpperCase() + level.slice(1)
+    );
+  };
+
+  // TRACE: Format job type for display
+  const formatJobType = (type: string | null | undefined): string => {
+    if (!type) return "Full Time";
+    return type
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   // TRACE: Calculate days since posting
@@ -527,7 +837,7 @@ export default function Careers() {
 
   // TRACE: Stats card component - Updated with business theme
   const StatCard = ({ icon, value, label, trend, color = "blue" }: any) => (
-    <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300">
+    <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300 overflow-hidden min-w-0">
       <div className="flex items-center justify-between mb-3">
         <div
           className={`p-2 rounded-lg bg-gradient-to-br ${
@@ -568,10 +878,65 @@ export default function Careers() {
           {trend}
         </span>
       </div>
-      <div className="text-2xl font-bold text-gray-900 mb-1">{value}</div>
+      <div className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 break-all leading-tight">
+        {value}
+      </div>
       <div className="text-xs text-gray-500 font-medium">{label}</div>
     </div>
   );
+
+  // Format a date string to readable date + time
+  const formatDateTime = (dateString: string) => {
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return { date: "N/A", time: "" };
+      return {
+        date: d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: d.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    } catch {
+      return { date: "N/A", time: "" };
+    }
+  };
+
+  // Star rating display component
+  const StarRating = ({
+    rating,
+    count,
+  }: {
+    rating: number | null | undefined;
+    count: number;
+  }) => {
+    if (!rating && count === 0) {
+      return (
+        <span className="flex items-center gap-1 text-gray-400 text-xs">
+          <MessageCircle className="h-3 w-3" />
+          No reviews yet
+        </span>
+      );
+    }
+    const stars = Math.round(rating || 0);
+    return (
+      <span className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Star
+            key={i}
+            className={`h-3.5 w-3.5 ${i <= stars ? "text-amber-400 fill-amber-400" : "text-gray-300"}`}
+          />
+        ))}
+        <span className="text-xs font-medium text-gray-600 ml-1">
+          {rating?.toFixed(1)} ({count})
+        </span>
+      </span>
+    );
+  };
 
   // Add smooth scroll effect
   useEffect(() => {
@@ -617,57 +982,99 @@ export default function Careers() {
       <div className="relative z-10">
         {/* Header - Updated with business theme */}
         <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200/80 shadow-sm transition-all duration-300">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Link href="/services">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+                    className="gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 px-2 sm:px-3"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Services
+                    <span className="hidden sm:inline">Back to Services</span>
                   </Button>
                 </Link>
-                <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-blue-600" />
+                <div className="hidden sm:block h-6 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg">
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
+                    <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
                       Career Portal
                     </h1>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 hidden sm:block">
                       Business Intelligence Careers
                     </p>
                   </div>
-                  <DatabaseStatus />
+                  <div className="hidden md:block">
+                    <DatabaseStatus />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-3">
+                {careersAuth.on && (
+                  <button
+                    onClick={flipCareersRole}
+                    className={
+                      "hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all " +
+                      (careersAuth.role === "job-seeker"
+                        ? "bg-blue-100 text-blue-800 border-blue-300"
+                        : "bg-amber-100 text-amber-800 border-amber-300")
+                    }
+                  >
+                    {careersAuth.role === "job-seeker" ? (
+                      <Briefcase className="h-3.5 w-3.5" />
+                    ) : (
+                      <HardHat className="h-3.5 w-3.5" />
+                    )}
+                    {careersAuth.role === "job-seeker"
+                      ? "Job Seeker"
+                      : "Contractor"}
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={refreshJobs}
-                  className="gap-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
+                  className="gap-1 sm:gap-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 px-2 sm:px-3"
                 >
                   <RefreshCw className="h-4 w-4" />
-                  Refresh Jobs
+                  <span className="hidden sm:inline">Refresh Jobs</span>
                 </Button>
-                <Button className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                  <Mail className="h-4 w-4" />
-                  Get Job Alerts
-                </Button>
+                {careersAuth.on ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      {careersAuth.user}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCareersSignOut}
+                      className="text-gray-500 hover:text-red-600"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setShowCareersAuth(true)}
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    <User className="h-4 w-4" />
+                    Sign In
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Hero Section - Updated with business theme */}
-        <section className="relative py-16 bg-gradient-to-r from-blue-50/50 via-white to-cyan-50/50 overflow-hidden">
+        <section className="relative py-8 sm:py-12 lg:py-16 bg-gradient-to-r from-blue-50/50 via-white to-cyan-50/50 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-blue-50/20 to-transparent"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-12 scroll-fade-in opacity-0 translate-y-4 transition-all duration-700">
@@ -688,7 +1095,7 @@ export default function Careers() {
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.1 }}
-                className="text-5xl font-bold text-gray-900 mb-4 leading-tight"
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight"
               >
                 Find Your{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
@@ -701,12 +1108,12 @@ export default function Careers() {
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.2 }}
-                className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed"
+                className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mb-4 sm:mb-8 leading-relaxed px-2"
               >
                 Discover {filteredJobs.length} real opportunities across all
-                industries from our PostgreSQL database.
-                <span className="font-semibold text-emerald-600 ml-2">
-                  ✅ Connected to live PostgreSQL database!
+                industries.
+                <span className="font-semibold text-emerald-600 ml-2 hidden sm:inline">
+                  ✅ Updated in real time
                 </span>
               </motion.p>
 
@@ -716,7 +1123,7 @@ export default function Careers() {
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.3 }}
-                className="max-w-2xl mx-auto mb-8"
+                className="max-w-2xl mx-auto mb-4 sm:mb-8 hidden sm:block"
               >
                 <Card className="border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-5">
@@ -763,7 +1170,7 @@ export default function Careers() {
                 variants={staggerContainer}
                 initial="hidden"
                 animate="visible"
-                className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8"
+                className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 max-w-3xl mx-auto mb-4 sm:mb-8 px-2 sm:px-0"
               >
                 <StatCard
                   icon={<Server className="w-5 h-5" />}
@@ -776,7 +1183,7 @@ export default function Careers() {
                   icon={<HardDrive className="w-5 h-5" />}
                   value={DB_CONFIG.database}
                   label="Database"
-                  trend="Same as Commerce"
+                  trend="Wider Scope"
                   color="blue"
                 />
                 <StatCard
@@ -841,12 +1248,41 @@ export default function Careers() {
           </div>
         </section>
 
+        {/* 📬 Job Alerts Subscribe CTA */}
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 mb-6">
+          <EmailSubscribeCTA
+            channelType="job_alerts"
+            userId={platformUser?.id}
+            onAuthRequired={() =>
+              toast({
+                title: "Sign in required",
+                description:
+                  "Create an account or sign in to subscribe to job alerts.",
+              })
+            }
+          />
+        </div>
+
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar - Enhanced */}
-            <div className="lg:w-1/4">
-              <Card className="sticky top-24 border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300">
+            {/* Filters Sidebar - Collapsible on mobile */}
+            <div className="w-full lg:w-1/4">
+              {/* Mobile filter toggle */}
+              <Button
+                variant="outline"
+                className="w-full lg:hidden mb-3 gap-2 border-gray-300"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="h-4 w-4" />
+                {showFilters ? "Hide Filters" : "Show Filters"}
+                <Badge variant="secondary" className="ml-auto">
+                  {filteredJobs.length}
+                </Badge>
+              </Button>
+              <Card
+                className={`sticky top-24 border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300 ${showFilters ? "block" : "hidden lg:block"}`}
+              >
                 <CardHeader className="pb-4 border-b border-gray-200/50">
                   <CardTitle className="flex items-center gap-3 text-gray-900">
                     <div className="p-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg">
@@ -879,6 +1315,34 @@ export default function Careers() {
                             value={category.toLowerCase()}
                           >
                             {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="mb-3 block font-semibold text-gray-700">
+                      Sector
+                    </Label>
+                    <Select
+                      value={selectedSector}
+                      onValueChange={setSelectedSector}
+                    >
+                      <SelectTrigger className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        <SelectValue placeholder="All Sectors" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SECTORS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            <span className="flex items-center gap-2">
+                              {s.value !== "all" && (
+                                <span
+                                  className={`inline-block h-2 w-2 rounded-full bg-gradient-to-r ${s.gradient}`}
+                                />
+                              )}
+                              {s.label}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1028,6 +1492,7 @@ export default function Careers() {
                     className="w-full gap-2 py-6 border-gray-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
                     onClick={() => {
                       setSelectedCategory("all");
+                      setSelectedSector("all");
                       setSelectedType("all");
                       setSelectedExperience("all");
                       setSalaryRange([0, 300000]);
@@ -1104,17 +1569,143 @@ export default function Careers() {
                   ))}
                 </CardContent>
               </Card>
+
+              {/* Blog Community Card */}
+              <Card className="mt-6 border border-gray-200/80 shadow-sm overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600" />
+                <CardContent className="pt-5 pb-5">
+                  {blogAuth.connected ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                          {blogAuth.user.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {blogAuth.user}
+                          </p>
+                          <p className="text-xs text-emerald-600 flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Connected to Community
+                          </p>
+                        </div>
+                      </div>
+                      <Link href="/blog">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 text-sm border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          Open Community Feed
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 text-center">
+                      <div className="mx-auto h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          Join the Community
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Connect with professionals, share insights & grow your
+                          network
+                        </p>
+                      </div>
+                      <Link href="/blog">
+                        <Button className="w-full gap-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md transition-all">
+                          <Users className="h-4 w-4" />
+                          Sign In to Community
+                        </Button>
+                      </Link>
+                      <p className="text-[11px] text-gray-400">
+                        Like LinkedIn — post, comment & connect
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             {/* Jobs List */}
             <div className="lg:w-3/4">
+              {/* Sector Quick Filter — Searchable Dropdown */}
+              <div className="mb-5">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-500">
+                    Sector:
+                  </span>
+                  <Popover open={sectorOpen} onOpenChange={setSectorOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all duration-200 min-w-[230px] justify-between ${
+                          selectedSector !== "all"
+                            ? `bg-gradient-to-r ${getSectorDef(selectedSector).gradient} text-white border-transparent shadow-md`
+                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          {selectedSector !== "all" && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-white/40" />
+                          )}
+                          {getSectorDef(selectedSector).label}
+                        </span>
+                        <ChevronRight
+                          className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                            sectorOpen ? "rotate-90" : ""
+                          } ${selectedSector !== "all" ? "text-white/70" : "text-gray-400"}`}
+                        />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[270px] p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search sector…"
+                          className="h-9"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No sector found.</CommandEmpty>
+                          <CommandGroup>
+                            {SECTORS.map((s) => {
+                              const isActive = selectedSector === s.value;
+                              return (
+                                <CommandItem
+                                  key={s.value}
+                                  value={s.label}
+                                  onSelect={() => {
+                                    setSelectedSector(s.value);
+                                    setSectorOpen(false);
+                                  }}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <span
+                                    className={`inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r ${s.gradient} shrink-0`}
+                                  />
+                                  <span
+                                    className={isActive ? "font-semibold" : ""}
+                                  >
+                                    {s.label}
+                                  </span>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
               {/* Tabs - Enhanced */}
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 className="mb-8"
               >
-                <TabsList className="grid grid-cols-5 mb-6 bg-gray-100/80 p-1.5 rounded-xl">
+                <TabsList className="grid grid-cols-3 sm:grid-cols-5 mb-4 sm:mb-6 bg-gray-100/80 p-1 sm:p-1.5 rounded-xl">
                   {[
                     {
                       value: "all",
@@ -1147,10 +1738,10 @@ export default function Careers() {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className={`gap-2 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 data-[state=active]:font-semibold`}
+                      className={`gap-1 sm:gap-2 rounded-lg transition-all duration-300 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 data-[state=active]:font-semibold`}
                     >
                       {tab.icon}
-                      {tab.label}
+                      <span className="hidden sm:inline">{tab.label}</span>
                       {tab.count !== undefined && (
                         <Badge
                           variant="secondary"
@@ -1164,22 +1755,17 @@ export default function Careers() {
                 </TabsList>
 
                 <TabsContent value="all" className="mt-0">
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-8 gap-3">
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                        {databaseHealth?.database?.connected
-                          ? "Live Opportunities from PostgreSQL"
-                          : "Sample Opportunities"}
+                      <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">
+                        Available Opportunities
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Database:{" "}
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                          {DB_CONFIG.database}
-                        </code>
+                        Showing {filteredJobs.length} matching positions
                       </p>
                     </div>
                     <Select defaultValue="newest">
-                      <SelectTrigger className="w-48 border-gray-300 focus:ring-blue-500">
+                      <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:ring-blue-500">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1308,9 +1894,25 @@ export default function Careers() {
                                   </div>
 
                                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
+                                    {/* Sector badge */}
+                                    {(() => {
+                                      const sd = getSectorDef(
+                                        job.sector || "general",
+                                      );
+                                      return (
+                                        <span
+                                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${sd.color}`}
+                                        >
+                                          <span
+                                            className={`inline-block h-2 w-2 rounded-full bg-gradient-to-r ${sd.gradient}`}
+                                          />
+                                          {sd.label}
+                                        </span>
+                                      );
+                                    })()}
                                     <span className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg">
                                       <Clock className="h-4 w-4" />
-                                      {job.type.replace("-", " ")}
+                                      {formatJobType(job.type)}
                                     </span>
                                     <span className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-cyan-50 px-3 py-1.5 rounded-lg">
                                       <DollarSign className="h-4 w-4" />
@@ -1324,12 +1926,43 @@ export default function Careers() {
                                     </span>
                                     <span className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg">
                                       <Users className="h-4 w-4" />
-                                      {job.experience_level} Level
+                                      {formatExperienceLevel(
+                                        job.experience_level,
+                                      )}{" "}
+                                      Level
+                                    </span>
+                                    <span
+                                      className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg"
+                                      title={`Posted: ${formatDateTime(job.posted_date || job.created_at).date} at ${formatDateTime(job.posted_date || job.created_at).time}`}
+                                    >
+                                      <Calendar className="h-4 w-4" />
+                                      {
+                                        formatDateTime(
+                                          job.posted_date || job.created_at,
+                                        ).date
+                                      }{" "}
+                                      ·{" "}
+                                      {
+                                        formatDateTime(
+                                          job.posted_date || job.created_at,
+                                        ).time
+                                      }
                                     </span>
                                     <span className="text-sm text-gray-400">
-                                      Posted {getDaysSince(job.posted_date)}{" "}
-                                      days ago
+                                      (
+                                      {getDaysSince(
+                                        job.posted_date || job.created_at,
+                                      )}{" "}
+                                      days ago)
                                     </span>
+                                  </div>
+
+                                  {/* Company Reviews */}
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <StarRating
+                                      rating={job.company_rating}
+                                      count={job.company_review_count || 0}
+                                    />
                                   </div>
 
                                   <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">
@@ -1370,9 +2003,10 @@ export default function Careers() {
                                   {job.view_count.toLocaleString()} views
                                 </span>
                                 <span className="flex items-center gap-2 mt-2">
-                                  <Database className="h-3 w-3" />
-                                  <span className="text-xs font-mono">
-                                    PostgreSQL Live Data
+                                  <Clock className="h-3 w-3" />
+                                  <span className="text-xs">
+                                    Added {formatDateTime(job.created_at).date}{" "}
+                                    at {formatDateTime(job.created_at).time}
                                   </span>
                                 </span>
                               </div>
@@ -1395,21 +2029,11 @@ export default function Careers() {
                                   View Details
                                 </Button>
                                 <Button
-                                  onClick={() => handleApply(job.id)}
-                                  disabled={applyMutation.isPending}
+                                  onClick={() => handleApply(job)}
                                   className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-md hover:shadow-lg"
                                 >
-                                  {applyMutation.isPending ? (
-                                    <>
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                      Applying...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Target className="h-4 w-4" />
-                                      Apply Now
-                                    </>
-                                  )}
+                                  <Target className="h-4 w-4" />
+                                  Apply Now
                                 </Button>
                               </div>
                             </div>
@@ -1424,6 +2048,132 @@ export default function Careers() {
           </div>
         </div>
       </div>
+
+      {/* ── Shared Careers / Contractors Auth Modal ── */}
+      {showCareersAuth && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* header */}
+            <div
+              className={`p-6 text-white ${careersAuth.role === "contractor" ? "bg-gradient-to-r from-amber-600 to-orange-600" : "bg-gradient-to-r from-blue-600 to-cyan-600"}`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">
+                  {careersAuth.role === "contractor"
+                    ? "Contractor Sign In"
+                    : "Job Seeker Sign In"}
+                </h2>
+                <button
+                  onClick={() => setShowCareersAuth(false)}
+                  className="text-white/80 hover:text-white text-2xl leading-none"
+                >
+                  &times;
+                </button>
+              </div>
+              {/* role toggle */}
+              <div className="flex bg-white/20 rounded-lg p-1 gap-1">
+                <button
+                  onClick={() => flipCareersRole()}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${careersAuth.role === "job-seeker" ? "bg-white text-blue-700 shadow" : "text-white/80 hover:text-white"}`}
+                >
+                  <Briefcase className="h-4 w-4" /> Job Seeker
+                </button>
+                <button
+                  onClick={() => flipCareersRole()}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${careersAuth.role === "contractor" ? "bg-white text-amber-700 shadow" : "text-white/80 hover:text-white"}`}
+                >
+                  <HardHat className="h-4 w-4" /> Contractor
+                </button>
+              </div>
+            </div>
+            {/* body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <Input
+                  placeholder="Enter your name"
+                  value={careersForm.name}
+                  onChange={(e) =>
+                    setCareersForm({ ...careersForm, name: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={careersForm.email}
+                  onChange={(e) =>
+                    setCareersForm({ ...careersForm, email: e.target.value })
+                  }
+                />
+              </div>
+              <Button
+                className={`w-full ${careersAuth.role === "contractor" ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700" : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"}`}
+                onClick={handleCareersSignIn}
+                disabled={!careersForm.name.trim() || !careersForm.email.trim()}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Sign In as{" "}
+                {careersAuth.role === "contractor"
+                  ? "Contractor"
+                  : "Job Seeker"}
+              </Button>
+              <div className="text-center text-sm text-gray-500 mt-3">
+                {careersAuth.role === "job-seeker" ? (
+                  <span>
+                    Looking for contract work?{" "}
+                    <Link
+                      href="/services/contractors"
+                      className="text-amber-600 hover:underline font-medium"
+                    >
+                      Browse Contracts{" "}
+                      <ChevronRight className="inline h-3 w-3" />
+                    </Link>
+                  </span>
+                ) : (
+                  <span>
+                    Looking for full-time roles?{" "}
+                    <Link
+                      href="/services/careers"
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      Browse Careers <ChevronRight className="inline h-3 w-3" />
+                    </Link>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Application Modal ── */}
+      {platformUser && authToken && (
+        <JobApplicationModal
+          open={showApplyModal}
+          onClose={() => {
+            setShowApplyModal(false);
+            setApplyingJob(null);
+          }}
+          job={applyingJob}
+          user={platformUser}
+          token={authToken}
+          variant="careers"
+          onSubmitSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["jobs"] });
+            toast({
+              title: "Application submitted!",
+              description: "Your application has been received. Good luck!",
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

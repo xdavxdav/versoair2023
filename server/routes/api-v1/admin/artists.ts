@@ -3,9 +3,31 @@ import { db } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { artists, auditLogs } from "../../../../shared/schema";
-import { eq, ilike, and, count, desc } from "drizzle-orm";
+import { eq, ilike, and, or, count, desc, sql, isNotNull } from "drizzle-orm";
 
 const router = Router();
+
+/**
+ * GET /api/v1/admin/artists/genres
+ * List distinct genre values for dropdown
+ */
+router.get(
+  "/genres",
+  requireAuth(["admin", "moderator"]),
+  asyncHandler(async (_req, res) => {
+    const result = await db
+      .selectDistinct({ genre: artists.genre })
+      .from(artists)
+      .where(isNotNull(artists.genre))
+      .orderBy(artists.genre);
+
+    const genres = result
+      .map((r) => r.genre)
+      .filter((g): g is string => !!g && g.trim().length > 0);
+
+    res.json({ success: true, data: genres });
+  }),
+);
 
 /**
  * GET /api/v1/admin/artists
@@ -15,7 +37,7 @@ router.get(
   "/",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
-    const { page = "1", limit = "20", search } = req.query;
+    const { page = "1", limit = "20", search, genre, countryCode } = req.query;
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
     const limitNum = Math.min(100, parseInt(limit as string, 10) || 20);
     const offset = (pageNum - 1) * limitNum;
@@ -24,7 +46,24 @@ router.get(
     const conditions = [];
 
     if (search) {
-      conditions.push(ilike(artists.stageName, `%${search}%`));
+      conditions.push(
+        or(
+          ilike(artists.stageName, `${search}%`),
+          ilike(artists.genre, `${search}%`),
+        ),
+      );
+    }
+
+    if (genre) {
+      conditions.push(eq(artists.genre, genre as string));
+    }
+
+    if (
+      countryCode &&
+      typeof countryCode === "string" &&
+      countryCode.length === 2
+    ) {
+      conditions.push(eq(artists.countryCode, countryCode.toUpperCase()));
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -70,7 +109,8 @@ router.post(
   "/",
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
-    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } = req.body;
+    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } =
+      req.body;
 
     // Validate required fields
     if (!stageName) {
@@ -158,7 +198,8 @@ router.put(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } = req.body;
+    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } =
+      req.body;
     const artistId = parseInt(id);
 
     // Validate required fields

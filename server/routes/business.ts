@@ -31,7 +31,7 @@ router.get("/search", async (req, res) => {
 
     // Text search across multiple fields
     if (params.query && params.query.trim()) {
-      const searchTerm = `%${params.query.trim().toLowerCase()}%`;
+      const searchTerm = `${params.query.trim().toLowerCase()}%`;
       conditions.push(
         or(
           ilike(businesses.name, searchTerm),
@@ -46,12 +46,12 @@ router.get("/search", async (req, res) => {
     // Category filter
     if (params.category) {
       // categoryId is numeric; for a quick filter match we check name/address fields
-      conditions.push(ilike(businesses.name, `%${params.category}%`));
+      conditions.push(ilike(businesses.name, `${params.category}%`));
     }
 
     // Location filter
     if (params.location) {
-      conditions.push(ilike(businesses.location, `%${params.location}%`));
+      conditions.push(ilike(businesses.location, `${params.location}%`));
     }
 
     // Apply all conditions

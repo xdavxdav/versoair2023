@@ -34,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -42,74 +43,52 @@ interface Artist {
   id: number;
   name: string;
   genre: string;
-  biography: string | null;
-  image_url: string | null;
-  total_streams: number | null;
-  monthly_listeners: number | null;
-  created_at: string;
-  track_count: number;
+  label_status: string | null;
+  spotify_url: string | null;
+  business_id: number | null;
+  user_id: number | null;
 }
 
-interface ArtistDetails extends Artist {
-  tracks: Track[];
-  analytics: {
-    total_streams: string | null;
-    total_downloads: string | null;
-    total_shares: string | null;
-    total_revenue: string | null;
-  } | null;
-}
-
-interface Track {
-  id: string | number;
-  title: string;
-  duration: number | null;
-  streams: number | null;
-  release_date: string | null;
-  genre: string | null;
-}
+interface ArtistDetails extends Artist {}
 
 // Sort options
 const SORT_OPTIONS = [
-  { value: "monthly_listeners_desc", label: "Auditeurs (plus populaires)" },
-  { value: "monthly_listeners_asc", label: "Auditeurs (moins populaires)" },
-  { value: "streams_desc", label: "Streams (plus écoutés)" },
-  { value: "streams_asc", label: "Streams (moins écoutés)" },
   { value: "name_asc", label: "Nom (A → Z)" },
   { value: "name_desc", label: "Nom (Z → A)" },
+  { value: "genre_asc", label: "Genre (A → Z)" },
   { value: "recent", label: "Plus récents" },
 ];
 
-// Genre icons mapping
+// Genre icons mapping — Ivorian music genres
 const GENRE_ICONS: Record<string, string> = {
-  Pop: "🎵",
-  Rock: "🎸",
-  "Hip Hop": "🎤",
-  Electronic: "🎧",
-  "R&B": "🎶",
-  Country: "🤠",
-  Classical: "🎻",
-  Latin: "💃",
-  "Indie Pop": "🎹",
-  Synthwave: "🌊",
-  Jazz: "🎷",
+  "Coupé-Décalé": "💃",
+  Zouglou: "🥁",
   Reggae: "🌴",
+  Afrobeats: "🔥",
+  "Afro-Trap": "🎤",
+  Rap: "🎤",
+  "Hip-Hop": "🎧",
+  Electronic: "🎧",
+  "Afro-Electronic": "⚡",
+  "R&B": "🎶",
+  Traditional: "🪘",
+  "World Music": "🌍",
 };
 
-// Genre colors
+// Genre colors — Ivorian music genres
 const GENRE_COLORS: Record<string, string> = {
-  Pop: "from-pink-500 to-purple-500",
-  Rock: "from-red-600 to-orange-500",
-  "Hip Hop": "from-amber-500 to-yellow-500",
+  "Coupé-Décalé": "from-orange-500 to-yellow-500",
+  Zouglou: "from-green-500 to-emerald-500",
+  Reggae: "from-green-600 to-yellow-500",
+  Afrobeats: "from-red-500 to-orange-500",
+  "Afro-Trap": "from-purple-600 to-pink-500",
+  Rap: "from-amber-500 to-yellow-500",
+  "Hip-Hop": "from-violet-500 to-purple-600",
   Electronic: "from-cyan-400 to-blue-500",
+  "Afro-Electronic": "from-fuchsia-500 to-cyan-500",
   "R&B": "from-violet-500 to-purple-600",
-  Country: "from-amber-600 to-yellow-600",
-  Classical: "from-slate-400 to-gray-600",
-  Latin: "from-red-500 to-pink-500",
-  "Indie Pop": "from-teal-400 to-emerald-500",
-  Synthwave: "from-fuchsia-500 to-violet-600",
-  Jazz: "from-amber-400 to-orange-500",
-  Reggae: "from-green-500 to-yellow-500",
+  Traditional: "from-amber-600 to-orange-600",
+  "World Music": "from-teal-500 to-emerald-500",
 };
 
 function formatNumber(num: number | null | undefined): string {
@@ -133,7 +112,7 @@ export default function ArtistDirectory() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
-  const [sortBy, setSortBy] = useState("monthly_listeners_desc");
+  const [sortBy, setSortBy] = useState("name_asc");
   const [artists, setArtists] = useState<Artist[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -148,6 +127,7 @@ export default function ArtistDirectory() {
     null,
   );
   const [showArtistDetails, setShowArtistDetails] = useState(false);
+  useScrollLock(showArtistDetails);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   // Database connection test
@@ -177,16 +157,18 @@ export default function ArtistDirectory() {
         console.error("Failed to fetch genres:", error);
         // Fallback genres
         setGenres([
-          "Classical",
-          "Country",
+          "Afro-Electronic",
+          "Afro-Trap",
+          "Afrobeats",
+          "Coupé-Décalé",
           "Electronic",
-          "Hip Hop",
-          "Indie Pop",
-          "Latin",
-          "Pop",
+          "Hip-Hop",
           "R&B",
-          "Rock",
-          "Synthwave",
+          "Rap",
+          "Reggae",
+          "Traditional",
+          "World Music",
+          "Zouglou",
         ]);
       }
     };
@@ -264,7 +246,7 @@ export default function ArtistDirectory() {
   const clearAllFilters = () => {
     setSearchQuery("");
     setSelectedGenre("");
-    setSortBy("monthly_listeners_desc");
+    setSortBy("name_asc");
     setArtists([]);
     setHasSearched(false);
     setTotalResults(0);
@@ -581,109 +563,110 @@ export default function ArtistDirectory() {
 
             {artists.length > 0 ? (
               <>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <AnimatePresence>
                     {artists.map((artist, index) => (
                       <motion.div
                         key={artist.id}
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
+                        transition={{
+                          delay: index * 0.05,
+                          type: "spring",
+                          stiffness: 120,
+                        }}
+                        className="relative rounded-2xl overflow-hidden cursor-pointer group"
                         onClick={() => fetchArtistDetails(artist.id)}
                       >
-                        {/* Genre color bar */}
-                        <div
-                          className={`h-2 bg-gradient-to-r ${getGenreGradient(artist.genre || "")}`}
-                        />
+                        {/* Outer glow on hover */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 rounded-2xl opacity-0 group-hover:opacity-60 blur-sm transition-opacity duration-500 pointer-events-none" />
 
-                        {/* Artist image or placeholder */}
-                        <div className="relative h-48 bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
-                          {artist.image_url ? (
-                            <img
-                              src={artist.image_url}
-                              alt={artist.name || "Artiste"}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  "none";
-                              }}
-                            />
-                          ) : (
+                        <div className="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-md rounded-2xl border border-gray-700/60 group-hover:border-purple-500/50 transition-all duration-500 group-hover:-translate-y-1 overflow-hidden">
+                          {/* Genre color bar — thinner, more refined */}
+                          <div
+                            className={`h-1 bg-gradient-to-r ${getGenreGradient(artist.genre || "")} opacity-70 group-hover:opacity-100 transition-opacity duration-500`}
+                          />
+
+                          {/* Artist avatar header — more spacious */}
+                          <div className="relative h-52 overflow-hidden">
+                            {/* Background pattern */}
                             <div
-                              className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getGenreGradient(artist.genre || "")} opacity-20`}
-                            >
-                              <Music className="h-20 w-20 text-white/40" />
+                              className={`absolute inset-0 bg-gradient-to-br ${getGenreGradient(artist.genre || "")} opacity-20 group-hover:opacity-30 transition-opacity duration-500`}
+                            />
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.4),transparent)]" />
+
+                            {/* Decorative floating elements */}
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                              <div className="absolute top-4 left-4 w-16 h-16 border border-white/5 rounded-full" />
+                              <div className="absolute bottom-6 right-6 w-24 h-24 border border-white/5 rounded-full" />
+                              <div className="absolute top-1/2 right-1/4 w-8 h-8 border border-white/5 rounded-full" />
                             </div>
-                          )}
-                          {/* Overlay info on hover */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                            <motion.div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                                <Play
-                                  className="h-8 w-8 text-white"
-                                  fill="white"
-                                />
+
+                            {/* Centered initials — bigger, better shadow */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div
+                                className={`w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
+                              >
+                                {(artist.name || "?")
+                                  .split(/\s+/)
+                                  .map((w: string) => w[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase()}
                               </div>
-                            </motion.div>
-                          </div>
-                          {/* Genre badge */}
-                          <div className="absolute top-3 right-3">
-                            <Badge
-                              className={`bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-white border-0 shadow-lg`}
-                            >
-                              {GENRE_ICONS[artist.genre || ""] || "🎵"}{" "}
-                              {artist.genre || "Divers"}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="p-5">
-                          <h4 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
-                            {artist.name || "Artiste inconnu"}
-                          </h4>
-
-                          {artist.biography && (
-                            <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                              {artist.biography}
-                            </p>
-                          )}
-
-                          {/* Stats row */}
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-3">
-                              {artist.monthly_listeners != null && (
-                                <div
-                                  className="flex items-center gap-1 text-purple-300"
-                                  title="Auditeurs mensuels"
-                                >
-                                  <Users className="h-3.5 w-3.5" />
-                                  <span className="font-semibold">
-                                    {formatNumber(artist.monthly_listeners)}
-                                  </span>
-                                </div>
-                              )}
-                              {artist.total_streams != null && (
-                                <div
-                                  className="flex items-center gap-1 text-fuchsia-300"
-                                  title="Streams totaux"
-                                >
-                                  <Headphones className="h-3.5 w-3.5" />
-                                  <span className="font-semibold">
-                                    {formatNumber(artist.total_streams)}
-                                  </span>
-                                </div>
-                              )}
                             </div>
 
-                            <div className="flex items-center gap-1 bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs">
-                              <Disc3 className="h-3 w-3" />
-                              <span>
-                                {artist.track_count ?? 0} titre
-                                {Number(artist.track_count ?? 0) !== 1
-                                  ? "s"
-                                  : ""}
-                              </span>
+                            {/* Genre badge — polished glass effect */}
+                            <div className="absolute top-3.5 right-3.5">
+                              <Badge
+                                className={`bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-white border-0 shadow-lg backdrop-blur-sm px-3 py-1 text-xs font-semibold`}
+                              >
+                                {GENRE_ICONS[artist.genre || ""] || "🎵"}{" "}
+                                {artist.genre || "Divers"}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Card body — improved spacing & typography */}
+                          <div className="p-6">
+                            <h4 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight">
+                              {artist.name || "Artiste inconnu"}
+                            </h4>
+
+                            {/* Subtle divider */}
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent mb-4" />
+
+                            {/* Label status + Spotify — better layout */}
+                            <div className="flex items-center justify-between">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs font-medium px-3 py-1 rounded-lg ${
+                                  artist.label_status === "signed"
+                                    ? "border-green-500/40 text-green-400 bg-green-500/5"
+                                    : artist.label_status === "independent"
+                                      ? "border-amber-500/40 text-amber-400 bg-amber-500/5"
+                                      : "border-purple-500/40 text-purple-300 bg-purple-500/5"
+                                }`}
+                              >
+                                {artist.label_status === "signed"
+                                  ? "🏷️ Signé"
+                                  : artist.label_status === "independent"
+                                    ? "🎯 Indépendant"
+                                    : "🆓 Unsigned"}
+                              </Badge>
+
+                              {artist.spotify_url && (
+                                <a
+                                  href={artist.spotify_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-1.5 text-green-400 hover:text-green-300 transition-colors text-xs font-medium bg-green-500/10 hover:bg-green-500/20 px-3 py-1.5 rounded-lg"
+                                >
+                                  <Music className="h-3.5 w-3.5" />
+                                  Spotify
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -800,22 +783,21 @@ export default function ArtistDirectory() {
                 </div>
               ) : selectedArtist ? (
                 <>
-                  {/* Header with image */}
+                  {/* Header with gradient */}
                   <div className="relative">
                     <div
                       className={`h-48 bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} relative overflow-hidden`}
                     >
-                      {selectedArtist.image_url && (
-                        <img
-                          src={selectedArtist.image_url}
-                          alt={selectedArtist.name || "Artiste"}
-                          className="w-full h-full object-cover opacity-40"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold">
+                          {(selectedArtist.name || "?")
+                            .split(/\s+/)
+                            .map((w: string) => w[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-800 via-transparent to-transparent" />
                     </div>
 
@@ -845,210 +827,46 @@ export default function ArtistDirectory() {
                   </div>
 
                   <div className="p-6 space-y-6">
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {/* Info Cards */}
+                    <div className="grid grid-cols-2 gap-3">
                       <Card className="bg-purple-900/30 border-purple-500/20">
                         <CardContent className="p-4 text-center">
-                          <Users className="h-5 w-5 text-purple-400 mx-auto mb-1" />
+                          <Mic2 className="h-5 w-5 text-purple-400 mx-auto mb-1" />
                           <div className="text-lg font-bold text-white">
-                            {formatNumber(selectedArtist.monthly_listeners)}
+                            {selectedArtist.genre || "—"}
                           </div>
-                          <div className="text-xs text-purple-300">
-                            Auditeurs/mois
-                          </div>
+                          <div className="text-xs text-purple-300">Genre</div>
                         </CardContent>
                       </Card>
                       <Card className="bg-fuchsia-900/30 border-fuchsia-500/20">
                         <CardContent className="p-4 text-center">
-                          <Headphones className="h-5 w-5 text-fuchsia-400 mx-auto mb-1" />
+                          <CheckCircle className="h-5 w-5 text-fuchsia-400 mx-auto mb-1" />
                           <div className="text-lg font-bold text-white">
-                            {formatNumber(selectedArtist.total_streams)}
+                            {selectedArtist.label_status === "signed"
+                              ? "Signé"
+                              : selectedArtist.label_status === "independent"
+                                ? "Indépendant"
+                                : "Unsigned"}
                           </div>
                           <div className="text-xs text-fuchsia-300">
-                            Streams totaux
+                            Statut label
                           </div>
                         </CardContent>
                       </Card>
-                      <Card className="bg-violet-900/30 border-violet-500/20">
-                        <CardContent className="p-4 text-center">
-                          <Disc3 className="h-5 w-5 text-violet-400 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-white">
-                            {selectedArtist.tracks?.length || 0}
-                          </div>
-                          <div className="text-xs text-violet-300">Titres</div>
-                        </CardContent>
-                      </Card>
-                      {selectedArtist.analytics?.total_revenue && (
-                        <Card className="bg-emerald-900/30 border-emerald-500/20">
-                          <CardContent className="p-4 text-center">
-                            <TrendingUp className="h-5 w-5 text-emerald-400 mx-auto mb-1" />
-                            <div className="text-lg font-bold text-white">
-                              €
-                              {parseFloat(
-                                selectedArtist.analytics.total_revenue,
-                              ).toLocaleString()}
-                            </div>
-                            <div className="text-xs text-emerald-300">
-                              Revenus
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
                     </div>
 
-                    {/* Biography */}
-                    {selectedArtist.biography && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                          <Mic2 className="h-5 w-5 text-purple-400" />
-                          Biographie
-                        </h3>
-                        <p className="text-gray-300 leading-relaxed">
-                          {selectedArtist.biography}
-                        </p>
-                      </div>
+                    {/* Spotify Link */}
+                    {selectedArtist.spotify_url && (
+                      <a
+                        href={selectedArtist.spotify_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-green-600 to-green-500 rounded-lg text-white font-semibold hover:from-green-700 hover:to-green-600 transition-all"
+                      >
+                        <Music className="h-5 w-5" />
+                        Écouter sur Spotify
+                      </a>
                     )}
-
-                    {/* Discography / Tracks */}
-                    {selectedArtist.tracks &&
-                      selectedArtist.tracks.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                            <Disc3 className="h-5 w-5 text-purple-400" />
-                            Discographie ({selectedArtist.tracks.length} titre
-                            {selectedArtist.tracks.length !== 1 ? "s" : ""})
-                          </h3>
-                          <div className="space-y-2">
-                            {selectedArtist.tracks.map((track, idx) => (
-                              <motion.div
-                                key={track.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-lg border border-purple-500/10 hover:border-purple-500/30 transition-colors group"
-                              >
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-900/50 text-purple-300 text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                  {idx + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-white font-medium truncate">
-                                    {track.title}
-                                  </div>
-                                  <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
-                                    {track.genre && <span>{track.genre}</span>}
-                                    {track.release_date && (
-                                      <span>
-                                        {new Date(
-                                          track.release_date,
-                                        ).toLocaleDateString("fr-FR", {
-                                          year: "numeric",
-                                          month: "short",
-                                        })}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-4 text-sm text-gray-400">
-                                  {track.duration != null && (
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="h-3.5 w-3.5" />
-                                      <span>
-                                        {formatDuration(track.duration)}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {track.streams != null && (
-                                    <div className="flex items-center gap-1">
-                                      <Play className="h-3.5 w-3.5" />
-                                      <span>{formatNumber(track.streams)}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Analytics Summary */}
-                    {selectedArtist.analytics && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                          <BarChart3 className="h-5 w-5 text-purple-400" />
-                          Analytiques
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {selectedArtist.analytics.total_streams && (
-                            <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                              <div className="text-xs text-gray-400 mb-1">
-                                Streams
-                              </div>
-                              <div className="text-white font-bold">
-                                {formatNumber(
-                                  parseInt(
-                                    selectedArtist.analytics.total_streams,
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          {selectedArtist.analytics.total_downloads && (
-                            <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                              <div className="text-xs text-gray-400 mb-1">
-                                Téléchargements
-                              </div>
-                              <div className="text-white font-bold">
-                                {formatNumber(
-                                  parseInt(
-                                    selectedArtist.analytics.total_downloads,
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          {selectedArtist.analytics.total_shares && (
-                            <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                              <div className="text-xs text-gray-400 mb-1">
-                                Partages
-                              </div>
-                              <div className="text-white font-bold">
-                                {formatNumber(
-                                  parseInt(
-                                    selectedArtist.analytics.total_shares,
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          {selectedArtist.analytics.total_revenue && (
-                            <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                              <div className="text-xs text-gray-400 mb-1">
-                                Revenus
-                              </div>
-                              <div className="text-emerald-400 font-bold">
-                                €
-                                {parseFloat(
-                                  selectedArtist.analytics.total_revenue,
-                                ).toLocaleString()}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Member since */}
-                    <div className="text-center text-xs text-gray-500 pt-4 border-t border-gray-700">
-                      Artiste inscrit le{" "}
-                      {new Date(selectedArtist.created_at).toLocaleDateString(
-                        "fr-FR",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        },
-                      )}
-                    </div>
                   </div>
                 </>
               ) : null}

@@ -24,6 +24,7 @@ export interface Business {
   revenue?: number;
   employees?: number;
   status?: "active" | "inactive" | "popular" | "verified" | "premium";
+  countryCode?: string;
   specialization?: string[];
   years_experience?: number;
   distance?: number;
@@ -66,6 +67,7 @@ function normalizeRow(row: any): Business {
     revenue: row.revenue ? parseFloat(row.revenue) : undefined,
     employees: row.employees ? parseInt(row.employees) : undefined,
     status: row.is_active === false ? "inactive" : "active",
+    countryCode: row.country_code || undefined,
   };
 }
 
@@ -126,6 +128,7 @@ export async function searchBusinesses(params: {
   categoryIds?: number[];
   location?: string;
   status?: string;
+  countryCode?: string;
   limit?: number;
   page?: number;
 }): Promise<Business[]> {
@@ -135,6 +138,8 @@ export async function searchBusinesses(params: {
     if (params.page) queryParams.append("page", String(params.page));
     if (params.query) queryParams.append("search", params.query);
     if (params.location) queryParams.append("location", params.location);
+    if (params.countryCode)
+      queryParams.append("countryCode", params.countryCode);
 
     // Priority: categoryIds > categoryId > sectorId > category text fallback
     if (params.categoryIds && params.categoryIds.length > 0) {

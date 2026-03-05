@@ -62,12 +62,14 @@ export function TableBrowserContainer({
     const query = searchQuery.toLowerCase();
     const filtered = tables.filter(
       (table) =>
-        table.name.toLowerCase().includes(query) ||
-        table.displayName?.toLowerCase().includes(query) ||
-        table.description?.toLowerCase().includes(query) ||
+        table.name.toLowerCase().startsWith(query) ||
+        table.displayName?.toLowerCase().startsWith(query) ||
+        table.description?.toLowerCase().startsWith(query) ||
         (table.tags &&
           Array.isArray(table.tags) &&
-          table.tags.some((tag: string) => tag.toLowerCase().includes(query))),
+          table.tags.some((tag: string) =>
+            tag.toLowerCase().startsWith(query),
+          )),
     );
 
     setFilteredTables(filtered);

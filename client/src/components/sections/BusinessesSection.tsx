@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, AlertCircle, Check } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { authenticatedFetch } from "@/lib/auth";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface Business {
   id: number;
@@ -28,6 +29,7 @@ export function BusinessesSection() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
+  useScrollLock(isModalOpen);
   const [formData, setFormData] = useState<CreateBusinessInput>({
     name: "",
     categoryId: 1,
@@ -38,9 +40,7 @@ export function BusinessesSection() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const API_BASE_URL =
-    typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_API_URL || ""
-      : "";
+    typeof window !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "" : "";
 
   // Fetch businesses
   const {
@@ -50,11 +50,14 @@ export function BusinessesSection() {
   } = useQuery({
     queryKey: ["businesses"],
     queryFn: async () => {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/v1/admin/businesses`, {
-        headers: {
-          "Content-Type": "application/json",
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/businesses`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error?.message || "Failed to fetch businesses");

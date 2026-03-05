@@ -29,7 +29,7 @@ router.get(
     const conditions = [];
 
     if (search) {
-      conditions.push(ilike(businessCategories.name, `%${search}%`));
+      conditions.push(ilike(businessCategories.name, `${search}%`));
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -384,7 +384,7 @@ router.get(
     const conditions = [eq(businesses.categoryId, category.id)];
 
     if (search) {
-      conditions.push(ilike(businesses.name, `%${search}%`));
+      conditions.push(ilike(businesses.name, `${search}%`));
     }
 
     const where = and(...conditions);

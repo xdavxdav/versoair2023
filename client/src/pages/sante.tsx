@@ -64,6 +64,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 // Database API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -213,6 +214,7 @@ export default function Sante() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
 
   // Database connection test
   useEffect(() => {

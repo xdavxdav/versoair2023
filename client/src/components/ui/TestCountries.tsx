@@ -9,7 +9,7 @@ export function TestCountries() {
     return <div className="text-sm text-red-600">Error: {error.message}</div>;
 
   return (
-    <div className="max-h-60 overflow-y-auto">
+    <div>
       <h4 className="font-semibold text-green-600 mb-2">✅ API Connected!</h4>
       <p className="text-xs text-gray-600 mb-2">
         Countries data loaded successfully:

@@ -9,6 +9,7 @@ import {
   Globe,
   Info,
   Headphones,
+  ShoppingBag,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -21,6 +22,7 @@ interface BlogNavbarProps {
 
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/businesses-directory", label: "Annuaire", icon: Store },
   { href: "/geo-admin", label: "Geo Admin", icon: Globe },
   { href: "/about", label: "About", icon: Info },

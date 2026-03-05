@@ -7,6 +7,25 @@ import { businesses, auditLogs } from "@shared/schema";
 const router = Router();
 
 // ============================================================================
+// COUNTRIES ENDPOINT
+// ============================================================================
+
+// GET available countries (for country toggle filter)
+router.get("/api/countries", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, code FROM countries ORDER BY name ASC",
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("Error fetching countries:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch countries" });
+  }
+});
+
+// ============================================================================
 // BUSINESSES ENDPOINTS
 // ============================================================================
 
@@ -26,6 +45,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       isActive = "",
       sortBy = "created_at",
       order = "DESC",
+      countryCode = "",
     } = req.query;
 
     const offset = ((Number(page) - 1) * Number(limit)) as number;
@@ -35,13 +55,27 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     const params: any[] = [];
 
     if (search) {
-      whereClause +=
-        " AND (b.name ILIKE $" +
-        (params.length + 1) +
-        " OR b.description ILIKE $" +
-        (params.length + 1) +
-        ")";
-      params.push(`%${search}%`);
+      // Use full-text search with ts_rank when search_vector exists,
+      // fallback to ILIKE for short queries or partial matches
+      const searchTerm = String(search).trim();
+      if (searchTerm.length >= 3) {
+        whereClause +=
+          " AND (to_tsvector('simple', COALESCE(b.name,'') || ' ' || COALESCE(b.description,'')) @@ plainto_tsquery('simple', $" +
+          (params.length + 1) +
+          ") OR b.name ILIKE $" +
+          (params.length + 2) +
+          ")";
+        params.push(searchTerm);
+        params.push(`${searchTerm}%`);
+      } else {
+        whereClause +=
+          " AND (b.name ILIKE $" +
+          (params.length + 1) +
+          " OR b.description ILIKE $" +
+          (params.length + 1) +
+          ")";
+        params.push(`${searchTerm}%`);
+      }
     }
 
     if (locationFilter) {
@@ -53,7 +87,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         " OR b.city_name ILIKE $" +
         (params.length + 1) +
         ")";
-      params.push(`%${locationFilter}%`);
+      params.push(`${locationFilter}%`);
     }
 
     // Support both 'category' (from dashboard-admin) and 'categoryId' (legacy)
@@ -96,12 +130,18 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     // name but not its numeric ID.
     if (categoryName) {
       whereClause += " AND bc.name ILIKE $" + (params.length + 1);
-      params.push(`%${categoryName}%`);
+      params.push(`${categoryName}%`);
     }
 
     if (isActive !== "") {
       whereClause += " AND b.is_active = $" + (params.length + 1);
       params.push(isActive === "true");
+    }
+
+    if (countryCode) {
+      whereClause +=
+        " AND UPPER(b.country_code) = UPPER($" + (params.length + 1) + ")";
+      params.push(String(countryCode));
     }
 
     // Validate sortBy to prevent SQL injection
@@ -124,20 +164,35 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     `;
 
     // 🛸 Growth Engine: Tier-weighted ranking algorithm
-    // For now, order by the requested field
-    // TODO: Implement tier-weighted ranking after confirming owner_id relationships exist
+    // Joins owner's subscription tier and applies ranking multiplier:
+    // enterprise(1) → max(2) → verified(3) → essential(4) → free(5)
     const dataQuery = `
       SELECT 
         b.id, b.name, b.category_id, b.description, 
         b.location, b.address, b.phone, b.email,
         b.rating, b.reviews, b.tags, b.latitude, b.longitude,
+        b.country_code, b.city_name,
+        b.featured, b.is_active,
+        b.is_verified, b.is_advertiser, b.is_premium,
+        b.verified_at, b.website, b.popularity_score,
         b.created_at, b.updated_at,
         bc.name as category_name,
-        'free' as owner_tier
+        COALESCE(u.subscription_tier, 'free') as owner_tier
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
+      LEFT JOIN users u ON b.owner_id = u.id
       ${whereClause}
-      ORDER BY b.${sortField} ${order}
+      ORDER BY
+        b.featured DESC NULLS LAST,
+        CASE COALESCE(u.subscription_tier, 'free')
+          WHEN 'enterprise' THEN 1
+          WHEN 'max'        THEN 2
+          WHEN 'verified'   THEN 3
+          WHEN 'essential'  THEN 4
+          WHEN 'free'       THEN 5
+          ELSE 5
+        END ASC,
+        b.${sortField} ${order}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
 
@@ -238,6 +293,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
       email,
       latitude,
       longitude,
+      countryCode,
+      cityName,
       tags = [],
       isActive = true,
     } = req.body;
@@ -252,8 +309,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
     const result = await pool.query(
       `
       INSERT INTO businesses 
-      (name, category_id, description, location, address, phone, email, latitude, longitude, tags, is_active, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+      (name, category_id, description, location, address, phone, email, latitude, longitude, country_code, city_name, tags, is_active, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
       RETURNING *
     `,
       [
@@ -266,6 +323,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
         email || null,
         latitude || null,
         longitude || null,
+        countryCode || null,
+        cityName || null,
         JSON.stringify(tags),
         isActive,
       ],
@@ -512,60 +571,67 @@ router.get(
   },
 );
 
-// BULK UPDATE businesses
+// BULK UPDATE businesses (transaction-wrapped)
 router.post(
   "/api/businesses/bulk/update",
   async (req: Request, res: Response) => {
+    const client = await pool.connect();
     try {
       const { updates } = req.body; // Array of {id, ...updates}
 
       if (!Array.isArray(updates) || updates.length === 0) {
+        client.release();
         return res.status(400).json({
           success: false,
           error: "Invalid bulk update format",
         });
       }
 
-      const results = await Promise.all(
-        updates.map((update: any) => {
-          const { id, ...data } = update;
-          const setClauses: string[] = [];
-          const values: any[] = [];
-          let paramIndex = 1;
+      await client.query("BEGIN");
 
-          for (const [key, value] of Object.entries(data)) {
-            setClauses.push(`${key} = $${paramIndex}`);
-            values.push(value);
-            paramIndex++;
-          }
+      let updatedCount = 0;
+      for (const update of updates) {
+        const { id, ...data } = update;
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
 
-          setClauses.push(`updated_at = NOW()`);
-          values.push(id);
+        for (const [key, value] of Object.entries(data)) {
+          setClauses.push(`${key} = $${paramIndex}`);
+          values.push(value);
+          paramIndex++;
+        }
 
-          return pool.query(
-            `
-          UPDATE businesses
-          SET ${setClauses.join(", ")}
-          WHERE id = $${paramIndex}
-          RETURNING id
-        `,
-            values,
-          );
-        }),
-      );
+        setClauses.push(`updated_at = NOW()`);
+        values.push(id);
+
+        const result = await client.query(
+          `UPDATE businesses
+           SET ${setClauses.join(", ")}
+           WHERE id = $${paramIndex}
+           RETURNING id`,
+          values,
+        );
+        if (result.rows.length > 0) updatedCount++;
+      }
+
+      await client.query("COMMIT");
 
       res.json({
         success: true,
-        updated: results.filter((r: any) => r.rows.length > 0).length,
-        message: `${results.filter((r: any) => r.rows.length > 0).length} businesses updated`,
+        updated: updatedCount,
+        message: `${updatedCount} businesses updated`,
       });
     } catch (error) {
+      await client.query("ROLLBACK");
       console.error("Error bulk updating businesses:", error);
       res.status(500).json({
         success: false,
         error: "Failed to bulk update businesses",
         details: (error as Error).message,
       });
+    } finally {
+      client.release();
     }
   },
 );

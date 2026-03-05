@@ -122,6 +122,56 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     });
   });
 
+  // Broadcast new job posted (to all connected users — client filters relevance)
+  notificationEmitter.on("job_posted", (data) => {
+    if (!io) return;
+
+    console.log(`[SOCKET] Broadcasting job_posted globally`, data);
+    io.emit("notification", {
+      id: `job-${data.jobId}`,
+      type: "job_posted",
+      title: `New job: ${data.title}`,
+      message: `${data.company} · ${data.location}`,
+      timestamp: data.timestamp,
+      read: false,
+    });
+  });
+
+  // Broadcast new contract posted
+  notificationEmitter.on("contract_posted", (data) => {
+    if (!io) return;
+
+    console.log(`[SOCKET] Broadcasting contract_posted globally`, data);
+    io.emit("notification", {
+      id: `contract-${data.contractId}`,
+      type: "contract_posted",
+      title: `New contract: ${data.title}`,
+      message: `${data.client}`,
+      timestamp: data.timestamp,
+      read: false,
+    });
+  });
+
+  // Broadcast reservation update to specific user
+  notificationEmitter.on("reservation_update", (data) => {
+    if (!io) return;
+
+    const roomName = `user_${data.userId}`;
+    console.log(
+      `[SOCKET] Broadcasting reservation_update to ${roomName}`,
+      data,
+    );
+
+    io.to(roomName).emit("notification", {
+      id: `reservation-${data.reservationId}`,
+      type: "reservation_update",
+      title: `Reservation ${data.status}`,
+      message: `Your booking at ${data.businessName} has been ${data.status}`,
+      timestamp: data.timestamp,
+      read: false,
+    });
+  });
+
   return io;
 }
 

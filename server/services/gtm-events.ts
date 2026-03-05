@@ -35,7 +35,8 @@ interface GTMEventStats {
   countryBreakdown: Record<string, number>;
 }
 
-// In-memory event store (in production, use a database)
+// In-memory event store (capped at 10,000 to prevent unbounded growth)
+const MAX_EVENT_STORE_SIZE = 10_000;
 const eventStore: Map<string, GTMEvent> = new Map();
 const sessionStore: Set<string> = new Set();
 const userStore: Set<string> = new Set();
@@ -49,6 +50,12 @@ export function logEvent(event: Omit<GTMEvent, "id" | "timestamp">): GTMEvent {
     id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     timestamp: new Date(),
   };
+
+  // Evict oldest entries if at capacity
+  if (eventStore.size >= MAX_EVENT_STORE_SIZE) {
+    const oldestKey = eventStore.keys().next().value;
+    if (oldestKey) eventStore.delete(oldestKey);
+  }
 
   eventStore.set(gtmEvent.id, gtmEvent);
   sessionStore.add(event.sessionId);

@@ -61,18 +61,18 @@ export async function searchBusinesses(
     const query = params.query.toLowerCase();
     filtered = filtered.filter(
       (b: any) =>
-        b.title?.toLowerCase().includes(query) ||
-        b.description?.toLowerCase().includes(query) ||
-        b.email?.toLowerCase().includes(query) ||
-        b.phone?.toLowerCase().includes(query) ||
-        b.tags?.some((tag: string) => tag.toLowerCase().includes(query)),
+        b.title?.toLowerCase().startsWith(query) ||
+        b.description?.toLowerCase().startsWith(query) ||
+        b.email?.toLowerCase().startsWith(query) ||
+        b.phone?.toLowerCase().startsWith(query) ||
+        b.tags?.some((tag: string) => tag.toLowerCase().startsWith(query)),
     );
   }
 
   if (params.category) {
     const category = params.category.toLowerCase();
     filtered = filtered.filter((b: any) =>
-      b.category?.toLowerCase().includes(category),
+      b.category?.toLowerCase().startsWith(category),
     );
   }
 
@@ -80,8 +80,8 @@ export async function searchBusinesses(
     const location = params.location.toLowerCase();
     filtered = filtered.filter(
       (b: any) =>
-        b.address?.toLowerCase().includes(location) ||
-        b.location?.toLowerCase().includes(location),
+        b.address?.toLowerCase().startsWith(location) ||
+        b.location?.toLowerCase().startsWith(location),
     );
   }
 

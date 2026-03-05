@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, UserPlus, MessageCircle, Share2, Mail } from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface User {
   id: number;
@@ -37,6 +38,7 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
   onMessage,
   onShare,
 }) => {
+  useScrollLock(isOpen);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
     "idle" | "connecting" | "connected" | "failed"

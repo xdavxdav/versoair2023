@@ -124,11 +124,11 @@ export function WholeDatabase() {
     return businessesData.data.filter((business) => {
       const matchesSearch =
         !searchTerm ||
-        business.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        business.name?.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         business.description
           ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        business.location?.toLowerCase().includes(searchTerm.toLowerCase());
+          .startsWith(searchTerm.toLowerCase()) ||
+        business.location?.toLowerCase().startsWith(searchTerm.toLowerCase());
 
       const matchesStatus =
         selectedStatus === "all" ||

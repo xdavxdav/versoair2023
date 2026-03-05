@@ -5,6 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
@@ -54,6 +65,25 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /* Prevent scroll chaining: inner scrollable areas (modals, dialogs, sidebars,
+     dropdowns, pinned sections) must not leak scroll events to the outer page
+     when they hit their scroll boundary. The topmost visible scroll always
+     takes priority. */
+  [role="dialog"],
+  [data-radix-scroll-area-viewport],
+  [data-state="open"][role="dialog"],
+  aside,
+  .pin-spacer,
+  .panels-wrapper {
+    overscroll-behavior: contain;
+  }
+
+  /* GSAP pinned panel sections: prevent touch scroll bleed on mobile */
+  .panel {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: auto;
   }
 
   html {
@@ -610,7 +640,7 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-25%);
   }
 }
 
@@ -619,49 +649,195 @@
 }
 
 .animate-scroll-continuous {
-  animation: scroll-continuous 30s linear infinite;
+  animation: scroll-continuous 40s linear infinite;
   white-space: nowrap;
 }
 
-/* Mobile responsive utilities for iPhone and all displays */
-@media (max-width: 375px) {
-  .text-xs {
-    font-size: 0.6rem !important;
-  }
-  .text-sm {
-    font-size: 0.7rem !important;
-  }
-  .p-2 {
-    padding: 0.375rem !important;
-  }
-  .gap-2 {
-    gap: 0.375rem !important;
-  }
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — Mobile & Tablet professional overhaul
+   Breakpoints: 480 (phone) · 640 (sm) · 768 (md/tablet) · 1024 (lg/desktop)
+   ═══════════════════════════════════════════════════════ */
 
-  .banner {
-    font-size: 0.7rem !important;
+/* ── GLOBAL: Responsive typography clamp ──
+   Automatically scale headings on all pages without touching JSX */
+@media (max-width: 640px) {
+  .text-5xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+  .text-4xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+  .text-3xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+  .text-2xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .text-5xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+  .text-4xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+}
+
+/* ── GLOBAL: Section padding reduction ──
+   py-20, py-16 → smaller on mobile */
+@media (max-width: 640px) {
+  .py-20 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  .py-16 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+  .py-12 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+  .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .gap-8 { gap: 1rem !important; }
+  .gap-6 { gap: 0.75rem !important; }
+  .mb-12 { margin-bottom: 1.5rem !important; }
+  .mb-8 { margin-bottom: 1rem !important; }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .py-20 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+  .py-16 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+}
+
+/* ── GLOBAL: Tab grids — prevent crush on mobile ── */
+@media (max-width: 640px) {
+  /* Any 4+ col tab grid becomes scrollable horizontal row on phone */
+  [role="tablist"].grid-cols-4,
+  [role="tablist"].grid-cols-5,
+  [role="tablist"].grid-cols-6 {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 0.25rem !important;
+    padding-bottom: 0.25rem;
+  }
+  [role="tablist"].grid-cols-4 > *,
+  [role="tablist"].grid-cols-5 > *,
+  [role="tablist"].grid-cols-6 > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    min-width: max-content;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.75rem !important;
+  }
+  /* Hide tab badge on phones to save space */
+  [role="tablist"] .badge,
+  [role="tablist"] [class*="Badge"] {
+    display: none !important;
   }
 }
 
-/* Extra small screens breakpoint */
-@media (max-width: 480px) {
-  .xs\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+@media (min-width: 641px) and (max-width: 768px) {
+  [role="tablist"].grid-cols-5 {
+    grid-template-columns: repeat(5, 1fr) !important;
   }
+  [role="tablist"].grid-cols-5 > * {
+    font-size: 0.75rem !important;
+    padding: 0.375rem 0.25rem !important;
+  }
+}
 
+/* ── GLOBAL: Fixed-position elements — safe insets ── */
+@media (max-width: 640px) {
+  /* Prevent fixed elements from overlapping mobile browser chrome */
+  .fixed.bottom-8 { bottom: 1rem !important; }
+  .fixed.right-8 { right: 1rem !important; }
+  /* DB status badges top-right — push below mobile menu bubble */
+  .fixed.top-20 { top: 3.5rem !important; }
+  .fixed.top-4.right-4 { top: 3.5rem !important; right: 0.5rem !important; }
+}
+
+/* ── GLOBAL: Fixed-width elements — flex on mobile ── */
+@media (max-width: 640px) {
+  /* SelectTrigger with fixed width → full-width */
+  .w-48 { width: 100% !important; }
+  /* Buttons with min-width that overflow */
+  [class*="min-w-\[230px\]"],
+  [class*="min-w-\[220px\]"] {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* ── GLOBAL: Hero search bars — stack button below on phone ── */
+@media (max-width: 480px) {
+  /* Search input with absolutely-positioned button → stack vertically */
+  .relative:has(> input + .absolute) {
+    display: flex;
+    flex-direction: column;
+  }
+  .relative:has(> input + .absolute) > .absolute {
+    position: static !important;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  .relative:has(> input + .absolute) > input {
+    padding-right: 1rem !important;
+  }
+}
+
+/* ── GLOBAL: Card grids — single column on phones ── */
+@media (max-width: 480px) {
+  .grid-cols-2:not([role="tablist"]) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── GLOBAL: Header bars — wrap on mobile ── */
+@media (max-width: 768px) {
+  /* Sticky page headers with flex justify-between → allow wrapping */
+  .sticky .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+/* ── GLOBAL: Sidebar layouts — stack on tablet ── */
+@media (max-width: 1023px) {
+  /* lg:flex-row sidebars become full-width stacked */
+  .lg\:w-1\/4 {
+    width: 100% !important;
+  }
+}
+
+/* ── Phone (≤480px) ── */
+@media (max-width: 480px) {
+  /* Charts: constrained height */
   .chart-container {
     height: 200px !important;
   }
-}
 
-/* Improve touch targets for mobile */
-@media (max-width: 768px) {
-  button,
-  .clickable {
-    min-height: 44px !important;
-    min-width: 44px !important;
+  /* Marquee: faster on small screens so text doesn't feel frozen */
+  .animate-scroll-continuous {
+    animation-duration: 20s;
   }
 
+  /* Tighten card padding globally */
+  .p-5 { padding: 0.75rem !important; }
+  .p-6:not([role="dialog"] *) { padding: 1rem !important; }
+}
+
+/* ── Small screens (≤640px) ── */
+@media (max-width: 640px) {
+  .navbar-logo {
+    height: 32px !important;
+  }
+
+  .custom-container {
+    margin: 10px auto !important;
+    padding: 12px !important;
+  }
+
+  /* Code blocks: wrap and shrink */
+  code {
+    font-size: 0.625rem !important;
+    word-break: break-all;
+  }
+}
+
+/* ── Tablet & below (≤768px) ── */
+@media (max-width: 768px) {
+  /* Touch-friendly tap targets (Apple HIG: 44pt minimum) */
+  button:not(.mobile-compact-btn),
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Disable hover scale effects — they cause jank on touch */
   .hover\:scale-105:hover {
     transform: none !important;
   }
@@ -670,18 +846,31 @@
     transform: none !important;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
   }
+
+  /* Reduce motion on mobile for perf */
+  .animate-scroll-continuous {
+    animation-duration: 25s;
+  }
+
+  /* Scrollbar: thinner on touch devices */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
 }
 
-/* Mobile-first responsive padding */
-@media (max-width: 640px) {
-  .navbar-logo {
-    height: 32px !important;
-  }
+/* ── Mobile filter panel collapse utility ── */
+.mobile-filters-collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
 
-  .custom-container {
-    margin: 10px auto !important;
-    padding: 15px !important;
-  }
+.mobile-filters-expanded {
+  max-height: 2000px;
+  overflow: visible;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
 }
 
 /* ===================== */

@@ -155,9 +155,9 @@ export default function Communities() {
     if (searchQuery) {
       filtered = filtered.filter(
         (c) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.focus.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          c.region.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          c.focus.toLowerCase().startsWith(searchQuery.toLowerCase()),
       );
     }
 

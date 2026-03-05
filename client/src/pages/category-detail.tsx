@@ -112,8 +112,8 @@ export default function CategoryDetail() {
   const filteredBusinesses = businesses
     .filter(
       (b) =>
-        b.name.toLowerCase().includes(search.toLowerCase()) ||
-        b.description?.toLowerCase().includes(search.toLowerCase()),
+        b.name.toLowerCase().startsWith(search.toLowerCase()) ||
+        b.description?.toLowerCase().startsWith(search.toLowerCase()),
     )
     .sort((a, b) => {
       switch (sortBy) {

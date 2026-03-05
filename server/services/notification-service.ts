@@ -1,10 +1,23 @@
 import { db } from "../db";
-import { connections, users, auditLogs, notifications } from "@shared/schema";
+import {
+  connections,
+  users,
+  auditLogs,
+  notifications,
+  emailSubscriptions,
+  emailQueue,
+} from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { EventEmitter } from "events";
 import {
   sendConnectionRequestEmail,
   sendConnectionAcceptedEmail,
+  sendJobAlertEmail,
+  sendContractAlertEmail,
+  sendReservationUpdateEmail,
+  type JobAlertData,
+  type ContractAlertData,
+  type ReservationUpdateData,
 } from "./email-service";
 
 /**
@@ -399,4 +412,349 @@ export async function getNotificationSummary(userId: number) {
     acceptedConnections: acceptedConnections?.count || 0,
     unreadNotifications: 0, // Would be from notifications table
   };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EMAIL SUBSCRIPTION TRIGGERS — Queue emails for matching subscribers
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Build the one-click unsubscribe URL for a subscription
+ */
+function buildUnsubscribeUrl(unsubscribeToken: string): string {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+  return `${appUrl}/api/v1/email-subscriptions/unsubscribe/${unsubscribeToken}`;
+}
+
+/**
+ * Notify subscribers when a new job is posted.
+ * Finds all active job_alerts subscribers, checks filter matches,
+ * and either sends instantly or queues for digest.
+ */
+export async function notifyNewJobPosted(job: {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  salary?: string;
+  type: string;
+  sector?: string;
+}): Promise<{ instant: number; queued: number }> {
+  let instant = 0;
+  let queued = 0;
+
+  try {
+    // Find all active job_alerts subscriptions
+    const subscribers = await db
+      .select({
+        subscription: emailSubscriptions,
+        email: users.email,
+        username: users.username,
+      })
+      .from(emailSubscriptions)
+      .innerJoin(users, eq(emailSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(emailSubscriptions.type, "job_alerts"),
+          eq(emailSubscriptions.isActive, true),
+        ),
+      );
+
+    const postedAt = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+    const appUrl =
+      process.env.VITE_API_URL ||
+      process.env.VERSOAIR_URL ||
+      "http://localhost:5003";
+
+    for (const sub of subscribers) {
+      // Check filter match (if filters exist)
+      const filters = (sub.subscription.filters as Record<string, any>) || {};
+      if (filters.sectors && filters.sectors.length > 0 && job.sector) {
+        if (!filters.sectors.includes(job.sector)) continue;
+      }
+      if (filters.locations && filters.locations.length > 0) {
+        if (
+          !filters.locations.some((loc: string) =>
+            job.location?.toLowerCase().includes(loc.toLowerCase()),
+          )
+        )
+          continue;
+      }
+      if (filters.keywords && filters.keywords.length > 0) {
+        const jobText = `${job.title} ${job.company}`.toLowerCase();
+        if (
+          !filters.keywords.some((kw: string) =>
+            jobText.includes(kw.toLowerCase()),
+          )
+        )
+          continue;
+      }
+
+      const jobData: JobAlertData = {
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        salary: job.salary,
+        type: job.type,
+        postedAt,
+        url: `${appUrl}/services/careers?job=${job.id}`,
+      };
+
+      if (sub.subscription.frequency === "instant") {
+        // Send immediately
+        const sent = await sendJobAlertEmail(
+          sub.email!,
+          sub.username || "User",
+          [jobData],
+          buildUnsubscribeUrl(sub.subscription.unsubscribeToken),
+        );
+        if (sent) instant++;
+
+        // Update lastSentAt
+        await db
+          .update(emailSubscriptions)
+          .set({ lastSentAt: new Date() })
+          .where(eq(emailSubscriptions.id, sub.subscription.id));
+      } else {
+        // Queue for digest processing
+        await db.insert(emailQueue).values({
+          subscriptionId: sub.subscription.id,
+          recipientEmail: sub.email!,
+          recipientUserId: sub.subscription.userId,
+          subject: `🎯 New job: ${job.title} at ${job.company}`,
+          htmlBody: JSON.stringify(jobData), // Digest worker will render the full template
+          status: "pending",
+          emailType: "job_alert",
+        });
+        queued++;
+      }
+    }
+
+    // Emit real-time event for Socket.io
+    notificationEmitter.emit("job_posted", {
+      jobId: job.id,
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      type: "job_posted",
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(
+      `[NOTIFICATION] Job "${job.title}" → ${instant} instant emails sent, ${queued} queued for digest`,
+    );
+  } catch (error) {
+    console.error("[NOTIFICATION] Error notifying job posted:", error);
+  }
+
+  return { instant, queued };
+}
+
+/**
+ * Notify subscribers when a contract is posted.
+ * Same pattern as job alerts, but for contract_alerts channel.
+ */
+export async function notifyNewContractPosted(contract: {
+  id: number;
+  title: string;
+  client: string;
+  location: string;
+  budget?: string;
+  duration?: string;
+  skills: string[];
+  sector?: string;
+}): Promise<{ instant: number; queued: number }> {
+  let instant = 0;
+  let queued = 0;
+
+  try {
+    const subscribers = await db
+      .select({
+        subscription: emailSubscriptions,
+        email: users.email,
+        username: users.username,
+      })
+      .from(emailSubscriptions)
+      .innerJoin(users, eq(emailSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(emailSubscriptions.type, "contract_alerts"),
+          eq(emailSubscriptions.isActive, true),
+        ),
+      );
+
+    const postedAt = new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+    const appUrl =
+      process.env.VITE_API_URL ||
+      process.env.VERSOAIR_URL ||
+      "http://localhost:5003";
+
+    for (const sub of subscribers) {
+      const filters = (sub.subscription.filters as Record<string, any>) || {};
+      if (filters.skills && filters.skills.length > 0) {
+        const hasMatch = contract.skills.some((s) =>
+          filters.skills.some((fs: string) =>
+            s.toLowerCase().includes(fs.toLowerCase()),
+          ),
+        );
+        if (!hasMatch) continue;
+      }
+      if (filters.locations && filters.locations.length > 0) {
+        if (
+          !filters.locations.some((loc: string) =>
+            contract.location?.toLowerCase().includes(loc.toLowerCase()),
+          )
+        )
+          continue;
+      }
+
+      const contractData: ContractAlertData = {
+        title: contract.title,
+        client: contract.client,
+        location: contract.location,
+        budget: contract.budget,
+        duration: contract.duration,
+        skills: contract.skills,
+        postedAt,
+        url: `${appUrl}/services/contractors?contract=${contract.id}`,
+      };
+
+      if (sub.subscription.frequency === "instant") {
+        const sent = await sendContractAlertEmail(
+          sub.email!,
+          sub.username || "User",
+          [contractData],
+          buildUnsubscribeUrl(sub.subscription.unsubscribeToken),
+        );
+        if (sent) instant++;
+
+        await db
+          .update(emailSubscriptions)
+          .set({ lastSentAt: new Date() })
+          .where(eq(emailSubscriptions.id, sub.subscription.id));
+      } else {
+        await db.insert(emailQueue).values({
+          subscriptionId: sub.subscription.id,
+          recipientEmail: sub.email!,
+          recipientUserId: sub.subscription.userId,
+          subject: `🔨 New contract: ${contract.title}`,
+          htmlBody: JSON.stringify(contractData),
+          status: "pending",
+          emailType: "contract_alert",
+        });
+        queued++;
+      }
+    }
+
+    notificationEmitter.emit("contract_posted", {
+      contractId: contract.id,
+      title: contract.title,
+      client: contract.client,
+      type: "contract_posted",
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(
+      `[NOTIFICATION] Contract "${contract.title}" → ${instant} instant, ${queued} queued`,
+    );
+  } catch (error) {
+    console.error("[NOTIFICATION] Error notifying contract posted:", error);
+  }
+
+  return { instant, queued };
+}
+
+/**
+ * Notify a user when their reservation status changes.
+ * Targets the specific user who owns the reservation.
+ */
+export async function notifyReservationUpdate(reservation: {
+  id: string | number;
+  userId: number;
+  businessName: string;
+  date: string;
+  time?: string;
+  status: "confirmed" | "pending" | "cancelled" | "completed" | "modified";
+  totalPrice?: string;
+  updateMessage?: string;
+}): Promise<boolean> {
+  try {
+    // Check if user has reservation_tracking subscription
+    const [sub] = await db
+      .select({
+        subscription: emailSubscriptions,
+        email: users.email,
+        username: users.username,
+      })
+      .from(emailSubscriptions)
+      .innerJoin(users, eq(emailSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(emailSubscriptions.userId, reservation.userId),
+          eq(emailSubscriptions.type, "reservation_tracking"),
+          eq(emailSubscriptions.isActive, true),
+        ),
+      );
+
+    if (!sub) {
+      console.log(
+        `[NOTIFICATION] User ${reservation.userId} not subscribed to reservation_tracking`,
+      );
+      return false;
+    }
+
+    const reservationData: ReservationUpdateData = {
+      reservationId: reservation.id.toString(),
+      businessName: reservation.businessName,
+      date: reservation.date,
+      time: reservation.time,
+      status: reservation.status,
+      totalPrice: reservation.totalPrice,
+      updateMessage: reservation.updateMessage,
+    };
+
+    // Reservation updates are always instant (status changes are time-sensitive)
+    const sent = await sendReservationUpdateEmail(
+      sub.email!,
+      sub.username || "User",
+      reservationData,
+      buildUnsubscribeUrl(sub.subscription.unsubscribeToken),
+    );
+
+    if (sent) {
+      await db
+        .update(emailSubscriptions)
+        .set({ lastSentAt: new Date() })
+        .where(eq(emailSubscriptions.id, sub.subscription.id));
+    }
+
+    // Emit Socket.io event
+    notificationEmitter.emit("reservation_update", {
+      userId: reservation.userId,
+      reservationId: reservation.id,
+      businessName: reservation.businessName,
+      status: reservation.status,
+      type: "reservation_update",
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(
+      `[NOTIFICATION] Reservation #${reservation.id} ${reservation.status} → email ${sent ? "sent" : "failed"}`,
+    );
+    return sent;
+  } catch (error) {
+    console.error("[NOTIFICATION] Error notifying reservation update:", error);
+    return false;
+  }
 }
