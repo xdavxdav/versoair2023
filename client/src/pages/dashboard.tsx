@@ -916,12 +916,82 @@ export default function PublicDashboard() {
 
           {/* Mobile Menu */}
           {showMobileMenu && (
-            <div className="lg:hidden mt-4 pt-4 border-t border-gray-100 space-y-2">
-              <Button asChild variant="ghost" className="w-full justify-start">
-                <Link href="/businesses-directory">Browse Businesses</Link>
+            <div className="lg:hidden mt-4 pt-4 border-t border-slate-700/50 space-y-1">
+              {isLoggedIn && (
+                <>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">
+                    Dashboard Tabs
+                  </p>
+                  {[
+                    { label: "📊 Analytics", value: "analytics" },
+                    { label: "🚀 Visibility", value: "visibility" },
+                    { label: "🏠 Overview", value: "overview" },
+                    { label: "📂 Categories", value: "categories" },
+                    { label: "💼 Opportunities", value: "opportunities" },
+                  ].map((tab) => (
+                    <Button
+                      key={tab.value}
+                      variant="ghost"
+                      className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+                      onClick={() => {
+                        const tabEl = document.querySelector(
+                          `[data-state][value="${tab.value}"]`,
+                        ) as HTMLElement;
+                        if (tabEl) tabEl.click();
+                        setShowMobileMenu(false);
+                      }}
+                    >
+                      {tab.label}
+                    </Button>
+                  ))}
+                  <div className="border-t border-slate-700/50 my-2" />
+                </>
+              )}
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">
+                Navigation
+              </p>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/">🏠 Home</Link>
               </Button>
-              <Button asChild variant="ghost" className="w-full justify-start">
-                <Link href="/communities">Communities</Link>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/businesses-directory">📒 Browse Businesses</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/services">🔧 Services</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/reservations">📅 Reservations</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/communities">👥 Communities</Link>
+              </Button>
+              <div className="border-t border-slate-700/50 my-2" />
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              >
+                <Link href="/geo-admin">🌍 Back to Geo Admin</Link>
               </Button>
             </div>
           )}
@@ -1231,7 +1301,7 @@ export default function PublicDashboard() {
                         <CardTitle>⚔️ Competitor Comparison</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                           <div className="p-4 bg-gray-50 rounded-lg">
                             <div className="text-2xl font-bold">--</div>
                             <div className="text-sm text-gray-500">
@@ -1263,7 +1333,7 @@ export default function PublicDashboard() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                         <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                           <div className="text-2xl font-bold text-blue-700">
                             {business.rating.toFixed(1)}

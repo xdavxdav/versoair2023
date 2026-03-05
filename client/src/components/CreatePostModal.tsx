@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Image as ImageIcon, Smile, Tag } from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  useScrollLock(isOpen);
   const [content, setContent] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");

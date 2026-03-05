@@ -157,8 +157,11 @@ export default function ProfilePage() {
         }}
       />
 
+      {/* Spacer for fixed navbar */}
+      <div className="h-20" />
+
       {/* Back Button */}
-      <div className="sticky top-16 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 px-4 py-3">
+      <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 px-4 py-3">
         <motion.button
           onClick={() => window.history.back()}
           whileHover={{ scale: 1.05 }}

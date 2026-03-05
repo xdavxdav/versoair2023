@@ -37,8 +37,8 @@ router.get("/api/properties", async (req: Request, res: Response) => {
     if (search) {
       filters.push(
         or(
-          like(properties.name, `%${search}%`),
-          like(properties.description, `%${search}%`),
+          like(properties.name, `${search}%`),
+          like(properties.description, `${search}%`),
         ),
       );
     }

@@ -144,6 +144,19 @@ export default function ScrollableNavbar({
               animate={{ opacity: 1, y: 0 }}
               className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-2"
             >
+              <div className="space-y-1 pb-3">
+                {quickLinks.map(({ label, icon: Icon, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-colors text-sm"
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </a>
+                ))}
+              </div>
               <div className="border-t border-white/10 pt-3 space-y-2">
                 {isAuthenticated ? (
                   <>

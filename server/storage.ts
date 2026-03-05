@@ -373,8 +373,18 @@ export class DatabaseStorage implements IStorage {
         { id: 1, name: "United States", code: "US", createdAt: new Date() },
         { id: 2, name: "Canada", code: "CA", createdAt: new Date() },
         { id: 3, name: "France", code: "FR", createdAt: new Date() },
-        { id: 4, name: "Germany", code: "DE", createdAt: new Date() },
-        { id: 5, name: "United Kingdom", code: "GB", createdAt: new Date() },
+        { id: 4, name: "Côte d'Ivoire", code: "CI", createdAt: new Date() },
+        { id: 5, name: "Germany", code: "DE", createdAt: new Date() },
+        { id: 6, name: "United Kingdom", code: "GB", createdAt: new Date() },
+        { id: 7, name: "Sénégal", code: "SN", createdAt: new Date() },
+        { id: 8, name: "Cameroun", code: "CM", createdAt: new Date() },
+        { id: 9, name: "Belgium", code: "BE", createdAt: new Date() },
+        { id: 10, name: "Switzerland", code: "CH", createdAt: new Date() },
+        { id: 11, name: "Mali", code: "ML", createdAt: new Date() },
+        { id: 12, name: "Haïti", code: "HT", createdAt: new Date() },
+        { id: 13, name: "Maroc", code: "MA", createdAt: new Date() },
+        { id: 14, name: "Algérie", code: "DZ", createdAt: new Date() },
+        { id: 15, name: "Tunisie", code: "TN", createdAt: new Date() },
       ] as Country[];
     }
   }

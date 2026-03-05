@@ -1,5 +1,6 @@
 import { searchBusinesses, Business } from "@/lib/business-data";
 import { useEffect, useState } from "react";
+import { useCountry } from "@/contexts/CountryContext";
 import {
   Search,
   Filter,
@@ -28,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -74,7 +76,7 @@ const CATEGORY_GROUPS = {
     "Real Estate Agencies",
     "Property Management",
   ],
-  "Automotive": [
+  Automotive: [
     "Automotive & Motorbike",
     "Car Dealers",
     "Auto Repair",
@@ -89,7 +91,7 @@ const CATEGORY_GROUPS = {
     "Investment Services",
     "Accounting",
   ],
-  "Healthcare": [
+  Healthcare: [
     "Health",
     "Hospitals",
     "Clinics",
@@ -132,9 +134,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   "Food & Beverage": "🍽️",
   "Hospitality & Tourism": "🏨",
   "Construction & Real Estate": "🏗️",
-  "Automotive": "🚗",
+  Automotive: "🚗",
   "Finance & Insurance": "💰",
-  "Healthcare": "⚕️",
+  Healthcare: "⚕️",
   "Education & Professional": "📚",
   "Entertainment & Arts": "🎭",
   "Personal Services": "💇",
@@ -361,6 +363,7 @@ export default function Annuaire() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -378,6 +381,7 @@ export default function Annuaire() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
 
   // Database connection test
   useEffect(() => {
@@ -405,6 +409,7 @@ export default function Annuaire() {
         query: searchQuery,
         category: category || undefined,
         location: locationQuery || undefined,
+        countryCode: selectedCountry || undefined,
         status: activeFilters.status || undefined,
         limit: 12,
       });
@@ -437,8 +442,13 @@ export default function Annuaire() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white">
       {/* Database Connection Status */}
-      <div className="fixed bottom-4 right-4 z-50" title={databaseConnected ? "Connecté" : "Déconnecté"}>
-        <div className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`} />
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Connecté" : "Déconnecté"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
       </div>
 
       {/* Hero Section */}
@@ -572,27 +582,47 @@ export default function Annuaire() {
                       Toutes les catégories
                     </span>
                   </DropdownMenuItem>
-                  
+
                   {/* Organized by category groups */}
-                  {Object.entries(CATEGORY_GROUPS).map(([groupName, categories]) => (
-                    <div key={groupName}>
-                      <div className="px-2 py-2 text-xs font-bold text-blue-400 border-t border-blue-700 mt-2 pt-2 flex items-center gap-2">
-                        <span>{(CATEGORY_ICONS as Record<string, string>)[groupName]}</span>
-                        <span>{groupName}</span>
+                  {Object.entries(CATEGORY_GROUPS).map(
+                    ([groupName, categories]) => (
+                      <div key={groupName}>
+                        <div className="px-2 py-2 text-xs font-bold text-blue-400 border-t border-blue-700 mt-2 pt-2 flex items-center gap-2">
+                          <span>
+                            {
+                              (CATEGORY_ICONS as Record<string, string>)[
+                                groupName
+                              ]
+                            }
+                          </span>
+                          <span>{groupName}</span>
+                        </div>
+                        {categories.map((cat) => (
+                          <DropdownMenuItem
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className="pl-8"
+                          >
+                            {selectedCategory === cat && (
+                              <Check className="h-4 w-4 mr-2" />
+                            )}
+                            <span
+                              className={
+                                selectedCategory === cat
+                                  ? "font-semibold text-blue-300"
+                                  : "text-blue-200"
+                              }
+                            >
+                              {cat}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
                       </div>
-                      {categories.map((cat) => (
-                        <DropdownMenuItem
-                          key={cat}
-                          onClick={() => setSelectedCategory(cat)}
-                          className="pl-8"
-                        >
-                          {selectedCategory === cat && (
-                            <Check className="h-4 w-4 mr-2" />
-                          )}\n                          <span\n                            className={
-                              selectedCategory === cat
-                                ? "font-semibold text-blue-300"
-                                : "text-blue-200"
-                            }\n                          >\n                            {cat}\n                          </span>\n                        </DropdownMenuItem>\n                      ))}\n                    </div>\n                  ))}\n                </DropdownMenuContent>\n              </DropdownMenu>\n            </div>
+                    ),
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             {/* Advanced Filters */}
             {showFilters && (
@@ -701,9 +731,22 @@ export default function Annuaire() {
                         >
                           <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
                           <div className="p-6">
-                            <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
-                              {business.title}
-                            </h4>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
+                                {business.title}
+                              </h4>
+                              {(business as any).is_featured && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  ⭐ Featured
+                                </span>
+                              )}
+                              {(business as any).owner_tier &&
+                                (business as any).owner_tier !== "free" && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                    ✓
+                                  </span>
+                                )}
+                            </div>
                             <div className="flex items-center gap-2 text-gray-400 mb-3">
                               <Building className="h-4 w-4 text-blue-500" />
                               <span className="text-sm font-medium">

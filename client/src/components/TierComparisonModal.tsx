@@ -7,6 +7,7 @@ import {
   type TierKey,
   getTierIndex,
 } from "@/lib/tiers";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface TierComparisonModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
   onSelectTier,
   hiddenSearches = 0,
 }) => {
+  useScrollLock(isOpen);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );

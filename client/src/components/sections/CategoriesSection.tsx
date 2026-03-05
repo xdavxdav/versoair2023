@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, X, AlertCircle, Check, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  X,
+  AlertCircle,
+  Check,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { authenticatedFetch } from "@/lib/auth";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface Category {
   id: number;
@@ -16,6 +24,8 @@ export function CategoriesSection() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  useScrollLock(isModalOpen);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -24,9 +34,7 @@ export function CategoriesSection() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const API_BASE_URL =
-    typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_API_URL || ""
-      : "";
+    typeof window !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "" : "";
 
   // Fetch categories
   const {
@@ -36,11 +44,14 @@ export function CategoriesSection() {
   } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/v1/admin/categories`, {
-        headers: {
-          "Content-Type": "application/json",
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/categories`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error?.message || "Failed to fetch categories");
@@ -199,16 +210,29 @@ export function CategoriesSection() {
             Manage business categories and taxonomy
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Category
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Quick Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Quick search..."
+              className="pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 w-48"
+            />
+          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Category
+          </button>
+        </div>
       </div>
 
       {/* Alerts */}
@@ -228,7 +252,15 @@ export function CategoriesSection() {
 
       {/* Table */}
       <DataTable
-        data={categories}
+        data={categories.filter(
+          (cat) =>
+            !searchQuery ||
+            cat.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+            cat.slug.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+            cat.description
+              ?.toLowerCase()
+              .startsWith(searchQuery.toLowerCase()),
+        )}
         columns={columns}
         onEdit={handleEdit}
         onDelete={(row) => {

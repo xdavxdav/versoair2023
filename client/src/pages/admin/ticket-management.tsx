@@ -277,7 +277,11 @@ export function AdminTicketManagement() {
               </Button>
             )}
             <Button
-              onClick={() => window.history.length > 1 ? window.history.back() : navigate("/geo-admin/dashboard")}
+              onClick={() =>
+                window.history.length > 1
+                  ? window.history.back()
+                  : navigate("/geo-admin/dashboard")
+              }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

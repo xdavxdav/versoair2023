@@ -3,6 +3,7 @@ import { Button } from "./button";
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface LocationPanelProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface LocationData {
 }
 
 export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
+  useScrollLock(isOpen);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const [liveLocation, setLiveLocation] = useState<LocationData | null>(null);

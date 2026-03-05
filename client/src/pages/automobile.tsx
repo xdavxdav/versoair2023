@@ -83,6 +83,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SettingsModal } from "@/components/SettingsModal";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 // Database API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -139,6 +141,7 @@ async function searchAutomobileBusinesses(params: {
   sort_by?: string;
   status?: string;
   amenities?: string;
+  countryCode?: string;
 }): Promise<{ data: Business[]; total: number; success: boolean }> {
   try {
     const queryParams = new URLSearchParams();
@@ -160,6 +163,7 @@ async function searchAutomobileBusinesses(params: {
       query: params.query,
       sectorId: 5,
       location: params.location,
+      countryCode: params.countryCode,
       limit: params.limit || 50,
     });
     return { data: results, total: results.length, success: true };
@@ -217,6 +221,7 @@ export default function Automobile() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -236,6 +241,7 @@ export default function Automobile() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Database connection test
@@ -307,7 +313,7 @@ export default function Automobile() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery, locationQuery, activeFilters]);
+  }, [searchQuery, locationQuery, selectedCountry, activeFilters]);
 
   // Search handler - FIXED PAGINATION
   const handleSearch = async (page: number = 1) => {
@@ -323,6 +329,7 @@ export default function Automobile() {
     };
 
     if (locationQuery) params.location = locationQuery;
+    if (selectedCountry) params.countryCode = selectedCountry;
     if (activeFilters.category) params.category = activeFilters.category;
     if (activeFilters.minRating)
       params.min_rating = parseFloat(activeFilters.minRating);

@@ -71,6 +71,8 @@ import {
   checkDatabaseConnection,
   Business,
 } from "@/lib/business-data";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 // Database API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -203,6 +205,7 @@ export default function Finance() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -222,6 +225,7 @@ export default function Finance() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Database connection test
@@ -286,7 +290,7 @@ export default function Finance() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery, locationQuery]);
+  }, [searchQuery, locationQuery, selectedCountry]);
 
   // Search handler - uses slug-based endpoint
   const handleSearch = async (page: number = 1) => {
@@ -298,6 +302,7 @@ export default function Finance() {
         query: searchQuery || undefined,
         sectorId: 3,
         location: locationQuery || undefined,
+        countryCode: selectedCountry || undefined,
         limit: 9,
       });
       setSearchResults(results);

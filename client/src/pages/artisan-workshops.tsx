@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface Workshop {
   id: string;
@@ -160,6 +161,7 @@ export default function ArtisanWorkshops() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(
     null,
   );
+  useScrollLock(!!selectedWorkshop);
 
   const levels = ["All", "Beginner", "Intermediate", "Advanced"];
 
@@ -173,9 +175,9 @@ export default function ArtisanWorkshops() {
     if (searchQuery) {
       filtered = filtered.filter(
         (w) =>
-          w.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          w.artisan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          w.specialty.toLowerCase().includes(searchQuery.toLowerCase()),
+          w.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          w.artisan.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          w.specialty.toLowerCase().startsWith(searchQuery.toLowerCase()),
       );
     }
 

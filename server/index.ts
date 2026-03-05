@@ -35,6 +35,8 @@ import { serveStatic, log } from "./prod-static";
 import { setupCategoryIntegrityCheck } from "./services/category-integrity-check";
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
+import { startDigestWorker } from "./services/digest-worker";
+import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 
 const app = express();
@@ -159,6 +161,16 @@ app.use((req, res, next) => {
   // Setup category integrity check (runs daily + on startup)
   setupCategoryIntegrityCheck();
   console.log("✅ [SERVER] Category integrity check scheduled");
+
+  // Start digest worker for batched email delivery
+  startDigestWorker();
+  console.log(
+    "✅ [SERVER] Digest worker started (hourly email queue processor)",
+  );
+
+  // Setup subscription expiry check (runs daily)
+  setupSubscriptionExpiryCron();
+  console.log("✅ [SERVER] Subscription expiry cron scheduled");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

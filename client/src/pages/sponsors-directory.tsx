@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/use-subscription";
 import ScrollToTop from "@/components/ScrollToTop";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -194,6 +195,7 @@ export default function SponsorsDirectory() {
   const { isAuthenticated, user, tier, loading } = useSubscription();
   const [, navigate] = useLocation();
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
+  useScrollLock(showEligibilityModal);
 
   const tierLevel = tier?.toLowerCase() || "free";
   const eligibilityData =

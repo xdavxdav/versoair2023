@@ -3,6 +3,7 @@ import { Button } from "./button";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { Link } from "wouter";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface MusicPortalProps {
   isOpen: boolean;
@@ -31,22 +32,9 @@ interface MusicAnalytics {
 }
 
 export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
+  useScrollLock(isOpen);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
-
-  // Disable page scrolling when portal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
 
   const { data: artistsResponse } = useQuery<{ data: MusicArtist[] }>({
     queryKey: ["/api/music/artists"],

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
+import { requireTier } from "../../../middleware/tierGate";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { adCampaigns, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, count, desc } from "drizzle-orm";
@@ -10,10 +11,12 @@ const router = Router();
 /**
  * GET /api/v1/admin/campaigns
  * List all ad campaigns with pagination and filtering
+ * Requires at least verified tier for business owners
  */
 router.get(
   "/",
-  requireAuth(["admin", "moderator"]),
+  requireAuth(["admin", "moderator", "business_owner"]),
+  requireTier("verified"),
   asyncHandler(async (req, res) => {
     try {
       const { page = "1", limit = "20", search } = req.query;
@@ -25,7 +28,7 @@ router.get(
       const conditions = [];
 
       if (search) {
-        conditions.push(ilike(adCampaigns.name, `%${search}%`));
+        conditions.push(ilike(adCampaigns.name, `${search}%`));
       }
 
       const where = conditions.length > 0 ? and(...conditions) : undefined;

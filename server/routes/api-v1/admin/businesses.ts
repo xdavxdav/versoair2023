@@ -28,7 +28,7 @@ router.get(
     const conditions: any[] = [eq(businesses.isActive, true)];
 
     if (search) {
-      const searchTerm = `%${search}%`;
+      const searchTerm = `${search}%`;
       conditions.push(
         or(
           ilike(businesses.name, searchTerm),

@@ -77,6 +77,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SettingsModal } from "@/components/SettingsModal";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 // Database API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -122,6 +124,7 @@ async function searchCommerceBusinesses(params: {
   page?: number;
   limit?: number;
   sort_by?: string;
+  countryCode?: string;
 }): Promise<Business[]> {
   try {
     const queryParams = new URLSearchParams();
@@ -138,6 +141,7 @@ async function searchCommerceBusinesses(params: {
       query: params.query,
       sectorId: 4,
       location: params.location,
+      countryCode: params.countryCode,
       limit: params.limit || 50,
     });
     return results;
@@ -241,6 +245,7 @@ export default function CommerceBusinessAds() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -261,6 +266,7 @@ export default function CommerceBusinessAds() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Load categories and stats from the server
@@ -427,7 +433,7 @@ export default function CommerceBusinessAds() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery, locationQuery, activeFilters]);
+  }, [searchQuery, locationQuery, selectedCountry, activeFilters]);
 
   // Search handler
   const handleSearch = async (page: number = 1) => {
@@ -444,6 +450,7 @@ export default function CommerceBusinessAds() {
       };
 
       if (locationQuery) params.location = locationQuery;
+      if (selectedCountry) params.countryCode = selectedCountry;
       if (activeFilters.category) params.category = activeFilters.category;
       if (activeFilters.business_type)
         params.business_type = activeFilters.business_type;

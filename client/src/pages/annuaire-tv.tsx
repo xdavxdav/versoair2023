@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useCountry } from "@/contexts/CountryContext";
 import {
   Carousel,
   CarouselContent,
@@ -148,14 +149,19 @@ export default function AnnuaireTV() {
   const [speed, setSpeed] = useState(1); // index into SPEED_OPTIONS
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { selectedCountry } = useCountry();
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Fetch businesses
   const { data: allBusinesses = [], isLoading } = useQuery<Business[]>({
-    queryKey: ["annuaire-tv-businesses"],
+    queryKey: ["annuaire-tv-businesses", selectedCountry],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/businesses?limit=100`);
+      const params = new URLSearchParams({ limit: "100" });
+      if (selectedCountry) params.set("countryCode", selectedCountry);
+      const res = await fetch(
+        `${API_BASE_URL}/api/businesses?${params.toString()}`,
+      );
       if (!res.ok) return [];
       const json = await res.json();
       return Array.isArray(json) ? json : json.data || [];

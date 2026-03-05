@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, AlertCircle, Check } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { authenticatedFetch } from "@/lib/auth";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface Page {
   id: number;
@@ -25,6 +26,7 @@ export function CMSSection() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
+  useScrollLock(isModalOpen);
   const [formData, setFormData] = useState<CreatePageInput>({
     title: "",
     slug: "",
@@ -86,12 +88,9 @@ export function CMSSection() {
   // Delete page
   const deleteMutation = useMutation({
     mutationFn: async (pageId: number) => {
-      const res = await authenticatedFetch(
-        `/api/v1/admin/pages/${pageId}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await authenticatedFetch(`/api/v1/admin/pages/${pageId}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) throw new Error("Failed to delete page");
       return res.json();

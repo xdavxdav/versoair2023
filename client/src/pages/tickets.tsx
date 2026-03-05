@@ -307,8 +307,8 @@ export function Tickets() {
     if (searchQuery) {
       filtered = filtered.filter(
         (t) =>
-          t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          t.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+          t.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          t.description?.toLowerCase().startsWith(searchQuery.toLowerCase()),
       );
     }
 

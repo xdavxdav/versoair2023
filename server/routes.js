@@ -22,8 +22,8 @@ app.get("/api/business/search", async (req, res) => {
     // Add text search if query exists
     if (query) {
       conditions.push(
-        sql`(${businesses.name} ILIKE ${"%" + query + "%"} 
-            OR ${businesses.description} ILIKE ${"%" + query + "%"})`
+        sql`(${businesses.name} ILIKE ${query + "%"} 
+            OR ${businesses.description} ILIKE ${query + "%"})`,
       );
     }
 
@@ -38,22 +38,20 @@ app.get("/api/business/search", async (req, res) => {
 
       if (categoryRecord.length > 0) {
         conditions.push(
-          sql`${businesses.categoryId} = ${categoryRecord[0].id}`
+          sql`${businesses.categoryId} = ${categoryRecord[0].id}`,
         );
       }
     }
 
     // Add location filter
     if (location) {
-      conditions.push(
-        sql`${businesses.location} ILIKE ${"%" + location + "%"}`
-      );
+      conditions.push(sql`${businesses.location} ILIKE ${location + "%"}`);
     }
 
     // Apply all conditions
     if (conditions.length > 0) {
       sqlQuery = sqlQuery.where(
-        sql`${conditions.reduce((acc, cond) => sql`${acc} AND ${cond}`)}`
+        sql`${conditions.reduce((acc, cond) => sql`${acc} AND ${cond}`)}`,
       );
     }
 

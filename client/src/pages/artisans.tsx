@@ -145,9 +145,9 @@ export default function ArtisansDirectory() {
     if (searchQuery) {
       filtered = filtered.filter(
         (a) =>
-          a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          a.specialty.toLowerCase().includes(searchQuery.toLowerCase()),
+          a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          a.location.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+          a.specialty.toLowerCase().startsWith(searchQuery.toLowerCase()),
       );
     }
 

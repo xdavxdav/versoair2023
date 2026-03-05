@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ScrollToTop from "@/components/ScrollToTop";
+import AuthModal from "@/components/AuthModal";
+import ViewOnlyGate from "@/components/ViewOnlyGate";
 import {
   Search,
   Heart,
@@ -11,467 +14,1480 @@ import {
   Clock,
   DollarSign,
   Plus,
+  Grid3X3,
+  List,
+  ChevronDown,
+  Star,
+  Eye,
+  Bookmark,
+  BookmarkCheck,
+  TrendingUp,
+  Users,
+  Palette,
+  Home as HomeIcon,
+  Briefcase,
+  Car,
+  Dumbbell,
+  Smartphone,
+  Music,
+  Shirt,
+  Sparkles,
+  Sun,
+  Moon,
+  Globe,
+  Package,
+  Camera,
+  SlidersHorizontal,
+  BadgeCheck,
 } from "lucide-react";
-import ScrollableNavbar from "@/components/ScrollableNavbar";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
-interface MarketplaceItem {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  category: string;
-  seller: { name: string; avatar: string; rating: number };
-  location: string;
-  posted: string;
-  description: string;
-  condition: string;
-  views: number;
-  isFavorite?: boolean;
-}
+// ─── Artisan-focused categories (community, not dating) ───
+const CATEGORIES = [
+  {
+    id: "all",
+    label: "Browse All",
+    icon: Grid3X3,
+    color: "from-amber-500 to-orange-500",
+  },
+  {
+    id: "handmade",
+    label: "Handmade Art",
+    icon: Palette,
+    color: "from-purple-500 to-pink-500",
+  },
+  {
+    id: "fashion",
+    label: "Fashion & Textiles",
+    icon: Shirt,
+    color: "from-rose-500 to-red-500",
+  },
+  {
+    id: "home",
+    label: "Home & Living",
+    icon: HomeIcon,
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    id: "instruments",
+    label: "Instruments",
+    icon: Music,
+    color: "from-blue-500 to-indigo-500",
+  },
+  {
+    id: "photography",
+    label: "Photography",
+    icon: Camera,
+    color: "from-cyan-500 to-blue-500",
+  },
+  {
+    id: "electronics",
+    label: "Electronics",
+    icon: Smartphone,
+    color: "from-slate-500 to-gray-500",
+  },
+  {
+    id: "vehicles",
+    label: "Vehicles",
+    icon: Car,
+    color: "from-orange-500 to-amber-500",
+  },
+  {
+    id: "services",
+    label: "Services",
+    icon: Briefcase,
+    color: "from-violet-500 to-purple-500",
+  },
+  {
+    id: "sports",
+    label: "Sports & Outdoors",
+    icon: Dumbbell,
+    color: "from-green-500 to-emerald-500",
+  },
+  {
+    id: "community",
+    label: "Community Hub",
+    icon: Users,
+    color: "from-sky-500 to-cyan-500",
+  },
+];
 
-const mockItems: MarketplaceItem[] = [
+// ─── Mock listings ───
+const generateListings = () => [
   {
     id: 1,
-    title: 'MacBook Pro 16" M2 Max',
-    price: 1800,
+    title: "Hand-Carved Mahogany Sculpture",
+    price: 320,
     image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&w=400&h=300&fit=crop",
-    category: "Electronics",
+      "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400&h=400&fit=crop",
+    category: "handmade",
+    condition: "New",
     seller: {
-      name: "Alex Chen",
+      name: "Amara Diallo",
       avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
-      rating: 4.8,
+        "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop",
+      rating: 4.9,
+      verified: true,
+      memberSince: "2023",
     },
-    location: "San Francisco, CA",
-    posted: "2 hours ago",
-    description: "Barely used MacBook Pro with AppleCare+",
-    condition: "Like New",
-    views: 256,
+    location: "Dakar, Senegal",
+    posted: "2h ago",
+    description:
+      "One-of-a-kind hand-carved sculpture from sustainably sourced mahogany. Each piece tells a story of West African heritage.",
+    views: 342,
+    saves: 28,
+    messages: 5,
   },
   {
     id: 2,
-    title: "Vintage Leather Sofa",
-    price: 450,
+    title: "Handwoven Kente Cloth — Limited Edition",
+    price: 185,
     image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&w=400&h=300&fit=crop",
-    category: "Furniture",
+      "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=400&h=400&fit=crop",
+    category: "fashion",
+    condition: "New",
     seller: {
-      name: "Maria Rodriguez",
+      name: "Kwame Asante",
       avatar:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
-      rating: 4.9,
+        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
+      rating: 5.0,
+      verified: true,
+      memberSince: "2022",
     },
-    location: "Oakland, CA",
-    posted: "5 hours ago",
-    description: "Beautiful vintage leather sofa, great condition",
-    condition: "Good",
-    views: 128,
+    location: "Accra, Ghana",
+    posted: "5h ago",
+    description:
+      "Authentic handwoven Kente cloth with traditional Ashanti patterns. Perfect for ceremonies and art display.",
+    views: 567,
+    saves: 45,
+    messages: 12,
   },
   {
     id: 3,
-    title: "Canon EOS R6 Camera",
-    price: 2200,
+    title: 'Professional Studio Monitor 8"',
+    price: 450,
     image:
-      "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?ixlib=rb-4.0.3&w=400&h=300&fit=crop",
-    category: "Electronics",
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+    category: "instruments",
+    condition: "Like New",
     seller: {
-      name: "James Park",
+      name: "Léa Dubois",
       avatar:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
       rating: 4.7,
+      verified: false,
+      memberSince: "2024",
     },
-    location: "Berkeley, CA",
-    posted: "1 day ago",
-    description: "Professional mirrorless camera with lenses",
-    condition: "Excellent",
-    views: 342,
+    location: "Paris, France",
+    posted: "1d ago",
+    description:
+      "Near-mint condition studio monitors, barely used. Perfect for music production and mastering.",
+    views: 189,
+    saves: 14,
+    messages: 3,
   },
   {
     id: 4,
-    title: "Mountain Bike - Trek Roscoe",
-    price: 650,
+    title: "Ceramic Vase Collection — Artisan Series",
+    price: 95,
     image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&w=400&h=300&fit=crop",
-    category: "Sports & Outdoors",
+      "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&h=400&fit=crop",
+    category: "home",
+    condition: "New",
     seller: {
-      name: "Sarah Thompson",
+      name: "Sofia Martínez",
       avatar:
-        "https://images.unsplash.com/photo-1517841905240-3c0439c4b5fc?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
-      rating: 4.6,
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+      rating: 4.8,
+      verified: true,
+      memberSince: "2023",
     },
-    location: "San Jose, CA",
-    posted: "3 days ago",
-    description: "2021 Trek Roscoe 7, well maintained",
-    condition: "Very Good",
-    views: 189,
+    location: "Barcelona, Spain",
+    posted: "3h ago",
+    description:
+      "Set of 3 handmade ceramic vases with unique glazing techniques. Each piece is one-of-a-kind.",
+    views: 421,
+    saves: 38,
+    messages: 9,
   },
   {
     id: 5,
-    title: "Design Consultation Service",
-    price: 150,
+    title: "Leather Workshop — 2-Day Masterclass",
+    price: 120,
     image:
-      "https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&w=400&h=300&fit=crop",
-    category: "Services",
-    seller: {
-      name: "Emma Watson",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&w=100&h=100&fit=crop",
-      rating: 5.0,
-    },
-    location: "Remote",
-    posted: "6 hours ago",
-    description: "Professional UI/UX design consultation",
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
+    category: "services",
     condition: "Service",
-    views: 95,
+    seller: {
+      name: "Marcus Johnson",
+      avatar:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+      rating: 4.9,
+      verified: true,
+      memberSince: "2021",
+    },
+    location: "London, UK",
+    posted: "6h ago",
+    description:
+      "Learn traditional leather crafting techniques in this immersive 2-day hands-on workshop.",
+    views: 654,
+    saves: 52,
+    messages: 18,
+  },
+  {
+    id: 6,
+    title: "Vintage Film Camera — Canon AE-1",
+    price: 280,
+    image:
+      "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=400&fit=crop",
+    category: "photography",
+    condition: "Very Good",
+    seller: {
+      name: "Yuki Tanaka",
+      avatar:
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
+      rating: 4.6,
+      verified: false,
+      memberSince: "2024",
+    },
+    location: "Tokyo, Japan",
+    posted: "8h ago",
+    description:
+      "Classic Canon AE-1 film camera in excellent working condition. Includes 50mm f/1.8 lens.",
+    views: 312,
+    saves: 22,
+    messages: 7,
+  },
+  {
+    id: 7,
+    title: "Afrobeat Djembe Drum — Hand-carved",
+    price: 210,
+    image:
+      "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=400&h=400&fit=crop",
+    category: "instruments",
+    condition: "New",
+    seller: {
+      name: "Ibrahim Koné",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
+      rating: 5.0,
+      verified: true,
+      memberSince: "2022",
+    },
+    location: "Bamako, Mali",
+    posted: "12h ago",
+    description:
+      "Authentic hand-carved djembe drum with goatskin head. Rich, warm tones for professional performance.",
+    views: 478,
+    saves: 41,
+    messages: 15,
+  },
+  {
+    id: 8,
+    title: "Community Garden Plot — Shared Space",
+    price: 0,
+    image:
+      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
+    category: "community",
+    condition: "Free",
+    seller: {
+      name: "Community Collective",
+      avatar:
+        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=100&h=100&fit=crop",
+      rating: 4.9,
+      verified: true,
+      memberSince: "2020",
+    },
+    location: "Montreal, Canada",
+    posted: "1d ago",
+    description:
+      "Free community garden plot available for members. Share seeds, tools, and harvest with neighbors.",
+    views: 892,
+    saves: 67,
+    messages: 34,
   },
 ];
 
-const CATEGORIES = [
-  "All",
-  "Electronics",
-  "Furniture",
-  "Sports & Outdoors",
-  "Services",
-  "Fashion",
-  "Home & Garden",
-];
-const CONDITIONS = [
-  "All",
-  "Like New",
-  "Excellent",
-  "Very Good",
-  "Good",
-  "Fair",
+// ─── Community activity feed ───
+const COMMUNITY_ACTIVITY = [
+  {
+    user: "Amara D.",
+    action: "listed a new sculpture",
+    time: "2m ago",
+    avatar:
+      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=40&h=40&fit=crop",
+  },
+  {
+    user: "Kwame A.",
+    action: "joined the Artisan Guild",
+    time: "15m ago",
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop",
+  },
+  {
+    user: "Sofia M.",
+    action: "completed a custom order",
+    time: "1h ago",
+    avatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop",
+  },
+  {
+    user: "Marcus J.",
+    action: "is hosting a workshop",
+    time: "2h ago",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop",
+  },
+  {
+    user: "Ibrahim K.",
+    action: "shared a creation process",
+    time: "3h ago",
+    avatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop",
+  },
 ];
 
+// ─── Condition badge colors ───
+const conditionStyle = (c: string) => {
+  switch (c) {
+    case "New":
+      return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+    case "Like New":
+      return "bg-green-500/20 text-green-400 border-green-500/30";
+    case "Very Good":
+      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    case "Good":
+      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    case "Service":
+      return "bg-violet-500/20 text-violet-400 border-violet-500/30";
+    case "Free":
+      return "bg-pink-500/20 text-pink-400 border-pink-500/30";
+    default:
+      return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// MARKETPLACE PAGE
+// ═══════════════════════════════════════════════════
 export default function MarketplacePage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedCondition, setSelectedCondition] = useState("All");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [items, setItems] = useState(mockItems);
-
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || item.category === selectedCategory;
-    const matchesCondition =
-      selectedCondition === "All" || item.condition === selectedCondition;
-    const matchesPrice =
-      item.price >= priceRange[0] && item.price <= priceRange[1];
-
-    return matchesSearch && matchesCategory && matchesCondition && matchesPrice;
+  // ═══ AUTH STATE (Blog Community gate) ═══
+  // Reads localStorage so already-connected users skip the gate
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("blog_community_auth") === "true";
   });
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem("blog_community_user") || "User";
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id],
-    );
+  // Auth handlers — same flow as Blog community
+  const handleAuthenticate = async (
+    email: string,
+    password: string,
+    isSignUp: boolean,
+  ) => {
+    setIsAuthLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const name =
+        email.split("@")[0].charAt(0).toUpperCase() +
+        email.split("@")[0].slice(1);
+      setUserName(name);
+      setIsAuthenticated(true);
+      setIsAuthModalOpen(false);
+
+      // Persist blog community session
+      localStorage.setItem("blog_community_auth", "true");
+      localStorage.setItem("blog_community_user", name);
+
+      console.log(isSignUp ? "Account created!" : "Logged in to Marketplace!");
+    } catch (error) {
+      console.error("Auth error:", error);
+    } finally {
+      setIsAuthLoading(false);
+    }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserName("User");
+    // Clear persisted blog community session
+    localStorage.removeItem("blog_community_auth");
+    localStorage.removeItem("blog_community_user");
+  };
+
+  // ═══ MARKETPLACE STATE ═══
+  const [darkMode, setDarkMode] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<
+    "recent" | "price_low" | "price_high" | "popular"
+  >("recent");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [saved, setSaved] = useState<number[]>([]);
+  const [showCreateListing, setShowCreateListing] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  useScrollLock(showCreateListing || showMobileSidebar);
+  const [listings] = useState(generateListings);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Theme classes
+  const t = {
+    bg: darkMode ? "bg-[#18191a]" : "bg-gray-100",
+    bgCard: darkMode ? "bg-[#242526]" : "bg-white",
+    bgHover: darkMode ? "hover:bg-[#3a3b3c]" : "hover:bg-gray-100",
+    bgSidebar: darkMode ? "bg-[#242526]" : "bg-white",
+    bgInput: darkMode ? "bg-[#3a3b3c]" : "bg-gray-100",
+    text: darkMode ? "text-[#e4e6eb]" : "text-gray-900",
+    textSecondary: darkMode ? "text-[#b0b3b8]" : "text-gray-600",
+    textMuted: darkMode ? "text-[#8a8d91]" : "text-gray-400",
+    border: darkMode ? "border-[#3a3b3c]" : "border-gray-200",
+    accent: "text-amber-500",
+    accentBg: "bg-amber-500",
+    accentHover: "hover:bg-amber-600",
+  };
+
+  // Filter & sort
+  const filtered = listings
+    .filter((item) => {
+      const matchSearch =
+        item.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().startsWith(searchQuery.toLowerCase());
+      const matchCat =
+        activeCategory === "all" || item.category === activeCategory;
+      const matchPrice =
+        item.price >= priceRange[0] && item.price <= priceRange[1];
+      return matchSearch && matchCat && matchPrice;
+    })
+    .sort((a, b) => {
+      if (sortBy === "price_low") return a.price - b.price;
+      if (sortBy === "price_high") return b.price - a.price;
+      if (sortBy === "popular") return b.views - a.views;
+      return 0;
+    });
+
+  const toggleFav = (id: number) =>
+    setFavorites((p) =>
+      p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+    );
+  const toggleSave = (id: number) =>
+    setSaved((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
+  // Keyboard shortcut: / to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape") {
+        setShowMobileSidebar(false);
+        setShowCreateListing(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // ═══ AUTH GATE: Block unauthenticated users ═══
+  if (!isAuthenticated) {
+    return (
+      <>
+        <ViewOnlyGate
+          onSignIn={() => setIsAuthModalOpen(true)}
+          onSignUp={() => setIsAuthModalOpen(true)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onAuthenticate={handleAuthenticate}
+          isLoading={isAuthLoading}
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
-      {/* Scroll-Aware Navbar */}
-      <ScrollableNavbar
-        isAuthenticated={true}
-        userName="User"
-        onLogout={() => {
-          // Handle logout
-        }}
-      />
+    <div
+      className={`min-h-screen transition-colors duration-300 ${t.bg} font-handstyle`}
+    >
+      <ScrollToTop />
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-16 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-white/10"
-      >
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-4">
-            <h1 className="text-3xl font-bold text-white">Marketplace</h1>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="ml-auto flex items-center gap-2 bg-cyan-500 text-white px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Sell Something
-            </motion.button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50"
-              />
+      {/* ═══ MAIN LAYOUT: FB-STYLE 3 COLUMNS ═══ */}
+      <div className="flex max-w-[1920px] mx-auto">
+        {/* ═══════════════════════════════════════
+            LEFT SIDEBAR — Categories + Filters
+            ═══════════════════════════════════════ */}
+        <aside
+          className={`hidden lg:block w-[360px] flex-shrink-0 h-screen sticky top-0 overflow-y-auto ${t.bgSidebar} border-r ${t.border}`}
+        >
+          <div className="p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h1 className={`text-2xl font-bold ${t.text}`}>Marketplace</h1>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 180 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-full ${t.bgInput} ${t.textSecondary} transition-colors`}
+              >
+                {darkMode ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </motion.button>
             </div>
 
+            {/* Search */}
+            <div className="relative mb-4">
+              <Search
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search Marketplace…  /"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full ${t.bgInput} ${t.text} rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all`}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${t.textMuted} hover:text-amber-500`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Create Listing Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:bg-white/10 transition-colors flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowCreateListing(true)}
+              className={`w-full flex items-center justify-center gap-2 ${t.accentBg} text-white font-semibold py-3 rounded-xl mb-6 shadow-lg shadow-amber-500/20 ${t.accentHover} transition-all`}
             >
-              <Filter className="w-5 h-5" />
-              Filters
+              <Plus className="w-5 h-5" />
+              Create New Listing
             </motion.button>
-          </div>
-        </div>
-      </motion.div>
 
-      {/* Filters Panel */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-slate-900/50 border-b border-white/10 overflow-hidden"
-          >
-            <div className="max-w-7xl mx-auto px-4 py-4">
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Category Filter */}
-                <div>
-                  <h3 className="text-sm font-bold text-slate-300 mb-2 uppercase">
-                    Category
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-3 py-1 rounded text-sm transition-all ${
-                          selectedCategory === cat
-                            ? "bg-cyan-500 text-white"
-                            : "bg-white/5 text-slate-400 hover:bg-white/10"
+            {/* Categories */}
+            <div className="mb-6">
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
+              >
+                Categories
+              </h3>
+              <div className="space-y-0.5">
+                {CATEGORIES.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  const Icon = cat.icon;
+                  return (
+                    <motion.button
+                      key={cat.id}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        isActive
+                          ? `bg-gradient-to-r ${cat.color} text-white shadow-md`
+                          : `${t.textSecondary} ${t.bgHover}`
+                      }`}
+                    >
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                          isActive
+                            ? "bg-white/20"
+                            : `bg-gradient-to-br ${cat.color}`
                         }`}
                       >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      {cat.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeCatDot"
+                          className="ml-auto w-2 h-2 bg-white rounded-full"
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
 
-                {/* Condition Filter */}
-                <div>
-                  <h3 className="text-sm font-bold text-slate-300 mb-2 uppercase">
-                    Condition
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {CONDITIONS.map((cond) => (
-                      <button
-                        key={cond}
-                        onClick={() => setSelectedCondition(cond)}
-                        className={`px-3 py-1 rounded text-sm transition-all ${
-                          selectedCondition === cond
-                            ? "bg-cyan-500 text-white"
-                            : "bg-white/5 text-slate-400 hover:bg-white/10"
-                        }`}
-                      >
-                        {cond}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <h3 className="text-sm font-bold text-slate-300 mb-2 uppercase">
-                    Price Range
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
+            {/* Price Filter */}
+            <div className="mb-6">
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
+              >
+                Price Range
+              </h3>
+              <div className={`${t.bgInput} rounded-xl p-4`}>
+                <div className="flex gap-3 mb-3">
+                  <div className="flex-1">
+                    <label className={`text-xs ${t.textMuted} mb-1 block`}>
+                      Min
+                    </label>
+                    <div
+                      className={`flex items-center gap-1 ${t.bgCard} rounded-lg px-3 py-2 border ${t.border}`}
+                    >
+                      <DollarSign className={`w-3.5 h-3.5 ${t.textMuted}`} />
                       <input
                         type="number"
                         value={priceRange[0]}
                         onChange={(e) =>
                           setPriceRange([Number(e.target.value), priceRange[1]])
                         }
-                        placeholder="Min"
-                        className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-sm"
+                        className={`w-full bg-transparent ${t.text} text-sm focus:outline-none`}
                       />
+                    </div>
+                  </div>
+                  <div className={`flex items-end pb-2 ${t.textMuted}`}>—</div>
+                  <div className="flex-1">
+                    <label className={`text-xs ${t.textMuted} mb-1 block`}>
+                      Max
+                    </label>
+                    <div
+                      className={`flex items-center gap-1 ${t.bgCard} rounded-lg px-3 py-2 border ${t.border}`}
+                    >
+                      <DollarSign className={`w-3.5 h-3.5 ${t.textMuted}`} />
                       <input
                         type="number"
                         value={priceRange[1]}
                         onChange={(e) =>
                           setPriceRange([priceRange[0], Number(e.target.value)])
                         }
-                        placeholder="Max"
-                        className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-sm"
+                        className={`w-full bg-transparent ${t.text} text-sm focus:outline-none`}
                       />
                     </div>
-                    <p className="text-xs text-slate-500">
-                      ${priceRange[0]} - ${priceRange[1]}
-                    </p>
                   </div>
                 </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={5000}
+                  value={priceRange[1]}
+                  onChange={(e) =>
+                    setPriceRange([priceRange[0], Number(e.target.value)])
+                  }
+                  className="w-full accent-amber-500 cursor-pointer"
+                />
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Results Count */}
-        <p className="text-slate-400 mb-6">
-          Showing {filteredItems.length} results
-        </p>
-
-        {filteredItems.length > 0 ? (
-          <motion.div
-            layout
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredItems.map((item, idx) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="group bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all"
+            {/* Quick Filters */}
+            <div>
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
               >
-                {/* Image */}
-                <div className="relative overflow-hidden h-48 bg-slate-800">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-
-                  {/* Favorite Button */}
+                Quick Filters
+              </h3>
+              <div className="space-y-2">
+                {[
+                  {
+                    label: "Free Items",
+                    icon: Sparkles,
+                    color: "text-pink-400",
+                  },
+                  {
+                    label: "Verified Sellers",
+                    icon: BadgeCheck,
+                    color: "text-blue-400",
+                  },
+                  { label: "Nearby", icon: MapPin, color: "text-emerald-400" },
+                  {
+                    label: "Trending",
+                    icon: TrendingUp,
+                    color: "text-amber-400",
+                  },
+                ].map((f) => (
                   <motion.button
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => toggleFavorite(item.id)}
-                    className="absolute top-3 right-3 p-2 bg-black/50 rounded-full backdrop-blur-sm hover:bg-black/70 transition-colors"
+                    key={f.label}
+                    whileHover={{ x: 4 }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm ${t.textSecondary} ${t.bgHover} transition-all`}
                   >
-                    <Heart
-                      className={`w-5 h-5 ${
-                        favorites.includes(item.id)
-                          ? "fill-red-500 text-red-500"
-                          : "text-white"
-                      }`}
-                    />
+                    <f.icon className={`w-4 h-4 ${f.color}`} />
+                    {f.label}
                   </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
 
-                  {/* Category Badge */}
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-black/50 rounded text-xs text-cyan-400 font-bold backdrop-blur-sm">
-                    {item.category}
-                  </div>
+        {/* ═══════════════════════════════════════
+            CENTER — Main Feed
+            ═══════════════════════════════════════ */}
+        <main className="flex-1 min-w-0">
+          {/* Top Bar */}
+          <div className={`sticky top-0 z-30 ${t.bgCard} border-b ${t.border}`}>
+            <div className="px-4 lg:px-6 py-3">
+              <div className="flex items-center gap-3">
+                {/* Mobile menu toggle */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowMobileSidebar(true)}
+                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
+                >
+                  <SlidersHorizontal className="w-5 h-5" />
+                </motion.button>
 
-                  {/* Views Count */}
-                  <div className="absolute bottom-3 right-3 text-xs text-slate-300 bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
-                    {item.views} views
-                  </div>
+                {/* Mobile search */}
+                <div className="lg:hidden flex-1 relative">
+                  <Search
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50`}
+                  />
                 </div>
 
-                {/* Content */}
-                <div className="p-4">
-                  {/* Price */}
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-2xl font-bold text-cyan-400">
-                      ${item.price.toLocaleString()}
+                {/* Results count */}
+                <div
+                  className={`hidden lg:flex items-center gap-2 ${t.textSecondary} text-sm`}
+                >
+                  <Package className="w-4 h-4" />
+                  <span>
+                    <strong className={t.text}>{filtered.length}</strong>{" "}
+                    listings
+                  </span>
+                  {activeCategory !== "all" && (
+                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
+                      {CATEGORIES.find((c) => c.id === activeCategory)?.label}
+                      <button
+                        onClick={() => setActiveCategory("all")}
+                        className="ml-1.5"
+                      >
+                        ×
+                      </button>
                     </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        item.condition === "Like New"
-                          ? "bg-green-500/20 text-green-300"
-                          : item.condition === "Excellent"
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : item.condition === "Very Good"
-                              ? "bg-blue-500/20 text-blue-300"
-                              : item.condition === "Good"
-                                ? "bg-yellow-500/20 text-yellow-300"
-                                : "bg-orange-500/20 text-orange-300"
-                      }`}
+                  )}
+                </div>
+
+                <div className="flex-1" />
+
+                {/* Sort */}
+                <div className="relative">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all`}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {sortBy === "recent"
+                        ? "Most Recent"
+                        : sortBy === "price_low"
+                          ? "Price: Low"
+                          : sortBy === "price_high"
+                            ? "Price: High"
+                            : "Popular"}
+                    </span>
+                    <ChevronDown className="w-3 h-3" />
+                  </motion.button>
+                  <AnimatePresence>
+                    {showSortMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        className={`absolute right-0 top-full mt-2 w-48 ${t.bgCard} rounded-xl shadow-2xl border ${t.border} overflow-hidden z-50`}
+                      >
+                        {(
+                          [
+                            { id: "recent", label: "Most Recent" },
+                            { id: "popular", label: "Most Popular" },
+                            { id: "price_low", label: "Price: Low to High" },
+                            { id: "price_high", label: "Price: High to Low" },
+                          ] as const
+                        ).map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              setSortBy(s.id);
+                              setShowSortMenu(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
+                              sortBy === s.id
+                                ? `${t.accent} bg-amber-500/10 font-medium`
+                                : `${t.textSecondary} ${t.bgHover}`
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* View mode */}
+                <div
+                  className={`hidden sm:flex items-center ${t.bgInput} rounded-xl overflow-hidden`}
+                >
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 transition-all ${viewMode === "grid" ? `${t.accentBg} text-white` : t.textMuted}`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 transition-all ${viewMode === "list" ? `${t.accentBg} text-white` : t.textMuted}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Theme toggle (mobile) */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
+                >
+                  {darkMode ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ LISTINGS GRID ═══ */}
+          <div className="px-4 lg:px-6 py-6">
+            {filtered.length > 0 ? (
+              <motion.div
+                layout
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                    : "space-y-3"
+                }
+              >
+                <AnimatePresence mode="popLayout">
+                  {filtered.map((item, idx) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{
+                        delay: idx * 0.04,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                      onMouseEnter={() => setHoveredCard(item.id)}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      className={
+                        viewMode === "list"
+                          ? `flex gap-4 ${t.bgCard} rounded-2xl p-3 border ${t.border} ${t.bgHover} transition-all cursor-pointer`
+                          : ""
+                      }
                     >
-                      {item.condition}
-                    </span>
-                  </div>
+                      {viewMode === "grid" ? (
+                        /* ═══ GRID CARD ═══ */
+                        <div
+                          className={`group ${t.bgCard} rounded-2xl overflow-hidden border ${t.border} hover:border-amber-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/5`}
+                        >
+                          {/* Image */}
+                          <div className="relative aspect-square overflow-hidden">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                            {/* Overlay on hover */}
+                            <motion.div
+                              initial={false}
+                              animate={{
+                                opacity: hoveredCard === item.id ? 1 : 0,
+                              }}
+                              className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3"
+                            >
+                              <div className="flex gap-2 w-full">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className="flex-1 py-2 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                                >
+                                  View Details
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSave(item.id);
+                                  }}
+                                  className="p-2 bg-white/20 backdrop-blur-sm rounded-xl text-white hover:bg-white/30 transition-colors"
+                                >
+                                  {saved.includes(item.id) ? (
+                                    <BookmarkCheck className="w-5 h-5 text-amber-400" />
+                                  ) : (
+                                    <Bookmark className="w-5 h-5" />
+                                  )}
+                                </motion.button>
+                              </div>
+                            </motion.div>
+                            {/* Top badges */}
+                            <div className="absolute top-3 left-3 flex gap-2">
+                              <span
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-lg border backdrop-blur-sm ${conditionStyle(item.condition)}`}
+                              >
+                                {item.condition}
+                              </span>
+                            </div>
+                            {/* Fav */}
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.8 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFav(item.id);
+                              }}
+                              className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"
+                            >
+                              <Heart
+                                className={`w-4 h-4 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-white"}`}
+                              />
+                            </motion.button>
+                          </div>
 
-                  {/* Title */}
-                  <h3 className="font-bold text-white mb-2 line-clamp-2 hover:text-cyan-400 transition-colors">
-                    {item.title}
-                  </h3>
+                          {/* Content */}
+                          <div className="p-4">
+                            {/* Price */}
+                            <p className={`text-xl font-bold ${t.text} mb-1`}>
+                              {item.price === 0 ? (
+                                <span className="text-pink-500">Free</span>
+                              ) : (
+                                <>${item.price.toLocaleString()}</>
+                              )}
+                            </p>
+                            {/* Title */}
+                            <h3
+                              className={`text-sm ${t.textSecondary} line-clamp-2 mb-2`}
+                            >
+                              {item.title}
+                            </h3>
+                            {/* Location & time */}
+                            <div
+                              className={`flex items-center gap-1.5 text-xs ${t.textMuted}`}
+                            >
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{item.location}</span>
+                              <span className="mx-1">·</span>
+                              <Clock className="w-3 h-3" />
+                              <span>{item.posted}</span>
+                            </div>
+                            {/* Stats */}
+                            <div
+                              className={`flex items-center gap-3 mt-3 pt-3 border-t ${t.border} text-xs ${t.textMuted}`}
+                            >
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {item.views}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Heart className="w-3 h-3" />
+                                {item.saves}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="w-3 h-3" />
+                                {item.messages}
+                              </span>
+                              {item.seller.verified && (
+                                <span className="ml-auto flex items-center gap-1 text-blue-400">
+                                  <BadgeCheck className="w-3.5 h-3.5" />{" "}
+                                  Verified
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* ═══ LIST VIEW ROW ═══ */
+                        <>
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-xl flex-shrink-0"
+                            loading="lazy"
+                          />
+                          <div className="flex-1 min-w-0 py-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className={`text-lg font-bold ${t.text}`}>
+                                  {item.price === 0 ? (
+                                    <span className="text-pink-500">Free</span>
+                                  ) : (
+                                    <>${item.price.toLocaleString()}</>
+                                  )}
+                                </p>
+                                <h3
+                                  className={`text-sm ${t.textSecondary} line-clamp-1 mb-1`}
+                                >
+                                  {item.title}
+                                </h3>
+                                <p
+                                  className={`text-xs ${t.textMuted} line-clamp-2 mb-2`}
+                                >
+                                  {item.description}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => toggleFav(item.id)}
+                                  className={`p-2 rounded-full ${t.bgInput}`}
+                                >
+                                  <Heart
+                                    className={`w-4 h-4 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : t.textMuted}`}
+                                  />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => toggleSave(item.id)}
+                                  className={`p-2 rounded-full ${t.bgInput}`}
+                                >
+                                  {saved.includes(item.id) ? (
+                                    <BookmarkCheck className="w-4 h-4 text-amber-400" />
+                                  ) : (
+                                    <Bookmark
+                                      className={`w-4 h-4 ${t.textMuted}`}
+                                    />
+                                  )}
+                                </motion.button>
+                              </div>
+                            </div>
+                            <div
+                              className={`flex items-center gap-3 text-xs ${t.textMuted}`}
+                            >
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {item.location}
+                              </span>
+                              <span>·</span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full border ${conditionStyle(item.condition)} text-xs`}
+                              >
+                                {item.condition}
+                              </span>
+                              {item.seller.verified && (
+                                <span className="flex items-center gap-1 text-blue-400">
+                                  <BadgeCheck className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-20 text-center"
+              >
+                <div
+                  className={`w-20 h-20 rounded-full ${t.bgInput} flex items-center justify-center mb-4`}
+                >
+                  <Search className={`w-8 h-8 ${t.textMuted}`} />
+                </div>
+                <p className={`text-lg font-semibold ${t.text} mb-1`}>
+                  No listings found
+                </p>
+                <p className={`text-sm ${t.textMuted} mb-4`}>
+                  Try adjusting your filters or search query
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setActiveCategory("all");
+                    setSearchQuery("");
+                    setPriceRange([0, 5000]);
+                  }}
+                  className="px-6 py-2.5 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
+                >
+                  Clear All Filters
+                </motion.button>
+              </motion.div>
+            )}
+          </div>
+        </main>
 
-                  {/* Description */}
-                  <p className="text-sm text-slate-400 mb-3 line-clamp-2">
-                    {item.description}
-                  </p>
+        {/* ═══════════════════════════════════════
+            RIGHT SIDEBAR — Community + Activity
+            ═══════════════════════════════════════ */}
+        <aside
+          className={`hidden xl:block w-[320px] flex-shrink-0 h-screen sticky top-0 overflow-y-auto border-l ${t.border}`}
+        >
+          <div className="p-4 space-y-4">
+            {/* Community Connections */}
+            <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                <h3 className={`font-bold ${t.text}`}>Community Hub</h3>
+              </div>
+              <p className={`text-xs ${t.textMuted} mb-3`}>
+                Connect with fellow artisans and creators in your area
+              </p>
+              <div className="space-y-3">
+                {COMMUNITY_ACTIVITY.map((act, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} transition-colors cursor-pointer`}
+                  >
+                    <img
+                      src={act.avatar}
+                      alt={act.user}
+                      className="w-9 h-9 rounded-full object-cover ring-2 ring-amber-500/20"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${t.text}`}>
+                        <strong>{act.user}</strong>{" "}
+                        <span className={t.textMuted}>{act.action}</span>
+                      </p>
+                      <p className={`text-xs ${t.textMuted}`}>{act.time}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                className={`w-full mt-3 py-2.5 rounded-xl text-sm font-medium ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all`}
+              >
+                View All Activity
+              </motion.button>
+            </div>
 
-                  {/* Location & Time */}
-                  <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
-                    <MapPin className="w-3 h-3" />
-                    {item.location}
-                    <span className="ml-auto flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {item.posted}
-                    </span>
-                  </div>
-
-                  {/* Seller Info */}
-                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/10">
+            {/* Artisan Spotlight */}
+            <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <h3 className={`font-bold ${t.text}`}>Artisan Spotlight</h3>
+              </div>
+              <div className="space-y-3">
+                {listings.slice(0, 3).map((item) => (
+                  <motion.div
+                    key={item.id}
+                    whileHover={{ x: 4 }}
+                    className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} cursor-pointer transition-all`}
+                  >
                     <img
                       src={item.seller.avatar}
                       alt={item.seller.name}
-                      className="w-8 h-8 rounded-full"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
-                    <div>
-                      <p className="text-xs font-bold text-white">
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-sm font-medium ${t.text} flex items-center gap-1`}
+                      >
                         {item.seller.name}
+                        {item.seller.verified && (
+                          <BadgeCheck className="w-3.5 h-3.5 text-blue-400" />
+                        )}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        ⭐ {item.seller.rating} rating
+                      <p className={`text-xs ${t.textMuted}`}>
+                        Member since {item.seller.memberSince}
                       </p>
                     </div>
-                  </div>
+                    <div className="flex items-center gap-0.5">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span
+                        className={`text-xs font-medium ${t.textSecondary}`}
+                      >
+                        {item.seller.rating}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-1 px-3 py-2 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors text-sm"
-                    >
-                      Contact Seller
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-3 py-2 bg-white/5 text-slate-400 rounded-lg hover:bg-white/10 transition-colors"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </motion.button>
+            {/* Verso Air Info Card */}
+            <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl p-4 border border-amber-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="w-5 h-5 text-amber-500" />
+                <h3 className={`font-bold ${t.text}`}>Verso Air Marketplace</h3>
+              </div>
+              <p className={`text-xs ${t.textMuted} mb-3`}>
+                A trusted space for artisans to share their craft, connect with
+                their community, and grow together.
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: "Artisans", value: "2.4K" },
+                  { label: "Listings", value: "8.9K" },
+                  { label: "Countries", value: "47" },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className={`${t.bgCard} rounded-xl py-2`}
+                  >
+                    <p className={`text-sm font-bold ${t.accent}`}>
+                      {stat.value}
+                    </p>
+                    <p className={`text-[10px] ${t.textMuted}`}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* ═══ MOBILE SIDEBAR OVERLAY ═══ */}
+      <AnimatePresence>
+        {showMobileSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileSidebar(false)}
+              className="fixed inset-0 bg-black/60 z-50 lg:hidden backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className={`fixed left-0 top-0 bottom-0 w-[320px] ${t.bgSidebar} z-50 overflow-y-auto shadow-2xl`}
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-xl font-bold ${t.text}`}>Filters</h2>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowMobileSidebar(false)}
+                    className={`p-2 rounded-full ${t.bgInput}`}
+                  >
+                    <X className={`w-5 h-5 ${t.textSecondary}`} />
+                  </motion.button>
+                </div>
+
+                {/* Categories */}
+                <div className="space-y-1 mb-6">
+                  {CATEGORIES.map((cat) => {
+                    const isActive = activeCategory === cat.id;
+                    const Icon = cat.icon;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setActiveCategory(cat.id);
+                          setShowMobileSidebar(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          isActive
+                            ? `bg-gradient-to-r ${cat.color} text-white`
+                            : `${t.textSecondary} ${t.bgHover}`
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : `bg-gradient-to-br ${cat.color}`}`}
+                        >
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Price */}
+                <div className="mb-4">
+                  <h3
+                    className={`text-xs font-bold uppercase ${t.textMuted} mb-3`}
+                  >
+                    Price Range
+                  </h3>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      value={priceRange[0]}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
+                      placeholder="Min"
+                      className={`flex-1 ${t.bgInput} ${t.text} rounded-lg px-3 py-2 text-sm focus:outline-none`}
+                    />
+                    <input
+                      type="number"
+                      value={priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([priceRange[0], Number(e.target.value)])
+                      }
+                      placeholder="Max"
+                      className={`flex-1 ${t.bgInput} ${t.text} rounded-lg px-3 py-2 text-sm focus:outline-none`}
+                    />
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <p className="text-slate-400 text-lg">
-              No items found matching your criteria
-            </p>
-          </motion.div>
+              </div>
+            </motion.div>
+          </>
         )}
-      </div>
+      </AnimatePresence>
+
+      {/* ═══ CREATE LISTING MODAL ═══ */}
+      <AnimatePresence>
+        {showCreateListing && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCreateListing(false)}
+              className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg ${t.bgCard} rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[90vh] overflow-y-auto`}
+            >
+              <div
+                className={`flex items-center justify-between p-4 border-b ${t.border}`}
+              >
+                <h2 className={`text-lg font-bold ${t.text}`}>
+                  Create New Listing
+                </h2>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowCreateListing(false)}
+                  className={`p-2 rounded-full ${t.bgInput}`}
+                >
+                  <X className={`w-5 h-5 ${t.textSecondary}`} />
+                </motion.button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label
+                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                  >
+                    Title
+                  </label>
+                  <input
+                    className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50`}
+                    placeholder="What are you selling?"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                    >
+                      Price
+                    </label>
+                    <div
+                      className={`flex items-center gap-2 ${t.bgInput} rounded-xl px-4 py-3`}
+                    >
+                      <DollarSign className={`w-4 h-4 ${t.textMuted}`} />
+                      <input
+                        className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none`}
+                        placeholder="0.00"
+                        type="number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                    >
+                      Category
+                    </label>
+                    <select
+                      className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none`}
+                    >
+                      {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none`}
+                    placeholder="Describe your item…"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                  >
+                    Photos
+                  </label>
+                  <div
+                    className={`border-2 border-dashed ${t.border} rounded-xl p-8 text-center cursor-pointer ${t.bgHover} transition-colors`}
+                  >
+                    <Camera className={`w-8 h-8 mx-auto mb-2 ${t.textMuted}`} />
+                    <p className={`text-sm ${t.textMuted}`}>
+                      Click or drag photos here
+                    </p>
+                    <p className={`text-xs ${t.textMuted} mt-1`}>
+                      Up to 10 photos
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-amber-500 text-white font-semibold py-3 rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+                >
+                  Publish Listing
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ MOBILE FAB ═══ */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowCreateListing(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-amber-500 text-white rounded-full shadow-xl shadow-amber-500/30 flex items-center justify-center hover:bg-amber-600 transition-colors"
+      >
+        <Plus className="w-6 h-6" />
+      </motion.button>
     </div>
   );
 }

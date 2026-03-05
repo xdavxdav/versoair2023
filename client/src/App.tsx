@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CountryProvider } from "@/contexts/CountryContext";
+import InactivityGuard from "@/components/InactivityGuard";
 import { useState, useEffect, useRef } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 
@@ -17,6 +19,7 @@ import Demo from "@/pages/demo";
 import Industries from "@/pages/industries";
 import Pricing from "@/pages/pricing";
 import Blog from "@/pages/blog";
+import FaqPage from "@/pages/faq";
 import Profile from "@/pages/profile";
 import Marketplace from "@/pages/marketplace";
 import Partners from "@/pages/partners";
@@ -106,7 +109,13 @@ import ReturnsHelp from "@/pages/help/returns";
 import GuaranteeHelp from "@/pages/help/guarantee";
 
 // ─────────────────────────────────────────────────────
-// 📖 Developer & Docs
+// 💳 Billing & Ads
+// ─────────────────────────────────────────────────────
+import BillingPage from "@/pages/billing";
+import AdCampaignsPage from "@/pages/ad-campaigns";
+
+// ─────────────────────────────────────────────────────
+// �📖 Developer & Docs
 // ─────────────────────────────────────────────────────
 import APIDocumentation from "@/pages/api";
 import Documentation from "@/pages/docs";
@@ -132,6 +141,7 @@ import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
 import { SponsorsSection } from "@/components/ui/sponsors-section";
 import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
+import { CountryDropdown } from "@/components/CountryDropdown";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 
 function Router() {
@@ -165,6 +175,7 @@ function Router() {
       <Route path="/industries" component={Industries} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/blog" component={Blog} />
+      <Route path="/faq" component={FaqPage} />
       <Route path="/profile" component={Profile} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/partners" component={Partners} />
@@ -174,6 +185,8 @@ function Router() {
       <Route path="/artihuman-foundation" component={ArtiHumanFoundation} />
       <Route path="/impact" component={Impact} />
       <Route path="/tickets" component={Tickets} />
+      <Route path="/account/billing" component={BillingPage} />
+      <Route path="/ad-campaigns" component={AdCampaignsPage} />
 
       {/* ═══════════════════════════════════════════════
           🏢 SECTORS — Top-level for SEO & branding
@@ -321,47 +334,74 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-4 relative z-60">
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs">
-          <span className="font-medium">Business Intelligence Portal</span>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
-              className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-            >
-              <span>🎵</span>
-              <span className="hidden sm:inline">Verso Air</span>
-              <span className="sm:hidden">VA</span>
-            </button>
-            <button
-              onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-              className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-            >
-              <span>📍</span>
-              <span className="hidden sm:inline">GPS Services</span>
-            </button>
+      {/* ── Sticky Header Block: amber top bar + scrolling ticker ── */}
+      <div className="sticky top-0 z-[60] flex flex-col">
+        {/* Top Banner */}
+        <div
+          className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
+          style={{ overflow: "visible" }}
+        >
+          <div
+            className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
+            style={{ overflow: "visible" }}
+          >
+            {/* Left: Portal label */}
+            <span className="font-medium flex-1 truncate">
+              Business Intelligence Portal
+            </span>
+
+            {/* Center: Country filter dropdown */}
+            <CountryDropdown />
+
+            {/* Right: Action buttons */}
+            <div className="flex items-center space-x-3 flex-1 justify-end">
+              <button
+                onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+              >
+                <span>🎵</span>
+                <span className="hidden sm:inline">Verso Air</span>
+                <span className="sm:hidden">VA</span>
+              </button>
+              <button
+                onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+              >
+                <span>📍</span>
+                <span className="hidden sm:inline">GPS Services</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Scrolling ticker — always visible while sticky block is on screen */}
+        {currentPath !== "/blog" && (
+          <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
+            <div className="animate-scroll-continuous flex">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex flex-shrink-0">
+                  <span className="flex-shrink-0 px-4 md:px-8">
+                    Welcome to Verso Air ™️ — Business Intelligence Platform
+                  </span>
+                  <span className="flex-shrink-0 px-4 md:px-8">
+                    Analyze • Optimize • Visualize • Grow
+                  </span>
+                  <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
+                    24 Industry Sectors • Live Analytics • Global Coverage
+                  </span>
+                  <span className="hidden md:inline-flex flex-shrink-0 px-8">
+                    Commerce • Hospitality • Construction • Automotive • Finance
+                    • Entertainment
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+      {/* ── End Sticky Header Block ── */}
 
       <MobileMenuBubble />
-
-      {/* Scrolling Banner - hidden on /blog */}
-      {currentPath !== "/blog" && (
-        <div className="sticky top-0 bg-primary text-white py-2 text-sm overflow-hidden z-50">
-          <div className="animate-scroll-continuous flex">
-            <span className="flex-shrink-0 px-4">
-              Welcome to Verso Air ™️ — Real-time Business Intelligence Platform
-            </span>
-            <span className="flex-shrink-0 px-4">
-              Analyze • Optimize • Visualize • Grow
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Navbar */}
       <div
         className={`hidden md:block transition-opacity duration-300 ${
           isLoading ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -421,14 +461,17 @@ function App() {
         }
       `}</style>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <LoadingProvider>
-              <AppContent />
-              <Toaster />
-            </LoadingProvider>
-          </TooltipProvider>
-        </AuthProvider>
+        <CountryProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <LoadingProvider>
+                <AppContent />
+                <InactivityGuard />
+                <Toaster />
+              </LoadingProvider>
+            </TooltipProvider>
+          </AuthProvider>
+        </CountryProvider>
       </QueryClientProvider>
     </>
   );

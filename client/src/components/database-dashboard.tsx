@@ -159,12 +159,12 @@ export function DatabaseDashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-50 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-950 text-slate-50">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-20"
-        } bg-slate-900 border-r border-slate-800 transition-all duration-300 overflow-y-auto flex flex-col`}
+        } bg-slate-900 border-r border-slate-800 transition-all duration-300 overflow-y-auto overscroll-contain flex flex-col sticky top-0 h-screen`}
       >
         <div className="p-6 border-b border-slate-800 flex items-center justify-between">
           {sidebarOpen && (
@@ -226,7 +226,7 @@ export function DatabaseDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1">
         {/* Top Bar */}
         <div className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">

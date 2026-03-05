@@ -69,6 +69,10 @@ export const users = pgTable("users", {
   // Email verification
   verifiedAt: timestamp("verified_at"),
 
+  // Referral tracking
+  referralCode: varchar("referral_code", { length: 12 }).unique(),
+  referredBy: integer("referred_by").references((): any => users.id),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -181,6 +185,7 @@ export const artists = pgTable("artists", {
   genre: varchar("genre", { length: 100 }),
   labelStatus: varchar("label_status").default("unsigned"),
   spotifyUrl: text("spotify_url"),
+  countryCode: varchar("country_code", { length: 2 }),
 });
 
 export const contractors = pgTable("contractors", {
@@ -227,6 +232,9 @@ export const jobs = pgTable("jobs", {
   businessId: integer("business_id").references(() => businesses.id, {
     onDelete: "set null",
   }),
+  // Sector classification — aligns with Annuaire directory categories
+  sector: varchar("sector").default("general"), // communication, tech, immobilier, conseil-juridique, sante, alimentation, animaux, artisans, maison-deco, mode-textile, telecom, agroalimentaire, administrations, associations, bien-etre, emploi, commerce, hotellerie, batiment, automobile, finances, divertissement, autres, general
+  countryCode: varchar("country_code", { length: 2 }),
   salaryMin: integer("salary_min"),
   salaryMax: integer("salary_max"),
   currency: varchar("currency").default("USD"),
@@ -671,3 +679,80 @@ export const settingsTemplates = pgTable(
 
 export type SettingsTemplate = typeof settingsTemplates.$inferSelect;
 export type InsertSettingsTemplate = typeof settingsTemplates.$inferInsert;
+
+// ── EMAIL SUBSCRIPTIONS (Follow-Up Channels) ───────────────────────────────
+// Drives the 4-channel email follow-up system:
+//   job_alerts, contract_alerts, reservation_tracking, geoadmin_reports, platform_updates
+export const emailSubscriptions = pgTable(
+  "email_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    // Subscription channel
+    type: varchar("type", { length: 50 }).notNull(), // 'job_alerts' | 'contract_alerts' | 'reservation_tracking' | 'geoadmin_reports' | 'platform_updates'
+    // Delivery frequency
+    frequency: varchar("frequency", { length: 30 }).default("daily_digest"), // 'instant' | 'daily_digest' | 'weekly_digest'
+    // Active toggle (soft-delete / pause)
+    isActive: boolean("is_active").default(true),
+    // Filter criteria stored as JSON — { sectors: [], locations: [], keywords: [], salaryMin: N, salaryMax: N }
+    filters: jsonb("filters").default({}),
+    // One-click unsubscribe (CAN-SPAM compliance)
+    unsubscribeToken: text("unsubscribe_token").notNull().unique(),
+    // When the last digest/alert was sent for this subscription
+    lastSentAt: timestamp("last_sent_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("email_sub_user_idx").on(t.userId),
+    typeIdx: index("email_sub_type_idx").on(t.type),
+    userTypeIdx: unique("email_sub_user_type_uniq").on(t.userId, t.type),
+    activeIdx: index("email_sub_active_idx").on(t.isActive),
+    tokenIdx: index("email_sub_token_idx").on(t.unsubscribeToken),
+  }),
+);
+
+export const insertEmailSubscriptionSchema =
+  createInsertSchema(emailSubscriptions);
+export type EmailSubscription = typeof emailSubscriptions.$inferSelect;
+export type InsertEmailSubscription = typeof emailSubscriptions.$inferInsert;
+
+// ── EMAIL QUEUE (Reliable Async Delivery) ───────────────────────────────────
+// Decouples email sending from request handling. Digest worker processes this.
+export const emailQueue = pgTable(
+  "email_queue",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Optional link to the subscription that triggered this email
+    subscriptionId: uuid("subscription_id").references(
+      () => emailSubscriptions.id,
+      { onDelete: "set null" },
+    ),
+    recipientEmail: text("recipient_email").notNull(),
+    recipientUserId: integer("recipient_user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    subject: text("subject").notNull(),
+    htmlBody: text("html_body").notNull(),
+    // Delivery state
+    status: varchar("status", { length: 20 }).default("pending"), // 'pending' | 'sent' | 'failed' | 'skipped'
+    scheduledAt: timestamp("scheduled_at").defaultNow(),
+    sentAt: timestamp("sent_at"),
+    error: text("error"),
+    retryCount: integer("retry_count").default(0),
+    // Categorisation for analytics
+    emailType: varchar("email_type", { length: 50 }), // 'job_alert' | 'contract_alert' | 'reservation_update' | 'geoadmin_report' | 'digest'
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("email_queue_status_idx").on(t.status),
+    scheduledIdx: index("email_queue_scheduled_idx").on(t.scheduledAt),
+    recipientIdx: index("email_queue_recipient_idx").on(t.recipientUserId),
+  }),
+);
+
+export const insertEmailQueueSchema = createInsertSchema(emailQueue);
+export type EmailQueueItem = typeof emailQueue.$inferSelect;
+export type InsertEmailQueueItem = typeof emailQueue.$inferInsert;

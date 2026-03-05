@@ -38,8 +38,8 @@ router.get(
     if (search) {
       conditions.push(
         or(
-          ilike(users.username, `%${search}%`),
-          ilike(users.email, `%${search}%`),
+          ilike(users.username, `${search}%`),
+          ilike(users.email, `${search}%`),
         ),
       );
     }

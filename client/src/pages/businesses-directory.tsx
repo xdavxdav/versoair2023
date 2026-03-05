@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { useCountry } from "@/contexts/CountryContext";
 import {
   staggerContainer,
   staggerItem,
@@ -50,6 +51,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -393,6 +395,7 @@ async function searchBusinessesByCategory(params: {
   subcategorySlug?: string;
   query?: string;
   location?: string;
+  countryCode?: string;
   page?: number;
   limit?: number;
 }): Promise<{ data: Business[]; total: number; success: boolean }> {
@@ -405,6 +408,8 @@ async function searchBusinessesByCategory(params: {
     queryParams.append("limit", String(limit));
     if (params.query) queryParams.append("search", params.query);
     if (params.location) queryParams.append("location", params.location);
+    if (params.countryCode)
+      queryParams.append("countryCode", params.countryCode);
 
     // 1) Specific subcategory slug → exact categoryId(s)
     if (
@@ -557,6 +562,7 @@ const CategoryCard = ({
 export default function BusinessesDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [selectedCategory, setSelectedCategory] = useState<
     (typeof categories)[0] | null
   >(null);
@@ -576,6 +582,7 @@ export default function BusinessesDirectory() {
     null,
   );
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
 
   // Test database connection and ensure auth
   useEffect(() => {
@@ -655,6 +662,7 @@ export default function BusinessesDirectory() {
         category: selectedCategory?.id,
         query: searchQuery,
         location: locationQuery,
+        countryCode: selectedCountry || undefined,
         page,
         limit: 12,
       });
@@ -666,7 +674,13 @@ export default function BusinessesDirectory() {
       }
       setIsSearching(false);
     },
-    [selectedCategory, selectedSubcategory, searchQuery, locationQuery],
+    [
+      selectedCategory,
+      selectedSubcategory,
+      searchQuery,
+      locationQuery,
+      selectedCountry,
+    ],
   );
 
   const clearSearch = () => {
@@ -776,7 +790,7 @@ export default function BusinessesDirectory() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative bg-[#0A1628] pt-16 pb-32 overflow-hidden">
+      <section className="relative bg-[#0A1628] pt-16 pb-16 sm:pb-32 overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl" />

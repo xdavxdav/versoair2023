@@ -45,40 +45,63 @@ export function DashboardSidebar({
     null,
   );
 
+  // Lock body scroll when sidebar overlay is open (mobile)
+  React.useEffect(() => {
+    if (isOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
+
   const activeSection_ = sections.find((s) => s.id === activeSection);
   const hasSubsections = activeSection_ && activeSection_.subsections;
 
   return (
     <>
-      {/* Mobile Toggle */}
-      <button
-        onClick={() => onToggle(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 text-white rounded"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
-
       {/* Sidebar Overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/50 z-[99999] overscroll-contain"
           onClick={() => onToggle(false)}
+          onTouchMove={(e) => e.preventDefault()}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:relative left-0 top-0 h-full w-64 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-700 transition-all duration-300 z-40 ${
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        className={`fixed lg:sticky left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-700 transition-all duration-300 z-[100000] lg:z-40 overflow-y-auto overscroll-contain ${
+          isOpen
+            ? "translate-x-0 visible"
+            : "-translate-x-full lg:translate-x-0 invisible lg:visible"
         }`}
       >
         <div className="p-6 space-y-8">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mt-12 lg:mt-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">A</span>
+          {/* Logo + Close */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold">A</span>
+              </div>
+              <h1 className="text-xl font-bold text-white">Dashboard</h1>
             </div>
-            <h1 className="text-xl font-bold text-white">Dashboard</h1>
+            <button
+              onClick={() => onToggle(false)}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation Sections */}

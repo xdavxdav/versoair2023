@@ -273,7 +273,7 @@ export default function HousingReservations() {
 
   const searchSuggestions = searchQuery.trim()
     ? searchHistory.filter((h) =>
-        h.toLowerCase().includes(searchQuery.toLowerCase()),
+        h.toLowerCase().startsWith(searchQuery.toLowerCase()),
       )
     : searchHistory.slice(0, 5);
 
@@ -843,18 +843,18 @@ export default function HousingReservations() {
         searchQuery === "" ||
         (property.name ?? "")
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+          .startsWith(searchQuery.toLowerCase()) ||
         (property.description ?? "")
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+          .startsWith(searchQuery.toLowerCase()) ||
         (property.location ?? "")
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .startsWith(searchQuery.toLowerCase());
 
       // Location filter
       const matchesLocation =
         locationQuery === "" ||
-        property.location.toLowerCase().includes(locationQuery.toLowerCase());
+        property.location.toLowerCase().startsWith(locationQuery.toLowerCase());
 
       // Price filter
       const matchesPrice =

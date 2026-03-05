@@ -55,12 +55,14 @@ import {
   Bell,
   ShieldCheck,
 } from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 export default function SAV() {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const [activeCategory, setActiveCategory] = useState("all");
   const [showTicketForm, setShowTicketForm] = useState(false);
+  useScrollLock(showTicketForm);
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [chartPeriod, setChartPeriod] = useState("week");

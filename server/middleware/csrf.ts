@@ -33,6 +33,8 @@ const CSRF_EXEMPT_PATHS = [
   "/api/v1/admin/gtm-events", // GTM analytics — fire-and-forget tracking, no CSRF needed
   "/auth/verify-email", // email verification link from inbox — GET, no CSRF needed
   "/auth/resend-verification", // resend verification email — must be exempt for unverified users
+  "/api/ai/chat", // VersoAI chat — same-origin, uses credentials:include
+  "/api/ai/status", // VersoAI status check
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────

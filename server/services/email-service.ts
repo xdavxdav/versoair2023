@@ -425,3 +425,415 @@ export async function sendEmail(
     return false;
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EMAIL SUBSCRIPTION TEMPLATES — 4 Channel Follow-Up System
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Shared branded wrapper for all subscription emails */
+function wrapInBrandedTemplate(
+  headerEmoji: string,
+  headerTitle: string,
+  headerGradient: string,
+  accentColor: string,
+  bodyHtml: string,
+  unsubscribeUrl: string,
+): string {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${headerTitle}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${headerGradient}; color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+    .header p { margin: 8px 0 0; opacity: 0.9; font-size: 14px; }
+    .header-icon { font-size: 40px; margin-bottom: 8px; }
+    .body { background: white; padding: 32px 24px; }
+    .button { display: inline-block; background: ${accentColor}; color: white !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+    .card { background: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid ${accentColor}; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 12px 0; }
+    .card h3 { margin: 0 0 6px; font-size: 16px; color: #1a1a2e; }
+    .card p { margin: 0; font-size: 14px; color: #555; }
+    .card .meta { font-size: 12px; color: #888; margin-top: 6px; }
+    .badge { display: inline-block; background: ${accentColor}22; color: ${accentColor}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .stat-label { color: #666; font-size: 14px; }
+    .stat-value { font-weight: 700; color: #1a1a2e; font-size: 14px; }
+    .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
+    .footer a { color: ${accentColor}; text-decoration: none; }
+    .unsubscribe { margin-top: 16px; padding-top: 16px; border-top: 1px solid #333; }
+    .divider { height: 1px; background: #e9ecef; margin: 24px 0; }
+    @media (max-width: 480px) {
+      .container { padding: 8px; }
+      .header, .body { padding: 20px 16px; }
+      .card { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-icon">${headerEmoji}</div>
+      <h1>${headerTitle}</h1>
+      <p>Verso Air Business Intelligence</p>
+    </div>
+    <div class="body">
+      ${bodyHtml}
+    </div>
+    <div class="footer">
+      <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
+      <p>Connecting African businesses with global opportunities</p>
+      <div class="unsubscribe">
+        <p>You're receiving this because you subscribed to updates on Verso Air.</p>
+        <p><a href="${unsubscribeUrl}">Unsubscribe</a> · <a href="${appUrl}/settings">Manage Preferences</a></p>
+      </div>
+      <p>&copy; ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// ── 1. JOB ALERTS (Career Page — Blue Theme) ───────────────────────────────
+
+export interface JobAlertData {
+  title: string;
+  company: string;
+  location: string;
+  salary?: string;
+  type: string; // Full-time, Part-time, etc.
+  postedAt: string;
+  url: string;
+}
+
+/**
+ * Send job alert email — triggered by new matching job postings
+ * Blue theme (#2563eb)
+ */
+export async function sendJobAlertEmail(
+  toEmail: string,
+  toName: string,
+  jobs: JobAlertData[],
+  unsubscribeUrl: string,
+): Promise<boolean> {
+  const jobCount = jobs.length;
+  const subject = `🎯 ${jobCount} new job${jobCount > 1 ? "s" : ""} matching your preferences — Verso Air`;
+
+  const jobCards = jobs
+    .slice(0, 10)
+    .map(
+      (job) => `
+    <div class="card">
+      <h3>${job.title}</h3>
+      <p>${job.company} · ${job.location}</p>
+      <div class="meta">
+        <span class="badge">${job.type}</span>
+        ${job.salary ? ` · ${job.salary}` : ""}
+        · Posted ${job.postedAt}
+      </div>
+    </div>`,
+    )
+    .join("");
+
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const bodyHtml = `
+    <p>Hi <strong>${toName}</strong>,</p>
+    <p>We found <strong>${jobCount} new position${jobCount > 1 ? "s" : ""}</strong> that match your job alert preferences:</p>
+    <div class="divider"></div>
+    ${jobCards}
+    ${jobCount > 10 ? `<p style="text-align: center; color: #888; font-size: 14px;">+ ${jobCount - 10} more positions</p>` : ""}
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      <a href="${appUrl}/services/careers" class="button">View All Jobs</a>
+    </div>
+    <p style="font-size: 13px; color: #888; margin-top: 20px;">💡 Tip: Refine your filters to get more targeted alerts.</p>
+  `;
+
+  const html = wrapInBrandedTemplate(
+    "🎯",
+    "New Job Matches",
+    "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)",
+    "#2563eb",
+    bodyHtml,
+    unsubscribeUrl,
+  );
+
+  return sendEmail(toEmail, subject, html);
+}
+
+// ── 2. CONTRACT ALERTS (Contractors Page — Amber Theme) ─────────────────────
+
+export interface ContractAlertData {
+  title: string;
+  client: string;
+  location: string;
+  budget?: string;
+  duration?: string;
+  skills: string[];
+  postedAt: string;
+  url: string;
+}
+
+/**
+ * Send contract alert email — triggered by new matching contracts
+ * Amber theme (#d97706)
+ */
+export async function sendContractAlertEmail(
+  toEmail: string,
+  toName: string,
+  contracts: ContractAlertData[],
+  unsubscribeUrl: string,
+): Promise<boolean> {
+  const count = contracts.length;
+  const subject = `🔨 ${count} new contract${count > 1 ? "s" : ""} for your expertise — Verso Air`;
+
+  const contractCards = contracts
+    .slice(0, 8)
+    .map(
+      (c) => `
+    <div class="card">
+      <h3>${c.title}</h3>
+      <p>${c.client} · ${c.location}</p>
+      <div class="meta">
+        ${c.budget ? `<span class="badge">${c.budget}</span> · ` : ""}
+        ${c.duration ? `${c.duration} · ` : ""}
+        ${c.skills.slice(0, 3).join(", ")}
+        · Posted ${c.postedAt}
+      </div>
+    </div>`,
+    )
+    .join("");
+
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const bodyHtml = `
+    <p>Hi <strong>${toName}</strong>,</p>
+    <p><strong>${count} new contract${count > 1 ? "s" : ""}</strong> just landed that match your skills and preferences:</p>
+    <div class="divider"></div>
+    ${contractCards}
+    ${count > 8 ? `<p style="text-align: center; color: #888; font-size: 14px;">+ ${count - 8} more contracts</p>` : ""}
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      <a href="${appUrl}/services/contractors" class="button">Browse All Contracts</a>
+    </div>
+    <p style="font-size: 13px; color: #888; margin-top: 20px;">⚡ Quick Apply is available for most contracts — don't miss out!</p>
+  `;
+
+  const html = wrapInBrandedTemplate(
+    "🔨",
+    "New Contract Opportunities",
+    "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)",
+    "#d97706",
+    bodyHtml,
+    unsubscribeUrl,
+  );
+
+  return sendEmail(toEmail, subject, html);
+}
+
+// ── 3. RESERVATION UPDATES (Booking Tracking — Green Theme) ─────────────────
+
+export interface ReservationUpdateData {
+  reservationId: string;
+  businessName: string;
+  date: string;
+  time?: string;
+  status: "confirmed" | "pending" | "cancelled" | "completed" | "modified";
+  guestCount?: number;
+  totalPrice?: string;
+  updateMessage?: string;
+}
+
+/**
+ * Send reservation update email — triggered by booking status changes
+ * Green theme (#059669)
+ */
+export async function sendReservationUpdateEmail(
+  toEmail: string,
+  toName: string,
+  reservation: ReservationUpdateData,
+  unsubscribeUrl: string,
+): Promise<boolean> {
+  const statusEmojis: Record<string, string> = {
+    confirmed: "✅",
+    pending: "⏳",
+    cancelled: "❌",
+    completed: "🎉",
+    modified: "📝",
+  };
+
+  const statusLabels: Record<string, string> = {
+    confirmed: "Confirmed",
+    pending: "Pending Confirmation",
+    cancelled: "Cancelled",
+    completed: "Completed",
+    modified: "Modified",
+  };
+
+  const emoji = statusEmojis[reservation.status] || "📋";
+  const label = statusLabels[reservation.status] || reservation.status;
+  const subject = `${emoji} Reservation ${label} — ${reservation.businessName}`;
+
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const bodyHtml = `
+    <p>Hi <strong>${toName}</strong>,</p>
+    <p>Your reservation has been updated:</p>
+    <div class="divider"></div>
+    <div class="card">
+      <h3>${reservation.businessName}</h3>
+      <p style="font-size: 18px; font-weight: 700; color: #059669; margin: 8px 0;">
+        ${emoji} ${label}
+      </p>
+      <div style="margin-top: 12px;">
+        <div class="stat-row">
+          <span class="stat-label">📅 Date</span>
+          <span class="stat-value">${reservation.date}</span>
+        </div>
+        ${reservation.time ? `<div class="stat-row"><span class="stat-label">🕐 Time</span><span class="stat-value">${reservation.time}</span></div>` : ""}
+        ${reservation.guestCount ? `<div class="stat-row"><span class="stat-label">👥 Guests</span><span class="stat-value">${reservation.guestCount}</span></div>` : ""}
+        ${reservation.totalPrice ? `<div class="stat-row"><span class="stat-label">💰 Total</span><span class="stat-value">${reservation.totalPrice}</span></div>` : ""}
+        <div class="stat-row" style="border-bottom: none;">
+          <span class="stat-label">🔖 Reference</span>
+          <span class="stat-value">#${reservation.reservationId}</span>
+        </div>
+      </div>
+    </div>
+    ${reservation.updateMessage ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 14px; color: #065f46;"><strong>Note:</strong> ${reservation.updateMessage}</div>` : ""}
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      <a href="${appUrl}/reservations" class="button">View My Reservations</a>
+    </div>
+  `;
+
+  const html = wrapInBrandedTemplate(
+    emoji,
+    `Reservation ${label}`,
+    "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+    "#059669",
+    bodyHtml,
+    unsubscribeUrl,
+  );
+
+  return sendEmail(toEmail, subject, html);
+}
+
+// ── 4. GEOADMIN REPORTS (Market Study Digest — Purple Theme) ────────────────
+
+export interface GeoAdminReportData {
+  reportTitle: string;
+  period: string;
+  metrics: Array<{
+    label: string;
+    value: string;
+    change?: string;
+    trend?: "up" | "down" | "stable";
+  }>;
+  topBusinesses?: Array<{ name: string; sector: string; rating: string }>;
+  insights?: string[];
+  exportUrl?: string;
+}
+
+/**
+ * Send GeoAdmin market study / report email — scheduled digest for subscribers
+ * Purple theme (#7c3aed)
+ */
+export async function sendGeoAdminReportEmail(
+  toEmail: string,
+  toName: string,
+  report: GeoAdminReportData,
+  unsubscribeUrl: string,
+): Promise<boolean> {
+  const subject = `📊 ${report.reportTitle} — Verso Air Market Intelligence`;
+
+  const metricsHtml = report.metrics
+    .map(
+      (m) => `
+    <div class="stat-row">
+      <span class="stat-label">${m.label}</span>
+      <span class="stat-value">
+        ${m.value}
+        ${m.change ? `<span style="font-size: 12px; color: ${m.trend === "up" ? "#059669" : m.trend === "down" ? "#dc2626" : "#888"}; margin-left: 6px;">${m.trend === "up" ? "▲" : m.trend === "down" ? "▼" : "●"} ${m.change}</span>` : ""}
+      </span>
+    </div>`,
+    )
+    .join("");
+
+  const topBusinessesHtml =
+    report.topBusinesses && report.topBusinesses.length > 0
+      ? `
+    <div class="divider"></div>
+    <h3 style="margin: 0 0 12px; color: #1a1a2e;">🏆 Top Performers</h3>
+    ${report.topBusinesses
+      .slice(0, 5)
+      .map(
+        (b, i) => `
+      <div class="card">
+        <h3>${i + 1}. ${b.name}</h3>
+        <p><span class="badge">${b.sector}</span> · ⭐ ${b.rating}</p>
+      </div>`,
+      )
+      .join("")}`
+      : "";
+
+  const insightsHtml =
+    report.insights && report.insights.length > 0
+      ? `
+    <div class="divider"></div>
+    <h3 style="margin: 0 0 12px; color: #1a1a2e;">💡 Key Insights</h3>
+    <ul style="padding-left: 20px; color: #555; font-size: 14px; line-height: 1.8;">
+      ${report.insights.map((i) => `<li>${i}</li>`).join("")}
+    </ul>`
+      : "";
+
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const bodyHtml = `
+    <p>Hi <strong>${toName}</strong>,</p>
+    <p>Your <strong>${report.period}</strong> market intelligence report is ready:</p>
+    <div class="divider"></div>
+    <h3 style="margin: 0 0 12px; color: #1a1a2e;">📈 Key Metrics</h3>
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 16px;">
+      ${metricsHtml}
+    </div>
+    ${topBusinessesHtml}
+    ${insightsHtml}
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      ${report.exportUrl ? `<a href="${report.exportUrl}" class="button" style="margin-right: 12px; background: #6d28d9;">📥 Download Report</a>` : ""}
+      <a href="${appUrl}/geo-admin" class="button">Open Dashboard</a>
+    </div>
+    <p style="font-size: 13px; color: #888; margin-top: 20px;">🔐 This report is exclusive to your GeoAdmin subscription tier.</p>
+  `;
+
+  const html = wrapInBrandedTemplate(
+    "📊",
+    report.reportTitle,
+    "linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)",
+    "#7c3aed",
+    bodyHtml,
+    unsubscribeUrl,
+  );
+
+  return sendEmail(toEmail, subject, html);
+}

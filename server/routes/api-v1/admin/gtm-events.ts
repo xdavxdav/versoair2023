@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, optionalAuth } from "../../../middleware/auth";
+import { requireTier } from "../../../middleware/tierGate";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import * as gtmService from "../../../services/gtm-events";
 

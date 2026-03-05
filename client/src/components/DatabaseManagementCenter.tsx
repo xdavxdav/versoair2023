@@ -375,7 +375,7 @@ export default function DatabaseManagementCenter() {
     switch (activeTab) {
       case "categories":
         data = categories.filter((c: any) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Name" },
@@ -387,7 +387,7 @@ export default function DatabaseManagementCenter() {
 
       case "countries":
         data = countries.filter((c: any) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Country" },
@@ -398,7 +398,7 @@ export default function DatabaseManagementCenter() {
 
       case "regions":
         data = regions.filter((r: any) =>
-          r.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          r.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Region" },
@@ -409,7 +409,7 @@ export default function DatabaseManagementCenter() {
 
       case "cities":
         data = cities.filter((c: any) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "City" },
@@ -420,7 +420,7 @@ export default function DatabaseManagementCenter() {
 
       case "artists":
         data = artists.filter((a: any) =>
-          a.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          a.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Artist Name" },
@@ -433,7 +433,7 @@ export default function DatabaseManagementCenter() {
 
       case "contractors":
         data = contractors.filter((c: any) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Contractor" },
@@ -446,7 +446,7 @@ export default function DatabaseManagementCenter() {
 
       case "payment_card_types":
         data = paymentCardTypes.filter((p: any) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          p.name.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
         columns = [
           { key: "name", label: "Card Type" },

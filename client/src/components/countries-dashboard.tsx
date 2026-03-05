@@ -908,6 +908,7 @@ export default function DatabaseExpert({
   const [selectedBusinessType, setSelectedBusinessType] = useState<
     string | null
   >(null);
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>("all");
   const [showViewDataModal, setShowViewDataModal] = useState(false);
   const [currentTableData, setCurrentTableData] = useState<any[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -1021,6 +1022,22 @@ export default function DatabaseExpert({
       staleTime: 300000,
     });
 
+  // Countries query (for country filter)
+  const { data: countriesList = [] } = useQuery({
+    queryKey: ["geo-countries"],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/countries`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : data.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 300000,
+  });
+
   // Tickets query
   const { data: ticketsData = [] } = useQuery({
     queryKey: ["dashboard-tickets"],
@@ -1059,12 +1076,15 @@ export default function DatabaseExpert({
   // Businesses query
   const { data: businessesData = [], isLoading: isBusinessesLoading } =
     useQuery({
-      queryKey: ["geo-businesses", selectedBusinessType],
+      queryKey: ["geo-businesses", selectedBusinessType, selectedCountryCode],
       queryFn: async () => {
         try {
           const params = new URLSearchParams({ limit: "50" });
           if (selectedBusinessType) {
             params.set("categoryId", selectedBusinessType);
+          }
+          if (selectedCountryCode && selectedCountryCode !== "all") {
+            params.set("countryCode", selectedCountryCode);
           }
           const response = await fetch(
             `${API_BASE_URL}/api/businesses?${params}`,
@@ -1078,6 +1098,72 @@ export default function DatabaseExpert({
       },
       staleTime: 30000,
     });
+
+  // Artists query (country-filtered)
+  const { data: artistsData = [], isLoading: isArtistsLoading } = useQuery({
+    queryKey: ["geo-artists", selectedCountryCode],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        if (selectedCountryCode && selectedCountryCode !== "all") {
+          params.set("countryCode", selectedCountryCode);
+        }
+        const response = await fetch(
+          `${API_BASE_URL}/api/artists/search?${params}`,
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
+
+  // Jobs query (country-filtered)
+  const { data: jobsData = [], isLoading: isJobsLoading } = useQuery({
+    queryKey: ["geo-jobs", selectedCountryCode],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        if (selectedCountryCode && selectedCountryCode !== "all") {
+          params.set("countryCode", selectedCountryCode);
+        }
+        const response = await fetch(
+          `${API_BASE_URL}/api/jobs/search?${params}`,
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
+
+  // Ad campaigns query (country-filtered)
+  const { data: adCampaignsData = [], isLoading: isAdsLoading } = useQuery({
+    queryKey: ["geo-ads", selectedCountryCode],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        if (selectedCountryCode && selectedCountryCode !== "all") {
+          params.set("countryCode", selectedCountryCode);
+        }
+        const response = await fetch(
+          `${API_BASE_URL}/api/ad-campaigns?${params}`,
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
 
   // Update connection status based on health data
   useEffect(() => {
@@ -1096,15 +1182,15 @@ export default function DatabaseExpert({
     return tablesData.filter((table: any) => {
       const matchesSearch =
         searchQuery === "" ||
-        table.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        table.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
         (table.displayName || "")
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+          .startsWith(searchQuery.toLowerCase()) ||
         (table.description || "")
           .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+          .startsWith(searchQuery.toLowerCase()) ||
         (table.tags || []).some((tag: string) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase()),
+          tag.toLowerCase().startsWith(searchQuery.toLowerCase()),
         );
 
       const matchesCategory =
@@ -1191,6 +1277,9 @@ export default function DatabaseExpert({
         });
         if (selectedBusinessType) {
           params.set("categoryId", selectedBusinessType);
+        }
+        if (selectedCountryCode && selectedCountryCode !== "all") {
+          params.set("countryCode", selectedCountryCode);
         }
         url = `${API_BASE_URL}/api/businesses?${params}`;
       } else {
@@ -1642,33 +1731,102 @@ export default function DatabaseExpert({
           </CardContent>
         </Card>
 
+        {/* Global Country Selector */}
+        <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl">
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Globe className="h-5 w-5 text-amber-400" />
+                <span className="text-sm font-medium text-slate-200">
+                  Country Filter
+                </span>
+                <Select
+                  value={selectedCountryCode}
+                  onValueChange={setSelectedCountryCode}
+                >
+                  <SelectTrigger className="w-56 bg-white/5 border-white/10 text-slate-200 h-9">
+                    <SelectValue placeholder="All Countries" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/10 max-h-72">
+                    <SelectItem value="all" className="text-slate-300">
+                      🌍 All Countries
+                    </SelectItem>
+                    {countriesList.map((c: any) => (
+                      <SelectItem
+                        key={c.code || c.id}
+                        value={c.code}
+                        className="text-slate-300"
+                      >
+                        {c.code} — {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCountryCode && selectedCountryCode !== "all" && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-amber-500/20 border-amber-400/30 text-amber-300"
+                  >
+                    🔍 {selectedCountryCode}
+                  </Badge>
+                )}
+              </div>
+              {selectedCountryCode && selectedCountryCode !== "all" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCountryCode("all")}
+                  className="text-slate-400 hover:text-slate-200 text-xs"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear filter
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-14 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-2">
+          <TabsList className="grid w-full grid-cols-7 h-14 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
             <TabsTrigger
               value="dashboard"
-              className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
             <TabsTrigger
               value="businesses"
-              className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <Building className="h-4 w-4" />
               <span className="hidden sm:inline">Businesses</span>
             </TabsTrigger>
             <TabsTrigger
+              value="artists"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">Artists</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="jobs"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Jobs</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="tables"
-              className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <Table2 className="h-4 w-4" />
               <span className="hidden sm:inline">Tables</span>
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
-              className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
@@ -1890,7 +2048,7 @@ export default function DatabaseExpert({
                   Business Directory
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Browse businesses by category (read-only)
+                  Browse businesses by category and country (read-only)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -2000,6 +2158,9 @@ export default function DatabaseExpert({
                                   )}
                                   <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                                     {biz.rating && <span>⭐ {biz.rating}</span>}
+                                    {biz.country_code && (
+                                      <span>🌍 {biz.country_code}</span>
+                                    )}
                                     {biz.phone && <span>📞 {biz.phone}</span>}
                                     {biz.is_active !== undefined && (
                                       <Badge
@@ -2031,6 +2192,309 @@ export default function DatabaseExpert({
                       {selectedBusinessType
                         ? "Try selecting a different category"
                         : "Business API may be unavailable"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Artists Tab */}
+          <TabsContent value="artists" className="space-y-8 mt-8">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-slate-100">
+                      <Music className="h-5 w-5 text-purple-400" />
+                      Artists Directory
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {selectedCountryCode !== "all"
+                        ? `Artists in ${selectedCountryCode}`
+                        : "All artists across countries"}
+                      {" · "}
+                      {artistsData.length} results
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-purple-500/20 border-purple-400/30 text-purple-300"
+                  >
+                    {artistsData.length} artists
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isArtistsLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-32 w-full rounded-lg bg-white/5 border border-white/10"
+                      />
+                    ))}
+                  </div>
+                ) : artistsData.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {artistsData.map((artist: any) => (
+                      <Card
+                        key={artist.id}
+                        className="bg-white/5 border-white/10 hover:bg-white/[0.07] transition-all"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-slate-100 text-lg">
+                              {artist.name}
+                            </h3>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${
+                                artist.label_status === "signed"
+                                  ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                  : artist.label_status === "independent"
+                                    ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                                    : "bg-slate-500/20 border-slate-400/30 text-slate-300"
+                              }`}
+                            >
+                              {artist.label_status || "unsigned"}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1.5">
+                            {artist.genre && (
+                              <div className="flex items-center gap-2 text-sm text-slate-400">
+                                <Music className="h-3 w-3" />
+                                <span>{artist.genre}</span>
+                              </div>
+                            )}
+                            {artist.country_code && (
+                              <div className="flex items-center gap-2 text-sm text-slate-400">
+                                <Globe className="h-3 w-3" />
+                                <span>{artist.country_code}</span>
+                              </div>
+                            )}
+                            {artist.spotify_url && (
+                              <a
+                                href={artist.spotify_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                <span>Spotify</span>
+                              </a>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Music className="h-12 w-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No artists found</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {selectedCountryCode !== "all"
+                        ? `No artists registered in ${selectedCountryCode}`
+                        : "No artists in the database"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ad Campaigns section */}
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-slate-100">
+                      <Target className="h-5 w-5 text-amber-400" />
+                      Ad Campaigns
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {selectedCountryCode !== "all"
+                        ? `Advertising campaigns in ${selectedCountryCode}`
+                        : "All advertising campaigns"}
+                      {" · "}
+                      {adCampaignsData.length} campaigns
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-amber-500/20 border-amber-400/30 text-amber-300"
+                  >
+                    {adCampaignsData.length} campaigns
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isAdsLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-16 w-full rounded-lg bg-white/5 border border-white/10"
+                      />
+                    ))}
+                  </div>
+                ) : adCampaignsData.length > 0 ? (
+                  <div className="space-y-3">
+                    {adCampaignsData.map((ad: any) => (
+                      <div
+                        key={ad.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-all"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-slate-200">
+                              {ad.name}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${
+                                ad.status === "active"
+                                  ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                  : ad.status === "paused"
+                                    ? "bg-amber-500/20 border-amber-400/30 text-amber-300"
+                                    : "bg-slate-500/20 border-slate-400/30 text-slate-300"
+                              }`}
+                            >
+                              {ad.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-slate-400">
+                            <span>{ad.objective}</span>
+                            <span>${ad.daily_budget}/day</span>
+                            {ad.business_name && (
+                              <span>by {ad.business_name}</span>
+                            )}
+                            {ad.country_code && (
+                              <span>📍 {ad.country_code}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Target className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No ad campaigns found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Jobs Tab */}
+          <TabsContent value="jobs" className="space-y-8 mt-8">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-slate-100">
+                      <Briefcase className="h-5 w-5 text-blue-400" />
+                      Jobs Directory
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      {selectedCountryCode !== "all"
+                        ? `Job listings in ${selectedCountryCode}`
+                        : "All job listings across countries"}
+                      {" · "}
+                      {jobsData.length} results
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-500/20 border-blue-400/30 text-blue-300"
+                  >
+                    {jobsData.length} jobs
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isJobsLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-24 w-full rounded-lg bg-white/5 border border-white/10"
+                      />
+                    ))}
+                  </div>
+                ) : jobsData.length > 0 ? (
+                  <div className="space-y-3">
+                    {jobsData.map((job: any) => (
+                      <Card
+                        key={job.id}
+                        className="bg-white/5 border-white/10 hover:bg-white/[0.07] transition-all"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h3 className="font-semibold text-slate-100">
+                                {job.title}
+                              </h3>
+                              <p className="text-sm text-slate-400">
+                                {job.company} · {job.location}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {job.is_featured && (
+                                <Badge className="text-[10px] bg-amber-500/20 border-amber-400/30 text-amber-300">
+                                  ⭐ Featured
+                                </Badge>
+                              )}
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${
+                                  job.type === "remote"
+                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    : "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                                }`}
+                              >
+                                {job.type || "full-time"}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                            {job.sector && (
+                              <span className="flex items-center gap-1">
+                                <Layers className="h-3 w-3" />
+                                {job.sector}
+                              </span>
+                            )}
+                            {(job.salary_min || job.salary_max) && (
+                              <span className="flex items-center gap-1">
+                                💰 {job.salary_min?.toLocaleString()} -{" "}
+                                {job.salary_max?.toLocaleString()}{" "}
+                                {job.currency}
+                              </span>
+                            )}
+                            {job.experience_level && (
+                              <span className="flex items-center gap-1">
+                                📊 {job.experience_level}
+                              </span>
+                            )}
+                            {job.is_remote && (
+                              <span className="flex items-center gap-1 text-emerald-400">
+                                🏠 Remote
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No jobs found</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {selectedCountryCode !== "all"
+                        ? `No jobs listed in ${selectedCountryCode}`
+                        : "No jobs in the database"}
                     </p>
                   </div>
                 )}
@@ -2480,7 +2944,7 @@ export default function DatabaseExpert({
                       <p className="text-sm text-slate-400 mt-2">
                         Top categories by business count
                       </p>
-                      <ul className="mt-3 space-y-2 max-h-48 overflow-auto">
+                      <ul className="mt-3 space-y-2">
                         {businessCategories.slice(0, 10).map((cat: any) => {
                           const count = businessesData.filter(
                             (b: any) =>
@@ -2519,7 +2983,7 @@ export default function DatabaseExpert({
                       <h5 className="font-medium text-slate-100">
                         All Categories
                       </h5>
-                      <div className="mt-3 max-h-56 overflow-auto space-y-3">
+                      <div className="mt-3 space-y-3">
                         {businessCategories.length > 0 ? (
                           (() => {
                             const parents = businessCategories
@@ -2585,7 +3049,7 @@ export default function DatabaseExpert({
       <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
         <SheetContent
           side="left"
-          className="w-72 bg-slate-900/95 backdrop-blur-xl border-white/10 z-50"
+          className="w-72 bg-slate-900/95 backdrop-blur-xl border-white/10"
         >
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-slate-100">
@@ -2627,13 +3091,101 @@ export default function DatabaseExpert({
                 Platform Dashboard
               </Button>
             </Link>
+            <Separator className="my-4 bg-white/10" />
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2 mb-1">
+              Services
+            </p>
+            <Link href="/services">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Zap className="h-4 w-4" />
+                All Services
+              </Button>
+            </Link>
+            <Link href="/services/news">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Bell className="h-4 w-4" />
+                News & Updates
+              </Button>
+            </Link>
+            <Link href="/services/careers">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Briefcase className="h-4 w-4" />
+                Careers
+              </Button>
+            </Link>
+            <Link href="/services/contractors">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Target className="h-4 w-4" />
+                Contractors
+              </Button>
+            </Link>
+            <Separator className="my-4 bg-white/10" />
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2 mb-1">
+              Quick Links
+            </p>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
+            <Link href="/reservations">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Clock className="h-4 w-4" />
+                Reservations
+              </Button>
+            </Link>
+            <Link href="/sav">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Settings className="h-4 w-4" />
+                SAV 24/7
+              </Button>
+            </Link>
+            <Link href="/versoai">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                <Sparkles className="h-4 w-4" />
+                VersoAI
+              </Button>
+            </Link>
           </div>
         </SheetContent>
       </Sheet>
 
       {/* View Data Modal */}
       <Dialog open={showViewDataModal} onOpenChange={setShowViewDataModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-slate-900/95 backdrop-blur-xl border-white/10">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto overscroll-contain bg-slate-900/95 backdrop-blur-xl border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-100">
               <Eye className="h-5 w-5" />
@@ -2655,7 +3207,7 @@ export default function DatabaseExpert({
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
             </div>
           ) : currentTableData.length > 0 ? (
-            <div className="overflow-auto max-h-[55vh]">
+            <div className="overflow-auto max-h-[55vh] overscroll-contain">
               <table className="w-full text-sm border-collapse">
                 <thead className="bg-white/5 sticky top-0">
                   <tr>

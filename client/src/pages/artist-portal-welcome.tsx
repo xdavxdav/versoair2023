@@ -298,9 +298,11 @@ function MiniStudio({
     "idle",
   );
   const [recTime, setRecTime] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState("verso-recording.webm");
   const [collapsed, setCollapsed] = useState(false);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Init / teardown audio context ──
   const ensureAudioCtx = useCallback((): AudioContext | null => {
@@ -637,6 +639,7 @@ function MiniStudio({
       instrumentalSourceRef.current?.stop();
       audioCtxRef.current?.close().catch(() => {});
       if (timerRef.current) clearInterval(timerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -764,37 +767,63 @@ function MiniStudio({
       setDownloadUrl(null);
     }
 
-    const { mimeType, ext } = getRecordingMime();
-    recordedChunksRef.current = [];
+    // Start countdown: 3... 2... 1...
+    setCountdown(3);
+    let count = 3;
+    countdownTimerRef.current = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setCountdown(count);
+      } else {
+        // Countdown finished - start recording!
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        setCountdown(null);
 
-    const options: MediaRecorderOptions = {};
-    if (mimeType) options.mimeType = mimeType;
+        // Auto-start instrumental if loaded and not playing
+        if (instrumentalBufferRef.current && !instrumentalPlaying) {
+          playInstrumental(0);
+        }
 
-    const mr = new MediaRecorder(recDestRef.current!.stream, options);
-    mr.ondataavailable = (e) => {
-      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-    };
-    mr.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, {
-        type: mimeType || "audio/webm",
-      });
-      const url = URL.createObjectURL(blob);
-      setDownloadUrl(url);
-      setDownloadName(
-        `verso-recording-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.${ext}`,
-      );
-      // Auto-expand panel so user sees the result
-      setCollapsed(false);
-    };
-    mr.start(250); // collect in 250ms chunks
-    mediaRecorderRef.current = mr;
-    setRecState("recording");
-    setRecTime(0);
+        const { mimeType, ext } = getRecordingMime();
+        recordedChunksRef.current = [];
 
-    timerRef.current = setInterval(() => {
-      setRecTime((t) => t + 1);
+        const options: MediaRecorderOptions = {};
+        if (mimeType) options.mimeType = mimeType;
+
+        const mr = new MediaRecorder(recDestRef.current!.stream, options);
+        mr.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+        };
+        mr.onstop = () => {
+          const blob = new Blob(recordedChunksRef.current, {
+            type: mimeType || "audio/webm",
+          });
+          const url = URL.createObjectURL(blob);
+          setDownloadUrl(url);
+          setDownloadName(
+            `verso-recording-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.${ext}`,
+          );
+          // Auto-expand panel so user sees the result
+          setCollapsed(false);
+        };
+        mr.start(250); // collect in 250ms chunks
+        mediaRecorderRef.current = mr;
+        setRecState("recording");
+        setRecTime(0);
+
+        timerRef.current = setInterval(() => {
+          setRecTime((t) => t + 1);
+        }, 1000);
+      }
     }, 1000);
-  }, [ensureAudioCtx, downloadUrl, getRecordingMime]);
+  }, [
+    ensureAudioCtx,
+    downloadUrl,
+    getRecordingMime,
+    instrumentalBufferRef,
+    instrumentalPlaying,
+    playInstrumental,
+  ]);
 
   const pauseRecording = useCallback(() => {
     if (
@@ -821,6 +850,12 @@ function MiniStudio({
   }, []);
 
   const stopRecording = useCallback(() => {
+    // Clear countdown if active
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      setCountdown(null);
+    }
+
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
@@ -829,7 +864,57 @@ function MiniStudio({
     }
     setRecState("idle");
     if (timerRef.current) clearInterval(timerRef.current);
-  }, []);
+
+    // Stop instrumental when recording stops
+    if (instrumentalPlaying) {
+      stopInstrumental();
+    }
+  }, [instrumentalPlaying, stopInstrumental]);
+
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    if (!heroVisible) return; // Only active when mini studio is visible
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in input/textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      // Space bar: Start/Pause recording
+      if (e.code === "Space" && !e.repeat) {
+        e.preventDefault();
+        if (recState === "idle" && (micReady || instrumentalName)) {
+          startRecording();
+        } else if (recState === "recording") {
+          pauseRecording();
+        } else if (recState === "paused") {
+          resumeRecording();
+        }
+      }
+
+      // Escape: Stop recording
+      if (e.code === "Escape" && recState !== "idle") {
+        e.preventDefault();
+        stopRecording();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    heroVisible,
+    recState,
+    micReady,
+    instrumentalName,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+  ]);
 
   // Don't render if hero not visible
   if (!heroVisible) return null;
@@ -1309,14 +1394,28 @@ function MiniStudio({
 
                 {/* Recording Controls */}
                 <div className="flex items-center gap-2">
-                  {recState === "idle" ? (
+                  {countdown !== null ? (
+                    <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-amber-500/20 border border-amber-500/20">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/30 flex items-center justify-center animate-pulse">
+                        <span className="text-amber-300 text-lg font-bold">
+                          {countdown}
+                        </span>
+                      </div>
+                      <span className="text-amber-300 text-[11px] font-medium">
+                        Get ready...
+                      </span>
+                    </div>
+                  ) : recState === "idle" ? (
                     <button
                       onClick={startRecording}
                       disabled={!micReady && !instrumentalName}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/20 text-red-400 text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <div className="w-2 h-2 rounded-full bg-red-500" />
-                      Record
+                      Record{" "}
+                      <span className="text-red-300/50 text-[9px]">
+                        (Space)
+                      </span>
                     </button>
                   ) : (
                     <>
@@ -1327,7 +1426,10 @@ function MiniStudio({
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/15 text-amber-400 text-[11px] font-medium transition-colors"
                         >
                           <Pause className="w-3 h-3" />
-                          Pause
+                          Pause{" "}
+                          <span className="text-amber-300/40 text-[9px]">
+                            (Space)
+                          </span>
                         </button>
                       ) : (
                         <button
@@ -1335,7 +1437,10 @@ function MiniStudio({
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/15 text-emerald-400 text-[11px] font-medium transition-colors"
                         >
                           <Play className="w-3 h-3" fill="currentColor" />
-                          Resume
+                          Resume{" "}
+                          <span className="text-emerald-300/40 text-[9px]">
+                            (Space)
+                          </span>
                         </button>
                       )}
                       {/* Stop */}
@@ -1344,7 +1449,8 @@ function MiniStudio({
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] text-white/50 text-[11px] font-medium transition-colors"
                       >
                         <Square className="w-3 h-3" />
-                        Stop
+                        Stop{" "}
+                        <span className="text-white/30 text-[9px]">(Esc)</span>
                       </button>
                     </>
                   )}

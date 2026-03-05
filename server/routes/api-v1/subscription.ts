@@ -35,10 +35,10 @@ const TIER_ORDER: Record<TierKey, number> = {
 
 const TRIAL_DURATION_DAYS = 7;
 
-/** Feature matrix — mirrors client/src/lib/tiers.ts */
+/** Feature matrix — aligned with client/src/lib/tiers.ts */
 const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
   free: {
-    photos: 3,
+    photos: 1,
     analytics: "basic",
     support: "community",
     maxProducts: 5,
@@ -52,13 +52,17 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
     revenueSimulator: false,
     apiAccess: false,
     exportData: false,
-    socialMediaLinks: 2,
+    socialMediaLinks: 1,
+    emailChannels: ["job_alerts", "contract_alerts", "platform_updates"],
+    instantDelivery: false,
+    reservationTracking: false,
+    geoAdminReports: false,
   },
   essential: {
-    photos: 10,
-    analytics: "standard",
+    photos: 5,
+    analytics: "detailed",
     support: "email",
-    maxProducts: 25,
+    maxProducts: 20,
     customUrl: false,
     keywordTracking: false,
     competitorInsights: false,
@@ -68,31 +72,50 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
     categorySpotlight: false,
     revenueSimulator: false,
     apiAccess: false,
-    exportData: false,
-    socialMediaLinks: 5,
+    exportData: true,
+    socialMediaLinks: 3,
+    emailChannels: [
+      "job_alerts",
+      "contract_alerts",
+      "reservation_tracking",
+      "platform_updates",
+    ],
+    instantDelivery: false,
+    reservationTracking: true,
+    geoAdminReports: false,
   },
   verified: {
-    photos: 30,
-    analytics: "advanced",
+    photos: 15,
+    analytics: "full",
     support: "priority_email",
     maxProducts: 100,
     customUrl: true,
     keywordTracking: true,
     competitorInsights: true,
-    newsletterFeature: true,
-    videoShowcase: false,
-    promotedListing: false,
+    newsletterFeature: false,
+    videoShowcase: true,
+    promotedListing: true,
     categorySpotlight: false,
     revenueSimulator: true,
     apiAccess: false,
     exportData: true,
-    socialMediaLinks: 10,
+    socialMediaLinks: 5,
+    emailChannels: [
+      "job_alerts",
+      "contract_alerts",
+      "reservation_tracking",
+      "geoadmin_reports",
+      "platform_updates",
+    ],
+    instantDelivery: true,
+    reservationTracking: true,
+    geoAdminReports: true,
   },
   max: {
-    photos: -1, // unlimited
-    analytics: "full",
-    support: "dedicated_agent",
-    maxProducts: -1,
+    photos: 50,
+    analytics: "predictive",
+    support: "chat",
+    maxProducts: 500,
     customUrl: true,
     keywordTracking: true,
     competitorInsights: true,
@@ -104,12 +127,22 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
     apiAccess: true,
     exportData: true,
     socialMediaLinks: -1,
+    emailChannels: [
+      "job_alerts",
+      "contract_alerts",
+      "reservation_tracking",
+      "geoadmin_reports",
+      "platform_updates",
+    ],
+    instantDelivery: true,
+    reservationTracking: true,
+    geoAdminReports: true,
   },
   enterprise: {
-    photos: -1,
-    analytics: "full_with_api",
-    support: "dedicated_team",
-    maxProducts: -1,
+    photos: -1, // unlimited
+    analytics: "predictive",
+    support: "dedicated",
+    maxProducts: -1, // unlimited
     customUrl: true,
     keywordTracking: true,
     competitorInsights: true,
@@ -121,6 +154,16 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
     apiAccess: true,
     exportData: true,
     socialMediaLinks: -1,
+    emailChannels: [
+      "job_alerts",
+      "contract_alerts",
+      "reservation_tracking",
+      "geoadmin_reports",
+      "platform_updates",
+    ],
+    instantDelivery: true,
+    reservationTracking: true,
+    geoAdminReports: true,
   },
 };
 
@@ -226,12 +269,10 @@ router.post("/upgrade", async (req: Request, res: Response) => {
     }
 
     if (!isValidTier(targetTier)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: `Invalid tier: ${targetTier}. Valid: ${VALID_TIERS.join(", ")}`,
-        });
+      return res.status(400).json({
+        success: false,
+        error: `Invalid tier: ${targetTier}. Valid: ${VALID_TIERS.join(", ")}`,
+      });
     }
 
     // Fetch current user
@@ -454,10 +495,10 @@ router.get("/tiers", async (_req: Request, res: Response) => {
     features: TIER_FEATURES[tier],
     pricing: {
       free: { monthly: 0, annual: 0 },
-      essential: { monthly: 9.99, annual: 99 },
-      verified: { monthly: 29.99, annual: 299 },
-      max: { monthly: 79.99, annual: 799 },
-      enterprise: { monthly: 199.99, annual: 1999 },
+      essential: { monthly: 29, annual: 290 },
+      verified: { monthly: 79, annual: 790 },
+      max: { monthly: 149, annual: 1490 },
+      enterprise: { monthly: 499, annual: 4990 },
     }[tier],
   }));
 

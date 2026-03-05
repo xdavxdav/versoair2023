@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, AlertCircle, Check, Briefcase } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { authenticatedFetch } from "@/lib/auth";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -24,6 +25,7 @@ export function JobsSection() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  useScrollLock(isModalOpen);
   const [formData, setFormData] = useState({
     title: "",
     company: "",
@@ -42,11 +44,14 @@ export function JobsSection() {
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["jobs"],
     queryFn: async () => {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/v1/admin/jobs`, {
-        headers: {
-          "Content-Type": "application/json",
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/jobs`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       if (!res.ok) throw new Error("Failed to fetch jobs");
       const json = await res.json();
       return json.data || [];
@@ -104,12 +109,15 @@ export function JobsSection() {
   // Delete job
   const deleteMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/v1/admin/jobs/${jobId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/jobs/${jobId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to delete job");
       return res.json();

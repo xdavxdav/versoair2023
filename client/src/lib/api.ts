@@ -71,11 +71,11 @@ export async function searchBusinesses(
       const query = params.query.toLowerCase();
       filtered = filtered.filter(
         (b: any) =>
-          b.title?.toLowerCase().includes(query) ||
-          b.description?.toLowerCase().includes(query) ||
-          b.email?.toLowerCase().includes(query) ||
-          b.phone?.toLowerCase().includes(query) ||
-          b.tags?.some((tag: string) => tag.toLowerCase().includes(query)),
+          b.title?.toLowerCase().startsWith(query) ||
+          b.description?.toLowerCase().startsWith(query) ||
+          b.email?.toLowerCase().startsWith(query) ||
+          b.phone?.toLowerCase().startsWith(query) ||
+          b.tags?.some((tag: string) => tag.toLowerCase().startsWith(query)),
       );
     }
 
@@ -328,10 +328,10 @@ export async function mockSearchBusinesses(
     const searchTerm = query.toLowerCase().trim();
     results = results.filter(
       (business) =>
-        business.title.toLowerCase().includes(searchTerm) ||
-        business.description.toLowerCase().includes(searchTerm) ||
-        business.category.toLowerCase().includes(searchTerm) ||
-        business.tags.some((tag) => tag.toLowerCase().includes(searchTerm)),
+        business.title.toLowerCase().startsWith(searchTerm) ||
+        business.description.toLowerCase().startsWith(searchTerm) ||
+        business.category.toLowerCase().startsWith(searchTerm) ||
+        business.tags.some((tag) => tag.toLowerCase().startsWith(searchTerm)),
     );
   }
 

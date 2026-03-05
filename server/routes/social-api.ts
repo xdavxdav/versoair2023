@@ -4,7 +4,7 @@
 
 import { Router, Request, Response } from "express";
 import { db } from "../../server/db";
-import { desc, eq, isNull, and } from "drizzle-orm";
+import { desc, eq, isNull, and, inArray } from "drizzle-orm";
 import {
   socialPosts,
   socialComments,
@@ -43,21 +43,27 @@ router.get("/posts", async (req: Request, res: Response) => {
 
     const posts = await query;
 
-    // Enrich with author info
-    const enrichedPosts = await Promise.all(
-      posts.map(async (post: any) => {
-        const author = await db
-          .select()
-          .from(socialUsers)
-          .where(eq(socialUsers.id, post.authorId))
-          .limit(1);
+    // Batch-fetch all authors in a single query instead of N+1
+    const authorIds = [
+      ...new Set(posts.map((p: any) => p.authorId).filter(Boolean)),
+    ];
+    let authorMap: Record<number, any> = {};
 
-        return {
-          ...post,
-          author: author[0],
-        };
-      }),
-    );
+    if (authorIds.length > 0) {
+      const authors = await db
+        .select()
+        .from(socialUsers)
+        .where(inArray(socialUsers.id, authorIds));
+
+      for (const author of authors) {
+        authorMap[author.id] = author;
+      }
+    }
+
+    const enrichedPosts = posts.map((post: any) => ({
+      ...post,
+      author: authorMap[post.authorId] || null,
+    }));
 
     res.json({
       success: true,
