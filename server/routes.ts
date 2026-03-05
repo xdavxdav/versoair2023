@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express) {
         sql`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`,
       );
       const distinctCountries = await db.execute(
-        sql`SELECT COUNT(DISTINCT country) as count FROM businesses WHERE country IS NOT NULL AND is_active = true`,
+        sql`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`,
       );
       const allUsers = await db.execute(
         sql`SELECT COUNT(*) as count FROM users`,
