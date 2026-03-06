@@ -1739,7 +1739,7 @@ export default function Home() {
   useEffect(() => {
     // Check if this is the first time visiting (ever)
     const hasVisitedBefore = localStorage.getItem("hasVisitedBefore");
-    
+
     if (!hasVisitedBefore) {
       // First visit ever — show testimonials after 3 seconds
       setTimeout(() => setTestimonialsVisible(true), 3000);
