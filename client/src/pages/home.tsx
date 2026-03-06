@@ -1737,32 +1737,30 @@ export default function Home() {
 
   // Testimonials
   useEffect(() => {
-    const saved = sessionStorage.getItem("testimonialsState");
-    if (saved) {
-      try {
-        const { closed, minimized, visible } = JSON.parse(saved);
-        setTestimonialsClosed(closed);
-        setTestimonialsMinimized(minimized);
-        setTestimonialsVisible(visible);
-      } catch (error) {
-        console.error("Error parsing testimonials state:", error);
-        setTimeout(() => setTestimonialsVisible(true), 3000);
-      }
-    } else {
+    // Check if this is the first time visiting (ever)
+    const hasVisitedBefore = localStorage.getItem("hasVisitedBefore");
+    
+    if (!hasVisitedBefore) {
+      // First visit ever — show testimonials after 3 seconds
       setTimeout(() => setTestimonialsVisible(true), 3000);
+      localStorage.setItem("hasVisitedBefore", "true");
+    } else {
+      // Returning visitor — don't auto-show testimonials
+      setTestimonialsVisible(false);
     }
   }, []);
 
+  // Testimonials state management (closed/minimized)
   useEffect(() => {
-    sessionStorage.setItem(
+    // Save closed/minimized state to localStorage (but not visibility)
+    localStorage.setItem(
       "testimonialsState",
       JSON.stringify({
         closed: testimonialsClosed,
         minimized: testimonialsMinimized,
-        visible: testimonialsVisible,
       }),
     );
-  }, [testimonialsClosed, testimonialsMinimized, testimonialsVisible]);
+  }, [testimonialsClosed, testimonialsMinimized]);
 
   // Handle scroll indicator visibility
   useEffect(() => {
