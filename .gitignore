@@ -20,7 +20,7 @@ vite.config.ts.*
 pwds*
 
 # Scripts & utilities (not needed for deployment)
-*.sh
+# EXCEPTION: Keep scripts/migrations/ and scripts/run-migrations.sh for DB management
 *.py
 *.cjs
 server.cjs
@@ -36,15 +36,18 @@ seed_businesses.js
 ADMIN_CLEANUP_ENDPOINTS.ts
 
 # Non-essential folders
-scripts/
 db/
 docs/
-migrations/
 attached_assets/
 .claude/
 .hintrc
 .replit
 nodemon.json
+
+# Ignore most scripts but keep migrations
+scripts/*
+!scripts/migrations/
+!scripts/run-migrations.sh
 
 # Backup & duplicate configs
 client/postcss.config.cjs

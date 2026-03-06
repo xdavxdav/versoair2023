@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, memo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { BusinessForm } from "@/components/BusinessForm";
 
 import {
   Database,
@@ -892,6 +893,7 @@ export default function DatabaseExpert({
 }: {
   username: string | null;
 }) {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -1788,13 +1790,20 @@ export default function DatabaseExpert({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 h-14 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
+          <TabsList className="grid w-full grid-cols-8 h-14 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
             <TabsTrigger
               value="dashboard"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="manage"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Manage</span>
             </TabsTrigger>
             <TabsTrigger
               value="businesses"
@@ -2035,6 +2044,46 @@ export default function DatabaseExpert({
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Manage Tab - Business Management */}
+          <TabsContent value="manage" className="space-y-8 mt-8">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-100">
+                  <Settings className="h-5 w-5" />
+                  Business Management
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Add, view, and manage businesses in your directory. All actions are performed directly by country.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-300">
+                      <p className="font-medium">Non-Coder Friendly Interface</p>
+                      <p className="text-blue-300/80 mt-1">
+                        Use the form below to add new businesses to your directory. Simply fill in the business details and select the appropriate country. No technical knowledge required.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <BusinessForm onSuccess={() => {
+                    // Refresh businesses data when new business is added
+                    queryClient.invalidateQueries({ queryKey: ["businesses"] });
+                  }} />
+                </div>
+
+                <div className="border-t border-white/10 pt-6">
+                  <h3 className="text-sm font-semibold text-slate-200 mb-4">Recently Added Businesses</h3>
+                  <p className="text-sm text-slate-400">Businesses you add will appear here automatically.</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Businesses Tab */}
