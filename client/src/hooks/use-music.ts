@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MusicArtist, MusicTrack, MusicAnalytics } from "@shared/schema";
 
-// GET all music artists
-export function useMusicArtists() {
+// GET all music artists (optionally filtered by country)
+export function useMusicArtists(countryCode?: string) {
   return useQuery({
-    queryKey: ["music", "artists"],
+    queryKey: ["music", "artists", countryCode ?? "all"],
     queryFn: async () => {
-      const response = await fetch("/api/music/artists");
+      const params = new URLSearchParams();
+      if (countryCode) params.set("countryCode", countryCode);
+      const response = await fetch(`/api/music/artists?${params}`);
       if (!response.ok) throw new Error("Failed to fetch music artists");
       const data = await response.json();
       return data.data as MusicArtist[];

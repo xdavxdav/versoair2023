@@ -18,6 +18,7 @@ import musicRouter from "./routes/music";
 import artistsRouter from "./routes/artists";
 import dataDispatchRouter from "./routes/data-dispatch";
 import settingsRouter from "./routes/settings";
+import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
@@ -93,6 +94,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/artists", artistsRouter);
   app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/api/settings", settingsRouter);
+  app.use("/api/home", homeStatsRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

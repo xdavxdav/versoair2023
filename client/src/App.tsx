@@ -156,7 +156,7 @@ function Router() {
       return;
     }
     if (location !== previousLocation) {
-      showEagleLoader(800);
+      showEagleLoader();
       setPreviousLocation(location);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -312,7 +312,7 @@ function LoadingOverlay() {
   return (
     <div className="page-loading-overlay">
       <div className="text-center">
-        <LoadingEagle className="w-24 h-24 mb-4" />
+        <LoadingEagle className="w-40 h-40 mb-4 mx-auto" />
         <p className="text-white text-lg font-semibold">Loading...</p>
       </div>
     </div>
@@ -326,6 +326,38 @@ function AppContent() {
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
 
+  // Hide-on-scroll-down / show-on-scroll-up for the fixed header
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Measure the header height dynamically
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 10) {
+        setHeaderVisible(true);
+      } else if (currentY > lastScrollY.current && currentY > 60) {
+        setHeaderVisible(false);
+      } else if (currentY < lastScrollY.current) {
+        setHeaderVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Initialize GTM and track page views
   useEffect(() => {
     initializeGTMSession();
@@ -334,8 +366,13 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Sticky Header Block: amber top bar + scrolling ticker ── */}
-      <div className="sticky top-0 z-[60] flex flex-col">
+      {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
+      <div
+        ref={headerRef}
+        className={`fixed top-0 left-0 right-0 z-[60] flex flex-col transition-transform duration-300 ${
+          headerVisible ? "translate-y-0" : "-translate-y-full"
+        }`}
+      >
         {/* Top Banner */}
         <div
           className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
@@ -399,7 +436,8 @@ function AppContent() {
           </div>
         )}
       </div>
-      {/* ── End Sticky Header Block ── */}
+      {/* Spacer for fixed header */}
+      <div style={{ height: headerHeight }} />
 
       <MobileMenuBubble />
       <div

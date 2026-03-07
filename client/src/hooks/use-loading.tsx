@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -19,7 +19,9 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LoadingContext.Provider value={{ isLoading, setIsLoading, showEagleLoader }}>
+    <LoadingContext.Provider
+      value={{ isLoading, setIsLoading, showEagleLoader }}
+    >
       {children}
     </LoadingContext.Provider>
   );
@@ -28,7 +30,7 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
 export function useLoading() {
   const context = useContext(LoadingContext);
   if (!context) {
-    throw new Error('useLoading must be used within a LoadingProvider');
+    throw new Error("useLoading must be used within a LoadingProvider");
   }
   return context;
 }

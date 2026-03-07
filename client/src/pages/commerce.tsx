@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import {
   searchBusinesses,
   checkDatabaseConnection,
@@ -392,6 +391,7 @@ export default function CommerceBusinessAds() {
       const businesses = await searchCommerceBusinesses({
         query: "",
         business_type: "retail,service,restaurant",
+        countryCode: selectedCountry || undefined,
         limit: 9,
         sort_by: activeFilters.sort_by,
       });
@@ -407,7 +407,7 @@ export default function CommerceBusinessAds() {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [activeFilters.sort_by]);
+  }, [activeFilters.sort_by, selectedCountry]);
 
   useEffect(() => {
     fetchBusinesses();
@@ -731,64 +731,6 @@ export default function CommerceBusinessAds() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
-      {/* Quick Navigation */}
-      <div className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto text-sm">
-          <Link href="/">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏠 Accueil
-            </span>
-          </Link>
-          <Link href="/businesses-directory">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              📋 Annuaire
-            </span>
-          </Link>
-          <span className="text-purple-400/50">|</span>
-          <Link href="/hotellerie">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏨 Hôtellerie
-            </span>
-          </Link>
-          <Link href="/batiment">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏗️ Bâtiment
-            </span>
-          </Link>
-          <Link href="/automobile">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🚗 Automobile
-            </span>
-          </Link>
-          <Link href="/finances">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              💰 Finances
-            </span>
-          </Link>
-          <Link href="/divertissement">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🎭 Divertissement
-            </span>
-          </Link>
-          <Link href="/sante">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏥 Santé
-            </span>
-          </Link>
-          <span className="text-purple-400/50">|</span>
-          <Link href="/logement">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏠 Logement
-            </span>
-          </Link>
-          <Link href="/geo-admin">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🌍 Geo Admin
-            </span>
-          </Link>
-        </div>
-      </div>
-
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"

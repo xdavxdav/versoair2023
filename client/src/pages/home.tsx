@@ -17,6 +17,7 @@ import GoldenAnimatedHeading from "@/components/GoldenAnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
 import { AnimatedButton } from "@/components/AnimatedButton";
 import { useCountry } from "@/contexts/CountryContext";
+import { getCountryMeta } from "@/utils/countryMeta";
 /* webhint-disable hint-no-inline-styles */
 import {
   Search,
@@ -138,8 +139,9 @@ const goldTextStyles = `
     word-spacing: 0.2em;
     display: inline-block;
     padding: 0;
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.1;
+    white-space: normal;
+    text-align: center;
     color: transparent;
     background-color: #E8A95B;
     background-image: 
@@ -237,7 +239,13 @@ const goldTextStyles = `
 
   @media (max-width: 640px) {
     .gold-text {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .gold-text {
+      font-size: 1.25rem;
     }
   }
 `;
@@ -454,15 +462,15 @@ async function testDatabaseConnection(): Promise<{
 // Testimonials data
 const testimonials = [
   {
-    name: "Koffi Kouame",
-    company: "Abidjan Tech Solutions",
+    name: "K. Laurent",
+    company: "Tech Solutions Inc.",
     industry: "Technology",
     rating: 5,
     text: "ArtiHuman Foundation transformed our artisan community. The support helped us increase income by 40% in just 3 months.",
-    avatar: "KK",
+    avatar: "KL",
   },
   {
-    name: "Aminata Diarra",
+    name: "A. Diarra",
     company: "Textile Artisans Collective",
     industry: "Artisan Crafts",
     rating: 5,
@@ -470,12 +478,12 @@ const testimonials = [
     avatar: "AD",
   },
   {
-    name: "Jean-Baptiste Yao",
+    name: "J. Baptiste",
     company: "Wood Carving Cooperative",
     industry: "Artisan Crafts",
     rating: 5,
     text: "Skill development became accessible. We completed our largest order 20% faster using ArtiHuman training.",
-    avatar: "JY",
+    avatar: "JB",
   },
 ];
 
@@ -794,7 +802,11 @@ const MagneticInput = ({ children, className }: MagneticInputProps) => {
 };
 
 // Responsive Footer Component
-const ResponsiveFooter = () => {
+const ResponsiveFooter = ({
+  countryMeta,
+}: {
+  countryMeta: ReturnType<typeof getCountryMeta>;
+}) => {
   const { isAuthenticated } = useSubscription();
   return (
     <footer className="bg-slate-900 text-white pt-12 pb-8">
@@ -809,7 +821,7 @@ const ResponsiveFooter = () => {
             </div>
             <p className="text-gray-400 text-sm mb-4">
               Empowering artisans and uplifting communities through humanitarian
-              innovation across Côte d'Ivoire.
+              innovation across {countryMeta.name}.
             </p>
             <div className="flex space-x-4">
               <a
@@ -913,15 +925,17 @@ const ResponsiveFooter = () => {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Phone size={16} />
-                <span>+225 27 20 21 22 23</span>
+                <span>{countryMeta.phone}</span>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Mail size={16} />
-                <span>contact@artihuman.ci</span>
+                <span>contact@artihuman{countryMeta.tld}</span>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <GlobeIcon size={16} />
-                <span>Côte d'Ivoire</span>
+                <span>
+                  {countryMeta.flag} {countryMeta.name}
+                </span>
               </li>
             </ul>
           </div>
@@ -965,14 +979,14 @@ const categoryOptions: FilterOption[] = [
 ];
 
 const locationOptions: FilterOption[] = [
-  { value: "abidjan", label: "Abidjan" },
-  { value: "yamoussoukro", label: "Yamoussoukro" },
-  { value: "bouake", label: "Bouaké" },
-  { value: "daloa", label: "Daloa" },
-  { value: "korhogo", label: "Korhogo" },
-  { value: "san-pedro", label: "San Pedro" },
-  { value: "man", label: "Man" },
-  { value: "gagnoa", label: "Gagnoa" },
+  { value: "capital", label: "Capital City" },
+  { value: "north", label: "Northern Region" },
+  { value: "south", label: "Southern Region" },
+  { value: "east", label: "Eastern Region" },
+  { value: "west", label: "Western Region" },
+  { value: "central", label: "Central Region" },
+  { value: "coastal", label: "Coastal Area" },
+  { value: "rural", label: "Rural Area" },
 ];
 
 const rangeOptions: FilterOption[] = [
@@ -985,8 +999,8 @@ const rangeOptions: FilterOption[] = [
 ];
 
 // Music Artists Grid Component
-function MusicArtistsGrid() {
-  const { data: artists, isLoading } = useMusicArtists();
+function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
+  const { data: artists, isLoading } = useMusicArtists(countryCode);
 
   if (isLoading) {
     return (
@@ -1325,6 +1339,43 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const { selectedCountry } = useCountry();
+  const countryMeta = getCountryMeta(selectedCountry || "");
+
+  // Dynamic home stats from API
+  const [homeStats, setHomeStats] = useState<{
+    businessCount: number;
+    artisanCount: number;
+    categoryCount: number;
+    featuredArtisans: any[];
+  }>({
+    businessCount: 0,
+    artisanCount: 0,
+    categoryCount: 0,
+    featuredArtisans: [],
+  });
+
+  // Fetch home stats when country changes
+  useEffect(() => {
+    const fetchHomeStats = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedCountry) params.set("countryCode", selectedCountry);
+        const res = await fetch(`${API_BASE_URL}/api/home/stats?${params}`);
+        const json = await res.json();
+        if (json.success) {
+          setHomeStats({
+            businessCount: json.businessCount || 0,
+            artisanCount: json.artisanCount || 0,
+            categoryCount: json.categoryCount || 0,
+            featuredArtisans: json.featuredArtisans || [],
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch home stats:", err);
+      }
+    };
+    fetchHomeStats();
+  }, [selectedCountry]);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [isCulturalModalOpen, setIsCulturalModalOpen] = useState(false);
   useScrollLock(isCulturalModalOpen);
@@ -1889,6 +1940,7 @@ export default function Home() {
       if (artistAnnuaireQuery.trim())
         params.set("query", artistAnnuaireQuery.trim());
       if (selectedArtistGenre) params.set("genre", selectedArtistGenre);
+      if (selectedCountry) params.set("countryCode", selectedCountry);
       const res = await fetch(`${API_BASE_URL}/api/artists/search?${params}`);
       const json = await res.json();
       if (json.success) {
@@ -1954,7 +2006,7 @@ export default function Home() {
             className="mb-4 md:mb-6"
           >
             <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 backdrop-blur-sm rounded-full text-xs md:text-sm font-medium border border-white/20">
-              🎨 Empowering Artisans in West Africa
+              🎨 Empowering Artisans in {countryMeta.name}
             </span>
           </motion.div>
 
@@ -1974,7 +2026,7 @@ export default function Home() {
             className="text-base sm:text-lg md:text-xl lg:text-2xl mb-4 text-white/90 px-4"
           >
             Empowering artisans and uplifting communities through humanitarian
-            innovation across Côte d'Ivoire
+            innovation across {countryMeta.name}
           </motion.p>
 
           {/* Database Connection Status */}
@@ -2056,7 +2108,7 @@ export default function Home() {
             </h2>
             <p className="text-lg md:text-2xl text-gray-600 px-4 max-w-3xl mx-auto">
               Search our directory of artisan communities and cultural programs
-              across Côte d'Ivoire
+              across {countryMeta.name}
             </p>
           </motion.div>
 
@@ -2570,10 +2622,10 @@ export default function Home() {
                       }}
                       className="inline-block"
                     >
-                      <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 md:mb-4 text-white" />
+                      <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-2 sm:mb-3"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="ArtiHuman Foundation"
                     >
                       <span
@@ -2583,36 +2635,45 @@ export default function Home() {
                         ArtiHuman Foundation
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-2 sm:mb-3 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Empowering artisans and uplifting communities through
-                      humanitarian innovation across Côte d'Ivoire.
+                      humanitarian innovation across {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 w-full max-w-5xl mb-3 sm:mb-4 md:mb-6">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
-                      <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 group-hover:text-emerald-300 transition-colors" />
-                        Our Impact in Ivory Coast:
+                      <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
+                        Our Impact in {countryMeta.name}:
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
                           {
-                            stat: "800+",
+                            stat:
+                              homeStats.artisanCount > 0
+                                ? `${homeStats.artisanCount}+`
+                                : "—",
                             label: "artisans supported",
                             icon: "👥",
                           },
                           {
-                            stat: "3,000+",
-                            label: "families impacted",
+                            stat:
+                              homeStats.businessCount > 0
+                                ? `${homeStats.businessCount}+`
+                                : "—",
+                            label: "businesses registered",
                             icon: "❤️",
                           },
                           {
-                            stat: "18",
-                            label: "community workshops",
+                            stat:
+                              homeStats.categoryCount > 0
+                                ? `${homeStats.categoryCount}`
+                                : "—",
+                            label: "industry categories",
                             icon: "🏢",
                           },
                           {
@@ -2622,7 +2683,7 @@ export default function Home() {
                           },
                           {
                             stat: "Skill",
-                            label: "development in 12 regions",
+                            label: "development programs",
                             icon: "📚",
                           },
                           {
@@ -2652,18 +2713,18 @@ export default function Home() {
 
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
-                      <div className="text-center mb-2 sm:mb-3">
+                      <div className="text-center mb-1 sm:mb-2">
                         <Sparkles
-                          className="mx-auto mb-1 sm:mb-2 text-white"
-                          size={20}
+                          className="mx-auto mb-0.5 sm:mb-1 text-white"
+                          size={14}
                         />
-                        <h3 className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
                           Cultural Programs
                         </h3>
                       </div>
-                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
                           { icon: Trees, label: "Agricultural Arts" },
                           { icon: Music, label: "Music" },
@@ -2673,7 +2734,7 @@ export default function Home() {
                           <motion.div
                             key={i}
                             whileHover={{ scale: 1.05, rotate: 5 }}
-                            className="text-center p-2 sm:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
+                            className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
                           >
                             <item.icon
                               className="mx-auto mb-0.5 sm:mb-1 text-emerald-300"
@@ -2687,7 +2748,7 @@ export default function Home() {
                       </div>
                       <button
                         onClick={() => setIsCulturalModalOpen(true)}
-                        className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-2 sm:py-3 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         <Sparkles size={14} className="inline mr-1 sm:mr-2" />
                         Explore Programs
@@ -2697,9 +2758,9 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-2 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
                       Join Our Movement
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
@@ -2749,10 +2810,10 @@ export default function Home() {
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <ShoppingBag className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 md:mb-4 text-white" />
+                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-2 sm:mb-3"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Artisan Marketplace"
                     >
                       <span
@@ -2762,18 +2823,19 @@ export default function Home() {
                         Artisan Marketplace
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-2 sm:mb-3 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Discover unique handcrafted products that support
-                      communities and preserve traditional Ivorian crafts.
+                      communities and preserve traditional {countryMeta.demonym}{" "}
+                      crafts.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-5xl mb-3 sm:mb-4 md:mb-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     {[
                       {
-                        name: "Baoulé Pottery Set",
+                        name: "Artisan Pottery Set",
                         type: "Traditional Ceramics",
-                        price: "149.99 XOF",
+                        price: `149.99 ${countryMeta.currencySymbol}`,
                         rating: 4.8,
                         emoji: "🏺",
                         gradient: "from-orange-400 to-amber-600",
@@ -2781,9 +2843,9 @@ export default function Home() {
                         sold: "2.4K sold",
                       },
                       {
-                        name: "Korhogo Textile Collection",
+                        name: "Handwoven Textile Collection",
                         type: "Handwoven Textiles",
-                        price: "89.99 XOF",
+                        price: `89.99 ${countryMeta.currencySymbol}`,
                         rating: 4.9,
                         emoji: "🧵",
                         gradient: "from-indigo-500 to-purple-600",
@@ -2791,9 +2853,9 @@ export default function Home() {
                         sold: "1.8K sold",
                       },
                       {
-                        name: "Sénoufo Wooden Sculptures",
+                        name: "Wooden Sculptures",
                         type: "Wood Crafts",
-                        price: "199.99 XOF",
+                        price: `199.99 ${countryMeta.currencySymbol}`,
                         rating: 5.0,
                         emoji: "🪵",
                         gradient: "from-emerald-500 to-teal-600",
@@ -2807,9 +2869,9 @@ export default function Home() {
                         className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-white/40 transition-all shadow-lg"
                       >
                         <div
-                          className={`bg-gradient-to-br ${product.gradient} p-4 sm:p-5 md:p-7 flex items-center justify-between relative h-24 sm:h-28`}
+                          className={`bg-gradient-to-br ${product.gradient} p-2 sm:p-4 md:p-7 flex items-center justify-between relative h-14 sm:h-20 md:h-28`}
                         >
-                          <span className="text-5xl sm:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
+                          <span className="text-3xl sm:text-4xl md:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
                             {product.emoji}
                           </span>
                           <motion.span
@@ -2820,15 +2882,15 @@ export default function Home() {
                             {product.badge}
                           </motion.span>
                         </div>
-                        <div className="p-3 sm:p-4">
-                          <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-1 line-clamp-2">
+                        <div className="p-2 sm:p-3 md:p-4">
+                          <h3 className="text-xs sm:text-sm md:text-lg font-bold text-white mb-0.5 sm:mb-1 line-clamp-1">
                             {product.name}
                           </h3>
-                          <p className="text-white/70 text-xs sm:text-sm mb-3">
+                          <p className="text-white/70 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2">
                             {product.type}
                           </p>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-base sm:text-lg font-bold text-amber-300">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
+                            <span className="text-sm sm:text-base md:text-lg font-bold text-amber-300">
                               {product.price}
                             </span>
                             <div className="flex items-center gap-1">
@@ -2838,7 +2900,7 @@ export default function Home() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-white/60 text-[10px] sm:text-xs mb-3 font-medium">
+                          <p className="text-white/60 text-[10px] sm:text-xs mb-1 sm:mb-2 font-medium">
                             {product.sold}
                           </p>
                           <Link to="/blog">
@@ -2863,12 +2925,9 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3
-                      className="gold-text mb-3 text-lg"
-                      style={{ fontSize: "28px" }}
-                    >
+                    <h3 className="gold-text mb-1 sm:mb-2">
                       <span
                         className="gold-text__shine"
                         data-text="Support Communities"
@@ -2876,7 +2935,7 @@ export default function Home() {
                         Support Communities
                       </span>
                     </h3>
-                    <p className="text-white/90 mb-3 sm:mb-4 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-1 sm:mb-2 md:mb-4 text-xs sm:text-sm md:text-base">
                       Browse our collection and make a difference with every
                       purchase
                     </p>
@@ -2921,10 +2980,10 @@ export default function Home() {
                       transition={{ duration: 3, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 md:mb-4 text-white" />
+                      <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-2 sm:mb-3"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Impact Dashboard"
                     >
                       <span
@@ -2934,35 +2993,44 @@ export default function Home() {
                         Impact Dashboard
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-2 sm:mb-3 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Track our collective impact on artisan communities across
-                      Ivory Coast.
+                      {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 w-full max-w-5xl mb-3 sm:mb-4 md:mb-6">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-4 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-6">
                     {[
                       {
-                        value: "800+",
+                        value:
+                          homeStats.artisanCount > 0
+                            ? `${homeStats.artisanCount}+`
+                            : "—",
                         label: "Artisans Supported",
                         icon: Users,
                         delay: 0,
                       },
                       {
-                        value: "3,000+",
-                        label: "Families Impacted",
+                        value:
+                          homeStats.businessCount > 0
+                            ? `${homeStats.businessCount}+`
+                            : "—",
+                        label: "Businesses Registered",
                         icon: Heart,
                         delay: 0.2,
                       },
                       {
-                        value: "18",
-                        label: "Workshops",
+                        value:
+                          homeStats.categoryCount > 0
+                            ? `${homeStats.categoryCount}`
+                            : "—",
+                        label: "Categories",
                         icon: Building2,
                         delay: 0.4,
                       },
                       {
-                        value: "12",
-                        label: "Regions Covered",
+                        value: countryMeta.flag,
+                        label: countryMeta.name,
                         icon: MapPin,
                         delay: 0.6,
                       },
@@ -2973,34 +3041,34 @@ export default function Home() {
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ delay: stat.delay }}
                         whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-4 text-center border border-white/20 hover:border-white/40 transition-all cursor-pointer group shadow-lg hover:shadow-xl"
+                        className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-1 sm:p-2 md:p-4 text-center border border-white/20 hover:border-white/40 transition-all cursor-pointer group shadow-lg hover:shadow-xl"
                       >
-                        <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mx-auto mb-1 sm:mb-2 text-emerald-200 group-hover:text-emerald-100 transition-colors" />
+                        <stat.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-8 md:h-8 mx-auto mb-0 sm:mb-1 md:mb-2 text-emerald-200 group-hover:text-emerald-100 transition-colors" />
                         <motion.span
-                          className="text-lg sm:text-xl md:text-2xl font-bold text-white block"
+                          className="text-xs sm:text-base md:text-2xl font-bold text-white block"
                           initial={{ opacity: 0 }}
                           whileInView={{ opacity: 1 }}
                           transition={{ delay: stat.delay + 0.3 }}
                         >
                           {stat.value}
                         </motion.span>
-                        <span className="text-white/80 text-[10px] sm:text-xs md:text-sm font-semibold group-hover:text-white/90 transition-colors">
+                        <span className="text-white/80 text-[8px] sm:text-[10px] md:text-sm font-semibold group-hover:text-white/90 transition-colors leading-tight">
                           {stat.label}
                         </span>
                       </motion.div>
                     ))}
                   </div>
 
-                  <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-3 sm:mb-4 md:mb-6">
+                  <div className="w-full max-w-5xl grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-6 mb-1.5 sm:mb-2 md:mb-6">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 border border-white/20 hover:border-white/40 transition-all"
+                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
                     >
-                      <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5" />
+                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         Community Growth
                       </h3>
-                      <div className="space-y-3">
+                      <div className="space-y-1 sm:space-y-1.5 md:space-y-3">
                         {[
                           {
                             label: "Active Programs",
@@ -3019,16 +3087,16 @@ export default function Home() {
                           },
                         ].map((item, i) => (
                           <div key={i}>
-                            <div className="flex justify-between mb-1">
-                              <span className="text-white/90 text-xs sm:text-sm font-semibold">
+                            <div className="flex justify-between mb-0.5 sm:mb-1">
+                              <span className="text-white/90 text-[9px] sm:text-xs md:text-sm font-semibold">
                                 {item.label}
                               </span>
-                              <span className="text-emerald-300 font-bold text-xs sm:text-sm">
+                              <span className="text-emerald-300 font-bold text-[9px] sm:text-xs md:text-sm">
                                 {item.value}%
                               </span>
                             </div>
                             <motion.div
-                              className="h-2 bg-white/10 rounded-full overflow-hidden"
+                              className="h-1 sm:h-1.5 md:h-2 bg-white/10 rounded-full overflow-hidden"
                               initial={{ scaleX: 0 }}
                               whileInView={{ scaleX: 1 }}
                               transition={{ delay: i * 0.2, duration: 1 }}
@@ -3051,30 +3119,42 @@ export default function Home() {
 
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 border border-white/20 hover:border-white/40 transition-all"
+                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
                     >
-                      <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Globe className="w-5 h-5" />
-                        Regional Impact
+                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
+                        <Globe className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                        {countryMeta.name} Overview
                       </h3>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-3">
                         {[
-                          { region: "Northern", artisans: 156 },
-                          { region: "Central", artisans: 234 },
-                          { region: "Eastern", artisans: 189 },
-                          { region: "Western", artisans: 221 },
+                          {
+                            region: "Businesses",
+                            artisans: homeStats.businessCount,
+                          },
+                          {
+                            region: "Artisans",
+                            artisans: homeStats.artisanCount,
+                          },
+                          {
+                            region: "Categories",
+                            artisans: homeStats.categoryCount,
+                          },
+                          {
+                            region: "Currency",
+                            artisans: countryMeta.currencySymbol,
+                          },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
                             initial={{ opacity: 0, scale: 0.8 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-2 sm:p-3 text-center border border-white/10"
+                            className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-1 sm:p-2 md:p-3 text-center border border-white/10"
                           >
-                            <span className="text-white/80 text-[10px] sm:text-xs font-semibold">
+                            <span className="text-white/80 text-[8px] sm:text-[10px] md:text-xs font-semibold">
                               {item.region}
                             </span>
-                            <div className="text-lg sm:text-xl font-bold text-emerald-300 mt-1">
+                            <div className="text-sm sm:text-base md:text-xl font-bold text-emerald-300 mt-0.5">
                               {item.artisans}
                             </div>
                           </motion.div>
@@ -3085,12 +3165,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-2 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
                       See Our Impact in Action
                     </h3>
-                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                       Track real-time progress and community transformation
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -3140,10 +3220,10 @@ export default function Home() {
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <Handshake className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 md:mb-4 text-white" />
+                      <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-2 sm:mb-3"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Get Involved"
                     >
                       <span
@@ -3153,13 +3233,13 @@ export default function Home() {
                         Get Involved
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-2 sm:mb-3 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Join our movement to empower artisans and transform
-                      communities across Côte d'Ivoire.
+                      communities across {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-5xl mb-3 sm:mb-4 md:mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     {[
                       {
                         title: "Volunteer",
@@ -3195,21 +3275,21 @@ export default function Home() {
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.15 }}
                         whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 border border-white/20 hover:border-white/40 text-center group shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                        className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 text-center group shadow-lg hover:shadow-xl transition-all cursor-pointer"
                       >
                         <div
-                          className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto mb-2 sm:mb-3 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-16 md:h-16 mx-auto mb-1 sm:mb-2 md:mb-3 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
                         >
-                          <item.icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
+                          <item.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-8 md:h-8 text-white" />
                         </div>
-                        <h3 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">
+                        <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-0.5 sm:mb-1">
                           {item.title}
                         </h3>
-                        <p className="text-white/80 text-xs sm:text-sm mb-2 sm:mb-3 md:mb-4">
+                        <p className="text-white/80 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2 md:mb-4">
                           {item.desc}
                         </p>
                         <motion.div
-                          className="inline-block mb-3 sm:mb-4 px-3 py-1 bg-white/10 rounded-full border border-white/20"
+                          className="inline-block mb-1 sm:mb-2 md:mb-4 px-2 py-0.5 sm:px-3 sm:py-1 bg-white/10 rounded-full border border-white/20"
                           animate={{ scale: [1, 1.05, 1] }}
                           transition={{
                             duration: 2,
@@ -3217,7 +3297,7 @@ export default function Home() {
                             delay: i * 0.3,
                           }}
                         >
-                          <span className="text-emerald-300 font-bold text-xs sm:text-sm">
+                          <span className="text-emerald-300 font-bold text-[10px] sm:text-xs md:text-sm">
                             {item.count}
                           </span>
                         </motion.div>
@@ -3225,7 +3305,7 @@ export default function Home() {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="w-full bg-gradient-to-r from-white to-teal-100 text-teal-700 py-2 sm:py-2.5 rounded-lg font-bold hover:from-teal-50 hover:to-teal-200 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg group-hover:shadow-xl"
+                            className="w-full bg-gradient-to-r from-white to-teal-100 text-teal-700 py-1.5 sm:py-2 rounded-lg font-bold hover:from-teal-50 hover:to-teal-200 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg group-hover:shadow-xl"
                           >
                             {item.action}
                           </motion.button>
@@ -3236,12 +3316,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-2 group-hover:text-teal-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors">
                       Transform Lives Through Art
                     </h3>
-                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                       Your support creates lasting change in artisan communities
                     </p>
                     <Link to="/get-involved">
@@ -3273,39 +3353,63 @@ export default function Home() {
               Featured Artisans
             </h2>
             <p className="text-base md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
-              Meet some of the talented artisans we support across Côte d'Ivoire
+              Meet some of the talented artisans we support across{" "}
+              {countryMeta.name}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {[
-              {
-                name: "Amina Traoré",
-                role: "Textile Weaver",
-                specialty: "Korhogo Cloth",
-                image: "AT",
-                location: "Korhogo",
-                rating: 4.9,
-                color: "from-indigo-500 to-purple-600",
-              },
-              {
-                name: "Koffi Yao",
-                role: "Wood Carver",
-                specialty: "Sénoufo Sculptures",
-                image: "KY",
-                location: "Man",
-                rating: 4.8,
-                color: "from-amber-500 to-orange-600",
-              },
-              {
-                name: "Fatou Coulibaly",
-                role: "Pottery Artist",
-                specialty: "Baoulé Pottery",
-                image: "FC",
-                location: "Bouaké",
-                rating: 4.9,
-                color: "from-emerald-500 to-teal-600",
-              },
-            ].map((artisan, i) => (
+            {(homeStats.featuredArtisans.length > 0
+              ? homeStats.featuredArtisans.map((a: any) => {
+                  const initials = (a.name || "??")
+                    .split(/\s+/)
+                    .map((w: string) => w[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return {
+                    name: a.name || "Unknown Artist",
+                    role: a.genre || "Artisan",
+                    specialty: a.genre || "Crafts",
+                    image: initials,
+                    location: countryMeta.name,
+                    rating: 4.9,
+                    color: [
+                      "from-indigo-500 to-purple-600",
+                      "from-amber-500 to-orange-600",
+                      "from-emerald-500 to-teal-600",
+                    ][homeStats.featuredArtisans.indexOf(a) % 3],
+                  };
+                })
+              : [
+                  {
+                    name: "Featured Artisan",
+                    role: "Textile Weaver",
+                    specialty: "Traditional Textiles",
+                    image: "FA",
+                    location: countryMeta.name,
+                    rating: 4.9,
+                    color: "from-indigo-500 to-purple-600",
+                  },
+                  {
+                    name: "Featured Artisan",
+                    role: "Wood Carver",
+                    specialty: "Traditional Sculptures",
+                    image: "FA",
+                    location: countryMeta.name,
+                    rating: 4.8,
+                    color: "from-amber-500 to-orange-600",
+                  },
+                  {
+                    name: "Featured Artisan",
+                    role: "Pottery Artist",
+                    specialty: "Traditional Pottery",
+                    image: "FA",
+                    location: countryMeta.name,
+                    rating: 4.9,
+                    color: "from-emerald-500 to-teal-600",
+                  },
+                ]
+            ).map((artisan, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -3391,7 +3495,7 @@ export default function Home() {
             </motion.h2>
             <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
               Explorez plus de {artistAnnuaireGenres.length} catégories
-              d'artistes à travers Côte d'Ivoire
+              d'artistes à travers {countryMeta.name}
             </p>
           </div>
 
@@ -3648,7 +3752,7 @@ export default function Home() {
             </p>
           </div>
 
-          <MusicArtistsGrid />
+          <MusicArtistsGrid countryCode={selectedCountry} />
 
           <div className="text-center mt-8 md:mt-12">
             <Link to="/artist-portal">
@@ -3687,7 +3791,8 @@ export default function Home() {
               Partners & Sponsors
             </motion.h2>
             <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Organizations supporting artisan communities across Côte d'Ivoire
+              Organizations supporting artisan communities across{" "}
+              {countryMeta.name}
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-8">
@@ -3962,7 +4067,7 @@ export default function Home() {
         </motion.button>
       )}
 
-      <ResponsiveFooter />
+      <ResponsiveFooter countryMeta={countryMeta} />
 
       <AnimatePresence>
         {showCookieConsent && (

@@ -9,6 +9,7 @@ Migrations run **automatically** on Render deployment and can be run **manually*
 ### File Naming Convention
 
 Migrations are numbered sequentially:
+
 ```
 001_initialize_countries.sql
 002_seed_sample_businesses.sql
@@ -20,16 +21,19 @@ Numbers ensure migrations run in correct order.
 ### Running Migrations Locally
 
 **Option 1: Using the migration runner**
+
 ```bash
 ./scripts/run-migrations.sh
 ```
 
 **Option 2: Run a single migration**
+
 ```bash
 psql $DATABASE_URL -f scripts/migrations/001_initialize_countries.sql
 ```
 
 **Option 3: Run all migrations at once**
+
 ```bash
 psql $DATABASE_URL -f scripts/migrations/*.sql
 ```
@@ -40,32 +44,35 @@ Migrations will auto-run during deployment. See `.render/build.sh` for build hoo
 
 ## Current Migrations
 
-| Migration | Purpose | Status |
-|-----------|---------|--------|
-| `001_initialize_countries.sql` | Add all 35 supported countries | ✅ Active |
+| Migration                        | Purpose                                        | Status    |
+| -------------------------------- | ---------------------------------------------- | --------- |
+| `001_initialize_countries.sql`   | Add all 35 supported countries                 | ✅ Active |
 | `002_seed_sample_businesses.sql` | Populate sample businesses across 10 countries | ✅ Active |
 
 ## Adding New Migrations
 
 1. Create a new file with next number:
+
    ```bash
    touch scripts/migrations/003_your_migration_name.sql
    ```
 
 2. Write your SQL:
+
    ```sql
    -- Migration 003: Your description
    -- Purpose: What does this do
    -- Date: YYYY-MM-DD
-   
+
    -- Your SQL here
    INSERT INTO ...
-   
+
    -- Verify
    SELECT 'Migration 003 complete' as status;
    ```
 
 3. Test locally:
+
    ```bash
    psql $DATABASE_URL -f scripts/migrations/003_your_migration_name.sql
    ```
@@ -75,12 +82,14 @@ Migrations will auto-run during deployment. See `.render/build.sh` for build hoo
 ## Key Rules
 
 ✅ **DO:**
+
 - Write **idempotent** SQL (use `ON CONFLICT DO NOTHING`, `IF NOT EXISTS`, etc.)
 - Test locally before pushing
 - Include comments explaining what the migration does
 - Verify migration with a final SELECT statement
 
 ❌ **DON'T:**
+
 - Delete or rename existing migration files
 - Run migrations out of order
 - Make migrations dependent on external tools/APIs
@@ -88,6 +97,7 @@ Migrations will auto-run during deployment. See `.render/build.sh` for build hoo
 ## Rollback
 
 To rollback a migration:
+
 1. Create a reverse migration (e.g., `003_undo_previous_change.sql`)
 2. Run the new migration
 3. Push to git

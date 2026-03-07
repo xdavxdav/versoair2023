@@ -10,6 +10,12 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const CACHE_KEY = "fsa_detected_country";
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
 
+interface CacheEntry {
+  code: string;
+  ts: number;
+  manual?: boolean; // true = user explicitly picked this country
+}
+
 interface CountryContextType {
   selectedCountry: string;
   setSelectedCountry: (code: string) => void;
@@ -22,22 +28,29 @@ const CountryContext = createContext<CountryContextType>({
   detecting: true,
 });
 
-function getCached(): string | null {
+function getCached(): CacheEntry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    const { code, ts } = JSON.parse(raw);
-    if (Date.now() - ts < CACHE_TTL && typeof code === "string" && code)
-      return code;
+    const entry: CacheEntry = JSON.parse(raw);
+    if (
+      Date.now() - entry.ts < CACHE_TTL &&
+      typeof entry.code === "string" &&
+      entry.code
+    )
+      return entry;
   } catch {
     /* ignore */
   }
   return null;
 }
 
-function setCache(code: string) {
+function setCache(code: string, manual = false) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ code, ts: Date.now() }));
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ code, ts: Date.now(), manual }),
+    );
   } catch {
     /* ignore */
   }
@@ -45,13 +58,17 @@ function setCache(code: string) {
 
 export function CountryProvider({ children }: { children: React.ReactNode }) {
   const cached = getCached();
-  const [selectedCountry, setSelectedCountryState] = useState(cached ?? "");
-  const [detecting, setDetecting] = useState(!cached);
+  // Start with cached code if available (instant display), otherwise empty
+  const [selectedCountry, setSelectedCountryState] = useState(
+    cached?.code ?? "",
+  );
+  // Still detecting if: no cache at all, OR cache exists but was auto-detected (not manual)
+  const [detecting, setDetecting] = useState(!cached || !cached.manual);
 
   const setSelectedCountry = (code: string) => {
     setSelectedCountryState(code);
     if (code) {
-      setCache(code);
+      setCache(code, true); // mark as manually set
     } else {
       try {
         localStorage.removeItem(CACHE_KEY);
@@ -62,7 +79,8 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (cached) return;
+    // Skip re-detection only if the user manually chose their country
+    if (cached?.manual) return;
     let cancelled = false;
     (async () => {
       try {
@@ -74,12 +92,12 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         const code = (data.country_code || "").toUpperCase();
         if (!cancelled && code) {
           setSelectedCountryState(code);
-          setCache(code);
+          setCache(code, false); // auto-detected, not manual
         }
       } catch {
         try {
           const res = await fetch(
-            "http://ip-api.com/json/?fields=countryCode",
+            "https://ip-api.com/json/?fields=countryCode",
             { signal: AbortSignal.timeout(5000) },
           );
           if (!res.ok) throw new Error();
@@ -87,10 +105,10 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
           const code = (data.countryCode || "").toUpperCase();
           if (!cancelled && code) {
             setSelectedCountryState(code);
-            setCache(code);
+            setCache(code, false);
           }
         } catch {
-          /* both failed — no filter */
+          /* both failed — keep whatever was cached or stay empty */
         }
       } finally {
         if (!cancelled) setDetecting(false);

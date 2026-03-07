@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -107,6 +108,7 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function ArtistDirectory() {
+  const { selectedCountry } = useCountry();
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
   );
@@ -181,6 +183,12 @@ export default function ArtistDirectory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-search when country changes
+  useEffect(() => {
+    if (hasSearched) handleSearch(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry]);
+
   // Search handler
   const handleSearch = useCallback(
     async (page: number = 1, genreOverride?: string) => {
@@ -198,6 +206,7 @@ export default function ArtistDirectory() {
 
         if (searchQuery.trim()) params.set("query", searchQuery.trim());
         if (genre) params.set("genre", genre);
+        if (selectedCountry) params.set("countryCode", selectedCountry);
 
         const response = await fetch(
           `${API_BASE_URL}/api/artists/search?${params}`,
