@@ -107,110 +107,136 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
     };
   }, [isOpen]);
 
+  // Build location data from IP data + optional browser coords
+  const buildLocationData = (
+    ipData: any,
+    coords?: { latitude: number; longitude: number; altitude: number | null },
+  ): LocationData => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezoneOffset = -now.getTimezoneOffset() / 60;
+    const timezoneString = `${timezone} (UTC${timezoneOffset >= 0 ? "+" : ""}${timezoneOffset})`;
+
+    return {
+      currentLocation: ipData.city
+        ? `${ipData.city}, ${ipData.region_code || ipData.country_code}`
+        : "Unknown",
+      postalCode: ipData.postal || "N/A",
+      district: ipData.region || "N/A",
+      coordinates: coords
+        ? { latitude: coords.latitude, longitude: coords.longitude }
+        : ipData.latitude && ipData.longitude
+          ? { latitude: ipData.latitude, longitude: ipData.longitude }
+          : { latitude: 0, longitude: 0 },
+      altitude:
+        coords?.altitude != null
+          ? `${Math.round(coords.altitude * 3.28084)} ft`
+          : "N/A",
+      wifiProvider: ipData.org || "Unknown Provider",
+      networkType:
+        (navigator as any).connection?.effectiveType?.toUpperCase() ||
+        "Unknown",
+      signalStrength: "Good",
+      ipAddress: ipData.ip || "N/A",
+      internetProvider: ipData.org || "Unknown ISP",
+      timezone: timezoneString,
+      localTime: timeString,
+      nearbyLandmarks: [
+        `${ipData.city || "Local"} City Center`,
+        `${ipData.region || "Regional"} Regional Office`,
+        "Nearby Shopping District",
+        "Public Transport Hub",
+        "Local Business District",
+      ],
+      activeUsers: activeUsers,
+      coverageAreas: Math.floor(Math.random() * 20) + 80,
+      responseTime: `${Math.floor(Math.random() * 20) + 5}ms`,
+      regions: [
+        { name: "North", coverage: Math.floor(Math.random() * 20) + 75 },
+        { name: "East", coverage: Math.floor(Math.random() * 20) + 75 },
+        { name: "South", coverage: Math.floor(Math.random() * 20) + 75 },
+        { name: "West", coverage: Math.floor(Math.random() * 20) + 75 },
+        { name: "Center", coverage: Math.floor(Math.random() * 20) + 80 },
+      ],
+    };
+  };
+
   // Get live location data when panel opens
   useEffect(() => {
-    if (isOpen && !liveLocation) {
-      // Get browser geolocation
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude, altitude } = position.coords;
+    if (!isOpen || liveLocation) return;
+    let cancelled = false;
 
-            try {
-              // Fetch IP and location data
-              const ipResponse = await fetch("https://ipapi.co/json/");
-              const ipData = await ipResponse.json();
-
-              // Get current time
-              const now = new Date();
-              const timeString = now.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-              });
-
-              // Get timezone
-              const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-              const timezoneOffset = -now.getTimezoneOffset() / 60;
-              const timezoneString = `${timezone} (UTC${
-                timezoneOffset >= 0 ? "+" : ""
-              }${timezoneOffset})`;
-
-              setLiveLocation({
-                currentLocation: ipData.city
-                  ? `${ipData.city}, ${
-                      ipData.region_code || ipData.country_code
-                    }`
-                  : "Unknown",
-                postalCode: ipData.postal || "N/A",
-                district: ipData.region || "N/A",
-                coordinates: {
-                  latitude: latitude,
-                  longitude: longitude,
-                },
-                altitude: altitude
-                  ? `${Math.round(altitude * 3.28084)} ft`
-                  : "N/A",
-                wifiProvider: ipData.org || "Unknown Provider",
-                networkType:
-                  (navigator as any).connection?.effectiveType?.toUpperCase() ||
-                  "Unknown",
-                signalStrength: "Good",
-                ipAddress: ipData.ip || "N/A",
-                internetProvider: ipData.org || "Unknown ISP",
-                timezone: timezoneString,
-                localTime: timeString,
-                nearbyLandmarks: [
-                  `${ipData.city} City Center`,
-                  `${ipData.region} Regional Office`,
-                  "Nearby Shopping District",
-                  "Public Transport Hub",
-                  "Local Business District",
-                ],
-                activeUsers: activeUsers,
-                coverageAreas: Math.floor(Math.random() * 20) + 80,
-                responseTime: `${Math.floor(Math.random() * 20) + 5}ms`,
-                regions: [
-                  {
-                    name: "North",
-                    coverage: Math.floor(Math.random() * 20) + 75,
-                  },
-                  {
-                    name: "East",
-                    coverage: Math.floor(Math.random() * 20) + 75,
-                  },
-                  {
-                    name: "South",
-                    coverage: Math.floor(Math.random() * 20) + 75,
-                  },
-                  {
-                    name: "West",
-                    coverage: Math.floor(Math.random() * 20) + 75,
-                  },
-                  {
-                    name: "Center",
-                    coverage: Math.floor(Math.random() * 20) + 80,
-                  },
-                ],
-              });
-              setLocationError(null);
-            } catch (error) {
-              console.error("Error fetching location data:", error);
-              setLocationError("Failed to fetch location details");
-            }
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            setLocationError(
-              "Location access denied. Please enable location permissions.",
-            );
-          },
-        );
-      } else {
-        setLocationError("Geolocation is not supported by your browser.");
+    const fetchIPData = async () => {
+      try {
+        const res = await fetch("https://ipapi.co/json/", {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) throw new Error("ipapi failed");
+        return await res.json();
+      } catch {
+        // Fallback IP API
+        const res = await fetch("https://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query", {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) throw new Error("ip-api failed");
+        const data = await res.json();
+        // Normalize to ipapi.co format
+        return {
+          ip: data.query,
+          city: data.city,
+          region: data.regionName,
+          region_code: data.region,
+          country_code: data.countryCode,
+          postal: data.zip,
+          latitude: data.lat,
+          longitude: data.lon,
+          org: data.org || data.isp,
+        };
       }
-    }
+    };
+
+    (async () => {
+      try {
+        // Always fetch IP data first (no permissions needed)
+        const ipData = await fetchIPData();
+        if (cancelled) return;
+
+        // Try browser geolocation for precise coords (non-blocking)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (cancelled) return;
+              const { latitude, longitude, altitude } = position.coords;
+              setLiveLocation(buildLocationData(ipData, { latitude, longitude, altitude }));
+              setLocationError(null);
+            },
+            () => {
+              // Geolocation denied — use IP-based coords instead (no error shown)
+              if (cancelled) return;
+              setLiveLocation(buildLocationData(ipData));
+              setLocationError(null);
+            },
+          );
+        } else {
+          // No geolocation support — use IP data only
+          setLiveLocation(buildLocationData(ipData));
+          setLocationError(null);
+        }
+      } catch (error) {
+        console.error("Error fetching location data:", error);
+        if (!cancelled) {
+          setLocationError("Failed to fetch location details. Please check your connection.");
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [isOpen, liveLocation]);
 
   // Update time and active users every second
