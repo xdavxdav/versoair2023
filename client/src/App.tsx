@@ -383,15 +383,17 @@ function AppContent() {
             style={{ overflow: "visible" }}
           >
             {/* Left: Portal label */}
-            <span className="font-medium flex-1 truncate">
+            <span className="font-medium flex-1 min-w-0 truncate">
               Business Intelligence Portal
             </span>
 
             {/* Center: Country filter dropdown */}
-            <CountryDropdown />
+            <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+              <CountryDropdown />
+            </div>
 
             {/* Right: Action buttons */}
-            <div className="flex items-center space-x-3 flex-1 justify-end">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
               <button
                 onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
                 className="hover:text-amber-200 transition-colors flex items-center space-x-1"

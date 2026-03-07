@@ -9,6 +9,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CACHE_KEY = "fsa_detected_country";
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 interface CacheEntry {
   code: string;
@@ -20,12 +21,14 @@ interface CountryContextType {
   selectedCountry: string;
   setSelectedCountry: (code: string) => void;
   detecting: boolean;
+  reloadDetection: () => void;
 }
 
 const CountryContext = createContext<CountryContextType>({
   selectedCountry: "",
   setSelectedCountry: () => {},
   detecting: true,
+  reloadDetection: () => {},
 });
 
 function getCached(): CacheEntry | null {
@@ -62,14 +65,71 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   const [selectedCountry, setSelectedCountryState] = useState(
     cached?.code ?? "",
   );
+  const [manualSelection, setManualSelection] = useState(
+    Boolean(cached?.manual),
+  );
   // Still detecting if: no cache at all, OR cache exists but was auto-detected (not manual)
   const [detecting, setDetecting] = useState(!cached || !cached.manual);
+  const [reloadCounter, setReloadCounter] = useState(0);
+
+  const normalizeCode = (value: string) => {
+    const code = (value || "").trim().toUpperCase();
+    return /^[A-Z]{2}$/.test(code) ? code : "";
+  };
+
+  const detectFromBackend = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/location/country`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      return normalizeCode(data?.countryCode || "");
+    } catch {
+      return "";
+    }
+  };
+
+  const detectFromIpApiCo = async () => {
+    try {
+      const res = await fetch("https://ipapi.co/json/", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      return normalizeCode(data?.country_code || "");
+    } catch {
+      return "";
+    }
+  };
+
+  const detectFromIpWhoIs = async () => {
+    try {
+      const res = await fetch("https://ipwho.is/?fields=success,country_code", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      if (!data?.success) return "";
+      return normalizeCode(data?.country_code || "");
+    } catch {
+      return "";
+    }
+  };
+
+  const detectFromBrowserLocale = () => {
+    const locale = navigator.languages?.[0] || navigator.language;
+    const region = (locale || "").split("-")[1] || "";
+    return normalizeCode(region);
+  };
 
   const setSelectedCountry = (code: string) => {
     setSelectedCountryState(code);
     if (code) {
+      setManualSelection(true);
       setCache(code, true); // mark as manually set
     } else {
+      setManualSelection(false);
       try {
         localStorage.removeItem(CACHE_KEY);
       } catch {
@@ -78,38 +138,68 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const reloadDetection = () => {
+    setDetecting(true);
+    setManualSelection(false);
+    setSelectedCountryState("");
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setReloadCounter((c) => c + 1);
+  };
+
   useEffect(() => {
     // Skip re-detection only if the user manually chose their country
-    if (cached?.manual) return;
+    if (manualSelection) {
+      setDetecting(false);
+      return;
+    }
+
+    // Re-read cache fresh (not from stale closure) to avoid acting on
+    // an outdated entry that was cleared by reloadDetection.
+    const freshCache = getCached();
+    if (freshCache?.manual) {
+      setSelectedCountryState(freshCache.code);
+      setDetecting(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("https://ipapi.co/json/", {
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const code = (data.country_code || "").toUpperCase();
-        if (!cancelled && code) {
-          setSelectedCountryState(code);
-          setCache(code, false); // auto-detected, not manual
+        // IP-based strategies give actual geographic location;
+        // browser locale only reflects language preference (en-US ≠ in the US).
+        // ipwho.is is first because ipapi.co frequently rate-limits.
+        const strategies = [
+          detectFromIpWhoIs,
+          detectFromIpApiCo,
+          detectFromBackend,
+        ];
+
+        for (const detect of strategies) {
+          try {
+            const code = await detect();
+            if (!cancelled && code) {
+              setSelectedCountryState(code);
+              setCache(code, false); // auto-detected, not manual
+              return;
+            }
+          } catch {
+            // This strategy failed (CORS, network, timeout, etc.) — try next
+            continue;
+          }
+        }
+
+        // Last-resort fallback: browser locale region (e.g. fr-CA → CA)
+        const localeCode = detectFromBrowserLocale();
+        if (!cancelled && localeCode) {
+          setSelectedCountryState(localeCode);
+          setCache(localeCode, false);
         }
       } catch {
-        try {
-          const res = await fetch(
-            "https://ip-api.com/json/?fields=countryCode",
-            { signal: AbortSignal.timeout(5000) },
-          );
-          if (!res.ok) throw new Error();
-          const data = await res.json();
-          const code = (data.countryCode || "").toUpperCase();
-          if (!cancelled && code) {
-            setSelectedCountryState(code);
-            setCache(code, false);
-          }
-        } catch {
-          /* both failed — keep whatever was cached or stay empty */
-        }
+        /* all failed — keep whatever was cached or stay empty */
       } finally {
         if (!cancelled) setDetecting(false);
       }
@@ -117,11 +207,16 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reloadCounter, manualSelection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <CountryContext.Provider
-      value={{ selectedCountry, setSelectedCountry, detecting }}
+      value={{
+        selectedCountry,
+        setSelectedCountry,
+        detecting,
+        reloadDetection,
+      }}
     >
       {children}
     </CountryContext.Provider>
