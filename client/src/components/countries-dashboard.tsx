@@ -2055,7 +2055,8 @@ export default function DatabaseExpert({
                   Business Management
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Add, view, and manage businesses in your directory. All actions are performed directly by country.
+                  Add, view, and manage businesses in your directory. All
+                  actions are performed directly by country.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -2063,24 +2064,41 @@ export default function DatabaseExpert({
                   <div className="flex gap-3">
                     <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-blue-300">
-                      <p className="font-medium">Non-Coder Friendly Interface</p>
+                      <p className="font-medium">
+                        Non-Coder Friendly Interface
+                      </p>
                       <p className="text-blue-300/80 mt-1">
-                        Use the form below to add new businesses to your directory. Simply fill in the business details and select the appropriate country. No technical knowledge required.
+                        Use the form below to add new businesses to your
+                        directory. Simply fill in the business details and
+                        select the appropriate country. No technical knowledge
+                        required.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <BusinessForm onSuccess={() => {
-                    // Refresh businesses data when new business is added
-                    queryClient.invalidateQueries({ queryKey: ["businesses"] });
-                  }} />
+                  <BusinessForm
+                    defaultCountryCode={selectedCountryCode}
+                    onSuccess={() => {
+                      // Refresh businesses data when new business is added
+                      queryClient.invalidateQueries({
+                        queryKey: ["geo-businesses"],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ["businesses"],
+                      });
+                    }}
+                  />
                 </div>
 
                 <div className="border-t border-white/10 pt-6">
-                  <h3 className="text-sm font-semibold text-slate-200 mb-4">Recently Added Businesses</h3>
-                  <p className="text-sm text-slate-400">Businesses you add will appear here automatically.</p>
+                  <h3 className="text-sm font-semibold text-slate-200 mb-4">
+                    Recently Added Businesses
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    Businesses you add will appear here automatically.
+                  </p>
                 </div>
               </CardContent>
             </Card>
