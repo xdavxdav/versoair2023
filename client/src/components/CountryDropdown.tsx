@@ -144,7 +144,7 @@ interface Country {
 }
 
 export function CountryDropdown() {
-  const { selectedCountry, setSelectedCountry } = useCountry();
+  const { selectedCountry, setSelectedCountry, detecting } = useCountry();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -188,8 +188,9 @@ export function CountryDropdown() {
       })
     : allOptions;
 
-  const current =
-    allOptions.find((c) => c.code === selectedCountry) ?? allOptions[0];
+  const current = selectedCountry
+    ? (allOptions.find((c) => c.code === selectedCountry) ?? null)
+    : null;
 
   const select = useCallback(
     (code: string) => {
@@ -199,8 +200,15 @@ export function CountryDropdown() {
     [setSelectedCountry],
   );
 
-  // Countries haven't loaded yet — render nothing until ready
-  if (!current) return null;
+  // Still detecting or no country resolved yet — show a spinner
+  if (detecting || !current) {
+    return (
+      <div className="flex items-center gap-1.5 pl-1.5 pr-2 py-[3px] rounded-full bg-white/15 text-white border border-white/20 text-[10px] sm:text-[11px] font-semibold opacity-80">
+        <Globe className="h-3 w-3 animate-spin" />
+        <span>Detecting…</span>
+      </div>
+    );
+  }
 
   return (
     <>

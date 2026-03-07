@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import {
   searchBusinesses,
   checkDatabaseConnection,
@@ -7,6 +6,7 @@ import {
 } from "@/lib/business-data";
 /* webhint-disable hint-no-inline-styles */
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useCountry } from "@/contexts/CountryContext";
 import AnalyticsCard from "@/components/ui/analytics-card";
 import ProgressBar from "@/components/ui/progress-bar";
 import AnimatedHeading from "@/components/AnimatedHeading";
@@ -117,6 +117,7 @@ async function searchHealthcareBusinesses(params: {
   page?: number;
   limit?: number;
   sort_by?: string;
+  countryCode?: string;
 }): Promise<{ data: Business[]; total: number; success: boolean }> {
   try {
     const queryParams = new URLSearchParams();
@@ -139,6 +140,7 @@ async function searchHealthcareBusinesses(params: {
       query: params.query,
       sectorId: 10,
       location: params.location,
+      countryCode: params.countryCode,
       limit: params.limit || 50,
     });
     return { data: results, total: results.length, success: true };
@@ -183,6 +185,7 @@ const statusOptions = [
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
 
 export default function Sante() {
+  const { selectedCountry } = useCountry();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const barChartRef = useRef<HTMLCanvasElement>(null);
@@ -250,6 +253,7 @@ export default function Sante() {
       category: "health",
       limit: 9,
       sort_by: activeFilters.sort_by,
+      countryCode: selectedCountry || undefined,
     });
     if (result.success) {
       setSearchResults(result.data);
@@ -257,7 +261,7 @@ export default function Sante() {
       setHasSearched(true);
     }
     setIsInitialLoading(false);
-  }, [databaseConnected, activeFilters.sort_by]);
+  }, [databaseConnected, activeFilters.sort_by, selectedCountry]);
 
   useEffect(() => {
     fetchBusinesses();
@@ -283,7 +287,7 @@ export default function Sante() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [searchQuery, locationQuery, activeFilters]);
+  }, [searchQuery, locationQuery, activeFilters, selectedCountry]);
 
   // Search handler
   const handleSearch = async (page: number = 1) => {
@@ -298,6 +302,7 @@ export default function Sante() {
     };
 
     if (locationQuery) params.location = locationQuery;
+    if (selectedCountry) params.countryCode = selectedCountry;
     if (activeFilters.category) params.category = activeFilters.category;
     if (activeFilters.minRating)
       params.min_rating = parseFloat(activeFilters.minRating);
@@ -567,64 +572,6 @@ export default function Sante() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-red-900 to-slate-900 text-white">
-      {/* Quick Navigation */}
-      <div className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-red-500/20">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto text-sm">
-          <Link href="/">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏠 Accueil
-            </span>
-          </Link>
-          <Link href="/businesses-directory">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              📋 Annuaire
-            </span>
-          </Link>
-          <span className="text-red-400/50">|</span>
-          <Link href="/commerce">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🛍️ Commerce
-            </span>
-          </Link>
-          <Link href="/hotellerie">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏨 Hôtellerie
-            </span>
-          </Link>
-          <Link href="/batiment">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏗️ Bâtiment
-            </span>
-          </Link>
-          <Link href="/automobile">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🚗 Automobile
-            </span>
-          </Link>
-          <Link href="/finances">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              💰 Finances
-            </span>
-          </Link>
-          <Link href="/divertissement">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🎭 Divertissement
-            </span>
-          </Link>
-          <span className="text-red-400/50">|</span>
-          <Link href="/logement">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏠 Logement
-            </span>
-          </Link>
-          <Link href="/geo-admin">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🌍 Geo Admin
-            </span>
-          </Link>
-        </div>
-      </div>
-
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
