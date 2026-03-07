@@ -20,19 +20,32 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface BusinessFormProps {
   onSuccess?: () => void;
+  defaultCountryCode?: string;
 }
 
-export function BusinessForm({ onSuccess }: BusinessFormProps) {
+export function BusinessForm({
+  onSuccess,
+  defaultCountryCode,
+}: BusinessFormProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
-    countryCode: "",
+    countryCode:
+      defaultCountryCode && defaultCountryCode !== "all"
+        ? defaultCountryCode
+        : "",
     cityName: "",
     address: "",
     phone: "",
@@ -49,6 +62,13 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
       return res.json();
     },
   });
+
+  // Sync country when dashboard selection changes or dialog opens
+  useEffect(() => {
+    if (defaultCountryCode && defaultCountryCode !== "all") {
+      setFormData((prev) => ({ ...prev, countryCode: defaultCountryCode }));
+    }
+  }, [defaultCountryCode, open]);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -127,7 +147,10 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
       setFormData({
         name: "",
         categoryId: "",
-        countryCode: "",
+        countryCode:
+          defaultCountryCode && defaultCountryCode !== "all"
+            ? defaultCountryCode
+            : "",
         cityName: "",
         address: "",
         phone: "",
@@ -141,7 +164,8 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
       console.error("Error creating business:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create business",
+        description:
+          error instanceof Error ? error.message : "Failed to create business",
         variant: "destructive",
       });
     } finally {
@@ -149,8 +173,12 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
     }
   };
 
-  const selectedCountry = countries.find((c: any) => c.code === formData.countryCode);
-  const selectedCategory = categories.find((c: any) => c.id === parseInt(formData.categoryId));
+  const selectedCountry = countries.find(
+    (c: any) => c.code === formData.countryCode,
+  );
+  const selectedCategory = categories.find(
+    (c: any) => c.id === parseInt(formData.categoryId),
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -177,7 +205,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="text"
               placeholder="e.g., Acme Corp, The Coffee House"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -185,13 +215,20 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
           {/* Category */}
           <div className="space-y-1.5">
             <Label className="text-slate-200">Category *</Label>
-            <Select value={formData.categoryId} onValueChange={(v) => setFormData({ ...formData, categoryId: v })}>
+            <Select
+              value={formData.categoryId}
+              onValueChange={(v) => setFormData({ ...formData, categoryId: v })}
+            >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10">
                 {categories.map((cat: any) => (
-                  <SelectItem key={cat.id} value={String(cat.id)} className="text-slate-100 hover:bg-white/10">
+                  <SelectItem
+                    key={cat.id}
+                    value={String(cat.id)}
+                    className="text-slate-100 hover:bg-white/10"
+                  >
                     {cat.name}
                   </SelectItem>
                 ))}
@@ -202,13 +239,22 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
           {/* Country */}
           <div className="space-y-1.5">
             <Label className="text-slate-200">Country *</Label>
-            <Select value={formData.countryCode} onValueChange={(v) => setFormData({ ...formData, countryCode: v })}>
+            <Select
+              value={formData.countryCode}
+              onValueChange={(v) =>
+                setFormData({ ...formData, countryCode: v })
+              }
+            >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
                 <SelectValue placeholder="Select a country" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10 max-h-60">
                 {countries.map((country: any) => (
-                  <SelectItem key={country.code} value={country.code} className="text-slate-100 hover:bg-white/10">
+                  <SelectItem
+                    key={country.code}
+                    value={country.code}
+                    className="text-slate-100 hover:bg-white/10"
+                  >
                     {country.name} ({country.code})
                   </SelectItem>
                 ))}
@@ -223,7 +269,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="text"
               placeholder="e.g., New York, Paris"
               value={formData.cityName}
-              onChange={(e) => setFormData({ ...formData, cityName: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, cityName: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -235,7 +283,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="text"
               placeholder="e.g., 123 Main St, Suite 100"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -247,7 +297,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="tel"
               placeholder="e.g., +1-555-0123"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -259,7 +311,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="email"
               placeholder="e.g., contact@business.com"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -271,7 +325,9 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
               type="text"
               placeholder="Brief description of the business"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
             />
           </div>
@@ -291,10 +347,19 @@ export function BusinessForm({ onSuccess }: BusinessFormProps) {
 
           {/* Buttons */}
           <div className="flex gap-3 justify-end pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-white/10 text-slate-300 hover:bg-white/5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="border-white/10 text-slate-300 hover:bg-white/5"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="gap-2 bg-blue-600 hover:bg-blue-700"
+            >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isSubmitting ? "Creating..." : "Create Business"}
             </Button>
