@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 
 interface LocationPanelProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface LocationData {
 
 export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
   useScrollLock(isOpen);
+  const { selectedCountry } = useCountry();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const [liveLocation, setLiveLocation] = useState<LocationData | null>(null);
@@ -172,72 +174,173 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
     if (!isOpen || liveLocation) return;
     let cancelled = false;
 
-    const fetchIPData = async () => {
-      try {
-        const res = await fetch("https://ipapi.co/json/", {
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) throw new Error("ipapi failed");
-        return await res.json();
-      } catch {
-        // Fallback IP API
-        const res = await fetch("https://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query", {
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) throw new Error("ip-api failed");
-        const data = await res.json();
-        // Normalize to ipapi.co format
-        return {
-          ip: data.query,
-          city: data.city,
-          region: data.regionName,
-          region_code: data.region,
-          country_code: data.countryCode,
-          postal: data.zip,
-          latitude: data.lat,
-          longitude: data.lon,
-          org: data.org || data.isp,
-        };
+    // Fetch IP data from multiple sources with fallbacks
+    const fetchIPData = async (): Promise<Record<string, any>> => {
+      const providers = [
+        async () => {
+          const r = await authenticatedFetch("/api/location/ip-data", {
+            signal: AbortSignal.timeout(4000),
+          });
+          if (!r.ok) throw new Error("backend failed");
+          const d = await r.json();
+          if (!d?.success) throw new Error("backend no data");
+          return d;
+        },
+        async () => {
+          const r = await fetch("https://ipapi.co/json/", {
+            signal: AbortSignal.timeout(4000),
+          });
+          if (!r.ok) throw new Error("ipapi failed");
+          const d = await r.json();
+          if (d?.error) throw new Error("ipapi rate limited");
+          return d;
+        },
+        async () => {
+          const r = await fetch("https://ipwho.is/", {
+            signal: AbortSignal.timeout(4000),
+          });
+          if (!r.ok) throw new Error("ipwho failed");
+          const d = await r.json();
+          if (!d?.success) throw new Error("ipwho no data");
+          return {
+            ip: d.ip,
+            city: d.city,
+            region: d.region,
+            region_code: d.region,
+            country_code: d.country_code,
+            postal: d.postal,
+            latitude: d.latitude,
+            longitude: d.longitude,
+            org: d?.connection?.org || d?.connection?.isp || "",
+          };
+        },
+      ];
+
+      for (const provider of providers) {
+        try {
+          const data = await provider();
+          if (data?.ip && data.ip !== "unknown") return data;
+        } catch {
+          /* try next */
+        }
       }
+      return {}; // all failed
     };
 
-    (async () => {
-      try {
-        // Always fetch IP data first (no permissions needed)
-        const ipData = await fetchIPData();
-        if (cancelled) return;
+    // Get browser geolocation (returns coords or null)
+    const getBrowserCoords = (): Promise<{
+      latitude: number;
+      longitude: number;
+      altitude: number | null;
+    } | null> =>
+      new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve(null);
+        navigator.geolocation.getCurrentPosition(
+          (pos) =>
+            resolve({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              altitude: pos.coords.altitude,
+            }),
+          () => resolve(null),
+          { timeout: 6000 },
+        );
+      });
 
-        // Try browser geolocation for precise coords (non-blocking)
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              if (cancelled) return;
-              const { latitude, longitude, altitude } = position.coords;
-              setLiveLocation(buildLocationData(ipData, { latitude, longitude, altitude }));
-              setLocationError(null);
-            },
-            () => {
-              // Geolocation denied — use IP-based coords instead (no error shown)
-              if (cancelled) return;
-              setLiveLocation(buildLocationData(ipData));
-              setLocationError(null);
-            },
-          );
-        } else {
-          // No geolocation support — use IP data only
-          setLiveLocation(buildLocationData(ipData));
-          setLocationError(null);
-        }
-      } catch (error) {
-        console.error("Error fetching location data:", error);
-        if (!cancelled) {
-          setLocationError("Failed to fetch location details. Please check your connection.");
-        }
-      }
+    (async () => {
+      // Run both in parallel — don't wait for IP if browser geo is fast
+      const [ipData, coords] = await Promise.all([
+        fetchIPData().catch(() => ({})),
+        getBrowserCoords().catch(() => null),
+      ]);
+
+      if (cancelled) return;
+
+      // Build the best possible location from whatever succeeded
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const now = new Date();
+      const timezoneOffset = -now.getTimezoneOffset() / 60;
+      const timeString = now.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+      const timezoneString = `${timezone} (UTC${timezoneOffset >= 0 ? "+" : ""}${timezoneOffset})`;
+      const networkType =
+        (navigator as any).connection?.effectiveType?.toUpperCase() ||
+        "Broadband";
+
+      // Derive city name from timezone if IP data is empty
+      const cityFromTimezone =
+        timezone.split("/").pop()?.replace(/_/g, " ") || "";
+      const regionFromTimezone = timezone.split("/")[0] || "";
+
+      const city =
+        ipData.city && ipData.city !== "Unknown"
+          ? ipData.city
+          : cityFromTimezone;
+      const region = ipData.region || ipData.region_code || regionFromTimezone;
+      const countryCode = (selectedCountry || ipData.country_code || "")
+        .toString()
+        .trim()
+        .toUpperCase();
+
+      const countryName = countryCode
+        ? new Intl.DisplayNames([navigator.language || "en"], {
+            type: "region",
+          }).of(countryCode) || countryCode
+        : "";
+
+      const locationLabel = city
+        ? `${city}${region ? ", " + region : ""}${countryName ? " (" + countryName + ")" : ""}`
+        : cityFromTimezone || "Location detected";
+
+      const lat = coords?.latitude ?? ipData.latitude ?? 0;
+      const lng = coords?.longitude ?? ipData.longitude ?? 0;
+
+      setLiveLocation({
+        currentLocation: locationLabel,
+        postalCode:
+          ipData.postal && ipData.postal !== "Unknown" ? ipData.postal : "N/A",
+        district: region || "N/A",
+        coordinates: { latitude: lat, longitude: lng },
+        altitude:
+          coords?.altitude != null
+            ? `${Math.round(coords.altitude * 3.28084)} ft`
+            : "N/A",
+        wifiProvider: ipData.org || "Unknown Provider",
+        networkType,
+        signalStrength: "Good",
+        ipAddress: ipData.ip && ipData.ip !== "unknown" ? ipData.ip : "N/A",
+        internetProvider: ipData.org || "Unknown ISP",
+        timezone: timezoneString,
+        localTime: timeString,
+        nearbyLandmarks: [
+          `${city || "Local"} City Center`,
+          `${region || "Regional"} Office`,
+          "Nearby Shopping District",
+          "Public Transport Hub",
+          "Local Business District",
+        ],
+        activeUsers,
+        coverageAreas: Math.floor(Math.random() * 20) + 80,
+        responseTime: `${Math.floor(Math.random() * 20) + 5}ms`,
+        regions: [
+          { name: "North", coverage: Math.floor(Math.random() * 20) + 75 },
+          { name: "East", coverage: Math.floor(Math.random() * 20) + 75 },
+          { name: "South", coverage: Math.floor(Math.random() * 20) + 75 },
+          { name: "West", coverage: Math.floor(Math.random() * 20) + 75 },
+          { name: "Center", coverage: Math.floor(Math.random() * 20) + 80 },
+        ],
+      });
+      setLocationError(null);
     })();
 
-    return () => { cancelled = true; };
-  }, [isOpen, liveLocation]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, liveLocation, selectedCountry]);
 
   // Update time and active users every second
   useEffect(() => {
@@ -386,7 +489,7 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
 
       {/* Panel */}
       <div
-        className={`fixed top-4 left-2 right-2 md:left-auto md:right-4 md:w-96 max-h-[90vh] overflow-y-auto smooth-scroll bg-white shadow-2xl z-[10001] p-4 md:p-6 rounded-lg border transition-all duration-500 ease-in-out ${
+        className={`fixed top-[calc(env(safe-area-inset-top)+0.75rem)] bottom-4 left-2 right-2 md:top-4 md:bottom-auto md:left-auto md:right-4 md:w-96 max-h-[calc(100dvh-2rem)] md:max-h-[90vh] overflow-y-auto overscroll-contain smooth-scroll bg-white shadow-2xl z-[10001] p-4 md:p-6 rounded-lg border transition-all duration-500 ease-in-out ${
           isOpen
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-4 pointer-events-none"
@@ -398,12 +501,6 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
             <X className="h-4 w-4" />
           </Button>
         </div>
-
-        {locationError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{locationError}</p>
-          </div>
-        )}
 
         <div className="space-y-4">
           {/* Current Location Details */}

@@ -25,6 +25,157 @@ router.get("/api/countries", async (_req: Request, res: Response) => {
   }
 });
 
+// GET detected country for current request (best-effort)
+router.get("/api/location/country", async (req: Request, res: Response) => {
+  const normalizeCode = (value?: string | null) => {
+    const code = (value || "").trim().toUpperCase();
+    if (/^[A-Z]{2}$/.test(code) && code !== "XX" && code !== "ZZ") {
+      return code;
+    }
+    return "";
+  };
+
+  try {
+    // 1) Prefer platform-provided headers (Cloudflare/Vercel/etc.)
+    const headerCandidates = [
+      req.header("cf-ipcountry"),
+      req.header("x-vercel-ip-country"),
+      req.header("x-country-code"),
+      req.header("x-country"),
+    ];
+
+    for (const candidate of headerCandidates) {
+      const code = normalizeCode(candidate);
+      if (code) {
+        return res.json({ success: true, countryCode: code, source: "header" });
+      }
+    }
+
+    // 2) Fallback: resolve from client IP using ipwho.is
+    const forwardedFor = req.header("x-forwarded-for") || "";
+    const ipFromHeader = forwardedFor.split(",")[0]?.trim();
+    const candidateIp = ipFromHeader || req.ip || "";
+
+    if (candidateIp) {
+      const ip = candidateIp.replace(/^::ffff:/, "");
+
+      // Skip loopback/private IPs — they won't resolve to a real country
+      const isPrivate =
+        ip === "127.0.0.1" ||
+        ip === "::1" ||
+        ip === "localhost" ||
+        ip.startsWith("10.") ||
+        ip.startsWith("192.168.") ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
+      if (!isPrivate) {
+        const encodedIp = encodeURIComponent(ip);
+        const response = await fetch(
+          `https://ipwho.is/${encodedIp}?fields=success,country_code`,
+          { signal: AbortSignal.timeout(4000) },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const code = normalizeCode(data?.country_code);
+          if (data?.success && code) {
+            return res.json({
+              success: true,
+              countryCode: code,
+              source: "ip",
+            });
+          }
+        }
+      }
+    }
+
+    // 3) Final fallback: call ipwho.is with no IP (uses server's public IP)
+    try {
+      const response = await fetch(
+        "https://ipwho.is/?fields=success,country_code",
+        { signal: AbortSignal.timeout(4000) },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const code = normalizeCode(data?.country_code);
+        if (data?.success && code) {
+          return res.json({
+            success: true,
+            countryCode: code,
+            source: "server-ip",
+          });
+        }
+      }
+    } catch {
+      /* ignore — return empty below */
+    }
+
+    return res.status(200).json({ success: false, countryCode: "" });
+  } catch (error) {
+    console.warn("Country detection failed:", error);
+    return res.status(200).json({ success: false, countryCode: "" });
+  }
+});
+
+// GET detailed IP geolocation data (for location panel)
+router.get("/api/location/ip-data", async (req: Request, res: Response) => {
+  try {
+    // Get client IP from headers or request object
+    const forwardedFor = req.header("x-forwarded-for") || "";
+    const ipFromHeader = forwardedFor.split(",")[0]?.trim();
+    const candidateIp = ipFromHeader || req.ip || "";
+    const ip = candidateIp.replace(/^::ffff:/, "");
+
+    // Try ipwho.is (HTTPS-friendly, works in all environments)
+    try {
+      const response = await fetch(
+        `https://ipwho.is/${ip}?fields=success,ip,city,region,region_code,country,country_code,postal,latitude,longitude,connection`,
+        { signal: AbortSignal.timeout(4000) },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.success) {
+          return res.json({
+            success: true,
+            ip: data.ip,
+            city: data.city || "Unknown",
+            region: data.region || "Unknown",
+            region_code: data.region_code || "",
+            country_code: data.country_code || "Unknown",
+            postal: data.postal || "Unknown",
+            latitude: data.latitude || 0,
+            longitude: data.longitude || 0,
+            org:
+              data?.connection?.org || data?.connection?.isp || "Unknown ISP",
+            source: "ipwho.is",
+          });
+        }
+      }
+    } catch (error) {
+      console.warn("ipwho.is lookup failed:", error);
+    }
+
+    // All providers failed - return minimal data
+    return res.status(200).json({
+      success: false,
+      ip: ip || "unknown",
+      city: "Unknown",
+      region: "Unknown",
+      country_code: "Unknown",
+      postal: "Unknown",
+      latitude: 0,
+      longitude: 0,
+      org: "Unknown ISP",
+    });
+  } catch (error) {
+    console.error("Location data error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to get location data" });
+  }
+});
+
 // ============================================================================
 // BUSINESSES ENDPOINTS
 // ============================================================================

@@ -5,7 +5,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, ChevronDown, Globe, Check, X } from "lucide-react";
+import { Search, ChevronDown, Globe, Check, X, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCountry } from "@/contexts/CountryContext";
 
@@ -144,7 +144,8 @@ interface Country {
 }
 
 export function CountryDropdown() {
-  const { selectedCountry, setSelectedCountry, detecting } = useCountry();
+  const { selectedCountry, setSelectedCountry, detecting, reloadDetection } =
+    useCountry();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -200,8 +201,8 @@ export function CountryDropdown() {
     [setSelectedCountry],
   );
 
-  // Still detecting or no country resolved yet — show a spinner
-  if (detecting || !current) {
+  // Still detecting — show a spinner
+  if (detecting) {
     return (
       <div className="flex items-center gap-1.5 pl-1.5 pr-2 py-[3px] rounded-full bg-white/15 text-white border border-white/20 text-[10px] sm:text-[11px] font-semibold opacity-80">
         <Globe className="h-3 w-3 animate-spin" />
@@ -221,7 +222,7 @@ export function CountryDropdown() {
       )}
 
       <div
-        className="relative flex items-center"
+        className="relative flex items-center gap-1.5"
         style={{ zIndex: open ? 999999 : "auto" }}
       >
         {/* ── Trigger ── */}
@@ -232,13 +233,26 @@ export function CountryDropdown() {
           aria-haspopup="true"
           aria-expanded={open}
         >
-          <span className="text-sm leading-none">{current.flag}</span>
+          <span className="text-sm leading-none">{current?.flag ?? "🌍"}</span>
           <span className="text-[10px] sm:text-[11px] font-semibold max-w-[4.5rem] sm:max-w-[6rem] truncate">
-            {current.name}
+            {current?.name ?? "Select"}
           </span>
           <ChevronDown
             className={`h-2.5 w-2.5 opacity-70 group-hover:opacity-100 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
+        </button>
+
+        {/* ── Reload/Refresh button — retrigger detection ── */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            reloadDetection();
+          }}
+          className="text-white/70 hover:text-white transition-colors focus:outline-none"
+          title="Reload location detection"
+          aria-label="Reload location detection"
+        >
+          <RefreshCw className="h-3 w-3" />
         </button>
 
         {/* ── Dropdown ── */}
