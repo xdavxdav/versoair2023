@@ -85,6 +85,7 @@ import PasswordPage from "@/pages/password";
 import GeoAdminPage from "@/pages/geo-admin";
 import BusinessVerification from "@/pages/business-verification";
 import ImmobilierPortal from "@/pages/immobilier-portal";
+import CredentialsVault from "@/pages/credentials-vault";
 
 // ─────────────────────────────────────────────────────
 // 🛡️ Admin HQ (internal platform management)
@@ -262,6 +263,8 @@ function Router() {
       <Route path="/admin/database" component={DatabaseManagementCenter} />
       <Route path="/admin/verification" component={VerificationPage} />
       <Route path="/admin/tickets" component={AdminTicketManagement} />
+      {/* 🔐 Superuser-only credentials vault — no nav links, direct URL only */}
+      <Route path="/vault" component={CredentialsVault} />
 
       {/* ═══════════════════════════════════════════════
           ❓ HELP & SUPPORT

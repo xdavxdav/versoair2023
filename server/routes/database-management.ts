@@ -123,8 +123,19 @@ router.delete("/countries/:id", async (req, res) => {
 
 router.get("/regions", async (req, res) => {
   try {
-    const result = await db.select().from(regions);
-    res.json(result);
+    const { countryId } = req.query;
+    if (countryId) {
+      const cid = parseInt(countryId as string);
+      const result = await db.execute(
+        sql`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`,
+      );
+      res.json(result.rows);
+    } else {
+      const result = await db.execute(
+        sql`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`,
+      );
+      res.json(result.rows);
+    }
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -173,8 +184,38 @@ router.delete("/regions/:id", async (req, res) => {
 
 router.get("/cities", async (req, res) => {
   try {
-    const result = await db.select().from(cities);
-    res.json(result);
+    const { countryId, regionId } = req.query;
+    if (regionId) {
+      // Filter by region — cascading Region → City
+      const rid = parseInt(regionId as string);
+      const result = await db.execute(
+        sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+            FROM cities c
+            JOIN regions r ON c.region_id = r.id
+            WHERE c.region_id = ${rid}
+            ORDER BY c.name`,
+      );
+      res.json(result.rows);
+    } else if (countryId) {
+      // Filter by country — JOIN through regions since cities has no country_id column
+      const cid = parseInt(countryId as string);
+      const result = await db.execute(
+        sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+            FROM cities c
+            JOIN regions r ON c.region_id = r.id
+            WHERE r.country_id = ${cid}
+            ORDER BY c.name`,
+      );
+      res.json(result.rows);
+    } else {
+      const result = await db.execute(
+        sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+            FROM cities c
+            LEFT JOIN regions r ON c.region_id = r.id
+            ORDER BY c.name`,
+      );
+      res.json(result.rows);
+    }
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

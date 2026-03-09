@@ -451,4 +451,62 @@ router.post("/:id/unsave", (req, res) => {
   });
 });
 
+// POST /api/jobs — create a new job listing
+router.post("/", async (req, res) => {
+  try {
+    const {
+      title,
+      company,
+      location,
+      type,
+      sector,
+      countryCode,
+      salaryMin,
+      salaryMax,
+      currency,
+      description,
+      requirements,
+      experienceLevel,
+      department,
+      isRemote,
+    } = req.body;
+
+    if (!title || !company) {
+      return res
+        .status(400)
+        .json({ success: false, error: "title and company are required" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO jobs (id, title, company, location, type, sector, country_code,
+         salary_min, salary_max, currency, description, requirements,
+         experience_level, department, is_remote, status, posted_date, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'active',
+               CURRENT_DATE, NOW(), NOW())
+       RETURNING *`,
+      [
+        title,
+        company,
+        location || null,
+        type || "Full-time",
+        sector || "general",
+        countryCode || null,
+        salaryMin || null,
+        salaryMax || null,
+        currency || "USD",
+        description || null,
+        requirements || null,
+        experienceLevel || null,
+        department || null,
+        isRemote || false,
+      ],
+    );
+
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    console.error("[JOBS] Create error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

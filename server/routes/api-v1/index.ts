@@ -5,6 +5,7 @@ import subscriptionRouter from "./subscription";
 import emailSubscriptionsRouter from "./email-subscriptions";
 import paymentsRouter from "./payments";
 import referralRouter from "./referral";
+import cardsRouter from "./cards";
 
 const router = Router();
 
@@ -18,6 +19,10 @@ router.use("/email-subscriptions", emailSubscriptionsRouter);
 router.use("/payments/webhook", raw({ type: "application/json" }));
 router.use("/payments", paymentsRouter);
 router.use("/referral", referralRouter);
+
+// Verso Air Card — Stripe Issuing + Points rewards
+router.use("/cards/webhook/issuing", raw({ type: "application/json" }));
+router.use("/cards", cardsRouter);
 
 // TODO: Add public and private routes as they're created
 // router.use('/public', publicRouter);

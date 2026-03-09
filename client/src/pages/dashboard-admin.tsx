@@ -38,6 +38,7 @@ import {
   HardDrive,
   Clock,
   CheckCircle,
+  Check,
   AlertTriangle,
   XCircle,
   Info,
@@ -184,6 +185,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import {
+  GeolocationFields,
+  BUSINESS_TYPE_OPTIONS,
+  getBusinessTypesForCategory,
+  getAdminLabels,
+} from "@/components/ui/geolocation-fields";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -205,6 +212,7 @@ import { AdvertisingSection } from "@/components/sections/AdvertisingSection";
 import { ArtistsSection } from "@/components/sections/ArtistsSection";
 import { UsersSection } from "@/components/sections/UsersSection";
 import { AnalyticsSection } from "@/components/sections/AnalyticsSection";
+import { useCountry } from "@/contexts/CountryContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -567,6 +575,187 @@ const DashboardStats = ({ stats, onRefresh, isRefreshing }: any) => (
   </div>
 );
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PENDING BUSINESS APPROVALS (SupUser / SuperUser review panel)
+// ══════════════════════════════════════════════════════════════════════════════
+const PendingApprovals = () => {
+  const [pendingBiz, setPendingBiz] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [actionId, setActionId] = useState<number | null>(null);
+
+  const fetchPending = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses/pending`,
+      );
+      const data = await res.json();
+      if (data.success) setPendingBiz(data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch pending businesses:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPending();
+  }, [fetchPending]);
+
+  const handleApprove = async (id: number, name: string) => {
+    setActionId(id);
+    try {
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses/${id}/approve`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approvedBy: 1 }),
+        },
+      );
+      const result = await res.json();
+      if (result.success) {
+        setPendingBiz((prev) => prev.filter((b) => b.id !== id));
+        alert(`✅ "${name}" approved and now live!`);
+      }
+    } catch (err) {
+      console.error("Approve error:", err);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleReject = async (id: number, name: string) => {
+    const reason = prompt(`Reason for rejecting "${name}":`);
+    if (reason === null) return; // user cancelled
+    setActionId(id);
+    try {
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses/${id}/reject`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rejectedBy: 1, reason }),
+        },
+      );
+      const result = await res.json();
+      if (result.success) {
+        setPendingBiz((prev) => prev.filter((b) => b.id !== id));
+        alert(`❌ "${name}" has been rejected.`);
+      }
+    } catch (err) {
+      console.error("Reject error:", err);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  if (pendingBiz.length === 0 && !loading) return null;
+
+  return (
+    <Card className="border-0 shadow-lg mb-6 border-l-4 border-l-amber-400">
+      <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b px-3 sm:px-6 py-4">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <div className="p-1.5 bg-amber-500 text-white rounded-lg">
+            <Clock className="h-4 w-4" />
+          </div>
+          Pending Business Approvals
+          {pendingBiz.length > 0 && (
+            <span className="ml-2 inline-flex items-center justify-center h-5 w-5 text-xs font-bold bg-amber-500 text-white rounded-full">
+              {pendingBiz.length}
+            </span>
+          )}
+        </CardTitle>
+        <CardDescription>
+          GeoAdmin submissions awaiting SupUser / SuperUser review
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-3 sm:p-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-amber-500 mr-2" />
+            <span className="text-sm text-gray-500">
+              Loading pending submissions…
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingBiz.map((biz: any) => (
+              <div
+                key={biz.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-amber-50/50 border border-amber-200 gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-800">
+                      {biz.name}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-700">
+                      ⏳ Pending
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
+                    {biz.category_name && <span>{biz.category_name}</span>}
+                    {biz.country_code && <span>🌍 {biz.country_code}</span>}
+                    {biz.city_name && <span>📍 {biz.city_name}</span>}
+                    {biz.submitted_by_username && (
+                      <span>👤 {biz.submitted_by_username}</span>
+                    )}
+                    {biz.created_at && (
+                      <span>
+                        📅 {new Date(biz.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {biz.pdf_path && (
+                    <a
+                      href={`${API_BASE_URL}/api/businesses/${biz.id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    >
+                      📄 PDF
+                    </a>
+                  )}
+                  <Button
+                    size="sm"
+                    className="gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs"
+                    disabled={actionId === biz.id}
+                    onClick={() => handleApprove(biz.id, biz.name)}
+                  >
+                    {actionId === biz.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Check className="h-3 w-3" />
+                    )}
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="gap-1 text-xs"
+                    disabled={actionId === biz.id}
+                    onClick={() => handleReject(biz.id, biz.name)}
+                  >
+                    {actionId === biz.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <X className="h-3 w-3" />
+                    )}
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 // Business Management Component
 const BusinessManagement = ({
   sharedCategories,
@@ -590,6 +779,13 @@ const BusinessManagement = ({
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [regionsList, setRegionsList] = useState<any[]>([]);
+  const [regionsLoading, setRegionsLoading] = useState(false);
+  const [citiesList, setCitiesList] = useState<any[]>([]);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+  const [autoPopulateRegion, setAutoPopulateRegion] = useState(true);
+  const [autoPopulateCity, setAutoPopulateCity] = useState(true);
+  const { selectedCountry: detectedCountry } = useCountry();
   const [newBusiness, setNewBusiness] = useState({
     name: "",
     categoryId: 0,
@@ -598,6 +794,7 @@ const BusinessManagement = ({
     address: "",
     description: "",
     // Location
+    regionId: "",
     cityName: "",
     countryCode: "",
     latitude: "",
@@ -609,6 +806,161 @@ const BusinessManagement = ({
     tags: "",
     openingHours: "",
   });
+
+  // Auto-initialize country from detected location when Add dialog opens
+  useEffect(() => {
+    if (showAddDialog && detectedCountry && !newBusiness.countryCode) {
+      setNewBusiness((prev) => ({ ...prev, countryCode: detectedCountry }));
+    }
+  }, [showAddDialog, detectedCountry]);
+
+  // Fetch regions when country changes (for Add dialog) — cascading: Country → Region
+  useEffect(() => {
+    const countryCode = newBusiness.countryCode;
+    if (!countryCode) {
+      setRegionsList([]);
+      setCitiesList([]);
+      return;
+    }
+    const matchedCountry = countriesList.find(
+      (c: any) => c.code === countryCode,
+    );
+    if (!matchedCountry) {
+      setRegionsList([]);
+      setCitiesList([]);
+      return;
+    }
+    setRegionsLoading(true);
+    fetch(`${API_BASE_URL}/api/regions?countryId=${matchedCountry.id}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setRegionsList(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(() => setRegionsList([]))
+      .finally(() => setRegionsLoading(false));
+  }, [newBusiness.countryCode, countriesList]);
+
+  // Fetch cities when region changes (for Add dialog) — cascading: Region → City
+  useEffect(() => {
+    const regionId = newBusiness.regionId;
+    if (!regionId) {
+      // If no region selected but country is, fetch all cities for that country as fallback
+      const countryCode = newBusiness.countryCode;
+      if (countryCode && regionsList.length === 0) {
+        const matchedCountry = countriesList.find(
+          (c: any) => c.code === countryCode,
+        );
+        if (matchedCountry) {
+          setCitiesLoading(true);
+          fetch(`${API_BASE_URL}/api/cities?countryId=${matchedCountry.id}`)
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => {
+              setCitiesList(Array.isArray(data) ? data : data.data || []);
+            })
+            .catch(() => setCitiesList([]))
+            .finally(() => setCitiesLoading(false));
+          return;
+        }
+      }
+      setCitiesList([]);
+      return;
+    }
+    setCitiesLoading(true);
+    fetch(`${API_BASE_URL}/api/cities?regionId=${regionId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setCitiesList(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(() => setCitiesList([]))
+      .finally(() => setCitiesLoading(false));
+  }, [
+    newBusiness.regionId,
+    newBusiness.countryCode,
+    regionsList,
+    countriesList,
+  ]);
+
+  // ── Edit dialog: Region & City state ──
+  const [editRegionsList, setEditRegionsList] = useState<any[]>([]);
+  const [editRegionsLoading, setEditRegionsLoading] = useState(false);
+  const [editCitiesList, setEditCitiesList] = useState<any[]>([]);
+  const [editCitiesLoading, setEditCitiesLoading] = useState(false);
+  const [editAutoPopulateRegion, setEditAutoPopulateRegion] = useState(true);
+  const [editAutoPopulateCity, setEditAutoPopulateCity] = useState(true);
+
+  // Fetch regions for Edit dialog when country changes
+  useEffect(() => {
+    const countryCode =
+      currentBusiness?.countryCode || currentBusiness?.country_code;
+    if (!countryCode) {
+      setEditRegionsList([]);
+      setEditCitiesList([]);
+      return;
+    }
+    const matchedCountry = countriesList.find(
+      (c: any) => c.code === countryCode,
+    );
+    if (!matchedCountry) {
+      setEditRegionsList([]);
+      setEditCitiesList([]);
+      return;
+    }
+    setEditRegionsLoading(true);
+    fetch(`${API_BASE_URL}/api/regions?countryId=${matchedCountry.id}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setEditRegionsList(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(() => setEditRegionsList([]))
+      .finally(() => setEditRegionsLoading(false));
+  }, [
+    currentBusiness?.countryCode,
+    currentBusiness?.country_code,
+    countriesList,
+  ]);
+
+  // Fetch cities for Edit dialog when region changes
+  useEffect(() => {
+    const regionId = currentBusiness?.regionId || currentBusiness?.region_id;
+    if (!regionId) {
+      // Fallback: fetch all cities for the country if no regions exist
+      const countryCode =
+        currentBusiness?.countryCode || currentBusiness?.country_code;
+      if (countryCode && editRegionsList.length === 0) {
+        const matchedCountry = countriesList.find(
+          (c: any) => c.code === countryCode,
+        );
+        if (matchedCountry) {
+          setEditCitiesLoading(true);
+          fetch(`${API_BASE_URL}/api/cities?countryId=${matchedCountry.id}`)
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => {
+              setEditCitiesList(Array.isArray(data) ? data : data.data || []);
+            })
+            .catch(() => setEditCitiesList([]))
+            .finally(() => setEditCitiesLoading(false));
+          return;
+        }
+      }
+      setEditCitiesList([]);
+      return;
+    }
+    setEditCitiesLoading(true);
+    fetch(`${API_BASE_URL}/api/cities?regionId=${regionId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setEditCitiesList(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(() => setEditCitiesList([]))
+      .finally(() => setEditCitiesLoading(false));
+  }, [
+    currentBusiness?.regionId,
+    currentBusiness?.region_id,
+    currentBusiness?.countryCode,
+    currentBusiness?.country_code,
+    editRegionsList,
+    countriesList,
+  ]);
 
   const fetchBusinesses = useCallback(
     async (
@@ -862,6 +1214,7 @@ const BusinessManagement = ({
           phone: "",
           address: "",
           description: "",
+          regionId: "",
           cityName: "",
           countryCode: "",
           latitude: "",
@@ -960,10 +1313,10 @@ const BusinessManagement = ({
 
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-2xl">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
               <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-lg">
                 <Store className="h-5 w-5" />
               </div>
@@ -991,21 +1344,23 @@ const BusinessManagement = ({
               )}
             </CardDescription>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
+              size="sm"
               onClick={handleSeedData}
               disabled={seedingLoading || businesses.length > 0}
               variant="outline"
-              className="gap-2"
+              className="gap-1.5 text-xs sm:text-sm"
             >
               {seedingLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Upload className="h-4 w-4" />
+                <Upload className="h-3.5 w-3.5" />
               )}
-              {seedingLoading ? "Loading..." : "Load Sample Data"}
+              {seedingLoading ? "Loading..." : "Sample Data"}
             </Button>
             <Button
+              size="sm"
               onClick={() => {
                 setShowAddDialog(true);
                 // Pre-fill countryCode with selected country (if not "all")
@@ -1016,13 +1371,17 @@ const BusinessManagement = ({
                   }));
                 }
               }}
-              className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+              className="gap-1.5 text-xs sm:text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Add Business
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs sm:text-sm"
+            >
+              <Download className="h-3.5 w-3.5" />
               Export
             </Button>
           </div>
@@ -1031,10 +1390,10 @@ const BusinessManagement = ({
       <CardContent>
         <div className="space-y-6">
           {/* Country Filter */}
-          <div className="flex flex-wrap items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
             <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-amber-600" />
-              <span className="text-sm font-medium text-amber-800">
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+              <span className="text-xs sm:text-sm font-medium text-amber-800">
                 Country
               </span>
             </div>
@@ -1047,7 +1406,7 @@ const BusinessManagement = ({
                 // Fetch immediately with new country
                 fetchBusinesses(search, selectedCategory, 1, newCountry);
               }}
-              className="flex-1 min-w-[140px] sm:min-w-[180px] md:max-w-xs h-9 px-3 rounded-md border border-amber-300 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex-1 min-w-0 w-full sm:w-auto sm:min-w-[180px] md:max-w-xs h-9 px-3 rounded-md border border-amber-300 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
               <option value="all">🌍 All Countries</option>
               {countriesList.map((c: any) => (
@@ -1072,14 +1431,14 @@ const BusinessManagement = ({
 
           {/* Stats Row */}
           {businesses.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex overflow-x-auto gap-3 mb-4 pb-1 snap-x snap-mandatory sm:grid sm:grid-cols-2 md:grid-cols-4">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 min-w-[130px] flex-1 snap-start">
                 <div className="text-2xl font-bold text-blue-700">
                   {totalCount}
                 </div>
                 <div className="text-xs text-blue-600">Total Businesses</div>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200 min-w-[130px] flex-1 snap-start">
                 <div className="text-2xl font-bold text-green-700">
                   {
                     businesses.filter((b: any) => b.isVerified || b.is_verified)
@@ -1088,7 +1447,7 @@ const BusinessManagement = ({
                 </div>
                 <div className="text-xs text-green-600">Verified</div>
               </div>
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 min-w-[130px] flex-1 snap-start">
                 <div className="text-2xl font-bold text-purple-700">
                   {
                     businesses.filter(
@@ -1098,14 +1457,21 @@ const BusinessManagement = ({
                 </div>
                 <div className="text-xs text-purple-600">Advertisers</div>
               </div>
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 min-w-[130px] flex-1 snap-start">
                 <div className="text-2xl font-bold text-amber-700">
-                  {(
-                    businesses.reduce(
-                      (sum: number, b: any) => sum + (b.rating || 0),
-                      0,
-                    ) / Math.max(1, businesses.length)
-                  ).toFixed(1)}
+                  {(() => {
+                    const rated = businesses.filter(
+                      (b: any) => Number(b.rating) > 0,
+                    );
+                    return rated.length > 0
+                      ? (
+                          rated.reduce(
+                            (s: number, b: any) => s + Number(b.rating),
+                            0,
+                          ) / rated.length
+                        ).toFixed(1)
+                      : "—";
+                  })()}
                 </div>
                 <div className="text-xs text-amber-600">Avg Rating</div>
               </div>
@@ -1232,7 +1598,7 @@ const BusinessManagement = ({
           </div>
 
           {/* Businesses Table */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b px-4 py-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -1264,12 +1630,18 @@ const BusinessManagement = ({
               <TableHeader className="bg-gray-50">
                 <TableRow>
                   <TableHead>Business</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Category
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Contact
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell">Rating</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Created
+                  </TableHead>
+                  <TableHead className="text-right w-[50px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1325,24 +1697,46 @@ const BusinessManagement = ({
                             <div>
                               <p className="font-semibold text-gray-900 flex items-center gap-2">
                                 {business.name}
-                                {business.isVerified && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-normal">
-                                    ✓ Verified
+                                {(business.isVerified ||
+                                  business.is_verified) && (
+                                  <span className="inline-flex items-center text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-normal">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Verified
                                   </span>
                                 )}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-gray-500 truncate max-w-[180px] sm:max-w-none">
                                 {business.address || business.location || "—"}
                               </p>
+                              {/* Mobile-only: show category + status inline */}
+                              <div className="flex items-center gap-1.5 mt-1 sm:hidden">
+                                <Badge
+                                  variant="outline"
+                                  className="capitalize text-[10px] px-1.5 py-0"
+                                >
+                                  {categoryName}
+                                </Badge>
+                                <span
+                                  className={`text-[10px] px-1.5 py-0 rounded-full font-medium ${
+                                    business.isActive !== false
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {business.isActive !== false
+                                    ? "Active"
+                                    : "Inactive"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge variant="outline" className="capitalize">
                             {categoryName}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div>
                             <p className="text-sm font-medium">
                               {business.email}
@@ -1352,7 +1746,7 @@ const BusinessManagement = ({
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                             <span className="font-medium">
@@ -1360,7 +1754,7 @@ const BusinessManagement = ({
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge
                             variant={
                               business.isActive !== false
@@ -1378,45 +1772,38 @@ const BusinessManagement = ({
                               : "Inactive"}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <p className="text-sm text-gray-500">
                             {business.createdAt}
                           </p>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setCurrentBusiness(business);
-                                  setShowEditDialog(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => {
-                                  setCurrentBusiness(business);
-                                  setShowDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <TableCell className="text-right p-1 sm:p-2">
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              onClick={() => {
+                                setCurrentBusiness(business);
+                                setShowEditDialog(true);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setCurrentBusiness(business);
+                                setShowDeleteDialog(true);
+                              }}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -1459,21 +1846,34 @@ const BusinessManagement = ({
                   <Label htmlFor="category">Category *</Label>
                   <Select
                     value={
-                      newBusiness.categoryId
+                      newBusiness.categoryId && newBusiness.categoryId > 0
                         ? String(newBusiness.categoryId)
                         : undefined
                     }
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const newCatId = parseInt(value);
+                      // Auto-clear businessType if it's no longer compatible with the new category
+                      const compatibleTypes = getBusinessTypesForCategory(
+                        categories,
+                        newCatId,
+                      );
+                      const currentTypeStillValid = compatibleTypes.find(
+                        (t) =>
+                          t.value === newBusiness.businessType && !t.disabled,
+                      );
                       setNewBusiness({
                         ...newBusiness,
-                        categoryId: parseInt(value),
-                      })
-                    }
+                        categoryId: newCatId,
+                        businessType: currentTypeStillValid
+                          ? newBusiness.businessType
+                          : "",
+                      });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-60">
                       {categories.length === 0 ? (
                         <SelectItem value="__loading" disabled>
                           Loading categories...
@@ -1481,6 +1881,9 @@ const BusinessManagement = ({
                       ) : (
                         categories
                           .filter((c: any) => !c.parentId)
+                          .sort((a: any, b: any) =>
+                            a.name.localeCompare(b.name),
+                          )
                           .map((cat: any) => (
                             <SelectItem key={cat.id} value={String(cat.id)}>
                               {cat.name}
@@ -1501,21 +1904,20 @@ const BusinessManagement = ({
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="restaurant">Restaurant</SelectItem>
-                      <SelectItem value="hotel">Hotel</SelectItem>
-                      <SelectItem value="retail">Retail / Shop</SelectItem>
-                      <SelectItem value="service">Service Provider</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="automotive">Automotive</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="entertainment">
-                        Entertainment
-                      </SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                    <SelectContent className="max-h-60">
+                      {getBusinessTypesForCategory(
+                        categories,
+                        newBusiness.categoryId,
+                      ).map((opt) => (
+                        <SelectItem
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={opt.disabled}
+                          className={opt.disabled ? "opacity-40" : ""}
+                        >
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1529,83 +1931,274 @@ const BusinessManagement = ({
               <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <MapPin className="h-4 w-4" /> Location
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="123 Main Street, Suite 4"
-                    value={newBusiness.address}
-                    onChange={(e) =>
-                      setNewBusiness({
-                        ...newBusiness,
-                        address: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cityName">City</Label>
-                  <Input
-                    id="cityName"
-                    placeholder="Paris"
-                    value={newBusiness.cityName}
-                    onChange={(e) =>
-                      setNewBusiness({
-                        ...newBusiness,
-                        cityName: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="countryCode">Country Code</Label>
-                  <Input
-                    id="countryCode"
-                    placeholder="FR"
-                    maxLength={2}
-                    value={newBusiness.countryCode}
-                    onChange={(e) =>
-                      setNewBusiness({
-                        ...newBusiness,
-                        countryCode: e.target.value.toUpperCase(),
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="latitude">Latitude</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    placeholder="48.8566"
-                    value={newBusiness.latitude}
-                    onChange={(e) =>
-                      setNewBusiness({
-                        ...newBusiness,
-                        latitude: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="longitude">Longitude</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    placeholder="2.3522"
-                    value={newBusiness.longitude}
-                    onChange={(e) =>
-                      setNewBusiness({
-                        ...newBusiness,
-                        longitude: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
+              {(() => {
+                const labels = getAdminLabels(newBusiness.countryCode);
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Country */}
+                    <div>
+                      <Label htmlFor="countryCode">Country *</Label>
+                      <select
+                        id="countryCode"
+                        value={newBusiness.countryCode}
+                        onChange={(e) =>
+                          setNewBusiness({
+                            ...newBusiness,
+                            countryCode: e.target.value,
+                            regionId: "", // reset region when country changes
+                            cityName: "", // reset city when country changes
+                          })
+                        }
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="">Select country</option>
+                        {countriesList.map((c: any) => (
+                          <option key={c.code || c.id} value={c.code}>
+                            {c.code} — {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Region / Province / State — dynamic label + auto-populate toggle */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label htmlFor="regionId">{labels.region}</Label>
+                        {regionsList.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAutoPopulateRegion(!autoPopulateRegion)
+                            }
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              autoPopulateRegion ? "bg-primary" : "bg-muted"
+                            }`}
+                            title={
+                              autoPopulateRegion
+                                ? "Switch to manual input"
+                                : "Switch to dropdown"
+                            }
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                                autoPopulateRegion
+                                  ? "translate-x-[18px]"
+                                  : "translate-x-[3px]"
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                      {regionsList.length > 0 && autoPopulateRegion ? (
+                        <select
+                          id="regionId"
+                          value={newBusiness.regionId}
+                          onChange={(e) =>
+                            setNewBusiness({
+                              ...newBusiness,
+                              regionId: e.target.value,
+                              cityName: "",
+                            })
+                          }
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">
+                            {regionsLoading
+                              ? `Loading ${labels.region.toLowerCase()}s...`
+                              : `Select ${labels.region.toLowerCase()}`}
+                          </option>
+                          {regionsList
+                            .sort((a: any, b: any) =>
+                              a.name.localeCompare(b.name),
+                            )
+                            .map((region: any) => (
+                              <option key={region.id} value={String(region.id)}>
+                                {region.name}
+                              </option>
+                            ))}
+                        </select>
+                      ) : (
+                        <Input
+                          id="regionId"
+                          placeholder={
+                            newBusiness.countryCode
+                              ? regionsLoading
+                                ? `Loading ${labels.region.toLowerCase()}s...`
+                                : `Type ${labels.region.toLowerCase()} name`
+                              : "Select country first"
+                          }
+                          disabled={!newBusiness.countryCode || regionsLoading}
+                          value={newBusiness.regionName || ""}
+                          onChange={(e) =>
+                            setNewBusiness({
+                              ...newBusiness,
+                              regionName: e.target.value,
+                            })
+                          }
+                        />
+                      )}
+                    </div>
+
+                    {/* City / Ville / Stadt — dynamic label + auto-populate toggle */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label htmlFor="cityName">{labels.city}</Label>
+                        {citiesList.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAutoPopulateCity(!autoPopulateCity)
+                            }
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              autoPopulateCity ? "bg-primary" : "bg-muted"
+                            }`}
+                            title={
+                              autoPopulateCity
+                                ? "Switch to manual input"
+                                : "Switch to dropdown"
+                            }
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                                autoPopulateCity
+                                  ? "translate-x-[18px]"
+                                  : "translate-x-[3px]"
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                      {citiesList.length > 0 && autoPopulateCity ? (
+                        <select
+                          id="cityName"
+                          value={newBusiness.cityName}
+                          onChange={(e) =>
+                            setNewBusiness({
+                              ...newBusiness,
+                              cityName: e.target.value,
+                            })
+                          }
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">
+                            {citiesLoading
+                              ? `Loading ${labels.city.toLowerCase()}...`
+                              : `Select ${labels.city.toLowerCase()}`}
+                          </option>
+                          {citiesList
+                            .sort((a: any, b: any) =>
+                              a.name.localeCompare(b.name),
+                            )
+                            .map((city: any) => (
+                              <option key={city.id} value={city.name}>
+                                {city.name}
+                              </option>
+                            ))}
+                        </select>
+                      ) : (
+                        <Input
+                          id="cityName"
+                          placeholder={
+                            newBusiness.countryCode
+                              ? regionsList.length > 0 && !newBusiness.regionId
+                                ? `Select ${labels.region.toLowerCase()} first`
+                                : `Type ${labels.city.toLowerCase()} name`
+                              : "Select country first"
+                          }
+                          value={newBusiness.cityName}
+                          onChange={(e) =>
+                            setNewBusiness({
+                              ...newBusiness,
+                              cityName: e.target.value,
+                            })
+                          }
+                          disabled={!newBusiness.countryCode}
+                        />
+                      )}
+                    </div>
+
+                    {/* Address — dynamic label */}
+                    <div>
+                      <Label htmlFor="address">{labels.address}</Label>
+                      <Input
+                        id="address"
+                        placeholder={
+                          newBusiness.countryCode === "CI"
+                            ? "ex: Rue des Jardins, Cocody"
+                            : newBusiness.countryCode === "FR"
+                              ? "ex: 12 Rue de la Paix"
+                              : "123 Main Street, Suite 4"
+                        }
+                        value={newBusiness.address}
+                        onChange={(e) =>
+                          setNewBusiness({
+                            ...newBusiness,
+                            address: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <GeolocationFields
+                        latitude={newBusiness.latitude}
+                        longitude={newBusiness.longitude}
+                        onLatitudeChange={(v) =>
+                          setNewBusiness({ ...newBusiness, latitude: v })
+                        }
+                        onLongitudeChange={(v) =>
+                          setNewBusiness({ ...newBusiness, longitude: v })
+                        }
+                        onCountryDetected={(code) => {
+                          if (!newBusiness.countryCode) {
+                            setNewBusiness((prev) => ({
+                              ...prev,
+                              countryCode: code,
+                            }));
+                          }
+                        }}
+                        onRegionDetected={(regionName) => {
+                          if (!newBusiness.regionId) {
+                            // Try to match detected region name against loaded regions
+                            const match = regionsList.find(
+                              (r: any) =>
+                                r.name.toLowerCase() ===
+                                  regionName.toLowerCase() ||
+                                regionName
+                                  .toLowerCase()
+                                  .includes(r.name.toLowerCase()) ||
+                                r.name
+                                  .toLowerCase()
+                                  .includes(regionName.toLowerCase()),
+                            );
+                            if (match) {
+                              setNewBusiness((prev) => ({
+                                ...prev,
+                                regionId: String(match.id),
+                              }));
+                            } else {
+                              // No dropdown match — store as free text
+                              setAutoPopulateRegion(false);
+                              setNewBusiness((prev) => ({
+                                ...prev,
+                                regionName: regionName,
+                              }));
+                            }
+                          }
+                        }}
+                        onCityDetected={(city) => {
+                          if (!newBusiness.cityName) {
+                            setNewBusiness((prev) => ({
+                              ...prev,
+                              cityName: city,
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <Separator />
@@ -1766,17 +2359,98 @@ const BusinessManagement = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-businessType">Business Type</Label>
-                    <Input
-                      id="edit-businessType"
-                      value={currentBusiness.businessType || ""}
-                      onChange={(e) =>
+                    <Label htmlFor="edit-category">Category *</Label>
+                    <Select
+                      value={
+                        currentBusiness.categoryId ||
+                        currentBusiness.category_id
+                          ? String(
+                              currentBusiness.categoryId ||
+                                currentBusiness.category_id,
+                            )
+                          : undefined
+                      }
+                      onValueChange={(value) => {
+                        const newCatId = parseInt(value);
+                        // Auto-clear businessType if incompatible with new category
+                        const compatibleTypes = getBusinessTypesForCategory(
+                          categories,
+                          newCatId,
+                        );
+                        const currentTypeStillValid = compatibleTypes.find(
+                          (t) =>
+                            t.value === currentBusiness.businessType &&
+                            !t.disabled,
+                        );
                         setCurrentBusiness({
                           ...currentBusiness,
-                          businessType: e.target.value,
+                          categoryId: newCatId,
+                          category_id: newCatId,
+                          businessType: currentTypeStillValid
+                            ? currentBusiness.businessType
+                            : "",
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {categories.length === 0 ? (
+                          <SelectItem value="__loading" disabled>
+                            Loading categories...
+                          </SelectItem>
+                        ) : (
+                          categories
+                            .filter((c: any) => !c.parentId)
+                            .sort((a: any, b: any) =>
+                              a.name.localeCompare(b.name),
+                            )
+                            .map((cat: any) => (
+                              <SelectItem key={cat.id} value={String(cat.id)}>
+                                {cat.name}
+                              </SelectItem>
+                            ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-businessType">Business Type</Label>
+                    <Select
+                      value={
+                        currentBusiness.businessType ||
+                        currentBusiness.business_type ||
+                        undefined
+                      }
+                      onValueChange={(value) =>
+                        setCurrentBusiness({
+                          ...currentBusiness,
+                          businessType: value,
+                          business_type: value,
                         })
                       }
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {getBusinessTypesForCategory(
+                          categories,
+                          currentBusiness.categoryId ||
+                            currentBusiness.category_id,
+                        ).map((opt) => (
+                          <SelectItem
+                            key={opt.value}
+                            value={opt.value}
+                            disabled={opt.disabled}
+                            className={opt.disabled ? "opacity-40" : ""}
+                          >
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -1788,78 +2462,323 @@ const BusinessManagement = ({
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <MapPin className="h-4 w-4" /> Location
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="edit-address">Street Address</Label>
-                    <Input
-                      id="edit-address"
-                      value={currentBusiness.address || ""}
-                      onChange={(e) =>
-                        setCurrentBusiness({
-                          ...currentBusiness,
-                          address: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-cityName">City</Label>
-                    <Input
-                      id="edit-cityName"
-                      value={currentBusiness.cityName || ""}
-                      onChange={(e) =>
-                        setCurrentBusiness({
-                          ...currentBusiness,
-                          cityName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-countryCode">Country Code</Label>
-                    <Input
-                      id="edit-countryCode"
-                      maxLength={2}
-                      value={currentBusiness.countryCode || ""}
-                      onChange={(e) =>
-                        setCurrentBusiness({
-                          ...currentBusiness,
-                          countryCode: e.target.value.toUpperCase(),
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-latitude">Latitude</Label>
-                    <Input
-                      id="edit-latitude"
-                      type="number"
-                      step="any"
-                      value={currentBusiness.latitude || ""}
-                      onChange={(e) =>
-                        setCurrentBusiness({
-                          ...currentBusiness,
-                          latitude: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-longitude">Longitude</Label>
-                    <Input
-                      id="edit-longitude"
-                      type="number"
-                      step="any"
-                      value={currentBusiness.longitude || ""}
-                      onChange={(e) =>
-                        setCurrentBusiness({
-                          ...currentBusiness,
-                          longitude: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const editCountryCode =
+                    currentBusiness.countryCode ||
+                    currentBusiness.country_code ||
+                    "";
+                  const labels = getAdminLabels(editCountryCode);
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Country */}
+                      <div>
+                        <Label htmlFor="edit-countryCode">Country</Label>
+                        <select
+                          id="edit-countryCode"
+                          value={editCountryCode}
+                          onChange={(e) =>
+                            setCurrentBusiness({
+                              ...currentBusiness,
+                              countryCode: e.target.value,
+                              country_code: e.target.value,
+                              regionId: "",
+                              region_id: "",
+                              cityName: "",
+                              city_name: "",
+                            })
+                          }
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">Select country</option>
+                          {countriesList.map((c: any) => (
+                            <option key={c.code || c.id} value={c.code}>
+                              {c.code} — {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Region / Province / State — dynamic label + auto-populate toggle */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label htmlFor="edit-regionId">{labels.region}</Label>
+                          {editRegionsList.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditAutoPopulateRegion(
+                                  !editAutoPopulateRegion,
+                                )
+                              }
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                editAutoPopulateRegion
+                                  ? "bg-primary"
+                                  : "bg-muted"
+                              }`}
+                              title={
+                                editAutoPopulateRegion
+                                  ? "Switch to manual input"
+                                  : "Switch to dropdown"
+                              }
+                            >
+                              <span
+                                className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                                  editAutoPopulateRegion
+                                    ? "translate-x-[18px]"
+                                    : "translate-x-[3px]"
+                                }`}
+                              />
+                            </button>
+                          )}
+                        </div>
+                        {editRegionsList.length > 0 &&
+                        editAutoPopulateRegion ? (
+                          <select
+                            id="edit-regionId"
+                            value={
+                              currentBusiness.regionId ||
+                              currentBusiness.region_id ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setCurrentBusiness({
+                                ...currentBusiness,
+                                regionId: e.target.value,
+                                region_id: e.target.value,
+                                cityName: "",
+                                city_name: "",
+                              })
+                            }
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">
+                              {editRegionsLoading
+                                ? `Loading ${labels.region.toLowerCase()}s...`
+                                : `Select ${labels.region.toLowerCase()}`}
+                            </option>
+                            {editRegionsList
+                              .sort((a: any, b: any) =>
+                                a.name.localeCompare(b.name),
+                              )
+                              .map((region: any) => (
+                                <option
+                                  key={region.id}
+                                  value={String(region.id)}
+                                >
+                                  {region.name}
+                                </option>
+                              ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id="edit-regionId"
+                            placeholder={
+                              editCountryCode
+                                ? editRegionsLoading
+                                  ? `Loading ${labels.region.toLowerCase()}s...`
+                                  : `Type ${labels.region.toLowerCase()} name`
+                                : "Select country first"
+                            }
+                            disabled={!editCountryCode || editRegionsLoading}
+                            value={
+                              currentBusiness.regionName ||
+                              currentBusiness.region_name ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setCurrentBusiness({
+                                ...currentBusiness,
+                                regionName: e.target.value,
+                                region_name: e.target.value,
+                              })
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* City / Ville — dynamic label + auto-populate toggle */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label htmlFor="edit-cityName">{labels.city}</Label>
+                          {editCitiesList.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditAutoPopulateCity(!editAutoPopulateCity)
+                              }
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                editAutoPopulateCity ? "bg-primary" : "bg-muted"
+                              }`}
+                              title={
+                                editAutoPopulateCity
+                                  ? "Switch to manual input"
+                                  : "Switch to dropdown"
+                              }
+                            >
+                              <span
+                                className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                                  editAutoPopulateCity
+                                    ? "translate-x-[18px]"
+                                    : "translate-x-[3px]"
+                                }`}
+                              />
+                            </button>
+                          )}
+                        </div>
+                        {editCitiesList.length > 0 && editAutoPopulateCity ? (
+                          <select
+                            id="edit-cityName"
+                            value={
+                              currentBusiness.cityName ||
+                              currentBusiness.city_name ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setCurrentBusiness({
+                                ...currentBusiness,
+                                cityName: e.target.value,
+                                city_name: e.target.value,
+                              })
+                            }
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">
+                              {editCitiesLoading
+                                ? `Loading ${labels.city.toLowerCase()}...`
+                                : `Select ${labels.city.toLowerCase()}`}
+                            </option>
+                            {editCitiesList
+                              .sort((a: any, b: any) =>
+                                a.name.localeCompare(b.name),
+                              )
+                              .map((city: any) => (
+                                <option key={city.id} value={city.name}>
+                                  {city.name}
+                                </option>
+                              ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id="edit-cityName"
+                            placeholder={
+                              editCountryCode
+                                ? editRegionsList.length > 0 &&
+                                  !(
+                                    currentBusiness.regionId ||
+                                    currentBusiness.region_id
+                                  )
+                                  ? `Select ${labels.region.toLowerCase()} first`
+                                  : `Type ${labels.city.toLowerCase()} name`
+                                : "Select country first"
+                            }
+                            value={
+                              currentBusiness.cityName ||
+                              currentBusiness.city_name ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setCurrentBusiness({
+                                ...currentBusiness,
+                                cityName: e.target.value,
+                                city_name: e.target.value,
+                              })
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* Address — dynamic label */}
+                      <div>
+                        <Label htmlFor="edit-address">{labels.address}</Label>
+                        <Input
+                          id="edit-address"
+                          value={currentBusiness.address || ""}
+                          onChange={(e) =>
+                            setCurrentBusiness({
+                              ...currentBusiness,
+                              address: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <GeolocationFields
+                          latitude={currentBusiness.latitude || ""}
+                          longitude={currentBusiness.longitude || ""}
+                          onLatitudeChange={(v) =>
+                            setCurrentBusiness({
+                              ...currentBusiness,
+                              latitude: v,
+                            })
+                          }
+                          onLongitudeChange={(v) =>
+                            setCurrentBusiness({
+                              ...currentBusiness,
+                              longitude: v,
+                            })
+                          }
+                          onCountryDetected={(code) => {
+                            if (
+                              !currentBusiness.countryCode &&
+                              !currentBusiness.country_code
+                            ) {
+                              setCurrentBusiness((prev: any) => ({
+                                ...prev,
+                                countryCode: code,
+                                country_code: code,
+                              }));
+                            }
+                          }}
+                          onRegionDetected={(regionName) => {
+                            if (
+                              !currentBusiness.regionId &&
+                              !currentBusiness.region_id
+                            ) {
+                              const match = editRegionsList.find(
+                                (r: any) =>
+                                  r.name.toLowerCase() ===
+                                    regionName.toLowerCase() ||
+                                  regionName
+                                    .toLowerCase()
+                                    .includes(r.name.toLowerCase()) ||
+                                  r.name
+                                    .toLowerCase()
+                                    .includes(regionName.toLowerCase()),
+                              );
+                              if (match) {
+                                setCurrentBusiness((prev: any) => ({
+                                  ...prev,
+                                  regionId: String(match.id),
+                                  region_id: String(match.id),
+                                }));
+                              } else {
+                                setEditAutoPopulateRegion(false);
+                                setCurrentBusiness((prev: any) => ({
+                                  ...prev,
+                                  regionName: regionName,
+                                  region_name: regionName,
+                                }));
+                              }
+                            }
+                          }}
+                          onCityDetected={(city) => {
+                            if (
+                              !currentBusiness.cityName &&
+                              !currentBusiness.city_name
+                            ) {
+                              setCurrentBusiness((prev: any) => ({
+                                ...prev,
+                                cityName: city,
+                                city_name: city,
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <Separator />
@@ -5285,6 +6204,17 @@ export default function AdminDashboard() {
 
   const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
     () => {
+      // If coming from vault (?from=vault), superuser is already authenticated
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") === "vault") {
+        // Auto-grant access and persist session
+        localStorage.setItem(
+          "adminAccessTime",
+          new Date().getTime().toString(),
+        );
+        localStorage.setItem("adminUsername", "vault-superuser");
+        return true;
+      }
       const savedAccessTime = localStorage.getItem("adminAccessTime");
       const savedUsername = localStorage.getItem("adminUsername");
       if (!savedAccessTime || !savedUsername) return false;
@@ -5339,6 +6269,13 @@ export default function AdminDashboard() {
     }
   }, [isAdminGateAuthenticated, authenticatedAdminUsername]);
 
+  const handleSessionExpired = useCallback(() => {
+    setIsAdminGateAuthenticated(false);
+    setAuthenticatedAdminUsername("");
+    localStorage.removeItem("adminAccessTime");
+    localStorage.removeItem("adminUsername");
+  }, []);
+
   const {
     sessionTimeLeft,
     sessionProgress,
@@ -5346,7 +6283,7 @@ export default function AdminDashboard() {
     isSessionLow,
     handleExtendSession,
     formatTimeLeft,
-  } = useSessionTimer(isAdminGateAuthenticated, true); // enableTimeout=true for admin dashboard
+  } = useSessionTimer(isAdminGateAuthenticated, true, handleSessionExpired); // enableTimeout=true for admin dashboard
 
   const [showSqlEditor, setShowSqlEditor] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
@@ -5613,29 +6550,32 @@ export default function AdminDashboard() {
         onLogout={handleLogout}
       >
         {/* Wrap all children in a flex column that takes full height of the main content area */}
-        <div className="flex flex-col min-h-full">
+        <div className="flex flex-col min-h-full min-w-0 overflow-x-hidden">
           {/* Fixed top section (non-scrolling) */}
           <div className="flex-none space-y-4">
-            <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 py-3 rounded-lg shadow-sm flex flex-wrap justify-end gap-3">
+            <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-2 sm:px-4 py-2 sm:py-3 rounded-lg shadow-sm flex flex-wrap justify-end gap-2">
               <Button
+                size="sm"
                 onClick={() => setLocation("/geo-admin")}
-                className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-800 gap-2"
+                className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-800 gap-1.5 text-xs sm:text-sm"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Geo Admin
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Back to</span> Geo Admin
               </Button>
               <Button
+                size="sm"
                 onClick={() => setLocation("/tickets")}
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 gap-2"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 gap-1.5 text-xs sm:text-sm"
               >
-                <FileText className="h-4 w-4" />
-                Ticket System
+                <FileText className="h-3.5 w-3.5" />
+                Tickets
               </Button>
               <Button
+                size="sm"
                 onClick={() => setLocation("/admin/tickets")}
-                className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 gap-2"
+                className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 gap-1.5 text-xs sm:text-sm"
               >
-                <Shield className="h-4 w-4" />
+                <Shield className="h-3.5 w-3.5" />
                 TAM
               </Button>
             </div>
@@ -5687,9 +6627,9 @@ export default function AdminDashboard() {
           {/* Content area — scroll handled by DashboardLayout */}
           <div className="flex-1 space-y-6 pb-6">
             {/* Fixed Status Indicator (absolute positioned, but kept here for visibility) */}
-            <div className="fixed top-4 right-4 z-50">
+            <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
               <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${
+                className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
                   dbConnected
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-rose-100 text-rose-700"
@@ -5707,12 +6647,18 @@ export default function AdminDashboard() {
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
             {activeSection === "dashboard" && (
               <>
+                <PendingApprovals />
                 <BusinessManagement />
                 <CategoryManagement />
                 <JobManagement />
               </>
             )}
-            {activeSection === "businesses" && <BusinessManagement />}
+            {activeSection === "businesses" && (
+              <>
+                <PendingApprovals />
+                <BusinessManagement />
+              </>
+            )}
             {activeSection === "categories" && <CategoryManagement />}
             {activeSection === "jobs" && <JobManagement />}
             {activeSection === "advertising" && <AdvertisingSection />}

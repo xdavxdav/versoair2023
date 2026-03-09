@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,6 +37,17 @@ import {
   Download,
   Zap,
   Globe,
+  ShieldCheck,
+  ShieldX,
+  Power,
+  MessageSquare,
+  Send,
+  Clock,
+  Phone,
+  Mail,
+  Building2,
+  ExternalLink,
+  Hash,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -121,6 +132,8 @@ interface BusinessData {
   photos_count: number;
   products_count: number;
   created_at: string;
+  pdf_path?: string;
+  approval_status?: string;
 }
 
 interface BusinessAnalytics {
@@ -665,12 +678,16 @@ function IndustryKPIsSection({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🛸 MAIN DASHBOARD COMPONENT — Business Growth Engine
+// 🛸 USER DASHBOARD — Business Growth Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function PublicDashboard() {
+export default function UserDashboard() {
+  const queryClient = useQueryClient();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
+  const [showBusinessSwitcher, setShowBusinessSwitcher] = useState(false);
+  const [showDossier, setShowDossier] = useState(false);
 
   // ── Auth ──
   const { data: userSession } = useQuery<{ user: CurrentUser } | null>({
@@ -716,15 +733,92 @@ export default function PublicDashboard() {
     retry: 2,
   });
 
+  // ── Role-based redirect: superusers & admins get their own dashboards ──
+  // Skip redirect if user intentionally navigated here (e.g. from vault or geo-admin)
+  const [, navigateTo] = useLocation();
+  const fromParam = new URLSearchParams(window.location.search).get("from");
+  const cameFromGeoAdmin =
+    fromParam === "geoadmin" || fromParam === "geo-admin";
+  useEffect(() => {
+    if (!userSession?.user) return;
+    if (fromParam === "vault" || cameFromGeoAdmin) return; // intentional nav — stay
+    const role = (userSession.user.role || "user").toLowerCase();
+    if (role === "superuser") {
+      navigateTo("/vault");
+    } else if (role === "admin" || role === "moderator") {
+      navigateTo("/geo-admin/dashboard");
+    }
+  }, [userSession, navigateTo]);
+
   // ── Derived state ──
   const isLoggedIn = !!userSession?.user;
+  const userRole = (userSession?.user?.role || "user").toLowerCase();
+  const isSuperAdmin = userRole === "superuser";
+  // Staff roles (superuser, admin, moderator) — don't need subscriber upgrade/visibility features
+  const isStaffRole = ["superuser", "admin", "moderator"].includes(userRole);
+  // Superadmin always gets enterprise-tier access — they built the platform
   const currentTier: TierKey =
-    (userSession?.user?.subscriptionTier as TierKey) || "free";
+    userRole === "superuser"
+      ? "enterprise"
+      : (userSession?.user?.subscriptionTier as TierKey) || "free";
   const tierDef = TIERS[currentTier];
   const features = TIER_FEATURES[currentTier];
 
-  // Mock business + analytics (swap with real API later)
-  const business = useMemo(() => getMockBusiness(currentTier), [currentTier]);
+  // ── Fetch user's REAL businesses from API ──
+  const { data: userBusinesses } = useQuery<BusinessData[]>({
+    queryKey: ["my-businesses", userSession?.user?.id],
+    queryFn: async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("authToken");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const response = await fetch(
+          `${API_BASE_URL}/api/businesses?userId=${userSession!.user.id}&limit=10`,
+          { headers, credentials: "include" },
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.businesses || data.data || []).map((b: any) => ({
+          id: b.id,
+          name: b.name || "Unnamed Business",
+          description: b.description || "",
+          category: b.category_name || b.category || "General",
+          location:
+            [b.city, b.country].filter(Boolean).join(", ") ||
+            b.address ||
+            "Not specified",
+          rating: parseFloat(b.rating) || 0,
+          reviewCount: parseInt(b.review_count || b.reviewCount) || 0,
+          verification_status: b.verification_status || "unverified",
+          is_active: b.is_active ?? true,
+          is_advertiser: b.is_advertiser ?? false,
+          photos_count: parseInt(b.photos_count) || 0,
+          products_count: parseInt(b.products_count) || 0,
+          created_at: b.created_at || new Date().toISOString(),
+          pdf_path: b.pdf_path || "",
+          approval_status: b.approval_status || "",
+        }));
+      } catch {
+        return [];
+      }
+    },
+    enabled: isLoggedIn,
+    staleTime: 60_000,
+  });
+
+  // Use real business if available, else fall back to mock
+  const business = useMemo(() => {
+    if (userBusinesses && userBusinesses.length > 0) {
+      const idx = Math.min(selectedBusinessIdx, userBusinesses.length - 1);
+      return userBusinesses[idx];
+    }
+    return getMockBusiness(currentTier);
+  }, [userBusinesses, currentTier, selectedBusinessIdx]);
+
+  const hasRealBusiness = !!(userBusinesses && userBusinesses.length > 0);
+
   const analytics = useMemo(() => getMockAnalytics(currentTier), [currentTier]);
 
   const rankScore = useMemo(
@@ -785,6 +879,628 @@ export default function PublicDashboard() {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // BUSINESS DOSSIER — full registration preview + Teams-style messaging
+  // ═══════════════════════════════════════════════════════════════════════════
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [dossierMsg, setDossierMsg] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [dossierTab, setDossierTab] = useState<"info" | "chat">("info");
+
+  // Fetch full business dossier when modal opens
+  const { data: dossierData, isLoading: dossierLoading } = useQuery<any>({
+    queryKey: ["business-dossier", business.id],
+    queryFn: async () => {
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(
+        `${API_BASE_URL}/api/businesses/${business.id}/dossier`,
+        {
+          headers,
+          credentials: "include",
+        },
+      );
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: showDossier && !!business.id,
+    staleTime: 30_000,
+  });
+
+  // Fetch conversation thread
+  const { data: threadMessages = [], refetch: refetchMessages } = useQuery<
+    any[]
+  >({
+    queryKey: ["business-messages", business.id],
+    queryFn: async () => {
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(
+        `${API_BASE_URL}/api/businesses/${business.id}/messages`,
+        {
+          headers,
+          credentials: "include",
+        },
+      );
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    enabled: showDossier && !!business.id,
+    refetchInterval: showDossier ? 8000 : false, // poll every 8s when open
+  });
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (showDossier && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [threadMessages, showDossier, dossierTab]);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!dossierMsg.trim() || sendingMsg) return;
+    setSendingMsg(true);
+    try {
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+      await fetch(`${API_BASE_URL}/api/businesses/${business.id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          senderId: userSession?.user?.id,
+          senderName:
+            userSession?.user?.name || userSession?.user?.email || "Admin",
+          senderRole: userRole,
+          message: dossierMsg.trim(),
+        }),
+      });
+      setDossierMsg("");
+      refetchMessages();
+    } catch {
+      /* silent */
+    }
+    setSendingMsg(false);
+  }, [
+    dossierMsg,
+    sendingMsg,
+    business.id,
+    userSession,
+    userRole,
+    refetchMessages,
+  ]);
+
+  // Helper to render a dossier info row
+  const DossierRow = ({
+    label,
+    value,
+    icon,
+  }: {
+    label: string;
+    value: any;
+    icon?: React.ReactNode;
+  }) => (
+    <div className="flex items-start gap-3 py-2.5 border-b border-slate-700/30 last:border-0">
+      <div className="flex-shrink-0 w-5 h-5 mt-0.5 text-slate-500">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-mono">
+          {label}
+        </p>
+        <p className="text-sm text-slate-200 break-words">
+          {value || <span className="text-slate-600 italic">Not provided</span>}
+        </p>
+      </div>
+    </div>
+  );
+
+  const roleColors: Record<string, string> = {
+    superuser: "text-red-400 bg-red-500/15 border-red-500/30",
+    admin: "text-blue-400 bg-blue-500/15 border-blue-500/30",
+    moderator: "text-purple-400 bg-purple-500/15 border-purple-500/30",
+    owner: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30",
+    user: "text-slate-400 bg-slate-500/15 border-slate-500/30",
+  };
+
+  const renderDossierModal = () => {
+    if (!showDossier) return null;
+    const d = dossierData;
+
+    return (
+      <div
+        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setShowDossier(false);
+        }}
+      >
+        <div className="w-full max-w-5xl h-[85vh] bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/60">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                {business.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  {business.name}
+                  {business.verification_status === "verified" && (
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  )}
+                </h2>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  DOSSIER #{business.id} • {business.category}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Tab toggles */}
+              <div className="flex bg-slate-800 rounded-lg border border-slate-700/50 p-0.5">
+                <button
+                  onClick={() => setDossierTab("info")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    dossierTab === "info"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
+                      : "text-slate-400 hover:text-white border border-transparent"
+                  }`}
+                >
+                  <FileText className="h-3 w-3 inline mr-1" /> Registration
+                </button>
+                <button
+                  onClick={() => setDossierTab("chat")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all relative ${
+                    dossierTab === "chat"
+                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
+                      : "text-slate-400 hover:text-white border border-transparent"
+                  }`}
+                >
+                  <MessageSquare className="h-3 w-3 inline mr-1" /> Thread
+                  {threadMessages.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-purple-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {threadMessages.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+              {/* PDF download */}
+              {d?.pdf_path && (
+                <a
+                  href={`${API_BASE_URL}/api/businesses/${business.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all"
+                >
+                  <Download className="h-3 w-3" /> PDF
+                </a>
+              )}
+              <button
+                onClick={() => setShowDossier(false)}
+                className="h-8 w-8 rounded-lg bg-slate-700/50 hover:bg-red-500/30 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body */}
+          <div className="flex-1 overflow-hidden">
+            {dossierTab === "info" ? (
+              /* ═══ REGISTRATION INFO TAB ═══ */
+              <div className="h-full overflow-y-auto p-6 space-y-6">
+                {dossierLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(8)].map((_, i) => (
+                      <Skeleton key={i} className="h-10 bg-slate-800" />
+                    ))}
+                  </div>
+                ) : d ? (
+                  <>
+                    {/* Identity */}
+                    <div>
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5" /> Business Identity
+                      </h3>
+                      <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
+                        <DossierRow
+                          icon={<Hash className="h-4 w-4" />}
+                          label="Business ID"
+                          value={`#${d.id}`}
+                        />
+                        <DossierRow
+                          icon={<Building2 className="h-4 w-4" />}
+                          label="Business Name"
+                          value={d.name}
+                        />
+                        <DossierRow
+                          icon={<FileText className="h-4 w-4" />}
+                          label="Description"
+                          value={d.description}
+                        />
+                        <DossierRow
+                          icon={<BarChart3 className="h-4 w-4" />}
+                          label="Category"
+                          value={d.category_name || `ID: ${d.category_id}`}
+                        />
+                        <DossierRow
+                          icon={<Settings className="h-4 w-4" />}
+                          label="Business Type"
+                          value={d.business_type}
+                        />
+                        <DossierRow
+                          icon={<Star className="h-4 w-4" />}
+                          label="Rating"
+                          value={`${d.rating || 0} ★ (${d.reviews || 0} reviews)`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contact */}
+                    <div>
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5" /> Contact Information
+                      </h3>
+                      <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
+                        <DossierRow
+                          icon={<Phone className="h-4 w-4" />}
+                          label="Phone"
+                          value={d.phone}
+                        />
+                        <DossierRow
+                          icon={<Mail className="h-4 w-4" />}
+                          label="Email"
+                          value={d.email}
+                        />
+                        <DossierRow
+                          icon={<Globe className="h-4 w-4" />}
+                          label="Website"
+                          value={d.website}
+                        />
+                        <DossierRow
+                          icon={<MapPin className="h-4 w-4" />}
+                          label="Address"
+                          value={d.address}
+                        />
+                        <DossierRow
+                          icon={<MapPin className="h-4 w-4" />}
+                          label="Location / City"
+                          value={
+                            [d.city_name, d.country_code]
+                              .filter(Boolean)
+                              .join(", ") || d.location
+                          }
+                        />
+                        {d.latitude && d.longitude && (
+                          <DossierRow
+                            icon={<Globe className="h-4 w-4" />}
+                            label="Coordinates"
+                            value={`${d.latitude}, ${d.longitude}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status & Approval */}
+                    <div>
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Status &
+                        Approval
+                      </h3>
+                      <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
+                        <DossierRow
+                          icon={<Power className="h-4 w-4" />}
+                          label="Active"
+                          value={d.is_active ? "✅ Yes" : "❌ No"}
+                        />
+                        <DossierRow
+                          icon={<ShieldCheck className="h-4 w-4" />}
+                          label="Verified"
+                          value={
+                            d.is_verified ? "✅ Verified" : "⏳ Unverified"
+                          }
+                        />
+                        <DossierRow
+                          icon={<CheckCircle className="h-4 w-4" />}
+                          label="Approval Status"
+                          value={d.approval_status}
+                        />
+                        <DossierRow
+                          icon={<Users className="h-4 w-4" />}
+                          label="Submitted By"
+                          value={
+                            d.submitted_by_username ||
+                            (d.submitted_by ? `User #${d.submitted_by}` : null)
+                          }
+                        />
+                        <DossierRow
+                          icon={<Users className="h-4 w-4" />}
+                          label="Approved By"
+                          value={
+                            d.approved_by_username ||
+                            (d.approved_by ? `User #${d.approved_by}` : null)
+                          }
+                        />
+                        <DossierRow
+                          icon={<FileText className="h-4 w-4" />}
+                          label="Approval Notes"
+                          value={d.approval_notes}
+                        />
+                        <DossierRow
+                          icon={<FileText className="h-4 w-4" />}
+                          label="Registration PDF"
+                          value={d.pdf_path ? "📄 Available" : "No PDF on file"}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Owner */}
+                    <div>
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-3 flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5" /> Owner Account
+                      </h3>
+                      <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
+                        <DossierRow
+                          icon={<Users className="h-4 w-4" />}
+                          label="Owner"
+                          value={
+                            d.owner_username ||
+                            (d.owner_id
+                              ? `User #${d.owner_id}`
+                              : "No owner linked")
+                          }
+                        />
+                        <DossierRow
+                          icon={<Mail className="h-4 w-4" />}
+                          label="Owner Email"
+                          value={d.owner_email}
+                        />
+                        <DossierRow
+                          icon={<ShieldCheck className="h-4 w-4" />}
+                          label="Owner Role"
+                          value={d.owner_role}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Extras */}
+                    {(d.tags || d.amenities || d.attributes) && (
+                      <div>
+                        <h3 className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-3 flex items-center gap-2">
+                          <Settings className="h-3.5 w-3.5" /> Additional Data
+                        </h3>
+                        <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
+                          {d.tags &&
+                            Array.isArray(d.tags) &&
+                            d.tags.length > 0 && (
+                              <DossierRow
+                                icon={<Hash className="h-4 w-4" />}
+                                label="Tags"
+                                value={
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {(d.tags as string[]).map(
+                                      (t: string, i: number) => (
+                                        <span
+                                          key={i}
+                                          className="px-2 py-0.5 bg-slate-700/60 text-slate-300 text-[10px] rounded-full"
+                                        >
+                                          {t}
+                                        </span>
+                                      ),
+                                    )}
+                                  </div>
+                                }
+                              />
+                            )}
+                          {d.amenities &&
+                            Array.isArray(d.amenities) &&
+                            d.amenities.length > 0 && (
+                              <DossierRow
+                                icon={<Star className="h-4 w-4" />}
+                                label="Amenities"
+                                value={
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {(d.amenities as string[]).map(
+                                      (a: string, i: number) => (
+                                        <span
+                                          key={i}
+                                          className="px-2 py-0.5 bg-slate-700/60 text-slate-300 text-[10px] rounded-full"
+                                        >
+                                          {a}
+                                        </span>
+                                      ),
+                                    )}
+                                  </div>
+                                }
+                              />
+                            )}
+                          {d.attributes &&
+                            typeof d.attributes === "object" &&
+                            Object.keys(d.attributes).length > 0 && (
+                              <DossierRow
+                                icon={<Settings className="h-4 w-4" />}
+                                label="Attributes"
+                                value={
+                                  <pre className="text-[11px] text-slate-300 bg-slate-800 rounded-lg p-2 mt-1 overflow-x-auto font-mono">
+                                    {JSON.stringify(d.attributes, null, 2)}
+                                  </pre>
+                                }
+                              />
+                            )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Timestamps */}
+                    <div className="bg-slate-800/30 rounded-xl border border-slate-700/30 px-4 py-2">
+                      <div className="flex items-center gap-6 text-[10px] text-slate-500 font-mono">
+                        <span>
+                          Created:{" "}
+                          {d.created_at
+                            ? new Date(d.created_at).toLocaleString()
+                            : "—"}
+                        </span>
+                        <span>
+                          Updated:{" "}
+                          {d.updated_at
+                            ? new Date(d.updated_at).toLocaleString()
+                            : "—"}
+                        </span>
+                        {d.verified_at && (
+                          <span>
+                            Verified: {new Date(d.verified_at).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-500">
+                    <p>Could not load business data</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ═══ CONVERSATION THREAD TAB (Teams-style) ═══ */
+              <div className="h-full flex flex-col">
+                {/* Thread header */}
+                <div className="px-5 py-3 border-b border-slate-700/40 bg-slate-800/30">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-purple-400" />
+                    <h3 className="text-sm font-bold text-white">
+                      Admin Thread
+                    </h3>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      {threadMessages.length} message
+                      {threadMessages.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Internal conversation between admins & geo-admins about this
+                    business
+                  </p>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                  {threadMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-600">
+                      <MessageSquare className="h-10 w-10 mb-3 opacity-30" />
+                      <p className="text-sm font-semibold">No messages yet</p>
+                      <p className="text-xs mt-1">
+                        Start a conversation about this business
+                      </p>
+                    </div>
+                  ) : (
+                    threadMessages.map((msg: any) => {
+                      const isMe =
+                        msg.sender_id === userSession?.user?.id ||
+                        msg.sender_name ===
+                          (userSession?.user?.name || userSession?.user?.email);
+                      const colorClass =
+                        roleColors[msg.sender_role] || roleColors.user;
+
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[75%] ${isMe ? "items-end" : "items-start"}`}
+                          >
+                            {/* Sender name + role */}
+                            <div
+                              className={`flex items-center gap-1.5 mb-1 ${isMe ? "justify-end" : ""}`}
+                            >
+                              <span className="text-[10px] font-semibold text-slate-400">
+                                {msg.sender_name}
+                              </span>
+                              <span
+                                className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full border ${colorClass}`}
+                              >
+                                {msg.sender_role}
+                              </span>
+                            </div>
+                            {/* Bubble */}
+                            <div
+                              className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                isMe
+                                  ? "bg-blue-600/30 text-blue-100 border border-blue-500/30 rounded-br-md"
+                                  : "bg-slate-700/50 text-slate-200 border border-slate-600/30 rounded-bl-md"
+                              }`}
+                            >
+                              {msg.message_type === "status_change" ? (
+                                <p className="italic text-xs text-slate-400">
+                                  🔄 {msg.message}
+                                </p>
+                              ) : (
+                                <p className="whitespace-pre-wrap">
+                                  {msg.message}
+                                </p>
+                              )}
+                            </div>
+                            {/* Timestamp */}
+                            <p
+                              className={`text-[9px] text-slate-600 mt-1 font-mono ${isMe ? "text-right" : ""}`}
+                            >
+                              {msg.created_at
+                                ? new Date(msg.created_at).toLocaleString()
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Message input */}
+                <div className="px-5 py-3 border-t border-slate-700/40 bg-slate-800/40">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <textarea
+                        value={dossierMsg}
+                        onChange={(e) => setDossierMsg(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                        rows={2}
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 resize-none transition-all"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!dossierMsg.trim() || sendingMsg}
+                      className="h-10 w-10 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 disabled:text-slate-500 text-white flex items-center justify-center transition-all flex-shrink-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-slate-600 mt-1.5 font-mono">
+                    Posting as{" "}
+                    {userSession?.user?.name ||
+                      userSession?.user?.email ||
+                      "Admin"}{" "}
+                    • {userRole}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -833,8 +1549,8 @@ export default function PublicDashboard() {
               {/* Tier Badge */}
               {isLoggedIn && <TierBadge tier={currentTier} size="sm" />}
 
-              {/* Verification Quick Status */}
-              {isLoggedIn && (
+              {/* Verification Quick Status — only for subscribers (staff don't need it) */}
+              {isLoggedIn && !isStaffRole && (
                 <VerificationQuickStatus
                   status={business.verification_status}
                   isActive={business.is_active}
@@ -876,7 +1592,7 @@ export default function PublicDashboard() {
                       </span>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {userSession!.user.isAdmin && (
+                    {(userRole === "superuser" || userRole === "moderator") && (
                       <>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/tickets">
@@ -895,14 +1611,25 @@ export default function PublicDashboard() {
                       <Bell className="h-4 w-4 mr-2" />
                       Preferences
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleBackToGeoAdmin}>
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to Geo Admin
+                    {cameFromGeoAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleBackToGeoAdmin}>
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back to Geo Admin
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-400 focus:text-red-300"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              ) : (
+              ) : cameFromGeoAdmin ? (
                 <Button
                   onClick={handleBackToGeoAdmin}
                   className="gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold"
@@ -910,7 +1637,7 @@ export default function PublicDashboard() {
                   <ArrowLeft className="h-4 w-4" />
                   Back to Geo Admin
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -924,10 +1651,20 @@ export default function PublicDashboard() {
                   </p>
                   {[
                     { label: "📊 Analytics", value: "analytics" },
-                    { label: "🚀 Visibility", value: "visibility" },
+                    {
+                      label: isStaffRole
+                        ? "⚙️ Platform Tools"
+                        : "🚀 Visibility",
+                      value: "visibility",
+                    },
                     { label: "🏠 Overview", value: "overview" },
                     { label: "📂 Categories", value: "categories" },
-                    { label: "💼 Opportunities", value: "opportunities" },
+                    {
+                      label: isStaffRole
+                        ? "📋 Registrations"
+                        : "💼 Opportunities",
+                      value: "opportunities",
+                    },
                   ].map((tab) => (
                     <Button
                       key={tab.value}
@@ -985,14 +1722,18 @@ export default function PublicDashboard() {
               >
                 <Link href="/communities">👥 Communities</Link>
               </Button>
-              <div className="border-t border-slate-700/50 my-2" />
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
-              >
-                <Link href="/geo-admin">🌍 Back to Geo Admin</Link>
-              </Button>
+              {cameFromGeoAdmin && (
+                <>
+                  <div className="border-t border-slate-700/50 my-2" />
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  >
+                    <Link href="/geo-admin">🌍 Back to Geo Admin</Link>
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1000,8 +1741,8 @@ export default function PublicDashboard() {
 
       {/* ── MAIN CONTENT ───────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ── THE "AHA!" MOMENT — hidden searches alert ──────────────────── */}
-        {isLoggedIn && (
+        {/* ── THE "AHA!" MOMENT — hidden searches alert (subscribers only) ── */}
+        {isLoggedIn && !isStaffRole && (
           <HiddenSearchesAlert
             hiddenCount={hiddenSearches}
             currentTier={currentTier}
@@ -1019,7 +1760,9 @@ export default function PublicDashboard() {
             </h1>
             <p className="text-slate-300 mt-2 text-lg">
               {isLoggedIn
-                ? `${tierDef.icon} ${tierDef.name} Plan — ${tierDef.visibilityNarrative}`
+                ? hasRealBusiness
+                  ? `${tierDef.icon} ${tierDef.name} Plan — ${business.category} sector dashboard`
+                  : `${tierDef.icon} ${tierDef.name} Plan — ${tierDef.visibilityNarrative}`
                 : "Explore our comprehensive business directory and opportunities"}
             </p>
             {isLoggedIn && (
@@ -1031,7 +1774,7 @@ export default function PublicDashboard() {
               </p>
             )}
           </div>
-          {isLoggedIn && currentTier !== "enterprise" && (
+          {isLoggedIn && !isStaffRole && currentTier !== "enterprise" && (
             <Button
               onClick={() => setShowComparisonModal(true)}
               className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white font-bold gap-2 shadow-lg"
@@ -1047,91 +1790,555 @@ export default function PublicDashboard() {
             ═══════════════════════════════════════════════════════════════════ */}
         {isLoggedIn ? (
           <>
-            {/* ── TOP ROW: Visibility Gauge + Stats + Trust Hub ──────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {/* Visibility Meter */}
-              <VisibilityMeter
-                currentTier={currentTier}
-                onBoostClick={() => setShowComparisonModal(true)}
-              />
-
-              {/* Middle: Rank Score + Quick Stats */}
-              <div className="space-y-4">
-                <RankScoreDisplay
-                  score={rankScore}
-                  tier={currentTier}
-                  onUpgradeClick={() => setShowComparisonModal(true)}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <QuickStat
-                    icon={<Eye className="h-4 w-4 text-blue-600" />}
-                    label={industryStats[0]?.label ?? "Page Views"}
-                    value={industryStats[0]?.value ?? analytics.pageViews}
-                    change={
-                      industryStats[0]
-                        ? `${industryStats[0].positive ? "+" : ""}${industryStats[0].change}%`
-                        : "+12%"
-                    }
-                    positive={industryStats[0]?.positive ?? true}
-                  />
-                  <QuickStat
-                    icon={
-                      <MousePointerClick className="h-4 w-4 text-emerald-600" />
-                    }
-                    label={
-                      industryStats[1]?.isLocked
-                        ? "Clicks"
-                        : (industryStats[1]?.label ?? "Clicks")
-                    }
-                    value={
-                      industryStats[1]?.isLocked
-                        ? analytics.clicks
-                        : (industryStats[1]?.value ?? analytics.clicks)
-                    }
-                    change={
-                      industryStats[1]?.isLocked
-                        ? "+8%"
-                        : `${industryStats[1]?.positive ? "+" : ""}${industryStats[1]?.change}%`
-                    }
-                    positive={
-                      industryStats[1]?.isLocked
-                        ? true
-                        : (industryStats[1]?.positive ?? true)
-                    }
-                  />
-                  <QuickStat
-                    icon={<Search className="h-4 w-4 text-purple-600" />}
-                    label="Search Hits"
-                    value={analytics.searchAppearances}
-                    change="+24%"
-                    positive
-                  />
-                  <QuickStat
-                    icon={<Star className="h-4 w-4 text-yellow-500" />}
-                    label="Rating"
-                    value={business.rating.toFixed(1)}
-                    change={`${business.reviewCount} reviews`}
-                  />
+            {/* ── MY BUSINESS PROFILE CARD ───────────────────────────────── */}
+            {hasRealBusiness ? (
+              <div className="mb-8 bg-gradient-to-r from-slate-800/60 to-slate-800/40 rounded-2xl border border-slate-700/40 p-6">
+                {/* Header row */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-white text-base font-bold shadow-lg shadow-emerald-500/20">
+                    {business.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-bold text-white truncate">
+                      {business.name}
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      {business.category} • {business.location}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {business.verification_status === "verified" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        <ShieldCheck className="h-3 w-3" /> Verified
+                      </span>
+                    ) : business.verification_status === "rejected" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                        <ShieldX className="h-3 w-3" /> Rejected
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        ⏳ Pending
+                      </span>
+                    )}
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                        business.is_active
+                          ? "bg-green-500/15 text-green-400 border-green-500/30"
+                          : "bg-slate-600/30 text-slate-400 border-slate-600/40"
+                      }`}
+                    >
+                      <Power className="h-3 w-3" />
+                      {business.is_active ? "Active" : "Inactive"}
+                    </span>
+                    <span className="text-sm font-medium text-yellow-400">
+                      ★ {business.rating.toFixed(1)}{" "}
+                      <span className="text-slate-500 text-xs">
+                        ({business.reviewCount})
+                      </span>
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Right: Verification & Trust Hub */}
-              <VerificationTrustHub
-                tier={currentTier}
-                verificationStatus={business.verification_status}
-                isVerified={business.verification_status === "verified"}
-              />
-            </div>
+                {/* Quick stats row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                  <div className="bg-slate-700/40 rounded-lg p-3 text-center">
+                    <p className="text-lg font-bold text-emerald-400">
+                      {business.products_count}
+                    </p>
+                    <p className="text-xs text-slate-400">Products</p>
+                  </div>
+                  <div className="bg-slate-700/40 rounded-lg p-3 text-center">
+                    <p className="text-lg font-bold text-cyan-400">
+                      {business.photos_count}
+                    </p>
+                    <p className="text-xs text-slate-400">Photos</p>
+                  </div>
+                  <div className="bg-slate-700/40 rounded-lg p-3 text-center">
+                    <p className="text-lg font-bold text-blue-400">
+                      {business.reviewCount}
+                    </p>
+                    <p className="text-xs text-slate-400">Reviews</p>
+                  </div>
+                  <div className="bg-slate-700/40 rounded-lg p-3 text-center">
+                    <p className="text-lg font-bold text-purple-400">
+                      {business.approval_status || "—"}
+                    </p>
+                    <p className="text-xs text-slate-400">Approval</p>
+                  </div>
+                </div>
+
+                {/* ── ADMIN ACTIONS (superuser / admin / moderator) ────── */}
+                {(userRole === "superuser" ||
+                  userRole === "admin" ||
+                  userRole === "moderator") && (
+                  <div className="pt-4 border-t border-slate-700/40">
+                    <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest mb-3">
+                      Admin Controls
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Open Business Dossier (registration info + messaging) */}
+                      <button
+                        onClick={() => setShowDossier(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 hover:border-blue-400/50 transition-all"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Business Dossier
+                      </button>
+
+                      {/* Verify / Unverify Toggle */}
+                      <button
+                        onClick={async () => {
+                          try {
+                            const newVerified =
+                              business.verification_status !== "verified";
+                            const token =
+                              localStorage.getItem("auth_token") ||
+                              localStorage.getItem("authToken");
+                            const res = await fetch(
+                              `${API_BASE_URL}/api/businesses/${business.id}`,
+                              {
+                                method: "PUT",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...(token
+                                    ? { Authorization: `Bearer ${token}` }
+                                    : {}),
+                                },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                  isVerified: newVerified,
+                                }),
+                              },
+                            );
+                            if (res.ok) {
+                              await queryClient.invalidateQueries({
+                                queryKey: ["my-businesses"],
+                                refetchType: "all",
+                              });
+                              await queryClient.invalidateQueries({
+                                queryKey: ["business-dossier", business.id],
+                              });
+                            } else {
+                              console.error(
+                                "Verify toggle failed:",
+                                res.status,
+                                await res.text(),
+                              );
+                            }
+                          } catch (err) {
+                            console.error("Verify toggle error:", err);
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                          business.verification_status === "verified"
+                            ? "bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25"
+                            : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25"
+                        }`}
+                      >
+                        {business.verification_status === "verified" ? (
+                          <>
+                            <ShieldX className="h-3.5 w-3.5" /> Unverify
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5" /> Verify
+                          </>
+                        )}
+                      </button>
+
+                      {/* Active / Inactive Toggle */}
+                      <button
+                        onClick={async () => {
+                          try {
+                            const token =
+                              localStorage.getItem("auth_token") ||
+                              localStorage.getItem("authToken");
+                            const res = await fetch(
+                              `${API_BASE_URL}/api/businesses/${business.id}`,
+                              {
+                                method: "PUT",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...(token
+                                    ? { Authorization: `Bearer ${token}` }
+                                    : {}),
+                                },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                  isActive: !business.is_active,
+                                }),
+                              },
+                            );
+                            if (res.ok) {
+                              await queryClient.invalidateQueries({
+                                queryKey: ["my-businesses"],
+                                refetchType: "all",
+                              });
+                              await queryClient.invalidateQueries({
+                                queryKey: ["business-dossier", business.id],
+                              });
+                            } else {
+                              console.error(
+                                "Active toggle failed:",
+                                res.status,
+                                await res.text(),
+                              );
+                            }
+                          } catch (err) {
+                            console.error("Active toggle error:", err);
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                          business.is_active
+                            ? "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25"
+                            : "bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/25"
+                        }`}
+                      >
+                        <Power className="h-3.5 w-3.5" />
+                        {business.is_active ? "Deactivate" : "Activate"}
+                      </button>
+
+                      {/* Approve (if pending) */}
+                      {business.approval_status === "pending" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const token =
+                                localStorage.getItem("auth_token") ||
+                                localStorage.getItem("authToken");
+                              const res = await fetch(
+                                `${API_BASE_URL}/api/businesses/${business.id}/approve`,
+                                {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    ...(token
+                                      ? { Authorization: `Bearer ${token}` }
+                                      : {}),
+                                  },
+                                  credentials: "include",
+                                  body: JSON.stringify({
+                                    approvedBy: userSession?.user?.id,
+                                  }),
+                                },
+                              );
+                              if (res.ok) {
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["my-businesses"],
+                                  refetchType: "all",
+                                });
+                                await queryClient.invalidateQueries({
+                                  queryKey: ["business-dossier", business.id],
+                                });
+                              } else {
+                                console.error(
+                                  "Approve failed:",
+                                  res.status,
+                                  await res.text(),
+                                );
+                              }
+                            } catch (err) {
+                              console.error("Approve error:", err);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" /> Approve
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {userBusinesses && userBusinesses.length > 1 && (
+                  <div className="mt-4 pt-4 border-t border-slate-700/30">
+                    <button
+                      onClick={() =>
+                        setShowBusinessSwitcher(!showBusinessSwitcher)
+                      }
+                      className="flex items-center gap-2 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors group"
+                    >
+                      <span className="h-5 w-5 rounded-md bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-[10px] group-hover:bg-cyan-500/25 transition-colors">
+                        {userBusinesses.length}
+                      </span>
+                      {showBusinessSwitcher ? "Hide" : "Switch"} businesses
+                      <ArrowRight
+                        className={`h-3 w-3 transition-transform ${showBusinessSwitcher ? "rotate-90" : ""}`}
+                      />
+                    </button>
+
+                    {showBusinessSwitcher && (
+                      <div className="mt-3 grid gap-2">
+                        {userBusinesses.map((biz, idx) => (
+                          <button
+                            key={biz.id}
+                            onClick={() => {
+                              setSelectedBusinessIdx(idx);
+                              setShowBusinessSwitcher(false);
+                            }}
+                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg border transition-all ${
+                              idx === selectedBusinessIdx
+                                ? "bg-cyan-500/15 border-cyan-500/40 text-white"
+                                : "bg-slate-700/30 border-slate-700/40 text-slate-300 hover:bg-slate-700/50 hover:border-slate-600/50"
+                            }`}
+                          >
+                            <div
+                              className={`h-7 w-7 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                idx === selectedBusinessIdx
+                                  ? "bg-gradient-to-br from-emerald-500 to-cyan-600 text-white"
+                                  : "bg-slate-600/60 text-slate-300"
+                              }`}
+                            >
+                              {biz.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">
+                                {biz.name}
+                              </p>
+                              <p className="text-[10px] text-slate-500">
+                                {biz.category} • {biz.location}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {biz.is_active ? (
+                                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                              ) : (
+                                <span className="h-2 w-2 rounded-full bg-slate-600"></span>
+                              )}
+                              <span className="text-[10px] text-yellow-400">
+                                ★ {biz.rating.toFixed(1)}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-8 bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-2xl border border-amber-700/30 p-6 text-center">
+                <p className="text-amber-300 font-semibold mb-1">
+                  🏢 No business registered yet
+                </p>
+                <p className="text-slate-400 text-sm mb-4">
+                  Register your business to unlock personalized analytics,
+                  visibility tracking, and category-specific insights.
+                </p>
+                <Button
+                  asChild
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold gap-2"
+                >
+                  <Link href="/businesses-directory">
+                    <ShoppingCart className="h-4 w-4" />
+                    Register a Business
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {/* ── TOP ROW: Visibility Gauge + Stats + Trust Hub ──────────── */}
+            {isStaffRole ? (
+              /* ── STAFF (superuser/admin/mod): Platform Command Strip ── */
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Platform Pulse */}
+                <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/40">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-mono text-slate-400 flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-blue-400" /> Platform Pulse
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          Total Businesses
+                        </span>
+                        <span className="text-lg font-bold text-white">
+                          {stats?.totalBusinesses || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          Categories
+                        </span>
+                        <span className="text-lg font-bold text-cyan-400">
+                          {stats?.categoriesCount || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          Countries
+                        </span>
+                        <span className="text-lg font-bold text-emerald-400">
+                          {stats?.businessesByCountry
+                            ? Object.keys(stats.businessesByCountry).length
+                            : 0}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Admin Actions */}
+                <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/40">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-mono text-slate-400 flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-purple-400" /> Quick
+                      Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Link href="/geo-admin/dashboard?from=vault">
+                      <button className="w-full text-left px-3 py-2 rounded-lg bg-slate-700/40 hover:bg-blue-500/15 text-sm text-slate-300 hover:text-blue-400 transition-all flex items-center gap-2">
+                        <MapPin className="h-4 w-4" /> GEO Admin Panel
+                      </button>
+                    </Link>
+                    <Link href="/vault">
+                      <button className="w-full text-left px-3 py-2 rounded-lg bg-slate-700/40 hover:bg-red-500/15 text-sm text-slate-300 hover:text-red-400 transition-all flex items-center gap-2">
+                        <Lock className="h-4 w-4" /> Credentials Vault
+                      </button>
+                    </Link>
+                    <Link href="/businesses-directory">
+                      <button className="w-full text-left px-3 py-2 rounded-lg bg-slate-700/40 hover:bg-emerald-500/15 text-sm text-slate-300 hover:text-emerald-400 transition-all flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4" /> Business Directory
+                      </button>
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                {/* System Status */}
+                <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700/40">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-mono text-slate-400 flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-400" />{" "}
+                      System Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">Role</span>
+                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                          SUPERUSER
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          Tier Override
+                        </span>
+                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                          ENTERPRISE
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          Access Level
+                        </span>
+                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          FULL
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500">
+                          DB Connection
+                        </span>
+                        <span className="text-xs font-mono text-emerald-400">
+                          ● Online
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Visibility Meter */}
+                <VisibilityMeter
+                  currentTier={currentTier}
+                  onBoostClick={() => setShowComparisonModal(true)}
+                />
+
+                {/* Middle: Rank Score + Quick Stats */}
+                <div className="space-y-4">
+                  <RankScoreDisplay
+                    score={rankScore}
+                    tier={currentTier}
+                    onUpgradeClick={() => setShowComparisonModal(true)}
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <QuickStat
+                      icon={<Eye className="h-4 w-4 text-blue-600" />}
+                      label={industryStats[0]?.label ?? "Page Views"}
+                      value={industryStats[0]?.value ?? analytics.pageViews}
+                      change={
+                        industryStats[0]
+                          ? `${industryStats[0].positive ? "+" : ""}${industryStats[0].change}%`
+                          : "+12%"
+                      }
+                      positive={industryStats[0]?.positive ?? true}
+                    />
+                    <QuickStat
+                      icon={
+                        <MousePointerClick className="h-4 w-4 text-emerald-600" />
+                      }
+                      label={
+                        industryStats[1]?.isLocked
+                          ? "Clicks"
+                          : (industryStats[1]?.label ?? "Clicks")
+                      }
+                      value={
+                        industryStats[1]?.isLocked
+                          ? analytics.clicks
+                          : (industryStats[1]?.value ?? analytics.clicks)
+                      }
+                      change={
+                        industryStats[1]?.isLocked
+                          ? "+8%"
+                          : `${industryStats[1]?.positive ? "+" : ""}${industryStats[1]?.change}%`
+                      }
+                      positive={
+                        industryStats[1]?.isLocked
+                          ? true
+                          : (industryStats[1]?.positive ?? true)
+                      }
+                    />
+                    <QuickStat
+                      icon={<Search className="h-4 w-4 text-purple-600" />}
+                      label="Search Hits"
+                      value={analytics.searchAppearances}
+                      change="+24%"
+                      positive
+                    />
+                    <QuickStat
+                      icon={<Star className="h-4 w-4 text-yellow-500" />}
+                      label="Rating"
+                      value={business.rating.toFixed(1)}
+                      change={`${business.reviewCount} reviews`}
+                    />
+                  </div>
+                </div>
+
+                {/* Right: Verification & Trust Hub */}
+                <VerificationTrustHub
+                  tier={currentTier}
+                  verificationStatus={business.verification_status}
+                  isVerified={business.verification_status === "verified"}
+                />
+              </div>
+            )}
 
             {/* ── TABBED CONTENT (Subscriber) ────────────────────────────── */}
             <Tabs defaultValue="analytics" className="space-y-6">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
-                <TabsTrigger value="visibility">🚀 Visibility</TabsTrigger>
+                <TabsTrigger value="visibility">
+                  {isStaffRole ? "⚙️ Platform Tools" : "🚀 Visibility"}
+                </TabsTrigger>
                 <TabsTrigger value="overview">🏠 Overview</TabsTrigger>
                 <TabsTrigger value="categories">📂 Categories</TabsTrigger>
                 <TabsTrigger value="opportunities">
-                  💼 Opportunities
+                  {isStaffRole ? "📋 Registrations" : "💼 Opportunities"}
                 </TabsTrigger>
               </TabsList>
 
@@ -1375,13 +2582,15 @@ export default function PublicDashboard() {
 
               {/* ── VISIBILITY TAB ────────────────────────────────────── */}
               <TabsContent value="visibility" className="space-y-6">
-                {/* Revenue Simulator */}
-                <RevenueSimulator
-                  currentTier={currentTier}
-                  currentMonthlyViews={analytics.pageViews}
-                  locked={isFeatureLocked(currentTier, "revenueSimulator")}
-                  onUpgradeClick={() => setShowComparisonModal(true)}
-                />
+                {/* Revenue Simulator — subscribers only */}
+                {!isStaffRole && (
+                  <RevenueSimulator
+                    currentTier={currentTier}
+                    currentMonthlyViews={analytics.pageViews}
+                    locked={isFeatureLocked(currentTier, "revenueSimulator")}
+                    onUpgradeClick={() => setShowComparisonModal(true)}
+                  />
+                )}
 
                 {/* Feature Access Overview */}
                 <Card>
@@ -1468,7 +2677,7 @@ export default function PublicDashboard() {
                         active={features.apiAccess}
                       />
                     </div>
-                    {currentTier !== "enterprise" && (
+                    {!isStaffRole && currentTier !== "enterprise" && (
                       <div className="mt-4 text-center">
                         <button
                           onClick={() => setShowComparisonModal(true)}
@@ -1536,6 +2745,7 @@ export default function PublicDashboard() {
                 <OpportunitiesContent
                   stats={stats}
                   statsLoading={statsLoading}
+                  isAdmin={isStaffRole}
                 />
               </TabsContent>
             </Tabs>
@@ -1772,6 +2982,9 @@ export default function PublicDashboard() {
         }}
         hiddenSearches={hiddenSearches}
       />
+
+      {/* ═══ BUSINESS DOSSIER MODAL ═══ */}
+      {renderDossierModal()}
     </div>
   );
 }
@@ -1918,16 +3131,22 @@ function CategoriesContent({
 function OpportunitiesContent({
   stats,
   statsLoading,
+  isAdmin = false,
 }: {
   stats: PublicStats | null | undefined;
   statsLoading: boolean;
+  isAdmin?: boolean;
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Opportunities</CardTitle>
+        <CardTitle>
+          {isAdmin ? "Recent Registrations" : "Recent Opportunities"}
+        </CardTitle>
         <CardDescription>
-          Latest job listings and business opportunities
+          {isAdmin
+            ? "Newest businesses registered on the platform"
+            : "Latest job listings and business opportunities"}
         </CardDescription>
       </CardHeader>
       <CardContent>

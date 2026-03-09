@@ -88,8 +88,9 @@ export function useSubscription(): UseSubscriptionReturn {
       });
 
       if (!res.ok) {
-        // Token expired or invalid
-        if (res.status === 401) clearStoredTokens();
+        // Token expired or invalid — clear in-memory state only.
+        // Keep localStorage tokens so gateBypass persists across reloads.
+        // Tokens are only cleared on explicit signOut().
         setUser(null);
         return;
       }

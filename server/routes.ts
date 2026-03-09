@@ -108,6 +108,89 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ─── Business Categories endpoint (used by geo-admin dashboard) ───
+  app.get("/api/business-categories", async (req, res) => {
+    try {
+      const { countryCode } = req.query;
+      let result;
+      if (countryCode && String(countryCode) !== "all") {
+        result = await db.execute(
+          sql`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+              COUNT(b.id)::int AS business_count
+            FROM business_categories bc
+            LEFT JOIN businesses b ON b.category_id = bc.id
+              AND UPPER(b.country_code) = UPPER(${String(countryCode)})
+            GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
+            ORDER BY bc.name`,
+        );
+      } else {
+        result = await db.execute(
+          sql`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+              COUNT(b.id)::int AS business_count
+            FROM business_categories bc
+            LEFT JOIN businesses b ON b.category_id = bc.id
+            GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
+            ORDER BY bc.name`,
+        );
+      }
+      res.json(result.rows);
+    } catch (error: any) {
+      console.error("Error fetching business categories:", error);
+      res.status(500).json({ error: "Failed to fetch business categories" });
+    }
+  });
+
+  // ─── Ad Campaigns endpoint (used by geo-admin dashboard) ───
+  app.get("/api/ad-campaigns", async (req, res) => {
+    try {
+      const { countryCode, limit = "50" } = req.query;
+      const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
+
+      // Use SELECT ac.* to avoid column-not-found errors (schema may differ from DB)
+      let result;
+      if (countryCode && String(countryCode) !== "all") {
+        result = await db.execute(
+          sql`SELECT ac.*, b.name AS business_name, b.country_code
+              FROM ad_campaigns ac
+              INNER JOIN businesses b ON b.id = ac.business_id
+                AND UPPER(b.country_code) = UPPER(${String(countryCode)})
+              ORDER BY ac.created_at DESC NULLS LAST
+              LIMIT ${limitNum}`,
+        );
+      } else {
+        result = await db.execute(
+          sql`SELECT ac.*, b.name AS business_name, b.country_code
+              FROM ad_campaigns ac
+              LEFT JOIN businesses b ON b.id = ac.business_id
+              ORDER BY ac.created_at DESC NULLS LAST
+              LIMIT ${limitNum}`,
+        );
+      }
+
+      const campaigns = (result.rows || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        daily_budget: r.budget || r.daily_budget || "0",
+        objective: r.description || r.name || "Campaign",
+        status: r.status || "active",
+        start_date: r.start_date,
+        end_date: r.end_date,
+        impressions: r.impressions || 0,
+        clicks: r.clicks || 0,
+        conversions: r.conversions || 0,
+        business_id: r.business_id,
+        business_name: r.business_name,
+        country_code: r.country_code,
+        created_at: r.created_at,
+      }));
+
+      res.json({ success: true, data: campaigns });
+    } catch (error: any) {
+      console.error("❌ Ad campaigns fetch failed:", error);
+      res.status(500).json({ success: false, data: [], error: error.message });
+    }
+  });
+
   // Debug: Log available schema keys on startup
   console.log("📋 Available schema exports:", Object.keys(schema));
   console.log("🗺️  TABLE_NAME_MAP:", TABLE_NAME_MAP);

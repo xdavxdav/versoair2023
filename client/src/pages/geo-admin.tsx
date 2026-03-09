@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GeoAdmin from "@/components/geo-admin";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
@@ -32,11 +32,23 @@ export default function GeoAdminPage() {
   }, []);
 
   // Session timer - use gateBypass as indicator of authentication
+  // Also checks geoadmin_session which persists even after JWT expiry
+  // (only cleared on explicit Sign Out in the auth gate)
   const [gateBypass, setGateBypass] = useState(() => {
     const token =
       localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-    return !!token;
+    const geoSession = localStorage.getItem("geoadmin_session");
+    return !!token || !!geoSession;
   });
+
+  const handleGeoSessionExpired = useCallback(() => {
+    setGateBypass(false);
+    setIsStillConnected(false);
+    localStorage.removeItem("geoadmin_session");
+    localStorage.removeItem("geoadmin_username");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("authToken");
+  }, []);
 
   const {
     sessionTimeLeft,
@@ -45,15 +57,24 @@ export default function GeoAdminPage() {
     isSessionLow,
     handleExtendSession,
     formatTimeLeft,
-  } = useSessionTimer(gateBypass, true); // enableTimeout=true for geo-admin
+  } = useSessionTimer(gateBypass, true, handleGeoSessionExpired); // enableTimeout=true for geo-admin
   const [isStillConnected, setIsStillConnected] = useState(() => {
     const token =
       localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-    return !!token;
+    const geoSession = localStorage.getItem("geoadmin_session");
+    return !!token || !!geoSession;
   });
   const [username, setUsername] = useState<string | null>(() => {
     return localStorage.getItem("geoadmin_username") || null;
   });
+
+  // Best available display name: subscription user > localStorage username > fallback
+  const displayName =
+    user?.name ||
+    user?.username ||
+    user?.email?.split("@")[0] ||
+    username ||
+    null;
 
   // Maintain session across route changes - don't show gate if token exists
   useEffect(() => {
@@ -235,7 +256,7 @@ export default function GeoAdminPage() {
         </div>
 
         {/* Limited Geo Admin view */}
-        <GeoAdmin username={username} />
+        <GeoAdmin username={displayName || username} tier={tier} />
       </div>
     );
   }
@@ -262,13 +283,52 @@ export default function GeoAdminPage() {
         </div>
       )}
 
+      {/* Session status banner — context-aware messaging */}
+      {gateBypass && !isAuthenticated && !loading && (
+        <div
+          className={`border-b ${sessionTimeLeft > 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-amber-500/10 border-amber-500/20"}`}
+        >
+          <div className="max-w-7xl mx-auto px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <p
+              className={`text-xs sm:text-sm ${sessionTimeLeft > 0 ? "text-emerald-300" : "text-amber-300"}`}
+            >
+              {sessionTimeLeft > 0 ? (
+                <>
+                  <CheckCircle className="inline-block h-3.5 w-3.5 mr-1.5" />
+                  Connected as Geo Admin{displayName ? ` (${displayName})` : ""}
+                </>
+              ) : (
+                <>
+                  <Lock className="inline-block h-3.5 w-3.5 mr-1.5" />
+                  Session expired — sign in again for live data
+                </>
+              )}
+            </p>
+            {sessionTimeLeft <= 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-xs h-7 px-3"
+                onClick={() => {
+                  setGateBypass(false);
+                }}
+              >
+                <Zap className="h-3 w-3 mr-1" />
+                Re-authenticate
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Role / tier indicator */}
       {isGeoAdmin ? (
         <div className="bg-indigo-500/10 border-b border-indigo-500/20">
           <div className="max-w-7xl mx-auto px-4 py-2">
             <p className="text-indigo-300 text-xs sm:text-sm">
               <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
-              Geo Admin — full access granted{username ? ` (${username})` : ""}
+              Geo Admin — full access granted
+              {displayName ? ` (${displayName})` : ""}
             </p>
           </div>
         </div>
@@ -283,7 +343,7 @@ export default function GeoAdminPage() {
           </div>
         </div>
       ) : null}
-      <GeoAdmin username={username} />
+      <GeoAdmin username={displayName || username} tier={tier} />
     </div>
   );
 }

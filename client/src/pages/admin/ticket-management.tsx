@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
@@ -72,6 +72,16 @@ export function AdminTicketManagement() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // ── Role gate: only superuser & moderator can access TAM ──
+  const userRole = (user?.role || "").toLowerCase();
+  const canAccessTAM = userRole === "superuser" || userRole === "moderator";
+  useEffect(() => {
+    if (user && !canAccessTAM) {
+      navigate("/tickets");
+    }
+  }, [user, canAccessTAM, navigate]);
+
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
   const [newUserData, setNewUserData] = useState({

@@ -153,6 +153,77 @@ router.get("/api/properties/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST create a new property listing
+router.post("/api/properties", async (req: Request, res: Response) => {
+  try {
+    const {
+      name,
+      description,
+      type,
+      category = "rent",
+      city,
+      location,
+      address,
+      price,
+      bedrooms,
+      bathrooms,
+      area,
+      amenities,
+      hostName,
+      hostPhone,
+      hostEmail,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !type || !city || !price) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Missing required fields: name, type, city, and price are required",
+      });
+    }
+
+    const result = await db
+      .insert(properties)
+      .values({
+        name,
+        description: description || "",
+        type,
+        category,
+        city,
+        location: location || city,
+        address: address || "",
+        price: String(price),
+        bedrooms: bedrooms ? parseInt(String(bedrooms)) : 0,
+        bathrooms: bathrooms ? parseInt(String(bathrooms)) : 0,
+        area: area ? parseInt(String(area)) : 0,
+        amenities: Array.isArray(amenities) ? amenities : [],
+        hostName: hostName || "Owner",
+        hostPhone: hostPhone || "",
+        hostEmail: hostEmail || "",
+        verified: false,
+        featured: false,
+        rating: "0.0",
+        reviews: 0,
+      })
+      .returning();
+
+    console.log(`✅ [PROPERTIES] New listing created: "${name}" in ${city}`);
+
+    res.status(201).json({
+      success: true,
+      message: "Property listing created successfully",
+      data: result[0],
+    });
+  } catch (error) {
+    console.error("Error creating property:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create property listing",
+    });
+  }
+});
+
 // GET properties by city
 router.get(
   "/api/properties/city/:city",

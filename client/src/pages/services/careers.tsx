@@ -1073,19 +1073,18 @@ export default function Careers() {
           </div>
         </div>
 
-        {/* Hero Section - Updated with business theme */}
-        <section className="relative py-8 sm:py-12 lg:py-16 bg-gradient-to-r from-blue-50/50 via-white to-cyan-50/50 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-blue-50/20 to-transparent"></div>
+        {/* Hero Section - Compact */}
+        <section className="relative py-5 sm:py-6 bg-gradient-to-r from-blue-50/50 via-white to-cyan-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <div className="text-center mb-12 scroll-fade-in opacity-0 translate-y-4 transition-all duration-700">
+            <div className="text-center">
               <motion.div
                 variants={fadeInUp}
                 initial="hidden"
                 animate="visible"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full mb-6 border border-blue-200">
-                  <Zap className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-semibold bg-gradient-to-r from-blue-700 to-cyan-700 bg-clip-text text-transparent">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full mb-3 border border-blue-200">
+                  <Zap className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="text-xs font-semibold bg-gradient-to-r from-blue-700 to-cyan-700 bg-clip-text text-transparent">
                     Live PostgreSQL Job Portal
                   </span>
                 </div>
@@ -1095,7 +1094,7 @@ export default function Careers() {
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.1 }}
-                className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight"
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 leading-tight"
               >
                 Find Your{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
@@ -1108,7 +1107,7 @@ export default function Careers() {
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: 0.2 }}
-                className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mb-4 sm:mb-8 leading-relaxed px-2"
+                className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed"
               >
                 Discover {filteredJobs.length} real opportunities across all
                 industries.
@@ -1116,152 +1115,9 @@ export default function Careers() {
                   ✅ Updated in real time
                 </span>
               </motion.p>
-
-              {/* Database Connection Info */}
-              <motion.div
-                variants={fadeInUp}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.3 }}
-                className="max-w-2xl mx-auto mb-4 sm:mb-8 hidden sm:block"
-              >
-                <Card className="border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`p-3 rounded-xl ${
-                            databaseHealth?.database?.connected
-                              ? "bg-emerald-100"
-                              : "bg-amber-100"
-                          }`}
-                        >
-                          <Database
-                            className={`h-6 w-6 ${
-                              databaseHealth?.database?.connected
-                                ? "text-emerald-600"
-                                : "text-amber-600"
-                            }`}
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900">
-                            PostgreSQL Database
-                          </h4>
-                          <p className="text-sm font-medium text-emerald-600">
-                            ✅ Connected to{" "}
-                            {databaseHealth?.database?.name ||
-                              DB_CONFIG.database}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <code className="text-xs bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-300 font-mono">
-                          {DB_CONFIG.host}:{DB_CONFIG.port}
-                        </code>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Database Stats */}
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 max-w-3xl mx-auto mb-4 sm:mb-8 px-2 sm:px-0"
-              >
-                <StatCard
-                  icon={<Server className="w-5 h-5" />}
-                  value={filteredJobs.length.toLocaleString()}
-                  label="Total Jobs"
-                  trend="Live"
-                  color="green"
-                />
-                <StatCard
-                  icon={<HardDrive className="w-5 h-5" />}
-                  value={DB_CONFIG.database}
-                  label="Database"
-                  trend="Wider Scope"
-                  color="blue"
-                />
-                <StatCard
-                  icon={<Network className="w-5 h-5" />}
-                  value="Online"
-                  label="Status"
-                  trend="Real-time"
-                  color="green"
-                />
-                <StatCard
-                  icon={<Activity className="w-5 h-5" />}
-                  value={new Date().toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  label="Last Checked"
-                  trend="Now"
-                  color="purple"
-                />
-              </motion.div>
-
-              {/* Search Bar - Enhanced */}
-              <div className="max-w-3xl mx-auto scroll-fade-in opacity-0 translate-y-4 transition-all duration-700 delay-300">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-50"></div>
-                  <div className="relative bg-white/95 backdrop-blur-sm border border-gray-300/50 rounded-2xl shadow-xl overflow-hidden">
-                    <Search className="absolute left-5 top-5 h-5 w-5 text-gray-400" />
-                    <Input
-                      placeholder="Search jobs, companies, or skills (e.g., 'React Developer', 'Data Scientist')"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-24 py-7 text-lg border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
-                    />
-                    <Button className="absolute right-2.5 top-2.5 py-5 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md">
-                      <Search className="h-5 w-5 mr-2" />
-                      Search Jobs
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mt-6 justify-center">
-                  {[
-                    "#Remote",
-                    "#Tech",
-                    "#Startup",
-                    "#AI",
-                    "#Developer",
-                    "#Business",
-                    "#Analytics",
-                  ].map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 px-3 py-1.5 text-sm"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </section>
-
-        {/* 📬 Job Alerts Subscribe CTA */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 mb-6">
-          <EmailSubscribeCTA
-            channelType="job_alerts"
-            userId={platformUser?.id}
-            onAuthRequired={() =>
-              toast({
-                title: "Sign in required",
-                description:
-                  "Create an account or sign in to subscribe to job alerts.",
-              })
-            }
-          />
-        </div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -1631,6 +1487,60 @@ export default function Careers() {
 
             {/* Jobs List */}
             <div className="lg:w-3/4">
+              {/* Search Bar — right above job results */}
+              <div className="mb-5">
+                <div className="relative">
+                  <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      placeholder="Search jobs, companies, or skills…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-11 pr-28 py-6 text-base border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
+                    />
+                    <Button className="absolute right-2 top-1/2 -translate-y-1/2 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-sm text-sm">
+                      <Search className="h-4 w-4 mr-1.5" />
+                      Search
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  {[
+                    "#Remote",
+                    "#Tech",
+                    "#Startup",
+                    "#AI",
+                    "#Developer",
+                    "#Business",
+                    "#Analytics",
+                  ].map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all duration-200 px-2 py-0.5 text-xs"
+                      onClick={() => setSearchQuery(tag.replace("#", ""))}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* 📬 Job Alerts Subscribe CTA */}
+              <div className="mb-5">
+                <EmailSubscribeCTA
+                  channelType="job_alerts"
+                  userId={platformUser?.id}
+                  onAuthRequired={() =>
+                    toast({
+                      title: "Sign in required",
+                      description:
+                        "Create an account or sign in to subscribe to job alerts.",
+                    })
+                  }
+                />
+              </div>
+
               {/* Sector Quick Filter — Searchable Dropdown */}
               <div className="mb-5">
                 <div className="flex items-center gap-3">

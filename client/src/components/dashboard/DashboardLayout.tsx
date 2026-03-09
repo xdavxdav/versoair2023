@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Search, RefreshCw, LogOut, Menu } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { RefreshCw, LogOut, Menu } from "lucide-react";
 import { DashboardSidebar, NavSection } from "./DashboardSidebar";
 
 export interface DashboardLayoutProps {
@@ -11,7 +11,10 @@ export interface DashboardLayoutProps {
   subtitle?: string;
   onRefresh?: () => void;
   onLogout?: () => void;
+  navbarRef?: React.RefObject<HTMLElement>;
 }
+
+type ScrollState = "top" | "down" | "up";
 
 export function DashboardLayout({
   children,
@@ -22,22 +25,169 @@ export function DashboardLayout({
   subtitle,
   onRefresh,
   onLogout,
+  navbarRef,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [scrollState, setScrollState] = useState<ScrollState>("top");
+
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  const lastScrollY = useRef(0);
+  const scrollAccumulator = useRef(0);
+  const rafId = useRef<number | null>(null);
+
+  const headerHeightRef = useRef(0);
+  const headerOffsetRef = useRef(0);
+  const navbarBottomRef = useRef(0);
+
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const SCROLL_THRESHOLD = 10;
+
+  /*
+  ------------------------------------------------
+  MEASURE HEADER + NAVBAR
+  ------------------------------------------------
+  */
+
+  const measure = () => {
+    if (headerRef.current) {
+      headerHeightRef.current = headerRef.current.offsetHeight;
+      headerOffsetRef.current = headerRef.current.offsetTop;
+      setHeaderHeight(headerHeightRef.current);
+    }
+
+    if (navbarRef?.current) {
+      const rect = navbarRef.current.getBoundingClientRect();
+      navbarBottomRef.current = rect.bottom;
+    }
+  };
+
+  /*
+  ------------------------------------------------
+  SCROLL HANDLER
+  ------------------------------------------------
+  */
+
+  const updateScroll = () => {
+    rafId.current = null;
+
+    const currentY = window.scrollY;
+    const delta = currentY - lastScrollY.current;
+
+    if (navbarRef?.current) {
+      const rect = navbarRef.current.getBoundingClientRect();
+      navbarBottomRef.current = rect.bottom;
+    }
+
+    const pastHeader =
+      currentY > headerOffsetRef.current + headerHeightRef.current;
+
+    if (currentY < 5 || !pastHeader) {
+      scrollAccumulator.current = 0;
+      setScrollState("top");
+    } else {
+      scrollAccumulator.current += delta;
+
+      if (scrollAccumulator.current > SCROLL_THRESHOLD) {
+        scrollAccumulator.current = 0;
+        setScrollState("down");
+      }
+
+      if (scrollAccumulator.current < -SCROLL_THRESHOLD) {
+        scrollAccumulator.current = 0;
+        setScrollState("up");
+      }
+    }
+
+    if (headerRef.current && scrollState !== "top") {
+      headerRef.current.style.top = `${navbarBottomRef.current}px`;
+    }
+
+    lastScrollY.current = currentY;
+  };
+
+  const handleScroll = () => {
+    if (rafId.current !== null) return;
+    rafId.current = requestAnimationFrame(updateScroll);
+  };
+
+  /*
+  ------------------------------------------------
+  EFFECTS
+  ------------------------------------------------
+  */
+
+  useEffect(() => {
+    measure();
+
+    const resizeObserver = new ResizeObserver(measure);
+
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current);
+    }
+
+    if (navbarRef?.current) {
+      resizeObserver.observe(navbarRef.current);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", measure);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", measure);
+
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  /*
+  ------------------------------------------------
+  REFRESH HANDLER
+  ------------------------------------------------
+  */
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+
     if (onRefresh) {
       await onRefresh();
     }
+
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
+  /*
+  ------------------------------------------------
+  HEADER STYLE LOGIC
+  ------------------------------------------------
+  */
+
+  const headerFixed = scrollState !== "top";
+
+  const headerStyle: React.CSSProperties | undefined = headerFixed
+    ? {
+        top: `${navbarBottomRef.current}px`,
+        transform: scrollState === "up" ? "translateY(0)" : "translateY(-100%)",
+        opacity: scrollState === "up" ? 1 : 0,
+        pointerEvents: scrollState === "up" ? "auto" : "none",
+        willChange: "transform, opacity",
+      }
+    : undefined;
+
+  /*
+  ------------------------------------------------
+  RENDER
+  ------------------------------------------------
+  */
+
   return (
-    <div className="flex flex-1 bg-slate-950 text-white min-h-screen">
-      {/* Sidebar — fixed overlay on mobile/tablet, sticky on desktop */}
+    <div className="flex flex-1 bg-slate-950 text-white min-h-screen overflow-x-hidden">
       <DashboardSidebar
         sections={sections}
         activeSection={activeSection}
@@ -46,48 +196,51 @@ export function DashboardLayout({
         onToggle={setSidebarOpen}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <header className="bg-slate-900 border-b border-slate-700 px-6 py-4 lg:ml-0 flex-shrink-0">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* HEADER */}
+
+        <header
+          ref={headerRef}
+          className={`px-3 sm:px-6 py-4 z-30 transition-[transform,opacity] duration-250 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
+          ${
+            headerFixed
+              ? "fixed left-0 right-0 lg:left-64 bg-slate-900/90 backdrop-blur-md border-b border-slate-700/60 shadow-lg"
+              : "bg-slate-900 border-b border-slate-700"
+          }`}
+          style={headerStyle}
+        >
           <div className="flex items-center justify-between gap-4">
-            {/* Left Section */}
-            <div className="flex items-center gap-3 flex-1">
+            {/* LEFT */}
+
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div>
-                <h2 className="text-2xl font-bold text-white">{title}</h2>
+
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-2xl font-bold truncate">
+                  {title}
+                </h2>
+
                 {subtitle && (
-                  <p className="text-sm text-slate-400 mt-1">{subtitle}</p>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1 truncate">
+                    {subtitle}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Right Section */}
-            <div className="flex items-center gap-4">
-              {/* Search */}
-              <div className="hidden md:flex items-center bg-slate-800 border border-slate-700 rounded-lg px-4 py-2">
-                <Search className="w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="ml-2 bg-transparent outline-none text-sm text-white placeholder-slate-500 w-48"
-                />
-              </div>
+            {/* RIGHT */}
 
-              {/* Refresh Button */}
+            <div className="flex items-center gap-2 sm:gap-4">
               {onRefresh && (
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   className="p-2 hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
-                  title="Refresh data"
                 >
                   <RefreshCw
                     className={`w-5 h-5 text-slate-400 ${
@@ -97,12 +250,10 @@ export function DashboardLayout({
                 </button>
               )}
 
-              {/* Logout Button */}
               {onLogout && (
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
-                  title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline text-sm">Logout</span>
@@ -110,23 +261,22 @@ export function DashboardLayout({
               )}
             </div>
           </div>
-
-          {/* Mobile Search */}
-          <div className="md:hidden mt-4 flex items-center bg-slate-800 border border-slate-700 rounded-lg px-4 py-2">
-            <Search className="w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ml-2 bg-transparent outline-none text-sm text-white placeholder-slate-500 w-full"
-            />
-          </div>
         </header>
 
-        {/* Content Area */}
-        <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="p-4 md:p-6 space-y-6">{children}</div>
+        {/* SPACER */}
+
+        <div
+          aria-hidden="true"
+          style={{
+            height: headerFixed ? headerHeight : 0,
+            flexShrink: 0,
+          }}
+        />
+
+        {/* CONTENT */}
+
+        <main className="flex-1 overflow-x-hidden">
+          <div className="p-4 md:p-6 space-y-6 max-w-full">{children}</div>
         </main>
       </div>
     </div>

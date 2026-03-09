@@ -33,6 +33,8 @@ export interface Business {
   certifications?: string[];
   assets_under_management?: number;
   daily_volume?: number;
+  is_verified?: boolean;
+  verified_at?: string;
 }
 
 export interface BusinessResponse {
@@ -68,6 +70,11 @@ function normalizeRow(row: any): Business {
     employees: row.employees ? parseInt(row.employees) : undefined,
     status: row.is_active === false ? "inactive" : "active",
     countryCode: row.country_code || undefined,
+    is_verified:
+      row.is_verified === true ||
+      row.is_verified === "true" ||
+      row.isVerified === true,
+    verified_at: row.verified_at || undefined,
   };
 }
 

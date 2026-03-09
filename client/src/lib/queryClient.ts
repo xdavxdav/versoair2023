@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getCsrfToken, initializeCsrfToken } from "./auth";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,9 +13,27 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Attach CSRF token on mutating requests
+  const upperMethod = method.toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(upperMethod)) {
+    let csrf = getCsrfToken();
+    if (!csrf) {
+      await initializeCsrfToken();
+      csrf = getCsrfToken();
+    }
+    if (csrf) {
+      headers["x-csrf-token"] = csrf;
+    }
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });

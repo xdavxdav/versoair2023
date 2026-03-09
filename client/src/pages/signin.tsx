@@ -155,7 +155,15 @@ export default function SignIn() {
         if (redirectTarget && redirectTarget.startsWith("/")) {
           navigate(redirectTarget);
         } else {
-          navigate("/dashboard");
+          // Role-based dashboard routing
+          const role = (data.user.role || "user").toLowerCase();
+          if (role === "superuser") {
+            navigate("/vault");
+          } else if (role === "admin" || role === "moderator") {
+            navigate("/geo-admin/dashboard");
+          } else {
+            navigate("/dashboard");
+          }
         }
       } else {
         setLoginError(data.message || "Invalid credentials");
@@ -205,11 +213,18 @@ export default function SignIn() {
         });
         localStorage.setItem("signin_timestamp", new Date().toISOString());
         const redirectTarget = getQueryParam("redirect");
-        navigate(
-          redirectTarget && redirectTarget.startsWith("/")
-            ? redirectTarget
-            : "/dashboard",
-        );
+        if (redirectTarget && redirectTarget.startsWith("/")) {
+          navigate(redirectTarget);
+        } else {
+          const role = (data.user.role || "user").toLowerCase();
+          if (role === "superuser") {
+            navigate("/vault");
+          } else if (role === "admin" || role === "moderator") {
+            navigate("/geo-admin/dashboard");
+          } else {
+            navigate("/dashboard");
+          }
+        }
       } else {
         alert(data.message || "Registration failed");
       }

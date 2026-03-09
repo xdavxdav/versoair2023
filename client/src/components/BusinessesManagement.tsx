@@ -58,6 +58,18 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  GeolocationFields,
+  BUSINESS_TYPE_OPTIONS,
+  getBusinessTypesForCategory,
+} from "@/components/ui/geolocation-fields";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -105,6 +117,7 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "0",
+    businessType: "",
     description: "",
     location: "",
     address: "",
@@ -251,6 +264,7 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
     setFormData({
       name: "",
       categoryId: "",
+      businessType: "",
       description: "",
       location: "",
       address: "",
@@ -274,6 +288,8 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
     setFormData({
       name: business.name,
       categoryId: String(business.category_id),
+      businessType:
+        (business as any).business_type || (business as any).businessType || "",
       description: business.description || "",
       location: business.location || "",
       address: business.address || "",
@@ -300,6 +316,7 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
     const payload = {
       name: formData.name,
       categoryId: Number(formData.categoryId),
+      businessType: formData.businessType || null,
       description: formData.description || null,
       location: formData.location || null,
       address: formData.address || null,
@@ -778,48 +795,83 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
                 </div>
                 <div>
                   <Label>Category *</Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        {formData.categoryId && formData.categoryId !== "0"
-                          ? categories.find(
-                              (c) => String(c.id) === formData.categoryId,
-                            )?.name
-                          : "Select category"}
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-full">
-                      {categories.map((cat) => (
-                        <DropdownMenuItem
-                          key={cat.id}
-                          onClick={() =>
-                            setFormData({
-                              ...formData,
-                              categoryId: String(cat.id),
-                            })
-                          }
-                        >
-                          {formData.categoryId === String(cat.id) && (
-                            <Check className="h-4 w-4 mr-2" />
-                          )}
-                          <span
-                            className={
-                              formData.categoryId === String(cat.id)
-                                ? "font-semibold"
-                                : ""
-                            }
-                          >
-                            {cat.name}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Select
+                    value={
+                      formData.categoryId && formData.categoryId !== "0"
+                        ? formData.categoryId
+                        : undefined
+                    }
+                    onValueChange={(v) => {
+                      // Auto-clear businessType if incompatible with new category
+                      const compatibleTypes = getBusinessTypesForCategory(
+                        categories,
+                        parseInt(v),
+                      );
+                      const currentTypeStillValid = compatibleTypes.find(
+                        (t) => t.value === formData.businessType && !t.disabled,
+                      );
+                      setFormData({
+                        ...formData,
+                        categoryId: v,
+                        businessType: currentTypeStillValid
+                          ? formData.businessType
+                          : "",
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {categories.length === 0 ? (
+                        <SelectItem value="__loading" disabled>
+                          Loading categories...
+                        </SelectItem>
+                      ) : (
+                        categories
+                          .sort((a: any, b: any) =>
+                            a.name.localeCompare(b.name),
+                          )
+                          .map((cat: any) => (
+                            <SelectItem key={cat.id} value={String(cat.id)}>
+                              {cat.name}
+                            </SelectItem>
+                          ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+
+              <div>
+                <Label>Business Type</Label>
+                <Select
+                  value={formData.businessType || undefined}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, businessType: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a business type" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {getBusinessTypesForCategory(
+                      categories,
+                      formData.categoryId
+                        ? parseInt(formData.categoryId)
+                        : null,
+                    ).map((opt) => (
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
+                        disabled={opt.disabled}
+                        className={opt.disabled ? "opacity-40" : ""}
+                      >
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -881,32 +933,16 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Latitude</Label>
-                  <Input
-                    value={formData.latitude}
-                    onChange={(e) =>
-                      setFormData({ ...formData, latitude: e.target.value })
-                    }
-                    placeholder="e.g., 6.8245"
-                    type="number"
-                    step="0.00001"
-                  />
-                </div>
-                <div>
-                  <Label>Longitude</Label>
-                  <Input
-                    value={formData.longitude}
-                    onChange={(e) =>
-                      setFormData({ ...formData, longitude: e.target.value })
-                    }
-                    placeholder="e.g., -5.2788"
-                    type="number"
-                    step="0.00001"
-                  />
-                </div>
-              </div>
+              <GeolocationFields
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                onLatitudeChange={(v) =>
+                  setFormData({ ...formData, latitude: v })
+                }
+                onLongitudeChange={(v) =>
+                  setFormData({ ...formData, longitude: v })
+                }
+              />
 
               <div>
                 <Label>Tags (comma-separated)</Label>

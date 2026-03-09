@@ -31,7 +31,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Minus,
   X,
   SlidersHorizontal,
   XCircle,
@@ -460,32 +459,6 @@ async function testDatabaseConnection(): Promise<{
 }
 
 // Testimonials data
-const testimonials = [
-  {
-    name: "K. Laurent",
-    company: "Tech Solutions Inc.",
-    industry: "Technology",
-    rating: 5,
-    text: "ArtiHuman Foundation transformed our artisan community. The support helped us increase income by 40% in just 3 months.",
-    avatar: "KL",
-  },
-  {
-    name: "A. Diarra",
-    company: "Textile Artisans Collective",
-    industry: "Artisan Crafts",
-    rating: 5,
-    text: "The cultural programs are incredible. We preserved our traditional weaving techniques and boosted sales by 25%.",
-    avatar: "AD",
-  },
-  {
-    name: "J. Baptiste",
-    company: "Wood Carving Cooperative",
-    industry: "Artisan Crafts",
-    rating: 5,
-    text: "Skill development became accessible. We completed our largest order 20% faster using ArtiHuman training.",
-    avatar: "JB",
-  },
-];
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -1044,12 +1017,23 @@ function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
                 .join("")
                 .slice(0, 2)
                 .toUpperCase();
+              const artistCountry = artist.country_code
+                ? getCountryMeta(artist.country_code)
+                : null;
 
               return (
                 <>
                   {/* Artist Avatar */}
-                  <div className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow">
+                  <div className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative">
                     {initials}
+                    {artistCountry && (
+                      <span
+                        className="absolute -bottom-1 -right-1 text-lg"
+                        title={artistCountry.name}
+                      >
+                        {artistCountry.flag}
+                      </span>
+                    )}
                   </div>
 
                   {/* Artist Name */}
@@ -1057,13 +1041,16 @@ function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
                     {stageName}
                   </h3>
 
-                  {/* Genre */}
+                  {/* Genre + Country */}
                   <p className="text-purple-300 text-sm mb-3">
                     {artist.genre || "Artiste"}
+                    {artistCountry
+                      ? ` • ${artistCountry.flag} ${artistCountry.name}`
+                      : ""}
                   </p>
 
-                  {/* Label Status */}
-                  <div className="grid grid-cols-2 gap-3 w-full mt-3 pt-3 border-t border-white/10">
+                  {/* Label Status / Genre / Country */}
+                  <div className="grid grid-cols-3 gap-3 w-full mt-3 pt-3 border-t border-white/10">
                     <div className="text-center">
                       <div className="text-sm font-bold text-white">
                         {artist.label_status === "signed"
@@ -1079,6 +1066,16 @@ function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
                         {artist.genre ? artist.genre.slice(0, 8) : "—"}
                       </div>
                       <div className="text-xs text-purple-200">Genre</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-white">
+                        {artistCountry ? `${artistCountry.flag}` : "🌍"}
+                      </div>
+                      <div className="text-xs text-purple-200">
+                        {artistCountry
+                          ? artistCountry.name.slice(0, 10)
+                          : "Global"}
+                      </div>
                     </div>
                   </div>
 
@@ -1330,10 +1327,6 @@ export default function Home() {
   }, []);
 
   const { isAuthenticated } = useSubscription();
-  const [testimonialsVisible, setTestimonialsVisible] = useState(false);
-  const [testimonialsMinimized, setTestimonialsMinimized] = useState(false);
-  const [testimonialsClosed, setTestimonialsClosed] = useState(false);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1401,10 +1394,14 @@ export default function Home() {
   // Annuaire Musicale (artist directory) state
   const [artistAnnuaireQuery, setArtistAnnuaireQuery] = useState("");
   const [selectedArtistGenre, setSelectedArtistGenre] = useState("");
+  const [selectedArtistCountry, setSelectedArtistCountry] = useState("");
   const [artistAnnuaireResults, setArtistAnnuaireResults] = useState<any[]>([]);
   const [artistAnnuaireGenres, setArtistAnnuaireGenres] = useState<string[]>(
     [],
   );
+  const [artistAnnuaireCountries, setArtistAnnuaireCountries] = useState<
+    string[]
+  >([]);
   const [isArtistAnnuaireSearching, setIsArtistAnnuaireSearching] =
     useState(false);
   const [artistAnnuaireHasSearched, setArtistAnnuaireHasSearched] =
@@ -1786,33 +1783,6 @@ export default function Home() {
     handleSearch();
   }, [handleSearch]);
 
-  // Testimonials
-  useEffect(() => {
-    // Check if this is the first time visiting (ever)
-    const hasVisitedBefore = localStorage.getItem("hasVisitedBefore");
-
-    if (!hasVisitedBefore) {
-      // First visit ever — show testimonials after 3 seconds
-      setTimeout(() => setTestimonialsVisible(true), 3000);
-      localStorage.setItem("hasVisitedBefore", "true");
-    } else {
-      // Returning visitor — don't auto-show testimonials
-      setTestimonialsVisible(false);
-    }
-  }, []);
-
-  // Testimonials state management (closed/minimized)
-  useEffect(() => {
-    // Save closed/minimized state to localStorage (but not visibility)
-    localStorage.setItem(
-      "testimonialsState",
-      JSON.stringify({
-        closed: testimonialsClosed,
-        minimized: testimonialsMinimized,
-      }),
-    );
-  }, [testimonialsClosed, testimonialsMinimized]);
-
   // Handle scroll indicator visibility
   useEffect(() => {
     const handleScroll = () => {
@@ -1830,23 +1800,8 @@ export default function Home() {
     }
 
     window.addEventListener("scroll", handleScroll);
-
-    // Rotate testimonials
-    const timer = setInterval(() => {
-      if (
-        testimonialsVisible &&
-        !testimonialsMinimized &&
-        !testimonialsClosed
-      ) {
-        setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-      }
-    }, 8000);
-
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [testimonialsVisible, testimonialsMinimized, testimonialsClosed]);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const getUserLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -1915,18 +1870,24 @@ export default function Home() {
     }
   };
 
-  // Annuaire Musicale — fetch genres on mount
+  // Annuaire Musicale — fetch genres and countries on mount
   useEffect(() => {
-    const fetchGenres = async () => {
+    const fetchFilters = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/artists/genres`);
-        const json = await res.json();
-        if (json.success) setArtistAnnuaireGenres(json.data || []);
+        const [genresRes, countriesRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/artists/genres`),
+          fetch(`${API_BASE_URL}/api/artists/countries`),
+        ]);
+        const genresJson = await genresRes.json();
+        if (genresJson.success) setArtistAnnuaireGenres(genresJson.data || []);
+        const countriesJson = await countriesRes.json();
+        if (countriesJson.success)
+          setArtistAnnuaireCountries(countriesJson.data || []);
       } catch (e) {
-        console.error("Failed to fetch artist genres:", e);
+        console.error("Failed to fetch artist filters:", e);
       }
     };
-    fetchGenres();
+    fetchFilters();
   }, []);
 
   // Annuaire Musicale — search handler
@@ -1940,7 +1901,8 @@ export default function Home() {
       if (artistAnnuaireQuery.trim())
         params.set("query", artistAnnuaireQuery.trim());
       if (selectedArtistGenre) params.set("genre", selectedArtistGenre);
-      if (selectedCountry) params.set("countryCode", selectedCountry);
+      const countryFilter = selectedArtistCountry || selectedCountry;
+      if (countryFilter) params.set("countryCode", countryFilter);
       const res = await fetch(`${API_BASE_URL}/api/artists/search?${params}`);
       const json = await res.json();
       if (json.success) {
@@ -1960,6 +1922,7 @@ export default function Home() {
   const clearArtistAnnuaireFilters = () => {
     setArtistAnnuaireQuery("");
     setSelectedArtistGenre("");
+    setSelectedArtistCountry("");
     setArtistAnnuaireResults([]);
     setArtistAnnuaireHasSearched(false);
     setArtistAnnuaireTotalResults(0);
@@ -3536,58 +3499,120 @@ export default function Home() {
                 </Button>
               </div>
 
-              {/* Genre Dropdown */}
-              <div className="pt-4 border-t border-purple-700">
-                <Label className="text-sm font-medium mb-2 block text-purple-300">
-                  Genre ({artistAnnuaireGenres.length} disponibles)
-                </Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
-                    >
-                      <span className="text-sm">
-                        {selectedArtistGenre || "Tous les genres"}
-                      </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
-                    <DropdownMenuItem
-                      onClick={() => setSelectedArtistGenre("")}
-                    >
-                      <span
-                        className={
-                          !selectedArtistGenre
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
-                        }
+              {/* Genre & Country Filters */}
+              <div className="pt-4 border-t border-purple-700 flex flex-col md:flex-row gap-4">
+                {/* Genre Dropdown */}
+                <div className="flex-1">
+                  <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    Genre ({artistAnnuaireGenres.length} disponibles)
+                  </Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
                       >
-                        Tous les genres
-                      </span>
-                    </DropdownMenuItem>
-                    {artistAnnuaireGenres.map((genre) => (
+                        <span className="text-sm">
+                          {selectedArtistGenre || "Tous les genres"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
                       <DropdownMenuItem
-                        key={genre}
-                        onClick={() => setSelectedArtistGenre(genre)}
+                        onClick={() => setSelectedArtistGenre("")}
                       >
-                        {selectedArtistGenre === genre && (
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                        )}
                         <span
                           className={
-                            selectedArtistGenre === genre
+                            !selectedArtistGenre
                               ? "font-semibold text-purple-300"
                               : "text-purple-200"
                           }
                         >
-                          🎵 {genre}
+                          Tous les genres
                         </span>
                       </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {artistAnnuaireGenres.map((genre) => (
+                        <DropdownMenuItem
+                          key={genre}
+                          onClick={() => setSelectedArtistGenre(genre)}
+                        >
+                          {selectedArtistGenre === genre && (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          )}
+                          <span
+                            className={
+                              selectedArtistGenre === genre
+                                ? "font-semibold text-purple-300"
+                                : "text-purple-200"
+                            }
+                          >
+                            🎵 {genre}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Country Dropdown */}
+                <div className="flex-1">
+                  <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    Pays ({artistAnnuaireCountries.length} disponibles)
+                  </Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                      >
+                        <span className="text-sm">
+                          {selectedArtistCountry
+                            ? `${getCountryMeta(selectedArtistCountry).flag} ${getCountryMeta(selectedArtistCountry).name}`
+                            : "Tous les pays"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                      <DropdownMenuItem
+                        onClick={() => setSelectedArtistCountry("")}
+                      >
+                        <span
+                          className={
+                            !selectedArtistCountry
+                              ? "font-semibold text-purple-300"
+                              : "text-purple-200"
+                          }
+                        >
+                          🌍 Tous les pays
+                        </span>
+                      </DropdownMenuItem>
+                      {artistAnnuaireCountries.map((code) => {
+                        const meta = getCountryMeta(code);
+                        return (
+                          <DropdownMenuItem
+                            key={code}
+                            onClick={() => setSelectedArtistCountry(code)}
+                          >
+                            {selectedArtistCountry === code && (
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                            )}
+                            <span
+                              className={
+                                selectedArtistCountry === code
+                                  ? "font-semibold text-purple-300"
+                                  : "text-purple-200"
+                              }
+                            >
+                              {meta.flag} {meta.name}
+                            </span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -3954,118 +3979,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Testimonials Widget */}
-      <AnimatePresence>
-        {testimonialsVisible && !testimonialsClosed && (
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-4 md:bottom-6 left-4 md:left-6 w-[calc(100vw-2rem)] md:w-80 bg-white rounded-xl md:rounded-2xl shadow-xl md:shadow-2xl border z-[9990]"
-          >
-            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-t-xl md:rounded-t-2xl">
-              <h3 className="text-xs md:text-sm font-semibold">
-                💬 Artisan Testimonials
-              </h3>
-              <div className="flex items-center gap-1 md:gap-2">
-                <button
-                  onClick={() =>
-                    setTestimonialsMinimized(!testimonialsMinimized)
-                  }
-                  className="p-1 hover:bg-white/20 rounded"
-                >
-                  <Minus className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => setTestimonialsClosed(true)}
-                  className="p-1 hover:bg-white/20 rounded"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-            {!testimonialsMinimized && (
-              <div className="p-3 md:p-4">
-                <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                  <div className="w-8 h-8 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-full flex items-center justify-center text-xs md:text-sm font-bold">
-                    {testimonials[currentTestimonial].avatar}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 text-sm md:text-base">
-                      {testimonials[currentTestimonial].name}
-                    </h4>
-                    <p className="text-xs text-gray-500">
-                      {testimonials[currentTestimonial].company}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex mb-1 md:mb-2">
-                  {[...Array(testimonials[currentTestimonial].rating)].map(
-                    (_, i) => (
-                      <Star
-                        key={i}
-                        className="h-3 w-3 md:h-4 md:w-4 fill-yellow-400 text-yellow-400"
-                      />
-                    ),
-                  )}
-                </div>
-                <p className="text-xs md:text-sm text-gray-700 line-clamp-2 md:line-clamp-3">
-                  "{testimonials[currentTestimonial].text}"
-                </p>
-                <div className="flex items-center justify-between mt-3 md:mt-4">
-                  <button
-                    onClick={() =>
-                      setCurrentTestimonial((prev) =>
-                        prev === 0 ? testimonials.length - 1 : prev - 1,
-                      )
-                    }
-                    className="p-1 md:p-2 text-gray-400 hover:text-emerald-600"
-                  >
-                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
-                  </button>
-                  <div className="flex gap-1">
-                    {testimonials.map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
-                          i === currentTestimonial
-                            ? "bg-emerald-600"
-                            : "bg-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={() =>
-                      setCurrentTestimonial(
-                        (prev) => (prev + 1) % testimonials.length,
-                      )
-                    }
-                    className="p-1 md:p-2 text-gray-400 hover:text-emerald-600"
-                  >
-                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {testimonialsClosed && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          onClick={() => {
-            setTestimonialsClosed(false);
-            setTestimonialsVisible(true);
-          }}
-          className="fixed bottom-4 md:bottom-6 left-4 md:left-6 w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-full shadow-lg md:shadow-xl hover:scale-110 transition-transform z-[9990] flex items-center justify-center"
-        >
-          <Star className="h-4 w-4 md:h-6 md:w-6" />
-        </motion.button>
-      )}
 
       <ResponsiveFooter countryMeta={countryMeta} />
 

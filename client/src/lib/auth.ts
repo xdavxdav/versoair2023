@@ -85,7 +85,10 @@ export async function checkAuth(): Promise<AuthUser | null> {
       headers,
     });
     if (!response.ok) {
-      clearCachedUser();
+      // Clear in-memory token but keep localStorage tokens so
+      // gateBypass (geo-admin, etc.) persists across reloads.
+      // Tokens are only fully cleared on explicit logout.
+      _authToken = null;
       return null;
     }
     const data = await response.json();
@@ -93,7 +96,8 @@ export async function checkAuth(): Promise<AuthUser | null> {
       cacheUser(data.user);
       return data.user;
     }
-    clearCachedUser();
+    // Response OK but no user — clear in-memory only
+    _authToken = null;
     return null;
   } catch {
     return null;

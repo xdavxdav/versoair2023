@@ -109,7 +109,22 @@ router.post(
   "/",
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
-    const { name, categoryId, email, phone, description, address } = req.body;
+    const {
+      name,
+      categoryId,
+      email,
+      phone,
+      description,
+      address,
+      countryCode,
+      cityName,
+      latitude,
+      longitude,
+      website,
+      tags,
+      businessType,
+      openingHours,
+    } = req.body;
 
     // Validate required fields
     if (!name || !categoryId) {
@@ -145,15 +160,46 @@ router.post(
       });
     }
 
+    // Build location string from city + country if not provided
+    const location =
+      cityName && countryCode
+        ? `${cityName}, ${countryCode}`
+        : cityName || countryCode || null;
+
+    // Parse tags: accept comma-separated string or array
+    const parsedTags = tags
+      ? typeof tags === "string"
+        ? JSON.stringify(
+            tags
+              .split(",")
+              .map((t: string) => t.trim())
+              .filter(Boolean),
+          )
+        : JSON.stringify(tags)
+      : null;
+
     const [business] = await db
       .insert(businesses)
       .values({
         name,
         categoryId,
-        email,
-        phone,
-        description,
-        address,
+        email: email || null,
+        phone: phone || null,
+        description: description || null,
+        address: address || null,
+        countryCode: countryCode ? countryCode.toUpperCase() : null,
+        cityName: cityName || null,
+        location,
+        latitude: latitude ? String(latitude) : null,
+        longitude: longitude ? String(longitude) : null,
+        website: website || null,
+        tags: parsedTags,
+        openingHours: openingHours
+          ? typeof openingHours === "string"
+            ? openingHours
+            : JSON.stringify(openingHours)
+          : null,
+        attributes: businessType ? { type: businessType } : null,
       })
       .returning({
         id: businesses.id,
@@ -163,6 +209,12 @@ router.post(
         email: businesses.email,
         phone: businesses.phone,
         address: businesses.address,
+        countryCode: businesses.countryCode,
+        cityName: businesses.cityName,
+        location: businesses.location,
+        latitude: businesses.latitude,
+        longitude: businesses.longitude,
+        website: businesses.website,
         isActive: businesses.isActive,
         rating: businesses.rating,
         createdAt: businesses.createdAt,
@@ -244,8 +296,28 @@ router.put(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     const businessId = parseInt(req.params.id);
-    const { name, categoryId, email, phone, description, address, isActive } =
-      req.body;
+    const {
+      name,
+      categoryId,
+      email,
+      phone,
+      description,
+      address,
+      isActive,
+      countryCode,
+      country_code,
+      cityName,
+      city_name,
+      latitude,
+      longitude,
+      website,
+      businessType,
+      tags,
+    } = req.body;
+
+    // Normalize: accept both camelCase and snake_case from frontend
+    const effectiveCountryCode = countryCode || country_code;
+    const effectiveCityName = cityName || city_name;
 
     // Get old values for audit
     const [oldBusiness] = await db
@@ -258,6 +330,11 @@ router.put(
         phone: businesses.phone,
         location: businesses.location,
         address: businesses.address,
+        countryCode: businesses.countryCode,
+        cityName: businesses.cityName,
+        latitude: businesses.latitude,
+        longitude: businesses.longitude,
+        website: businesses.website,
         isVerified: businesses.isVerified,
         isAdvertiser: businesses.isAdvertiser,
         rating: businesses.rating,
@@ -275,16 +352,80 @@ router.put(
       });
     }
 
+    // Build update payload — only override fields that were actually sent
+    const resolvedCountry =
+      effectiveCountryCode !== undefined
+        ? effectiveCountryCode
+          ? effectiveCountryCode.toUpperCase()
+          : null
+        : oldBusiness.countryCode;
+    const resolvedCity =
+      effectiveCityName !== undefined
+        ? effectiveCityName || null
+        : oldBusiness.cityName;
+
+    // Parse tags if provided
+    let parsedTags = undefined;
+    if (tags !== undefined) {
+      parsedTags = tags
+        ? typeof tags === "string"
+          ? JSON.stringify(
+              tags
+                .split(",")
+                .map((t: string) => t.trim())
+                .filter(Boolean),
+            )
+          : JSON.stringify(tags)
+        : null;
+    }
+
+    const updateFields: Record<string, any> = {
+      name: name || oldBusiness.name,
+      categoryId: categoryId || oldBusiness.categoryId,
+      email: email !== undefined ? email || null : oldBusiness.email,
+      phone: phone !== undefined ? phone || null : oldBusiness.phone,
+      description:
+        description !== undefined
+          ? description || null
+          : oldBusiness.description,
+      address: address !== undefined ? address || null : oldBusiness.address,
+      countryCode: resolvedCountry,
+      cityName: resolvedCity,
+      latitude:
+        latitude !== undefined
+          ? latitude
+            ? String(latitude)
+            : null
+          : oldBusiness.latitude,
+      longitude:
+        longitude !== undefined
+          ? longitude
+            ? String(longitude)
+            : null
+          : oldBusiness.longitude,
+      website: website !== undefined ? website || null : oldBusiness.website,
+    };
+
+    // Build location string
+    if (resolvedCity || resolvedCountry) {
+      updateFields.location = [resolvedCity, resolvedCountry]
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    if (isActive !== undefined) {
+      updateFields.isActive = isActive;
+    }
+    if (parsedTags !== undefined) {
+      updateFields.tags = parsedTags;
+    }
+    if (businessType !== undefined) {
+      updateFields.attributes = businessType ? { type: businessType } : null;
+    }
+
     const [updated] = await db
       .update(businesses)
-      .set({
-        name: name || oldBusiness.name,
-        categoryId: categoryId || oldBusiness.categoryId,
-        email: email || oldBusiness.email,
-        phone: phone || oldBusiness.phone,
-        description: description || oldBusiness.description,
-        address: address || oldBusiness.address,
-      })
+      .set(updateFields)
       .where(eq(businesses.id, businessId))
       .returning({
         id: businesses.id,
@@ -294,6 +435,12 @@ router.put(
         email: businesses.email,
         phone: businesses.phone,
         address: businesses.address,
+        countryCode: businesses.countryCode,
+        cityName: businesses.cityName,
+        location: businesses.location,
+        latitude: businesses.latitude,
+        longitude: businesses.longitude,
+        website: businesses.website,
         isActive: businesses.isActive,
         rating: businesses.rating,
         createdAt: businesses.createdAt,

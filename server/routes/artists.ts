@@ -83,13 +83,11 @@ router.get("/search", async (req, res) => {
     });
   } catch (error: any) {
     console.error("❌ Artist search error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to search artists",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to search artists",
+      details: error.message,
+    });
   }
 });
 
@@ -103,6 +101,24 @@ router.get("/genres", async (_req, res) => {
   } catch (error: any) {
     console.error("❌ Get genres error:", error);
     res.status(500).json({ success: false, error: "Failed to fetch genres" });
+  }
+});
+
+// GET /api/artists/countries
+router.get("/countries", async (_req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT DISTINCT country_code FROM artists WHERE country_code IS NOT NULL AND country_code != '' ORDER BY country_code ASC",
+    );
+    res.json({
+      success: true,
+      data: result.rows.map((r: any) => r.country_code),
+    });
+  } catch (error: any) {
+    console.error("❌ Get artist countries error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch artist countries" });
   }
 });
 
@@ -124,13 +140,11 @@ router.get("/:id/details", async (req, res) => {
     res.json({ success: true, data: artistResult.rows[0] });
   } catch (error: any) {
     console.error("❌ Artist details error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch artist details",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch artist details",
+      details: error.message,
+    });
   }
 });
 
