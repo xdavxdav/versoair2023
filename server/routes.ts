@@ -10,6 +10,7 @@ import businessesRouter from "./routes/businesses";
 import propertiesRouter from "./routes/properties";
 import apiV1Router from "./routes/api-v1";
 import authRouter from "./routes/auth";
+import oauthRouter from "./routes/oauth";
 import socialApiRoutes from "./routes/social-api";
 import faqApiRoutes from "./routes/faq-api";
 import ticketsRouter from "./routes/tickets";
@@ -65,6 +66,39 @@ const TABLE_NAME_MAP: Record<string, string> = {
 export async function registerRoutes(app: Express) {
   // Register auth routes
   app.use("/auth", authRouter);
+  app.use("/auth", oauthRouter);
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔐 VAULT AUTHORIZATION — superadmin@versoair.test ONLY
+  // Even other superusers are denied. No exceptions.
+  // ═══════════════════════════════════════════════════════════
+  app.get("/api/vault/authorize", requireAuth(), async (req, res) => {
+    const VAULT_MASTER_EMAIL = "superadmin@versoair.test";
+    const user = req.user;
+
+    if (
+      !user ||
+      user.email !== VAULT_MASTER_EMAIL ||
+      user.role !== "superuser"
+    ) {
+      console.log(
+        `🔒 Vault access DENIED for: ${user?.email || "unknown"} (role: ${user?.role || "none"})`,
+      );
+      return res.status(403).json({
+        success: false,
+        authorized: false,
+        error: "VAULT_ACCESS_DENIED",
+        message: "You are not authorized to access the credentials vault.",
+      });
+    }
+
+    console.log(`🔓 Vault access GRANTED for: ${user.email}`);
+    res.json({
+      success: true,
+      authorized: true,
+      identity: user.email,
+    });
+  });
 
   // Register API v1 routes
   app.use("/api/v1", apiV1Router);

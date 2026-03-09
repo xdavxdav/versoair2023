@@ -49,6 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCountry } from "@/contexts/CountryContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -113,6 +114,7 @@ async function searchLogementProperties(params: {
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
+  countryCode?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -128,6 +130,7 @@ async function searchLogementProperties(params: {
     if (params.maxPrice) searchParams.set("maxPrice", String(params.maxPrice));
     if (params.minRating)
       searchParams.set("minRating", String(params.minRating));
+    if (params.countryCode) searchParams.set("countryCode", params.countryCode);
     if (params.page) searchParams.set("page", String(params.page));
     if (params.limit) searchParams.set("limit", String(params.limit));
     if (params.sortBy) searchParams.set("sortBy", params.sortBy);
@@ -230,6 +233,7 @@ export default function Logement() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
   const [searchResults, setSearchResults] = useState<Property[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -280,6 +284,7 @@ export default function Logement() {
       limit: 9,
       sortBy,
       order,
+      countryCode: selectedCountry || undefined,
     });
     if (result.success) {
       setSearchResults(result.data);
@@ -287,11 +292,31 @@ export default function Logement() {
       setHasSearched(true);
     }
     setIsInitialLoading(false);
-  }, [activeFilters.sort_by]);
+  }, [activeFilters.sort_by, selectedCountry]);
 
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
+  // Debounced search - auto-fetch after user stops typing
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (
+      searchQuery.trim() ||
+      locationQuery.trim() ||
+      Object.values(activeFilters).some((f) => f && f !== "rating_desc")
+    ) {
+      searchTimerRef.current = setTimeout(() => {
+        handleSearch(1);
+      }, 300);
+    }
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery, locationQuery, selectedCountry, activeFilters]);
 
   const handleSearch = async (page: number = 1) => {
     setIsSearching(true);
@@ -318,6 +343,7 @@ export default function Logement() {
       minRating: activeFilters.minRating
         ? parseFloat(activeFilters.minRating)
         : undefined,
+      countryCode: selectedCountry || undefined,
       limit: 9,
       page,
       sortBy,
@@ -456,9 +482,8 @@ export default function Logement() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search properties..."
+                  placeholder="Search properties, apartments, villas..."
                   className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
 
@@ -470,27 +495,12 @@ export default function Logement() {
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region..."
                   className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
 
-              <Button
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Search,
   Filter,
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
+import { getCountryMeta } from "@/utils/countryMeta";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -114,9 +115,11 @@ export default function ArtistDirectory() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedArtistCountry, setSelectedArtistCountry] = useState("");
   const [sortBy, setSortBy] = useState("name_asc");
   const [artists, setArtists] = useState<Artist[]>([]);
   const [genres, setGenres] = useState<string[]>([]);
+  const [countries, setCountries] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,17 +149,20 @@ export default function ArtistDirectory() {
     checkConnection();
   }, []);
 
-  // Fetch genres on mount
+  // Fetch genres and countries on mount
   useEffect(() => {
-    const fetchGenres = async () => {
+    const fetchFilters = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/artists/genres`);
-        const result = await response.json();
-        if (result.success) {
-          setGenres(result.data);
-        }
+        const [genresRes, countriesRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/artists/genres`),
+          fetch(`${API_BASE_URL}/api/artists/countries`),
+        ]);
+        const genresJson = await genresRes.json();
+        if (genresJson.success) setGenres(genresJson.data || []);
+        const countriesJson = await countriesRes.json();
+        if (countriesJson.success) setCountries(countriesJson.data || []);
       } catch (error) {
-        console.error("Failed to fetch genres:", error);
+        console.error("Failed to fetch filters:", error);
         // Fallback genres
         setGenres([
           "Afro-Electronic",
@@ -174,7 +180,7 @@ export default function ArtistDirectory() {
         ]);
       }
     };
-    fetchGenres();
+    fetchFilters();
   }, []);
 
   // Auto-search on mount to show all artists
@@ -188,6 +194,22 @@ export default function ArtistDirectory() {
     if (hasSearched) handleSearch(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCountry]);
+
+  // Debounced search - auto-fetch after user stops typing
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (searchQuery.trim()) {
+      searchTimerRef.current = setTimeout(() => {
+        handleSearch(1);
+      }, 300);
+    }
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery]);
 
   // Search handler
   const handleSearch = useCallback(
@@ -206,7 +228,8 @@ export default function ArtistDirectory() {
 
         if (searchQuery.trim()) params.set("query", searchQuery.trim());
         if (genre) params.set("genre", genre);
-        if (selectedCountry) params.set("countryCode", selectedCountry);
+        const countryFilter = selectedArtistCountry || selectedCountry;
+        if (countryFilter) params.set("countryCode", countryFilter);
 
         const response = await fetch(
           `${API_BASE_URL}/api/artists/search?${params}`,
@@ -231,7 +254,7 @@ export default function ArtistDirectory() {
       }
       setIsSearching(false);
     },
-    [searchQuery, selectedGenre, sortBy],
+    [searchQuery, selectedGenre, selectedArtistCountry, sortBy],
   );
 
   // Fetch artist details
@@ -255,6 +278,7 @@ export default function ArtistDirectory() {
   const clearAllFilters = () => {
     setSearchQuery("");
     setSelectedGenre("");
+    setSelectedArtistCountry("");
     setSortBy("name_asc");
     setArtists([]);
     setHasSearched(false);
@@ -379,27 +403,12 @@ export default function ArtistDirectory() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Recherchez des Artistes..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60 focus:border-purple-400"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch(1)}
                 />
               </div>
 
-              <Button
-                onClick={() => handleSearch(1)}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Recherche...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Rechercher
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -413,7 +422,7 @@ export default function ArtistDirectory() {
                   {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
-                {(searchQuery || selectedGenre) && (
+                {(searchQuery || selectedGenre || selectedArtistCountry) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -433,46 +442,139 @@ export default function ArtistDirectory() {
               </div>
             </div>
 
-            {/* Genre Filter - Always visible */}
-            <div className="mt-4 pt-4 border-t border-purple-700">
-              <Label className="text-sm font-medium mb-3 block text-purple-300">
-                Genre musical ({genres.length} disponibles)
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant={!selectedGenre ? "default" : "outline"}
-                  onClick={() => {
-                    setSelectedGenre("");
-                    handleSearch(1, "");
-                  }}
-                  className={
-                    !selectedGenre
-                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600"
-                      : "border-purple-600 hover:bg-purple-800 text-purple-200"
-                  }
-                >
-                  Tous les genres
-                </Button>
-                {genres.map((genre) => (
-                  <Button
-                    key={genre}
-                    size="sm"
-                    variant={selectedGenre === genre ? "default" : "outline"}
-                    onClick={() => {
-                      setSelectedGenre(genre);
-                      handleSearch(1, genre);
-                    }}
-                    className={
-                      selectedGenre === genre
-                        ? `bg-gradient-to-r ${getGenreGradient(genre)} text-white border-0`
-                        : "border-purple-600 hover:bg-purple-800 text-purple-200"
-                    }
-                  >
-                    <span className="mr-1">{GENRE_ICONS[genre] || "🎵"}</span>
-                    {genre}
-                  </Button>
-                ))}
+            {/* Genre & Country Filters */}
+            <div className="mt-4 pt-4 border-t border-purple-700 flex flex-col md:flex-row gap-4">
+              {/* Genre Dropdown */}
+              <div className="flex-1">
+                <Label className="text-sm font-medium mb-2 block text-purple-300">
+                  Genre ({genres.length} disponibles)
+                </Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                    >
+                      <span className="text-sm">
+                        {selectedGenre
+                          ? `${GENRE_ICONS[selectedGenre] || "🎵"} ${selectedGenre}`
+                          : "Tous les genres"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedGenre("");
+                        handleSearch(1, "");
+                      }}
+                    >
+                      {!selectedGenre && (
+                        <Check className="h-4 w-4 mr-2 text-purple-400" />
+                      )}
+                      <span
+                        className={
+                          !selectedGenre
+                            ? "font-semibold text-purple-300"
+                            : "text-purple-200"
+                        }
+                      >
+                        Tous les genres
+                      </span>
+                    </DropdownMenuItem>
+                    {genres.map((genre) => (
+                      <DropdownMenuItem
+                        key={genre}
+                        onClick={() => {
+                          setSelectedGenre(genre);
+                          handleSearch(1, genre);
+                        }}
+                      >
+                        {selectedGenre === genre && (
+                          <Check className="h-4 w-4 mr-2 text-purple-400" />
+                        )}
+                        <span
+                          className={
+                            selectedGenre === genre
+                              ? "font-semibold text-purple-300"
+                              : "text-purple-200"
+                          }
+                        >
+                          {GENRE_ICONS[genre] || "🎵"} {genre}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Country Dropdown */}
+              <div className="flex-1">
+                <Label className="text-sm font-medium mb-2 block text-purple-300">
+                  Pays ({countries.length} disponibles)
+                </Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                    >
+                      <span className="text-sm">
+                        {selectedArtistCountry
+                          ? `${getCountryMeta(selectedArtistCountry).flag} ${getCountryMeta(selectedArtistCountry).name}`
+                          : "Tous les pays"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedArtistCountry("");
+                        handleSearch(1);
+                      }}
+                    >
+                      {!selectedArtistCountry && (
+                        <Check className="h-4 w-4 mr-2 text-purple-400" />
+                      )}
+                      <span
+                        className={
+                          !selectedArtistCountry
+                            ? "font-semibold text-purple-300"
+                            : "text-purple-200"
+                        }
+                      >
+                        🌍 Tous les pays
+                      </span>
+                    </DropdownMenuItem>
+                    {countries.map((code) => {
+                      const meta = getCountryMeta(code);
+                      return (
+                        <DropdownMenuItem
+                          key={code}
+                          onClick={() => {
+                            setSelectedArtistCountry(code);
+                            handleSearch(1);
+                          }}
+                        >
+                          {selectedArtistCountry === code && (
+                            <Check className="h-4 w-4 mr-2 text-purple-400" />
+                          )}
+                          <span
+                            className={
+                              selectedArtistCountry === code
+                                ? "font-semibold text-purple-300"
+                                : "text-purple-200"
+                            }
+                          >
+                            {meta.flag} {meta.name}
+                          </span>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

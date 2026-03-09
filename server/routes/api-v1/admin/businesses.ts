@@ -19,7 +19,14 @@ router.get(
   "/",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
-    const { page = "1", limit = "20", search, category, status } = req.query;
+    const {
+      page = "1",
+      limit = "20",
+      search,
+      category,
+      status,
+      countryCode,
+    } = req.query;
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
     const limitNum = Math.min(100, parseInt(limit as string, 10) || 20);
     const offset = (pageNum - 1) * limitNum;
@@ -43,6 +50,14 @@ router.get(
 
     if (category) {
       conditions.push(eq(businesses.categoryId, parseInt(category as string)));
+    }
+
+    if (
+      countryCode &&
+      typeof countryCode === "string" &&
+      countryCode.length === 2
+    ) {
+      conditions.push(eq(businesses.countryCode, countryCode.toUpperCase()));
     }
 
     // Allow overriding active filter
@@ -71,6 +86,8 @@ router.get(
           isAdvertiser: businesses.isAdvertiser,
           isActive: businesses.isActive,
           rating: businesses.rating,
+          countryCode: businesses.countryCode,
+          cityName: businesses.cityName,
           createdAt: businesses.createdAt,
         })
         .from(businesses)
@@ -493,11 +510,8 @@ router.delete(
       });
     }
 
-    // Soft-delete by setting isActive = false
-    await db
-      .update(businesses)
-      .set({ isActive: false })
-      .where(eq(businesses.id, businessId));
+    // Hard delete — permanently remove the business
+    await db.delete(businesses).where(eq(businesses.id, businessId));
 
     // Audit log
     try {

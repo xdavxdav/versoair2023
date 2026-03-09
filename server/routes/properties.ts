@@ -22,6 +22,7 @@ router.get("/api/properties", async (req: Request, res: Response) => {
       minPrice = "",
       maxPrice = "",
       minRating = "",
+      countryCode = "",
       sortBy = "featured",
       order = "DESC",
     } = req.query;
@@ -69,6 +70,11 @@ router.get("/api/properties", async (req: Request, res: Response) => {
     // Rating filter
     if (minRating) {
       filters.push(gte(properties.rating, String(minRating)));
+    }
+
+    // Country code filter
+    if (countryCode) {
+      filters.push(eq(properties.countryCode, String(countryCode)));
     }
 
     // Build sort

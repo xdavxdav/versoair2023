@@ -55,7 +55,12 @@ export function requireAuth(allowedRoles?: string[]) {
         role: decoded.role,
       };
 
-      if (allowedRoles && !allowedRoles.includes(user.role)) {
+      // Superuser always has full access — bypass role checks
+      if (
+        allowedRoles &&
+        user.role !== "superuser" &&
+        !allowedRoles.includes(user.role)
+      ) {
         return res.status(403).json({
           success: false,
           status: 403,

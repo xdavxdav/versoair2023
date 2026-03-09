@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { authenticatedFetch } from "@/lib/auth";
 import {
   Search,
   Plus,
@@ -201,7 +202,7 @@ export function Tickets() {
   const { data: ticketsData, isLoading: ticketsLoading } = useQuery<Ticket[]>({
     queryKey: ["tickets"],
     queryFn: async () => {
-      const res = await fetch("/api/tickets");
+      const res = await authenticatedFetch("/api/tickets");
       if (!res.ok) throw new Error("Failed to fetch tickets");
       return res.json();
     },
@@ -211,7 +212,7 @@ export function Tickets() {
   const { data: statsData } = useQuery<TicketStats>({
     queryKey: ["ticket-stats"],
     queryFn: async () => {
-      const res = await fetch("/api/tickets/stats/summary");
+      const res = await authenticatedFetch("/api/tickets/stats/summary");
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json();
     },
@@ -244,7 +245,7 @@ export function Tickets() {
         }
       }
 
-      const res = await fetch("/api/tickets", {
+      const res = await authenticatedFetch("/api/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTicket),
@@ -276,7 +277,7 @@ export function Tickets() {
       id: number;
       updates: Partial<Ticket>;
     }) => {
-      const res = await fetch(`/api/tickets/${id}`, {
+      const res = await authenticatedFetch(`/api/tickets/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -294,7 +295,7 @@ export function Tickets() {
   // Delete ticket mutation
   const deleteTicketMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`/api/tickets/${id}`, {
+      const res = await authenticatedFetch(`/api/tickets/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete ticket");

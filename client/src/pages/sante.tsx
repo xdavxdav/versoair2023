@@ -717,7 +717,6 @@ export default function Sante() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search hospitals, clinics, pharmacies..."
                   className="pl-12 bg-slate-800/50 border-red-600 text-white placeholder-red-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
               <div className="relative flex-1 w-full">
@@ -728,26 +727,11 @@ export default function Sante() {
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region, or area..."
                   className="pl-12 bg-slate-800/50 border-red-600 text-white placeholder-red-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <Button
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-red-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

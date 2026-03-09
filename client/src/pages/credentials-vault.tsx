@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useLocation } from "wouter";
 import {
   motion,
   AnimatePresence,
@@ -325,15 +326,37 @@ function AccessDenied() {
 // ═══════════════════════════════════════════════════════════
 
 function BiometricGate({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<"scanning" | "verifying" | "granted">(
-    "scanning",
-  );
+  // ── Auto-unlock via URL param: ?key=PASSPHRASE ──
+  const VAULT_PASSPHRASE = "verso2026$root";
+
+  const [phase, setPhase] = useState<
+    "password" | "scanning" | "verifying" | "granted" | "denied"
+  >("password");
   const [scanProgress, setScanProgress] = useState(0);
   const [logLines, setLogLines] = useState<string[]>([]);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [attempts, setAttempts] = useState(0);
+  const [shake, setShake] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Check URL param on mount — auto-unlock if ?key= matches
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlKey = params.get("key");
+    if (urlKey === VAULT_PASSPHRASE) {
+      // Clean the URL so the password doesn't stay visible
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+      startUnlockSequence();
+    } else {
+      // Focus password input
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, []);
 
   const logs = [
     "$ sudo vault --authenticate",
-    "→ Initiating biometric scan...",
+    "→ Passphrase accepted...",
     "→ Fingerprint hash: 9f3a...c7e2",
     "→ Retinal pattern: MATCH",
     "→ Neural signature: VERIFIED",
@@ -344,37 +367,156 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
     "✓ ACCESS GRANTED — Welcome back, Commander",
   ];
 
-  useEffect(() => {
+  function startUnlockSequence() {
+    setPhase("scanning");
     let lineIdx = 0;
-    let cancelled = false;
     const addLine = () => {
-      if (cancelled || lineIdx >= logs.length) return;
+      if (lineIdx >= logs.length) {
+        setPhase("granted");
+        setScanProgress(100);
+        setTimeout(() => onComplete(), 800);
+        return;
+      }
       const currentLine = logs[lineIdx];
       if (currentLine) {
         setLogLines((prev) => [...prev, currentLine]);
       }
       lineIdx++;
-
       if (lineIdx === 4) setPhase("verifying");
-      if (lineIdx >= logs.length) {
-        setPhase("granted");
-        setTimeout(() => {
-          if (!cancelled) onComplete();
-        }, 800);
-        setScanProgress(100);
-        return;
-      }
-
       setScanProgress((lineIdx / logs.length) * 100);
-      setTimeout(addLine, 200 + Math.random() * 300);
+      setTimeout(addLine, 150 + Math.random() * 200);
     };
-    const timer = setTimeout(addLine, 600);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, []);
+    setTimeout(addLine, 400);
+  }
 
+  function handlePasswordSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (passwordInput === VAULT_PASSPHRASE) {
+      startUnlockSequence();
+    } else {
+      setAttempts((a) => a + 1);
+      setShake(true);
+      setPhase("denied");
+      setTimeout(() => {
+        setShake(false);
+        setPhase("password");
+        setPasswordInput("");
+        inputRef.current?.focus();
+      }, 1500);
+    }
+  }
+
+  // Password entry screen
+  if (phase === "password" || phase === "denied") {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden">
+        <MatrixRain />
+        <div className="relative z-10 w-full max-w-md px-6">
+          {/* Lock icon */}
+          <motion.div className="flex justify-center mb-8">
+            <motion.div
+              animate={{
+                boxShadow:
+                  phase === "denied"
+                    ? "0 0 60px rgba(239,68,68,0.5)"
+                    : [
+                        "0 0 20px rgba(34,197,94,0.2)",
+                        "0 0 50px rgba(34,197,94,0.4)",
+                        "0 0 20px rgba(34,197,94,0.2)",
+                      ],
+              }}
+              transition={
+                phase === "denied"
+                  ? { duration: 0.3 }
+                  : { duration: 1.5, repeat: Infinity }
+              }
+              className={`w-24 h-24 rounded-full border-2 flex items-center justify-center transition-colors duration-500 ${
+                phase === "denied"
+                  ? "border-red-400 bg-red-500/10"
+                  : "border-green-600 bg-green-500/5"
+              }`}
+            >
+              <Lock
+                className={`w-12 h-12 ${phase === "denied" ? "text-red-400" : "text-green-500"}`}
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Terminal window */}
+          <motion.div
+            animate={shake ? { x: [-12, 12, -8, 8, -4, 4, 0] } : {}}
+            transition={{ duration: 0.5 }}
+            className="bg-gray-950 border border-gray-800 rounded-lg p-4 font-mono text-xs"
+          >
+            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-800">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <span className="text-gray-500 ml-2">vault-auth — zsh</span>
+            </div>
+
+            <div className="text-gray-400 mb-1">
+              $ sudo vault --authenticate
+            </div>
+            <div className="text-cyan-400 mb-3">
+              → Vault requires passphrase to proceed
+            </div>
+
+            {phase === "denied" && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-red-400 mb-3"
+              >
+                ✗ ACCESS DENIED — Invalid passphrase{" "}
+                {attempts > 2 ? `(${attempts} failed attempts)` : ""}
+              </motion.div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit} className="flex gap-2">
+              <div className="flex-1 flex items-center bg-black/50 border border-gray-700 rounded px-3 py-2 focus-within:border-green-600/60 transition-colors">
+                <span className="text-green-500 mr-2">❯</span>
+                <input
+                  ref={inputRef}
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Enter vault passphrase..."
+                  className="bg-transparent text-green-400 placeholder-gray-600 outline-none flex-1 text-sm font-mono"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!passwordInput}
+                className="px-4 py-2 bg-green-600/20 border border-green-700/50 text-green-400 rounded hover:bg-green-600/30 hover:border-green-500/60 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs font-mono font-bold"
+              >
+                UNLOCK
+              </button>
+            </form>
+
+            <div className="mt-3 text-gray-600 text-[10px]">
+              <span className="text-gray-700">TIP:</span> Bookmark with{" "}
+              <span className="text-gray-500">?key=passphrase</span> for instant
+              access
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Scan lines overlay */}
+        <div
+          className="fixed inset-0 pointer-events-none z-20 opacity-[0.02]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.03) 2px, rgba(0,255,0,0.03) 4px)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Unlock animation (scanning → verifying → granted)
   return (
     <div className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden">
       <MatrixRain />
@@ -1336,6 +1478,22 @@ function UserRow({
               </button>
             )}
             <button
+              onClick={() => onAction("set-password", u.id)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-green-500/10 text-green-400 text-[10px] font-mono font-bold hover:bg-green-500/20 transition-colors border border-green-800/30"
+            >
+              <Key className="h-3 w-3" />
+              SET PASSWORD
+            </button>
+            {!u.isVerified && (
+              <button
+                onClick={() => onAction("verify", u.id)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold hover:bg-emerald-500/20 transition-colors border border-emerald-800/30"
+              >
+                <BadgeCheck className="h-3 w-3" />
+                VERIFY
+              </button>
+            )}
+            <button
               onClick={() => onAction("force-reset", u.id)}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold hover:bg-amber-500/20 transition-colors border border-amber-800/30"
             >
@@ -1390,21 +1548,42 @@ function UsersControlPanel() {
 
   const fetchUsers = async () => {
     try {
+      // Try primary endpoint first
       const params = new URLSearchParams({
         page: String(page),
         limit: String(pageSize),
       });
       if (searchQ) params.set("search", searchQ);
       if (roleFilter !== "all") params.set("role", roleFilter);
-      const res = await fetch(`/api/v1/admin/users?${params}`, {
+      let res = await fetch(`/api/v1/admin/users?${params}`, {
         credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : data.users || []);
+      } else {
+        // Fallback to superuser auth endpoint
+        const fallback = await fetch("/auth/admin/users", {
+          credentials: "include",
+        });
+        if (fallback.ok) {
+          const data = await fallback.json();
+          setUsers(data.users || []);
+        }
       }
     } catch {
-      /* fallback */
+      // Last resort: try the auth admin endpoint
+      try {
+        const fallback = await fetch("/auth/admin/users", {
+          credentials: "include",
+        });
+        if (fallback.ok) {
+          const data = await fallback.json();
+          setUsers(data.users || []);
+        }
+      } catch {
+        /* offline */
+      }
     }
     setLoading(false);
   };
@@ -1432,16 +1611,69 @@ function UsersControlPanel() {
         [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 50),
       );
 
+    // Helper: try primary endpoint, fallback to /auth/admin/* endpoints
+    const tryAction = async (
+      primaryUrl: string,
+      primaryOpts: RequestInit,
+      fallbackUrl: string,
+      fallbackOpts: RequestInit,
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(primaryUrl, {
+          credentials: "include",
+          ...primaryOpts,
+        });
+        if (res.ok) return true;
+      } catch {
+        /* primary failed */
+      }
+      try {
+        const res = await fetch(fallbackUrl, {
+          credentials: "include",
+          ...fallbackOpts,
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    };
+
     try {
       if (action === "unlock") {
-        const res = await fetch(
+        const ok = await tryAction(
           `/api/v1/admin/security/users/${userId}/unlock`,
-          { method: "POST", credentials: "include" },
+          { method: "POST" },
+          "/auth/admin/unlock-user",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId }),
+          },
         );
         logMsg(
-          res.ok
+          ok
             ? `✓ Unlocked ${user?.username}`
             : `✗ Failed to unlock ${user?.username}`,
+        );
+      } else if (action === "set-password") {
+        const newPassword = prompt(
+          `Set new password for ${user?.username} (${user?.email})\n\nMin 8 characters:`,
+        );
+        if (!newPassword) return;
+        if (newPassword.length < 8) {
+          logMsg("✗ Password must be at least 8 characters");
+          return;
+        }
+        const res = await fetch("/auth/admin/change-password", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, newPassword }),
+        });
+        logMsg(
+          res.ok
+            ? `✓ Password changed for ${user?.username} → new pwd set`
+            : `✗ Failed to change password for ${user?.username}`,
         );
       } else if (action === "force-reset") {
         if (
@@ -1465,16 +1697,36 @@ function UsersControlPanel() {
           user?.role,
         );
         if (!newRole) return;
-        const res = await fetch(`/api/v1/admin/security/users/${userId}/role`, {
+        const ok = await tryAction(
+          `/api/v1/admin/security/users/${userId}/role`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: newRole }),
+          },
+          "/auth/admin/change-role",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, newRole }),
+          },
+        );
+        logMsg(
+          ok
+            ? `✓ Changed ${user?.username} role → ${newRole}`
+            : `✗ Failed to change role for ${user?.username}`,
+        );
+      } else if (action === "verify") {
+        const res = await fetch("/auth/admin/verify-user", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role: newRole }),
+          body: JSON.stringify({ userId }),
         });
         logMsg(
           res.ok
-            ? `✓ Changed ${user?.username} role → ${newRole}`
-            : `✗ Failed to change role for ${user?.username}`,
+            ? `✓ Verified ${user?.username}`
+            : `✗ Failed to verify ${user?.username}`,
         );
       } else if (action === "tier-change") {
         const newTier = prompt(
@@ -4737,7 +4989,7 @@ function CommandCenter() {
                     emoji="🎫"
                   />
                   <RouteLink
-                    path="/vault"
+                    path="/sys/0x7f3a9c"
                     label="Credentials Vault (SU)"
                     emoji="🔐"
                   />
@@ -6144,10 +6396,43 @@ function CommandCenter() {
 // ═══════════════════════════════════════════════════════════
 
 export default function CredentialsVault() {
-  const { user, loading } = useAuthContext();
+  const { user, loading, token } = useAuthContext();
+  const [, navigate] = useLocation();
 
-  // Auth gate: must be superuser — only the superuser role can access the vault
-  const isSuperuser = user?.role === "superuser";
+  // ═══════════════════════════════════════════════════════════
+  // 🔐 VAULT IDENTITY LOCK — superadmin@versoair.test ONLY
+  // Server-verified. Even other superusers are denied.
+  // Passphrase alone is NOT enough — you must BE superadmin.
+  // ═══════════════════════════════════════════════════════════
+  const [vaultAuthorized, setVaultAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth/signin?redirect=/sys/0x7f3a9c");
+      return;
+    }
+
+    if (!loading && user && token) {
+      // Verify with server that this specific user is the vault master
+      fetch("/api/vault/authorize", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setVaultAuthorized(data.authorized === true);
+        })
+        .catch(() => {
+          setVaultAuthorized(false);
+        });
+    }
+  }, [loading, user, token, navigate]);
+
+  // Client-side pre-check (server is the real authority)
+  const isSuperuser = vaultAuthorized === true;
 
   const [gateComplete, setGateComplete] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -6270,8 +6555,9 @@ export default function CredentialsVault() {
     [],
   );
 
-  // Loading
-  if (loading) {
+  // Server verification in progress, or auth still loading
+  // The useEffect handles redirect for unauthenticated users
+  if (vaultAuthorized === null) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <motion.div
@@ -6284,7 +6570,6 @@ export default function CredentialsVault() {
     );
   }
 
-  // Access denied for non-superusers
   if (!isSuperuser) {
     return <AccessDenied />;
   }
@@ -6351,7 +6636,7 @@ export default function CredentialsVault() {
                 {/* Quick Nav — no re-auth needed since we're already in the vault */}
                 <div className="flex items-center gap-1.5">
                   <a
-                    href="/geo-admin/dashboard?from=vault"
+                    href="/geo-admin/dashboard?from=sv"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-800/40 rounded-full hover:bg-blue-500/20 hover:border-blue-600/60 transition-all group"
                   >
                     <Globe className="w-3 h-3 text-blue-400 group-hover:text-blue-300" />
@@ -6360,7 +6645,7 @@ export default function CredentialsVault() {
                     </span>
                   </a>
                   <a
-                    href="/dashboard?from=vault"
+                    href="/dashboard?from=sv"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-800/40 rounded-full hover:bg-purple-500/20 hover:border-purple-600/60 transition-all group"
                   >
                     <LayoutDashboard className="w-3 h-3 text-purple-400 group-hover:text-purple-300" />
@@ -6574,13 +6859,13 @@ export default function CredentialsVault() {
                   SECURITY CLASSIFICATION: RESTRICTED
                 </h3>
                 <ul className="text-red-400/60 text-xs space-y-1 font-mono">
-                  <li>• Development & staging environment credentials ONLY</li>
-                  <li>• Automatically disabled when NODE_ENV=production</li>
+                  <li>• Access restricted exclusively to superuser role</li>
+                  <li>• No admin, moderator, or staff access permitted</li>
                   <li>
                     • All credentials must be rotated before production
                     deployment
                   </li>
-                  <li>• Access restricted to superuser clearance level</li>
+                  <li>• Unauthorized access attempts are logged</li>
                   <li>• Session activity is logged and monitored</li>
                 </ul>
               </div>

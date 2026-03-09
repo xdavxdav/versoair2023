@@ -980,7 +980,7 @@ const BusinessManagement = ({
         if (countryFilter && countryFilter !== "all")
           params.set("countryCode", countryFilter);
 
-        const url = `${API_BASE_URL}/api/businesses?${params.toString()}`;
+        const url = `${API_BASE_URL}/api/v1/admin/businesses?${params.toString()}`;
         console.log("[Business Filter] Fetching from:", url, {
           searchTerm,
           categoryFilter,
@@ -1268,6 +1268,12 @@ const BusinessManagement = ({
           title: "Success",
           description: "Business updated successfully",
         });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to update business",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to update business:", error);
@@ -1297,6 +1303,12 @@ const BusinessManagement = ({
         toast({
           title: "Success",
           description: "Business deleted successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to delete business",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -3039,6 +3051,12 @@ const CategoryManagement = ({
           title: "Success",
           description: "Category updated successfully",
         });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to update category",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to update category:", error);
@@ -3068,6 +3086,12 @@ const CategoryManagement = ({
         toast({
           title: "Success",
           description: "Category deleted successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to delete category",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -3796,6 +3820,12 @@ const JobManagement = () => {
           title: "Success",
           description: "Job updated successfully",
         });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to update job",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to update job:", error);
@@ -3825,6 +3855,12 @@ const JobManagement = () => {
         toast({
           title: "Success",
           description: "Job deleted successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to delete job",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -4972,6 +5008,12 @@ const RoleManagementSection = () => {
           title: "Success",
           description: "Role updated successfully",
         });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to update role",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Failed to update role:", error);
@@ -5001,6 +5043,12 @@ const RoleManagementSection = () => {
         toast({
           title: "Success",
           description: `Role deleted. ${data.data?.reassignedUsers || 0} users reassigned to 'user'.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to delete role",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -6204,9 +6252,9 @@ export default function AdminDashboard() {
 
   const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
     () => {
-      // If coming from vault (?from=vault), superuser is already authenticated
+      // If coming from vault (?from=sv), superuser is already authenticated
       const params = new URLSearchParams(window.location.search);
-      if (params.get("from") === "vault") {
+      if (params.get("from") === "sv" || params.get("from") === "vault") {
         // Auto-grant access and persist session
         localStorage.setItem(
           "adminAccessTime",

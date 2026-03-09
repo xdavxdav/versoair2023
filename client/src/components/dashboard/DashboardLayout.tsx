@@ -201,13 +201,16 @@ export function DashboardLayout({
 
         <header
           ref={headerRef}
-          className={`px-3 sm:px-6 py-4 z-30 transition-[transform,opacity] duration-250 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
+          className={`px-3 sm:px-6 py-4 z-30 transition-[transform,opacity] duration-250
           ${
             headerFixed
               ? "fixed left-0 right-0 lg:left-64 bg-slate-900/90 backdrop-blur-md border-b border-slate-700/60 shadow-lg"
               : "bg-slate-900 border-b border-slate-700"
           }`}
-          style={headerStyle}
+          style={{
+            ...headerStyle,
+            transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)",
+          }}
         >
           <div className="flex items-center justify-between gap-4">
             {/* LEFT */}

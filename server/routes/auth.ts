@@ -95,7 +95,7 @@ const resetPasswordSchema = z.object({
 
 const SALT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCK_DURATION_MS = 2 * 60 * 1000; // 2 minutes (was 15 — reduced to avoid long waits during dev)
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -914,6 +914,191 @@ router.post(
         expiresAt: expiresAt.toISOString(),
       },
     });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔐 SUPERUSER ADMIN ENDPOINTS — credential & user management from Vault
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Middleware: verify the caller is an authenticated superuser */
+function requireSuperuser(req: Request, res: Response, next: Function) {
+  const token = getTokenFromRequest(req);
+  if (!token) {
+    res.status(401).json({ success: false, message: "Not authenticated" });
+    return;
+  }
+  try {
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
+    if (decoded.role !== "superuser") {
+      res
+        .status(403)
+        .json({ success: false, message: "Superuser role required" });
+      return;
+    }
+    (req as any).superuserId = decoded.userId;
+    next();
+  } catch {
+    res
+      .status(401)
+      .json({ success: false, message: "Invalid or expired token" });
+  }
+}
+
+/**
+ * GET /auth/admin/users
+ * List all users with their account status (for Vault management panel)
+ */
+router.get(
+  "/admin/users",
+  requireSuperuser,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const result = await db.execute(
+      sql`SELECT id, username, email, role, is_verified, subscription_tier, subscription_status,
+                 failed_login_attempts, locked_until, created_at
+          FROM users ORDER BY id`,
+    );
+    res.json({
+      success: true,
+      users: result.rows.map((u: any) => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role || "user",
+        isVerified: u.is_verified,
+        subscriptionTier: u.subscription_tier || "free",
+        subscriptionStatus: u.subscription_status || "active",
+        failedLoginAttempts: u.failed_login_attempts || 0,
+        lockedUntil: u.locked_until,
+        isLocked: u.locked_until
+          ? new Date(u.locked_until) > new Date()
+          : false,
+        createdAt: u.created_at,
+      })),
+    });
+  }),
+);
+
+/**
+ * POST /auth/admin/unlock-user
+ * Instantly unlock a locked account and reset failed attempts
+ */
+router.post(
+  "/admin/unlock-user",
+  requireSuperuser,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.body;
+    if (!userId) {
+      res.status(400).json({ success: false, message: "userId is required" });
+      return;
+    }
+    await db
+      .update(schema.users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, Number(userId)));
+    console.log(
+      `[ADMIN] User ${userId} unlocked by superuser ${(req as any).superuserId}`,
+    );
+    res.json({ success: true, message: "Account unlocked" });
+  }),
+);
+
+/**
+ * POST /auth/admin/change-password
+ * Superuser changes any user's password directly (no old password needed)
+ */
+router.post(
+  "/admin/change-password",
+  requireSuperuser,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, newPassword } = req.body;
+    if (!userId || !newPassword) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "userId and newPassword are required",
+        });
+      return;
+    }
+    if (newPassword.length < 8) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Password must be at least 8 characters",
+        });
+      return;
+    }
+    const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await db
+      .update(schema.users)
+      .set({ password: hashed, failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, Number(userId)));
+    console.log(
+      `[ADMIN] Password changed for user ${userId} by superuser ${(req as any).superuserId}`,
+    );
+    res.json({ success: true, message: "Password changed successfully" });
+  }),
+);
+
+/**
+ * POST /auth/admin/change-role
+ * Superuser changes any user's role
+ */
+router.post(
+  "/admin/change-role",
+  requireSuperuser,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, newRole } = req.body;
+    const validRoles = [
+      "superuser",
+      "admin",
+      "moderator",
+      "business_owner",
+      "user",
+    ];
+    if (!userId || !newRole || !validRoles.includes(newRole)) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: `userId and valid role required (${validRoles.join(", ")})`,
+        });
+      return;
+    }
+    await db
+      .update(schema.users)
+      .set({ role: newRole })
+      .where(eq(schema.users.id, Number(userId)));
+    console.log(
+      `[ADMIN] Role changed for user ${userId} to ${newRole} by superuser ${(req as any).superuserId}`,
+    );
+    res.json({ success: true, message: `Role changed to ${newRole}` });
+  }),
+);
+
+/**
+ * POST /auth/admin/verify-user
+ * Superuser manually verifies a user's email
+ */
+router.post(
+  "/admin/verify-user",
+  requireSuperuser,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.body;
+    if (!userId) {
+      res.status(400).json({ success: false, message: "userId is required" });
+      return;
+    }
+    await db
+      .update(schema.users)
+      .set({ isVerified: true })
+      .where(eq(schema.users.id, Number(userId)));
+    console.log(
+      `[ADMIN] User ${userId} verified by superuser ${(req as any).superuserId}`,
+    );
+    res.json({ success: true, message: "User verified" });
   }),
 );
 

@@ -1,7 +1,106 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
+import {
+  X,
+  Mail,
+  Lock,
+  User as UserIcon,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+
+function BlogSsoButtons() {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  const handleSso = async (provider: string) => {
+    setLoading(provider);
+    setError("");
+    try {
+      const res = await fetch(`/auth/oauth/${provider}?redirect=/blog`, {
+        redirect: "manual",
+      });
+      if (res.status === 501) {
+        const data = await res.json();
+        setError(data.message || `${provider} sign-in is not yet configured.`);
+        setLoading(null);
+        return;
+      }
+      window.location.href = `/auth/oauth/${provider}?redirect=/blog`;
+    } catch {
+      setError(`Failed to connect to ${provider}. Try again.`);
+      setLoading(null);
+    }
+  };
+
+  return (
+    <div>
+      {error && (
+        <p className="text-red-400 text-xs text-center mb-2">{error}</p>
+      )}
+      <div className="grid grid-cols-1 gap-2">
+        {/* LinkedIn */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSso("linkedin")}
+          disabled={!!loading}
+          className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#0077b5] to-[#006097] hover:from-[#006097] hover:to-[#004d7a] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading === "linkedin" ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+            </svg>
+          )}
+          Continue with LinkedIn
+        </motion.button>
+
+        {/* Indeed */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSso("indeed")}
+          disabled={!!loading}
+          className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#2164f3] to-[#1a4fc7] hover:from-[#1a4fc7] hover:to-[#153fa0] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading === "indeed" ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.566 21.552v-8.706c0-2.26.438-4.47 2.15-5.85 1.398-1.13 3.248-1.478 5.06-1.478.6 0 1.188.05 1.724.13v3.2a8.98 8.98 0 00-1.244-.08c-2.478 0-3.588 1.348-3.588 3.788v8.996h-4.102zM8.2 5.506a2.384 2.384 0 01-2.39 2.39A2.384 2.384 0 013.42 5.506a2.384 2.384 0 012.39-2.39 2.384 2.384 0 012.39 2.39zM3.756 21.552V9.524h4.102v12.028H3.756z" />
+            </svg>
+          )}
+          Continue with Indeed
+        </motion.button>
+
+        {/* Glassdoor */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleSso("glassdoor")}
+          disabled={!!loading}
+          className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#0caa41] to-[#0a8f36] hover:from-[#0a8f36] hover:to-[#08752c] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading === "glassdoor" ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16.09 3H7.91A1.91 1.91 0 006 4.91h10.18A1.91 1.91 0 0018 4.91 1.91 1.91 0 0016.09 3zM18 19.09A1.91 1.91 0 0016.09 21H7.91A1.91 1.91 0 006 19.09H18zM18 6.82H6v10.36h12V6.82z" />
+            </svg>
+          )}
+          Continue with Glassdoor
+        </motion.button>
+      </div>
+    </div>
+  );
+}
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -257,67 +356,7 @@ export default function AuthModal({
                 </div>
 
                 {/* Social Login — Professional Network SSO */}
-                <div className="grid grid-cols-1 gap-2">
-                  {/* LinkedIn */}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      onAuthenticate("user@linkedin.com", "sso-token", false)
-                    }
-                    className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#0077b5] to-[#006097] hover:from-[#006097] hover:to-[#004d7a] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                    </svg>
-                    Continue with LinkedIn
-                  </motion.button>
-
-                  {/* Indeed */}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      onAuthenticate("user@indeed.com", "sso-token", false)
-                    }
-                    className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#2164f3] to-[#1a4fc7] hover:from-[#1a4fc7] hover:to-[#153fa0] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M11.566 21.552v-8.706c0-2.26.438-4.47 2.15-5.85 1.398-1.13 3.248-1.478 5.06-1.478.6 0 1.188.05 1.724.13v3.2a8.98 8.98 0 00-1.244-.08c-2.478 0-3.588 1.348-3.588 3.788v8.996h-4.102zM8.2 5.506a2.384 2.384 0 01-2.39 2.39A2.384 2.384 0 013.42 5.506a2.384 2.384 0 012.39-2.39 2.384 2.384 0 012.39 2.39zM3.756 21.552V9.524h4.102v12.028H3.756z" />
-                    </svg>
-                    Continue with Indeed
-                  </motion.button>
-
-                  {/* Glassdoor */}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      onAuthenticate("user@glassdoor.com", "sso-token", false)
-                    }
-                    className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#0caa41] to-[#0a8f36] hover:from-[#0a8f36] hover:to-[#08752c] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M16.09 3H7.91A1.91 1.91 0 006 4.91h10.18A1.91 1.91 0 0018 4.91 1.91 1.91 0 0016.09 3zM18 19.09A1.91 1.91 0 0016.09 21H7.91A1.91 1.91 0 006 19.09H18zM18 6.82H6v10.36h12V6.82z" />
-                    </svg>
-                    Continue with Glassdoor
-                  </motion.button>
-                </div>
+                <BlogSsoButtons />
 
                 {/* Terms */}
                 <p className="text-xs text-slate-500 text-center font-handstyle">

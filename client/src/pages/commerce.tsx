@@ -887,7 +887,6 @@ export default function CommerceBusinessAds() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search businesses, retailers, services, products..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
               <div className="relative flex-1 w-full">
@@ -898,26 +897,11 @@ export default function CommerceBusinessAds() {
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region, or location..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <Button
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

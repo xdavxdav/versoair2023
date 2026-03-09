@@ -1,5 +1,5 @@
 import { searchBusinesses, Business } from "@/lib/business-data";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCountry } from "@/contexts/CountryContext";
 import {
   Search,
@@ -397,6 +397,27 @@ export default function Annuaire() {
     checkConnection();
   }, []);
 
+  // Debounced search - auto-fetch after user stops typing
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (
+      searchQuery.trim() ||
+      locationQuery.trim() ||
+      selectedCategory ||
+      Object.values(activeFilters).some((f) => f && f !== "rating_desc")
+    ) {
+      searchTimerRef.current = setTimeout(() => {
+        handleSearch(1);
+      }, 300);
+    }
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery, locationQuery, selectedCategory, selectedCountry, activeFilters]);
+
   // Search handler
   const handleSearch = async (page: number = 1, categoryOverride?: string) => {
     setIsSearching(true);
@@ -501,7 +522,6 @@ export default function Annuaire() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Recherchez des entreprises..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
 
@@ -513,27 +533,12 @@ export default function Annuaire() {
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Ville, région..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
 
-              <Button
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Recherche...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Rechercher
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
