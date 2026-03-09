@@ -742,7 +742,6 @@ export default function Automobile() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search car dealerships, auto services, vehicle brands..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
               <div className="relative flex-1 w-full">
@@ -753,26 +752,11 @@ export default function Automobile() {
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region, or service location..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <Button
-                onClick={() => handleSearch()}
-                disabled={isSearching}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} className="mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+              )}
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

@@ -1,4 +1,4 @@
-import { buildAIContext, type AIContext } from "./ai-context";
+import { buildAIContext, groundedSearch, type AIContext } from "./ai-context";
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
@@ -10,9 +10,23 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface ChatSource {
+  name: string;
+  snippet: string;
+}
+
 export interface ChatResult {
   reply: string;
   provider: "ollama" | "fallback";
+  sources?: ChatSource[];
+  searchMethod?: string;
+}
+
+export interface GroundedResult {
+  answer: string;
+  sources: ChatSource[];
+  searchMethod: string;
+  confidence: number;
 }
 
 // ─── System prompt ────────────────────────────────────────────────────────────
@@ -24,10 +38,15 @@ You help users:
 3. Generate professional business descriptions
 4. Suggest the correct directory category for a business
 5. Navigate platform features (Reservations, Business Verification, Geo Admin, Artist Portal)
+6. Answer natural language questions grounded in real database data
 
 PERSONALITY: Professional, concise, and data-driven. Use real numbers from [CONTEXT DATA] when provided. Format replies with clear structure using **bold** for headings and bullet points. Keep replies under 200 words unless a detailed breakdown is explicitly requested.
 
-IMPORTANT: When context data is provided, always ground your answers in it. Do not invent business names or statistics.`;
+IMPORTANT:
+- When context data is provided, always ground your answers in it. Do not invent business names or statistics.
+- When search results are provided with sources, always cite them by name in your answer.
+- If the context doesn't contain enough information to answer, say so honestly.
+- Never fabricate data — only use what is in [CONTEXT DATA].`;
 
 // ─── Build context string to inject into the system prompt ───────────────────
 function formatContext(ctx: AIContext): string {
@@ -39,12 +58,18 @@ function formatContext(ctx: AIContext): string {
     `Countries with listings: ${ctx.countries.map((c) => `${c.name} (${c.count})`).join(", ")}`,
   ];
 
+  if (ctx.searchMethod) {
+    lines.push(`Search method used: ${ctx.searchMethod}`);
+  }
+
   if (ctx.searchResults && ctx.searchResults.length > 0) {
-    lines.push("Matching businesses found:");
+    lines.push("Matching businesses found (CITE THESE AS SOURCES):");
     for (const b of ctx.searchResults) {
       const rating = b.rating != null ? ` ★${b.rating.toFixed(1)}` : "";
+      const relevance =
+        b.relevance != null ? ` [relevance: ${b.relevance.toFixed(3)}]` : "";
       lines.push(
-        `  • ${b.name} | ${b.category} | ${b.location || b.country}${rating}${b.description ? " — " + b.description : ""}`,
+        `  • ${b.name} | ${b.category} | ${b.location || b.country}${rating}${relevance}${b.description ? " — " + b.description : ""}`,
       );
     }
   } else if (
@@ -56,6 +81,25 @@ function formatContext(ctx: AIContext): string {
 
   lines.push("[/CONTEXT DATA]");
   return lines.join("\n");
+}
+
+/**
+ * Extracts source citations from the context search results.
+ */
+function extractSources(ctx: AIContext): ChatSource[] | undefined {
+  if (!ctx.searchResults || ctx.searchResults.length === 0) return undefined;
+  return ctx.searchResults.map((b) => ({
+    name: b.name,
+    snippet:
+      [
+        b.category,
+        b.location || b.country,
+        b.rating ? `★${b.rating.toFixed(1)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ") +
+      (b.description ? ` — ${b.description.substring(0, 100)}` : ""),
+  }));
 }
 
 // ─── Ollama call ──────────────────────────────────────────────────────────────
@@ -422,16 +466,20 @@ function smartFallback(
 /**
  * Processes a conversation and returns an AI reply.
  * Tries Ollama first (self-hosted, free), falls back to smart rule-based if unavailable.
+ * Supports identity-based access control and grounded source citations.
  */
-export async function chat(messages: ChatMessage[]): Promise<ChatResult> {
+export async function chat(
+  messages: ChatMessage[],
+  userRole?: string,
+): Promise<ChatResult> {
   // Get the last user message for context building
   const lastUserMsg =
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
-  // Build real database context
+  // Build real database context with access control
   let ctx: AIContext;
   try {
-    ctx = await buildAIContext(lastUserMsg);
+    ctx = await buildAIContext(lastUserMsg, userRole);
   } catch (err) {
     console.warn("[VersoAI] Context build failed, using empty context:", err);
     ctx = {
@@ -441,6 +489,9 @@ export async function chat(messages: ChatMessage[]): Promise<ChatResult> {
       countries: [],
     };
   }
+
+  // Extract sources for citation
+  const sources = extractSources(ctx);
 
   // Inject context into the system prompt
   const systemMessage: ChatMessage = {
@@ -455,7 +506,12 @@ export async function chat(messages: ChatMessage[]): Promise<ChatResult> {
   try {
     const reply = await callOllama(llmMessages);
     console.log("[VersoAI] Ollama responded successfully");
-    return { reply, provider: "ollama" };
+    return {
+      reply,
+      provider: "ollama",
+      sources,
+      searchMethod: ctx.searchMethod,
+    };
   } catch (err: any) {
     console.warn(
       "[VersoAI] Ollama unavailable, using smart fallback:",
@@ -465,5 +521,95 @@ export async function chat(messages: ChatMessage[]): Promise<ChatResult> {
 
   // ── Smart fallback ──
   const reply = smartFallback(lastUserMsg, ctx, messages);
-  return { reply, provider: "fallback" };
+  return {
+    reply,
+    provider: "fallback",
+    sources,
+    searchMethod: ctx.searchMethod,
+  };
+}
+
+// ─── Grounded Q&A ─────────────────────────────────────────────────────────────
+/**
+ * Grounded chat: answers a natural language question using ONLY data from the database.
+ * Returns the answer with source citations and confidence score.
+ * This prevents AI hallucinations by anchoring responses to real data.
+ */
+export async function groundedChat(
+  question: string,
+  userRole?: string,
+): Promise<GroundedResult> {
+  // Retrieve relevant documents strictly from the database
+  const {
+    results,
+    sources: rawSources,
+    searchMethod,
+  } = await groundedSearch(question, userRole);
+
+  const sources: ChatSource[] = rawSources.map((s) => ({
+    name: s.name,
+    snippet: s.snippet,
+  }));
+
+  // Build grounded context from retrieved data only
+  const context = results
+    .map(
+      (r) =>
+        `[${r.name}] (${r.location || r.country}, ${r.category}): ${r.description}` +
+        (r.rating != null ? ` | Rating: ★${r.rating.toFixed(1)}` : ""),
+    )
+    .join("\n");
+
+  const groundedPrompt = `You are VersoAI, the business intelligence assistant for Verso Air.
+
+Answer the user's question ONLY using the provided context below.
+If the context doesn't contain enough information, say "I don't have enough data in our database to answer that precisely."
+NEVER invent or fabricate information. Cite businesses by name when referencing them.
+
+CONTEXT (from Verso Air database — ${results.length} results via ${searchMethod} search):
+${context || "No matching records found in the database."}
+
+QUESTION: ${question}
+
+ANSWER (be specific, cite sources by name):`;
+
+  // Try Ollama for grounded response
+  try {
+    const reply = await callOllama([
+      { role: "system", content: groundedPrompt },
+      { role: "user", content: question },
+    ]);
+
+    return {
+      answer: reply,
+      sources,
+      searchMethod,
+      confidence: results.length > 0 ? 0.9 : 0.2,
+    };
+  } catch {
+    // Fallback: format results directly without LLM
+    if (results.length === 0) {
+      return {
+        answer:
+          "I searched the database but couldn't find matching records for your question. Try rephrasing or asking about a specific sector or country.",
+        sources: [],
+        searchMethod,
+        confidence: 0.1,
+      };
+    }
+
+    const formattedList = results
+      .map((r, i) => {
+        const rating = r.rating != null ? ` ★${r.rating.toFixed(1)}` : "";
+        return `${i + 1}. **${r.name}** — ${r.category} | ${r.location || r.country}${rating}${r.description ? `\n   ${r.description}` : ""}`;
+      })
+      .join("\n");
+
+    return {
+      answer: `Here's what I found in the database for your question:\n\n${formattedList}\n\n📌 These results are grounded in our live database — no AI-generated data.`,
+      sources,
+      searchMethod,
+      confidence: results.length >= 3 ? 0.8 : 0.5,
+    };
+  }
 }

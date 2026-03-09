@@ -11,11 +11,18 @@ import {
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface ChatSource {
+  name: string;
+  snippet: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
   provider?: "ollama" | "fallback";
+  sources?: ChatSource[];
+  searchMethod?: string;
 }
 
 // ─── Quick action suggestions ─────────────────────────────────────────────────
@@ -26,6 +33,8 @@ const QUICK_ACTIONS = [
   "✍️ Write a business description",
   "📍 Businesses in Morocco",
   "🚀 Platform features",
+  "🧠 Ask: best rated businesses?",
+  "🔗 Data connector status",
 ];
 
 // ─── Simple markdown renderer (bold + bullets) ────────────────────────────────
@@ -74,6 +83,62 @@ function renderMarkdown(text: string): React.ReactNode {
       </div>
     );
   });
+}
+
+// ─── Source citation renderer ──────────────────────────────────────────────────
+function renderSources(sources: ChatSource[]): React.ReactNode {
+  if (!sources || sources.length === 0) return null;
+  return (
+    <div className="mt-2 pt-2 border-t border-blue-500/15">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[10px] font-medium text-blue-400/70 uppercase tracking-wider">
+          📌 Sources from database
+        </span>
+      </div>
+      <div className="space-y-1">
+        {sources.map((source, idx) => (
+          <div
+            key={idx}
+            className="flex items-start gap-2 text-[11px] text-blue-300/60 bg-slate-800/40 rounded-lg px-2.5 py-1.5"
+          >
+            <span className="text-blue-400/50 shrink-0 mt-px">{idx + 1}.</span>
+            <div>
+              <span className="text-blue-200/80 font-medium">
+                {source.name}
+              </span>
+              {source.snippet && (
+                <span className="text-blue-300/40"> — {source.snippet}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Search method badge ──────────────────────────────────────────────────────
+function SearchMethodBadge({ method }: { method?: string }) {
+  if (!method) return null;
+  const labels: Record<string, { text: string; color: string }> = {
+    fulltext: {
+      text: "Full-text",
+      color: "bg-emerald-500/20 text-emerald-300",
+    },
+    ilike: { text: "Keyword", color: "bg-amber-500/20 text-amber-300" },
+    filter: { text: "Filtered", color: "bg-blue-500/20 text-blue-300" },
+  };
+  const label = labels[method] ?? {
+    text: method,
+    color: "bg-slate-500/20 text-slate-300",
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${label.color}`}
+    >
+      🔍 {label.text}
+    </span>
+  );
 }
 
 // ─── VersoAIChat Component ────────────────────────────────────────────────────
@@ -156,6 +221,8 @@ export default function VersoAIChat() {
           content: data.reply,
           timestamp: new Date(),
           provider: data.provider,
+          sources: data.sources,
+          searchMethod: data.searchMethod,
         };
 
         setMessages((prev) => [...prev, aiMessage]);
@@ -178,10 +245,72 @@ export default function VersoAIChat() {
     [messages, isLoading],
   );
 
+  // ── Grounded Q&A: uses /api/ai/ask for source-cited answers ──
+  const sendGroundedQuestion = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || isLoading) return;
+
+      const userMessage: Message = {
+        role: "user",
+        content: `🧠 ${trimmed}`,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      setIsLoading(true);
+
+      try {
+        const res = await fetch("/api/ai/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ question: trimmed }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error ?? "Unknown error");
+        }
+
+        const aiMessage: Message = {
+          role: "assistant",
+          content: data.answer,
+          timestamp: new Date(),
+          sources: data.sources,
+          searchMethod: data.searchMethod,
+        };
+
+        setMessages((prev) => [...prev, aiMessage]);
+      } catch (err: any) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "⚠️ Grounded search is temporarily unavailable. Please try a regular question.",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+    },
+    [isLoading],
+  );
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(input);
+      // Auto-detect grounded question prefix
+      if (input.trim().startsWith("?")) {
+        sendGroundedQuestion(input.trim().substring(1));
+      } else {
+        sendMessage(input);
+      }
     }
   };
 
@@ -224,7 +353,9 @@ export default function VersoAIChat() {
                 </p>
                 <p className="text-xs text-green-400 mt-0.5 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse inline-block" />
-                  {aiStatus === "ollama" ? "AI · Full mode" : "AI · Smart mode"}
+                  {aiStatus === "ollama"
+                    ? "AI · Full mode · Grounded"
+                    : "AI · Smart mode · Grounded"}
                 </p>
               </div>
             </div>
@@ -290,9 +421,21 @@ export default function VersoAIChat() {
                       : "bg-slate-800/70 border border-blue-500/15 text-blue-100 rounded-bl-sm"
                   }`}
                 >
-                  {msg.role === "assistant"
-                    ? renderMarkdown(msg.content)
-                    : msg.content}
+                  {msg.role === "assistant" ? (
+                    <>
+                      {msg.searchMethod && (
+                        <div className="mb-1.5">
+                          <SearchMethodBadge method={msg.searchMethod} />
+                        </div>
+                      )}
+                      {renderMarkdown(msg.content)}
+                      {msg.sources &&
+                        msg.sources.length > 0 &&
+                        renderSources(msg.sources)}
+                    </>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
@@ -323,9 +466,16 @@ export default function VersoAIChat() {
                   {QUICK_ACTIONS.map((action) => (
                     <button
                       key={action}
-                      onClick={() =>
-                        sendMessage(action.replace(/^[^\s]+\s/, ""))
-                      }
+                      onClick={() => {
+                        const text = action.replace(/^[^\s]+\s/, "");
+                        if (action.includes("Ask:")) {
+                          sendGroundedQuestion(text.replace(/^Ask:\s*/, ""));
+                        } else if (action.includes("connector")) {
+                          sendMessage("Show me the data connector status");
+                        } else {
+                          sendMessage(text);
+                        }
+                      }}
                       className="text-xs bg-slate-800/60 border border-blue-500/20 hover:border-blue-400/50 hover:bg-slate-700/60 text-blue-200 px-3 py-1.5 rounded-full transition-all"
                     >
                       {action}
@@ -347,7 +497,7 @@ export default function VersoAIChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask VersoAI anything…"
+                placeholder="Ask VersoAI… (prefix ? for grounded search)"
                 disabled={isLoading}
                 maxLength={1000}
                 className="flex-1 bg-slate-800/50 border border-blue-500/20 focus:border-blue-400/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-blue-300/40 focus:outline-none transition-colors disabled:opacity-50"

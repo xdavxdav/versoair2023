@@ -741,10 +741,10 @@ export default function UserDashboard() {
     fromParam === "geoadmin" || fromParam === "geo-admin";
   useEffect(() => {
     if (!userSession?.user) return;
-    if (fromParam === "vault" || cameFromGeoAdmin) return; // intentional nav — stay
+    if (fromParam === "sv" || fromParam === "vault" || cameFromGeoAdmin) return; // intentional nav — stay
     const role = (userSession.user.role || "user").toLowerCase();
     if (role === "superuser") {
-      navigateTo("/vault");
+      navigateTo("/sys/0x7f3a9c");
     } else if (role === "admin" || role === "moderator") {
       navigateTo("/geo-admin/dashboard");
     }
@@ -2189,12 +2189,12 @@ export default function UserDashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Link href="/geo-admin/dashboard?from=vault">
+                    <Link href="/geo-admin/dashboard?from=sv">
                       <button className="w-full text-left px-3 py-2 rounded-lg bg-slate-700/40 hover:bg-blue-500/15 text-sm text-slate-300 hover:text-blue-400 transition-all flex items-center gap-2">
                         <MapPin className="h-4 w-4" /> GEO Admin Panel
                       </button>
                     </Link>
-                    <Link href="/vault">
+                    <Link href="/sys/0x7f3a9c">
                       <button className="w-full text-left px-3 py-2 rounded-lg bg-slate-700/40 hover:bg-red-500/15 text-sm text-slate-300 hover:text-red-400 transition-all flex items-center gap-2">
                         <Lock className="h-4 w-4" /> Credentials Vault
                       </button>

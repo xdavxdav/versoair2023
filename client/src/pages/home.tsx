@@ -1890,6 +1890,26 @@ export default function Home() {
     fetchFilters();
   }, []);
 
+  // Debounced search - auto-fetch artist annuaire after user stops typing
+  const artistSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (artistSearchTimerRef.current) clearTimeout(artistSearchTimerRef.current);
+
+    if (
+      artistAnnuaireQuery.trim() ||
+      selectedArtistGenre ||
+      selectedArtistCountry
+    ) {
+      artistSearchTimerRef.current = setTimeout(() => {
+        handleArtistAnnuaireSearch();
+      }, 300);
+    }
+
+    return () => {
+      if (artistSearchTimerRef.current) clearTimeout(artistSearchTimerRef.current);
+    };
+  }, [artistAnnuaireQuery, selectedArtistGenre, selectedArtistCountry]);
+
   // Annuaire Musicale — search handler
   const handleArtistAnnuaireSearch = async () => {
     setIsArtistAnnuaireSearching(true);
@@ -3474,29 +3494,12 @@ export default function Home() {
                     onChange={(e) => setArtistAnnuaireQuery(e.target.value)}
                     placeholder="Recherchez des artistes..."
                     className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleArtistAnnuaireSearch()
-                    }
                   />
                 </div>
 
-                <Button
-                  onClick={() => handleArtistAnnuaireSearch()}
-                  disabled={isArtistAnnuaireSearching}
-                  className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white px-8"
-                >
-                  {isArtistAnnuaireSearching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Recherche...
-                    </>
-                  ) : (
-                    <>
-                      <Search size={18} className="mr-2" />
-                      Rechercher
-                    </>
-                  )}
-                </Button>
+                {isArtistAnnuaireSearching && (
+                  <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                )}
               </div>
 
               {/* Genre & Country Filters */}

@@ -154,7 +154,7 @@ app.use((req, res, next) => {
   initializeEmailTransporter();
   console.log("✅ [SERVER] Email service initialized");
 
-  // Register all API routes (this returns nothing)
+  // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
   console.log("✅ [SERVER] Routes registered successfully");
 
@@ -188,7 +188,8 @@ app.use((req, res, next) => {
   initializeSocket(server);
   console.log("✅ [SERVER] Socket.io initialized for real-time notifications");
 
-  // Setup Vite only in dev (lazy import to avoid bundling vite in production)
+  // Setup Vite/static LAST — SPA fallback catches unmatched GET routes
+  // (like /auth/signin, /dashboard, etc.) and serves index.html
   if (app.get("env") === "development") {
     const { setupVite } = await import("./vite");
     await setupVite(app, server);

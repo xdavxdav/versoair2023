@@ -77,6 +77,7 @@ import OngCulturelle from "@/pages/ong-culturelle";
 // ─────────────────────────────────────────────────────
 import SignIn from "@/pages/signin";
 import SignInSimple from "@/pages/signin-simple";
+import OAuthComplete from "@/pages/oauth-complete";
 import PasswordPage from "@/pages/password";
 
 // ─────────────────────────────────────────────────────
@@ -237,6 +238,7 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/auth/signin" component={SignIn} />
       <Route path="/auth/login" component={SignInSimple} />
+      <Route path="/auth/oauth-complete" component={OAuthComplete} />
       {/* Development only: Credentials vault */}
       {import.meta.env.DEV ? (
         <Route path="/auth/password" component={PasswordPage} />
@@ -263,8 +265,8 @@ function Router() {
       <Route path="/admin/database" component={DatabaseManagementCenter} />
       <Route path="/admin/verification" component={VerificationPage} />
       <Route path="/admin/tickets" component={AdminTicketManagement} />
-      {/* 🔐 Superuser-only credentials vault — no nav links, direct URL only */}
-      <Route path="/vault" component={CredentialsVault} />
+      {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
+      <Route path="/sys/0x7f3a9c" component={CredentialsVault} />
 
       {/* ═══════════════════════════════════════════════
           ❓ HELP & SUPPORT

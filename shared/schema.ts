@@ -76,6 +76,10 @@ export const users = pgTable("users", {
   // Stripe customer
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
 
+  // OAuth / SSO
+  oauthProvider: varchar("oauth_provider", { length: 20 }), // 'google' | 'microsoft' | 'apple'
+  oauthProviderId: text("oauth_provider_id"),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -421,6 +425,7 @@ export const properties = pgTable(
     category: varchar("category").notNull(), // 'luxury', 'standard', 'budget'
     location: text("location").notNull(),
     city: varchar("city").notNull(),
+    countryCode: varchar("country_code", { length: 2 }),
     address: text("address"),
     latitude: decimal("latitude", { precision: 10, scale: 8 }),
     longitude: decimal("longitude", { precision: 11, scale: 8 }),

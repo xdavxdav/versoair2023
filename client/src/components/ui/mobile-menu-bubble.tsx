@@ -10,6 +10,7 @@ import {
   Calendar,
   Headphones,
   LogIn,
+  LogOut,
   Globe,
   Lock,
   Building2,
@@ -23,9 +24,13 @@ import {
   Sparkles,
   ChevronRight,
   GripVertical,
+  Shield,
+  User,
+  KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 // ─── Grouped Navigation ────────────────────────────────────────
 
@@ -176,8 +181,11 @@ function SectionLabel({ text }: { text: string }) {
 
 export function MobileMenuBubble() {
   const [isOpen, setIsOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { isAuthenticated } = useSubscription();
+  const { user, logout, loading: authLoading } = useAuthContext();
+  const isSuperuser = user?.role === "superuser";
+  const isAdmin = user?.role === "admin" || user?.role === "moderator";
 
   // ── Draggable state — default: bottom-right like Messenger ──
   const BUBBLE_SIZE = 48;
@@ -353,9 +361,13 @@ export function MobileMenuBubble() {
           ) : (
             <Menu className="h-5 w-5" />
           )}
-          {/* Tiny pulse dot when closed — draws attention like Messenger */}
+          {/* Tiny pulse dot when closed — green=connected, amber=disconnected */}
           {!isOpen && !dragging && (
-            <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-green-400 rounded-full border-2 border-white animate-pulse" />
+            <span
+              className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white animate-pulse ${
+                user ? "bg-green-400" : "bg-amber-400"
+              }`}
+            />
           )}
         </Button>
 
@@ -451,20 +463,109 @@ export function MobileMenuBubble() {
 
               <hr className="border-gray-100 my-2" />
 
-              {/* ── Sign In ── */}
-              <Link href="/auth/signin">
-                <button
-                  onClick={close}
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 touch-manipulation ${
-                    location === "/auth/signin"
-                      ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
-                      : "bg-gray-900 text-white active:bg-gray-800"
-                  }`}
-                >
-                  <LogIn className="h-4 w-4" />
-                  Sign In
-                </button>
-              </Link>
+              {/* ── Auth Section — adapts to signed-in / signed-out ── */}
+              {user ? (
+                <div className="space-y-2">
+                  {/* User info badge */}
+                  <div className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/80">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#bf831c] to-[#d4941f] flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-gray-800 truncate">
+                        {user.name || user.email}
+                      </p>
+                      <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                        Connected
+                        {isSuperuser && " • Superuser"}
+                        {isAdmin && " • Admin"}
+                        {!isSuperuser && !isAdmin && user.role
+                          ? ` • ${user.role}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Shield
+                      className={`h-4 w-4 shrink-0 ${
+                        isSuperuser
+                          ? "text-amber-500"
+                          : isAdmin
+                            ? "text-blue-500"
+                            : "text-gray-400"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Vault link — superuser only */}
+                  {isSuperuser && (
+                    <Link href="/sys/0x7f3a9c">
+                      <button
+                        onClick={close}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors duration-150 touch-manipulation ${
+                          location === "/sys/0x7f3a9c"
+                            ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
+                            : "text-gray-700 active:bg-gray-100"
+                        }`}
+                      >
+                        <KeyRound
+                          className={`h-4 w-4 shrink-0 ${location === "/sys/0x7f3a9c" ? "text-white" : "text-amber-600"}`}
+                        />
+                        <span className="text-[13px] font-medium">
+                          Credentials Vault
+                        </span>
+                        <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
+                      </button>
+                    </Link>
+                  )}
+
+                  {/* Dashboard link */}
+                  <Link
+                    href={
+                      isSuperuser
+                        ? "/sys/0x7f3a9c"
+                        : isAdmin
+                          ? "/geo-admin/dashboard"
+                          : "/dashboard"
+                    }
+                  >
+                    <button
+                      onClick={close}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
+                    >
+                      <Globe className="h-4 w-4 shrink-0 text-[#bf831c]" />
+                      <span className="text-[13px] font-medium">Dashboard</span>
+                      <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
+                    </button>
+                  </Link>
+
+                  {/* Logout */}
+                  <button
+                    onClick={async () => {
+                      close();
+                      await logout();
+                      navigate("/");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 touch-manipulation bg-red-600 text-white active:bg-red-700"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <Link href="/auth/signin">
+                  <button
+                    onClick={close}
+                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 touch-manipulation ${
+                      location === "/auth/signin"
+                        ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
+                        : "bg-gray-900 text-white active:bg-gray-800"
+                    }`}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         )}
