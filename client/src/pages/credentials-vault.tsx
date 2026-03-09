@@ -6146,8 +6146,8 @@ function CommandCenter() {
 export default function CredentialsVault() {
   const { user, loading } = useAuthContext();
 
-  // Auth gate: must be superuser
-  const isSuperuser = user?.role === "superuser" || user?.isAdmin;
+  // Auth gate: must be superuser — only the superuser role can access the vault
+  const isSuperuser = user?.role === "superuser";
 
   const [gateComplete, setGateComplete] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
