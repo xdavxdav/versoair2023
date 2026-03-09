@@ -863,12 +863,10 @@ router.post(
 
     const parsed = startTrialSchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "Valid tier required (essential, verified, max, enterprise)",
-        });
+      res.status(400).json({
+        success: false,
+        message: "Valid tier required (essential, verified, max, enterprise)",
+      });
       return;
     }
 
