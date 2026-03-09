@@ -2,7 +2,13 @@ import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
 import { validateBusinessCategory } from "../services/business-validation";
 import { eq } from "drizzle-orm";
-import { businesses, auditLogs } from "@shared/schema";
+import { businesses, auditLogs, users } from "@shared/schema";
+import { generateBusinessPDF } from "../services/pdf-generator";
+import {
+  sendBusinessApprovalRequestEmail,
+  sendBusinessApprovedEmail,
+  sendBusinessRejectedEmail,
+} from "../services/email-service";
 
 const router = Router();
 
@@ -295,6 +301,13 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       params.push(String(countryCode));
     }
 
+    // userId / ownerId filter — fetch businesses owned by a specific user
+    const userIdFilter = req.query.userId || req.query.ownerId;
+    if (userIdFilter) {
+      whereClause += " AND b.owner_id = $" + (params.length + 1);
+      params.push(Number(userIdFilter));
+    }
+
     // Validate sortBy to prevent SQL injection
     const allowedSortFields = [
       "created_at",
@@ -326,6 +339,8 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         b.featured, b.is_active,
         b.is_verified, b.is_advertiser, b.is_premium,
         b.verified_at, b.website, b.popularity_score,
+        b.pdf_path, b.approval_status,
+        CASE WHEN b.is_verified THEN 'verified' ELSE 'unverified' END as verification_status,
         b.created_at, b.updated_at,
         bc.name as category_name,
         COALESCE(u.subscription_tier, 'free') as owner_tier
@@ -523,9 +538,14 @@ router.put("/api/businesses/:id", async (req: Request, res: Response) => {
         "description",
         "phone",
         "email",
+        "address",
+        "countryCode",
+        "cityName",
+        "isActive",
         "rating",
         "isAdvertiser",
         "isVerified",
+        "approvalStatus",
         "adBalance",
         "attributes",
         "tags",
@@ -819,5 +839,502 @@ router.get("/api/database/tables", async (req: Request, res: Response) => {
     });
   }
 });
+
+// ============================================================================
+// BUSINESS APPROVAL WORKFLOW (GeoAdmin → SupUser/SuperUser review)
+// ============================================================================
+
+/**
+ * SUBMIT business for approval (GeoAdmin users)
+ * Creates the business with approval_status='pending',
+ * auto-generates a PDF, and emails the admin SMTP address.
+ */
+router.post("/api/businesses/submit", async (req: Request, res: Response) => {
+  try {
+    const {
+      name,
+      categoryId,
+      description,
+      location,
+      address,
+      phone,
+      email,
+      latitude,
+      longitude,
+      countryCode,
+      cityName,
+      tags = [],
+      username, // the geo-admin user who submitted
+      userId, // the geo-admin user id
+    } = req.body;
+
+    if (!name || !categoryId) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: name, categoryId",
+      });
+    }
+
+    // 1. Insert the business with approval_status = 'pending'
+    const insertResult = await pool.query(
+      `INSERT INTO businesses
+         (name, category_id, description, location, address, phone, email,
+          latitude, longitude, country_code, city_name, tags, is_active,
+          approval_status, submitted_by, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,
+                 'pending',$13,NOW(),NOW())
+         RETURNING *`,
+      [
+        name,
+        categoryId,
+        description || null,
+        location || null,
+        address || null,
+        phone || null,
+        email || null,
+        latitude || null,
+        longitude || null,
+        countryCode || null,
+        cityName || null,
+        JSON.stringify(tags),
+        userId || null,
+      ],
+    );
+
+    const newBusiness = insertResult.rows[0];
+
+    // 2. Look up category name for the PDF / email
+    let categoryName = "";
+    try {
+      const catResult = await pool.query(
+        "SELECT name FROM business_categories WHERE id = $1",
+        [categoryId],
+      );
+      categoryName = catResult.rows[0]?.name || "";
+    } catch {
+      /* ignore */
+    }
+
+    // 3. Generate the registration PDF
+    let pdfPath: string | undefined;
+    try {
+      pdfPath = await generateBusinessPDF({
+        id: newBusiness.id,
+        name,
+        categoryName,
+        description,
+        address,
+        cityName,
+        countryCode,
+        phone,
+        email,
+        submittedBy: username || "GeoAdmin User",
+        submittedAt: new Date().toISOString(),
+      });
+
+      // Save PDF path back to the record
+      await pool.query("UPDATE businesses SET pdf_path = $1 WHERE id = $2", [
+        pdfPath,
+        newBusiness.id,
+      ]);
+    } catch (pdfErr) {
+      console.error("[SUBMIT] PDF generation failed:", pdfErr);
+    }
+
+    // 4. Send approval-request email to admin SMTP address
+    const adminEmail = process.env.SMTP_USER || process.env.SMTP_FROM || "";
+    if (adminEmail) {
+      try {
+        await sendBusinessApprovalRequestEmail(
+          adminEmail,
+          {
+            businessId: newBusiness.id,
+            businessName: name,
+            categoryName,
+            submittedBy: username || "GeoAdmin User",
+            description,
+            address,
+            cityName,
+            countryCode,
+            phone,
+            email,
+          },
+          pdfPath,
+        );
+      } catch (mailErr) {
+        console.error("[SUBMIT] Email notification failed:", mailErr);
+      }
+    }
+
+    // 5. Audit log
+    try {
+      await db.insert(auditLogs).values({
+        userId: userId || 0,
+        action: "BUSINESS_SUBMITTED_FOR_APPROVAL",
+        entityType: "business",
+        entityId: String(newBusiness.id),
+        changes: { name, categoryId, countryCode, cityName, username },
+        ipAddress: String(
+          req.headers["x-forwarded-for"] || req.ip || "unknown",
+        ),
+      });
+    } catch {
+      /* audit is best-effort */
+    }
+
+    res.status(201).json({
+      success: true,
+      data: newBusiness,
+      message:
+        "Business submitted for approval. An admin will review your registration shortly.",
+    });
+  } catch (error) {
+    console.error("Error submitting business:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to submit business for approval",
+      details: (error as Error).message,
+    });
+  }
+});
+
+/**
+ * GET pending businesses (for admin dashboard review)
+ */
+router.get("/api/businesses/pending", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT b.*, bc.name as category_name, u.username as submitted_by_username
+         FROM businesses b
+         LEFT JOIN business_categories bc ON b.category_id = bc.id
+         LEFT JOIN users u ON b.submitted_by = u.id
+         WHERE b.approval_status = 'pending'
+         ORDER BY b.created_at DESC`,
+    );
+
+    res.json({ success: true, data: result.rows, count: result.rows.length });
+  } catch (error) {
+    console.error("Error fetching pending businesses:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch pending businesses",
+    });
+  }
+});
+
+/**
+ * APPROVE a pending business (SupUser / SuperUser)
+ */
+router.put(
+  "/api/businesses/:id/approve",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { approvedBy, notes } = req.body; // userId of the approver
+
+      const result = await pool.query(
+        `UPDATE businesses
+         SET approval_status = 'approved',
+             is_active = true,
+             approved_by = $1,
+             approval_notes = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND approval_status = 'pending'
+         RETURNING *`,
+        [approvedBy || null, notes || null, id],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Business not found or not in pending state",
+        });
+      }
+
+      const biz = result.rows[0];
+
+      // Notify the submitter via email
+      if (biz.submitted_by) {
+        try {
+          const userResult = await pool.query(
+            "SELECT username, email FROM users WHERE id = $1",
+            [biz.submitted_by],
+          );
+          const submitter = userResult.rows[0];
+          if (submitter?.email) {
+            await sendBusinessApprovedEmail(
+              submitter.email,
+              submitter.username,
+              biz.name,
+              notes,
+            );
+          }
+        } catch {
+          /* best-effort */
+        }
+      }
+
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          userId: approvedBy || 0,
+          action: "BUSINESS_APPROVED",
+          entityType: "business",
+          entityId: String(id),
+          changes: { notes, businessName: biz.name },
+          ipAddress: String(
+            req.headers["x-forwarded-for"] || req.ip || "unknown",
+          ),
+        });
+      } catch {
+        /* best-effort */
+      }
+
+      res.json({
+        success: true,
+        data: biz,
+        message: `Business "${biz.name}" has been approved.`,
+      });
+    } catch (error) {
+      console.error("Error approving business:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to approve business",
+        details: (error as Error).message,
+      });
+    }
+  },
+);
+
+/**
+ * REJECT a pending business (SupUser / SuperUser)
+ */
+router.put(
+  "/api/businesses/:id/reject",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { rejectedBy, reason } = req.body;
+
+      const result = await pool.query(
+        `UPDATE businesses
+         SET approval_status = 'rejected',
+             is_active = false,
+             approved_by = $1,
+             approval_notes = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND approval_status = 'pending'
+         RETURNING *`,
+        [rejectedBy || null, reason || null, id],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Business not found or not in pending state",
+        });
+      }
+
+      const biz = result.rows[0];
+
+      // Notify the submitter via email
+      if (biz.submitted_by) {
+        try {
+          const userResult = await pool.query(
+            "SELECT username, email FROM users WHERE id = $1",
+            [biz.submitted_by],
+          );
+          const submitter = userResult.rows[0];
+          if (submitter?.email) {
+            await sendBusinessRejectedEmail(
+              submitter.email,
+              submitter.username,
+              biz.name,
+              reason,
+            );
+          }
+        } catch {
+          /* best-effort */
+        }
+      }
+
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          userId: rejectedBy || 0,
+          action: "BUSINESS_REJECTED",
+          entityType: "business",
+          entityId: String(id),
+          changes: { reason, businessName: biz.name },
+          ipAddress: String(
+            req.headers["x-forwarded-for"] || req.ip || "unknown",
+          ),
+        });
+      } catch {
+        /* best-effort */
+      }
+
+      res.json({
+        success: true,
+        data: biz,
+        message: `Business "${biz.name}" has been rejected.`,
+      });
+    } catch (error) {
+      console.error("Error rejecting business:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to reject business",
+        details: (error as Error).message,
+      });
+    }
+  },
+);
+
+/**
+ * DOWNLOAD business registration PDF
+ */
+router.get("/api/businesses/:id/pdf", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT pdf_path, name FROM businesses WHERE id = $1",
+      [id],
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].pdf_path) {
+      return res.status(404).json({
+        success: false,
+        error: "PDF not found for this business",
+      });
+    }
+
+    const { pdf_path, name } = result.rows[0];
+    const fs = await import("fs");
+    if (!fs.existsSync(pdf_path)) {
+      return res.status(404).json({
+        success: false,
+        error: "PDF file not found on server",
+      });
+    }
+
+    res.download(pdf_path, `business-registration-${name}.pdf`);
+  } catch (error) {
+    console.error("Error downloading PDF:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to download PDF",
+    });
+  }
+});
+
+// ============================================================================
+// BUSINESS ADMIN MESSAGES (Teams-style conversation thread)
+// ============================================================================
+
+/**
+ * GET messages for a business (conversation thread)
+ */
+router.get(
+  "/api/businesses/:id/messages",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT * FROM business_messages
+         WHERE business_id = $1
+         ORDER BY created_at ASC`,
+        [id],
+      );
+      res.json({ success: true, data: result.rows });
+    } catch (error) {
+      console.error("Error fetching business messages:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch messages" });
+    }
+  },
+);
+
+/**
+ * POST a new message to a business thread
+ */
+router.post(
+  "/api/businesses/:id/messages",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { senderId, senderName, senderRole, message, messageType } =
+        req.body;
+
+      if (!message || !senderName || !senderRole) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: message, senderName, senderRole",
+        });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO business_messages
+           (business_id, sender_id, sender_name, sender_role, message, message_type, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         RETURNING *`,
+        [
+          id,
+          senderId || null,
+          senderName,
+          senderRole,
+          message,
+          messageType || "text",
+        ],
+      );
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("Error posting business message:", error);
+      res.status(500).json({ success: false, error: "Failed to post message" });
+    }
+  },
+);
+
+/**
+ * GET full business dossier (all fields + owner info + category)
+ */
+router.get(
+  "/api/businesses/:id/dossier",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        `SELECT b.*,
+            bc.name as category_name,
+            u.username as owner_username,
+            u.email as owner_email,
+            u.role as owner_role,
+            sub.username as submitted_by_username,
+            appr.username as approved_by_username
+         FROM businesses b
+         LEFT JOIN business_categories bc ON b.category_id = bc.id
+         LEFT JOIN users u ON b.owner_id = u.id
+         LEFT JOIN users sub ON b.submitted_by = sub.id
+         LEFT JOIN users appr ON b.approved_by = appr.id
+         WHERE b.id = $1`,
+        [id],
+      );
+
+      if (result.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Business not found" });
+      }
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("Error fetching business dossier:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch dossier" });
+    }
+  },
+);
 
 export default router;

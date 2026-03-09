@@ -1566,7 +1566,7 @@ export default function BatimentDashboard() {
                                       <span className="text-sm capitalize font-medium">
                                         {facility.address || facility.location}
                                       </span>
-                                      {facility.status === "verified" && (
+                                      {facility.is_verified && (
                                         <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
                                           <CheckCircle className="h-3 w-3 mr-1" />
                                           Verified

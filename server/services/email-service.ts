@@ -384,6 +384,7 @@ export async function sendEmail(
   to: string,
   subject: string,
   html: string,
+  attachments?: Array<{ filename: string; path: string; contentType?: string }>,
 ): Promise<boolean> {
   if (!transporter) {
     console.warn("[EMAIL] Transporter not initialized");
@@ -395,6 +396,7 @@ export async function sendEmail(
       to,
       subject,
       html,
+      attachments,
     });
 
     console.log(`[EMAIL] Email sent to ${to}. Message ID: ${result.messageId}`);
@@ -424,6 +426,232 @@ export async function sendEmail(
 
     return false;
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BUSINESS APPROVAL WORKFLOW EMAILS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface BusinessApprovalData {
+  businessId: number;
+  businessName: string;
+  categoryName?: string;
+  submittedBy: string; // username
+  submittedByEmail?: string;
+  description?: string;
+  address?: string;
+  cityName?: string;
+  countryCode?: string;
+  phone?: string;
+  email?: string;
+}
+
+/**
+ * Send business approval request email to admin — includes PDF attachment
+ */
+export async function sendBusinessApprovalRequestEmail(
+  adminEmail: string,
+  data: BusinessApprovalData,
+  pdfPath?: string,
+): Promise<boolean> {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const subject = `📋 New Business Registration — ${data.businessName} (Approval Required)`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #bf831c 0%, #d4a037 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .header h1 { margin: 0; font-size: 24px; }
+          .header p { margin: 8px 0 0; opacity: 0.9; }
+          .body { background: white; padding: 32px 24px; }
+          .field { display: flex; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+          .field-label { color: #666; font-size: 14px; min-width: 120px; font-weight: 600; }
+          .field-value { color: #1a1a2e; font-size: 14px; }
+          .badge { display: inline-block; background: #fff3cd; color: #856404; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+          .actions { text-align: center; margin: 24px 0; }
+          .btn { display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 0 8px; }
+          .btn-approve { background: #059669; color: white !important; }
+          .btn-reject { background: #dc2626; color: white !important; }
+          .btn-view { background: #bf831c; color: white !important; }
+          .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📋 Business Registration Request</h1>
+            <p>A new business needs your approval</p>
+          </div>
+          <div class="body">
+            <p>Hi Admin,</p>
+            <p>A GeoAdmin user has submitted a new business for registration. Please review the details below:</p>
+
+            <div style="background: #f8f9fa; border-left: 4px solid #bf831c; border-radius: 0 8px 8px 0; padding: 20px; margin: 20px 0;">
+              <h3 style="margin: 0 0 12px; color: #1a1a2e;">${data.businessName}</h3>
+              <span class="badge">⏳ Pending Approval</span>
+            </div>
+
+            <div style="margin: 20px 0;">
+              <div class="field"><span class="field-label">Category</span><span class="field-value">${data.categoryName || "—"}</span></div>
+              <div class="field"><span class="field-label">Description</span><span class="field-value">${data.description || "—"}</span></div>
+              <div class="field"><span class="field-label">Address</span><span class="field-value">${data.address || "—"}</span></div>
+              <div class="field"><span class="field-label">City</span><span class="field-value">${data.cityName || "—"}</span></div>
+              <div class="field"><span class="field-label">Country</span><span class="field-value">${data.countryCode || "—"}</span></div>
+              <div class="field"><span class="field-label">Phone</span><span class="field-value">${data.phone || "—"}</span></div>
+              <div class="field"><span class="field-label">Email</span><span class="field-value">${data.email || "—"}</span></div>
+              <div class="field"><span class="field-label">Submitted By</span><span class="field-value">${data.submittedBy}</span></div>
+              <div class="field" style="border-bottom: none;"><span class="field-label">Reference</span><span class="field-value">VA-BIZ-${data.businessId}</span></div>
+            </div>
+
+            <div class="actions">
+              <a href="${appUrl}/geo-admin/dashboard" class="btn btn-view">Review in Dashboard</a>
+            </div>
+
+            ${pdfPath ? '<p style="font-size: 13px; color: #888; text-align: center;">📎 The full registration PDF is attached to this email.</p>' : ""}
+          </div>
+          <div class="footer">
+            <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
+            <p>© ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const attachments = pdfPath
+    ? [
+        {
+          filename: `business-registration-${data.businessId}.pdf`,
+          path: pdfPath,
+          contentType: "application/pdf",
+        },
+      ]
+    : undefined;
+
+  return sendEmail(adminEmail, subject, htmlContent, attachments);
+}
+
+/**
+ * Send notification to submitter when business is approved
+ */
+export async function sendBusinessApprovedEmail(
+  toEmail: string,
+  toName: string,
+  businessName: string,
+  notes?: string,
+): Promise<boolean> {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const subject = `✅ Your business "${businessName}" has been approved!`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .body { background: white; padding: 32px 24px; }
+          .button { display: inline-block; background: #059669; color: white !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+          .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+            <h1>Business Approved!</h1>
+          </div>
+          <div class="body">
+            <p>Hi <strong>${toName}</strong>,</p>
+            <p>Great news! Your business <strong>"${businessName}"</strong> has been reviewed and <strong style="color: #059669;">approved</strong> by the Verso Air team.</p>
+            <p>Your business is now live in the directory and visible to all users.</p>
+            ${notes ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 20px 0;"><strong>Admin Note:</strong> ${notes}</div>` : ""}
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${appUrl}/geo-admin" class="button">View Your Business</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
+            <p>© ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(toEmail, subject, htmlContent);
+}
+
+/**
+ * Send notification to submitter when business is rejected
+ */
+export async function sendBusinessRejectedEmail(
+  toEmail: string,
+  toName: string,
+  businessName: string,
+  reason?: string,
+): Promise<boolean> {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const subject = `❌ Your business "${businessName}" registration was not approved`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .body { background: white; padding: 32px 24px; }
+          .button { display: inline-block; background: #bf831c; color: white !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+          .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+            <h1>Registration Not Approved</h1>
+          </div>
+          <div class="body">
+            <p>Hi <strong>${toName}</strong>,</p>
+            <p>We're sorry, but your business <strong>"${businessName}"</strong> registration was <strong style="color: #dc2626;">not approved</strong> at this time.</p>
+            ${reason ? `<div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 20px 0;"><strong>Reason:</strong> ${reason}</div>` : ""}
+            <p>You can make corrections and resubmit your business registration through the GeoAdmin dashboard.</p>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${appUrl}/geo-admin" class="button">Go to Dashboard</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
+            <p>© ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(toEmail, subject, htmlContent);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

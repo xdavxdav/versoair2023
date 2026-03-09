@@ -960,13 +960,10 @@ export default function BusinessesDirectory() {
                                   {business.location}
                                 </span>
                               </div>
-                              {business.status && (
-                                <Badge className="bg-blue-100 text-blue-800 text-xs">
-                                  {business.status === "verified" && (
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                  )}
-                                  {business.status.charAt(0).toUpperCase() +
-                                    business.status.slice(1)}
+                              {business.is_verified && (
+                                <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Verified
                                 </Badge>
                               )}
                             </div>

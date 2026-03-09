@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
+import { getCsrfToken, initializeCsrfToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,40 +28,108 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  GeolocationFields,
+  BUSINESS_TYPE_OPTIONS,
+  getBusinessTypesForCategory,
+  getAdminLabels,
+} from "@/components/ui/geolocation-fields";
 
 interface BusinessFormProps {
   onSuccess?: () => void;
   defaultCountryCode?: string;
+  /** When true, submit goes to /api/businesses/submit (pending approval flow) */
+  requireApproval?: boolean;
+  /** Username of the submitter — sent along when requireApproval is true */
+  username?: string | null;
 }
 
 export function BusinessForm({
   onSuccess,
   defaultCountryCode,
+  requireApproval = false,
+  username,
 }: BusinessFormProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
+    businessType: "",
     countryCode:
       defaultCountryCode && defaultCountryCode !== "all"
         ? defaultCountryCode
         : "",
+    regionId: "",
+    regionName: "",
     cityName: "",
     address: "",
     phone: "",
     email: "",
     description: "",
+    latitude: "",
+    longitude: "",
   });
 
+  const [autoPopulateRegion, setAutoPopulateRegion] = useState(true);
+  const [autoPopulateCity, setAutoPopulateCity] = useState(true);
+
   // Fetch countries
-  const { data: countries = [] } = useQuery({
+  const { data: countriesRaw = [] } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => {
       const res = await fetch("/api/countries");
       if (!res.ok) throw new Error("Failed to fetch countries");
-      return res.json();
+      const json = await res.json();
+      return Array.isArray(json) ? json : json.data || [];
     },
+  });
+  const countries = countriesRaw as any[];
+
+  // Fetch cities filtered by selected country
+  const matchedCountry = countries.find(
+    (c: any) => c.code === formData.countryCode,
+  );
+
+  // Fetch regions filtered by country — cascading: Country → Region
+  const { data: regionsList = [], isLoading: regionsLoading } = useQuery({
+    queryKey: ["regions", matchedCountry?.id],
+    queryFn: async () => {
+      if (!matchedCountry?.id) return [];
+      const res = await fetch(`/api/regions?countryId=${matchedCountry.id}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? json : json.data || [];
+    },
+    enabled: !!matchedCountry?.id,
+  });
+
+  // Fetch cities filtered by region (or by country if no regions exist)
+  const selectedRegionId = formData.regionId;
+  const { data: citiesList = [], isLoading: citiesLoading } = useQuery({
+    queryKey: [
+      "cities",
+      selectedRegionId
+        ? `region-${selectedRegionId}`
+        : `country-${matchedCountry?.id}`,
+    ],
+    queryFn: async () => {
+      if (selectedRegionId) {
+        // Cascade: Region → City
+        const res = await fetch(`/api/cities?regionId=${selectedRegionId}`);
+        if (!res.ok) return [];
+        const json = await res.json();
+        return Array.isArray(json) ? json : json.data || [];
+      }
+      // Fallback: Country → City (when no regions exist for this country)
+      if (!matchedCountry?.id) return [];
+      if ((regionsList as any[]).length > 0) return []; // regions exist but none selected yet
+      const res = await fetch(`/api/cities?countryId=${matchedCountry.id}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json) ? json : json.data || [];
+    },
+    enabled: !!matchedCountry?.id,
   });
 
   // Sync country when dashboard selection changes or dialog opens
@@ -114,20 +183,37 @@ export function BusinessForm({
     try {
       setIsSubmitting(true);
 
-      const response = await fetch("/api/businesses", {
+      const endpoint = requireApproval
+        ? "/api/businesses/submit"
+        : "/api/businesses";
+
+      // Ensure CSRF token is available
+      let csrf = getCsrfToken();
+      if (!csrf) {
+        await initializeCsrfToken();
+        csrf = getCsrfToken();
+      }
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(csrf ? { "x-csrf-token": csrf } : {}),
         },
+        credentials: "include",
         body: JSON.stringify({
           name: formData.name,
           categoryId: parseInt(formData.categoryId),
+          businessType: formData.businessType || null,
           countryCode: formData.countryCode,
           cityName: formData.cityName || null,
           address: formData.address || null,
           phone: formData.phone || null,
           email: formData.email || null,
           description: formData.description || null,
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+          ...(requireApproval ? { username: username || "GeoAdmin User" } : {}),
         }),
       });
 
@@ -139,23 +225,30 @@ export function BusinessForm({
       const result = await response.json();
 
       toast({
-        title: "Success",
-        description: `Business "${formData.name}" created successfully`,
+        title: requireApproval ? "Submitted for Approval" : "Success",
+        description: requireApproval
+          ? `"${formData.name}" has been submitted. An admin will review it shortly.`
+          : `Business "${formData.name}" created successfully`,
       });
 
       // Reset form
       setFormData({
         name: "",
         categoryId: "",
+        businessType: "",
         countryCode:
           defaultCountryCode && defaultCountryCode !== "all"
             ? defaultCountryCode
             : "",
+        regionId: "",
+        regionName: "",
         cityName: "",
         address: "",
         phone: "",
         email: "",
         description: "",
+        latitude: "",
+        longitude: "",
       });
 
       setOpen(false);
@@ -189,7 +282,7 @@ export function BusinessForm({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md bg-slate-950 border border-white/10">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10">
         <DialogHeader>
           <DialogTitle className="text-slate-100">Add New Business</DialogTitle>
           <DialogDescription className="text-slate-400">
@@ -216,20 +309,78 @@ export function BusinessForm({
           <div className="space-y-1.5">
             <Label className="text-slate-200">Category *</Label>
             <Select
-              value={formData.categoryId}
-              onValueChange={(v) => setFormData({ ...formData, categoryId: v })}
+              value={formData.categoryId || undefined}
+              onValueChange={(v) => {
+                // Auto-clear businessType if incompatible with new category
+                const compatibleTypes = getBusinessTypesForCategory(
+                  categories,
+                  parseInt(v),
+                );
+                const currentTypeStillValid = compatibleTypes.find(
+                  (t) => t.value === formData.businessType && !t.disabled,
+                );
+                setFormData({
+                  ...formData,
+                  categoryId: v,
+                  businessType: currentTypeStillValid
+                    ? formData.businessType
+                    : "",
+                });
+              }}
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-white/10">
-                {categories.map((cat: any) => (
+              <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                {categories.length === 0 ? (
                   <SelectItem
-                    key={cat.id}
-                    value={String(cat.id)}
-                    className="text-slate-100 hover:bg-white/10"
+                    value="__loading"
+                    disabled
+                    className="text-slate-400"
                   >
-                    {cat.name}
+                    Loading categories...
+                  </SelectItem>
+                ) : (
+                  categories
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                    .map((cat: any) => (
+                      <SelectItem
+                        key={cat.id}
+                        value={String(cat.id)}
+                        className="text-slate-100 hover:bg-white/10"
+                      >
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Business Type */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-200">Business Type</Label>
+            <Select
+              value={formData.businessType || ""}
+              onValueChange={(v) =>
+                setFormData({ ...formData, businessType: v })
+              }
+            >
+              <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                <SelectValue placeholder="Select a business type" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                {getBusinessTypesForCategory(
+                  categories,
+                  formData.categoryId ? parseInt(formData.categoryId) : null,
+                ).map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={opt.disabled}
+                    className={`text-slate-100 hover:bg-white/10 ${opt.disabled ? "opacity-40" : ""}`}
+                  >
+                    {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -242,7 +393,12 @@ export function BusinessForm({
             <Select
               value={formData.countryCode}
               onValueChange={(v) =>
-                setFormData({ ...formData, countryCode: v })
+                setFormData({
+                  ...formData,
+                  countryCode: v,
+                  regionId: "",
+                  cityName: "",
+                })
               }
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
@@ -262,33 +418,183 @@ export function BusinessForm({
             </Select>
           </div>
 
-          {/* City Name */}
-          <div className="space-y-1.5">
-            <Label className="text-slate-200">City</Label>
-            <Input
-              type="text"
-              placeholder="e.g., New York, Paris"
-              value={formData.cityName}
-              onChange={(e) =>
-                setFormData({ ...formData, cityName: e.target.value })
-              }
-              className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
-            />
-          </div>
+          {/* Region / Province / State / Commune — dynamic label */}
+          {(() => {
+            const labels = getAdminLabels(formData.countryCode);
+            return (
+              <>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-200">{labels.region}</Label>
+                    {(regionsList as any[]).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAutoPopulateRegion(!autoPopulateRegion)
+                        }
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoPopulateRegion ? "bg-indigo-500" : "bg-slate-600"
+                        }`}
+                        title={
+                          autoPopulateRegion
+                            ? "Switch to manual input"
+                            : "Switch to dropdown"
+                        }
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                            autoPopulateRegion
+                              ? "translate-x-[18px]"
+                              : "translate-x-[3px]"
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {(regionsList as any[]).length > 0 && autoPopulateRegion ? (
+                    <select
+                      value={formData.regionId}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          regionId: e.target.value,
+                          cityName: "",
+                        })
+                      }
+                      className="flex h-10 w-full rounded-md border bg-white/5 border-white/10 text-slate-100 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="" className="bg-slate-900">
+                        {regionsLoading
+                          ? `Loading ${labels.region.toLowerCase()}s...`
+                          : `Select ${labels.region.toLowerCase()}`}
+                      </option>
+                      {(regionsList as any[])
+                        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                        .map((region: any) => (
+                          <option
+                            key={region.id}
+                            value={String(region.id)}
+                            className="bg-slate-900"
+                          >
+                            {region.name}
+                          </option>
+                        ))}
+                    </select>
+                  ) : (
+                    <Input
+                      type="text"
+                      placeholder={
+                        formData.countryCode
+                          ? regionsLoading
+                            ? `Loading ${labels.region.toLowerCase()}s...`
+                            : `Type ${labels.region.toLowerCase()} name`
+                          : "Select country first"
+                      }
+                      disabled={!formData.countryCode || regionsLoading}
+                      value={formData.regionName || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, regionName: e.target.value })
+                      }
+                      className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-400"
+                    />
+                  )}
+                </div>
 
-          {/* Address */}
-          <div className="space-y-1.5">
-            <Label className="text-slate-200">Address</Label>
-            <Input
-              type="text"
-              placeholder="e.g., 123 Main St, Suite 100"
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
-            />
-          </div>
+                {/* City / Ville — dynamic label + auto-populate toggle */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-200">{labels.city}</Label>
+                    {(citiesList as any[]).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setAutoPopulateCity(!autoPopulateCity)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoPopulateCity ? "bg-indigo-500" : "bg-slate-600"
+                        }`}
+                        title={
+                          autoPopulateCity
+                            ? "Switch to manual input"
+                            : "Switch to dropdown"
+                        }
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                            autoPopulateCity
+                              ? "translate-x-[18px]"
+                              : "translate-x-[3px]"
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {(citiesList as any[]).length > 0 && autoPopulateCity ? (
+                    <select
+                      value={formData.cityName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cityName: e.target.value })
+                      }
+                      className="flex h-10 w-full rounded-md border bg-white/5 border-white/10 text-slate-100 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="" className="bg-slate-900">
+                        {citiesLoading
+                          ? `Loading ${labels.city.toLowerCase()}...`
+                          : `Select ${labels.city.toLowerCase()}`}
+                      </option>
+                      {(citiesList as any[])
+                        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                        .map((city: any) => (
+                          <option
+                            key={city.id}
+                            value={city.name}
+                            className="bg-slate-900"
+                          >
+                            {city.name}
+                          </option>
+                        ))}
+                    </select>
+                  ) : (
+                    <Input
+                      type="text"
+                      placeholder={
+                        formData.countryCode
+                          ? (regionsList as any[]).length > 0 &&
+                            !formData.regionId
+                            ? `Select ${labels.region.toLowerCase()} first`
+                            : `Type ${labels.city.toLowerCase()} name`
+                          : "Select country first"
+                      }
+                      value={formData.cityName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cityName: e.target.value })
+                      }
+                      disabled={!formData.countryCode}
+                      className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
+                    />
+                  )}
+                </div>
+
+                {/* Address — dynamic label */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-200">{labels.address}</Label>
+                  <Input
+                    type="text"
+                    placeholder={
+                      formData.countryCode === "CI"
+                        ? "ex: Rue des Jardins, Cocody"
+                        : formData.countryCode === "FR"
+                          ? "ex: 12 Rue de la Paix"
+                          : "e.g., 123 Main St, Suite 100"
+                    }
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
+                  />
+                </div>
+              </>
+            );
+          })()}
 
           {/* Phone */}
           <div className="space-y-1.5">
@@ -329,6 +635,53 @@ export function BusinessForm({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500"
+            />
+          </div>
+
+          {/* Location Coordinates */}
+          <div className="space-y-1.5">
+            <GeolocationFields
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onLatitudeChange={(v) =>
+                setFormData({ ...formData, latitude: v })
+              }
+              onLongitudeChange={(v) =>
+                setFormData({ ...formData, longitude: v })
+              }
+              onCountryDetected={(code) => {
+                if (!formData.countryCode) {
+                  setFormData((prev) => ({ ...prev, countryCode: code }));
+                }
+              }}
+              onRegionDetected={(regionName) => {
+                if (!formData.regionId) {
+                  const match = (regionsList as any[]).find(
+                    (r: any) =>
+                      r.name.toLowerCase() === regionName.toLowerCase() ||
+                      regionName.toLowerCase().includes(r.name.toLowerCase()) ||
+                      r.name.toLowerCase().includes(regionName.toLowerCase()),
+                  );
+                  if (match) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      regionId: String(match.id),
+                    }));
+                  } else {
+                    setAutoPopulateRegion(false);
+                    setFormData((prev) => ({
+                      ...prev,
+                      regionName: regionName,
+                    }));
+                  }
+                }
+              }}
+              onCityDetected={(city) => {
+                if (!formData.cityName) {
+                  setFormData((prev) => ({ ...prev, cityName: city }));
+                }
+              }}
+              dark
             />
           </div>
 

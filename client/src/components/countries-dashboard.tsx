@@ -2,6 +2,18 @@ import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { BusinessForm } from "@/components/BusinessForm";
+import { EditBusinessForm } from "@/components/EditBusinessForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2, Pencil } from "lucide-react";
 
 import {
   Database,
@@ -64,6 +76,7 @@ import {
   ChevronUp,
   FileDown,
   Braces,
+  Plus,
 } from "lucide-react";
 
 import ProgressBar from "@/components/ui/progress-bar";
@@ -890,10 +903,19 @@ TableRowItem.displayName = "TableRowItem";
 // Main component
 export default function DatabaseExpert({
   username,
+  tier = "free",
 }: {
   username: string | null;
+  tier?: string;
 }) {
+  const canManage = tier !== "free";
   const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [manageSearch, setManageSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -917,6 +939,38 @@ export default function DatabaseExpert({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const recordsPerPage = 20;
+
+  // ── Business search state ──
+  const [businessSearch, setBusinessSearch] = useState("");
+  const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
+  const [bizDropdownOpen, setBizDropdownOpen] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // ── Add Artist dialog state ──
+  const [showAddArtist, setShowAddArtist] = useState(false);
+  const [isSubmittingArtist, setIsSubmittingArtist] = useState(false);
+  const [newArtist, setNewArtist] = useState({
+    stageName: "",
+    genre: "",
+    labelStatus: "unsigned",
+    spotifyUrl: "",
+    countryCode: "",
+  });
+
+  // ── Add Job dialog state ──
+  const [showAddJob, setShowAddJob] = useState(false);
+  const [isSubmittingJob, setIsSubmittingJob] = useState(false);
+  const [newJob, setNewJob] = useState({
+    title: "",
+    company: "",
+    location: "",
+    type: "Full-time",
+    sector: "general",
+    countryCode: "",
+    description: "",
+    experienceLevel: "",
+    isRemote: false,
+  });
 
   const [notifications, setNotifications] = useState([
     {
@@ -1004,14 +1058,18 @@ export default function DatabaseExpert({
     staleTime: 30000,
   });
 
-  // Business categories query
+  // Business categories query (re-fetches when country changes)
   const { data: businessCategories = [], isLoading: isCategoriesLoading } =
     useQuery({
-      queryKey: ["business-categories"],
+      queryKey: ["business-categories", selectedCountryCode],
       queryFn: async () => {
         try {
+          const params = new URLSearchParams();
+          if (selectedCountryCode && selectedCountryCode !== "all") {
+            params.set("countryCode", selectedCountryCode);
+          }
           const response = await fetch(
-            `${API_BASE_URL}/api/business-categories`,
+            `${API_BASE_URL}/api/business-categories?${params}`,
           );
           if (!response.ok) return [];
           const data = await response.json();
@@ -1021,7 +1079,7 @@ export default function DatabaseExpert({
           return [];
         }
       },
-      staleTime: 300000,
+      staleTime: 60000,
     });
 
   // Countries query (for country filter)
@@ -1693,7 +1751,7 @@ export default function DatabaseExpert({
         {/* Connection status */}
         <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
                   className={`p-3 rounded-xl ${
@@ -1736,8 +1794,8 @@ export default function DatabaseExpert({
         {/* Global Country Selector */}
         <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl">
           <CardContent className="py-3 px-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Globe className="h-5 w-5 text-amber-400" />
                 <span className="text-sm font-medium text-slate-200">
                   Country Filter
@@ -1746,7 +1804,7 @@ export default function DatabaseExpert({
                   value={selectedCountryCode}
                   onValueChange={setSelectedCountryCode}
                 >
-                  <SelectTrigger className="w-56 bg-white/5 border-white/10 text-slate-200 h-9">
+                  <SelectTrigger className="w-full sm:w-56 bg-white/5 border-white/10 text-slate-200 h-9">
                     <SelectValue placeholder="All Countries" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/10 max-h-72">
@@ -1790,7 +1848,7 @@ export default function DatabaseExpert({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8 h-14 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
+          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-8 w-full min-h-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
             <TabsTrigger
               value="dashboard"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
@@ -1798,13 +1856,15 @@ export default function DatabaseExpert({
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="manage"
-              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Manage</span>
-            </TabsTrigger>
+            {canManage && (
+              <TabsTrigger
+                value="manage"
+                className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Manage</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="businesses"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
@@ -2046,77 +2106,320 @@ export default function DatabaseExpert({
             </div>
           </TabsContent>
 
-          {/* Manage Tab - Business Management */}
-          <TabsContent value="manage" className="space-y-8 mt-8">
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-100">
-                  <Settings className="h-5 w-5" />
-                  Business Management
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Add, view, and manage businesses in your directory. All
-                  actions are performed directly by country.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                  <div className="flex gap-3">
-                    <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-300">
-                      <p className="font-medium">
-                        Non-Coder Friendly Interface
-                      </p>
-                      <p className="text-blue-300/80 mt-1">
-                        Use the form below to add new businesses to your
-                        directory. Simply fill in the business details and
-                        select the appropriate country. No technical knowledge
-                        required.
-                      </p>
+          {/* Manage Tab - Business Management (paid tiers only) */}
+          {canManage && (
+            <TabsContent value="manage" className="space-y-8 mt-8">
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-slate-100">
+                    <Settings className="h-5 w-5" />
+                    Business Management
+                  </CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Add, view, and manage businesses in your directory. All
+                    actions are performed directly by country.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-blue-300">
+                        <p className="font-medium">Approval Required</p>
+                        <p className="text-blue-300/80 mt-1">
+                          When you add a business, it will be submitted for
+                          approval. A registration PDF is auto-generated and
+                          emailed to the admin team. Once approved, the business
+                          goes live in the directory.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end">
+                  <div className="flex justify-end">
+                    <BusinessForm
+                      defaultCountryCode={selectedCountryCode}
+                      requireApproval={true}
+                      username={username}
+                      onSuccess={() => {
+                        // Refresh businesses data when new business is added
+                        queryClient.invalidateQueries({
+                          queryKey: ["geo-businesses"],
+                        });
+                        queryClient.invalidateQueries({
+                          queryKey: ["businesses"],
+                        });
+                      }}
+                    />
+                  </div>
+
+                  {/* ── Business List with Edit / Delete ── */}
+                  <div className="border-t border-white/10 pt-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <h3 className="text-sm font-semibold text-slate-200">
+                        Your Businesses
+                        {selectedCountryCode !== "all" && (
+                          <span className="ml-2 text-xs font-normal text-slate-400">
+                            filtered by {selectedCountryCode}
+                          </span>
+                        )}
+                      </h3>
+                      <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                        <Input
+                          placeholder="Search businesses…"
+                          value={manageSearch}
+                          onChange={(e) => setManageSearch(e.target.value)}
+                          className="pl-8 h-9 bg-white/5 border-white/10 text-slate-100 text-sm placeholder:text-slate-500"
+                        />
+                      </div>
+                    </div>
+
+                    {isBusinessesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <Skeleton
+                            key={i}
+                            className="h-16 w-full rounded-lg bg-white/5 border border-white/10"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      (() => {
+                        const filtered = businessesData.filter(
+                          (b: any) =>
+                            !manageSearch ||
+                            b.name
+                              ?.toLowerCase()
+                              .includes(manageSearch.toLowerCase()),
+                        );
+                        return filtered.length > 0 ? (
+                          <div className="space-y-2">
+                            <p className="text-xs text-slate-500">
+                              {filtered.length} businesses
+                            </p>
+                            {filtered.map((biz: any) => (
+                              <div
+                                key={biz.id}
+                                className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-all group"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-slate-200 truncate">
+                                      {biz.name}
+                                    </span>
+                                    {/* Approval status badge */}
+                                    {biz.approval_status === "pending" ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] bg-amber-500/20 border-amber-400/30 text-amber-300"
+                                      >
+                                        ⏳ Pending
+                                      </Badge>
+                                    ) : biz.approval_status === "rejected" ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] bg-red-500/20 border-red-400/30 text-red-300"
+                                      >
+                                        ❌ Rejected
+                                      </Badge>
+                                    ) : (
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-[10px] ${
+                                          (biz.is_active ?? true)
+                                            ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                            : "bg-red-500/20 border-red-400/30 text-red-300"
+                                        }`}
+                                      >
+                                        {(biz.is_active ?? true)
+                                          ? "✅ Approved"
+                                          : "Inactive"}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                    {(biz.category_name ||
+                                      biz.categoryName) && (
+                                      <span>
+                                        {biz.category_name || biz.categoryName}
+                                      </span>
+                                    )}
+                                    {biz.country_code && (
+                                      <span>🌍 {biz.country_code}</span>
+                                    )}
+                                    {biz.city_name && (
+                                      <span>📍 {biz.city_name}</span>
+                                    )}
+                                    {biz.phone && <span>📞 {biz.phone}</span>}
+                                  </div>
+                                </div>
+
+                                {/* Edit & Delete actions */}
+                                <div className="flex items-center gap-1 ml-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                                  <EditBusinessForm
+                                    business={biz}
+                                    onSuccess={() => {
+                                      queryClient.invalidateQueries({
+                                        queryKey: ["geo-businesses"],
+                                      });
+                                      queryClient.invalidateQueries({
+                                        queryKey: ["business-categories"],
+                                      });
+                                    }}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                                    onClick={() =>
+                                      setDeleteTarget({
+                                        id: biz.id,
+                                        name: biz.name,
+                                      })
+                                    }
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-slate-400">
+                            <Building className="h-10 w-10 mx-auto mb-2 text-slate-600" />
+                            <p className="text-sm">No businesses found</p>
+                            <p className="text-xs mt-1 text-slate-500">
+                              {manageSearch
+                                ? "Try a different search"
+                                : "Use the Add Business button above"}
+                            </p>
+                          </div>
+                        );
+                      })()
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Delete Confirmation Dialog */}
+              <AlertDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+              >
+                <AlertDialogContent className="bg-slate-950 border border-white/10">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-slate-100">
+                      Delete Business
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-slate-400">
+                      Are you sure you want to permanently delete{" "}
+                      <strong className="text-slate-200">
+                        {deleteTarget?.name}
+                      </strong>
+                      ? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel
+                      className="border-white/10 text-slate-300 hover:bg-white/5"
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      disabled={isDeleting}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (!deleteTarget) return;
+                        setIsDeleting(true);
+                        try {
+                          const response = await fetch(
+                            `${API_BASE_URL}/api/businesses/${deleteTarget.id}`,
+                            {
+                              method: "DELETE",
+                            },
+                          );
+                          if (!response.ok) {
+                            const err = await response.json();
+                            throw new Error(err.error || "Delete failed");
+                          }
+                          toast({
+                            title: "Deleted",
+                            description: `"${deleteTarget.name}" has been removed`,
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["geo-businesses"],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["business-categories"],
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: ["database-stats"],
+                          });
+                          setDeleteTarget(null);
+                        } catch (error) {
+                          console.error("Delete error:", error);
+                          toast({
+                            title: "Error",
+                            description:
+                              error instanceof Error
+                                ? error.message
+                                : "Failed to delete",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsDeleting(false);
+                        }
+                      }}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Deleting…
+                        </>
+                      ) : (
+                        "Delete Permanently"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </TabsContent>
+          )}
+
+          {/* Businesses Tab */}
+          <TabsContent value="businesses" className="space-y-8 mt-8">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-slate-100">
+                      <Building className="h-5 w-5" />
+                      Business Directory
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                      Browse and add businesses by category and country
+                    </CardDescription>
+                  </div>
                   <BusinessForm
                     defaultCountryCode={selectedCountryCode}
+                    requireApproval={true}
+                    username={username}
                     onSuccess={() => {
-                      // Refresh businesses data when new business is added
                       queryClient.invalidateQueries({
                         queryKey: ["geo-businesses"],
                       });
                       queryClient.invalidateQueries({
                         queryKey: ["businesses"],
                       });
+                      queryClient.invalidateQueries({
+                        queryKey: ["business-categories"],
+                      });
                     }}
                   />
                 </div>
-
-                <div className="border-t border-white/10 pt-6">
-                  <h3 className="text-sm font-semibold text-slate-200 mb-4">
-                    Recently Added Businesses
-                  </h3>
-                  <p className="text-sm text-slate-400">
-                    Businesses you add will appear here automatically.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Businesses Tab */}
-          <TabsContent value="businesses" className="space-y-8 mt-8">
-            <AdminOnlyBanner message="La gestion des entreprises (ajout, modification, suppression) est réservée au panneau Admin." />
-
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-100">
-                  <Building className="h-5 w-5" />
-                  Business Directory
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Browse businesses by category and country (read-only)
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isCategoriesLoading ? (
@@ -2129,129 +2432,359 @@ export default function DatabaseExpert({
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    <Button
-                      variant={!selectedBusinessType ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedBusinessType(null)}
-                      className={
-                        !selectedBusinessType
-                          ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white"
-                          : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
-                      }
-                    >
-                      All ({businessCategories.length} categories)
-                    </Button>
-                    {businessCategories.map((cat: any) => {
-                      const slug = (cat.slug || cat.name || "")
-                        .toLowerCase()
-                        .replace(/\s+/g, "-");
-                      const uiInfo =
-                        (INDUSTRY_UI_MAP as any)[slug] || DEFAULT_INDUSTRY_UI;
-                      return (
-                        <Button
-                          key={cat.id}
-                          variant={
-                            selectedBusinessType === String(cat.id)
-                              ? "default"
-                              : "outline"
-                          }
-                          size="sm"
-                          onClick={() =>
-                            setSelectedBusinessType(
-                              selectedBusinessType === String(cat.id)
-                                ? null
-                                : String(cat.id),
-                            )
-                          }
-                          className={
-                            selectedBusinessType === String(cat.id)
-                              ? `bg-gradient-to-r ${uiInfo.gradient} text-white`
-                              : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
-                          }
-                        >
-                          <span className="mr-1">{uiInfo.icon}</span>
-                          {cat.name}
-                        </Button>
+                  (() => {
+                    const visibleCats = businessCategories
+                      .filter((cat: any) => (cat.business_count || 0) > 0)
+                      .sort(
+                        (a: any, b: any) =>
+                          (b.business_count || 0) - (a.business_count || 0),
                       );
-                    })}
-                  </div>
+                    const COLLAPSED_LIMIT = 6;
+                    const hasMore = visibleCats.length > COLLAPSED_LIMIT;
+                    const catsToShow = showAllCategories
+                      ? visibleCats
+                      : visibleCats.slice(0, COLLAPSED_LIMIT);
+                    return (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant={
+                              !selectedBusinessType ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => setSelectedBusinessType(null)}
+                            className={`whitespace-nowrap ${
+                              !selectedBusinessType
+                                ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white"
+                                : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                            }`}
+                          >
+                            All (
+                            {businessCategories.reduce(
+                              (sum: number, c: any) =>
+                                sum + (c.business_count || 0),
+                              0,
+                            )}{" "}
+                            businesses · {businessCategories.length} categories)
+                          </Button>
+                          {catsToShow.map((cat: any) => {
+                            const slug = (cat.slug || cat.name || "")
+                              .toLowerCase()
+                              .replace(/\s+/g, "-");
+                            const uiInfo =
+                              (INDUSTRY_UI_MAP as any)[slug] ||
+                              DEFAULT_INDUSTRY_UI;
+                            return (
+                              <Button
+                                key={cat.id}
+                                variant={
+                                  selectedBusinessType === String(cat.id)
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() =>
+                                  setSelectedBusinessType(
+                                    selectedBusinessType === String(cat.id)
+                                      ? null
+                                      : String(cat.id),
+                                  )
+                                }
+                                className={
+                                  selectedBusinessType === String(cat.id)
+                                    ? `bg-gradient-to-r ${uiInfo.gradient} text-white`
+                                    : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                                }
+                              >
+                                <span className="mr-1">{uiInfo.icon}</span>
+                                {cat.name}
+                                <span className="ml-1 text-xs opacity-70">
+                                  ({cat.business_count})
+                                </span>
+                              </Button>
+                            );
+                          })}
+                          {hasMore && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setShowAllCategories(!showAllCategories)
+                              }
+                              className="text-slate-400 hover:text-slate-200 hover:bg-white/5 text-xs"
+                            >
+                              {showAllCategories
+                                ? "Show less ↑"
+                                : `+${visibleCats.length - COLLAPSED_LIMIT} more ↓`}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()
                 )}
 
-                {isBusinessesLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton
-                        key={i}
-                        className="h-40 w-full rounded-lg bg-white/5 border border-white/10"
-                      />
-                    ))}
+                {/* Searchable Business Dropdown */}
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search businesses by name, address, or category…"
+                      value={businessSearch}
+                      onChange={(e) => {
+                        setBusinessSearch(e.target.value);
+                        setBizDropdownOpen(true);
+                      }}
+                      onFocus={() => setBizDropdownOpen(true)}
+                      className="pl-10 bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500 h-11"
+                    />
+                    {businessSearch && (
+                      <button
+                        onClick={() => {
+                          setBusinessSearch("");
+                          setSelectedBusiness(null);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
-                ) : businessesData.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {businessesData.map((biz: any) => {
-                      const catSlug = (
-                        biz.category_name ||
-                        biz.categoryName ||
-                        ""
-                      )
-                        .toLowerCase()
-                        .replace(/\s+/g, "-");
-                      const uiInfo =
-                        (INDUSTRY_UI_MAP as any)[catSlug] ||
-                        DEFAULT_INDUSTRY_UI;
+
+                  {/* Dropdown results */}
+                  {bizDropdownOpen &&
+                    !isBusinessesLoading &&
+                    (() => {
+                      const filtered = businessesData.filter((biz: any) => {
+                        if (!businessSearch.trim()) return true;
+                        const q = businessSearch.toLowerCase();
+                        return (
+                          (biz.name || "").toLowerCase().includes(q) ||
+                          (biz.address || "").toLowerCase().includes(q) ||
+                          (biz.category_name || biz.categoryName || "")
+                            .toLowerCase()
+                            .includes(q) ||
+                          (biz.phone || "").toLowerCase().includes(q)
+                        );
+                      });
+                      const display = filtered.slice(0, 8);
                       return (
-                        <Link key={biz.id} href={`/business/${biz.id}`}>
-                          <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-2xl hover:bg-white/[0.07] transition-all duration-500 cursor-pointer group">
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="text-2xl">{uiInfo.icon}</div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-slate-100 truncate group-hover:text-white transition-colors">
-                                    {biz.name}
-                                  </h3>
-                                  {biz.address && (
-                                    <p className="text-xs text-slate-400 mt-1 truncate">
-                                      📍 {biz.address}
+                        <div className="absolute z-50 w-full mt-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl max-h-[380px] overflow-y-auto">
+                          <div className="px-3 py-2 border-b border-white/5 flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                              {filtered.length} business
+                              {filtered.length !== 1 ? "es" : ""} found
+                            </span>
+                            <button
+                              onClick={() => setBizDropdownOpen(false)}
+                              className="text-xs text-slate-400 hover:text-slate-200"
+                            >
+                              Close ↑
+                            </button>
+                          </div>
+                          {display.length > 0 ? (
+                            display.map((biz: any) => {
+                              const catSlug = (
+                                biz.category_name ||
+                                biz.categoryName ||
+                                ""
+                              )
+                                .toLowerCase()
+                                .replace(/\s+/g, "-");
+                              const uiInfo =
+                                (INDUSTRY_UI_MAP as any)[catSlug] ||
+                                DEFAULT_INDUSTRY_UI;
+                              return (
+                                <button
+                                  key={biz.id}
+                                  onClick={() => {
+                                    setSelectedBusiness(biz);
+                                    setBusinessSearch(biz.name);
+                                    setBizDropdownOpen(false);
+                                  }}
+                                  className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-0"
+                                >
+                                  <span className="text-lg flex-shrink-0">
+                                    {uiInfo.icon}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-slate-100 truncate">
+                                      {biz.name}
                                     </p>
-                                  )}
-                                  {(biz.category_name || biz.categoryName) && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="mt-2 text-xs bg-white/10 border-white/20 text-slate-300"
-                                    >
-                                      {biz.category_name || biz.categoryName}
-                                    </Badge>
-                                  )}
-                                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                                    {biz.rating && <span>⭐ {biz.rating}</span>}
-                                    {biz.country_code && (
-                                      <span>🌍 {biz.country_code}</span>
-                                    )}
-                                    {biz.phone && <span>📞 {biz.phone}</span>}
-                                    {biz.is_active !== undefined && (
-                                      <Badge
-                                        variant={
-                                          biz.is_active
-                                            ? "default"
-                                            : "secondary"
-                                        }
-                                        className="text-xs bg-white/10 border-white/20 text-slate-300"
-                                      >
-                                        {biz.is_active ? "Active" : "Inactive"}
-                                      </Badge>
-                                    )}
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      {(biz.category_name ||
+                                        biz.categoryName) && (
+                                        <span className="text-xs text-slate-400">
+                                          {biz.category_name ||
+                                            biz.categoryName}
+                                        </span>
+                                      )}
+                                      {biz.address && (
+                                        <span className="text-xs text-slate-500 truncate">
+                                          · 📍 {biz.address}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                                <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-slate-300 group-hover:translate-x-1 transition-all mt-1" />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {biz.rating && (
+                                      <span className="text-xs text-amber-400">
+                                        ⭐ {biz.rating}
+                                      </span>
+                                    )}
+                                    {biz.is_active !== undefined && (
+                                      <span
+                                        className={`w-2 h-2 rounded-full ${biz.is_active ? "bg-emerald-400" : "bg-slate-500"}`}
+                                      />
+                                    )}
+                                    <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+                                  </div>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="px-3 py-6 text-center text-slate-400 text-sm">
+                              No businesses match "{businessSearch}"
+                            </div>
+                          )}
+                          {filtered.length > 8 && (
+                            <div className="px-3 py-2 border-t border-white/5 text-center">
+                              <span className="text-xs text-slate-500">
+                                Showing 8 of {filtered.length} — refine your
+                                search
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       );
-                    })}
-                  </div>
-                ) : (
+                    })()}
+                </div>
+
+                {/* Selected Business Detail Card */}
+                {selectedBusiness && (
+                  <Card className="mt-4 bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="text-3xl">
+                          {
+                            (
+                              (INDUSTRY_UI_MAP as any)[
+                                (
+                                  selectedBusiness.category_name ||
+                                  selectedBusiness.categoryName ||
+                                  ""
+                                )
+                                  .toLowerCase()
+                                  .replace(/\s+/g, "-")
+                              ] || DEFAULT_INDUSTRY_UI
+                            ).icon
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-100">
+                              {selectedBusiness.name}
+                            </h3>
+                            <Link href={`/business/${selectedBusiness.id}`}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                              >
+                                View Page{" "}
+                                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                              </Button>
+                            </Link>
+                          </div>
+                          {selectedBusiness.address && (
+                            <p className="text-sm text-slate-400 mt-1">
+                              📍 {selectedBusiness.address}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
+                            {(selectedBusiness.category_name ||
+                              selectedBusiness.categoryName) && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-white/10 border-white/20 text-slate-300"
+                              >
+                                {selectedBusiness.category_name ||
+                                  selectedBusiness.categoryName}
+                              </Badge>
+                            )}
+                            {selectedBusiness.rating && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-amber-500/20 border-amber-400/30 text-amber-300"
+                              >
+                                ⭐ {selectedBusiness.rating}
+                              </Badge>
+                            )}
+                            {selectedBusiness.country_code && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-blue-500/20 border-blue-400/30 text-blue-300"
+                              >
+                                🌍 {selectedBusiness.country_code}
+                              </Badge>
+                            )}
+                            {selectedBusiness.is_active !== undefined && (
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs ${
+                                  selectedBusiness.is_active
+                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    : "bg-slate-500/20 border-slate-400/30 text-slate-400"
+                                }`}
+                              >
+                                {selectedBusiness.is_active
+                                  ? "Active"
+                                  : "Inactive"}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                            {selectedBusiness.phone && (
+                              <div className="text-xs">
+                                <span className="text-slate-500">Phone</span>
+                                <p className="text-slate-300 mt-0.5">
+                                  {selectedBusiness.phone}
+                                </p>
+                              </div>
+                            )}
+                            {selectedBusiness.email && (
+                              <div className="text-xs">
+                                <span className="text-slate-500">Email</span>
+                                <p className="text-slate-300 mt-0.5 truncate">
+                                  {selectedBusiness.email}
+                                </p>
+                              </div>
+                            )}
+                            {selectedBusiness.website && (
+                              <div className="text-xs">
+                                <span className="text-slate-500">Website</span>
+                                <p className="text-slate-300 mt-0.5 truncate">
+                                  {selectedBusiness.website}
+                                </p>
+                              </div>
+                            )}
+                            {selectedBusiness.city_name && (
+                              <div className="text-xs">
+                                <span className="text-slate-500">City</span>
+                                <p className="text-slate-300 mt-0.5">
+                                  {selectedBusiness.city_name}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Empty state */}
+                {!isBusinessesLoading && businessesData.length === 0 && (
                   <div className="text-center py-12 text-slate-400">
                     <Building className="h-12 w-12 mx-auto mb-3 text-slate-600" />
                     <p>No businesses found</p>
@@ -2260,6 +2793,15 @@ export default function DatabaseExpert({
                         ? "Try selecting a different category"
                         : "Business API may be unavailable"}
                     </p>
+                  </div>
+                )}
+
+                {isBusinessesLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                    <span className="ml-2 text-sm text-slate-400">
+                      Loading businesses…
+                    </span>
                   </div>
                 )}
               </CardContent>
@@ -2284,12 +2826,31 @@ export default function DatabaseExpert({
                       {artistsData.length} results
                     </CardDescription>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-purple-500/20 border-purple-400/30 text-purple-300"
-                  >
-                    {artistsData.length} artists
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-purple-500/20 border-purple-400/30 text-purple-300"
+                    >
+                      {artistsData.length} artists
+                    </Badge>
+                    <Button
+                      size="sm"
+                      className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => {
+                        setNewArtist((prev) => ({
+                          ...prev,
+                          countryCode:
+                            selectedCountryCode !== "all"
+                              ? selectedCountryCode
+                              : "",
+                        }));
+                        setShowAddArtist(true);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Artist
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -2472,12 +3033,31 @@ export default function DatabaseExpert({
                       {jobsData.length} results
                     </CardDescription>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-blue-500/20 border-blue-400/30 text-blue-300"
-                  >
-                    {jobsData.length} jobs
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-blue-500/20 border-blue-400/30 text-blue-300"
+                    >
+                      {jobsData.length} jobs
+                    </Badge>
+                    <Button
+                      size="sm"
+                      className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        setNewJob((prev) => ({
+                          ...prev,
+                          countryCode:
+                            selectedCountryCode !== "all"
+                              ? selectedCountryCode
+                              : "",
+                        }));
+                        setShowAddJob(true);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Job
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -3130,6 +3710,9 @@ export default function DatabaseExpert({
           <div className="mt-6 space-y-2">
             {[
               { label: "Dashboard", tab: "dashboard", icon: LayoutDashboard },
+              ...(canManage
+                ? [{ label: "Manage", tab: "manage", icon: Settings }]
+                : []),
               { label: "Businesses", tab: "businesses", icon: Building },
               { label: "Tables", tab: "tables", icon: Table2 },
               { label: "Analytics", tab: "analytics", icon: BarChart3 },
@@ -3355,6 +3938,377 @@ export default function DatabaseExpert({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Add Artist Dialog ── */}
+      <Dialog open={showAddArtist} onOpenChange={setShowAddArtist}>
+        <DialogContent className="max-w-md bg-slate-900/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-100">
+              <Music className="h-5 w-5 text-purple-400" />
+              Add Artist
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Add a new artist to the directory
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newArtist.stageName.trim()) {
+                toast({
+                  title: "Stage name is required",
+                  variant: "destructive",
+                });
+                return;
+              }
+              setIsSubmittingArtist(true);
+              try {
+                const res = await fetch(`${API_BASE_URL}/api/artists`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    stageName: newArtist.stageName,
+                    genre: newArtist.genre || null,
+                    labelStatus: newArtist.labelStatus,
+                    spotifyUrl: newArtist.spotifyUrl || null,
+                    countryCode: newArtist.countryCode || null,
+                  }),
+                });
+                if (!res.ok) throw new Error("Failed to create artist");
+                toast({ title: "Artist added successfully!" });
+                setNewArtist({
+                  stageName: "",
+                  genre: "",
+                  labelStatus: "unsigned",
+                  spotifyUrl: "",
+                  countryCode: "",
+                });
+                setShowAddArtist(false);
+                queryClient.invalidateQueries({ queryKey: ["geo-artists"] });
+              } catch (err) {
+                toast({
+                  title: "Error",
+                  description: err instanceof Error ? err.message : "Failed",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsSubmittingArtist(false);
+              }
+            }}
+          >
+            <div className="space-y-2">
+              <Label className="text-slate-300">Stage Name *</Label>
+              <Input
+                value={newArtist.stageName}
+                onChange={(e) =>
+                  setNewArtist({ ...newArtist, stageName: e.target.value })
+                }
+                placeholder="e.g. DJ Arafat"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Genre</Label>
+              <Input
+                value={newArtist.genre}
+                onChange={(e) =>
+                  setNewArtist({ ...newArtist, genre: e.target.value })
+                }
+                placeholder="e.g. Afrobeats, Hip-Hop"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Label Status</Label>
+              <Select
+                value={newArtist.labelStatus}
+                onValueChange={(val) =>
+                  setNewArtist({ ...newArtist, labelStatus: val })
+                }
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unsigned">Unsigned</SelectItem>
+                  <SelectItem value="signed">Signed</SelectItem>
+                  <SelectItem value="independent">Independent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Country Code</Label>
+              <Input
+                value={newArtist.countryCode}
+                onChange={(e) =>
+                  setNewArtist({
+                    ...newArtist,
+                    countryCode: e.target.value.toUpperCase().slice(0, 2),
+                  })
+                }
+                placeholder="e.g. CI, NG, US"
+                maxLength={2}
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Spotify URL</Label>
+              <Input
+                value={newArtist.spotifyUrl}
+                onChange={(e) =>
+                  setNewArtist({ ...newArtist, spotifyUrl: e.target.value })
+                }
+                placeholder="https://open.spotify.com/artist/…"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-slate-400"
+                onClick={() => setShowAddArtist(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingArtist}
+                className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
+              >
+                {isSubmittingArtist ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isSubmittingArtist ? "Adding…" : "Add Artist"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Add Job Dialog ── */}
+      <Dialog open={showAddJob} onOpenChange={setShowAddJob}>
+        <DialogContent className="max-w-lg bg-slate-900/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-100">
+              <Briefcase className="h-5 w-5 text-blue-400" />
+              Add Job Listing
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Post a new job listing to the directory
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4 max-h-[60vh] overflow-y-auto pr-1"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newJob.title.trim() || !newJob.company.trim()) {
+                toast({
+                  title: "Title and company are required",
+                  variant: "destructive",
+                });
+                return;
+              }
+              setIsSubmittingJob(true);
+              try {
+                const res = await fetch(`${API_BASE_URL}/api/jobs`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: newJob.title,
+                    company: newJob.company,
+                    location: newJob.location || null,
+                    type: newJob.type,
+                    sector: newJob.sector,
+                    countryCode: newJob.countryCode || null,
+                    description: newJob.description || null,
+                    experienceLevel: newJob.experienceLevel || null,
+                    isRemote: newJob.isRemote,
+                  }),
+                });
+                if (!res.ok) throw new Error("Failed to create job");
+                toast({ title: "Job listing added successfully!" });
+                setNewJob({
+                  title: "",
+                  company: "",
+                  location: "",
+                  type: "Full-time",
+                  sector: "general",
+                  countryCode: "",
+                  description: "",
+                  experienceLevel: "",
+                  isRemote: false,
+                });
+                setShowAddJob(false);
+                queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
+              } catch (err) {
+                toast({
+                  title: "Error",
+                  description: err instanceof Error ? err.message : "Failed",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsSubmittingJob(false);
+              }
+            }}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2 col-span-2">
+                <Label className="text-slate-300">Job Title *</Label>
+                <Input
+                  value={newJob.title}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, title: e.target.value })
+                  }
+                  placeholder="e.g. Senior Software Engineer"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Company *</Label>
+                <Input
+                  value={newJob.company}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, company: e.target.value })
+                  }
+                  placeholder="e.g. TechNova"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Location</Label>
+                <Input
+                  value={newJob.location}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, location: e.target.value })
+                  }
+                  placeholder="e.g. Abidjan, CI"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Type</Label>
+                <Select
+                  value={newJob.type}
+                  onValueChange={(val) => setNewJob({ ...newJob, type: val })}
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full-time">Full-time</SelectItem>
+                    <SelectItem value="Part-time">Part-time</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                    <SelectItem value="Freelance">Freelance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Country Code</Label>
+                <Input
+                  value={newJob.countryCode}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      countryCode: e.target.value.toUpperCase().slice(0, 2),
+                    })
+                  }
+                  placeholder="e.g. CI"
+                  maxLength={2}
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Experience Level</Label>
+                <Select
+                  value={newJob.experienceLevel}
+                  onValueChange={(val) =>
+                    setNewJob({ ...newJob, experienceLevel: val })
+                  }
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue placeholder="Select…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entry">Entry Level</SelectItem>
+                    <SelectItem value="mid">Mid Level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="lead">Lead / Principal</SelectItem>
+                    <SelectItem value="executive">Executive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Sector</Label>
+                <Select
+                  value={newJob.sector}
+                  onValueChange={(val) => setNewJob({ ...newJob, sector: val })}
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="tech">Tech</SelectItem>
+                    <SelectItem value="commerce">Commerce</SelectItem>
+                    <SelectItem value="hotellerie">Hospitality</SelectItem>
+                    <SelectItem value="batiment">Construction</SelectItem>
+                    <SelectItem value="finances">Finance</SelectItem>
+                    <SelectItem value="sante">Health</SelectItem>
+                    <SelectItem value="communication">Communication</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label className="text-slate-300">Description</Label>
+                <Input
+                  value={newJob.description}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, description: e.target.value })
+                  }
+                  placeholder="Brief description of the role…"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="flex items-center gap-2 col-span-2">
+                <Switch
+                  checked={newJob.isRemote}
+                  onCheckedChange={(checked) =>
+                    setNewJob({ ...newJob, isRemote: checked })
+                  }
+                />
+                <Label className="text-slate-300">Remote position</Label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-slate-400"
+                onClick={() => setShowAddJob(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingJob}
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+              >
+                {isSubmittingJob ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isSubmittingJob ? "Adding…" : "Add Job"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

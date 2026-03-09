@@ -114,6 +114,14 @@ export function Tickets() {
     user?.role === "admin" ||
     localStorage.getItem("geoadmin_session") === "true";
 
+  // TAM access: only superuser & moderator
+  const canAccessTAM = user?.role === "superuser" || user?.role === "moderator";
+
+  // Staff roles don't need subscriber upgrade prompts — they manage the platform
+  const isStaffRole = ["superuser", "admin", "moderator"].includes(
+    user?.role || "",
+  );
+
   // Subscription Tier Permissions
   type SubscriptionTier =
     | "free"
@@ -121,8 +129,10 @@ export function Tickets() {
     | "verified"
     | "max"
     | "enterprise";
-  const subscriptionTier = (user?.subscriptionTier ||
-    "free") as SubscriptionTier;
+  // Staff always get enterprise-level access — no upgrade prompts, no limits
+  const subscriptionTier: SubscriptionTier = isStaffRole
+    ? "enterprise"
+    : ((user?.subscriptionTier || "free") as SubscriptionTier);
 
   // Permission matrix based on subscription tier
   const subscriptionPermissions = {
@@ -419,7 +429,7 @@ export function Tickets() {
                 🛡️ Admin Dashboard
               </Button>
             </a>
-            {isAdmin && (
+            {canAccessTAM && (
               <a href="/admin/tickets">
                 <Button
                   variant="outline"
@@ -436,64 +446,66 @@ export function Tickets() {
 
       {/* Main Content */}
       <div className="flex-1 px-6 md:px-12 py-8 md:py-12" ref={contentRef}>
-        {/* Subscription Tier Banner */}
-        <div
-          className={`mb-6 p-4 rounded-lg border ${
-            subscriptionTier === "free"
-              ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"
-              : subscriptionTier === "enterprise"
-                ? "bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800"
-                : "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p
-                className={`text-sm font-semibold ${
-                  subscriptionTier === "free"
-                    ? "text-yellow-900 dark:text-yellow-100"
-                    : subscriptionTier === "enterprise"
-                      ? "text-purple-900 dark:text-purple-100"
-                      : "text-blue-900 dark:text-blue-100"
-                }`}
-              >
-                📊{" "}
-                <Badge className="ml-2 capitalize">
-                  {subscriptionTier} Plan
-                </Badge>
-              </p>
-              <p
-                className={`text-xs mt-1 ${
-                  subscriptionTier === "free"
-                    ? "text-yellow-800 dark:text-yellow-200"
-                    : subscriptionTier === "enterprise"
-                      ? "text-purple-800 dark:text-purple-200"
-                      : "text-blue-800 dark:text-blue-200"
-                }`}
-              >
-                {subscriptionTier === "free" &&
-                  "Max 5 tickets/month • No SLA • No team assignment"}
-                {subscriptionTier === "essential" &&
-                  "Unlimited tickets • 48h SLA • Email support"}
-                {subscriptionTier === "verified" &&
-                  "Unlimited tickets • 24h SLA • Team (5) • Analytics"}
-                {subscriptionTier === "max" &&
-                  "Unlimited tickets • 24h SLA • Team (10) • Full analytics"}
-                {subscriptionTier === "enterprise" &&
-                  "Unlimited everything • Guaranteed SLA • Dedicated support"}
-              </p>
+        {/* Subscription Tier Banner — hidden for staff (they're not subscribers) */}
+        {!isStaffRole && (
+          <div
+            className={`mb-6 p-4 rounded-lg border ${
+              subscriptionTier === "free"
+                ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"
+                : subscriptionTier === "enterprise"
+                  ? "bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800"
+                  : "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p
+                  className={`text-sm font-semibold ${
+                    subscriptionTier === "free"
+                      ? "text-yellow-900 dark:text-yellow-100"
+                      : subscriptionTier === "enterprise"
+                        ? "text-purple-900 dark:text-purple-100"
+                        : "text-blue-900 dark:text-blue-100"
+                  }`}
+                >
+                  📊{" "}
+                  <Badge className="ml-2 capitalize">
+                    {subscriptionTier} Plan
+                  </Badge>
+                </p>
+                <p
+                  className={`text-xs mt-1 ${
+                    subscriptionTier === "free"
+                      ? "text-yellow-800 dark:text-yellow-200"
+                      : subscriptionTier === "enterprise"
+                        ? "text-purple-800 dark:text-purple-200"
+                        : "text-blue-800 dark:text-blue-200"
+                  }`}
+                >
+                  {subscriptionTier === "free" &&
+                    "Max 5 tickets/month • No SLA • No team assignment"}
+                  {subscriptionTier === "essential" &&
+                    "Unlimited tickets • 48h SLA • Email support"}
+                  {subscriptionTier === "verified" &&
+                    "Unlimited tickets • 24h SLA • Team (5) • Analytics"}
+                  {subscriptionTier === "max" &&
+                    "Unlimited tickets • 24h SLA • Team (10) • Full analytics"}
+                  {subscriptionTier === "enterprise" &&
+                    "Unlimited everything • Guaranteed SLA • Dedicated support"}
+                </p>
+              </div>
+              {currentPermissions.showUpgradePrompt && (
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setShowUpgradeModal(true)}
+                >
+                  Upgrade
+                </Button>
+              )}
             </div>
-            {currentPermissions.showUpgradePrompt && (
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => setShowUpgradeModal(true)}
-              >
-                Upgrade
-              </Button>
-            )}
           </div>
-        </div>
+        )}
 
         {/* Header with Parallax Effect */}
         <div className="mb-8">
@@ -657,7 +669,7 @@ export function Tickets() {
                 <Plus className="h-4 w-4 mr-2" />
                 New Ticket
               </Button>
-              {user?.role === "admin" && (
+              {canAccessTAM && (
                 <Button
                   onClick={() => navigate("/admin/tickets")}
                   className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 shrink-0"
@@ -964,23 +976,25 @@ export function Tickets() {
         </DialogContent>
       </Dialog>
 
-      {/* Subscription Tier Badge - Fixed Top Right */}
-      <div className="fixed bottom-6 right-6 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg p-3 z-40">
-        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-          Current Plan
+      {/* Subscription Tier Badge - Fixed Bottom Right (subscribers only) */}
+      {!isStaffRole && (
+        <div className="fixed bottom-6 right-6 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg p-3 z-40">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+            Current Plan
+          </div>
+          <Badge className="bg-blue-600 text-white capitalize">
+            {subscriptionTier}
+          </Badge>
+          <Button
+            variant="link"
+            size="sm"
+            className="text-xs p-0 h-auto mt-2 w-full justify-center"
+            onClick={() => setShowUpgradeModal(true)}
+          >
+            Upgrade Plan
+          </Button>
         </div>
-        <Badge className="bg-blue-600 text-white capitalize">
-          {subscriptionTier}
-        </Badge>
-        <Button
-          variant="link"
-          size="sm"
-          className="text-xs p-0 h-auto mt-2 w-full justify-center"
-          onClick={() => setShowUpgradeModal(true)}
-        >
-          Upgrade Plan
-        </Button>
-      </div>
+      )}
     </div>
   );
 }

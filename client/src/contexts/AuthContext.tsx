@@ -73,14 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Sync in-memory token so authenticatedFetch sends Authorization header
             setAuthToken(storedToken);
           } else {
-            // Token is invalid, clear it
-            clearAllTokens();
+            // Token response invalid — clear in-memory state but keep
+            // localStorage tokens so pages with gateBypass still work.
             setUser(null);
             setToken(null);
           }
         } else if (response.status === 401) {
-          // Token expired, clear it
-          clearAllTokens();
+          // Token expired — clear in-memory state only.
+          // Keep localStorage tokens so gateBypass (geo-admin, etc.) persists
+          // across reloads. Tokens are only cleared on explicit logout.
           setUser(null);
           setToken(null);
         }

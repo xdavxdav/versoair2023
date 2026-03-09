@@ -1222,7 +1222,7 @@ export default function Hotellerie() {
                                       <span className="text-sm capitalize font-medium">
                                         {business.address || business.location}
                                       </span>
-                                      {business.status === "verified" && (
+                                      {business.is_verified && (
                                         <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
                                           <CheckCircle className="h-3 w-3 mr-1" />
                                           Verified

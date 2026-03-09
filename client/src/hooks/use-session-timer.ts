@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 export function useSessionTimer(
   isAuthenticated: boolean,
   enableTimeout: boolean = false,
+  onSessionExpired?: () => void,
 ) {
   const SESSION_DURATION = 15 * 60; // 15 minutes in seconds (only used if enableTimeout is true)
   const WARNING_THRESHOLD = 60; // show warning at 1 minute remaining
@@ -12,12 +13,14 @@ export function useSessionTimer(
   const [sessionTimeLeft, setSessionTimeLeft] = useState(SESSION_DURATION);
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const sessionWarningShown = useRef(false);
+  const expiredCallbackFired = useRef(false);
 
   // Session countdown timer - only active if enableTimeout is true
   useEffect(() => {
     if (!isAuthenticated || !enableTimeout) {
       setSessionTimeLeft(SESSION_DURATION);
       sessionWarningShown.current = false;
+      expiredCallbackFired.current = false;
       return;
     }
 
@@ -36,6 +39,12 @@ export function useSessionTimer(
               "Your 15-minute session has ended. Please log in again.",
             variant: "destructive",
           });
+          // Notify the page so it can force re-authentication
+          if (onSessionExpired && !expiredCallbackFired.current) {
+            expiredCallbackFired.current = true;
+            // Small delay so the toast renders before redirect
+            setTimeout(() => onSessionExpired(), 500);
+          }
           return 0;
         }
         // Show warning at 1 minute remaining
@@ -48,11 +57,12 @@ export function useSessionTimer(
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isAuthenticated, enableTimeout, toast]);
+  }, [isAuthenticated, enableTimeout, onSessionExpired, toast]);
 
   const handleExtendSession = useCallback(() => {
     setSessionTimeLeft(SESSION_DURATION);
     sessionWarningShown.current = false;
+    expiredCallbackFired.current = false;
     setShowSessionWarning(false);
     toast({
       title: "Session Extended ✅",

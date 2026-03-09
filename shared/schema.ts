@@ -73,6 +73,9 @@ export const users = pgTable("users", {
   referralCode: varchar("referral_code", { length: 12 }).unique(),
   referredBy: integer("referred_by").references((): any => users.id),
 
+  // Stripe customer
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -164,6 +167,13 @@ export const businesses = pgTable(
     // Search Engine Vector
     searchVector: text("search_vector"),
 
+    // ── Approval Workflow ──
+    approvalStatus: varchar("approval_status").default("approved"), // 'pending' | 'approved' | 'rejected'  (existing rows default approved)
+    submittedBy: integer("submitted_by").references(() => users.id),
+    approvedBy: integer("approved_by").references(() => users.id),
+    approvalNotes: text("approval_notes"),
+    pdfPath: text("pdf_path"), // path to auto-generated registration PDF
+
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -208,6 +218,65 @@ export const paymentCardTypes = pgTable("payment_card_types", {
   name: text("name").notNull(),
   code: varchar("code", { length: 10 }).notNull().unique(),
   description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- SAVED PAYMENT METHODS (Stripe tokenized cards) ---
+export const savedPaymentMethods = pgTable("saved_payment_methods", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  stripePaymentMethodId: varchar("stripe_payment_method_id", { length: 255 })
+    .notNull()
+    .unique(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).notNull(),
+  cardBrand: varchar("card_brand", { length: 30 }), // visa, mastercard, amex, etc.
+  cardLast4: varchar("card_last4", { length: 4 }),
+  cardExpMonth: integer("card_exp_month"),
+  cardExpYear: integer("card_exp_year"),
+  cardholderName: text("cardholder_name"),
+  billingEmail: varchar("billing_email", { length: 255 }),
+  billingPhone: varchar("billing_phone", { length: 50 }),
+  billingAddressLine1: text("billing_address_line1"),
+  billingAddressLine2: text("billing_address_line2"),
+  billingCity: varchar("billing_city", { length: 100 }),
+  billingState: varchar("billing_state", { length: 100 }),
+  billingPostalCode: varchar("billing_postal_code", { length: 20 }),
+  billingCountry: varchar("billing_country", { length: 2 }), // ISO 3166-1 alpha-2
+  cardCountry: varchar("card_country", { length: 2 }), // issuing country
+  cardFunding: varchar("card_funding", { length: 20 }), // credit, debit, prepaid
+  cardIssuer: varchar("card_issuer", { length: 100 }), // issuing bank name
+  cardFingerprint: varchar("card_fingerprint", { length: 64 }), // Stripe unique card fingerprint
+  cvcCheck: varchar("cvc_check", { length: 20 }), // pass, fail, unavailable, unchecked
+  isDefault: boolean("is_default").default(false),
+  label: varchar("label", { length: 100 }), // e.g. "NGO Donation Card", "Business Card"
+  preauthorized: boolean("preauthorized").default(false), // pre-authorized for NGO charges
+  maxChargeAmount: decimal("max_charge_amount", { precision: 12, scale: 2 }), // max per charge if set
+  currency: varchar("currency", { length: 3 }).default("USD"),
+  status: varchar("status", { length: 20 }).default("active"), // active, expired, revoked
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// --- NGO CHARGE RECORDS (POS-style charges against saved cards) ---
+export const ngoCharges = pgTable("ngo_charges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  paymentMethodId: integer("payment_method_id").references(
+    () => savedPaymentMethods.id,
+  ),
+  userId: integer("user_id").references(() => users.id),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD"),
+  description: text("description"),
+  category: varchar("category", { length: 50 }), // donation, activity_fee, membership, event, supplies
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, succeeded, failed, refunded
+  receiptUrl: text("receipt_url"),
+  processedBy: integer("processed_by").references(() => users.id), // admin who initiated charge
+  refundedAt: timestamp("refunded_at"),
+  refundReason: text("refund_reason"),
+  metadata: text("metadata"), // JSON string for extra context
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -450,6 +519,31 @@ export const musicArtists = pgTable("music_artists", {
   monthlyListeners: integer("monthly_listeners").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// --- 6b. BUSINESS ADMIN MESSAGES (Teams-style thread per business) ---
+export const businessMessages = pgTable(
+  "business_messages",
+  {
+    id: serial("id").primaryKey(),
+    businessId: integer("business_id")
+      .references(() => businesses.id, { onDelete: "cascade" })
+      .notNull(),
+    senderId: integer("sender_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    senderName: varchar("sender_name").notNull(), // display name at send-time
+    senderRole: varchar("sender_role").notNull(), // 'superuser' | 'admin' | 'moderator' | 'owner'
+    message: text("message").notNull(),
+    messageType: varchar("message_type").default("text"), // 'text' | 'status_change' | 'system'
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    businessIdx: index("biz_msg_business_idx").on(t.businessId),
+    createdIdx: index("biz_msg_created_idx").on(t.createdAt),
+  }),
+);
+
+export type BusinessMessage = typeof businessMessages.$inferSelect;
 
 // --- 7. NOTIFICATIONS & REAL-TIME ---
 export const notifications = pgTable("notifications", {
@@ -756,3 +850,110 @@ export const emailQueue = pgTable(
 export const insertEmailQueueSchema = createInsertSchema(emailQueue);
 export type EmailQueueItem = typeof emailQueue.$inferSelect;
 export type InsertEmailQueueItem = typeof emailQueue.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 💳 VERSO AIR CARD — Stripe Issuing Virtual Cards + Points Rewards
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// --- ISSUED VIRTUAL CARDS (Stripe Issuing) ---
+export const issuedCards = pgTable(
+  "issued_cards",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    stripeCardId: varchar("stripe_card_id", { length: 255 }).notNull().unique(), // ic_xxxxx
+    stripeCardholderId: varchar("stripe_cardholder_id", {
+      length: 255,
+    }).notNull(), // ich_xxxxx
+    cardBrand: varchar("card_brand", { length: 30 }).default("Visa"),
+    cardLast4: varchar("card_last4", { length: 4 }),
+    cardExpMonth: integer("card_exp_month"),
+    cardExpYear: integer("card_exp_year"),
+    cardType: varchar("card_type", { length: 20 }).default("virtual"), // virtual | physical
+    cardStatus: varchar("card_status", { length: 20 }).default("active"), // active, inactive, canceled
+    spendingLimitAmount: decimal("spending_limit_amount", {
+      precision: 12,
+      scale: 2,
+    }),
+    spendingLimitInterval: varchar("spending_limit_interval", { length: 20 }), // per_authorization, daily, weekly, monthly, yearly, all_time
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    cardholderName: text("cardholder_name"),
+    billingAddressLine1: text("billing_address_line1"),
+    billingCity: varchar("billing_city", { length: 100 }),
+    billingState: varchar("billing_state", { length: 100 }),
+    billingPostalCode: varchar("billing_postal_code", { length: 20 }),
+    billingCountry: varchar("billing_country", { length: 2 }),
+    tierAtIssuance: varchar("tier_at_issuance", { length: 20 }), // which tier user had when card was issued
+    pointsMultiplier: decimal("points_multiplier", {
+      precision: 4,
+      scale: 2,
+    }).default("1.00"), // tier-based
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    canceledAt: timestamp("canceled_at"),
+  },
+  (t) => ({
+    userIdx: index("issued_cards_user_idx").on(t.userId),
+    statusIdx: index("issued_cards_status_idx").on(t.cardStatus),
+  }),
+);
+
+// --- VERSO AIR POINTS LEDGER ---
+export const pointsLedger = pgTable(
+  "points_ledger",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    issuedCardId: integer("issued_card_id").references(() => issuedCards.id),
+    type: varchar("type", { length: 30 }).notNull(), // earn, redeem, bonus, tier_upgrade, expiry, adjustment
+    points: integer("points").notNull(), // positive = earn, negative = spend
+    balance: integer("balance").notNull(), // running balance after this txn
+    description: text("description"),
+    // Transaction link (for earn from card spend)
+    stripeTransactionId: varchar("stripe_transaction_id", { length: 255 }),
+    transactionAmount: decimal("transaction_amount", {
+      precision: 12,
+      scale: 2,
+    }),
+    transactionCurrency: varchar("transaction_currency", { length: 3 }),
+    merchantName: text("merchant_name"),
+    merchantCategory: varchar("merchant_category", { length: 100 }),
+    // Points calculation
+    basePoints: integer("base_points"), // before multiplier
+    multiplier: decimal("multiplier", { precision: 4, scale: 2 }), // tier multiplier applied
+    categoryBonus: decimal("category_bonus", { precision: 4, scale: 2 }), // extra category bonus
+    tierAtEarning: varchar("tier_at_earning", { length: 20 }),
+    // Expiry
+    expiresAt: timestamp("expires_at"), // points expire after 12 months
+    expiredAt: timestamp("expired_at"), // actual expiry date
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("points_ledger_user_idx").on(t.userId),
+    typeIdx: index("points_ledger_type_idx").on(t.type),
+    expiryIdx: index("points_ledger_expiry_idx").on(t.expiresAt),
+  }),
+);
+
+// --- POINTS REDEMPTION OPTIONS ---
+export const pointsRedemptions = pgTable("points_redemptions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "1 Month Essential Upgrade", "$10 Ad Credit"
+  description: text("description"),
+  pointsCost: integer("points_cost").notNull(),
+  rewardType: varchar("reward_type", { length: 30 }).notNull(), // tier_upgrade, ad_credit, feature_unlock, merch, donation
+  rewardValue: jsonb("reward_value"), // { tier: "essential", months: 1 } or { credit: 10 }
+  isActive: boolean("is_active").default(true),
+  minTier: varchar("min_tier", { length: 20 }), // minimum tier required to redeem
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertIssuedCardSchema = createInsertSchema(issuedCards);
+export const insertPointsLedgerSchema = createInsertSchema(pointsLedger);
+export const insertPointsRedemptionSchema =
+  createInsertSchema(pointsRedemptions);

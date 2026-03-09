@@ -33,6 +33,7 @@ import {
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
+import { GeolocationFields } from "@/components/ui/geolocation-fields";
 
 interface VerificationFormData {
   // Step 1: Basic
@@ -374,33 +375,18 @@ export default function BusinessVerificationPage() {
                       placeholder="+225 123 456 789"
                     />
                   </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Latitude
-                    </Label>
-                    <Input
-                      value={formData.latitude}
-                      onChange={(e) =>
-                        setFormData({ ...formData, latitude: e.target.value })
-                      }
-                      placeholder="5.3599517"
-                    />
-                  </div>
-                  <div>
-                    <Label className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Longitude
-                    </Label>
-                    <Input
-                      value={formData.longitude}
-                      onChange={(e) =>
-                        setFormData({ ...formData, longitude: e.target.value })
-                      }
-                      placeholder="-3.9746496"
-                    />
-                  </div>
                 </div>
+
+                <GeolocationFields
+                  latitude={formData.latitude}
+                  longitude={formData.longitude}
+                  onLatitudeChange={(v) =>
+                    setFormData({ ...formData, latitude: v })
+                  }
+                  onLongitudeChange={(v) =>
+                    setFormData({ ...formData, longitude: v })
+                  }
+                />
               </div>
             )}
 
