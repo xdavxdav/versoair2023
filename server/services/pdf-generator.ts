@@ -7,11 +7,19 @@ import path from "path";
  * Auto-generates a branded PDF when a business is submitted for approval.
  */
 
-const UPLOADS_DIR = path.resolve("uploads", "business-pdfs");
+// In production containers /app is read-only; use /tmp instead
+const UPLOADS_DIR =
+  process.env.NODE_ENV === "production"
+    ? path.join("/tmp", "uploads", "business-pdfs")
+    : path.resolve("uploads", "business-pdfs");
 
-// Ensure directory exists on startup
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+// Ensure directory exists on startup (wrapped so a permission error never crashes the server)
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`⚠️  Could not create PDF uploads dir (${UPLOADS_DIR}):`, err);
 }
 
 export interface BusinessPDFData {
