@@ -6,6 +6,19 @@ import * as schema from "@shared/schema";
 const router = Router();
 // Mounted at /api/music
 
+// Check if country_code column exists on artists table (cached)
+let hasCountryCodeCol: boolean | null = null;
+async function artistsHaveCountryCode(): Promise<boolean> {
+  if (hasCountryCodeCol !== null) return hasCountryCodeCol;
+  try {
+    await pool.query("SELECT country_code FROM artists LIMIT 0");
+    hasCountryCodeCol = true;
+  } catch {
+    hasCountryCodeCol = false;
+  }
+  return hasCountryCodeCol;
+}
+
 // GET /api/music/artists
 router.get("/artists", async (req, res) => {
   try {
@@ -14,10 +27,12 @@ router.get("/artists", async (req, res) => {
       `🎵 [MUSIC] Fetching artists${countryCode ? ` for country=${countryCode}` : ""}`,
     );
 
-    let query = `SELECT id, stage_name AS name, genre, label_status, spotify_url, business_id, user_id, country_code FROM artists`;
+    const hasCC = await artistsHaveCountryCode();
+    const ccSelect = hasCC ? ", country_code" : "";
+    let query = `SELECT id, stage_name AS name, genre, label_status, spotify_url, business_id, user_id${ccSelect} FROM artists`;
     const params: any[] = [];
 
-    if (countryCode && countryCode !== "all") {
+    if (hasCC && countryCode && countryCode !== "all") {
       query += ` WHERE country_code = $1`;
       params.push(countryCode.toUpperCase());
     }
