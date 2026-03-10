@@ -442,9 +442,7 @@ async function testDatabaseConnection(): Promise<{
   };
 }> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/status`,
-    );
+    const response = await fetch(`${API_BASE_URL}/api/status`);
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
@@ -829,6 +827,28 @@ const ResponsiveFooter = ({
                 <Instagram size={20} />
               </a>
               <a
+                href="https://tiktok.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white"
+                aria-label="TikTok"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .56.04.82.1v-3.53a6.37 6.37 0 0 0-.82-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.17a8.16 8.16 0 0 0 4.76 1.54v-3.45a4.85 4.85 0 0 1-1-.57z"/>
+                </svg>
+              </a>
+              <a
+                href="https://wa.me/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white"
+                aria-label="WhatsApp"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+              </a>
+              <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -976,8 +996,35 @@ const rangeOptions: FilterOption[] = [
 ];
 
 // Music Artists Grid Component
-function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
-  const { data: artists, isLoading } = useMusicArtists(countryCode);
+// Artist Carousel by Countries — auto-scrolling promo/ads for registered artists
+function ArtistCarouselByCountry() {
+  // Fetch ALL artists (no country filter) so we can group them
+  const { data: artists, isLoading } = useMusicArtists();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Auto-scroll animation
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !artists || artists.length === 0) return;
+
+    let animId: number;
+    let scrollPos = 0;
+    const speed = 0.5; // px per frame
+
+    const animate = () => {
+      if (!isPaused && el) {
+        scrollPos += speed;
+        if (scrollPos >= el.scrollWidth / 2) {
+          scrollPos = 0; // loop seamlessly
+        }
+        el.scrollLeft = scrollPos;
+      }
+      animId = requestAnimationFrame(animate);
+    };
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [artists, isPaused]);
 
   if (isLoading) {
     return (
@@ -999,115 +1046,135 @@ function MusicArtistsGrid({ countryCode }: { countryCode?: string }) {
     );
   }
 
+  // Group artists by country
+  const byCountry: Record<string, typeof artists> = {};
+  artists.forEach((artist: any) => {
+    const cc = artist.country_code || "INTL";
+    if (!byCountry[cc]) byCountry[cc] = [];
+    byCountry[cc].push(artist);
+  });
+  const countryKeys = Object.keys(byCountry).sort();
+
+  // Build the card list — duplicate for seamless looping
+  const cards = countryKeys.flatMap((cc) => {
+    const meta = getCountryMeta(cc);
+    return byCountry[cc].map((artist: any) => ({ artist, meta, cc }));
+  });
+  const duplicated = [...cards, ...cards]; // double for infinite scroll
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {artists.slice(0, 8).map((artist: any, i: number) => (
-        <motion.div
-          key={artist.id}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          viewport={{ once: true, margin: "-50px" }}
-          whileHover={{ scale: 1.05, y: -5 }}
-          className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-purple-400/50 transition-all cursor-pointer group"
-        >
-          <div className="flex flex-col items-center text-center">
-            {(() => {
-              const stageName = artist?.name?.trim() || "Unknown Artist";
-              const initials = stageName
-                .split(/\s+/)
-                .filter(Boolean)
-                .map((n: string) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase();
-              const artistCountry = artist.country_code
-                ? getCountryMeta(artist.country_code)
-                : null;
+    <div className="space-y-6">
+      {/* Country filter pills */}
+      <div className="flex flex-wrap justify-center gap-2 mb-4">
+        {countryKeys.map((cc) => {
+          const meta = getCountryMeta(cc);
+          return (
+            <span
+              key={cc}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm text-purple-200"
+            >
+              <span className="text-base">{meta.flag || "🌍"}</span>
+              {meta.name || cc} ({byCountry[cc].length})
+            </span>
+          );
+        })}
+      </div>
 
-              return (
-                <>
-                  {/* Artist Avatar */}
-                  <div className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative">
-                    {initials}
-                    {artistCountry && (
-                      <span
-                        className="absolute -bottom-1 -right-1 text-lg"
-                        title={artistCountry.name}
-                      >
-                        {artistCountry.flag}
-                      </span>
-                    )}
-                  </div>
+      {/* Scrolling carousel */}
+      <div
+        ref={scrollRef}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        className="flex gap-5 overflow-x-hidden py-2"
+        style={{ scrollBehavior: "auto" }}
+      >
+        {duplicated.map(({ artist, meta, cc }, i) => {
+          const stageName = (artist as any)?.name?.trim() || "Unknown Artist";
+          const initials = stageName
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((n: string) => n[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
 
-                  {/* Artist Name */}
-                  <h3 className="text-xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
-                    {stageName}
-                  </h3>
-
-                  {/* Genre + Country */}
-                  <p className="text-purple-300 text-sm mb-3">
-                    {artist.genre || "Artiste"}
-                    {artistCountry
-                      ? ` • ${artistCountry.flag} ${artistCountry.name}`
-                      : ""}
-                  </p>
-
-                  {/* Label Status / Genre / Country */}
-                  <div className="grid grid-cols-3 gap-3 w-full mt-3 pt-3 border-t border-white/10">
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-white">
-                        {artist.label_status === "signed"
-                          ? "🏷️ Signé"
-                          : artist.label_status === "independent"
-                            ? "🎯 Indép."
-                            : "🆓 Libre"}
-                      </div>
-                      <div className="text-xs text-purple-200">Label</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-white">
-                        {artist.genre ? artist.genre.slice(0, 8) : "—"}
-                      </div>
-                      <div className="text-xs text-purple-200">Genre</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-white">
-                        {artistCountry ? `${artistCountry.flag}` : "🌍"}
-                      </div>
-                      <div className="text-xs text-purple-200">
-                        {artistCountry
-                          ? artistCountry.name.slice(0, 10)
-                          : "Global"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Spotify / View Button */}
-                  {artist.spotify_url ? (
-                    <a
-                      href={artist.spotify_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-500 text-white py-2 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-green-500/30"
-                    >
-                      <Play className="w-4 h-4" />
-                      Écouter
-                    </a>
-                  ) : (
-                    <Link to="/artistes" className="w-full">
-                      <button className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/50">
-                        <Music className="w-4 h-4" />
-                        Voir le profil
-                      </button>
-                    </Link>
+          return (
+            <motion.div
+              key={`${artist.id}-${i}`}
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="flex-shrink-0 w-64 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-5 border border-white/20 hover:border-purple-400/50 transition-all cursor-pointer group"
+            >
+              <div className="flex flex-col items-center text-center">
+                {/* Avatar */}
+                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative">
+                  {initials}
+                  {meta && (
+                    <span className="absolute -bottom-1 -right-1 text-lg" title={meta.name}>
+                      {meta.flag}
+                    </span>
                   )}
-                </>
-              );
-            })()}
-          </div>
-        </motion.div>
-      ))}
+                </div>
+
+                {/* Name */}
+                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-300 transition-colors truncate w-full">
+                  {stageName}
+                </h3>
+
+                {/* Genre + Country */}
+                <p className="text-purple-300 text-xs mb-2">
+                  {(artist as any).genre || "Artiste"} • {meta.flag} {meta.name}
+                </p>
+
+                {/* Verso Air badge */}
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-semibold mb-3">
+                  <Music className="w-3 h-3" />
+                  Verso Air ™️
+                </div>
+
+                {/* Label status */}
+                <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-white/10">
+                  <div className="text-center">
+                    <div className="text-xs font-bold text-white">
+                      {(artist as any).label_status === "signed"
+                        ? "🏷️ Signé"
+                        : (artist as any).label_status === "independent"
+                          ? "🎯 Indép."
+                          : "🆓 Libre"}
+                    </div>
+                    <div className="text-[10px] text-purple-200">Label</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs font-bold text-white">
+                      {(artist as any).genre ? (artist as any).genre.slice(0, 10) : "—"}
+                    </div>
+                    <div className="text-[10px] text-purple-200">Genre</div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                {(artist as any).spotify_url ? (
+                  <a
+                    href={(artist as any).spotify_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full mt-3 bg-gradient-to-r from-green-600 to-green-500 text-white py-1.5 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    Écouter
+                  </a>
+                ) : (
+                  <Link to="/artistes" className="w-full">
+                    <button className="w-full mt-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-1.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 text-sm">
+                      <Music className="w-3.5 h-3.5" />
+                      Voir le profil
+                    </button>
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1895,9 +1962,12 @@ export default function Home() {
   }, []);
 
   // Debounced search - auto-fetch artist annuaire after user stops typing
-  const artistSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const artistSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   useEffect(() => {
-    if (artistSearchTimerRef.current) clearTimeout(artistSearchTimerRef.current);
+    if (artistSearchTimerRef.current)
+      clearTimeout(artistSearchTimerRef.current);
 
     if (
       artistAnnuaireQuery.trim() ||
@@ -1910,7 +1980,8 @@ export default function Home() {
     }
 
     return () => {
-      if (artistSearchTimerRef.current) clearTimeout(artistSearchTimerRef.current);
+      if (artistSearchTimerRef.current)
+        clearTimeout(artistSearchTimerRef.current);
     };
   }, [artistAnnuaireQuery, selectedArtistGenre, selectedArtistCountry]);
 
@@ -3777,14 +3848,14 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
             >
-              Registered Artists
+              Registered Artists by Country
             </motion.h2>
             <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
-              Discover talented artists signed to our exclusive music label
+              Discover talented artists signed with Verso Air across the globe
             </p>
           </div>
 
-          <MusicArtistsGrid countryCode={selectedCountry} />
+          <ArtistCarouselByCountry />
 
           <div className="text-center mt-8 md:mt-12">
             <Link to="/artist-portal">

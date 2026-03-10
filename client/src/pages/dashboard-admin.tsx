@@ -6366,23 +6366,8 @@ export default function AdminDashboard() {
         setAuthToken(storedToken),
       );
     } else if (isAdminGateAuthenticated && authenticatedAdminUsername) {
-      // Session restored from localStorage but no JWT — re-authenticate via admin gate
-      const API = import.meta.env.VITE_API_URL || "";
-      fetch(`${API}/auth/admin-gate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ username: authenticatedAdminUsername }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.token) {
-            import("@/lib/auth").then(({ setAuthToken }) =>
-              setAuthToken(data.token),
-            );
-          }
-        })
-        .catch(() => {});
+      // Session restored from localStorage but no JWT — redirect to sign in
+      console.warn("No JWT found on page refresh — re-authentication required.");
     }
     // Always bootstrap CSRF token
     initializeCsrfToken().catch((error) => {

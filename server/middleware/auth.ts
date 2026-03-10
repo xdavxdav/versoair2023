@@ -64,30 +64,35 @@ const PUBLIC_PATHS: string[] = [
  * Used for sub-routes like /api/home/stats?country=FR, /api/artists/search?q=...
  */
 const PUBLIC_PATH_PREFIXES: string[] = [
-  "/api/home/",           // Home page stats
-  "/api/artists/",        // Artist directory (search, genres, countries)
-  "/api/business/search", // Business search
-  "/api/business/categories", // Business category listing
-  "/api/businesses/pool/",    // Business pool by category
-  "/api/category/",       // Category search
-  "/api/jobs/search",     // Public career portal
-  "/api/commerce/",       // Commerce search & analytics
-  "/api/properties/",     // Property search & analytics
+  "/api/home/",              // Home page stats
+  "/api/artists/",           // Artist directory (search, genres, countries)
+  "/api/music/",             // Music artists, tracks, analytics (home page carousel)
+  "/api/businesses",         // Business listing & search (home page, directory)
+  "/api/business/search",    // Business search (legacy)
+  "/api/business/categories",// Business category listing
+  "/api/businesses/pool/",   // Business pool by category
+  "/api/category/",          // Category search
+  "/api/jobs/search",        // Public career portal
+  "/api/commerce/",          // Commerce search & analytics
+  "/api/properties/",        // Property search & analytics
 ];
 
 /**
  * Check if a request path matches any whitelisted public path.
  * Supports exact matches and prefix matching for OAuth redirect chains.
+ * Prefix matches are GET-only to prevent unauthenticated writes.
  */
-function isPublicPath(path: string): boolean {
-  // Exact match
+function isPublicPath(path: string, method: string): boolean {
+  // Exact match (any method — login/register/logout use POST)
   if (PUBLIC_PATHS.includes(path)) return true;
   // Prefix match for OAuth sub-routes (e.g. /auth/google/callback?code=...)
   if (path.startsWith("/auth/google/") || path.startsWith("/auth/facebook/"))
     return true;
-  // Prefix match for public data endpoints (read-only)
-  for (const prefix of PUBLIC_PATH_PREFIXES) {
-    if (path.startsWith(prefix)) return true;
+  // Prefix match for public data endpoints — GET only (read-only)
+  if (method === "GET") {
+    for (const prefix of PUBLIC_PATH_PREFIXES) {
+      if (path.startsWith(prefix)) return true;
+    }
   }
   return false;
 }
@@ -111,7 +116,7 @@ export function globalAuthGate(
   const path = req.path;
 
   // 1. Let whitelisted public paths through
-  if (isPublicPath(path)) return next();
+  if (isPublicPath(path, req.method.toUpperCase())) return next();
 
   // 2. Non-API paths are static assets or SPA client routes — let through
   //    (Vite/serveStatic handles these; they don't expose server data)

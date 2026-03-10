@@ -6,6 +6,19 @@ const router = Router();
 // ─── ARTIST DIRECTORY (PUBLIC) ───
 // Mounted at /api/artists
 
+// Check if country_code column exists (cached after first query)
+let hasCountryCodeColumn: boolean | null = null;
+async function checkCountryCodeColumn(): Promise<boolean> {
+  if (hasCountryCodeColumn !== null) return hasCountryCodeColumn;
+  try {
+    await pool.query("SELECT country_code FROM artists LIMIT 0");
+    hasCountryCodeColumn = true;
+  } catch {
+    hasCountryCodeColumn = false;
+  }
+  return hasCountryCodeColumn;
+}
+
 // GET /api/artists/search
 router.get("/search", async (req, res) => {
   try {
@@ -21,6 +34,8 @@ router.get("/search", async (req, res) => {
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 12));
     const offset = (pageNum - 1) * limitNum;
+
+    const hasCC = await checkCountryCodeColumn();
 
     const conditions: string[] = [];
     const params: any[] = [];
@@ -38,7 +53,7 @@ router.get("/search", async (req, res) => {
       params.push(genre.trim());
       paramIdx++;
     }
-    if (countryCode.trim() && countryCode !== "all") {
+    if (hasCC && countryCode.trim() && countryCode !== "all") {
       conditions.push(`a.country_code = $${paramIdx}`);
       params.push(countryCode.trim().toUpperCase());
       paramIdx++;
@@ -66,8 +81,9 @@ router.get("/search", async (req, res) => {
     );
     const total = parseInt(countResult.rows[0]?.total || "0");
 
+    const ccSelect = hasCC ? ", a.country_code" : "";
     const dataResult = await pool.query(
-      `SELECT a.id, a.stage_name AS name, a.genre, a.label_status, a.spotify_url, a.business_id, a.user_id, a.country_code
+      `SELECT a.id, a.stage_name AS name, a.genre, a.label_status, a.spotify_url, a.business_id, a.user_id${ccSelect}
        FROM artists a ${whereClause} ${orderClause}
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...params, limitNum, offset],
@@ -107,6 +123,10 @@ router.get("/genres", async (_req, res) => {
 // GET /api/artists/countries
 router.get("/countries", async (_req, res) => {
   try {
+    const hasCC = await checkCountryCodeColumn();
+    if (!hasCC) {
+      return res.json({ success: true, data: [] });
+    }
     const result = await pool.query(
       "SELECT DISTINCT country_code FROM artists WHERE country_code IS NOT NULL AND country_code != '' ORDER BY country_code ASC",
     );

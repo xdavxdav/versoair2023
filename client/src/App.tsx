@@ -98,6 +98,11 @@ import VerificationPage from "@/pages/admin/verification";
 import AdminTicketManagement from "@/pages/admin/ticket-management";
 
 // ─────────────────────────────────────────────────────
+// 🔒 Route Guards
+// ─────────────────────────────────────────────────────
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// ─────────────────────────────────────────────────────
 // ❓ Help & Support
 // ─────────────────────────────────────────────────────
 import SAV from "@/pages/sav";
@@ -178,7 +183,9 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/blog" component={Blog} />
       <Route path="/faq" component={FaqPage} />
-      <Route path="/profile" component={Profile} />
+      <Route path="/profile">
+        {() => <ProtectedRoute component={Profile} />}
+      </Route>
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/partners" component={Partners} />
       <Route path="/status" component={SystemStatus} />
@@ -187,7 +194,9 @@ function Router() {
       <Route path="/artihuman-foundation" component={ArtiHumanFoundation} />
       <Route path="/impact" component={Impact} />
       <Route path="/tickets" component={Tickets} />
-      <Route path="/account/billing" component={BillingPage} />
+      <Route path="/account/billing">
+        {() => <ProtectedRoute component={BillingPage} />}
+      </Route>
       <Route path="/ad-campaigns" component={AdCampaignsPage} />
 
       {/* ═══════════════════════════════════════════════
@@ -224,10 +233,9 @@ function Router() {
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal" component={ArtistPortalWelcome} />
       <Route path="/artist-portal/signin" component={ArtistPortalSignIn} />
-      <Route
-        path="/artist-portal/dashboard"
-        component={ArtistPortalDashboard}
-      />
+      <Route path="/artist-portal/dashboard">
+        {() => <ProtectedRoute component={ArtistPortalDashboard} />}
+      </Route>
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
@@ -248,25 +256,38 @@ function Router() {
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
 
       {/* ═══════════════════════════════════════════════
-          🌍 GEO ADMIN — Subscriber portal
+          🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
       <Route path="/geo-admin" component={GeoAdminPage} />
-      <Route
-        path="/geo-admin/business-verification"
-        component={BusinessVerification}
-      />
-      <Route path="/geo-admin/immobilier" component={ImmobilierPortal} />
-      <Route path="/geo-admin/dashboard" component={AdminDashboard} />
+      <Route path="/geo-admin/business-verification">
+        {() => <ProtectedRoute component={BusinessVerification} />}
+      </Route>
+      <Route path="/geo-admin/immobilier">
+        {() => <ProtectedRoute component={ImmobilierPortal} />}
+      </Route>
+      <Route path="/geo-admin/dashboard">
+        {() => <ProtectedRoute component={AdminDashboard} roles={["admin", "moderator"]} />}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
-          🛡️ ADMIN HQ — Internal platform management
+          🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
           ═══════════════════════════════════════════════ */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/admin/database" component={DatabaseManagementCenter} />
-      <Route path="/admin/verification" component={VerificationPage} />
-      <Route path="/admin/tickets" component={AdminTicketManagement} />
+      <Route path="/dashboard">
+        {() => <ProtectedRoute component={Dashboard} roles={["admin", "moderator"]} />}
+      </Route>
+      <Route path="/admin/database">
+        {() => <ProtectedRoute component={DatabaseManagementCenter} roles={["admin"]} />}
+      </Route>
+      <Route path="/admin/verification">
+        {() => <ProtectedRoute component={VerificationPage} roles={["admin"]} />}
+      </Route>
+      <Route path="/admin/tickets">
+        {() => <ProtectedRoute component={AdminTicketManagement} roles={["admin", "moderator"]} />}
+      </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
-      <Route path="/sys/0x7f3a9c" component={CredentialsVault} />
+      <Route path="/sys/0x7f3a9c">
+        {() => <ProtectedRoute component={CredentialsVault} roles={["superuser"]} />}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           ❓ HELP & SUPPORT

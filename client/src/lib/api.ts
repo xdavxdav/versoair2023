@@ -193,9 +193,7 @@ export async function testDatabaseConnection(): Promise<{
   };
 }> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/status`,
-    );
+    const response = await fetch(`${API_BASE_URL}/api/status`);
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
