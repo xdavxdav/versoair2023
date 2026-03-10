@@ -1011,10 +1011,8 @@ function ArtistCarouselByCountry() {
   // Fetch ALL artists (no country filter) so we can group them
   const { data: artists, isLoading } = useMusicArtists();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const countryScrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [isCountryPaused, setIsCountryPaused] = useState(false);
-  const [showCountries, setShowCountries] = useState(false);
+  const [showCountryList, setShowCountryList] = useState(false);
 
   // Auto-scroll animation
   useEffect(() => {
@@ -1038,48 +1036,6 @@ function ArtistCarouselByCountry() {
     animId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animId);
   }, [artists, isPaused]);
-
-  // Auto-scroll for country chips (when expanded)
-  useEffect(() => {
-    const el = countryScrollRef.current;
-    if (!el || !showCountries) return;
-
-    let animId: number;
-    let scrollPos = 0;
-    const speed = 0.35;
-
-    const animate = () => {
-      if (!isCountryPaused && el) {
-        scrollPos += speed;
-        if (scrollPos >= el.scrollWidth / 2) {
-          scrollPos = 0;
-        }
-        el.scrollLeft = scrollPos;
-      }
-      animId = requestAnimationFrame(animate);
-    };
-
-    animId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animId);
-  }, [showCountries, isCountryPaused]);
-
-  // Lock page scroll while country list is open
-  useEffect(() => {
-    if (!showCountries) return;
-
-    const body = document.body;
-    const html = document.documentElement;
-    const prevBodyOverflow = body.style.overflow;
-    const prevHtmlOverflow = html.style.overflow;
-
-    body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
-
-    return () => {
-      body.style.overflow = prevBodyOverflow;
-      html.style.overflow = prevHtmlOverflow;
-    };
-  }, [showCountries]);
 
   if (isLoading) {
     return (
@@ -1116,68 +1072,69 @@ function ArtistCarouselByCountry() {
     return byCountry[cc].map((artist: any) => ({ artist, meta, cc }));
   });
   const duplicated = [...cards, ...cards]; // double for infinite scroll
+  const topCountryKey = countryKeys.reduce((best, cc) => {
+    if (!best) return cc;
+    return byCountry[cc].length > byCountry[best].length ? cc : best;
+  }, "");
+  const topCountryMeta = topCountryKey ? getCountryMeta(topCountryKey) : null;
 
   return (
     <div className="space-y-6">
       {/* Compact country summary (space-saving) */}
-      <div className="mb-2">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-purple-100">
-            🌍 {countryKeys.length} countries
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-purple-100">
-            🎤 {artists.length} artists
-          </span>
+      <div className="mb-2 rounded-xl border border-white/15 bg-white/5 backdrop-blur-sm px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-purple-100">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
+              🌍 {countryKeys.length} countries
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
+              🎤 {cards.length} artists
+            </span>
+            {topCountryMeta && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
+                ⭐ Top: {topCountryMeta.flag || "🌍"} {topCountryMeta.name} ({byCountry[topCountryKey].length})
+              </span>
+            )}
+          </div>
+
           <button
-            onClick={() => setShowCountries((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/25 border border-purple-300/30 text-xs font-semibold text-purple-100 hover:bg-purple-500/35 transition-colors"
+            type="button"
+            onClick={() => setShowCountryList((prev) => !prev)}
+            className="text-[11px] sm:text-xs px-2.5 py-1 rounded-full bg-purple-500/25 border border-purple-400/35 text-purple-100 hover:bg-purple-500/35 transition-colors"
           >
-            {showCountries ? "Hide list" : "Show countries"}
+            {showCountryList ? "Hide countries" : "View countries"}
           </button>
         </div>
 
-        <AnimatePresence initial={false}>
-          {showCountries && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div
-                ref={countryScrollRef}
-                onMouseEnter={() => setIsCountryPaused(true)}
-                onMouseLeave={() => setIsCountryPaused(false)}
-                className="flex flex-nowrap gap-1.5 mt-3 overflow-x-hidden"
-                style={{ scrollBehavior: "auto" }}
-              >
-                {[...countryKeys, ...countryKeys].map((cc, idx) => {
-                  const meta = getCountryMeta(cc);
-                  return (
-                    <span
-                      key={`${cc}-${idx}`}
-                      className="inline-flex flex-shrink-0 items-center gap-1 px-2 py-1 rounded-full bg-white/8 border border-white/15 text-[11px] text-purple-200"
-                    >
-                      <span className="text-sm">{meta.flag || "🌍"}</span>
-                      {meta.name || cc} ({byCountry[cc].length})
-                    </span>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showCountryList && (
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-purple-500/40 scrollbar-track-transparent">
+            {countryKeys.map((cc) => {
+              const meta = getCountryMeta(cc);
+              return (
+                <span
+                  key={cc}
+                  className="inline-flex whitespace-nowrap items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-[11px] text-purple-200"
+                >
+                  <span>{meta.flag || "🌍"}</span>
+                  {meta.name || cc} ({byCountry[cc].length})
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Scrolling carousel */}
-      <div
-        ref={scrollRef}
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        className="flex gap-5 overflow-x-hidden py-2"
-        style={{ scrollBehavior: "auto" }}
-      >
+      <div className="relative">
+        <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-10 bg-gradient-to-r from-slate-900/95 to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-10 bg-gradient-to-l from-slate-900/95 to-transparent" />
+        <div
+          ref={scrollRef}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="flex gap-4 overflow-x-hidden py-2 px-1"
+          style={{ scrollBehavior: "auto" }}
+        >
         {duplicated.map(({ artist, meta, cc }, i) => {
           const stageName = (artist as any)?.name?.trim() || "Unknown Artist";
           const initials = stageName
@@ -1191,17 +1148,17 @@ function ArtistCarouselByCountry() {
           return (
             <motion.div
               key={`${artist.id}-${i}`}
-              whileHover={{ scale: 1.04, y: -6 }}
-              className="flex-shrink-0 w-64 bg-gradient-to-br from-white/12 to-white/5 backdrop-blur-lg rounded-2xl p-5 border border-white/20 hover:border-purple-300/60 transition-all cursor-pointer group shadow-lg shadow-black/20 hover:shadow-purple-900/40"
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="relative overflow-hidden flex-shrink-0 w-60 bg-gradient-to-b from-white/15 via-white/7 to-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/20 hover:border-purple-400/55 transition-all cursor-pointer group shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
             >
-              <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-purple-400/70 via-fuchsia-400/70 to-indigo-400/70 mb-4" />
+              <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-purple-400/0 via-purple-300/90 to-pink-400/0" />
               <div className="flex flex-col items-center text-center">
                 {/* Avatar */}
-                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl ring-2 ring-white/20 group-hover:shadow-purple-500/50 transition-shadow relative">
+                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative ring-2 ring-white/25">
                   {initials}
                   {meta && (
                     <span
-                      className="absolute -bottom-1 -right-1 text-lg"
+                      className="absolute -bottom-1 -right-1 text-lg bg-slate-900/70 rounded-full px-1"
                       title={meta.name}
                     >
                       {meta.flag}
@@ -1215,7 +1172,7 @@ function ArtistCarouselByCountry() {
                 </h3>
 
                 {/* Genre + Country */}
-                <p className="text-purple-300 text-xs mb-2">
+                <p className="text-purple-300 text-xs mb-2 px-2 py-1 rounded-full bg-white/5 border border-white/10">
                   {(artist as any).genre || "Artiste"} • {meta.flag} {meta.name}
                 </p>
 
@@ -1226,7 +1183,7 @@ function ArtistCarouselByCountry() {
                 </div>
 
                 {/* Label status */}
-                <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-white/10 bg-black/10 rounded-lg px-2 pb-2">
                   <div className="text-center">
                     <div className="text-xs font-bold text-white">
                       {(artist as any).label_status === "signed"
@@ -1253,14 +1210,14 @@ function ArtistCarouselByCountry() {
                     href={(artist as any).spotify_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full mt-3 bg-gradient-to-r from-green-600 to-green-500 text-white py-1.5 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 text-sm"
+                    className="w-full mt-3 bg-gradient-to-r from-green-600 to-green-500 text-white py-1.5 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 text-sm shadow-md"
                   >
                     <Play className="w-3.5 h-3.5" />
                     Écouter
                   </a>
                 ) : (
                   <Link to="/artistes" className="w-full">
-                    <button className="w-full mt-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-1.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 text-sm">
+                    <button className="w-full mt-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-1.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 text-sm shadow-md">
                       <Music className="w-3.5 h-3.5" />
                       Voir le profil
                     </button>
@@ -1270,6 +1227,7 @@ function ArtistCarouselByCountry() {
             </motion.div>
           );
         })}
+        </div>
       </div>
     </div>
   );
