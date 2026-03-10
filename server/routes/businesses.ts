@@ -12,6 +12,19 @@ import {
 
 const router = Router();
 
+// ─── Cached column existence checks (production DB may lag behind schema) ───
+const _bizColCache: Record<string, boolean | null> = {};
+async function bizHasColumn(col: string): Promise<boolean> {
+  if (_bizColCache[col] !== undefined && _bizColCache[col] !== null) return _bizColCache[col]!;
+  try {
+    await pool.query(`SELECT ${col} FROM businesses LIMIT 0`);
+    _bizColCache[col] = true;
+  } catch {
+    _bizColCache[col] = false;
+  }
+  return _bizColCache[col]!;
+}
+
 // ============================================================================
 // COUNTRIES ENDPOINT
 // ============================================================================
@@ -330,6 +343,37 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     // 🛸 Growth Engine: Tier-weighted ranking algorithm
     // Joins owner's subscription tier and applies ranking multiplier:
     // enterprise(1) → max(2) → verified(3) → essential(4) → free(5)
+    //
+    // Dynamically include columns that may not exist on production yet
+    const optionalCols = [
+      'is_advertiser', 'is_premium', 'verified_at',
+      'popularity_score', 'pdf_path', 'approval_status'
+    ];
+    const colChecks = await Promise.all(
+      optionalCols.map(async (c) => ({ col: c, exists: await bizHasColumn(c) }))
+    );
+    const extraSelect = colChecks
+      .filter((c) => c.exists)
+      .map((c) => `b.${c.col}`)
+      .join(', ');
+    const extraSelectClause = extraSelect ? `, ${extraSelect}` : '';
+
+    const hasOwner = await bizHasColumn('owner_id');
+    const ownerJoin = hasOwner ? 'LEFT JOIN users u ON b.owner_id = u.id' : '';
+    const ownerTierSelect = hasOwner
+      ? ", COALESCE(u.subscription_tier, 'free') as owner_tier"
+      : ", 'free' as owner_tier";
+    const tierOrder = hasOwner
+      ? `CASE COALESCE(u.subscription_tier, 'free')
+          WHEN 'enterprise' THEN 1
+          WHEN 'max'        THEN 2
+          WHEN 'verified'   THEN 3
+          WHEN 'essential'  THEN 4
+          WHEN 'free'       THEN 5
+          ELSE 5
+        END ASC,`
+      : '';
+
     const dataQuery = `
       SELECT 
         b.id, b.name, b.category_id, b.description, 
@@ -337,27 +381,19 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         b.rating, b.reviews, b.tags, b.latitude, b.longitude,
         b.country_code, b.city_name,
         b.featured, b.is_active,
-        b.is_verified, b.is_advertiser, b.is_premium,
-        b.verified_at, b.website, b.popularity_score,
-        b.pdf_path, b.approval_status,
+        b.is_verified, b.website,
         CASE WHEN b.is_verified THEN 'verified' ELSE 'unverified' END as verification_status,
         b.created_at, b.updated_at,
-        bc.name as category_name,
-        COALESCE(u.subscription_tier, 'free') as owner_tier
+        bc.name as category_name
+        ${ownerTierSelect}
+        ${extraSelectClause}
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
-      LEFT JOIN users u ON b.owner_id = u.id
+      ${ownerJoin}
       ${whereClause}
       ORDER BY
         b.featured DESC NULLS LAST,
-        CASE COALESCE(u.subscription_tier, 'free')
-          WHEN 'enterprise' THEN 1
-          WHEN 'max'        THEN 2
-          WHEN 'verified'   THEN 3
-          WHEN 'essential'  THEN 4
-          WHEN 'free'       THEN 5
-          ELSE 5
-        END ASC,
+        ${tierOrder}
         b.${sortField} ${order}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
