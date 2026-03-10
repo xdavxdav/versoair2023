@@ -197,11 +197,25 @@ export async function autoSeedArtists(): Promise<void> {
       "SELECT column_name FROM information_schema.columns WHERE table_name = 'artists'",
     );
     const cols = new Set(colResult.rows.map((r: any) => r.column_name));
+
+    // Ensure country_code column exists (safety net if db:push missed it)
+    if (!cols.has("country_code")) {
+      try {
+        await pool.query("ALTER TABLE artists ADD COLUMN IF NOT EXISTS country_code VARCHAR(2)");
+        cols.add("country_code");
+        console.log("🔧 [AUTO-SEED] Added missing country_code column to artists");
+      } catch (err: any) {
+        console.error("⚠️  [AUTO-SEED] Could not add country_code column:", err.message);
+      }
+    }
+
     const hasCC = cols.has("country_code");
     const hasLabel = cols.has("label_status");
     const hasSpotify = cols.has("spotify_url");
 
-    console.log(`🎤 [AUTO-SEED] artists columns: country_code=${hasCC}, label_status=${hasLabel}, spotify_url=${hasSpotify}`);
+    console.log(
+      `🎤 [AUTO-SEED] artists columns: country_code=${hasCC}, label_status=${hasLabel}, spotify_url=${hasSpotify}`,
+    );
 
     // Check if already populated
     const { rows } = await pool.query(
@@ -215,7 +229,9 @@ export async function autoSeedArtists(): Promise<void> {
           "SELECT COUNT(*)::int AS cnt FROM artists WHERE country_code IS NULL",
         );
         if (nullCC.rows[0].cnt > 0) {
-          console.log(`🔄 [AUTO-SEED] Backfilling country_code for ${nullCC.rows[0].cnt} artists...`);
+          console.log(
+            `🔄 [AUTO-SEED] Backfilling country_code for ${nullCC.rows[0].cnt} artists...`,
+          );
           let updated = 0;
           for (const a of SEED_ARTISTS) {
             try {
@@ -228,12 +244,18 @@ export async function autoSeedArtists(): Promise<void> {
               // Non-fatal
             }
           }
-          console.log(`✅ [AUTO-SEED] Backfilled country_code for ${updated} artists`);
+          console.log(
+            `✅ [AUTO-SEED] Backfilled country_code for ${updated} artists`,
+          );
         } else {
-          console.log(`⏭️  [AUTO-SEED] artists already has ${rows[0].cnt} rows with country_codes — skipping`);
+          console.log(
+            `⏭️  [AUTO-SEED] artists already has ${rows[0].cnt} rows with country_codes — skipping`,
+          );
         }
       } else {
-        console.log(`⏭️  [AUTO-SEED] artists already has ${rows[0].cnt} rows — skipping`);
+        console.log(
+          `⏭️  [AUTO-SEED] artists already has ${rows[0].cnt} rows — skipping`,
+        );
       }
       return;
     }
