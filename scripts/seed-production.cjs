@@ -3774,14 +3774,36 @@ const TICKETS = [
     // ════════════════════════════════════════════════════════════════════
     console.log("\n🎤 Seeding artists...");
     let artistsInserted = 0;
+
+    // Check which columns exist on the artists table
+    let artistHasCC = false;
+    try {
+      await pool.query("SELECT country_code FROM artists LIMIT 0");
+      artistHasCC = true;
+    } catch { /* column doesn't exist yet */ }
+
     for (const a of ARTISTS) {
       try {
-        await pool.query(
-          `INSERT INTO artists (stage_name, genre, country_code, label_status, spotify_url)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT DO NOTHING`,
-          [a.stageName, a.genre, a.cc, a.labelStatus, a.spotify],
+        // Check if this artist already exists
+        const existing = await pool.query(
+          "SELECT id FROM artists WHERE stage_name = $1 LIMIT 1",
+          [a.stageName]
         );
+        if (existing.rows.length > 0) continue;
+
+        if (artistHasCC) {
+          await pool.query(
+            `INSERT INTO artists (stage_name, genre, country_code, label_status, spotify_url)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [a.stageName, a.genre, a.cc, a.labelStatus, a.spotify],
+          );
+        } else {
+          await pool.query(
+            `INSERT INTO artists (stage_name, genre, label_status, spotify_url)
+             VALUES ($1, $2, $3, $4)`,
+            [a.stageName, a.genre, a.labelStatus, a.spotify],
+          );
+        }
         artistsInserted++;
       } catch (err) {
         if (err.code === "42P01") {
@@ -3802,21 +3824,26 @@ const TICKETS = [
     let maInserted = 0;
     for (const ma of MUSIC_ARTISTS) {
       try {
+        // Check if this music artist already exists
+        const existing = await pool.query(
+          "SELECT id FROM music_artists WHERE name = $1 LIMIT 1",
+          [ma.name]
+        );
+        if (existing.rows.length > 0) {
+          musicArtistIdMap.push(existing.rows[0].id);
+          continue;
+        }
+
         const result = await pool.query(
           `INSERT INTO music_artists (name, genre, biography, total_streams, monthly_listeners, created_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
-           ON CONFLICT DO NOTHING RETURNING id`,
+           VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
           [ma.name, ma.genre, ma.bio, ma.streams, ma.listeners],
         );
         if (result.rows.length > 0) {
           musicArtistIdMap.push(result.rows[0].id);
           maInserted++;
         } else {
-          const existing = await pool.query(
-            `SELECT id FROM music_artists WHERE name=$1`,
-            [ma.name],
-          );
-          musicArtistIdMap.push(existing.rows[0]?.id || null);
+          musicArtistIdMap.push(null);
         }
       } catch (err) {
         if (err.code === "42P01") {
