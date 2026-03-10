@@ -609,9 +609,7 @@ export default function CardVaultPage() {
           </DialogHeader>
           <p className="text-sm text-gray-600 dark:text-gray-400 py-2">
             Are you sure you want to remove your{" "}
-            <strong className="capitalize">
-              {deleteTarget?.card_brand}
-            </strong>{" "}
+            <strong className="capitalize">{deleteTarget?.card_brand}</strong>{" "}
             card ending in <strong>{deleteTarget?.card_last4}</strong>?
           </p>
           {deleteTarget?.is_default && (

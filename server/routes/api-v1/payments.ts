@@ -607,7 +607,9 @@ router.get("/my-cards", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     if (!userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     const result = await pool.query(
@@ -641,7 +643,9 @@ router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
     const { cardId } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     // Verify card belongs to this user

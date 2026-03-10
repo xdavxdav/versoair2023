@@ -7,6 +7,7 @@ import {
   Globe,
   Lock,
   LogOut,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -526,18 +527,26 @@ export default function Navbar({
               </label>
             </div>
 
-            {/* Sign In Button or Logout - Always visible */}
+            {/* User Actions - Always visible */}
             {user ? (
-              <button
-                onClick={async () => {
-                  await logout();
-                  navigate("/");
-                }}
-                className="flex-shrink-0 flex items-center gap-1 bg-red-600 text-white px-2 md:px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
-              >
-                <LogOut className="h-3 w-3" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <Link href="/account/cards" className="flex-shrink-0">
+                  <button className="flex items-center gap-1 bg-amber-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-amber-700 transition-colors text-xs font-medium whitespace-nowrap">
+                    <CreditCard className="h-3 w-3" />
+                    <span className="hidden lg:inline">Card Vault</span>
+                  </button>
+                </Link>
+                <button
+                  onClick={async () => {
+                    await logout();
+                    navigate("/");
+                  }}
+                  className="flex-shrink-0 flex items-center gap-1 bg-red-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
+                >
+                  <LogOut className="h-3 w-3" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </div>
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">
                 <Button className="bg-primary text-white px-2 md:px-4 py-2 rounded-md hover:bg-primary/90 transition-colors text-xs font-medium whitespace-nowrap">
