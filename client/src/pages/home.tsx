@@ -1012,6 +1012,7 @@ function ArtistCarouselByCountry() {
   const { data: artists, isLoading } = useMusicArtists();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [showCountries, setShowCountries] = useState(false);
 
   // Auto-scroll animation
   useEffect(() => {
@@ -1074,20 +1075,49 @@ function ArtistCarouselByCountry() {
 
   return (
     <div className="space-y-6">
-      {/* Country filter pills */}
-      <div className="flex flex-wrap justify-center gap-2 mb-4">
-        {countryKeys.map((cc) => {
-          const meta = getCountryMeta(cc);
-          return (
-            <span
-              key={cc}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm text-purple-200"
+      {/* Compact country summary (space-saving) */}
+      <div className="mb-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-purple-100">
+            🌍 {countryKeys.length} countries
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-purple-100">
+            🎤 {artists.length} artists
+          </span>
+          <button
+            onClick={() => setShowCountries((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/25 border border-purple-300/30 text-xs font-semibold text-purple-100 hover:bg-purple-500/35 transition-colors"
+          >
+            {showCountries ? "Hide list" : "Show countries"}
+          </button>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {showCountries && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
             >
-              <span className="text-base">{meta.flag || "🌍"}</span>
-              {meta.name || cc} ({byCountry[cc].length})
-            </span>
-          );
-        })}
+              <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-h-24 overflow-y-auto pr-1">
+                {countryKeys.map((cc) => {
+                  const meta = getCountryMeta(cc);
+                  return (
+                    <span
+                      key={cc}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/8 border border-white/15 text-[11px] text-purple-200"
+                    >
+                      <span className="text-sm">{meta.flag || "🌍"}</span>
+                      {meta.name || cc} ({byCountry[cc].length})
+                    </span>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Scrolling carousel */}
@@ -1111,12 +1141,13 @@ function ArtistCarouselByCountry() {
           return (
             <motion.div
               key={`${artist.id}-${i}`}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="flex-shrink-0 w-64 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-5 border border-white/20 hover:border-purple-400/50 transition-all cursor-pointer group"
+              whileHover={{ scale: 1.04, y: -6 }}
+              className="flex-shrink-0 w-64 bg-gradient-to-br from-white/12 to-white/5 backdrop-blur-lg rounded-2xl p-5 border border-white/20 hover:border-purple-300/60 transition-all cursor-pointer group shadow-lg shadow-black/20 hover:shadow-purple-900/40"
             >
+              <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-purple-400/70 via-fuchsia-400/70 to-indigo-400/70 mb-4" />
               <div className="flex flex-col items-center text-center">
                 {/* Avatar */}
-                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative">
+                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl ring-2 ring-white/20 group-hover:shadow-purple-500/50 transition-shadow relative">
                   {initials}
                   {meta && (
                     <span
