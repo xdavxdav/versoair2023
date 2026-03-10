@@ -621,45 +621,33 @@ router.post(
 );
 
 /**
- * Usernames recognised by the AdminAccessGate frontend component.
- * Keep in sync with client/src/lib/admin-auth.ts ADMIN_USERS.
- * Each maps to a real DB user that will be looked up for JWT issuance.
- */
-const ADMIN_GATE_MAP: Record<string, string> = {
-  joel_007: "superadmin@versoair.test",
-  admin_001: "admin@versoair.test",
-  manager_001: "moderator@versoair.test",
-};
-
-/**
  * POST /auth/admin-gate
- * Issues a JWT for admin users after client-side code validation.
- * Looks up the corresponding DB user and issues a token with proper roles.
+ * Issues a JWT for users who have a gate_username set in the DB.
+ * The admin dashboard Users CRUD controls who gets gate access.
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
     const { username } = req.body;
 
-    if (!username || !ADMIN_GATE_MAP[username]) {
+    if (!username) {
       return res.status(403).json({
         success: false,
-        message: "Unknown admin username.",
+        message: "Username is required.",
       });
     }
 
-    // Look up the real DB user mapped to this admin gate username
-    const email = ADMIN_GATE_MAP[username];
+    // Look up user by gate_username column
     const [user] = await db
       .select()
       .from(schema.users)
-      .where(eq(schema.users.email, email))
+      .where(eq(schema.users.gateUsername, username.toLowerCase()))
       .limit(1);
 
     if (!user) {
       return res.status(403).json({
         success: false,
-        message: "Admin user not found in database. Run seed first.",
+        message: "Invalid gate username.",
       });
     }
 
