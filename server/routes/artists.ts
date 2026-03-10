@@ -11,11 +11,15 @@ let hasCountryCodeColumn: boolean | null = null;
 async function checkCountryCodeColumn(): Promise<boolean> {
   if (hasCountryCodeColumn !== null) return hasCountryCodeColumn;
   try {
-    await pool.query("SELECT country_code FROM artists LIMIT 0");
-    hasCountryCodeColumn = true;
+    const result = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'artists' AND column_name = 'country_code'`
+    );
+    hasCountryCodeColumn = result.rows.length > 0;
   } catch {
     hasCountryCodeColumn = false;
   }
+  console.log(`🎤 [ARTISTS] country_code column detected: ${hasCountryCodeColumn}`);
   return hasCountryCodeColumn;
 }
 
