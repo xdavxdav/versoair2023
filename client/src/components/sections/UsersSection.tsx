@@ -783,7 +783,9 @@ export function UsersSection() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   GeoAdmin Username
-                  <span className="text-xs text-slate-400 ml-1">(optional — grants gate access)</span>
+                  <span className="text-xs text-slate-400 ml-1">
+                    (optional — grants gate access)
+                  </span>
                 </label>
                 <input
                   type="text"

@@ -201,11 +201,18 @@ export async function autoSeedArtists(): Promise<void> {
     // Ensure country_code column exists (safety net if db:push missed it)
     if (!cols.has("country_code")) {
       try {
-        await pool.query("ALTER TABLE artists ADD COLUMN IF NOT EXISTS country_code VARCHAR(2)");
+        await pool.query(
+          "ALTER TABLE artists ADD COLUMN IF NOT EXISTS country_code VARCHAR(2)",
+        );
         cols.add("country_code");
-        console.log("🔧 [AUTO-SEED] Added missing country_code column to artists");
+        console.log(
+          "🔧 [AUTO-SEED] Added missing country_code column to artists",
+        );
       } catch (err: any) {
-        console.error("⚠️  [AUTO-SEED] Could not add country_code column:", err.message);
+        console.error(
+          "⚠️  [AUTO-SEED] Could not add country_code column:",
+          err.message,
+        );
       }
     }
 

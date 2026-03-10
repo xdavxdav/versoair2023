@@ -6,6 +6,9 @@ import { jobs, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, count, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { notifyNewJobPosted } from "../../../services/notification-service";
+import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
+
+const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 
 const router = Router();
 
@@ -195,6 +198,15 @@ router.post(
         console.error("[JOB] Notification trigger error:", err),
       );
 
+      // 📬 Send admin SMTP notification
+      sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+        action: "created",
+        entityType: "job",
+        entityName: title,
+        entityId: job.id,
+        details: { company, location, type, sector, experienceLevel, isRemote },
+      }).catch((err) => console.error("[JOB] Email notification error:", err));
+
       res.status(201).json({
         success: true,
         status: 201,
@@ -367,6 +379,15 @@ router.put(
         entityId: id,
       });
 
+      // 📬 Send admin SMTP notification
+      sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+        action: "updated",
+        entityType: "job",
+        entityName: updatedJob.title,
+        entityId: id,
+        details: { company: updatedJob.company, location: updatedJob.location, type: updatedJob.type, sector: updatedJob.sector },
+      }).catch((err) => console.error("[JOB] Email notification error:", err));
+
       res.json({
         success: true,
         status: 200,
@@ -436,6 +457,14 @@ router.delete(
         entityType: "job",
         entityId: id,
       });
+
+      // 📬 Send admin SMTP notification
+      sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+        action: "deleted",
+        entityType: "job",
+        entityName: job.title || `Job #${id}`,
+        entityId: id,
+      }).catch((err) => console.error("[JOB] Email notification error:", err));
 
       res.json({
         success: true,

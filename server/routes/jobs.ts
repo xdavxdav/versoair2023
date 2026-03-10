@@ -3,7 +3,9 @@ import { db, pool } from "../db";
 import { sql, eq, and, or, ilike, desc, count } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import jwt from "jsonwebtoken";
+import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
+const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 const router = Router();
 
 // GET /api/jobs — list all jobs
@@ -503,6 +505,16 @@ router.post("/", async (req, res) => {
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });
+
+    // 📬 Send SMTP notification (non-blocking)
+    const created = result.rows[0];
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "created",
+      entityType: "job",
+      entityName: created?.title || title,
+      entityId: created?.id || "unknown",
+      details: { company, location, type, sector, experienceLevel, isRemote },
+    }).catch((err) => console.error("[JOB] Email notification error:", err));
   } catch (error: any) {
     console.error("[JOBS] Create error:", error);
     res.status(500).json({ success: false, error: error.message });

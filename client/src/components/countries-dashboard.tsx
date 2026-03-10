@@ -957,6 +957,25 @@ export default function DatabaseExpert({
     countryCode: "",
   });
 
+  // ── Edit Artist dialog state ──
+  const [showEditArtist, setShowEditArtist] = useState(false);
+  const [isUpdatingArtist, setIsUpdatingArtist] = useState(false);
+  const [editingArtist, setEditingArtist] = useState<any>(null);
+  const [editArtist, setEditArtist] = useState({
+    stageName: "",
+    genre: "",
+    labelStatus: "unsigned",
+    spotifyUrl: "",
+    countryCode: "",
+  });
+
+  // ── Delete Artist state ──
+  const [deleteArtistTarget, setDeleteArtistTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [isDeletingArtist, setIsDeletingArtist] = useState(false);
+
   // ── Add Job dialog state ──
   const [showAddJob, setShowAddJob] = useState(false);
   const [isSubmittingJob, setIsSubmittingJob] = useState(false);
@@ -971,6 +990,29 @@ export default function DatabaseExpert({
     experienceLevel: "",
     isRemote: false,
   });
+
+  // ── Edit Job dialog state ──
+  const [showEditJob, setShowEditJob] = useState(false);
+  const [isUpdatingJob, setIsUpdatingJob] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
+  const [editJob, setEditJob] = useState({
+    title: "",
+    company: "",
+    location: "",
+    type: "Full-time",
+    sector: "general",
+    countryCode: "",
+    description: "",
+    experienceLevel: "",
+    isRemote: false,
+  });
+
+  // ── Delete Job state ──
+  const [deleteJobTarget, setDeleteJobTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeletingJob, setIsDeletingJob] = useState(false);
 
   const [notifications, setNotifications] = useState([
     {
@@ -2875,18 +2917,57 @@ export default function DatabaseExpert({
                             <h3 className="font-semibold text-slate-100 text-lg">
                               {artist.name}
                             </h3>
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${
-                                artist.label_status === "signed"
-                                  ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
-                                  : artist.label_status === "independent"
-                                    ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
-                                    : "bg-slate-500/20 border-slate-400/30 text-slate-300"
-                              }`}
-                            >
-                              {artist.label_status || "unsigned"}
-                            </Badge>
+                            <div className="flex items-center gap-1.5">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${
+                                  artist.label_status === "signed"
+                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    : artist.label_status === "independent"
+                                      ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
+                                      : "bg-slate-500/20 border-slate-400/30 text-slate-300"
+                                }`}
+                              >
+                                {artist.label_status || "unsigned"}
+                              </Badge>
+                              {canManage && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-slate-400 hover:text-purple-300 hover:bg-purple-500/10"
+                                    onClick={() => {
+                                      setEditingArtist(artist);
+                                      setEditArtist({
+                                        stageName: artist.name || artist.stage_name || "",
+                                        genre: artist.genre || "",
+                                        labelStatus: artist.label_status || "unsigned",
+                                        spotifyUrl: artist.spotify_url || "",
+                                        countryCode: artist.country_code || "",
+                                      });
+                                      setShowEditArtist(true);
+                                    }}
+                                    title="Edit artist"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                                    onClick={() =>
+                                      setDeleteArtistTarget({
+                                        id: artist.id,
+                                        name: artist.name || artist.stage_name || "Unknown",
+                                      })
+                                    }
+                                    title="Delete artist"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
                           <div className="space-y-1.5">
                             {artist.genre && (
@@ -3103,6 +3184,47 @@ export default function DatabaseExpert({
                               >
                                 {job.type || "full-time"}
                               </Badge>
+                              {canManage && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-slate-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                    onClick={() => {
+                                      setEditingJob(job);
+                                      setEditJob({
+                                        title: job.title || "",
+                                        company: job.company || "",
+                                        location: job.location || "",
+                                        type: job.type || "Full-time",
+                                        sector: job.sector || "general",
+                                        countryCode: job.country_code || "",
+                                        description: job.description || "",
+                                        experienceLevel: job.experience_level || "",
+                                        isRemote: job.is_remote || false,
+                                      });
+                                      setShowEditJob(true);
+                                    }}
+                                    title="Edit job"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                                    onClick={() =>
+                                      setDeleteJobTarget({
+                                        id: job.id,
+                                        title: job.title || "Unknown",
+                                      })
+                                    }
+                                    title="Delete job"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
@@ -4311,6 +4433,405 @@ export default function DatabaseExpert({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ── Edit Artist Dialog ── */}
+      <Dialog open={showEditArtist} onOpenChange={setShowEditArtist}>
+        <DialogContent className="max-w-md bg-slate-900/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-100">
+              <Pencil className="h-5 w-5 text-purple-400" />
+              Edit Artist
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Update artist details
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!editArtist.stageName.trim() || !editingArtist) {
+                toast({ title: "Stage name is required", variant: "destructive" });
+                return;
+              }
+              setIsUpdatingArtist(true);
+              try {
+                const res = await fetch(
+                  `${API_BASE_URL}/api/v1/admin/artists/${editingArtist.id}`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                      stageName: editArtist.stageName,
+                      genre: editArtist.genre || null,
+                      labelStatus: editArtist.labelStatus,
+                      spotifyUrl: editArtist.spotifyUrl || null,
+                    }),
+                  },
+                );
+                if (!res.ok) throw new Error("Failed to update artist");
+                toast({ title: "Artist updated successfully!" });
+                setShowEditArtist(false);
+                setEditingArtist(null);
+                queryClient.invalidateQueries({ queryKey: ["geo-artists"] });
+              } catch (err) {
+                toast({
+                  title: "Error",
+                  description: err instanceof Error ? err.message : "Failed",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsUpdatingArtist(false);
+              }
+            }}
+          >
+            <div className="space-y-2">
+              <Label className="text-slate-300">Stage Name *</Label>
+              <Input
+                value={editArtist.stageName}
+                onChange={(e) => setEditArtist({ ...editArtist, stageName: e.target.value })}
+                placeholder="e.g. DJ Arafat"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Genre</Label>
+              <Input
+                value={editArtist.genre}
+                onChange={(e) => setEditArtist({ ...editArtist, genre: e.target.value })}
+                placeholder="e.g. Afrobeats, Hip-Hop"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Label Status</Label>
+              <Select
+                value={editArtist.labelStatus}
+                onValueChange={(val) => setEditArtist({ ...editArtist, labelStatus: val })}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unsigned">Unsigned</SelectItem>
+                  <SelectItem value="signed">Signed</SelectItem>
+                  <SelectItem value="independent">Independent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Country Code</Label>
+              <Input
+                value={editArtist.countryCode}
+                onChange={(e) =>
+                  setEditArtist({ ...editArtist, countryCode: e.target.value.toUpperCase().slice(0, 2) })
+                }
+                placeholder="e.g. CI, NG, US"
+                maxLength={2}
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Spotify URL</Label>
+              <Input
+                value={editArtist.spotifyUrl}
+                onChange={(e) => setEditArtist({ ...editArtist, spotifyUrl: e.target.value })}
+                placeholder="https://open.spotify.com/artist/…"
+                className="bg-white/5 border-white/10 text-slate-100"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" className="text-slate-400" onClick={() => setShowEditArtist(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isUpdatingArtist} className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5">
+                {isUpdatingArtist ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {isUpdatingArtist ? "Updating…" : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Artist Confirmation ── */}
+      <AlertDialog open={!!deleteArtistTarget} onOpenChange={(open) => !open && setDeleteArtistTarget(null)}>
+        <AlertDialogContent className="bg-slate-950 border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-100">Delete Artist</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Are you sure you want to permanently delete{" "}
+              <strong className="text-slate-200">{deleteArtistTarget?.name}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-slate-300 hover:bg-white/5" disabled={isDeletingArtist}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeletingArtist}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteArtistTarget) return;
+                setIsDeletingArtist(true);
+                try {
+                  const response = await fetch(
+                    `${API_BASE_URL}/api/v1/admin/artists/${deleteArtistTarget.id}`,
+                    { method: "DELETE", credentials: "include" },
+                  );
+                  if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Delete failed");
+                  }
+                  toast({ title: "Deleted", description: `"${deleteArtistTarget.name}" has been removed` });
+                  queryClient.invalidateQueries({ queryKey: ["geo-artists"] });
+                  setDeleteArtistTarget(null);
+                } catch (error) {
+                  console.error("Delete artist error:", error);
+                  toast({
+                    title: "Error",
+                    description: error instanceof Error ? error.message : "Failed to delete",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsDeletingArtist(false);
+                }
+              }}
+            >
+              {isDeletingArtist ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</>
+              ) : (
+                "Delete Artist"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Edit Job Dialog ── */}
+      <Dialog open={showEditJob} onOpenChange={setShowEditJob}>
+        <DialogContent className="max-w-lg bg-slate-900/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-100">
+              <Pencil className="h-5 w-5 text-blue-400" />
+              Edit Job Listing
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Update job listing details
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4 max-h-[60vh] overflow-y-auto pr-1"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!editJob.title.trim() || !editJob.company.trim() || !editingJob) {
+                toast({ title: "Title and company are required", variant: "destructive" });
+                return;
+              }
+              setIsUpdatingJob(true);
+              try {
+                const res = await fetch(
+                  `${API_BASE_URL}/api/v1/admin/jobs/${editingJob.id}`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                      title: editJob.title,
+                      company: editJob.company,
+                      location: editJob.location || null,
+                      type: editJob.type,
+                      sector: editJob.sector,
+                      countryCode: editJob.countryCode || null,
+                      description: editJob.description || null,
+                      experienceLevel: editJob.experienceLevel || null,
+                      isRemote: editJob.isRemote,
+                    }),
+                  },
+                );
+                if (!res.ok) throw new Error("Failed to update job");
+                toast({ title: "Job updated successfully!" });
+                setShowEditJob(false);
+                setEditingJob(null);
+                queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
+              } catch (err) {
+                toast({
+                  title: "Error",
+                  description: err instanceof Error ? err.message : "Failed",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsUpdatingJob(false);
+              }
+            }}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2 col-span-2">
+                <Label className="text-slate-300">Job Title *</Label>
+                <Input
+                  value={editJob.title}
+                  onChange={(e) => setEditJob({ ...editJob, title: e.target.value })}
+                  placeholder="e.g. Senior Software Engineer"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Company *</Label>
+                <Input
+                  value={editJob.company}
+                  onChange={(e) => setEditJob({ ...editJob, company: e.target.value })}
+                  placeholder="e.g. TechNova"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Location</Label>
+                <Input
+                  value={editJob.location}
+                  onChange={(e) => setEditJob({ ...editJob, location: e.target.value })}
+                  placeholder="e.g. Abidjan, CI"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Type</Label>
+                <Select value={editJob.type} onValueChange={(val) => setEditJob({ ...editJob, type: val })}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full-time">Full-time</SelectItem>
+                    <SelectItem value="Part-time">Part-time</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                    <SelectItem value="Freelance">Freelance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Country Code</Label>
+                <Input
+                  value={editJob.countryCode}
+                  onChange={(e) => setEditJob({ ...editJob, countryCode: e.target.value.toUpperCase().slice(0, 2) })}
+                  placeholder="e.g. CI"
+                  maxLength={2}
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Experience Level</Label>
+                <Select value={editJob.experienceLevel} onValueChange={(val) => setEditJob({ ...editJob, experienceLevel: val })}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entry">Entry Level</SelectItem>
+                    <SelectItem value="mid">Mid Level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="lead">Lead / Principal</SelectItem>
+                    <SelectItem value="executive">Executive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Sector</Label>
+                <Select value={editJob.sector} onValueChange={(val) => setEditJob({ ...editJob, sector: val })}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="tech">Tech</SelectItem>
+                    <SelectItem value="commerce">Commerce</SelectItem>
+                    <SelectItem value="hotellerie">Hospitality</SelectItem>
+                    <SelectItem value="batiment">Construction</SelectItem>
+                    <SelectItem value="finances">Finance</SelectItem>
+                    <SelectItem value="sante">Health</SelectItem>
+                    <SelectItem value="communication">Communication</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label className="text-slate-300">Description</Label>
+                <Input
+                  value={editJob.description}
+                  onChange={(e) => setEditJob({ ...editJob, description: e.target.value })}
+                  placeholder="Brief description of the role…"
+                  className="bg-white/5 border-white/10 text-slate-100"
+                />
+              </div>
+              <div className="flex items-center gap-2 col-span-2">
+                <Switch
+                  checked={editJob.isRemote}
+                  onCheckedChange={(checked) => setEditJob({ ...editJob, isRemote: checked })}
+                />
+                <Label className="text-slate-300">Remote position</Label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" className="text-slate-400" onClick={() => setShowEditJob(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isUpdatingJob} className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5">
+                {isUpdatingJob ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {isUpdatingJob ? "Updating…" : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Job Confirmation ── */}
+      <AlertDialog open={!!deleteJobTarget} onOpenChange={(open) => !open && setDeleteJobTarget(null)}>
+        <AlertDialogContent className="bg-slate-950 border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-100">Delete Job</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Are you sure you want to permanently delete{" "}
+              <strong className="text-slate-200">{deleteJobTarget?.title}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-slate-300 hover:bg-white/5" disabled={isDeletingJob}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeletingJob}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteJobTarget) return;
+                setIsDeletingJob(true);
+                try {
+                  const response = await fetch(
+                    `${API_BASE_URL}/api/v1/admin/jobs/${deleteJobTarget.id}`,
+                    { method: "DELETE", credentials: "include" },
+                  );
+                  if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Delete failed");
+                  }
+                  toast({ title: "Deleted", description: `"${deleteJobTarget.title}" has been removed` });
+                  queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
+                  setDeleteJobTarget(null);
+                } catch (error) {
+                  console.error("Delete job error:", error);
+                  toast({
+                    title: "Error",
+                    description: error instanceof Error ? error.message : "Failed to delete",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsDeletingJob(false);
+                }
+              }}
+            >
+              {isDeletingJob ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</>
+              ) : (
+                "Delete Job"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

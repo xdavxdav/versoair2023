@@ -5621,10 +5621,7 @@ const RoleManagementSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowAssignModal(false)}
-            >
+            <Button variant="outline" onClick={() => setShowAssignModal(false)}>
               Cancel
             </Button>
             <Button
