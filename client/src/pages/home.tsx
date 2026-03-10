@@ -1442,20 +1442,19 @@ function ShowcaseToggle({
         </div>
       </button>
 
-      {/* Collapsible content */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Collapsible content — always mounted to preserve GSAP DOM refs */}
+      <motion.div
+        animate={
+          isOpen
+            ? { height: "auto", opacity: 1 }
+            : { height: 0, opacity: 0 }
+        }
+        initial={false}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="overflow-hidden"
+      >
+        {children}
+      </motion.div>
     </div>
   );
 }
@@ -1586,6 +1585,8 @@ export default function Home() {
 
   const toggleSection = useCallback((key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+    // Refresh GSAP ScrollTrigger after layout reflow so pins recalculate
+    setTimeout(() => ScrollTrigger.refresh(), 500);
   }, []);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
