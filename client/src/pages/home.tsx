@@ -1417,26 +1417,30 @@ function ShowcaseToggle({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative">
+    <div className="relative mb-1">
       <button
         onClick={onToggle}
-        className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-3 sm:py-4 ${gradient} text-white transition-all duration-300 hover:brightness-110 cursor-pointer border-b border-white/10`}
+        aria-expanded={isOpen}
+        className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 ${gradient} text-white transition-all duration-300 hover:brightness-110 hover:-translate-y-[1px] cursor-pointer border border-white/20 rounded-lg shadow-lg shadow-black/20 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60`}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          {icon}
-          <span className="text-sm sm:text-base md:text-lg font-semibold tracking-wide">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/15 ring-1 ring-white/20">
+            {icon}
+          </span>
+          <span className="text-xs sm:text-sm md:text-base font-semibold tracking-wide">
             {label}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 font-medium hidden sm:inline">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-white/70 font-semibold hidden sm:inline px-2 py-0.5 rounded-full bg-white/10 ring-1 ring-white/15">
             {isOpen ? "Collapse" : "Expand"}
           </span>
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 ring-1 ring-white/20"
           >
-            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 group-hover:text-white transition-colors" />
+            <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/80 group-hover:text-white transition-colors" />
           </motion.div>
         </div>
       </button>
