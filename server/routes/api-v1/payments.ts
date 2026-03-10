@@ -103,11 +103,22 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
     const user = userResult.rows[0];
     const amount = billingCycle === "annual" ? pricing.annual : pricing.monthly;
 
+    // Get or create Stripe customer so card is attached to their account
+    const customerId = await getOrCreateStripeCustomer(
+      userId,
+      user.email,
+      user.username,
+    );
+
     // Create Stripe Checkout Session (one-time payment model)
+    // setup_future_usage saves the card for future billing automatically
     const session = await stripe!.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      customer_email: user.email,
+      customer: customerId,
+      payment_intent_data: {
+        setup_future_usage: "off_session",
+      },
       line_items: [
         {
           price_data: {
@@ -184,53 +195,106 @@ router.post("/webhook", async (req: Request, res: Response) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const { userId, targetTier, billingCycle, type } = session.metadata || {};
 
-      if (!userId || !targetTier) {
-        console.error("⚠️ Missing metadata in checkout session:", session.id);
+      if (!userId) {
+        console.error("⚠️ Missing userId in checkout session:", session.id);
         break;
       }
 
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
+      // ── Subscription payment: record transaction + upgrade tier ──
+      if (targetTier) {
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN");
 
-        // 1. Record transaction
-        await client.query(
-          `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
-           VALUES (NULL, $1, $2, $3, 'completed', $4)`,
-          [
-            userId,
-            ((session.amount_total || 0) / 100).toFixed(2),
-            type || "subscription_fee",
-            session.id,
-          ],
-        );
+          // 1. Record transaction
+          await client.query(
+            `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
+             VALUES (NULL, $1, $2, $3, 'completed', $4)`,
+            [
+              userId,
+              ((session.amount_total || 0) / 100).toFixed(2),
+              type || "subscription_fee",
+              session.id,
+            ],
+          );
 
-        // 2. Upgrade user tier
-        const expiresAt = new Date();
-        if (billingCycle === "annual") {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        } else {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
+          // 2. Upgrade user tier
+          const expiresAt = new Date();
+          if (billingCycle === "annual") {
+            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+          } else {
+            expiresAt.setMonth(expiresAt.getMonth() + 1);
+          }
+
+          await client.query(
+            `UPDATE users
+             SET subscription_tier = $1,
+                 subscription_status = 'active',
+                 premium_expires_at = $2
+             WHERE id = $3`,
+            [targetTier, expiresAt.toISOString(), userId],
+          );
+
+          await client.query("COMMIT");
+          console.log(
+            `✅ Payment processed: User ${userId} → ${targetTier} (expires ${expiresAt.toISOString()})`,
+          );
+        } catch (dbError) {
+          await client.query("ROLLBACK");
+          console.error("❌ DB error processing payment:", dbError);
+        } finally {
+          client.release();
         }
+      }
 
-        await client.query(
-          `UPDATE users
-           SET subscription_tier = $1,
-               subscription_status = 'active',
-               premium_expires_at = $2
-           WHERE id = $3`,
-          [targetTier, expiresAt.toISOString(), userId],
-        );
+      // ── Auto-save the payment method used in this checkout ──
+      try {
+        const numericUserId = parseInt(userId);
+        if (session.payment_intent && typeof session.payment_intent === "string") {
+          // Payment mode: extract PM from PaymentIntent
+          const pi = await stripe!.paymentIntents.retrieve(session.payment_intent);
+          if (pi.payment_method && typeof pi.payment_method === "string" && pi.customer) {
+            await autoSavePaymentMethod(
+              pi.payment_method,
+              numericUserId,
+              typeof pi.customer === "string" ? pi.customer : pi.customer.id,
+            );
+          }
+        } else if (session.setup_intent && typeof session.setup_intent === "string") {
+          // Setup mode (add-card-session): extract PM from SetupIntent
+          const si = await stripe!.setupIntents.retrieve(session.setup_intent);
+          if (si.payment_method && typeof si.payment_method === "string" && si.customer) {
+            await autoSavePaymentMethod(
+              si.payment_method,
+              numericUserId,
+              typeof si.customer === "string" ? si.customer : si.customer.id,
+            );
+          }
+        }
+      } catch (autoSaveErr: any) {
+        console.error("⚠️ Auto-save card after checkout error:", autoSaveErr.message);
+      }
+      break;
+    }
 
-        await client.query("COMMIT");
-        console.log(
-          `✅ Payment processed: User ${userId} → ${targetTier} (expires ${expiresAt.toISOString()})`,
-        );
-      } catch (dbError) {
-        await client.query("ROLLBACK");
-        console.error("❌ DB error processing payment:", dbError);
-      } finally {
-        client.release();
+    case "setup_intent.succeeded": {
+      // Fired when a SetupIntent completes (card added via setup-intent endpoint)
+      const setupIntent = event.data.object as Stripe.SetupIntent;
+      const siUserId = setupIntent.metadata?.userId;
+
+      if (siUserId && setupIntent.payment_method && setupIntent.customer) {
+        try {
+          const pmId = typeof setupIntent.payment_method === "string"
+            ? setupIntent.payment_method
+            : setupIntent.payment_method.id;
+          const custId = typeof setupIntent.customer === "string"
+            ? setupIntent.customer
+            : setupIntent.customer.id;
+
+          await autoSavePaymentMethod(pmId, parseInt(siUserId), custId);
+        } catch (err: any) {
+          console.error("⚠️ Auto-save on setup_intent.succeeded error:", err.message);
+        }
       }
       break;
     }
@@ -408,6 +472,166 @@ async function getOrCreateStripeCustomer(
 
   return customerId;
 }
+
+// ─── HELPER: Auto-save a Stripe PaymentMethod to our DB ─────────────────────────
+
+/**
+ * Automatically saves a Stripe PaymentMethod to saved_payment_methods.
+ * Deduplicates by stripe_payment_method_id so the same card isn't stored twice.
+ * Called by webhook handlers when checkout/setup completes.
+ */
+async function autoSavePaymentMethod(
+  pmId: string,
+  userId: number,
+  customerId: string,
+  opts: { isDefault?: boolean; label?: string } = {},
+): Promise<void> {
+  if (!stripe) return;
+
+  try {
+    // Check if already saved
+    const existing = await pool.query(
+      `SELECT id FROM saved_payment_methods
+       WHERE stripe_payment_method_id = $1 AND status != 'deleted'`,
+      [pmId],
+    );
+    if (existing.rows.length > 0) {
+      console.log(`ℹ️ Card ${pmId} already saved, skipping duplicate.`);
+      return;
+    }
+
+    // Retrieve full card details from Stripe
+    const pm = await stripe.paymentMethods.retrieve(pmId);
+    if (!pm.card) {
+      console.warn(`⚠️ PM ${pmId} is not a card, skipping.`);
+      return;
+    }
+
+    // Attach to customer if not already
+    try {
+      await stripe.paymentMethods.attach(pmId, { customer: customerId });
+    } catch (attachErr: any) {
+      if (!attachErr.message?.includes("already been attached")) {
+        console.warn(`⚠️ Attach warning for ${pmId}:`, attachErr.message);
+      }
+    }
+
+    // If setting as default, unset others first
+    if (opts.isDefault) {
+      await pool.query(
+        `UPDATE saved_payment_methods SET is_default = false, updated_at = NOW() WHERE user_id = $1`,
+        [userId],
+      );
+    }
+
+    // Check if this is the user's first card → auto-set as default
+    const cardCount = await pool.query(
+      `SELECT COUNT(*) as cnt FROM saved_payment_methods WHERE user_id = $1 AND status != 'deleted'`,
+      [userId],
+    );
+    const isFirstCard = parseInt(cardCount.rows[0]?.cnt) === 0;
+    const makeDefault = opts.isDefault || isFirstCard;
+
+    const billing = pm.billing_details;
+    const autoLabel = opts.label || `${pm.card.brand?.toUpperCase()} •••• ${pm.card.last4}`;
+
+    await pool.query(
+      `INSERT INTO saved_payment_methods
+       (user_id, stripe_payment_method_id, stripe_customer_id, card_brand, card_last4,
+        card_exp_month, card_exp_year, cardholder_name, billing_email, billing_phone,
+        billing_address_line1, billing_address_line2, billing_city, billing_state,
+        billing_postal_code, billing_country, card_country, card_funding, card_issuer,
+        card_fingerprint, cvc_check,
+        is_default, label, preauthorized, currency, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,'active')`,
+      [
+        userId,
+        pmId,
+        customerId,
+        pm.card.brand,
+        pm.card.last4,
+        pm.card.exp_month,
+        pm.card.exp_year,
+        billing?.name || null,
+        billing?.email || null,
+        billing?.phone || null,
+        billing?.address?.line1 || null,
+        billing?.address?.line2 || null,
+        billing?.address?.city || null,
+        billing?.address?.state || null,
+        billing?.address?.postal_code || null,
+        billing?.address?.country || null,
+        pm.card.country || null,
+        pm.card.funding || null,
+        (pm.card as any).issuer || null,
+        (pm.card as any).fingerprint || null,
+        pm.card.checks?.cvc_check || null,
+        makeDefault,
+        autoLabel,
+        true,
+        "USD",
+      ],
+    );
+
+    console.log(
+      `✅ Auto-saved card: ${pm.card.brand} ****${pm.card.last4} → User ${userId}${makeDefault ? " (default)" : ""}`,
+    );
+  } catch (error: any) {
+    console.error(`❌ Auto-save PM error for ${pmId}:`, error.message);
+  }
+}
+
+// ─── ADD CARD SESSION (Stripe-hosted card collection) ───────────────────────────
+
+/**
+ * POST /api/v1/payments/add-card-session
+ * Creates a Stripe Checkout Session in 'setup' mode.
+ * Redirects user to Stripe's secure hosted page to enter card details.
+ * On completion, webhook auto-saves the card. No raw card numbers touch our server.
+ */
+router.post("/add-card-session", async (req: Request, res: Response) => {
+  if (!requireStripe(res)) return;
+
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const userResult = await pool.query(
+      `SELECT id, email, username FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const user = userResult.rows[0];
+    const customerId = await getOrCreateStripeCustomer(userId, user.email, user.username);
+
+    const origin = req.headers.origin || "http://localhost:5003";
+
+    const session = await stripe!.checkout.sessions.create({
+      mode: "setup",
+      customer: customerId,
+      payment_method_types: ["card"],
+      metadata: {
+        userId: String(userId),
+        type: "card_vault_add",
+      },
+      success_url: `${origin}/account/cards?card_added=true`,
+      cancel_url: `${origin}/account/cards?card_added=false`,
+    });
+
+    res.json({
+      success: true,
+      data: { url: session.url },
+    });
+  } catch (error: any) {
+    console.error("❌ Add card session error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // ─── SETUP INTENT (Pre-authorize card) ──────────────────────────────────────────
 
