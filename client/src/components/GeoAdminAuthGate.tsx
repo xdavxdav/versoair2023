@@ -42,15 +42,16 @@ interface GeoAdminAuthGateProps {
 export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
-  const [mode, setMode] = useState<"gate" | "signin">("gate");
+  const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -71,13 +72,47 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("geoadmin_session", "true");
         localStorage.setItem("geoadmin_username", email.split("@")[0]);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
-        // Set in-memory token so authenticatedFetch sends Authorization header
         setAuthToken(data.token);
         await initializeCsrfToken();
         setIsSuccess(true);
         onSignInSuccess(email.split("@")[0]);
       } else {
         setError(data.message || "Invalid credentials. Please try again.");
+      }
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeoAdminSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/auth/admin-gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username: username.toLowerCase() }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.token) {
+        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("geoadmin_session", "true");
+        localStorage.setItem("geoadmin_username", username.toLowerCase());
+        localStorage.setItem("geoadmin_login_time", new Date().toISOString());
+        setAuthToken(data.token);
+        await initializeCsrfToken();
+        setIsSuccess(true);
+        onSignInSuccess(username.toLowerCase());
+      } else {
+        setError(data.message || "Invalid username. Use format: username_xxx");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -146,6 +181,7 @@ export default function GeoAdminAuthGate({
       localStorage.removeItem("geoadmin_login_time");
       setIsSuccess(false);
       setMode("gate");
+      setUsername("");
       setPassword("");
       setEmail("");
     };
@@ -365,6 +401,46 @@ export default function GeoAdminAuthGate({
               </p>
             </div>
 
+            {/* Tab switcher */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => {
+                  setMode("signin");
+                  setError("");
+                  setEmail("");
+                  setPassword("");
+                  setUsername("");
+                  setShowPassword(false);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                  mode === "signin"
+                    ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
+                    : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                }`}
+              >
+                <User className="inline-block h-4 w-4 mr-1.5" />
+                Subscriber
+              </button>
+              <button
+                onClick={() => {
+                  setMode("geoadmin");
+                  setError("");
+                  setEmail("");
+                  setPassword("");
+                  setUsername("");
+                  setShowPassword(false);
+                }}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                  mode === "geoadmin"
+                    ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
+                    : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
+                }`}
+              >
+                <Lock className="inline-block h-4 w-4 mr-1.5" />
+                Geo Admin
+              </button>
+            </div>
+
             {/* Error */}
             {error && (
               <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
@@ -372,8 +448,9 @@ export default function GeoAdminAuthGate({
               </div>
             )}
 
-            {/* SIGN-IN FORM */}
-            <form onSubmit={handleSignIn} className="space-y-4">
+            {/* SUBSCRIBER SIGN-IN FORM */}
+            {mode === "signin" && (
+            <form onSubmit={handleSubscriberSignIn} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">
                   Email
@@ -502,6 +579,60 @@ export default function GeoAdminAuthGate({
                 </button>
               </div>
             </form>
+            )}
+
+            {/* GEO ADMIN SIGN-IN FORM */}
+            {mode === "geoadmin" && (
+              <form onSubmit={handleGeoAdminSignIn} className="space-y-4">
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
+                  <span className="font-medium">
+                    Geo Admin Access
+                  </span>
+                  <p className="text-emerald-300/80 mt-1">
+                    Use your admin username (e.g.{" "}
+                    <code className="bg-black/40 px-2 py-1 rounded">
+                      joel_007
+                    </code>
+                    )
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="username_xxx"
+                      required
+                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Authenticating…
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Access Geo Admin
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
 
             {/* Footer links */}
             <div className="mt-6 space-y-3 text-center">
