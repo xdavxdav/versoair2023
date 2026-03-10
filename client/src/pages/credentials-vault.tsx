@@ -6574,10 +6574,7 @@ export default function CredentialsVault() {
     return <AccessDenied />;
   }
 
-  // Show biometric gate on first load
-  if (!gateComplete) {
-    return <BiometricGate onComplete={() => setGateComplete(true)} />;
-  }
+  // Server already verified identity — no passphrase needed
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
