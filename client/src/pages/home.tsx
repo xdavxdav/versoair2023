@@ -1063,19 +1063,21 @@ function ArtistCarouselByCountry() {
     return () => cancelAnimationFrame(animId);
   }, [showCountries, isCountryPaused]);
 
-  // Disable global page scroll while countries list is shown
+  // Lock page scroll while country list is open
   useEffect(() => {
     if (!showCountries) return;
 
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const body = document.body;
+    const html = document.documentElement;
+    const prevBodyOverflow = body.style.overflow;
+    const prevHtmlOverflow = html.style.overflow;
 
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      html.style.overflow = prevHtmlOverflow;
     };
   }, [showCountries]);
 
