@@ -52,6 +52,27 @@ const PUBLIC_PATHS: string[] = [
   // Basic health check (load balancers / uptime monitors)
   "/api/status",
   "/api/health",
+  // Public-facing data (needed by home page & components before login)
+  "/api/countries",
+  "/api/categories",
+  "/api/business-categories",
+  "/api/public/dashboard-stats",
+];
+
+/**
+ * Public path PREFIXES — any path starting with these is public (GET only).
+ * Used for sub-routes like /api/home/stats?country=FR, /api/artists/search?q=...
+ */
+const PUBLIC_PATH_PREFIXES: string[] = [
+  "/api/home/",           // Home page stats
+  "/api/artists/",        // Artist directory (search, genres, countries)
+  "/api/business/search", // Business search
+  "/api/business/categories", // Business category listing
+  "/api/businesses/pool/",    // Business pool by category
+  "/api/category/",       // Category search
+  "/api/jobs/search",     // Public career portal
+  "/api/commerce/",       // Commerce search & analytics
+  "/api/properties/",     // Property search & analytics
 ];
 
 /**
@@ -64,6 +85,10 @@ function isPublicPath(path: string): boolean {
   // Prefix match for OAuth sub-routes (e.g. /auth/google/callback?code=...)
   if (path.startsWith("/auth/google/") || path.startsWith("/auth/facebook/"))
     return true;
+  // Prefix match for public data endpoints (read-only)
+  for (const prefix of PUBLIC_PATH_PREFIXES) {
+    if (path.startsWith(prefix)) return true;
+  }
   return false;
 }
 
