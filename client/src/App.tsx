@@ -119,6 +119,7 @@ import GuaranteeHelp from "@/pages/help/guarantee";
 // 💳 Billing & Ads
 // ─────────────────────────────────────────────────────
 import BillingPage from "@/pages/billing";
+import CardVaultPage from "@/pages/card-vault";
 import AdCampaignsPage from "@/pages/ad-campaigns";
 
 // ─────────────────────────────────────────────────────
@@ -196,6 +197,9 @@ function Router() {
       <Route path="/tickets" component={Tickets} />
       <Route path="/account/billing">
         {() => <ProtectedRoute component={BillingPage} />}
+      </Route>
+      <Route path="/account/cards">
+        {() => <ProtectedRoute component={CardVaultPage} />}
       </Route>
       <Route path="/ad-campaigns" component={AdCampaignsPage} />
 

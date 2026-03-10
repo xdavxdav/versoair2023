@@ -14,7 +14,8 @@ import {
 import { eq, like, count, desc, sql } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
-const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 const router = Router();
 
 // =======================
@@ -315,7 +316,10 @@ router.put("/artists/:id", async (req, res) => {
 router.delete("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [deleted] = await db.delete(artists).where(eq(artists.id, parseInt(id))).returning();
+    const [deleted] = await db
+      .delete(artists)
+      .where(eq(artists.id, parseInt(id)))
+      .returning();
     // 📬 Send SMTP notification
     sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
       action: "deleted",

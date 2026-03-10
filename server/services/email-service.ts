@@ -1093,21 +1093,28 @@ export async function sendGeoAdminCrudNotificationEmail(
     "http://localhost:5003";
 
   const actionEmoji =
-    data.action === "created" ? "✅" :
-    data.action === "updated" ? "📝" : "🗑️";
+    data.action === "created" ? "✅" : data.action === "updated" ? "📝" : "🗑️";
 
   const actionColor =
-    data.action === "created" ? "#059669" :
-    data.action === "updated" ? "#2563eb" : "#dc2626";
+    data.action === "created"
+      ? "#059669"
+      : data.action === "updated"
+        ? "#2563eb"
+        : "#dc2626";
 
   const actionGradient =
-    data.action === "created" ? "linear-gradient(135deg, #059669 0%, #10b981 100%)" :
-    data.action === "updated" ? "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)" :
-    "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+    data.action === "created"
+      ? "linear-gradient(135deg, #059669 0%, #10b981 100%)"
+      : data.action === "updated"
+        ? "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)"
+        : "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
 
   const entityIcon =
-    data.entityType === "business" ? "🏢" :
-    data.entityType === "artist" ? "🎤" : "💼";
+    data.entityType === "business"
+      ? "🏢"
+      : data.entityType === "artist"
+        ? "🎤"
+        : "💼";
 
   const subject = `${actionEmoji} ${data.entityType.charAt(0).toUpperCase() + data.entityType.slice(1)} ${data.action}: ${data.entityName} — Verso Air`;
 
@@ -1131,12 +1138,16 @@ export async function sendGeoAdminCrudNotificationEmail(
       <p>Entity Type: <span class="badge">${data.entityType}</span></p>
       <p class="meta">ID: ${data.entityId} · Action: ${data.action.toUpperCase()} · ${new Date().toLocaleString()}</p>
     </div>
-    ${detailsHtml ? `
+    ${
+      detailsHtml
+        ? `
     <div class="divider"></div>
     <h3 style="margin: 0 0 12px; color: #1a1a2e;">📋 Details</h3>
     <div style="background: #f8f9fa; border-radius: 8px; padding: 16px;">
       ${detailsHtml}
-    </div>` : ""}
+    </div>`
+        : ""
+    }
     ${data.performedBy ? `<p style="font-size: 13px; color: #888; margin-top: 16px;">Performed by: <strong>${data.performedBy}</strong></p>` : ""}
     <div class="divider"></div>
     <div style="text-align: center;">

@@ -10,7 +10,8 @@ import {
 import { eq, ilike, and, or, count, desc } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
 
-const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 
 const router = Router();
 
@@ -257,8 +258,17 @@ router.post(
       entityType: "business",
       entityName: name,
       entityId: business.id,
-      details: { email, phone, address, countryCode, cityName, category: category[0]?.name },
-    }).catch((err) => console.error("[BUSINESS] Email notification error:", err));
+      details: {
+        email,
+        phone,
+        address,
+        countryCode,
+        cityName,
+        category: category[0]?.name,
+      },
+    }).catch((err) =>
+      console.error("[BUSINESS] Email notification error:", err),
+    );
 
     res.status(201).json({
       success: true,
@@ -492,8 +502,15 @@ router.put(
       entityType: "business",
       entityName: updated.name,
       entityId: businessId,
-      details: { email: updated.email, phone: updated.phone, address: updated.address, countryCode: updated.countryCode },
-    }).catch((err) => console.error("[BUSINESS] Email notification error:", err));
+      details: {
+        email: updated.email,
+        phone: updated.phone,
+        address: updated.address,
+        countryCode: updated.countryCode,
+      },
+    }).catch((err) =>
+      console.error("[BUSINESS] Email notification error:", err),
+    );
 
     res.json({
       success: true,
@@ -551,7 +568,9 @@ router.delete(
       entityType: "business",
       entityName: business.name,
       entityId: businessId,
-    }).catch((err) => console.error("[BUSINESS] Email notification error:", err));
+    }).catch((err) =>
+      console.error("[BUSINESS] Email notification error:", err),
+    );
 
     res.json({
       success: true,
