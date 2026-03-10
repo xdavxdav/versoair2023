@@ -1669,125 +1669,133 @@ export async function registerRoutes(app: Express) {
   // ========== ADMIN DATABASE MANAGEMENT ENDPOINTS ==========
 
   // Get database statistics
-  app.get("/api/admin/database-stats", async (req, res) => {
-    try {
-      const tables = [
-        "users",
-        "businesses",
-        "business_categories",
-        "business_hours",
-        "business_services",
-        "business_reviews",
-        "analytics",
-        "reservations",
-        "ad_campaigns",
-        "ad_audiences",
-        "ad_creatives",
-        "ad_performance",
-        "billing_history",
-        "music_artists",
-        "music_tracks",
-        "music_analytics",
-        "countries",
-        "regions",
-        "cities",
-        "target_regions",
-        "jobs",
-        "job_applications",
-        "saved_jobs",
-        "commerce_categories",
-        "payment_methods",
-        "transactions",
-        "content_categories",
-        "content_pages",
-        "page_categories",
-        "notifications",
-        "user_favorites",
-      ];
+  app.get(
+    "/api/admin/database-stats",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const tables = [
+          "users",
+          "businesses",
+          "business_categories",
+          "business_hours",
+          "business_services",
+          "business_reviews",
+          "analytics",
+          "reservations",
+          "ad_campaigns",
+          "ad_audiences",
+          "ad_creatives",
+          "ad_performance",
+          "billing_history",
+          "music_artists",
+          "music_tracks",
+          "music_analytics",
+          "countries",
+          "regions",
+          "cities",
+          "target_regions",
+          "jobs",
+          "job_applications",
+          "saved_jobs",
+          "commerce_categories",
+          "payment_methods",
+          "transactions",
+          "content_categories",
+          "content_pages",
+          "page_categories",
+          "notifications",
+          "user_favorites",
+        ];
 
-      let totalRecords = 0;
-      const tableCounts: Record<string, number> = {};
+        let totalRecords = 0;
+        const tableCounts: Record<string, number> = {};
 
-      for (const tableName of tables) {
-        try {
-          const countResult = await db.execute(
-            sql.raw(`SELECT COUNT(*) as count FROM ${tableName}`),
-          );
-          const count = parseInt(
-            String((countResult.rows[0] as any)?.count) || "0",
-          );
-          tableCounts[tableName] = count;
-          totalRecords += count;
-        } catch (error) {
-          console.error(`Failed to count ${tableName}:`, error);
-          tableCounts[tableName] = 0;
+        for (const tableName of tables) {
+          try {
+            const countResult = await db.execute(
+              sql.raw(`SELECT COUNT(*) as count FROM ${tableName}`),
+            );
+            const count = parseInt(
+              String((countResult.rows[0] as any)?.count) || "0",
+            );
+            tableCounts[tableName] = count;
+            totalRecords += count;
+          } catch (error) {
+            console.error(`Failed to count ${tableName}:`, error);
+            tableCounts[tableName] = 0;
+          }
         }
-      }
 
-      res.json({
-        success: true,
-        totalRecords,
-        activeTables: tables.length,
-        tableCounts,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      console.error("❌ Failed to get database stats:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+        res.json({
+          success: true,
+          totalRecords,
+          activeTables: tables.length,
+          tableCounts,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error: any) {
+        console.error("❌ Failed to get database stats:", error);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    },
+  );
 
   // Get all data from a specific table
-  app.get("/api/admin/table/:tableName", async (req, res) => {
-    try {
-      const { tableName } = req.params;
-      const { search } = req.query;
+  app.get(
+    "/api/admin/table/:tableName",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const { tableName } = req.params;
+        const { search } = req.query;
 
-      // Validate table name - use all available tables from TABLE_NAME_MAP
-      const validTables = Object.keys(TABLE_NAME_MAP);
+        // Validate table name - use all available tables from TABLE_NAME_MAP
+        const validTables = Object.keys(TABLE_NAME_MAP);
 
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid table name",
-        });
-      }
-
-      // Get the schema table
-      const schemaName = TABLE_NAME_MAP[tableName];
-      console.log(`🔍 Looking up table: ${tableName} -> ${schemaName}`);
-      console.log(`📦 Schema has key "${schemaName}":`, schemaName in schema);
-      const table = schemaName ? (schema as any)[schemaName] : null;
-      console.log(`✅ Found table:`, !!table);
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema",
-        });
-      }
-
-      // Build query with optional search
-      let query: any = db.select().from(table);
-
-      // Add search if provided (basic implementation)
-      if (search && typeof search === "string") {
-        // This is a simple search - you can enhance it based on table structure
-        const nameField = (table as any).name;
-        if (nameField) {
-          query = query.where(ilike(nameField, `${search}%`));
+        if (!validTables.includes(tableName)) {
+          return res.status(400).json({
+            success: false,
+            error: "Invalid table name",
+          });
         }
+
+        // Get the schema table
+        const schemaName = TABLE_NAME_MAP[tableName];
+        console.log(`🔍 Looking up table: ${tableName} -> ${schemaName}`);
+        console.log(`📦 Schema has key "${schemaName}":`, schemaName in schema);
+        const table = schemaName ? (schema as any)[schemaName] : null;
+        console.log(`✅ Found table:`, !!table);
+        if (!table) {
+          return res.status(400).json({
+            success: false,
+            error: "Table not found in schema",
+          });
+        }
+
+        // Build query with optional search
+        let query: any = db.select().from(table);
+
+        // Add search if provided (basic implementation)
+        if (search && typeof search === "string") {
+          // This is a simple search - you can enhance it based on table structure
+          const nameField = (table as any).name;
+          if (nameField) {
+            query = query.where(ilike(nameField, `${search}%`));
+          }
+        }
+      } catch (error: any) {
+        console.error(`❌ Failed to fetch ${req.params.tableName}:`, error);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
       }
-    } catch (error: any) {
-      console.error(`❌ Failed to fetch ${req.params.tableName}:`, error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+    },
+  );
 
   // Create a new record in a table
   app.post(
@@ -2044,7 +2052,7 @@ export async function registerRoutes(app: Express) {
   );
 
   // Admin: Get database health metrics
-  app.get("/api/admin/health", async (req, res) => {
+  app.get("/api/admin/health", requireAuth(["admin"]), async (req, res) => {
     try {
       // Query database for connection count
       const connResult = await db.execute(
@@ -2145,24 +2153,28 @@ export async function registerRoutes(app: Express) {
   });
 
   // Admin: Get category stats (counts per category)
-  app.get("/api/admin/category-stats", async (req, res) => {
-    try {
-      const result = await db.execute(
-        sql.raw(`
+  app.get(
+    "/api/admin/category-stats",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const result = await db.execute(
+          sql.raw(`
         SELECT c.id, c.name, c.parent_id, c.category_type, COUNT(b.*) AS businesses_count
         FROM categories c
         LEFT JOIN businesses b ON b.category_id = c.id
         GROUP BY c.id, c.name, c.parent_id, c.category_type
         ORDER BY businesses_count DESC, c.name
       `),
-      );
+        );
 
-      res.json({ success: true, data: result.rows });
-    } catch (error: any) {
-      console.error("❌ Failed to fetch category stats:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
+        res.json({ success: true, data: result.rows });
+      } catch (error: any) {
+        console.error("❌ Failed to fetch category stats:", error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    },
+  );
 
   // Admin: Preview mapping of businesses -> categories by business_type -> category.name
   app.post(
@@ -2229,7 +2241,7 @@ export async function registerRoutes(app: Express) {
   );
 
   // Admin: Get full hierarchical categories (for management)
-  app.get("/api/admin/categories", async (req, res) => {
+  app.get("/api/admin/categories", requireAuth(["admin"]), async (req, res) => {
     try {
       console.log("🔍 Fetching admin categories (no slug)");
       const result = await db.execute(
@@ -3174,8 +3186,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get all tables from database
-  app.get("/api/tables", async (req, res) => {
+  // Get all tables from database (admin only)
+  app.get("/api/tables", requireAuth(["admin"]), async (req, res) => {
     try {
       const result = await db.execute(
         sql.raw(`
@@ -3729,50 +3741,54 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Debug endpoint for business structure
-  app.get("/api/debug/businesses-structure", async (req, res) => {
-    try {
-      const sampleResult = await db
-        .select({
-          business: schema.businesses,
-          category: schema.businessCategories,
-        })
-        .from(schema.businesses)
-        .leftJoin(
-          schema.businessCategories,
-          eq(schema.businesses.categoryId, schema.businessCategories.id),
-        )
-        .limit(5);
+  // Debug endpoint for business structure (admin only)
+  app.get(
+    "/api/debug/businesses-structure",
+    requireAuth(["admin"]),
+    async (req, res) => {
+      try {
+        const sampleResult = await db
+          .select({
+            business: schema.businesses,
+            category: schema.businessCategories,
+          })
+          .from(schema.businesses)
+          .leftJoin(
+            schema.businessCategories,
+            eq(schema.businesses.categoryId, schema.businessCategories.id),
+          )
+          .limit(5);
 
-      const businessCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.businesses);
+        const businessCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.businesses);
 
-      const categoryCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.businessCategories);
+        const categoryCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.businessCategories);
 
-      res.json({
-        success: true,
-        sampleData: sampleResult,
-        businessCount: businessCount[0]?.count || 0,
-        categoryCount: categoryCount[0]?.count || 0,
-        schemaInfo: {
-          businesses: Object.keys(schema.businesses),
-          businessCategories: Object.keys(schema.businessCategories),
-        },
-      });
-    } catch (error: any) {
-      console.error("❌ Debug failed:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
-  });
+        res.json({
+          success: true,
+          sampleData: sampleResult,
+          businessCount: businessCount[0]?.count || 0,
+          categoryCount: categoryCount[0]?.count || 0,
+          schemaInfo: {
+            businesses: Object.keys(schema.businesses),
+            businessCategories: Object.keys(schema.businessCategories),
+          },
+        });
+      } catch (error: any) {
+        console.error("❌ Debug failed:", error);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    },
+  );
 
-  // Debug endpoint for countries
-  app.get("/api/debug/countries", async (req, res) => {
+  // Debug endpoint for countries (admin only)
+  app.get("/api/debug/countries", requireAuth(["admin"]), async (req, res) => {
     try {
       const rawData = await db
         .select()

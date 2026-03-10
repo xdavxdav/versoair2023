@@ -38,6 +38,7 @@ import { initializeEmailTransporter } from "./services/email-service";
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
+import { globalAuthGate } from "./middleware/auth";
 
 const app = express();
 
@@ -111,6 +112,11 @@ app.use(express.urlencoded({ extended: false }));
 // ─── CSRF protection ──────────────────────────────────────────────────────────
 app.use(csrfSetCookie);
 app.use(csrfProtect);
+
+// ─── 🔒 GLOBAL AUTH GATE — every request must be authenticated ────────────────
+// Only whitelisted paths (login, register, health) are exempt.
+// Superuser gets unrestricted free pass on all routes.
+app.use(globalAuthGate);
 
 // ---------- Logging middleware ----------
 app.use((req, res, next) => {

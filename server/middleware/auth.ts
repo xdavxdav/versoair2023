@@ -28,6 +28,107 @@ function extractToken(req: Request): string | null {
   return null;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔒 PUBLIC PATH WHITELIST — only these paths skip authentication
+// Everything else REQUIRES a valid JWT. Superusers get unrestricted access.
+// ═══════════════════════════════════════════════════════════════════════════════
+const PUBLIC_PATHS: string[] = [
+  // Auth endpoints (must be accessible to log in)
+  "/auth/login",
+  "/auth/register",
+  "/auth/logout",
+  "/auth/verify-token",
+  "/auth/verify-email",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/refresh-token",
+  // OAuth flows
+  "/auth/google",
+  "/auth/google/callback",
+  "/auth/facebook",
+  "/auth/facebook/callback",
+  // CSRF token (needed before login)
+  "/api/csrf-token",
+  // Basic health check (load balancers / uptime monitors)
+  "/api/status",
+  "/api/health",
+];
+
+/**
+ * Check if a request path matches any whitelisted public path.
+ * Supports exact matches and prefix matching for OAuth redirect chains.
+ */
+function isPublicPath(path: string): boolean {
+  // Exact match
+  if (PUBLIC_PATHS.includes(path)) return true;
+  // Prefix match for OAuth sub-routes (e.g. /auth/google/callback?code=...)
+  if (path.startsWith("/auth/google/") || path.startsWith("/auth/facebook/"))
+    return true;
+  return false;
+}
+
+/**
+ * 🔒 GLOBAL AUTH GATE — applied to EVERY request before route handlers.
+ *
+ * Rules:
+ *  1. Whitelisted public paths (login, register, health) → pass through
+ *  2. Non-API / non-auth paths (static assets, SPA routes) → pass through
+ *  3. Everything else → MUST have a valid JWT
+ *  4. Superuser → unrestricted free pass on all routes
+ *  5. All other authenticated users → allowed through the gate
+ *     (individual routes still enforce role-based checks via requireAuth)
+ */
+export function globalAuthGate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const path = req.path;
+
+  // 1. Let whitelisted public paths through
+  if (isPublicPath(path)) return next();
+
+  // 2. Non-API paths are static assets or SPA client routes — let through
+  //    (Vite/serveStatic handles these; they don't expose server data)
+  if (!path.startsWith("/api/") && !path.startsWith("/auth/")) return next();
+
+  // 3. Must have a valid JWT for any /api/* or /auth/* path
+  try {
+    const token = extractToken(req);
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "AUTH_REQUIRED",
+          message: "Authentication required. Please log in.",
+        },
+      });
+    }
+
+    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    };
+
+    // 4. Superuser gets unrestricted free pass
+    // 5. All other authenticated users pass through the gate
+    //    (route-level requireAuth() still enforces role checks downstream)
+    next();
+  } catch {
+    return res.status(401).json({
+      success: false,
+      status: 401,
+      error: {
+        code: "INVALID_TOKEN",
+        message: "Invalid or expired token. Please log in again.",
+      },
+    });
+  }
+}
+
 /**
  * Middleware to check if user is authenticated.
  * Accepts token from Authorization header OR HttpOnly cookie.
