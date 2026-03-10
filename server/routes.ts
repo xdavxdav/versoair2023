@@ -174,6 +174,27 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ─── Public Categories endpoint (used by admin dashboard + BusinessForm component) ───
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const result = await db
+        .select({
+          id: schema.businessCategories.id,
+          name: schema.businessCategories.name,
+          slug: schema.businessCategories.slug,
+          description: schema.businessCategories.description,
+          parentId: schema.businessCategories.parentId,
+          mainCategory: schema.businessCategories.mainCategory,
+        })
+        .from(schema.businessCategories)
+        .orderBy(schema.businessCategories.name);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
   // ─── Ad Campaigns endpoint (used by geo-admin dashboard) ───
   app.get("/api/ad-campaigns", async (req, res) => {
     try {

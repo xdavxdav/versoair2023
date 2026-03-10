@@ -969,7 +969,7 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
     // 5. Audit log
     try {
       await db.insert(auditLogs).values({
-        userId: userId || 0,
+        userId: userId || null,
         action: "BUSINESS_SUBMITTED_FOR_APPROVAL",
         entityType: "business",
         entityId: String(newBusiness.id),
@@ -1077,7 +1077,7 @@ router.put(
       // Audit log
       try {
         await db.insert(auditLogs).values({
-          userId: approvedBy || 0,
+          userId: approvedBy || null,
           action: "BUSINESS_APPROVED",
           entityType: "business",
           entityId: String(id),
@@ -1161,7 +1161,7 @@ router.put(
       // Audit log
       try {
         await db.insert(auditLogs).values({
-          userId: rejectedBy || 0,
+          userId: rejectedBy || null,
           action: "BUSINESS_REJECTED",
           entityType: "business",
           entityId: String(id),
