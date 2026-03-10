@@ -4882,6 +4882,10 @@ const RoleManagementSection = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [assignSearch, setAssignSearch] = useState("");
   const [newRole, setNewRole] = useState({
     name: "",
     description: "",
@@ -4924,6 +4928,61 @@ const RoleManagementSection = () => {
       toast({
         title: "Error",
         description: "Failed to load roles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAssignableUsers = async (search = "") => {
+    try {
+      const params = new URLSearchParams({ limit: "50" });
+      if (search.trim()) params.set("search", search.trim());
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/users?${params}`,
+      );
+      const data = await res.json();
+      if (data.success) setAssignableUsers(data.data || []);
+    } catch (e) {
+      console.error("Failed to fetch users for assignment:", e);
+    }
+  };
+
+  const handleAssignUser = async () => {
+    if (!selectedRole || !selectedUserId) return;
+    setLoading(true);
+    try {
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/roles/${selectedRole.id}/assign`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: selectedUserId }),
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        setShowAssignModal(false);
+        setSelectedUserId("");
+        setAssignSearch("");
+        fetchRoles();
+        toast({
+          title: "Success",
+          description: `User assigned to ${selectedRole.name} role`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error?.message || "Failed to assign user",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to assign user:", e);
+      toast({
+        title: "Error",
+        description: "Failed to assign user to role",
         variant: "destructive",
       });
     } finally {
@@ -5207,6 +5266,22 @@ const RoleManagementSection = () => {
                       <EditIcon className="h-3 w-3" />
                       Edit
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedRole(role);
+                        setAssignSearch("");
+                        setSelectedUserId("");
+                        fetchAssignableUsers();
+                        setShowAssignModal(true);
+                      }}
+                    >
+                      <UserPlus className="h-3 w-3" />
+                      Assign
+                    </Button>
                     {!role.isSystem && (
                       <Button
                         variant="destructive"
@@ -5464,6 +5539,105 @@ const RoleManagementSection = () => {
                 <Trash2 className="h-4 w-4" />
               )}
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign User to Role Dialog */}
+      <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign User to Role</DialogTitle>
+            <DialogDescription>
+              Select a user to assign to the{" "}
+              <span className="font-semibold capitalize">
+                {selectedRole?.name?.replace(/_/g, " ")}
+              </span>{" "}
+              role
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Search Users</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="Search by name or email..."
+                  value={assignSearch}
+                  onChange={(e) => setAssignSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      fetchAssignableUsers(assignSearch);
+                    }
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchAssignableUsers(assignSearch)}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="max-h-60 overflow-y-auto border rounded-lg divide-y">
+              {assignableUsers.length === 0 ? (
+                <p className="text-sm text-gray-500 p-4 text-center">
+                  No users found
+                </p>
+              ) : (
+                assignableUsers.map((u: any) => (
+                  <label
+                    key={u.id}
+                    className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      String(selectedUserId) === String(u.id)
+                        ? "bg-blue-50"
+                        : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="assign-user"
+                      value={u.id}
+                      checked={String(selectedUserId) === String(u.id)}
+                      onChange={() => setSelectedUserId(String(u.id))}
+                      className="accent-blue-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {u.username}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {u.email}
+                      </p>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                      {u.role}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAssignModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignUser}
+              disabled={loading || !selectedUserId}
+              className="gap-2 bg-gradient-to-r from-emerald-500 to-cyan-500"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
+              Assign Role
             </Button>
           </DialogFooter>
         </DialogContent>
