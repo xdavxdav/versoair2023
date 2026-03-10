@@ -637,9 +637,14 @@ router.post(
       });
     }
 
-    // Look up user by gate_username column
+    // Look up user by gate_username column (select only needed fields to avoid missing-column errors)
     const [user] = await db
-      .select()
+      .select({
+        id: schema.users.id,
+        email: schema.users.email,
+        role: schema.users.role,
+        subscriptionTier: schema.users.subscriptionTier,
+      })
       .from(schema.users)
       .where(eq(schema.users.gateUsername, username.toLowerCase()))
       .limit(1);
@@ -656,7 +661,7 @@ router.post(
         userId: String(user.id),
         email: user.email,
         role: user.role || "admin",
-        subscriptionTier: user.subscription_tier || "enterprise",
+        subscriptionTier: user.subscriptionTier || "enterprise",
       },
       getJwtSecret(),
       { expiresIn: JWT_EXPIRES_IN },
