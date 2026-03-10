@@ -1400,6 +1400,66 @@ const ALL_CATEGORIES = [
   "Animal Training",
 ];
 
+// ── Collapsible showcase section wrapper ──
+function ShowcaseToggle({
+  label,
+  icon,
+  isOpen,
+  onToggle,
+  gradient,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  gradient: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      {/* Toggle bar */}
+      <button
+        onClick={onToggle}
+        className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-3 sm:py-4 ${gradient} text-white transition-all duration-300 hover:brightness-110 cursor-pointer border-b border-white/10`}
+      >
+        <div className="flex items-center gap-2 sm:gap-3">
+          {icon}
+          <span className="text-sm sm:text-base md:text-lg font-semibold tracking-wide">
+            {label}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-white/60 font-medium hidden sm:inline">
+            {isOpen ? "Collapse" : "Expand"}
+          </span>
+          <motion.div
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 group-hover:text-white transition-colors" />
+          </motion.div>
+        </div>
+      </button>
+
+      {/* Collapsible content */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // MAIN HOME COMPONENT
 export default function Home() {
   // Inject gold text styles
@@ -1499,6 +1559,34 @@ export default function Home() {
   const cardsSectionRef = useRef<HTMLDivElement>(null);
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const panelsWrapperRef = useRef<HTMLDivElement>(null);
+
+  // ── Collapsible showcase sections ──
+  // Persist open/closed state in localStorage so it remembers across visits
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem("va_showcase_sections");
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    // Default: all collapsed for a lean, professional look
+    return {
+      panels: false,
+      artisans: false,
+      annuaire: false,
+      music: false,
+      partners: false,
+      volunteer: false,
+    };
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("va_showcase_sections", JSON.stringify(expandedSections));
+    } catch {}
+  }, [expandedSections]);
+
+  const toggleSection = useCallback((key: string) => {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const debouncedLocationQuery = useDebounce(locationQuery, 500);
@@ -2653,6 +2741,14 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══ COLLAPSIBLE SHOWCASE SECTIONS ═══ */}
+      <ShowcaseToggle
+        label="Discover Our Mission"
+        icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.panels}
+        onToggle={() => toggleSection("panels")}
+        gradient="bg-gradient-to-r from-emerald-700 to-emerald-800"
+      >
       {/* FIXED PANELS SECTION - Smooth zoom-out → slide → zoom-in */}
       <div
         className="panels-wrapper relative h-[100dvh] overflow-hidden"
@@ -3414,7 +3510,15 @@ export default function Home() {
           </div>
         </div>
       </div>
+      </ShowcaseToggle>
 
+      <ShowcaseToggle
+        label="Featured Artisans"
+        icon={<Palette className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.artisans}
+        onToggle={() => toggleSection("artisans")}
+        gradient="bg-gradient-to-r from-slate-700 to-slate-800"
+      >
       {/* Featured Artisans Section */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3543,7 +3647,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ShowcaseToggle>
 
+      <ShowcaseToggle
+        label="Annuaire Musicale"
+        icon={<Music className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.annuaire}
+        onToggle={() => toggleSection("annuaire")}
+        gradient="bg-gradient-to-r from-purple-800 to-purple-900"
+      >
       {/* Annuaire Musicale - Artist Directory Section */}
       <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 via-purple-900/60 to-slate-900 relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -3840,7 +3952,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ShowcaseToggle>
 
+      <ShowcaseToggle
+        label="Verso Air Music Label"
+        icon={<Disc3 className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.music}
+        onToggle={() => toggleSection("music")}
+        gradient="bg-gradient-to-r from-indigo-800 to-purple-900"
+      >
       {/* Verso Air Music Artists Section */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 relative overflow-hidden">
         {/* Background Effects */}
@@ -3887,7 +4007,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ShowcaseToggle>
 
+      <ShowcaseToggle
+        label="Partners & Sponsors"
+        icon={<Handshake className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.partners}
+        onToggle={() => toggleSection("partners")}
+        gradient="bg-gradient-to-r from-emerald-600 to-teal-700"
+      >
       {/* Partners & Sponsors Section */}
       <section className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3965,6 +4093,15 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      </ShowcaseToggle>
+
+      <ShowcaseToggle
+        label="Volunteer With Us"
+        icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5" />}
+        isOpen={!!expandedSections.volunteer}
+        onToggle={() => toggleSection("volunteer")}
+        gradient="bg-gradient-to-r from-amber-600 to-orange-700"
+      >
       <section className="py-12 md:py-20 bg-gradient-to-br from-emerald-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
@@ -4072,6 +4209,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ShowcaseToggle>
 
       <ResponsiveFooter countryMeta={countryMeta} />
 
