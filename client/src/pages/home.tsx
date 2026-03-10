@@ -1400,7 +1400,7 @@ const ALL_CATEGORIES = [
   "Animal Training",
 ];
 
-// ── Collapsible showcase section wrapper ──
+// Collapsible section toggle — always-mounted to preserve GSAP DOM refs
 function ShowcaseToggle({
   label,
   icon,
@@ -1418,7 +1418,6 @@ function ShowcaseToggle({
 }) {
   return (
     <div className="relative">
-      {/* Toggle bar */}
       <button
         onClick={onToggle}
         className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-3 sm:py-4 ${gradient} text-white transition-all duration-300 hover:brightness-110 cursor-pointer border-b border-white/10`}
@@ -1441,14 +1440,8 @@ function ShowcaseToggle({
           </motion.div>
         </div>
       </button>
-
-      {/* Collapsible content — always mounted to preserve GSAP DOM refs */}
       <motion.div
-        animate={
-          isOpen
-            ? { height: "auto", opacity: 1 }
-            : { height: 0, opacity: 0 }
-        }
+        animate={isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
         initial={false}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="overflow-hidden"
@@ -1559,33 +1552,20 @@ export default function Home() {
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const panelsWrapperRef = useRef<HTMLDivElement>(null);
 
-  // ── Collapsible showcase sections ──
-  // Persist open/closed state in localStorage so it remembers across visits
+  // Collapsible showcase sections — only annuaire + music label
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     try {
-      const stored = localStorage.getItem("va_showcase_sections");
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    // Default: all collapsed for a lean, professional look
-    return {
-      panels: false,
-      artisans: false,
-      annuaire: false,
-      music: false,
-      partners: false,
-      volunteer: false,
-    };
+      const saved = localStorage.getItem("va_showcase_sections");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem("va_showcase_sections", JSON.stringify(expandedSections));
-    } catch {}
+    localStorage.setItem("va_showcase_sections", JSON.stringify(expandedSections));
   }, [expandedSections]);
 
   const toggleSection = useCallback((key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
-    // Refresh GSAP ScrollTrigger after layout reflow so pins recalculate
     setTimeout(() => ScrollTrigger.refresh(), 500);
   }, []);
 
@@ -2742,14 +2722,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ COLLAPSIBLE SHOWCASE SECTIONS ═══ */}
-      <ShowcaseToggle
-        label="Discover Our Mission"
-        icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.panels}
-        onToggle={() => toggleSection("panels")}
-        gradient="bg-gradient-to-r from-emerald-700 to-emerald-800"
-      >
       {/* FIXED PANELS SECTION - Smooth zoom-out → slide → zoom-in */}
       <div
         className="panels-wrapper relative h-[100dvh] overflow-hidden"
@@ -2780,9 +2752,9 @@ export default function Home() {
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center">
-                  <div className="text-center mb-1.5 sm:mb-2 md:mb-3">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{
@@ -2792,7 +2764,7 @@ export default function Home() {
                       }}
                       className="inline-block"
                     >
-                      <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
+                      <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
@@ -2805,18 +2777,18 @@ export default function Home() {
                         ArtiHuman Foundation
                       </span>
                     </h2>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Empowering artisans and uplifting communities through
                       humanitarian innovation across {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-3">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-1.5 sm:p-2 md:p-4 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
-                      <h3 className="text-[10px] sm:text-xs md:text-base font-bold text-white mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2">
+                      <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
                         Our Impact in {countryMeta.name}:
                       </h3>
@@ -2883,14 +2855,14 @@ export default function Home() {
 
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-1.5 sm:p-2 md:p-4 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
-                      <div className="text-center mb-0.5 sm:mb-1">
+                      <div className="text-center mb-1 sm:mb-2">
                         <Sparkles
-                          className="mx-auto mb-0 sm:mb-0.5 text-white"
-                          size={12}
+                          className="mx-auto mb-0.5 sm:mb-1 text-white"
+                          size={14}
                         />
-                        <h3 className="text-[10px] sm:text-xs md:text-base font-bold text-white">
+                        <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
                           Cultural Programs
                         </h3>
                       </div>
@@ -2928,12 +2900,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white mb-0.5 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
                       Join Our Movement
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-1.5 text-[10px] sm:text-xs md:text-sm">
+                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
                       Be part of transforming communities through art, culture,
                       and humanitarian innovation
                     </p>
@@ -2972,15 +2944,15 @@ export default function Home() {
                 <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center">
-                  <div className="text-center mb-1.5 sm:mb-2 md:mb-3">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
+                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
@@ -2993,14 +2965,14 @@ export default function Home() {
                         Artisan Marketplace
                       </span>
                     </h2>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Discover unique handcrafted products that support
                       communities and preserve traditional {countryMeta.demonym}{" "}
                       crafts.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     {[
                       {
                         name: "Artisan Pottery Set",
@@ -3039,9 +3011,9 @@ export default function Home() {
                         className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-white/40 transition-all shadow-lg"
                       >
                         <div
-                          className={`bg-gradient-to-br ${product.gradient} p-1.5 sm:p-2 md:p-4 flex items-center justify-between relative h-10 sm:h-14 md:h-20`}
+                          className={`bg-gradient-to-br ${product.gradient} p-2 sm:p-4 md:p-7 flex items-center justify-between relative h-14 sm:h-20 md:h-28`}
                         >
-                          <span className="text-2xl sm:text-3xl md:text-4xl drop-shadow-lg group-hover:scale-125 transition-transform">
+                          <span className="text-3xl sm:text-4xl md:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
                             {product.emoji}
                           </span>
                           <motion.span
@@ -3052,32 +3024,32 @@ export default function Home() {
                             {product.badge}
                           </motion.span>
                         </div>
-                        <div className="p-1.5 sm:p-2 md:p-3">
-                          <h3 className="text-[10px] sm:text-xs md:text-sm font-bold text-white mb-0 sm:mb-0.5 line-clamp-1">
+                        <div className="p-2 sm:p-3 md:p-4">
+                          <h3 className="text-xs sm:text-sm md:text-lg font-bold text-white mb-0.5 sm:mb-1 line-clamp-1">
                             {product.name}
                           </h3>
-                          <p className="text-white/70 text-[9px] sm:text-[10px] md:text-xs mb-0.5 sm:mb-1 hidden sm:block">
+                          <p className="text-white/70 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2">
                             {product.type}
                           </p>
-                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                            <span className="text-xs sm:text-sm md:text-base font-bold text-amber-300">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
+                            <span className="text-sm sm:text-base md:text-lg font-bold text-amber-300">
                               {product.price}
                             </span>
-                            <div className="flex items-center gap-0.5">
-                              <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-300 text-yellow-300" />
-                              <span className="text-white font-semibold text-[10px] sm:text-xs">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
+                              <span className="text-white font-semibold text-xs sm:text-sm">
                                 {product.rating}
                               </span>
                             </div>
                           </div>
-                          <p className="text-white/60 text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 font-medium hidden sm:block">
+                          <p className="text-white/60 text-[10px] sm:text-xs mb-1 sm:mb-2 font-medium">
                             {product.sold}
                           </p>
                           <Link to="/blog">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-0.5"
+                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-2 rounded-lg text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
                             >
                               <ShoppingCart className="w-3 h-3" />
                               <AnimatedKeyboardText
@@ -3095,9 +3067,9 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="gold-text mb-0.5 sm:mb-1">
+                    <h3 className="gold-text mb-1 sm:mb-2">
                       <span
                         className="gold-text__shine"
                         data-text="Support Communities"
@@ -3105,7 +3077,7 @@ export default function Home() {
                         Support Communities
                       </span>
                     </h3>
-                    <p className="text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-[10px] sm:text-xs md:text-sm">
+                    <p className="text-white/90 mb-1 sm:mb-2 md:mb-4 text-xs sm:text-sm md:text-base">
                       Browse our collection and make a difference with every
                       purchase
                     </p>
@@ -3142,15 +3114,15 @@ export default function Home() {
                   style={{ animationDelay: "1s" }}
                 ></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center">
-                  <div className="text-center mb-1.5 sm:mb-2 md:mb-3">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
                     <motion.div
                       animate={{ rotate: [0, 5, -5, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
+                      <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
@@ -3163,13 +3135,13 @@ export default function Home() {
                         Impact Dashboard
                       </span>
                     </h2>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Track our collective impact on artisan communities across
                       {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1 sm:gap-1.5 md:gap-3 w-full max-w-5xl mb-1 sm:mb-1.5 md:mb-3">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-4 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-6">
                     {[
                       {
                         value:
@@ -3211,11 +3183,11 @@ export default function Home() {
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ delay: stat.delay }}
                         whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-3 text-center border border-white/20 hover:border-white/40 transition-all cursor-pointer group shadow-lg hover:shadow-xl"
+                        className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-1 sm:p-2 md:p-4 text-center border border-white/20 hover:border-white/40 transition-all cursor-pointer group shadow-lg hover:shadow-xl"
                       >
-                        <stat.icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 mx-auto mb-0 sm:mb-0.5 md:mb-1 text-emerald-200 group-hover:text-emerald-100 transition-colors" />
+                        <stat.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-8 md:h-8 mx-auto mb-0 sm:mb-1 md:mb-2 text-emerald-200 group-hover:text-emerald-100 transition-colors" />
                         <motion.span
-                          className="text-[10px] sm:text-sm md:text-xl font-bold text-white block"
+                          className="text-xs sm:text-base md:text-2xl font-bold text-white block"
                           initial={{ opacity: 0 }}
                           whileInView={{ opacity: 1 }}
                           transition={{ delay: stat.delay + 0.3 }}
@@ -3229,13 +3201,13 @@ export default function Home() {
                     ))}
                   </div>
 
-                  <div className="w-full max-w-5xl grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-3 mb-1 sm:mb-1.5 md:mb-3">
+                  <div className="w-full max-w-5xl grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-6 mb-1.5 sm:mb-2 md:mb-6">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 border border-white/20 hover:border-white/40 transition-all"
+                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
                     >
-                      <h3 className="text-[9px] sm:text-xs md:text-sm font-bold text-white mb-0.5 sm:mb-1 md:mb-2 flex items-center gap-1 sm:gap-2">
-                        <BarChart3 className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         Community Growth
                       </h3>
                       <div className="space-y-1 sm:space-y-1.5 md:space-y-3">
@@ -3289,10 +3261,10 @@ export default function Home() {
 
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 border border-white/20 hover:border-white/40 transition-all"
+                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
                     >
-                      <h3 className="text-[9px] sm:text-xs md:text-sm font-bold text-white mb-0.5 sm:mb-1 md:mb-2 flex items-center gap-1 sm:gap-2">
-                        <Globe className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4" />
+                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
+                        <Globe className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         {countryMeta.name} Overview
                       </h3>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-3">
@@ -3335,12 +3307,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white mb-0.5 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
                       See Our Impact in Action
                     </h3>
-                    <p className="text-white/90 mb-0.5 sm:mb-1 text-[10px] sm:text-xs md:text-sm">
+                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                       Track real-time progress and community transformation
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -3382,15 +3354,15 @@ export default function Home() {
                   style={{ animationDelay: "0.5s" }}
                 ></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-4 lg:p-6">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center">
-                  <div className="text-center mb-1.5 sm:mb-2 md:mb-3">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <Handshake className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
+                      <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
@@ -3403,13 +3375,13 @@ export default function Home() {
                         Get Involved
                       </span>
                     </h2>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Join our movement to empower artisans and transform
                       communities across {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
                     {[
                       {
                         title: "Volunteer",
@@ -3445,21 +3417,21 @@ export default function Home() {
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.15 }}
                         whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 border border-white/20 hover:border-white/40 text-center group shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                        className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 text-center group shadow-lg hover:shadow-xl transition-all cursor-pointer"
                       >
                         <div
-                          className={`w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 mx-auto mb-0.5 sm:mb-1 md:mb-2 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
+                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-16 md:h-16 mx-auto mb-1 sm:mb-2 md:mb-3 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
                         >
-                          <item.icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6 text-white" />
+                          <item.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-8 md:h-8 text-white" />
                         </div>
-                        <h3 className="text-xs sm:text-sm md:text-base font-bold text-white mb-0 sm:mb-0.5">
+                        <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-0.5 sm:mb-1">
                           {item.title}
                         </h3>
-                        <p className="text-white/80 text-[9px] sm:text-[10px] md:text-xs mb-0.5 sm:mb-1 md:mb-2">
+                        <p className="text-white/80 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2 md:mb-4">
                           {item.desc}
                         </p>
                         <motion.div
-                          className="inline-block mb-0.5 sm:mb-1 md:mb-2 px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-white/10 rounded-full border border-white/20"
+                          className="inline-block mb-1 sm:mb-2 md:mb-4 px-2 py-0.5 sm:px-3 sm:py-1 bg-white/10 rounded-full border border-white/20"
                           animate={{ scale: [1, 1.05, 1] }}
                           transition={{
                             duration: 2,
@@ -3486,12 +3458,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white mb-0.5 group-hover:text-teal-200 transition-colors">
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors">
                       Transform Lives Through Art
                     </h3>
-                    <p className="text-white/90 mb-0.5 sm:mb-1 text-[10px] sm:text-xs md:text-sm">
+                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                       Your support creates lasting change in artisan communities
                     </p>
                     <Link to="/get-involved">
@@ -3511,15 +3483,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-      </ShowcaseToggle>
 
-      <ShowcaseToggle
-        label="Featured Artisans"
-        icon={<Palette className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.artisans}
-        onToggle={() => toggleSection("artisans")}
-        gradient="bg-gradient-to-r from-slate-700 to-slate-800"
-      >
       {/* Featured Artisans Section */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3648,16 +3612,15 @@ export default function Home() {
           </div>
         </div>
       </section>
-      </ShowcaseToggle>
 
+      {/* Annuaire Musicale - Artist Directory Section */}
       <ShowcaseToggle
         label="Annuaire Musicale"
-        icon={<Music className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.annuaire}
+        icon={<Music className="w-5 h-5" />}
+        isOpen={!!expandedSections["annuaire"]}
         onToggle={() => toggleSection("annuaire")}
         gradient="bg-gradient-to-r from-purple-800 to-purple-900"
       >
-      {/* Annuaire Musicale - Artist Directory Section */}
       <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 via-purple-900/60 to-slate-900 relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Header */}
@@ -3955,14 +3918,14 @@ export default function Home() {
       </section>
       </ShowcaseToggle>
 
+      {/* Verso Air Music Artists Section */}
       <ShowcaseToggle
         label="Verso Air Music Label"
-        icon={<Disc3 className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.music}
+        icon={<Disc3 className="w-5 h-5" />}
+        isOpen={!!expandedSections["music"]}
         onToggle={() => toggleSection("music")}
         gradient="bg-gradient-to-r from-indigo-800 to-purple-900"
       >
-      {/* Verso Air Music Artists Section */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvZz48L3N2Zz4=')] opacity-20" />
@@ -4010,13 +3973,6 @@ export default function Home() {
       </section>
       </ShowcaseToggle>
 
-      <ShowcaseToggle
-        label="Partners & Sponsors"
-        icon={<Handshake className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.partners}
-        onToggle={() => toggleSection("partners")}
-        gradient="bg-gradient-to-r from-emerald-600 to-teal-700"
-      >
       {/* Partners & Sponsors Section */}
       <section className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -4094,15 +4050,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-      </ShowcaseToggle>
-
-      <ShowcaseToggle
-        label="Volunteer With Us"
-        icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5" />}
-        isOpen={!!expandedSections.volunteer}
-        onToggle={() => toggleSection("volunteer")}
-        gradient="bg-gradient-to-r from-amber-600 to-orange-700"
-      >
       <section className="py-12 md:py-20 bg-gradient-to-br from-emerald-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
@@ -4210,7 +4157,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      </ShowcaseToggle>
 
       <ResponsiveFooter countryMeta={countryMeta} />
 
