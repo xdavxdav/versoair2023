@@ -34,7 +34,9 @@ export default function ProtectedRoute({
 
     if (!user) {
       // Not logged in → redirect to sign-in with return path
-      setLocation(`/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`);
+      setLocation(
+        `/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`,
+      );
       return;
     }
 

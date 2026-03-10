@@ -42,13 +42,11 @@ router.get("/artists", async (req, res) => {
     res.json({ success: true, data: result.rows, count: result.rows.length });
   } catch (error: any) {
     console.error("❌ Get music artists error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch music artists",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch music artists",
+      details: error.message,
+    });
   }
 });
 
@@ -62,13 +60,11 @@ router.get("/tracks", async (_req, res) => {
     res.json({ success: true, data: tracks, count: tracks.length });
   } catch (error: any) {
     console.error("❌ Get music tracks error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch music tracks",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch music tracks",
+      details: error.message,
+    });
   }
 });
 
@@ -91,13 +87,11 @@ router.get("/analytics", async (_req, res) => {
     res.json({ success: true, data: analyticsData });
   } catch (error: any) {
     console.error("❌ Get music analytics error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch music analytics",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch music analytics",
+      details: error.message,
+    });
   }
 });
 
@@ -126,13 +120,11 @@ router.get("/artists/:id", async (req, res) => {
     res.json({ success: true, data: { ...artist[0], tracks } });
   } catch (error: any) {
     console.error("❌ Get artist error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch artist",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch artist",
+      details: error.message,
+    });
   }
 });
 
@@ -191,13 +183,11 @@ router.post("/artists/generate-random", async (req, res) => {
     res.json({ success: true, data: artists, count: artists.length });
   } catch (error: any) {
     console.error("❌ Generate artists error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to generate artists",
-        details: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate artists",
+      details: error.message,
+    });
   }
 });
 

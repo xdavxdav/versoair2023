@@ -15,7 +15,8 @@ const router = Router();
 // ─── Cached column existence checks (production DB may lag behind schema) ───
 const _bizColCache: Record<string, boolean | null> = {};
 async function bizHasColumn(col: string): Promise<boolean> {
-  if (_bizColCache[col] !== undefined && _bizColCache[col] !== null) return _bizColCache[col]!;
+  if (_bizColCache[col] !== undefined && _bizColCache[col] !== null)
+    return _bizColCache[col]!;
   try {
     await pool.query(`SELECT ${col} FROM businesses LIMIT 0`);
     _bizColCache[col] = true;
@@ -346,20 +347,27 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     //
     // Dynamically include columns that may not exist on production yet
     const optionalCols = [
-      'is_advertiser', 'is_premium', 'verified_at',
-      'popularity_score', 'pdf_path', 'approval_status'
+      "is_advertiser",
+      "is_premium",
+      "verified_at",
+      "popularity_score",
+      "pdf_path",
+      "approval_status",
     ];
     const colChecks = await Promise.all(
-      optionalCols.map(async (c) => ({ col: c, exists: await bizHasColumn(c) }))
+      optionalCols.map(async (c) => ({
+        col: c,
+        exists: await bizHasColumn(c),
+      })),
     );
     const extraSelect = colChecks
       .filter((c) => c.exists)
       .map((c) => `b.${c.col}`)
-      .join(', ');
-    const extraSelectClause = extraSelect ? `, ${extraSelect}` : '';
+      .join(", ");
+    const extraSelectClause = extraSelect ? `, ${extraSelect}` : "";
 
-    const hasOwner = await bizHasColumn('owner_id');
-    const ownerJoin = hasOwner ? 'LEFT JOIN users u ON b.owner_id = u.id' : '';
+    const hasOwner = await bizHasColumn("owner_id");
+    const ownerJoin = hasOwner ? "LEFT JOIN users u ON b.owner_id = u.id" : "";
     const ownerTierSelect = hasOwner
       ? ", COALESCE(u.subscription_tier, 'free') as owner_tier"
       : ", 'free' as owner_tier";
@@ -372,7 +380,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
           WHEN 'free'       THEN 5
           ELSE 5
         END ASC,`
-      : '';
+      : "";
 
     const dataQuery = `
       SELECT 

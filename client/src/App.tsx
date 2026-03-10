@@ -266,27 +266,51 @@ function Router() {
         {() => <ProtectedRoute component={ImmobilierPortal} />}
       </Route>
       <Route path="/geo-admin/dashboard">
-        {() => <ProtectedRoute component={AdminDashboard} roles={["admin", "moderator"]} />}
+        {() => (
+          <ProtectedRoute
+            component={AdminDashboard}
+            roles={["admin", "moderator"]}
+          />
+        )}
       </Route>
 
       {/* ═══════════════════════════════════════════════
           🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
           ═══════════════════════════════════════════════ */}
       <Route path="/dashboard">
-        {() => <ProtectedRoute component={Dashboard} roles={["admin", "moderator"]} />}
+        {() => (
+          <ProtectedRoute
+            component={Dashboard}
+            roles={["admin", "moderator"]}
+          />
+        )}
       </Route>
       <Route path="/admin/database">
-        {() => <ProtectedRoute component={DatabaseManagementCenter} roles={["admin"]} />}
+        {() => (
+          <ProtectedRoute
+            component={DatabaseManagementCenter}
+            roles={["admin"]}
+          />
+        )}
       </Route>
       <Route path="/admin/verification">
-        {() => <ProtectedRoute component={VerificationPage} roles={["admin"]} />}
+        {() => (
+          <ProtectedRoute component={VerificationPage} roles={["admin"]} />
+        )}
       </Route>
       <Route path="/admin/tickets">
-        {() => <ProtectedRoute component={AdminTicketManagement} roles={["admin", "moderator"]} />}
+        {() => (
+          <ProtectedRoute
+            component={AdminTicketManagement}
+            roles={["admin", "moderator"]}
+          />
+        )}
       </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
       <Route path="/sys/0x7f3a9c">
-        {() => <ProtectedRoute component={CredentialsVault} roles={["superuser"]} />}
+        {() => (
+          <ProtectedRoute component={CredentialsVault} roles={["superuser"]} />
+        )}
       </Route>
 
       {/* ═══════════════════════════════════════════════
