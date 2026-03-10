@@ -8,7 +8,8 @@ import { randomUUID } from "crypto";
 import { notifyNewJobPosted } from "../../../services/notification-service";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
 
-const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 
 const router = Router();
 
@@ -385,7 +386,12 @@ router.put(
         entityType: "job",
         entityName: updatedJob.title,
         entityId: id,
-        details: { company: updatedJob.company, location: updatedJob.location, type: updatedJob.type, sector: updatedJob.sector },
+        details: {
+          company: updatedJob.company,
+          location: updatedJob.location,
+          type: updatedJob.type,
+          sector: updatedJob.sector,
+        },
       }).catch((err) => console.error("[JOB] Email notification error:", err));
 
       res.json({

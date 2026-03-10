@@ -6,7 +6,8 @@ import { artists, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, or, count, desc, sql, isNotNull } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
 
-const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 
 const router = Router();
 

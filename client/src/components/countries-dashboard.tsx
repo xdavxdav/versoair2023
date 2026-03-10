@@ -2939,9 +2939,13 @@ export default function DatabaseExpert({
                                     onClick={() => {
                                       setEditingArtist(artist);
                                       setEditArtist({
-                                        stageName: artist.name || artist.stage_name || "",
+                                        stageName:
+                                          artist.name ||
+                                          artist.stage_name ||
+                                          "",
                                         genre: artist.genre || "",
-                                        labelStatus: artist.label_status || "unsigned",
+                                        labelStatus:
+                                          artist.label_status || "unsigned",
                                         spotifyUrl: artist.spotify_url || "",
                                         countryCode: artist.country_code || "",
                                       });
@@ -2958,7 +2962,10 @@ export default function DatabaseExpert({
                                     onClick={() =>
                                       setDeleteArtistTarget({
                                         id: artist.id,
-                                        name: artist.name || artist.stage_name || "Unknown",
+                                        name:
+                                          artist.name ||
+                                          artist.stage_name ||
+                                          "Unknown",
                                       })
                                     }
                                     title="Delete artist"
@@ -3200,7 +3207,8 @@ export default function DatabaseExpert({
                                         sector: job.sector || "general",
                                         countryCode: job.country_code || "",
                                         description: job.description || "",
-                                        experienceLevel: job.experience_level || "",
+                                        experienceLevel:
+                                          job.experience_level || "",
                                         isRemote: job.is_remote || false,
                                       });
                                       setShowEditJob(true);
@@ -4451,7 +4459,10 @@ export default function DatabaseExpert({
             onSubmit={async (e) => {
               e.preventDefault();
               if (!editArtist.stageName.trim() || !editingArtist) {
-                toast({ title: "Stage name is required", variant: "destructive" });
+                toast({
+                  title: "Stage name is required",
+                  variant: "destructive",
+                });
                 return;
               }
               setIsUpdatingArtist(true);
@@ -4490,7 +4501,9 @@ export default function DatabaseExpert({
               <Label className="text-slate-300">Stage Name *</Label>
               <Input
                 value={editArtist.stageName}
-                onChange={(e) => setEditArtist({ ...editArtist, stageName: e.target.value })}
+                onChange={(e) =>
+                  setEditArtist({ ...editArtist, stageName: e.target.value })
+                }
                 placeholder="e.g. DJ Arafat"
                 className="bg-white/5 border-white/10 text-slate-100"
               />
@@ -4499,7 +4512,9 @@ export default function DatabaseExpert({
               <Label className="text-slate-300">Genre</Label>
               <Input
                 value={editArtist.genre}
-                onChange={(e) => setEditArtist({ ...editArtist, genre: e.target.value })}
+                onChange={(e) =>
+                  setEditArtist({ ...editArtist, genre: e.target.value })
+                }
                 placeholder="e.g. Afrobeats, Hip-Hop"
                 className="bg-white/5 border-white/10 text-slate-100"
               />
@@ -4508,7 +4523,9 @@ export default function DatabaseExpert({
               <Label className="text-slate-300">Label Status</Label>
               <Select
                 value={editArtist.labelStatus}
-                onValueChange={(val) => setEditArtist({ ...editArtist, labelStatus: val })}
+                onValueChange={(val) =>
+                  setEditArtist({ ...editArtist, labelStatus: val })
+                }
               >
                 <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
                   <SelectValue />
@@ -4525,7 +4542,10 @@ export default function DatabaseExpert({
               <Input
                 value={editArtist.countryCode}
                 onChange={(e) =>
-                  setEditArtist({ ...editArtist, countryCode: e.target.value.toUpperCase().slice(0, 2) })
+                  setEditArtist({
+                    ...editArtist,
+                    countryCode: e.target.value.toUpperCase().slice(0, 2),
+                  })
                 }
                 placeholder="e.g. CI, NG, US"
                 maxLength={2}
@@ -4536,17 +4556,32 @@ export default function DatabaseExpert({
               <Label className="text-slate-300">Spotify URL</Label>
               <Input
                 value={editArtist.spotifyUrl}
-                onChange={(e) => setEditArtist({ ...editArtist, spotifyUrl: e.target.value })}
+                onChange={(e) =>
+                  setEditArtist({ ...editArtist, spotifyUrl: e.target.value })
+                }
                 placeholder="https://open.spotify.com/artist/…"
                 className="bg-white/5 border-white/10 text-slate-100"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" className="text-slate-400" onClick={() => setShowEditArtist(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-slate-400"
+                onClick={() => setShowEditArtist(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isUpdatingArtist} className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5">
-                {isUpdatingArtist ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              <Button
+                type="submit"
+                disabled={isUpdatingArtist}
+                className="bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
+              >
+                {isUpdatingArtist ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
                 {isUpdatingArtist ? "Updating…" : "Save Changes"}
               </Button>
             </div>
@@ -4555,18 +4590,28 @@ export default function DatabaseExpert({
       </Dialog>
 
       {/* ── Delete Artist Confirmation ── */}
-      <AlertDialog open={!!deleteArtistTarget} onOpenChange={(open) => !open && setDeleteArtistTarget(null)}>
+      <AlertDialog
+        open={!!deleteArtistTarget}
+        onOpenChange={(open) => !open && setDeleteArtistTarget(null)}
+      >
         <AlertDialogContent className="bg-slate-950 border border-white/10">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-100">Delete Artist</AlertDialogTitle>
+            <AlertDialogTitle className="text-slate-100">
+              Delete Artist
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
               Are you sure you want to permanently delete{" "}
-              <strong className="text-slate-200">{deleteArtistTarget?.name}</strong>?
-              This action cannot be undone.
+              <strong className="text-slate-200">
+                {deleteArtistTarget?.name}
+              </strong>
+              ? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-slate-300 hover:bg-white/5" disabled={isDeletingArtist}>
+            <AlertDialogCancel
+              className="border-white/10 text-slate-300 hover:bg-white/5"
+              disabled={isDeletingArtist}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -4585,14 +4630,20 @@ export default function DatabaseExpert({
                     const err = await response.json();
                     throw new Error(err.error?.message || "Delete failed");
                   }
-                  toast({ title: "Deleted", description: `"${deleteArtistTarget.name}" has been removed` });
+                  toast({
+                    title: "Deleted",
+                    description: `"${deleteArtistTarget.name}" has been removed`,
+                  });
                   queryClient.invalidateQueries({ queryKey: ["geo-artists"] });
                   setDeleteArtistTarget(null);
                 } catch (error) {
                   console.error("Delete artist error:", error);
                   toast({
                     title: "Error",
-                    description: error instanceof Error ? error.message : "Failed to delete",
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to delete",
                     variant: "destructive",
                   });
                 } finally {
@@ -4601,7 +4652,10 @@ export default function DatabaseExpert({
               }}
             >
               {isDeletingArtist ? (
-                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting…
+                </>
               ) : (
                 "Delete Artist"
               )}
@@ -4626,8 +4680,15 @@ export default function DatabaseExpert({
             className="space-y-4 max-h-[60vh] overflow-y-auto pr-1"
             onSubmit={async (e) => {
               e.preventDefault();
-              if (!editJob.title.trim() || !editJob.company.trim() || !editingJob) {
-                toast({ title: "Title and company are required", variant: "destructive" });
+              if (
+                !editJob.title.trim() ||
+                !editJob.company.trim() ||
+                !editingJob
+              ) {
+                toast({
+                  title: "Title and company are required",
+                  variant: "destructive",
+                });
                 return;
               }
               setIsUpdatingJob(true);
@@ -4672,7 +4733,9 @@ export default function DatabaseExpert({
                 <Label className="text-slate-300">Job Title *</Label>
                 <Input
                   value={editJob.title}
-                  onChange={(e) => setEditJob({ ...editJob, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditJob({ ...editJob, title: e.target.value })
+                  }
                   placeholder="e.g. Senior Software Engineer"
                   className="bg-white/5 border-white/10 text-slate-100"
                 />
@@ -4681,7 +4744,9 @@ export default function DatabaseExpert({
                 <Label className="text-slate-300">Company *</Label>
                 <Input
                   value={editJob.company}
-                  onChange={(e) => setEditJob({ ...editJob, company: e.target.value })}
+                  onChange={(e) =>
+                    setEditJob({ ...editJob, company: e.target.value })
+                  }
                   placeholder="e.g. TechNova"
                   className="bg-white/5 border-white/10 text-slate-100"
                 />
@@ -4690,15 +4755,22 @@ export default function DatabaseExpert({
                 <Label className="text-slate-300">Location</Label>
                 <Input
                   value={editJob.location}
-                  onChange={(e) => setEditJob({ ...editJob, location: e.target.value })}
+                  onChange={(e) =>
+                    setEditJob({ ...editJob, location: e.target.value })
+                  }
                   placeholder="e.g. Abidjan, CI"
                   className="bg-white/5 border-white/10 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Type</Label>
-                <Select value={editJob.type} onValueChange={(val) => setEditJob({ ...editJob, type: val })}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue /></SelectTrigger>
+                <Select
+                  value={editJob.type}
+                  onValueChange={(val) => setEditJob({ ...editJob, type: val })}
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Full-time">Full-time</SelectItem>
                     <SelectItem value="Part-time">Part-time</SelectItem>
@@ -4712,7 +4784,12 @@ export default function DatabaseExpert({
                 <Label className="text-slate-300">Country Code</Label>
                 <Input
                   value={editJob.countryCode}
-                  onChange={(e) => setEditJob({ ...editJob, countryCode: e.target.value.toUpperCase().slice(0, 2) })}
+                  onChange={(e) =>
+                    setEditJob({
+                      ...editJob,
+                      countryCode: e.target.value.toUpperCase().slice(0, 2),
+                    })
+                  }
                   placeholder="e.g. CI"
                   maxLength={2}
                   className="bg-white/5 border-white/10 text-slate-100"
@@ -4720,8 +4797,15 @@ export default function DatabaseExpert({
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Experience Level</Label>
-                <Select value={editJob.experienceLevel} onValueChange={(val) => setEditJob({ ...editJob, experienceLevel: val })}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue placeholder="Select…" /></SelectTrigger>
+                <Select
+                  value={editJob.experienceLevel}
+                  onValueChange={(val) =>
+                    setEditJob({ ...editJob, experienceLevel: val })
+                  }
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue placeholder="Select…" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="entry">Entry Level</SelectItem>
                     <SelectItem value="mid">Mid Level</SelectItem>
@@ -4733,8 +4817,15 @@ export default function DatabaseExpert({
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Sector</Label>
-                <Select value={editJob.sector} onValueChange={(val) => setEditJob({ ...editJob, sector: val })}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100"><SelectValue /></SelectTrigger>
+                <Select
+                  value={editJob.sector}
+                  onValueChange={(val) =>
+                    setEditJob({ ...editJob, sector: val })
+                  }
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="general">General</SelectItem>
                     <SelectItem value="tech">Tech</SelectItem>
@@ -4751,7 +4842,9 @@ export default function DatabaseExpert({
                 <Label className="text-slate-300">Description</Label>
                 <Input
                   value={editJob.description}
-                  onChange={(e) => setEditJob({ ...editJob, description: e.target.value })}
+                  onChange={(e) =>
+                    setEditJob({ ...editJob, description: e.target.value })
+                  }
                   placeholder="Brief description of the role…"
                   className="bg-white/5 border-white/10 text-slate-100"
                 />
@@ -4759,17 +4852,32 @@ export default function DatabaseExpert({
               <div className="flex items-center gap-2 col-span-2">
                 <Switch
                   checked={editJob.isRemote}
-                  onCheckedChange={(checked) => setEditJob({ ...editJob, isRemote: checked })}
+                  onCheckedChange={(checked) =>
+                    setEditJob({ ...editJob, isRemote: checked })
+                  }
                 />
                 <Label className="text-slate-300">Remote position</Label>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" className="text-slate-400" onClick={() => setShowEditJob(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-slate-400"
+                onClick={() => setShowEditJob(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isUpdatingJob} className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5">
-                {isUpdatingJob ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              <Button
+                type="submit"
+                disabled={isUpdatingJob}
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+              >
+                {isUpdatingJob ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
                 {isUpdatingJob ? "Updating…" : "Save Changes"}
               </Button>
             </div>
@@ -4778,18 +4886,28 @@ export default function DatabaseExpert({
       </Dialog>
 
       {/* ── Delete Job Confirmation ── */}
-      <AlertDialog open={!!deleteJobTarget} onOpenChange={(open) => !open && setDeleteJobTarget(null)}>
+      <AlertDialog
+        open={!!deleteJobTarget}
+        onOpenChange={(open) => !open && setDeleteJobTarget(null)}
+      >
         <AlertDialogContent className="bg-slate-950 border border-white/10">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-100">Delete Job</AlertDialogTitle>
+            <AlertDialogTitle className="text-slate-100">
+              Delete Job
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
               Are you sure you want to permanently delete{" "}
-              <strong className="text-slate-200">{deleteJobTarget?.title}</strong>?
-              This action cannot be undone.
+              <strong className="text-slate-200">
+                {deleteJobTarget?.title}
+              </strong>
+              ? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-slate-300 hover:bg-white/5" disabled={isDeletingJob}>
+            <AlertDialogCancel
+              className="border-white/10 text-slate-300 hover:bg-white/5"
+              disabled={isDeletingJob}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -4808,14 +4926,20 @@ export default function DatabaseExpert({
                     const err = await response.json();
                     throw new Error(err.error?.message || "Delete failed");
                   }
-                  toast({ title: "Deleted", description: `"${deleteJobTarget.title}" has been removed` });
+                  toast({
+                    title: "Deleted",
+                    description: `"${deleteJobTarget.title}" has been removed`,
+                  });
                   queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
                   setDeleteJobTarget(null);
                 } catch (error) {
                   console.error("Delete job error:", error);
                   toast({
                     title: "Error",
-                    description: error instanceof Error ? error.message : "Failed to delete",
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to delete",
                     variant: "destructive",
                   });
                 } finally {
@@ -4824,7 +4948,10 @@ export default function DatabaseExpert({
               }}
             >
               {isDeletingJob ? (
-                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting…
+                </>
               ) : (
                 "Delete Job"
               )}

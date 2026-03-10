@@ -10,6 +10,7 @@ import {
   Loader2,
   Receipt,
   ArrowLeft,
+  Shield,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -102,19 +103,27 @@ export default function BillingPage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={openCustomerPortal}
-            disabled={portalLoading}
-            variant="outline"
-            className="gap-2"
-          >
-            {portalLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="h-4 w-4" />
-            )}
-            Manage Billing
-          </Button>
+          <div className="flex gap-2">
+            <Link href="/account/cards">
+              <Button variant="outline" className="gap-2">
+                <Shield className="h-4 w-4" />
+                Card Vault
+              </Button>
+            </Link>
+            <Button
+              onClick={openCustomerPortal}
+              disabled={portalLoading}
+              variant="outline"
+              className="gap-2"
+            >
+              {portalLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              Manage Billing
+            </Button>
+          </div>
         </div>
 
         {/* Content */}

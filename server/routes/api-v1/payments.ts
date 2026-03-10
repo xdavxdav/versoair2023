@@ -596,6 +596,81 @@ router.post("/save-card", async (req: Request, res: Response) => {
   }
 });
 
+// ─── MY CARDS (auth-aware) ──────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/payments/my-cards
+ * Lists all saved payment methods for the authenticated user.
+ * Uses JWT userId from auth middleware — no URL param needed.
+ */
+router.get("/my-cards", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const result = await pool.query(
+      `SELECT id, card_brand, card_last4, card_exp_month, card_exp_year,
+              cardholder_name, billing_email, card_funding, is_default,
+              label, status, created_at
+       FROM saved_payment_methods
+       WHERE user_id = $1 AND status != 'deleted'
+       ORDER BY is_default DESC, created_at DESC`,
+      [userId],
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+    });
+  } catch (error: any) {
+    console.error("❌ My cards error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PUT /api/v1/payments/cards/:cardId/default
+ * Set a card as default payment method for the authenticated user.
+ */
+router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { cardId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    // Verify card belongs to this user
+    const cardResult = await pool.query(
+      `SELECT id FROM saved_payment_methods WHERE id = $1 AND user_id = $2 AND status != 'deleted'`,
+      [cardId, userId],
+    );
+
+    if (cardResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Card not found" });
+    }
+
+    // Unset all defaults for user, then set this one
+    await pool.query(
+      `UPDATE saved_payment_methods SET is_default = false, updated_at = NOW() WHERE user_id = $1`,
+      [userId],
+    );
+    await pool.query(
+      `UPDATE saved_payment_methods SET is_default = true, updated_at = NOW() WHERE id = $1`,
+      [cardId],
+    );
+
+    res.json({ success: true, message: "Default card updated" });
+  } catch (error: any) {
+    console.error("❌ Set default card error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ─── LIST CARDS FOR USER ────────────────────────────────────────────────────────
 
 /**
