@@ -47,6 +47,7 @@ const TEST_USERS = [
     email: "superadmin@versoair.test",
     role: "superuser",
     tier: "enterprise",
+    gateUsername: "joel_007",
   },
   {
     username: "sys_operator",
@@ -59,12 +60,14 @@ const TEST_USERS = [
     email: "admin@versoair.test",
     role: "admin",
     tier: "max",
+    gateUsername: "admin_001",
   },
   {
     username: "moderator_test",
     email: "moderator@versoair.test",
     role: "moderator",
     tier: "verified",
+    gateUsername: "manager_001",
   },
   {
     username: "business_owner_test",
@@ -3561,6 +3564,7 @@ const TICKETS = [
     const hasVerified = cols.includes("is_verified");
     const hasTier = cols.includes("subscription_tier");
     const hasStatus = cols.includes("subscription_status");
+    const hasGateUsername = cols.includes("gate_username");
 
     // ════════════════════════════════════════════════════════════════════
     // SEED 1: USERS
@@ -3590,6 +3594,11 @@ const TICKETS = [
           insertVals += `, $${idx++}`;
           params.push("active");
         }
+        if (hasGateUsername && u.gateUsername) {
+          insertCols += ", gate_username";
+          insertVals += `, $${idx++}`;
+          params.push(u.gateUsername);
+        }
 
         const result = await pool.query(
           `INSERT INTO users (${insertCols}) VALUES (${insertVals})
@@ -3598,6 +3607,7 @@ const TICKETS = [
              ${hasTier ? ", subscription_tier = EXCLUDED.subscription_tier" : ""}
              ${hasStatus ? ", subscription_status = EXCLUDED.subscription_status" : ""}
              ${hasVerified ? ", is_verified = EXCLUDED.is_verified" : ""}
+             ${hasGateUsername && u.gateUsername ? ", gate_username = EXCLUDED.gate_username" : ""}
            RETURNING id`,
           params,
         );
@@ -3812,7 +3822,10 @@ const TICKETS = [
           console.log("  ⚠️  artists table not found");
           break;
         }
-        console.error(`  ❌ Failed to insert artist "${a.stageName}":`, err.message);
+        console.error(
+          `  ❌ Failed to insert artist "${a.stageName}":`,
+          err.message,
+        );
       }
     }
     console.log(

@@ -33,6 +33,7 @@ interface User {
   username: string;
   email: string;
   role: string;
+  gateUsername: string | null;
   isVerified: boolean;
   verifiedAt: string | null;
   isActive: boolean;
@@ -58,6 +59,7 @@ interface UserFormData {
   email: string;
   password: string;
   role: string;
+  gateUsername: string;
   isVerified: boolean;
 }
 
@@ -134,6 +136,7 @@ export function UsersSection() {
     email: "",
     password: "",
     role: "user",
+    gateUsername: "",
     isVerified: false,
   });
   const [error, setError] = useState("");
@@ -208,6 +211,7 @@ export function UsersSection() {
         username: formData.username,
         email: formData.email,
         role: formData.role,
+        gateUsername: formData.gateUsername || null,
         isVerified: formData.isVerified,
       };
       if (formData.password) payload.password = formData.password;
@@ -267,6 +271,7 @@ export function UsersSection() {
       email: "",
       password: "",
       role: "user",
+      gateUsername: "",
       isVerified: false,
     });
     setEditingUser(null);
@@ -280,6 +285,7 @@ export function UsersSection() {
       email: user.email,
       password: "",
       role: user.role,
+      gateUsername: user.gateUsername || "",
       isVerified: user.isVerified,
     });
     setIsModalOpen(true);
@@ -423,6 +429,9 @@ export function UsersSection() {
                   Role
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600">
+                  GeoAdmin
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">
                   Status
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600">
@@ -442,7 +451,7 @@ export function UsersSection() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-500" />
                     <p className="text-slate-400 mt-2 text-sm">
                       Loading users…
@@ -452,7 +461,7 @@ export function UsersSection() {
               ) : users.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-12 text-center text-slate-400"
                   >
                     No users found.
@@ -484,7 +493,19 @@ export function UsersSection() {
                       <RoleBadge role={user.role} />
                     </td>
 
-                    {/* Status */}
+                    {/* GeoAdmin */}
+                    <td className="px-4 py-3">
+                      {user.gateUsername ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                          <Shield className="h-3 w-3" />
+                          {user.gateUsername}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+
+                    {/* Status */}}
                     <td className="px-4 py-3">
                       <StatusBadge active={user.isActive} />
                     </td>
@@ -601,6 +622,17 @@ export function UsersSection() {
                 <div>
                   <p className="text-xs text-slate-400 mb-1">Role</p>
                   <RoleBadge role={viewingUser.role} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 mb-1">GeoAdmin Access</p>
+                  {viewingUser.gateUsername ? (
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
+                      <Shield className="h-3 w-3" />
+                      {viewingUser.gateUsername}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-slate-400">None</span>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 mb-1">Status</p>
@@ -745,6 +777,23 @@ export function UsersSection() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* GeoAdmin Gate Username */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  GeoAdmin Username
+                  <span className="text-xs text-slate-400 ml-1">(optional — grants gate access)</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.gateUsername}
+                  onChange={(e) =>
+                    setFormData({ ...formData, gateUsername: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  placeholder="e.g. admin_001"
+                />
               </div>
 
               {/* Email Verified Toggle */}

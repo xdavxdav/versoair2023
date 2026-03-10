@@ -80,6 +80,9 @@ export const users = pgTable("users", {
   oauthProvider: varchar("oauth_provider", { length: 20 }), // 'google' | 'microsoft' | 'apple'
   oauthProviderId: text("oauth_provider_id"),
 
+  // GeoAdmin gate access — nullable, unique alias for admin-gate login
+  gateUsername: text("gate_username").unique(),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
