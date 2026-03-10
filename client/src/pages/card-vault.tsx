@@ -1238,9 +1238,9 @@ export default function CardVaultPage() {
               <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
                 <Zap className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <span>
-                  This will immediately charge the client's card via Stripe.
-                  The charge is processed off-session and cannot be undone
-                  without issuing a refund.
+                  This will immediately charge the client's card via Stripe. The
+                  charge is processed off-session and cannot be undone without
+                  issuing a refund.
                 </span>
               </div>
             </div>
@@ -1359,10 +1359,9 @@ export default function CardVaultPage() {
             <DialogTitle className="text-red-600">Remove Card</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600 dark:text-gray-400 py-2">
-            Remove{" "}
-            <strong className="capitalize">{deleteTarget?.brand}</strong> card
-            ending in <strong>{deleteTarget?.last4}</strong>? This card will no
-            longer be available for charges.
+            Remove <strong className="capitalize">{deleteTarget?.brand}</strong>{" "}
+            card ending in <strong>{deleteTarget?.last4}</strong>? This card
+            will no longer be available for charges.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>

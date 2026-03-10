@@ -360,14 +360,17 @@ function Router() {
 }
 
 function LoadingOverlay() {
-  const { isLoading } = useLoading();
+  const { isLoading, isFadingOut } = useLoading();
   if (!isLoading) return null;
 
   return (
-    <div className="page-loading-overlay">
+    <div className={`page-loading-overlay ${isFadingOut ? "fade-out" : ""}`}>
+      <div className="loading-shimmer-bar" />
       <div className="text-center">
-        <LoadingEagle className="w-40 h-40 mb-4 mx-auto" />
-        <p className="text-white text-lg font-semibold">Loading...</p>
+        <LoadingEagle className="w-44 h-44 mb-2 mx-auto" />
+        <p className="text-white/90 text-sm font-medium tracking-wide mt-3 animate-pulse">
+          Verso Air
+        </p>
       </div>
     </div>
   );
@@ -376,9 +379,25 @@ function LoadingOverlay() {
 function AppContent() {
   const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
-  const { isLoading } = useLoading();
+  const { isLoading, isFadingOut } = useLoading();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
+
+  // Track when loading just finished so we can apply page-enter animation
+  const [pageEnter, setPageEnter] = useState(false);
+  const wasLoading = useRef(false);
+
+  useEffect(() => {
+    if (isLoading && !isFadingOut) {
+      wasLoading.current = true;
+    }
+    if (!isLoading && wasLoading.current) {
+      wasLoading.current = false;
+      setPageEnter(true);
+      const t = setTimeout(() => setPageEnter(false), 500);
+      return () => clearTimeout(t);
+    }
+  }, [isLoading, isFadingOut]);
 
   // Hide-on-scroll-down / show-on-scroll-up for the fixed header
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -498,7 +517,7 @@ function AppContent() {
       <MobileMenuBubble />
       <div
         className={`hidden md:block transition-opacity duration-300 ${
-          isLoading ? "opacity-0 pointer-events-none" : "opacity-100"
+          isLoading && !isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
         <Navbar
@@ -527,8 +546,8 @@ function AppContent() {
       {/* Main Router */}
       <main
         className={`flex-1 transition-opacity duration-300 ${
-          isLoading ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
+          isLoading && !isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
+        } ${pageEnter ? "page-enter" : ""}`}
       >
         <Router />
       </main>

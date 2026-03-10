@@ -540,24 +540,24 @@ export function MobileMenuBubble() {
                   </Link>
 
                   {(isAdmin || isSuperuser || user?.isAdmin) && (
-                  <Link href="/account/cards">
-                    <button
-                      onClick={close}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors duration-150 touch-manipulation ${
-                        location === "/account/cards"
-                          ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
-                          : "text-gray-700 active:bg-gray-100"
-                      }`}
-                    >
-                      <CreditCard
-                        className={`h-4 w-4 shrink-0 ${location === "/account/cards" ? "text-white" : "text-amber-600"}`}
-                      />
-                      <span className="text-[13px] font-medium">
-                        Card Vault
-                      </span>
-                      <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
-                    </button>
-                  </Link>
+                    <Link href="/account/cards">
+                      <button
+                        onClick={close}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors duration-150 touch-manipulation ${
+                          location === "/account/cards"
+                            ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
+                            : "text-gray-700 active:bg-gray-100"
+                        }`}
+                      >
+                        <CreditCard
+                          className={`h-4 w-4 shrink-0 ${location === "/account/cards" ? "text-white" : "text-amber-600"}`}
+                        />
+                        <span className="text-[13px] font-medium">
+                          Card Vault
+                        </span>
+                        <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
+                      </button>
+                    </Link>
                   )}
 
                   {/* Dashboard link */}
