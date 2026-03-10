@@ -505,7 +505,7 @@ export function UsersSection() {
                       )}
                     </td>
 
-                    {/* Status */}}
+                    {/* Status */}
                     <td className="px-4 py-3">
                       <StatusBadge active={user.isActive} />
                     </td>
