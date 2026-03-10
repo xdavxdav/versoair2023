@@ -2,11 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { authenticatedFetch } from "@/lib/auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { toast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +20,11 @@ import {
   Shield,
   ArrowLeft,
   Loader2,
-  CheckCircle,
   AlertCircle,
   Wallet,
+  ExternalLink,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -91,20 +89,15 @@ function cardBrandGradient(brand: string) {
 
 export default function CardVaultPage() {
   const { user, tier, tierName } = useSubscription();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
 
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Add Card form
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  // Add Card redirect
   const [addLoading, setAddLoading] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [expMonth, setExpMonth] = useState("");
-  const [expYear, setExpYear] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [cardholderName, setCardholderName] = useState("");
-  const [cardLabel, setCardLabel] = useState("");
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<SavedCard | null>(null);
@@ -112,6 +105,28 @@ export default function CardVaultPage() {
 
   // Default-setting
   const [defaultLoading, setDefaultLoading] = useState<number | null>(null);
+
+  // ─── Show toast on return from Stripe ───────────────────────────────────────
+
+  useEffect(() => {
+    const cardAdded = searchParams.get("card_added");
+    if (cardAdded === "true") {
+      toast({
+        title: "Card registered",
+        description:
+          "Your payment method has been securely saved by Stripe.",
+      });
+      // Clean URL
+      window.history.replaceState({}, "", "/account/cards");
+    } else if (cardAdded === "false") {
+      toast({
+        title: "Card not added",
+        description: "You cancelled the card setup. No card was saved.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/account/cards");
+    }
+  }, []);
 
   // ─── Fetch Cards ────────────────────────────────────────────────────────────
 
@@ -134,84 +149,41 @@ export default function CardVaultPage() {
     fetchCards();
   }, [fetchCards]);
 
-  // ─── Add Card via SetupIntent ───────────────────────────────────────────────
+  // ─── Add Card → Stripe Hosted Page ─────────────────────────────────────────
 
   async function handleAddCard() {
-    if (!cardNumber || !expMonth || !expYear || !cvc) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all card details",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setAddLoading(true);
 
-      // Step 1: Create a SetupIntent on the server
-      const setupRes = await authenticatedFetch(
-        "/api/v1/payments/setup-intent",
+      const res = await authenticatedFetch(
+        "/api/v1/payments/add-card-session",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cardholderName: cardholderName || undefined,
-          }),
         },
       );
 
-      if (!setupRes.ok) {
-        const errData = await setupRes.json();
-        throw new Error(errData.error || "Failed to create setup intent");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to start card setup");
       }
 
-      const setupData = await setupRes.json();
+      const data = await res.json();
 
-      // Step 2: Save card to database via our API
-      const saveRes = await authenticatedFetch("/api/v1/payments/save-card", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          setupIntentId: setupData.setupIntentId,
-          cardholderName: cardholderName || undefined,
-          label: cardLabel || undefined,
-          // Server will retrieve payment method details from Stripe
-        }),
-      });
-
-      if (!saveRes.ok) {
-        const errData = await saveRes.json();
-        throw new Error(errData.error || "Failed to save card");
+      if (data.data?.url) {
+        // Redirect to Stripe's secure hosted page
+        window.location.href = data.data.url;
+      } else {
+        throw new Error("No redirect URL received from Stripe");
       }
-
-      toast({
-        title: "Card added",
-        description: "Your payment method has been saved securely.",
-      });
-
-      // Reset form & refresh
-      setShowAddDialog(false);
-      resetAddForm();
-      fetchCards();
     } catch (err: any) {
       toast({
-        title: "Error adding card",
+        title: "Error",
         description: err.message,
         variant: "destructive",
       });
-    } finally {
       setAddLoading(false);
     }
-  }
-
-  function resetAddForm() {
-    setCardNumber("");
-    setExpMonth("");
-    setExpYear("");
-    setCvc("");
-    setCardholderName("");
-    setCardLabel("");
   }
 
   // ─── Set Default ────────────────────────────────────────────────────────────
@@ -288,18 +260,44 @@ export default function CardVaultPage() {
                 Card Vault
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Manage your saved payment methods for subscription billing
+                Payment methods are registered automatically via Stripe
               </p>
             </div>
           </div>
           <Button
-            onClick={() => setShowAddDialog(true)}
+            onClick={handleAddCard}
+            disabled={addLoading}
             className="gap-2 bg-amber-600 hover:bg-amber-700"
           >
-            <Plus className="h-4 w-4" />
+            {addLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
             Add Card
           </Button>
         </div>
+
+        {/* How it works banner */}
+        <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white text-sm mb-1">
+                  Automatic & Secure Registration
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Cards are registered automatically when you complete a
+                  subscription payment or add a card via Stripe's secure
+                  checkout. Your card numbers never touch our servers — all
+                  credentials are handled directly by Stripe (PCI Level 1
+                  certified).
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Subscription Info Banner */}
         <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-800">
@@ -353,19 +351,37 @@ export default function CardVaultPage() {
             <CardContent className="py-16 text-center">
               <CreditCard className="h-14 w-14 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No saved cards
+                No saved cards yet
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                Add a payment method to enable subscription billing, quick
-                upgrades, and seamless renewals.
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 max-w-md mx-auto">
+                Cards are registered automatically when you purchase a
+                subscription. You can also add a card via Stripe's secure
+                checkout page.
               </p>
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                className="gap-2 bg-amber-600 hover:bg-amber-700"
-              >
-                <Plus className="h-4 w-4" />
-                Add Your First Card
-              </Button>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+                Your card details are handled entirely by Stripe — we never see
+                your full card number.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={handleAddCard}
+                  disabled={addLoading}
+                  className="gap-2 bg-amber-600 hover:bg-amber-700"
+                >
+                  {addLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-4 w-4" />
+                  )}
+                  Add Card via Stripe
+                </Button>
+                <Link href="/pricing">
+                  <Button variant="outline" className="gap-2">
+                    <Wallet className="h-4 w-4" />
+                    Subscribe to a Plan
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -424,6 +440,16 @@ export default function CardVaultPage() {
                     </span>
                   </div>
 
+                  {/* Registered date */}
+                  <p className="text-xs text-gray-400 mb-3">
+                    Registered{" "}
+                    {new Date(card.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+
                   {/* Actions */}
                   <div className="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
                     {!card.is_default && (
@@ -462,139 +488,11 @@ export default function CardVaultPage() {
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1">
             <Shield className="h-3 w-3" />
-            All payment data is encrypted and processed securely via Stripe.
-            Card numbers are never stored on our servers.
+            All payment data is encrypted and processed securely via Stripe. Card
+            numbers are never stored on our servers.
           </p>
         </div>
       </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          ADD CARD DIALOG
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog
-        open={showAddDialog}
-        onOpenChange={(v) => {
-          setShowAddDialog(v);
-          if (!v) resetAddForm();
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-amber-600" />
-              Add Payment Method
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Cardholder Name</Label>
-              <Input
-                value={cardholderName}
-                onChange={(e) => setCardholderName(e.target.value)}
-                placeholder="Name on card"
-              />
-            </div>
-            <div>
-              <Label>Card Number</Label>
-              <Input
-                value={cardNumber}
-                onChange={(e) =>
-                  setCardNumber(
-                    e.target.value
-                      .replace(/\D/g, "")
-                      .replace(/(.{4})/g, "$1 ")
-                      .trim()
-                      .slice(0, 19),
-                  )
-                }
-                placeholder="4242 4242 4242 4242"
-                maxLength={19}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Month</Label>
-                <Input
-                  value={expMonth}
-                  onChange={(e) =>
-                    setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))
-                  }
-                  placeholder="MM"
-                  maxLength={2}
-                />
-              </div>
-              <div>
-                <Label>Year</Label>
-                <Input
-                  value={expYear}
-                  onChange={(e) =>
-                    setExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder="2026"
-                  maxLength={4}
-                />
-              </div>
-              <div>
-                <Label>CVC</Label>
-                <Input
-                  value={cvc}
-                  onChange={(e) =>
-                    setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder="123"
-                  maxLength={4}
-                  type="password"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>
-                Label{" "}
-                <span className="text-gray-400 font-normal">(optional)</span>
-              </Label>
-              <Input
-                value={cardLabel}
-                onChange={(e) => setCardLabel(e.target.value)}
-                placeholder='e.g. "Business Amex", "Personal Visa"'
-              />
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
-              <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Your card details are securely tokenized by Stripe. We never
-                store your full card number. A small authorization hold may
-                appear and will be immediately released.
-              </span>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddDialog(false);
-                resetAddForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddCard}
-              disabled={addLoading}
-              className="gap-2 bg-amber-600 hover:bg-amber-700"
-            >
-              {addLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4" />
-              )}
-              Save Card
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* ═══════════════════════════════════════════════════════════════════════
           DELETE CONFIRMATION DIALOG
