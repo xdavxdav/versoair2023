@@ -1011,7 +1011,9 @@ function ArtistCarouselByCountry() {
   // Fetch ALL artists (no country filter) so we can group them
   const { data: artists, isLoading } = useMusicArtists();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const countryScrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isCountryPaused, setIsCountryPaused] = useState(false);
   const [showCountries, setShowCountries] = useState(false);
 
   // Auto-scroll animation
@@ -1036,6 +1038,30 @@ function ArtistCarouselByCountry() {
     animId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animId);
   }, [artists, isPaused]);
+
+  // Auto-scroll for country chips (when expanded)
+  useEffect(() => {
+    const el = countryScrollRef.current;
+    if (!el || !showCountries) return;
+
+    let animId: number;
+    let scrollPos = 0;
+    const speed = 0.35;
+
+    const animate = () => {
+      if (!isCountryPaused && el) {
+        scrollPos += speed;
+        if (scrollPos >= el.scrollWidth / 2) {
+          scrollPos = 0;
+        }
+        el.scrollLeft = scrollPos;
+      }
+      animId = requestAnimationFrame(animate);
+    };
+
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [showCountries, isCountryPaused]);
 
   if (isLoading) {
     return (
@@ -1101,13 +1127,19 @@ function ArtistCarouselByCountry() {
               transition={{ duration: 0.25 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-h-24 overflow-y-auto pr-1">
-                {countryKeys.map((cc) => {
+              <div
+                ref={countryScrollRef}
+                onMouseEnter={() => setIsCountryPaused(true)}
+                onMouseLeave={() => setIsCountryPaused(false)}
+                className="flex flex-nowrap gap-1.5 mt-3 overflow-x-hidden"
+                style={{ scrollBehavior: "auto" }}
+              >
+                {[...countryKeys, ...countryKeys].map((cc, idx) => {
                   const meta = getCountryMeta(cc);
                   return (
                     <span
-                      key={cc}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/8 border border-white/15 text-[11px] text-purple-200"
+                      key={`${cc}-${idx}`}
+                      className="inline-flex flex-shrink-0 items-center gap-1 px-2 py-1 rounded-full bg-white/8 border border-white/15 text-[11px] text-purple-200"
                     >
                       <span className="text-sm">{meta.flag || "🌍"}</span>
                       {meta.name || cc} ({byCountry[cc].length})
