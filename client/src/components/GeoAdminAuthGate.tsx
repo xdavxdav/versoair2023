@@ -33,6 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TierKey } from "@/lib/tiers";
 import { TIERS, TIER_ORDER } from "@/lib/tiers";
+import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
@@ -70,6 +71,9 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("geoadmin_session", "true");
         localStorage.setItem("geoadmin_username", email.split("@")[0]);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
+        // Set in-memory token so authenticatedFetch sends Authorization header
+        setAuthToken(data.token);
+        await initializeCsrfToken();
         setIsSuccess(true);
         onSignInSuccess(email.split("@")[0]);
       } else {

@@ -56,6 +56,8 @@ const PUBLIC_PATHS: string[] = [
   "/api/countries",
   "/api/categories",
   "/api/business-categories",
+  "/api/regions",
+  "/api/cities",
   "/api/public/dashboard-stats",
 ];
 

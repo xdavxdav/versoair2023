@@ -155,12 +155,17 @@ export default function ArtistDirectory() {
       try {
         const [genresRes, countriesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/artists/genres`),
-          fetch(`${API_BASE_URL}/api/artists/countries`),
+          fetch(`${API_BASE_URL}/api/countries`),
         ]);
         const genresJson = await genresRes.json();
         if (genresJson.success) setGenres(genresJson.data || []);
         const countriesJson = await countriesRes.json();
-        if (countriesJson.success) setCountries(countriesJson.data || []);
+        // /api/countries returns array of {id, name, code} objects
+        if (Array.isArray(countriesJson)) {
+          setCountries(countriesJson.map((c: any) => c.code));
+        } else if (countriesJson.success) {
+          setCountries(countriesJson.data || []);
+        }
       } catch (error) {
         console.error("Failed to fetch filters:", error);
         // Fallback genres
@@ -225,7 +230,8 @@ export default function ArtistDirectory() {
         if (searchQuery.trim()) params.set("query", searchQuery.trim());
         if (genre) params.set("genre", genre);
         // Only filter by artist-specific country selection, NOT the global header country
-        if (selectedArtistCountry) params.set("countryCode", selectedArtistCountry);
+        if (selectedArtistCountry)
+          params.set("countryCode", selectedArtistCountry);
 
         const response = await fetch(
           `${API_BASE_URL}/api/artists/search?${params}`,
