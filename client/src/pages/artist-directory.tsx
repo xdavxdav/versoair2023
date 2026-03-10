@@ -35,7 +35,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { useCountry } from "@/contexts/CountryContext";
+// Artist directory is global — no country context needed
+// import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -109,7 +110,6 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function ArtistDirectory() {
-  const { selectedCountry } = useCountry();
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
   );
@@ -189,11 +189,7 @@ export default function ArtistDirectory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-search when country changes
-  useEffect(() => {
-    if (hasSearched) handleSearch(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCountry]);
+  // Note: Artist directory is a global catalog — it does NOT filter by the header country selector
 
   // Debounced search - auto-fetch after user stops typing
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -228,8 +224,8 @@ export default function ArtistDirectory() {
 
         if (searchQuery.trim()) params.set("query", searchQuery.trim());
         if (genre) params.set("genre", genre);
-        const countryFilter = selectedArtistCountry || selectedCountry;
-        if (countryFilter) params.set("countryCode", countryFilter);
+        // Only filter by artist-specific country selection, NOT the global header country
+        if (selectedArtistCountry) params.set("countryCode", selectedArtistCountry);
 
         const response = await fetch(
           `${API_BASE_URL}/api/artists/search?${params}`,
@@ -362,8 +358,8 @@ export default function ArtistDirectory() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-xl mb-2 text-white/90"
           >
-            Explorez plus de {genres.length} catégories d'artistes à travers
-            Côte d'Ivoire
+            Explorez plus de {genres.length} catégories d'artistes
+            {countries.length > 0 ? ` à travers ${countries.length} pays` : ""}
           </motion.p>
 
           <motion.div
