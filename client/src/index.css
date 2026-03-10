@@ -601,7 +601,7 @@
     transform: translateZ(50px) scale(1.15) rotateX(-5deg);
   }
   75% {
-    transform: translateZ(20px) scale(1.0) rotateX(-2deg);
+    transform: translateZ(20px) scale(1) rotateX(-2deg);
   }
   100% {
     transform: translateZ(30px) scale(1.05) rotateX(-2deg) rotateY(0deg);
@@ -609,7 +609,8 @@
 }
 
 @keyframes eagle-peer {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateZ(30px) scale(1.05) rotateY(0deg) translateY(0px);
   }
   25% {
@@ -653,11 +654,11 @@
   position: fixed;
   inset: 0;
   background: radial-gradient(
-      ellipse at 50% 40%,
-      rgba(191, 131, 28, 0.95) 0%,
-      rgba(120, 70, 10, 0.97) 60%,
-      rgba(30, 20, 5, 0.98) 100%
-    );
+    ellipse at 50% 40%,
+    rgba(191, 131, 28, 0.95) 0%,
+    rgba(120, 70, 10, 0.97) 60%,
+    rgba(30, 20, 5, 0.98) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -707,7 +708,8 @@
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.6;
   }
@@ -742,7 +744,9 @@
 }
 
 @keyframes dot-bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.6);
     opacity: 0.4;
   }

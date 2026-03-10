@@ -517,7 +517,9 @@ function AppContent() {
       <MobileMenuBubble />
       <div
         className={`hidden md:block transition-opacity duration-300 ${
-          isLoading && !isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
+          isLoading && !isFadingOut
+            ? "opacity-0 pointer-events-none"
+            : "opacity-100"
         }`}
       >
         <Navbar
@@ -546,7 +548,9 @@ function AppContent() {
       {/* Main Router */}
       <main
         className={`flex-1 transition-opacity duration-300 ${
-          isLoading && !isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
+          isLoading && !isFadingOut
+            ? "opacity-0 pointer-events-none"
+            : "opacity-100"
         } ${pageEnter ? "page-enter" : ""}`}
       >
         <Router />

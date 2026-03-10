@@ -2875,18 +2875,18 @@ export default function Home() {
                 <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8">
                 <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
+                  <div className="text-center mb-1.5 sm:mb-3 md:mb-6">
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <ShoppingBag className="w-4 h-4 sm:w-7 sm:h-7 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-0.5 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
+                      className="gold-text mb-0.5 sm:mb-2 md:mb-3"
                       data-text="Artisan Marketplace"
                     >
                       <span
@@ -2896,14 +2896,14 @@ export default function Home() {
                         Artisan Marketplace
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-0.5 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2 hidden sm:block">
                       Discover unique handcrafted products that support
                       communities and preserve traditional {countryMeta.demonym}{" "}
                       crafts.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-3 md:gap-6 w-full max-w-5xl mb-1.5 sm:mb-3 md:mb-6">
                     {[
                       {
                         name: "Artisan Pottery Set",
@@ -2942,9 +2942,9 @@ export default function Home() {
                         className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-white/40 transition-all shadow-lg"
                       >
                         <div
-                          className={`bg-gradient-to-br ${product.gradient} p-2 sm:p-4 md:p-7 flex items-center justify-between relative h-14 sm:h-20 md:h-28`}
+                          className={`bg-gradient-to-br ${product.gradient} p-1.5 sm:p-4 md:p-7 flex items-center justify-between relative h-10 sm:h-20 md:h-28`}
                         >
-                          <span className="text-3xl sm:text-4xl md:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
+                          <span className="text-2xl sm:text-4xl md:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
                             {product.emoji}
                           </span>
                           <motion.span
@@ -2955,34 +2955,34 @@ export default function Home() {
                             {product.badge}
                           </motion.span>
                         </div>
-                        <div className="p-2 sm:p-3 md:p-4">
-                          <h3 className="text-xs sm:text-sm md:text-lg font-bold text-white mb-0.5 sm:mb-1 line-clamp-1">
+                        <div className="p-1.5 sm:p-3 md:p-4">
+                          <h3 className="text-[11px] sm:text-sm md:text-lg font-bold text-white mb-0.5 line-clamp-1">
                             {product.name}
                           </h3>
-                          <p className="text-white/70 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2">
+                          <p className="text-white/70 text-[9px] sm:text-xs md:text-sm mb-0.5 sm:mb-2 hidden sm:block">
                             {product.type}
                           </p>
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <span className="text-sm sm:text-base md:text-lg font-bold text-amber-300">
+                          <div className="flex items-center justify-between mb-0.5 sm:mb-2">
+                            <span className="text-xs sm:text-base md:text-lg font-bold text-amber-300">
                               {product.price}
                             </span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
-                              <span className="text-white font-semibold text-xs sm:text-sm">
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-2.5 h-2.5 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
+                              <span className="text-white font-semibold text-[10px] sm:text-sm">
                                 {product.rating}
                               </span>
                             </div>
                           </div>
-                          <p className="text-white/60 text-[10px] sm:text-xs mb-1 sm:mb-2 font-medium">
+                          <p className="text-white/60 text-[10px] sm:text-xs mb-1 sm:mb-2 font-medium hidden sm:block">
                             {product.sold}
                           </p>
                           <Link to="/blog">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-2 rounded-lg text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
+                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
                             >
-                              <ShoppingCart className="w-3 h-3" />
+                              <ShoppingCart className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                               <AnimatedKeyboardText
                                 text="Shop Now"
                                 variant="fast"
@@ -2998,17 +2998,12 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="gold-text mb-1 sm:mb-2">
-                      <span
-                        className="gold-text__shine"
-                        data-text="Support Communities"
-                      >
-                        Support Communities
-                      </span>
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-0.5 sm:mb-1 group-hover:text-amber-200 transition-colors">
+                      Support Communities
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-2 md:mb-4 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                       Browse our collection and make a difference with every
                       purchase
                     </p>
