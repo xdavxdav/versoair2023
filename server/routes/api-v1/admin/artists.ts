@@ -4,6 +4,9 @@ import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { artists, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, or, count, desc, sql, isNotNull } from "drizzle-orm";
+import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
+
+const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 
 const router = Router();
 
@@ -143,6 +146,15 @@ router.post(
       entityId: String(artist.id),
     });
 
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "created",
+      entityType: "artist",
+      entityName: stageName,
+      entityId: artist.id,
+      details: { genre, labelStatus, spotifyUrl },
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
+
     res.status(201).json({
       success: true,
       status: 201,
@@ -252,6 +264,15 @@ router.put(
       entityId: String(artistId),
     });
 
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "updated",
+      entityType: "artist",
+      entityName: stageName,
+      entityId: artistId,
+      details: { genre, labelStatus, spotifyUrl },
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
+
     res.json({
       success: true,
       status: 200,
@@ -301,6 +322,14 @@ router.delete(
       entityType: "artist",
       entityId: String(artistId),
     });
+
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "deleted",
+      entityType: "artist",
+      entityName: artist.stageName || `Artist #${artistId}`,
+      entityId: artistId,
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
 
     res.json({
       success: true,

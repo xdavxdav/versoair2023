@@ -12,7 +12,9 @@ import {
   users,
 } from "../../shared/schema";
 import { eq, like, count, desc, sql } from "drizzle-orm";
+import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
+const ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 const router = Router();
 
 // =======================
@@ -274,6 +276,14 @@ router.get("/artists", async (req, res) => {
 router.post("/artists", async (req, res) => {
   try {
     const result = await db.insert(artists).values(req.body).returning();
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "created",
+      entityType: "artist",
+      entityName: result[0]?.stageName || req.body.stageName || "Unknown",
+      entityId: result[0]?.id || 0,
+      details: { genre: req.body.genre, labelStatus: req.body.labelStatus },
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -288,6 +298,14 @@ router.put("/artists/:id", async (req, res) => {
       .set(req.body)
       .where(eq(artists.id, parseInt(id)))
       .returning();
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "updated",
+      entityType: "artist",
+      entityName: result[0]?.stageName || "Unknown",
+      entityId: parseInt(id),
+      details: { genre: req.body.genre, labelStatus: req.body.labelStatus },
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -297,7 +315,14 @@ router.put("/artists/:id", async (req, res) => {
 router.delete("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await db.delete(artists).where(eq(artists.id, parseInt(id)));
+    const [deleted] = await db.delete(artists).where(eq(artists.id, parseInt(id))).returning();
+    // 📬 Send SMTP notification
+    sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
+      action: "deleted",
+      entityType: "artist",
+      entityName: deleted?.stageName || `Artist #${id}`,
+      entityId: parseInt(id),
+    }).catch((err) => console.error("[ARTIST] Email notification error:", err));
     res.status(204).send();
   } catch (error: any) {
     res.status(400).json({ error: error.message });

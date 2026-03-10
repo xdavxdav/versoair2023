@@ -1065,3 +1065,93 @@ export async function sendGeoAdminReportEmail(
 
   return sendEmail(toEmail, subject, html);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GEO-ADMIN CRUD NOTIFICATION EMAILS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CrudNotificationData {
+  action: "created" | "updated" | "deleted";
+  entityType: "business" | "artist" | "job";
+  entityName: string;
+  entityId: string | number;
+  details?: Record<string, any>;
+  performedBy?: string;
+}
+
+/**
+ * Send SMTP notification email when a CRUD action is performed on businesses, artists, or jobs.
+ * Green theme for create, blue for update, red for delete.
+ */
+export async function sendGeoAdminCrudNotificationEmail(
+  adminEmail: string,
+  data: CrudNotificationData,
+): Promise<boolean> {
+  const appUrl =
+    process.env.VITE_API_URL ||
+    process.env.VERSOAIR_URL ||
+    "http://localhost:5003";
+
+  const actionEmoji =
+    data.action === "created" ? "✅" :
+    data.action === "updated" ? "📝" : "🗑️";
+
+  const actionColor =
+    data.action === "created" ? "#059669" :
+    data.action === "updated" ? "#2563eb" : "#dc2626";
+
+  const actionGradient =
+    data.action === "created" ? "linear-gradient(135deg, #059669 0%, #10b981 100%)" :
+    data.action === "updated" ? "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)" :
+    "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+
+  const entityIcon =
+    data.entityType === "business" ? "🏢" :
+    data.entityType === "artist" ? "🎤" : "💼";
+
+  const subject = `${actionEmoji} ${data.entityType.charAt(0).toUpperCase() + data.entityType.slice(1)} ${data.action}: ${data.entityName} — Verso Air`;
+
+  const detailsHtml = data.details
+    ? Object.entries(data.details)
+        .filter(([, v]) => v != null && v !== "")
+        .map(
+          ([k, v]) => `
+        <div class="stat-row">
+          <span class="stat-label">${k.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())}</span>
+          <span class="stat-value">${v}</span>
+        </div>`,
+        )
+        .join("")
+    : "";
+
+  const bodyHtml = `
+    <p>A <strong>${data.entityType}</strong> record has been <strong style="color: ${actionColor};">${data.action}</strong> on the Verso Air platform.</p>
+    <div class="card">
+      <h3>${entityIcon} ${data.entityName}</h3>
+      <p>Entity Type: <span class="badge">${data.entityType}</span></p>
+      <p class="meta">ID: ${data.entityId} · Action: ${data.action.toUpperCase()} · ${new Date().toLocaleString()}</p>
+    </div>
+    ${detailsHtml ? `
+    <div class="divider"></div>
+    <h3 style="margin: 0 0 12px; color: #1a1a2e;">📋 Details</h3>
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 16px;">
+      ${detailsHtml}
+    </div>` : ""}
+    ${data.performedBy ? `<p style="font-size: 13px; color: #888; margin-top: 16px;">Performed by: <strong>${data.performedBy}</strong></p>` : ""}
+    <div class="divider"></div>
+    <div style="text-align: center;">
+      <a href="${appUrl}/geo-admin" class="button">Open GeoAdmin Dashboard</a>
+    </div>
+  `;
+
+  const html = wrapInBrandedTemplate(
+    actionEmoji,
+    `${data.entityType.charAt(0).toUpperCase() + data.entityType.slice(1)} ${data.action.charAt(0).toUpperCase() + data.action.slice(1)}`,
+    actionGradient,
+    actionColor,
+    bodyHtml,
+    `${appUrl}/settings`,
+  );
+
+  return sendEmail(adminEmail, subject, html);
+}

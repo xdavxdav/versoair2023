@@ -151,18 +151,15 @@ router.post(
       insertValues.gateUsername = gateUsername.trim().toLowerCase();
     }
 
-    const [user] = await db
-      .insert(users)
-      .values(insertValues)
-      .returning({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        role: users.role,
-        gateUsername: users.gateUsername,
-        isVerified: users.isVerified,
-        createdAt: users.createdAt,
-      });
+    const [user] = await db.insert(users).values(insertValues).returning({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      role: users.role,
+      gateUsername: users.gateUsername,
+      isVerified: users.isVerified,
+      createdAt: users.createdAt,
+    });
 
     // Audit log (skip if fails)
     await db
@@ -248,8 +245,15 @@ router.put(
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { username, email, role, isVerified, password, subscriptionTier, gateUsername } =
-      req.body;
+    const {
+      username,
+      email,
+      role,
+      isVerified,
+      password,
+      subscriptionTier,
+      gateUsername,
+    } = req.body;
     const userId = parseInt(id, 10);
 
     // Check if user exists
@@ -281,7 +285,10 @@ router.put(
     if (subscriptionTier !== undefined)
       updates.subscriptionTier = subscriptionTier;
     if (gateUsername !== undefined) {
-      updates.gateUsername = gateUsername && gateUsername.trim() ? gateUsername.trim().toLowerCase() : null;
+      updates.gateUsername =
+        gateUsername && gateUsername.trim()
+          ? gateUsername.trim().toLowerCase()
+          : null;
     }
     if (password !== undefined) {
       updates.password = await bcrypt.hash(password, 10);

@@ -13,13 +13,15 @@ async function checkCountryCodeColumn(): Promise<boolean> {
   try {
     const result = await pool.query(
       `SELECT 1 FROM information_schema.columns
-       WHERE table_name = 'artists' AND column_name = 'country_code'`
+       WHERE table_name = 'artists' AND column_name = 'country_code'`,
     );
     hasCountryCodeColumn = result.rows.length > 0;
   } catch {
     hasCountryCodeColumn = false;
   }
-  console.log(`🎤 [ARTISTS] country_code column detected: ${hasCountryCodeColumn}`);
+  console.log(
+    `🎤 [ARTISTS] country_code column detected: ${hasCountryCodeColumn}`,
+  );
   return hasCountryCodeColumn;
 }
 
