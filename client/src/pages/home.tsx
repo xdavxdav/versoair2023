@@ -1063,6 +1063,22 @@ function ArtistCarouselByCountry() {
     return () => cancelAnimationFrame(animId);
   }, [showCountries, isCountryPaused]);
 
+  // Disable global page scroll while countries list is shown
+  useEffect(() => {
+    if (!showCountries) return;
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [showCountries]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
