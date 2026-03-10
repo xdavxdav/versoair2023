@@ -1059,7 +1059,10 @@ router.post("/charge", async (req: Request, res: Response) => {
     const callerId = (req as any).userId;
     let isAdminCaller = false;
     if (callerId) {
-      const roleCheck = await pool.query(`SELECT role FROM users WHERE id = $1`, [callerId]);
+      const roleCheck = await pool.query(
+        `SELECT role FROM users WHERE id = $1`,
+        [callerId],
+      );
       const callerRole = roleCheck.rows[0]?.role;
       isAdminCaller = ["admin", "moderator", "superuser"].includes(callerRole);
     }

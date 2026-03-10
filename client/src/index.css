@@ -624,6 +624,7 @@
 }
 
 .eagle-pierce {
+  position: relative;
   animation:
     eagle-pierce 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards,
     eagle-peer 2.4s ease-in-out 1.2s infinite;
@@ -647,28 +648,159 @@
     eagle-glide 4s ease-in-out infinite;
 }
 
-/* Page transition loading overlay */
+/* ─── Page-transition loading overlay ─── */
 .page-loading-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(191, 131, 28, 0.9),
-    rgba(255, 249, 229, 0.9)
-  );
+  inset: 0;
+  background: radial-gradient(
+      ellipse at 50% 40%,
+      rgba(191, 131, 28, 0.95) 0%,
+      rgba(120, 70, 10, 0.97) 60%,
+      rgba(30, 20, 5, 0.98) 100%
+    );
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  transition: opacity 0.3s ease-out;
+  animation: overlay-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  backdrop-filter: blur(6px);
 }
 
 .page-loading-overlay.fade-out {
-  opacity: 0;
+  animation: overlay-exit 0.4s ease-in forwards;
   pointer-events: none;
+}
+
+@keyframes overlay-enter {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(6px);
+  }
+}
+
+@keyframes overlay-exit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ─── Pulsing glow ring behind the eagle ─── */
+.eagle-glow-ring {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 200, 50, 0.35) 0%,
+    rgba(191, 131, 28, 0.15) 45%,
+    transparent 70%
+  );
+  animation: glow-pulse 1.8s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+/* ─── Animated loading dots ─── */
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* ─── Shimmer progress bar at overlay top ─── */
+.loading-shimmer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.loading-shimmer-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.7),
+    transparent
+  );
+  animation: shimmer-slide 1s ease-in-out infinite;
+}
+
+@keyframes shimmer-slide {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ─── Page content entrance after loading ─── */
+.page-enter {
+  animation: page-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes page-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Sliding text animation */
