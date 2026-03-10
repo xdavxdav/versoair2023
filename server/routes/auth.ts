@@ -623,22 +623,68 @@ router.post(
 /**
  * Usernames recognised by the AdminAccessGate frontend component.
  * Keep in sync with client/src/lib/admin-auth.ts ADMIN_USERS.
+ * Each maps to a real DB user that will be looked up for JWT issuance.
  */
-const ADMIN_GATE_USERNAMES = ["joel_007", "admin_001", "manager_001"];
+const ADMIN_GATE_MAP: Record<string, string> = {
+  joel_007: "superadmin@versoair.test",
+  admin_001: "admin@versoair.test",
+  manager_001: "moderator@versoair.test",
+};
 
 /**
  * POST /auth/admin-gate
- * ⛔ DISABLED — This endpoint previously issued admin JWTs without a password.
- * All admin access now requires proper authentication via /auth/login.
- * Only superuser accounts have unrestricted access.
+ * Issues a JWT for admin users after client-side code validation.
+ * Looks up the corresponding DB user and issues a token with proper roles.
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
-    res.status(403).json({
-      success: false,
-      message:
-        "Admin gate is disabled. Use standard login with proper credentials.",
+    const { username } = req.body;
+
+    if (!username || !ADMIN_GATE_MAP[username]) {
+      return res.status(403).json({
+        success: false,
+        message: "Unknown admin username.",
+      });
+    }
+
+    // Look up the real DB user mapped to this admin gate username
+    const email = ADMIN_GATE_MAP[username];
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email))
+      .limit(1);
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin user not found in database. Run seed first.",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        userId: String(user.id),
+        email: user.email,
+        role: user.role || "admin",
+        subscriptionTier: user.subscription_tier || "enterprise",
+      },
+      getJwtSecret(),
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    setAuthCookie(res, token);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: String(user.id),
+        email: user.email,
+        username: user.username || username,
+        role: user.role || "admin",
+      },
     });
   }),
 );
