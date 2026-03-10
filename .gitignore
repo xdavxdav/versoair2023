@@ -50,6 +50,7 @@ nodemon.json
 scripts/*
 !scripts/migrations/
 !scripts/run-migrations.sh
+!scripts/seed-production.cjs
 
 # Backup & duplicate configs
 client/postcss.config.cjs
