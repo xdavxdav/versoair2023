@@ -194,12 +194,16 @@ export async function testDatabaseConnection(): Promise<{
 }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/business/test-connection`,
+      `${API_BASE_URL}/api/status`,
     );
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    return {
+      success: data.database?.connected === true,
+      database: data.database,
+    };
   } catch (error: any) {
     console.error("Database connection test failed:", error);
     return {
