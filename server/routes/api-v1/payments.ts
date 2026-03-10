@@ -250,20 +250,36 @@ router.post("/webhook", async (req: Request, res: Response) => {
       // ── Auto-save the payment method used in this checkout ──
       try {
         const numericUserId = parseInt(userId);
-        if (session.payment_intent && typeof session.payment_intent === "string") {
+        if (
+          session.payment_intent &&
+          typeof session.payment_intent === "string"
+        ) {
           // Payment mode: extract PM from PaymentIntent
-          const pi = await stripe!.paymentIntents.retrieve(session.payment_intent);
-          if (pi.payment_method && typeof pi.payment_method === "string" && pi.customer) {
+          const pi = await stripe!.paymentIntents.retrieve(
+            session.payment_intent,
+          );
+          if (
+            pi.payment_method &&
+            typeof pi.payment_method === "string" &&
+            pi.customer
+          ) {
             await autoSavePaymentMethod(
               pi.payment_method,
               numericUserId,
               typeof pi.customer === "string" ? pi.customer : pi.customer.id,
             );
           }
-        } else if (session.setup_intent && typeof session.setup_intent === "string") {
+        } else if (
+          session.setup_intent &&
+          typeof session.setup_intent === "string"
+        ) {
           // Setup mode (add-card-session): extract PM from SetupIntent
           const si = await stripe!.setupIntents.retrieve(session.setup_intent);
-          if (si.payment_method && typeof si.payment_method === "string" && si.customer) {
+          if (
+            si.payment_method &&
+            typeof si.payment_method === "string" &&
+            si.customer
+          ) {
             await autoSavePaymentMethod(
               si.payment_method,
               numericUserId,
@@ -272,7 +288,10 @@ router.post("/webhook", async (req: Request, res: Response) => {
           }
         }
       } catch (autoSaveErr: any) {
-        console.error("⚠️ Auto-save card after checkout error:", autoSaveErr.message);
+        console.error(
+          "⚠️ Auto-save card after checkout error:",
+          autoSaveErr.message,
+        );
       }
       break;
     }
@@ -284,16 +303,21 @@ router.post("/webhook", async (req: Request, res: Response) => {
 
       if (siUserId && setupIntent.payment_method && setupIntent.customer) {
         try {
-          const pmId = typeof setupIntent.payment_method === "string"
-            ? setupIntent.payment_method
-            : setupIntent.payment_method.id;
-          const custId = typeof setupIntent.customer === "string"
-            ? setupIntent.customer
-            : setupIntent.customer.id;
+          const pmId =
+            typeof setupIntent.payment_method === "string"
+              ? setupIntent.payment_method
+              : setupIntent.payment_method.id;
+          const custId =
+            typeof setupIntent.customer === "string"
+              ? setupIntent.customer
+              : setupIntent.customer.id;
 
           await autoSavePaymentMethod(pmId, parseInt(siUserId), custId);
         } catch (err: any) {
-          console.error("⚠️ Auto-save on setup_intent.succeeded error:", err.message);
+          console.error(
+            "⚠️ Auto-save on setup_intent.succeeded error:",
+            err.message,
+          );
         }
       }
       break;
@@ -533,7 +557,8 @@ async function autoSavePaymentMethod(
     const makeDefault = opts.isDefault || isFirstCard;
 
     const billing = pm.billing_details;
-    const autoLabel = opts.label || `${pm.card.brand?.toUpperCase()} •••• ${pm.card.last4}`;
+    const autoLabel =
+      opts.label || `${pm.card.brand?.toUpperCase()} •••• ${pm.card.last4}`;
 
     await pool.query(
       `INSERT INTO saved_payment_methods
@@ -595,7 +620,9 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     if (!userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     const userResult = await pool.query(
@@ -607,7 +634,11 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
     }
 
     const user = userResult.rows[0];
-    const customerId = await getOrCreateStripeCustomer(userId, user.email, user.username);
+    const customerId = await getOrCreateStripeCustomer(
+      userId,
+      user.email,
+      user.username,
+    );
 
     const origin = req.headers.origin || "http://localhost:5003";
 
@@ -1401,6 +1432,97 @@ router.get("/pos-stats", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("❌ POS stats error:", error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── ADMIN: Manual card registration (metadata only) ──────────────────────
+router.post("/admin/register-card", async (req, res) => {
+  try {
+    const adminId = (req as any).userId;
+    if (!adminId) return res.status(401).json({ error: "Not authenticated" });
+
+    // Check admin role
+    const adminCheck = await pool.query(
+      `SELECT role FROM users WHERE id = $1`,
+      [adminId],
+    );
+    const role = adminCheck.rows[0]?.role;
+    if (!["admin", "moderator", "superuser"].includes(role)) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const {
+      userId,
+      cardBrand,
+      cardLast4,
+      cardExpMonth,
+      cardExpYear,
+      cardholderName,
+      billingEmail,
+      label,
+    } = req.body;
+
+    if (!userId || !cardBrand || !cardLast4 || !cardExpMonth || !cardExpYear) {
+      return res.status(400).json({
+        error: "userId, cardBrand, cardLast4, cardExpMonth, cardExpYear are required",
+      });
+    }
+
+    // Verify user exists
+    const userCheck = await pool.query(`SELECT id, email FROM users WHERE id = $1`, [userId]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check for duplicate by last4 + expiry + brand for the same user
+    const dupCheck = await pool.query(
+      `SELECT id FROM saved_payment_methods
+       WHERE user_id = $1 AND card_last4 = $2 AND card_exp_month = $3
+         AND card_exp_year = $4 AND card_brand = $5 AND status = 'active'`,
+      [userId, cardLast4, cardExpMonth, cardExpYear, cardBrand],
+    );
+    if (dupCheck.rows.length > 0) {
+      return res.status(409).json({ error: "A matching card already exists for this user" });
+    }
+
+    // Check if user has any cards to determine default
+    const existingCards = await pool.query(
+      `SELECT id FROM saved_payment_methods WHERE user_id = $1 AND status = 'active'`,
+      [userId],
+    );
+    const isDefault = existingCards.rows.length === 0;
+
+    const insertResult = await pool.query(
+      `INSERT INTO saved_payment_methods
+        (user_id, card_brand, card_last4, card_exp_month, card_exp_year,
+         cardholder_name, billing_email, label, is_default, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', NOW(), NOW())
+       RETURNING id`,
+      [
+        userId,
+        cardBrand.toLowerCase(),
+        cardLast4,
+        cardExpMonth,
+        cardExpYear,
+        cardholderName || null,
+        billingEmail || null,
+        label || `${cardBrand.toUpperCase()} •••• ${cardLast4}`,
+        isDefault,
+      ],
+    );
+
+    console.log(
+      `✅ Admin #${adminId} manually registered card for user #${userId}: ${cardBrand} ****${cardLast4}`,
+    );
+
+    res.json({
+      success: true,
+      cardId: insertResult.rows[0].id,
+      message: `Card registered for user #${userId}`,
+    });
+  } catch (error: any) {
+    console.error("❌ Admin register-card error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

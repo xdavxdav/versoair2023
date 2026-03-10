@@ -530,12 +530,14 @@ export default function Navbar({
             {/* User Actions - Always visible */}
             {user ? (
               <div className="flex items-center gap-1.5">
-                <Link href="/account/cards" className="flex-shrink-0">
-                  <button className="flex items-center gap-1 bg-amber-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-amber-700 transition-colors text-xs font-medium whitespace-nowrap">
-                    <CreditCard className="h-3 w-3" />
-                    <span className="hidden lg:inline">Card Vault</span>
-                  </button>
-                </Link>
+                {(user.role === "admin" || user.role === "moderator" || user.role === "superuser" || user.isAdmin) && (
+                  <Link href="/account/cards" className="flex-shrink-0">
+                    <button className="flex items-center gap-1 bg-amber-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-amber-700 transition-colors text-xs font-medium whitespace-nowrap">
+                      <CreditCard className="h-3 w-3" />
+                      <span className="hidden lg:inline">Card Vault</span>
+                    </button>
+                  </Link>
+                )}
                 <button
                   onClick={async () => {
                     await logout();

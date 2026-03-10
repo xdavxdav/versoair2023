@@ -539,6 +539,7 @@ export function MobileMenuBubble() {
                     </button>
                   </Link>
 
+                  {(isAdmin || isSuperuser || user?.isAdmin) && (
                   <Link href="/account/cards">
                     <button
                       onClick={close}
@@ -551,10 +552,13 @@ export function MobileMenuBubble() {
                       <CreditCard
                         className={`h-4 w-4 shrink-0 ${location === "/account/cards" ? "text-white" : "text-amber-600"}`}
                       />
-                      <span className="text-[13px] font-medium">Card Vault</span>
+                      <span className="text-[13px] font-medium">
+                        Card Vault
+                      </span>
                       <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                     </button>
                   </Link>
+                  )}
 
                   {/* Dashboard link */}
                   <Link
