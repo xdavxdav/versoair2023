@@ -3780,14 +3780,16 @@ const TICKETS = [
     try {
       await pool.query("SELECT country_code FROM artists LIMIT 0");
       artistHasCC = true;
-    } catch { /* column doesn't exist yet */ }
+    } catch {
+      /* column doesn't exist yet */
+    }
 
     for (const a of ARTISTS) {
       try {
         // Check if this artist already exists
         const existing = await pool.query(
           "SELECT id FROM artists WHERE stage_name = $1 LIMIT 1",
-          [a.stageName]
+          [a.stageName],
         );
         if (existing.rows.length > 0) continue;
 
@@ -3810,6 +3812,7 @@ const TICKETS = [
           console.log("  ⚠️  artists table not found");
           break;
         }
+        console.error(`  ❌ Failed to insert artist "${a.stageName}":`, err.message);
       }
     }
     console.log(
@@ -3827,7 +3830,7 @@ const TICKETS = [
         // Check if this music artist already exists
         const existing = await pool.query(
           "SELECT id FROM music_artists WHERE name = $1 LIMIT 1",
-          [ma.name]
+          [ma.name],
         );
         if (existing.rows.length > 0) {
           musicArtistIdMap.push(existing.rows[0].id);

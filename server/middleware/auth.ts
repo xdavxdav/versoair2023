@@ -64,17 +64,17 @@ const PUBLIC_PATHS: string[] = [
  * Used for sub-routes like /api/home/stats?country=FR, /api/artists/search?q=...
  */
 const PUBLIC_PATH_PREFIXES: string[] = [
-  "/api/home/",              // Home page stats
-  "/api/artists/",           // Artist directory (search, genres, countries)
-  "/api/music/",             // Music artists, tracks, analytics (home page carousel)
-  "/api/businesses",         // Business listing & search (home page, directory)
-  "/api/business/search",    // Business search (legacy)
-  "/api/business/categories",// Business category listing
-  "/api/businesses/pool/",   // Business pool by category
-  "/api/category/",          // Category search
-  "/api/jobs/search",        // Public career portal
-  "/api/commerce/",          // Commerce search & analytics
-  "/api/properties/",        // Property search & analytics
+  "/api/home/", // Home page stats
+  "/api/artists/", // Artist directory (search, genres, countries)
+  "/api/music/", // Music artists, tracks, analytics (home page carousel)
+  "/api/businesses", // Business listing & search (home page, directory)
+  "/api/business/search", // Business search (legacy)
+  "/api/business/categories", // Business category listing
+  "/api/businesses/pool/", // Business pool by category
+  "/api/category/", // Category search
+  "/api/jobs/search", // Public career portal
+  "/api/commerce/", // Commerce search & analytics
+  "/api/properties/", // Property search & analytics
 ];
 
 /**

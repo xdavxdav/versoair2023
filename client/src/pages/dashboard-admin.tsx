@@ -6367,7 +6367,9 @@ export default function AdminDashboard() {
       );
     } else if (isAdminGateAuthenticated && authenticatedAdminUsername) {
       // Session restored from localStorage but no JWT — redirect to sign in
-      console.warn("No JWT found on page refresh — re-authentication required.");
+      console.warn(
+        "No JWT found on page refresh — re-authentication required.",
+      );
     }
     // Always bootstrap CSRF token
     initializeCsrfToken().catch((error) => {
