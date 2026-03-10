@@ -604,7 +604,7 @@ export default function GeoAdminAuthGate({
               <form onSubmit={handleGeoAdminSignIn} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Code / Username
+                    Username
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -612,7 +612,7 @@ export default function GeoAdminAuthGate({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="code/username"
+                      placeholder="Enter your username"
                       required
                       className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />
