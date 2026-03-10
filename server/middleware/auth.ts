@@ -42,6 +42,8 @@ const PUBLIC_PATHS: string[] = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh-token",
+  "/auth/admin-gate",
+  "/auth/geo-admin",
   // OAuth flows
   "/auth/google",
   "/auth/google/callback",
