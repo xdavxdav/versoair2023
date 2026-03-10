@@ -16,25 +16,28 @@ import {
 } from "@/components/ui/dialog";
 import {
   CreditCard,
-  Plus,
   Trash2,
   Star,
   Shield,
   ArrowLeft,
   Loader2,
-  AlertCircle,
   Wallet,
   Users,
   Search,
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  CheckCircle,
   TrendingUp,
   Eye,
-  X,
+  Zap,
+  RotateCcw,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Receipt,
+  ArrowUpRight,
 } from "lucide-react";
-import { Link, useSearch } from "wouter";
+import { Link } from "wouter";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -51,6 +54,7 @@ interface CardDetail {
   billing_country: string | null;
   card_funding: string | null;
   label: string | null;
+  preauthorized: boolean;
   is_default: boolean;
   status: string;
   created_at: string;
@@ -77,6 +81,22 @@ interface VaultStats {
   total_refunded: string;
   revenue_this_month: string;
   revenue_today: string;
+}
+
+interface ChargeRecord {
+  id: number;
+  user_id: number;
+  amount: string;
+  currency: string;
+  description: string;
+  category: string;
+  status: string;
+  username: string;
+  email: string;
+  card_brand: string;
+  card_last4: string;
+  created_at: string;
+  processed_by_name: string | null;
 }
 
 // ─── Brand visuals ──────────────────────────────────────────────────────────────
@@ -129,14 +149,48 @@ function tierColor(tier: string) {
   }
 }
 
+function statusBadge(status: string) {
+  switch (status) {
+    case "succeeded":
+      return (
+        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[10px] gap-0.5">
+          <CheckCircle2 className="h-2.5 w-2.5" />
+          Succeeded
+        </Badge>
+      );
+    case "refunded":
+      return (
+        <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] gap-0.5">
+          <RotateCcw className="h-2.5 w-2.5" />
+          Refunded
+        </Badge>
+      );
+    case "failed":
+      return (
+        <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[10px] gap-0.5">
+          <XCircle className="h-2.5 w-2.5" />
+          Failed
+        </Badge>
+      );
+    default:
+      return (
+        <Badge className="bg-gray-100 text-gray-600 text-[10px] gap-0.5">
+          <Clock className="h-2.5 w-2.5" />
+          {status}
+        </Badge>
+      );
+  }
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export default function CardVaultPage() {
   const { user } = useSubscription();
-  const searchString = useSearch();
-  const searchParams = new URLSearchParams(searchString);
 
-  // Dashboard state
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"clients" | "history">("clients");
+
+  // Dashboard stats
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -148,49 +202,42 @@ export default function CardVaultPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCustomers, setTotalCustomers] = useState(0);
 
-  // View detail
+  // View client detail
   const [viewCustomer, setViewCustomer] = useState<CustomerRecord | null>(null);
 
-  // Manual add card
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addForm, setAddForm] = useState({
-    userId: "",
-    cardBrand: "",
-    cardLast4: "",
-    cardExpMonth: "",
-    cardExpYear: "",
-    cardholderName: "",
-    billingEmail: "",
-    label: "",
+  // Charge dialog
+  const [chargeTarget, setChargeTarget] = useState<{
+    cardId: number;
+    brand: string;
+    last4: string;
+    username: string;
+    userId: number;
+  } | null>(null);
+  const [chargeForm, setChargeForm] = useState({
+    amount: "",
+    description: "",
+    currency: "USD",
   });
+  const [chargeLoading, setChargeLoading] = useState(false);
 
-  // Delete
+  // Charge history
+  const [charges, setCharges] = useState<ChargeRecord[]>([]);
+  const [chargesLoading, setChargesLoading] = useState(false);
+  const [chargesPage, setChargesPage] = useState(1);
+  const [chargesTotalPages, setChargesTotalPages] = useState(1);
+  const [chargesTotal, setChargesTotal] = useState(0);
+
+  // Refund dialog
+  const [refundTarget, setRefundTarget] = useState<ChargeRecord | null>(null);
+  const [refundLoading, setRefundLoading] = useState(false);
+
+  // Delete card
   const [deleteTarget, setDeleteTarget] = useState<{
     cardId: number;
     brand: string;
     last4: string;
   } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // Return from Stripe
-  useEffect(() => {
-    const cardAdded = searchParams.get("card_added");
-    if (cardAdded === "true") {
-      toast({
-        title: "Card registered",
-        description: "Payment method saved via Stripe.",
-      });
-      window.history.replaceState({}, "", "/account/cards");
-    } else if (cardAdded === "false") {
-      toast({
-        title: "Cancelled",
-        description: "Card setup was cancelled.",
-        variant: "destructive",
-      });
-      window.history.replaceState({}, "", "/account/cards");
-    }
-  }, []);
 
   // ─── Fetch Stats ────────────────────────────────────────────────────────────
 
@@ -239,12 +286,44 @@ export default function CardVaultPage() {
     }
   }, []);
 
+  // ─── Fetch Charge History ───────────────────────────────────────────────────
+
+  const fetchCharges = useCallback(async (pageNum = 1) => {
+    try {
+      setChargesLoading(true);
+      const params = new URLSearchParams({
+        page: String(pageNum),
+        limit: "25",
+      });
+      const res = await authenticatedFetch(
+        `/api/v1/payments/ngo-charges?${params}`,
+      );
+      if (!res.ok) throw new Error("Failed to load charges");
+      const data = await res.json();
+      setCharges(data.data || []);
+      setChargesTotalPages(data.pagination?.pages || 1);
+      setChargesTotal(data.pagination?.total || 0);
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setChargesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchStats();
     fetchCustomers();
   }, [fetchStats, fetchCustomers]);
 
-  // ─── Search handler ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (activeTab === "history") fetchCharges(chargesPage);
+  }, [activeTab, chargesPage, fetchCharges]);
+
+  // ─── Search ─────────────────────────────────────────────────────────────────
 
   function handleSearch() {
     setPage(1);
@@ -256,70 +335,91 @@ export default function CardVaultPage() {
     fetchCustomers(newPage, searchQuery);
   }
 
-  // ─── Manual Add Card ───────────────────────────────────────────────────────
+  // ─── Charge Card ────────────────────────────────────────────────────────────
 
-  async function handleManualAdd() {
-    const { userId, cardBrand, cardLast4, cardExpMonth, cardExpYear } = addForm;
-    if (!userId || !cardBrand || !cardLast4 || !cardExpMonth || !cardExpYear) {
+  async function handleCharge() {
+    if (!chargeTarget) return;
+    const amt = parseFloat(chargeForm.amount);
+    if (!amt || amt <= 0) {
       toast({
-        title: "Missing fields",
-        description: "User ID, brand, last 4, and expiry are required.",
+        title: "Invalid amount",
+        description: "Enter a valid charge amount.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      setAddLoading(true);
-      const res = await authenticatedFetch(
-        "/api/v1/payments/admin/register-card",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: parseInt(userId),
-            cardBrand: cardBrand,
-            cardLast4: cardLast4,
-            cardExpMonth: parseInt(cardExpMonth),
-            cardExpYear: parseInt(cardExpYear),
-            cardholderName: addForm.cardholderName || null,
-            billingEmail: addForm.billingEmail || null,
-            label:
-              addForm.label || `${cardBrand.toUpperCase()} •••• ${cardLast4}`,
-          }),
-        },
-      );
+      setChargeLoading(true);
+      const res = await authenticatedFetch("/api/v1/payments/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardId: chargeTarget.cardId,
+          amount: amt,
+          currency: chargeForm.currency,
+          description:
+            chargeForm.description || `Charge for ${chargeTarget.username}`,
+          category: "admin_charge",
+          processedBy: user?.id,
+        }),
+      });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to register card");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Charge failed");
 
       toast({
-        title: "Card registered",
-        description: `${cardBrand.toUpperCase()} ****${cardLast4} added for user #${userId}.`,
+        title: "Charge successful",
+        description: `$${amt.toFixed(2)} charged to ${chargeTarget.brand.toUpperCase()} ****${chargeTarget.last4} (${chargeTarget.username})`,
       });
-      setShowAddDialog(false);
-      setAddForm({
-        userId: "",
-        cardBrand: "",
-        cardLast4: "",
-        cardExpMonth: "",
-        cardExpYear: "",
-        cardholderName: "",
-        billingEmail: "",
-        label: "",
-      });
-      fetchCustomers(page, searchQuery);
+      setChargeTarget(null);
+      setChargeForm({ amount: "", description: "", currency: "USD" });
       fetchStats();
+      if (activeTab === "history") fetchCharges(chargesPage);
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Charge failed",
         description: err.message,
         variant: "destructive",
       });
     } finally {
-      setAddLoading(false);
+      setChargeLoading(false);
+    }
+  }
+
+  // ─── Refund Charge ──────────────────────────────────────────────────────────
+
+  async function handleRefund() {
+    if (!refundTarget) return;
+    try {
+      setRefundLoading(true);
+      const res = await authenticatedFetch("/api/v1/payments/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chargeId: refundTarget.id,
+          reason: "requested_by_customer",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Refund failed");
+
+      toast({
+        title: "Refund processed",
+        description: `$${parseFloat(refundTarget.amount).toFixed(2)} refunded to ${refundTarget.username}`,
+      });
+      setRefundTarget(null);
+      fetchCharges(chargesPage);
+      fetchStats();
+    } catch (err: any) {
+      toast({
+        title: "Refund failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRefundLoading(false);
     }
   }
 
@@ -339,20 +439,9 @@ export default function CardVaultPage() {
         description: `Card ****${deleteTarget.last4} has been removed.`,
       });
       setDeleteTarget(null);
+      setViewCustomer(null);
       fetchCustomers(page, searchQuery);
       fetchStats();
-      if (viewCustomer) {
-        // Refresh detail view
-        const updated = customers.find(
-          (c) => c.user_id === viewCustomer.user_id,
-        );
-        if (updated) {
-          setViewCustomer({
-            ...updated,
-            cards: updated.cards.filter((c) => c.id !== deleteTarget.cardId),
-          });
-        }
-      }
     } catch (err: any) {
       toast({
         title: "Error",
@@ -381,7 +470,7 @@ export default function CardVaultPage() {
             <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
             <p className="text-sm text-gray-500">
               Card Vault is an admin-only dashboard for managing client payment
-              credentials.
+              methods and running charges.
             </p>
             <Link href="/">
               <Button className="mt-6">Back to Home</Button>
@@ -411,22 +500,14 @@ export default function CardVaultPage() {
                 Card Vault
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Admin dashboard — Client payment credentials (auto-registered
-                via Stripe)
+                Manage client cards &amp; run charges on demand
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            className="gap-2 bg-amber-600 hover:bg-amber-700"
-          >
-            <Plus className="h-4 w-4" />
-            Register Card
-          </Button>
         </div>
 
         {/* ═══════════════════ STATS CARDS ═══════════════════ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -452,7 +533,7 @@ export default function CardVaultPage() {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {statsLoading ? "—" : (stats?.total_cards ?? 0)}
                   </p>
-                  <p className="text-xs text-gray-500">Cards Saved</p>
+                  <p className="text-xs text-gray-500">Cards</p>
                 </div>
               </div>
             </CardContent>
@@ -469,7 +550,7 @@ export default function CardVaultPage() {
                       ? "—"
                       : `$${parseFloat(stats?.revenue_this_month ?? "0").toFixed(0)}`}
                   </p>
-                  <p className="text-xs text-gray-500">Revenue (Month)</p>
+                  <p className="text-xs text-gray-500">This Month</p>
                 </div>
               </div>
             </CardContent>
@@ -479,6 +560,23 @@ export default function CardVaultPage() {
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                   <TrendingUp className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {statsLoading
+                      ? "—"
+                      : `$${parseFloat(stats?.total_revenue ?? "0").toFixed(0)}`}
+                  </p>
+                  <p className="text-xs text-gray-500">Total Revenue</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                  <Zap className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -498,183 +596,385 @@ export default function CardVaultPage() {
               <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 Client cards are registered <strong>automatically</strong> when
-                they complete a subscription checkout via Stripe. You can also
-                manually register card credentials for clients below.
+                they subscribe via Stripe. Click{" "}
+                <strong className="text-amber-600">⚡ Charge</strong> on any
+                card to run an on-demand charge against it.
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* ═══════════════════ SEARCH BAR ═══════════════════ */}
-        <div className="flex gap-2 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Search clients by name or email..."
-              className="pl-10"
-            />
-          </div>
-          <Button onClick={handleSearch} variant="outline">
-            Search
-          </Button>
+        {/* ═══════════════════ TABS ═══════════════════ */}
+        <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setActiveTab("clients")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "clients"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Client Cards
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === "history"
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Charge History
+            </div>
+          </button>
         </div>
 
-        {/* ═══════════════════ CLIENTS TABLE ═══════════════════ */}
-        {customersLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-          </div>
-        ) : customers.length === 0 ? (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <Users className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No clients with saved cards
-              </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Cards will appear here automatically when clients complete
-                subscription payments, or you can register cards manually.
-              </p>
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                className="gap-2 bg-amber-600 hover:bg-amber-700"
-              >
-                <Plus className="h-4 w-4" />
-                Register First Card
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
+        {/* ═══════════════════ CLIENT CARDS TAB ═══════════════════ */}
+        {activeTab === "clients" && (
           <>
-            <Card>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Client
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Plan
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Cards
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Card Details
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {customers.map((customer) => (
-                      <tr
-                        key={customer.user_id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
-                      >
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {customer.username}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {customer.email}
-                            </p>
-                            <p className="text-[10px] text-gray-400">
-                              ID: {customer.user_id}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge
-                            className={`capitalize text-[10px] ${tierColor(customer.subscription_tier)}`}
+            {/* Search */}
+            <div className="flex gap-2 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Search clients by name or email..."
+                  className="pl-10"
+                />
+              </div>
+              <Button onClick={handleSearch} variant="outline">
+                Search
+              </Button>
+            </div>
+
+            {customersLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+              </div>
+            ) : customers.length === 0 ? (
+              <Card>
+                <CardContent className="py-16 text-center">
+                  <Users className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No clients with saved cards yet
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Cards are saved automatically when clients complete a Stripe
+                    subscription checkout.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <Card>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Client
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Plan
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Cards
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Saved Cards
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {customers.map((customer) => (
+                          <tr
+                            key={customer.user_id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                           >
-                            {customer.subscription_tier || "free"}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-lg font-bold text-gray-900 dark:text-white">
-                            {customer.card_count}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1.5">
-                            {customer.cards.slice(0, 3).map((card) => (
-                              <div
-                                key={card.id}
-                                className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 rounded px-2 py-1"
+                            <td className="px-4 py-3">
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {customer.username}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {customer.email}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                className={`capitalize text-[10px] ${tierColor(customer.subscription_tier)}`}
                               >
-                                {brandBadge(card.brand)}
-                                <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
-                                  ****{card.last4}
-                                </span>
-                                <span className="text-[10px] text-gray-400">
-                                  {String(card.exp_month).padStart(2, "0")}/
-                                  {card.exp_year}
-                                </span>
-                                {card.is_default && (
-                                  <Star className="h-3 w-3 text-amber-500" />
+                                {customer.subscription_tier || "free"}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                                {customer.card_count}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1.5">
+                                {customer.cards.slice(0, 3).map((card) => (
+                                  <div
+                                    key={card.id}
+                                    className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 rounded px-2 py-1"
+                                  >
+                                    {brandBadge(card.brand)}
+                                    <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
+                                      ****{card.last4}
+                                    </span>
+                                    {card.is_default && (
+                                      <Star className="h-3 w-3 text-amber-500" />
+                                    )}
+                                  </div>
+                                ))}
+                                {customer.cards.length > 3 && (
+                                  <span className="text-xs text-gray-400 self-center">
+                                    +{customer.cards.length - 3} more
+                                  </span>
                                 )}
                               </div>
-                            ))}
-                            {customer.cards.length > 3 && (
-                              <span className="text-xs text-gray-400 self-center">
-                                +{customer.cards.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            onClick={() => setViewCustomer(customer)}
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-xs"
-                          >
-                            <Eye className="h-3 w-3" />
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  onClick={() => setViewCustomer(customer)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  View
+                                </Button>
+                                {customer.cards.length > 0 && (
+                                  <Button
+                                    onClick={() => {
+                                      const defaultCard =
+                                        customer.cards.find(
+                                          (c) => c.is_default,
+                                        ) || customer.cards[0];
+                                      setChargeTarget({
+                                        cardId: defaultCard.id,
+                                        brand: defaultCard.brand,
+                                        last4: defaultCard.last4,
+                                        username: customer.username,
+                                        userId: customer.user_id,
+                                      });
+                                    }}
+                                    size="sm"
+                                    className="gap-1 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                                  >
+                                    <Zap className="h-3 w-3" />
+                                    Charge
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-gray-500">
-                  {totalCustomers} client{totalCustomers !== 1 ? "s" : ""} total
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => handlePageChange(page - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-gray-600">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => handlePageChange(page + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-gray-500">
+                      {totalCustomers} client
+                      {totalCustomers !== 1 ? "s" : ""} total
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => handlePageChange(page - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        {page} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPages}
+                        onClick={() => handlePageChange(page + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {/* ═══════════════════ CHARGE HISTORY TAB ═══════════════════ */}
+        {activeTab === "history" && (
+          <>
+            {chargesLoading ? (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
               </div>
+            ) : charges.length === 0 ? (
+              <Card>
+                <CardContent className="py-16 text-center">
+                  <Receipt className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No charges yet
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Charges will appear here after you run on-demand charges
+                    against client cards.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <Card>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Date
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Client
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Card
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Amount
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Description
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {charges.map((charge) => (
+                          <tr
+                            key={charge.id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                              {new Date(charge.created_at).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                              <br />
+                              <span className="text-[10px] text-gray-400">
+                                {new Date(charge.created_at).toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="font-medium text-gray-900 dark:text-white text-xs">
+                                {charge.username}
+                              </p>
+                              <p className="text-[10px] text-gray-400">
+                                {charge.email}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5">
+                                {brandBadge(charge.card_brand || "")}
+                                <span className="font-mono text-xs">
+                                  ****{charge.card_last4}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="font-bold text-gray-900 dark:text-white">
+                                {charge.currency}{" "}
+                                {parseFloat(charge.amount).toFixed(2)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 max-w-[200px] truncate">
+                                {charge.description}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              {statusBadge(charge.status)}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {charge.status === "succeeded" && (
+                                <Button
+                                  onClick={() => setRefundTarget(charge)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs text-orange-600 hover:text-orange-700"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  Refund
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+
+                {chargesTotalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-gray-500">
+                      {chargesTotal} charge{chargesTotal !== 1 ? "s" : ""} total
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={chargesPage <= 1}
+                        onClick={() => setChargesPage(chargesPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        {chargesPage} / {chargesTotalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={chargesPage >= chargesTotalPages}
+                        onClick={() => setChargesPage(chargesPage + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -683,14 +983,14 @@ export default function CardVaultPage() {
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1">
             <Shield className="h-3 w-3" />
-            All payment data encrypted via Stripe. Only last-4, brand & expiry
-            are stored for display.
+            All charges processed securely via Stripe. Cards auto-registered on
+            subscription checkout.
           </p>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          VIEW CLIENT DETAIL DIALOG
+          VIEW CLIENT DETAIL DIALOG — cards with charge & delete per card
           ═══════════════════════════════════════════════════════════════════════ */}
       <Dialog
         open={!!viewCustomer}
@@ -740,7 +1040,7 @@ export default function CardVaultPage() {
                 </div>
               </div>
 
-              {/* Cards */}
+              {/* Per-card: view + charge + delete */}
               {viewCustomer.cards.map((card) => (
                 <div
                   key={card.id}
@@ -759,20 +1059,6 @@ export default function CardVaultPage() {
                         </Badge>
                       )}
                     </div>
-                    <Button
-                      onClick={() =>
-                        setDeleteTarget({
-                          cardId: card.id,
-                          brand: card.brand,
-                          last4: card.last4,
-                        })
-                      }
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
                     <div>
@@ -805,14 +1091,48 @@ export default function CardVaultPage() {
                       )}
                     </div>
                   )}
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    Registered{" "}
-                    {new Date(card.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400">
+                      Registered{" "}
+                      {new Date(card.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <div className="flex gap-1.5">
+                      <Button
+                        onClick={() =>
+                          setChargeTarget({
+                            cardId: card.id,
+                            brand: card.brand,
+                            last4: card.last4,
+                            username: viewCustomer.username,
+                            userId: viewCustomer.user_id,
+                          })
+                        }
+                        size="sm"
+                        className="gap-1 text-xs bg-amber-600 hover:bg-amber-700 text-white h-7"
+                      >
+                        <Zap className="h-3 w-3" />
+                        Charge
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          setDeleteTarget({
+                            cardId: card.id,
+                            brand: card.brand,
+                            last4: card.last4,
+                          })
+                        }
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -827,191 +1147,208 @@ export default function CardVaultPage() {
       </Dialog>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          MANUAL ADD CARD DIALOG
+          CHARGE DIALOG
           ═══════════════════════════════════════════════════════════════════════ */}
       <Dialog
-        open={showAddDialog}
+        open={!!chargeTarget}
         onOpenChange={(v) => {
-          setShowAddDialog(v);
-          if (!v)
-            setAddForm({
-              userId: "",
-              cardBrand: "",
-              cardLast4: "",
-              cardExpMonth: "",
-              cardExpYear: "",
-              cardholderName: "",
-              billingEmail: "",
-              label: "",
-            });
+          if (!v) {
+            setChargeTarget(null);
+            setChargeForm({ amount: "", description: "", currency: "USD" });
+          }
         }}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-amber-600" />
-              Register Client Card
+              <Zap className="h-5 w-5 text-amber-600" />
+              Charge Card
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>
-                Client User ID <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                value={addForm.userId}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, userId: e.target.value })
-                }
-                placeholder="e.g. 42"
-                type="number"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          {chargeTarget && (
+            <div className="space-y-4 py-2">
+              {/* Target card */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {brandBadge(chargeTarget.brand)}
+                  <span className="font-mono text-sm font-bold text-gray-900 dark:text-white">
+                    •••• {chargeTarget.last4}
+                  </span>
+                </div>
+                <ArrowUpRight className="h-3 w-3 text-gray-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {chargeTarget.username}
+                </span>
+              </div>
+
               <div>
                 <Label>
-                  Card Brand <span className="text-red-500">*</span>
+                  Amount ({chargeForm.currency}){" "}
+                  <span className="text-red-500">*</span>
                 </Label>
-                <select
-                  value={addForm.cardBrand}
+                <div className="relative mt-1">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    value={chargeForm.amount}
+                    onChange={(e) =>
+                      setChargeForm({ ...chargeForm, amount: e.target.value })
+                    }
+                    placeholder="0.00"
+                    type="number"
+                    step="0.01"
+                    min="0.50"
+                    className="pl-10 text-lg font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={chargeForm.description}
                   onChange={(e) =>
-                    setAddForm({ ...addForm, cardBrand: e.target.value })
+                    setChargeForm({
+                      ...chargeForm,
+                      description: e.target.value,
+                    })
                   }
-                  className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-700"
+                  placeholder="e.g. Service fee, Monthly charge, Event ticket..."
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label>Currency</Label>
+                <select
+                  value={chargeForm.currency}
+                  onChange={(e) =>
+                    setChargeForm({ ...chargeForm, currency: e.target.value })
+                  }
+                  className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-700 mt-1"
                 >
-                  <option value="">Select...</option>
-                  <option value="visa">Visa</option>
-                  <option value="mastercard">Mastercard</option>
-                  <option value="amex">American Express</option>
-                  <option value="discover">Discover</option>
-                  <option value="diners">Diners Club</option>
-                  <option value="unionpay">UnionPay</option>
-                  <option value="jcb">JCB</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="CHF">CHF — Swiss Franc</option>
                 </select>
               </div>
-              <div>
-                <Label>
-                  Last 4 Digits <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={addForm.cardLast4}
-                  onChange={(e) =>
-                    setAddForm({
-                      ...addForm,
-                      cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4),
-                    })
-                  }
-                  placeholder="4242"
-                  maxLength={4}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>
-                  Exp Month <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={addForm.cardExpMonth}
-                  onChange={(e) =>
-                    setAddForm({
-                      ...addForm,
-                      cardExpMonth: e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 2),
-                    })
-                  }
-                  placeholder="MM"
-                  maxLength={2}
-                />
-              </div>
-              <div>
-                <Label>
-                  Exp Year <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={addForm.cardExpYear}
-                  onChange={(e) =>
-                    setAddForm({
-                      ...addForm,
-                      cardExpYear: e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 4),
-                    })
-                  }
-                  placeholder="2027"
-                  maxLength={4}
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Cardholder Name</Label>
-              <Input
-                value={addForm.cardholderName}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, cardholderName: e.target.value })
-                }
-                placeholder="Name on card"
-              />
-            </div>
-            <div>
-              <Label>Billing Email</Label>
-              <Input
-                value={addForm.billingEmail}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, billingEmail: e.target.value })
-                }
-                placeholder="client@example.com"
-                type="email"
-              />
-            </div>
-            <div>
-              <Label>
-                Label{" "}
-                <span className="text-gray-400 font-normal">(optional)</span>
-              </Label>
-              <Input
-                value={addForm.label}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, label: e.target.value })
-                }
-                placeholder='e.g. "Business Visa", "Personal Amex"'
-              />
-            </div>
 
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
-              <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Manual registration saves card metadata only (brand, last 4,
-                expiry). No full card numbers are stored. For Stripe-linked
-                cards, use the automated checkout flow.
-              </span>
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
+                <Zap className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  This will immediately charge the client's card via Stripe.
+                  The charge is processed off-session and cannot be undone
+                  without issuing a refund.
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChargeTarget(null);
+                setChargeForm({ amount: "", description: "", currency: "USD" });
+              }}
+            >
               Cancel
             </Button>
             <Button
-              onClick={handleManualAdd}
-              disabled={addLoading}
+              onClick={handleCharge}
+              disabled={chargeLoading || !chargeForm.amount}
               className="gap-2 bg-amber-600 hover:bg-amber-700"
             >
-              {addLoading ? (
+              {chargeLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <CheckCircle className="h-4 w-4" />
+                <Zap className="h-4 w-4" />
               )}
-              Register Card
+              Charge{" "}
+              {chargeForm.amount
+                ? `$${parseFloat(chargeForm.amount || "0").toFixed(2)}`
+                : ""}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          DELETE CONFIRMATION DIALOG
+          REFUND DIALOG
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <Dialog
+        open={!!refundTarget}
+        onOpenChange={(v) => !v && setRefundTarget(null)}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600">
+              <RotateCcw className="h-5 w-5" />
+              Refund Charge
+            </DialogTitle>
+          </DialogHeader>
+          {refundTarget && (
+            <div className="py-2 space-y-3">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-400">Client</span>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {refundTarget.username}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Amount</span>
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      {refundTarget.currency}{" "}
+                      {parseFloat(refundTarget.amount).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Card</span>
+                    <p className="font-mono">
+                      {refundTarget.card_brand?.toUpperCase()} ****
+                      {refundTarget.card_last4}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Date</span>
+                    <p>
+                      {new Date(refundTarget.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                The full amount will be refunded to the client's card. This
+                cannot be undone.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRefund}
+              disabled={refundLoading}
+              className="gap-2 bg-orange-600 hover:bg-orange-700"
+            >
+              {refundLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              Confirm Refund
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          DELETE CARD DIALOG
           ═══════════════════════════════════════════════════════════════════════ */}
       <Dialog
         open={!!deleteTarget}
@@ -1022,8 +1359,10 @@ export default function CardVaultPage() {
             <DialogTitle className="text-red-600">Remove Card</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600 dark:text-gray-400 py-2">
-            Remove <strong className="capitalize">{deleteTarget?.brand}</strong>{" "}
-            card ending in <strong>{deleteTarget?.last4}</strong>?
+            Remove{" "}
+            <strong className="capitalize">{deleteTarget?.brand}</strong> card
+            ending in <strong>{deleteTarget?.last4}</strong>? This card will no
+            longer be available for charges.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
