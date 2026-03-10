@@ -501,7 +501,7 @@ router.get(
 
 /**
  * GET /auth/session
- * Return current user info from token (supports JWT and geo-admin base64 tokens)
+ * Return current user info from token (JWT only — base64 geo-admin tokens removed)
  */
 router.get(
   "/session",
@@ -513,27 +513,6 @@ router.get(
     }
 
     try {
-      // Check if it's a geo-admin base64 token (geoadmin:password format)
-      try {
-        const decoded = Buffer.from(token, "base64").toString("utf-8");
-        if (decoded.startsWith("geoadmin:")) {
-          // Valid geo-admin token
-          res.json({
-            success: true,
-            user: {
-              id: "geo-admin",
-              email: "geoadmin@localhost",
-              name: "Geo Admin",
-              isAdmin: true,
-              role: "admin",
-            },
-          });
-          return;
-        }
-      } catch {
-        // Not a valid base64 token, try JWT
-      }
-
       // Try to verify as JWT
       const decoded: any = jwt.verify(token, getJwtSecret());
       const userId = decoded.userId || decoded.sub;
@@ -649,92 +628,34 @@ const ADMIN_GATE_USERNAMES = ["joel_007", "admin_001", "manager_001"];
 
 /**
  * POST /auth/admin-gate
- * Issues a real signed JWT for users who have passed the AdminAccessGate
- * frontend validation (generated code + username).
- * No DB lookup required — the gate is a frontend UX barrier; real security
- * is enforced per-route by requireAuth().
+ * ⛔ DISABLED — This endpoint previously issued admin JWTs without a password.
+ * All admin access now requires proper authentication via /auth/login.
+ * Only superuser accounts have unrestricted access.
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.body;
-
-    if (!username || !ADMIN_GATE_USERNAMES.includes(String(username))) {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid admin username" });
-      return;
-    }
-
-    const token = jwt.sign(
-      {
-        userId: `gate-${username}`,
-        email: `${username}@versoair.local`,
-        role: "admin",
-      },
-      getJwtSecret(),
-      { expiresIn: JWT_EXPIRES_IN },
-    );
-
-    setAuthCookie(res, token);
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: `gate-${username}`,
-        email: `${username}@versoair.local`,
-        role: "admin",
-      },
+    res.status(403).json({
+      success: false,
+      message:
+        "Admin gate is disabled. Use standard login with proper credentials.",
     });
   }),
 );
 
 /**
  * POST /auth/geo-admin
- * Geo-admin login — issues a real JWT with role "admin".
- * Username must be "geoadmin", password must be exactly 7 characters.
- * This is a development/ops login that bypasses the regular user DB.
+ * ⛔ DISABLED — This endpoint previously issued admin JWTs with a weak 7-char password.
+ * All admin access now requires proper authentication via /auth/login.
+ * Only superuser accounts have unrestricted access.
  */
 router.post(
   "/geo-admin",
   asyncHandler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      res
-        .status(400)
-        .json({ success: false, message: "Username and password required" });
-      return;
-    }
-
-    if (typeof username !== "string" || username.toLowerCase() !== "geoadmin") {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    if (typeof password !== "string" || password.length !== 7) {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    // Issue a real signed JWT so all requireAuth() guards pass
-    const token = jwt.sign(
-      { userId: "geo-admin", email: "geoadmin@versoair.local", role: "admin" },
-      getJwtSecret(),
-      { expiresIn: JWT_EXPIRES_IN },
-    );
-
-    setAuthCookie(res, token);
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: "geo-admin",
-        email: "geoadmin@versoair.local",
-        role: "admin",
-      },
+    res.status(403).json({
+      success: false,
+      message:
+        "Geo-admin gate is disabled. Use standard login with proper credentials.",
     });
   }),
 );
@@ -1013,21 +934,17 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { userId, newPassword } = req.body;
     if (!userId || !newPassword) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "userId and newPassword are required",
-        });
+      res.status(400).json({
+        success: false,
+        message: "userId and newPassword are required",
+      });
       return;
     }
     if (newPassword.length < 8) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "Password must be at least 8 characters",
-        });
+      res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters",
+      });
       return;
     }
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
@@ -1059,12 +976,10 @@ router.post(
       "user",
     ];
     if (!userId || !newRole || !validRoles.includes(newRole)) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: `userId and valid role required (${validRoles.join(", ")})`,
-        });
+      res.status(400).json({
+        success: false,
+        message: `userId and valid role required (${validRoles.join(", ")})`,
+      });
       return;
     }
     await db
