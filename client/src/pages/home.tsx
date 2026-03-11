@@ -402,7 +402,16 @@ async function getAllBusinesses(): Promise<{
         email: business.email || "",
         rating: business.rating || 0,
         reviews: business.reviews || 0,
-        tags: business.tags || [],
+        tags:
+          typeof business.tags === "string"
+            ? (() => {
+                try {
+                  return JSON.parse(business.tags || "[]");
+                } catch {
+                  return [];
+                }
+              })()
+            : business.tags || [],
         latitude: business.latitude || 0,
         longitude: business.longitude || 0,
         distance: business.distance,
@@ -1092,7 +1101,8 @@ function ArtistCarouselByCountry() {
             </span>
             {topCountryMeta && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/15">
-                ⭐ Top: {topCountryMeta.flag || "🌍"} {topCountryMeta.name} ({byCountry[topCountryKey].length})
+                ⭐ Top: {topCountryMeta.flag || "🌍"} {topCountryMeta.name} (
+                {byCountry[topCountryKey].length})
               </span>
             )}
           </div>
@@ -1135,98 +1145,90 @@ function ArtistCarouselByCountry() {
           className="flex gap-4 overflow-x-hidden py-2 px-1"
           style={{ scrollBehavior: "auto" }}
         >
-        {duplicated.map(({ artist, meta, cc }, i) => {
-          const stageName = (artist as any)?.name?.trim() || "Unknown Artist";
-          const initials = stageName
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((n: string) => n[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase();
+          {duplicated.map(({ artist, meta, cc }, i) => {
+            const stageName = (artist as any)?.name?.trim() || "Unknown Artist";
+            const initials = stageName
+              .split(/\s+/)
+              .filter(Boolean)
+              .map((n: string) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
 
-          return (
-            <motion.div
-              key={`${artist.id}-${i}`}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="relative overflow-hidden flex-shrink-0 w-60 bg-gradient-to-b from-white/15 via-white/7 to-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/20 hover:border-purple-400/55 transition-all cursor-pointer group shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
-            >
-              <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-purple-400/0 via-purple-300/90 to-pink-400/0" />
-              <div className="flex flex-col items-center text-center">
-                {/* Avatar */}
-                <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative ring-2 ring-white/25">
-                  {initials}
-                  {meta && (
-                    <span
-                      className="absolute -bottom-1 -right-1 text-lg bg-slate-900/70 rounded-full px-1"
-                      title={meta.name}
-                    >
-                      {meta.flag}
-                    </span>
-                  )}
-                </div>
-
-                {/* Name */}
-                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-300 transition-colors truncate w-full">
-                  {stageName}
-                </h3>
-
-                {/* Genre + Country */}
-                <p className="text-purple-300 text-xs mb-2 px-2 py-1 rounded-full bg-white/5 border border-white/10">
-                  {(artist as any).genre || "Artiste"} • {meta.flag} {meta.name}
-                </p>
-
-                {/* Verso Air badge */}
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-semibold mb-3">
-                  <Music className="w-3 h-3" />
-                  Verso Air ™️
-                </div>
-
-                {/* Label status */}
-                <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-white/10 bg-black/10 rounded-lg px-2 pb-2">
-                  <div className="text-center">
-                    <div className="text-xs font-bold text-white">
-                      {(artist as any).label_status === "signed"
-                        ? "🏷️ Signé"
-                        : (artist as any).label_status === "independent"
-                          ? "🎯 Indép."
-                          : "🆓 Libre"}
-                    </div>
-                    <div className="text-[10px] text-purple-200">Label</div>
+            return (
+              <motion.div
+                key={`${artist.id}-${i}`}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="relative overflow-hidden flex-shrink-0 w-60 bg-gradient-to-b from-white/15 via-white/7 to-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/20 hover:border-purple-400/55 transition-all cursor-pointer group shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+              >
+                <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-purple-400/0 via-purple-300/90 to-pink-400/0" />
+                <div className="flex flex-col items-center text-center">
+                  {/* Avatar */}
+                  <div className="w-20 h-20 mb-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold shadow-xl group-hover:shadow-purple-500/50 transition-shadow relative ring-2 ring-white/25">
+                    {initials}
+                    {meta && (
+                      <span
+                        className="absolute -bottom-1 -right-1 text-lg bg-slate-900/70 rounded-full px-1"
+                        title={meta.name}
+                      >
+                        {meta.flag}
+                      </span>
+                    )}
                   </div>
-                  <div className="text-center">
-                    <div className="text-xs font-bold text-white">
-                      {(artist as any).genre
-                        ? (artist as any).genre.slice(0, 10)
-                        : "—"}
-                    </div>
-                    <div className="text-[10px] text-purple-200">Genre</div>
-                  </div>
-                </div>
 
-                {/* CTA */}
-                {(artist as any).spotify_url ? (
-                  <a
-                    href={(artist as any).spotify_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full mt-3 bg-gradient-to-r from-green-600 to-green-500 text-white py-1.5 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all flex items-center justify-center gap-2 text-sm shadow-md"
+                  {/* Name */}
+                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-300 transition-colors truncate w-full">
+                    {stageName}
+                  </h3>
+
+                  {/* Genre + Country */}
+                  <p className="text-purple-300 text-xs mb-2 px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                    {(artist as any).genre || "Artiste"} • {meta.flag}{" "}
+                    {meta.name}
+                  </p>
+
+                  {/* Verso Air badge */}
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-semibold mb-3">
+                    <Music className="w-3 h-3" />
+                    Verso Air ™️
+                  </div>
+
+                  {/* Label status */}
+                  <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-white/10 bg-black/10 rounded-lg px-2 pb-2">
+                    <div className="text-center">
+                      <div className="text-xs font-bold text-white">
+                        {(artist as any).label_status === "signed"
+                          ? "🏷️ Signé"
+                          : (artist as any).label_status === "independent"
+                            ? "🎯 Indép."
+                            : "🆓 Libre"}
+                      </div>
+                      <div className="text-[10px] text-purple-200">Label</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs font-bold text-white">
+                        {(artist as any).genre
+                          ? (artist as any).genre.slice(0, 10)
+                          : "—"}
+                      </div>
+                      <div className="text-[10px] text-purple-200">Genre</div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <Link
+                    to={`/artist-catalogue/${artist.id}`}
+                    className="w-full"
                   >
-                    <Play className="w-3.5 h-3.5" />
-                    Écouter
-                  </a>
-                ) : (
-                  <Link to="/artistes" className="w-full">
-                    <button className="w-full mt-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-1.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 text-sm shadow-md">
-                      <Music className="w-3.5 h-3.5" />
-                      Voir le profil
+                    <button className="w-full mt-3 bg-gradient-to-r from-amber-600 to-orange-500 text-white py-1.5 rounded-lg font-semibold hover:from-amber-700 hover:to-orange-600 transition-all flex items-center justify-center gap-2 text-sm shadow-md">
+                      <Play className="w-3.5 h-3.5" />
+                      Écouter
                     </button>
                   </Link>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1484,7 +1486,9 @@ function ShowcaseToggle({
         </div>
       </button>
       <motion.div
-        animate={isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+        animate={
+          isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }
+        }
         initial={false}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="overflow-hidden"
@@ -1596,15 +1600,22 @@ export default function Home() {
   const panelsWrapperRef = useRef<HTMLDivElement>(null);
 
   // Collapsible showcase sections — only annuaire + music label
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >(() => {
     try {
       const saved = localStorage.getItem("va_showcase_sections");
       return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem("va_showcase_sections", JSON.stringify(expandedSections));
+    localStorage.setItem(
+      "va_showcase_sections",
+      JSON.stringify(expandedSections),
+    );
   }, [expandedSections]);
 
   const toggleSection = useCallback((key: string) => {
@@ -1654,11 +1665,15 @@ export default function Home() {
             result.database || "versoair_business_intelligence"
           }`,
         );
-        // Get total count without loading data
+        // Load latest businesses so users can browse without searching
         try {
           const result = await getAllBusinesses();
           if (result.success) {
             setTotalDatabaseCount(result.total);
+            if (result.data.length > 0) {
+              setSearchResults(result.data.slice(0, 5));
+              setHasSearched(true);
+            }
           }
         } catch (error) {
           console.error("Failed to get database count:", error);
@@ -1913,9 +1928,21 @@ export default function Home() {
       !debouncedLocationQuery.trim() &&
       activeFilters.length === 0
     ) {
-      // If no search criteria, clear results - don't show cards
-      setSearchResults([]);
-      setHasSearched(false);
+      // If no search criteria, show latest businesses from database
+      try {
+        const result = await getAllBusinesses();
+        if (result.success && result.data.length > 0) {
+          setSearchResults(result.data.slice(0, 5));
+          setTotalDatabaseCount(result.total);
+          setHasSearched(true);
+        } else {
+          setSearchResults([]);
+          setHasSearched(false);
+        }
+      } catch {
+        setSearchResults([]);
+        setHasSearched(false);
+      }
       return;
     }
 
@@ -2096,15 +2123,9 @@ export default function Home() {
     if (artistSearchTimerRef.current)
       clearTimeout(artistSearchTimerRef.current);
 
-    if (
-      artistAnnuaireQuery.trim() ||
-      selectedArtistGenre ||
-      selectedArtistCountry
-    ) {
-      artistSearchTimerRef.current = setTimeout(() => {
-        handleArtistAnnuaireSearch();
-      }, 300);
-    }
+    artistSearchTimerRef.current = setTimeout(() => {
+      handleArtistAnnuaireSearch();
+    }, 300);
 
     return () => {
       if (artistSearchTimerRef.current)
@@ -2123,8 +2144,8 @@ export default function Home() {
       if (artistAnnuaireQuery.trim())
         params.set("query", artistAnnuaireQuery.trim());
       if (selectedArtistGenre) params.set("genre", selectedArtistGenre);
-      const countryFilter = selectedArtistCountry || selectedCountry;
-      if (countryFilter) params.set("countryCode", countryFilter);
+      if (selectedArtistCountry)
+        params.set("countryCode", selectedArtistCountry);
       const res = await fetch(`${API_BASE_URL}/api/artists/search?${params}`);
       const json = await res.json();
       if (json.success) {
@@ -2145,9 +2166,6 @@ export default function Home() {
     setArtistAnnuaireQuery("");
     setSelectedArtistGenre("");
     setSelectedArtistCountry("");
-    setArtistAnnuaireResults([]);
-    setArtistAnnuaireHasSearched(false);
-    setArtistAnnuaireTotalResults(0);
   };
 
   const scrollToHelpSection = () => {
@@ -2159,7 +2177,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-x-clip">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/80 via-emerald-700/80 to-emerald-800/80" />
@@ -2251,6 +2269,11 @@ export default function Home() {
             <Link to="/get-involved">
               <Button className="bg-white text-emerald-600 px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-gray-100 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
                 Get Involved
+              </Button>
+            </Link>
+            <Link to="/apply">
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
+                ✨ Apply Now
               </Button>
             </Link>
             <Link to="/ong-culturelle">
@@ -2614,18 +2637,22 @@ export default function Home() {
                                 <span className="px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-800 rounded-full text-sm font-bold capitalize">
                                   {business.category}
                                 </span>
-                                {business.tags && business.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {business.tags.slice(0, 2).map((tag, i) => (
-                                      <span
-                                        key={i}
-                                        className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
+                                {business.tags &&
+                                  business.tags.length > 0 &&
+                                  Array.isArray(business.tags) && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {business.tags
+                                        .slice(0, 2)
+                                        .map((tag, i) => (
+                                          <span
+                                            key={i}
+                                            className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
+                                          >
+                                            {tag}
+                                          </span>
+                                        ))}
+                                    </div>
+                                  )}
                                 <Link
                                   to={`/business/${business.id}`}
                                   className="text-emerald-600 hover:text-emerald-700 text-sm md:text-base font-bold flex items-center gap-2"
@@ -2712,19 +2739,19 @@ export default function Home() {
               {
                 icon: User,
                 text: "Artisan Profiles",
-                desc: "Meet our artisans",
+                desc: "Skilled tradespeople",
                 href: "/artisans",
               },
               {
                 icon: Palette,
                 text: "Art & Crafts",
-                desc: "Shop handmade creations",
+                desc: "Handmade creations",
                 href: "/marketplace",
               },
               {
                 icon: ShoppingBag,
                 text: "Marketplace",
-                desc: "Artisan storefront",
+                desc: "Browse & shop",
                 href: "/marketplace",
               },
               {
@@ -2736,7 +2763,7 @@ export default function Home() {
               {
                 icon: Heart,
                 text: "Support Us",
-                desc: "Fund & sponsor the mission",
+                desc: "Fund the mission",
                 href: "/sponsorship",
               },
               {
@@ -2749,13 +2776,13 @@ export default function Home() {
               <Link key={i} to={item.href}>
                 <motion.div
                   whileHover={{ y: -4, scale: 1.05 }}
-                  className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                  className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
                 >
-                  <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mx-auto mb-3 md:mb-4" />
-                  <p className="font-semibold text-gray-800 text-sm md:text-base">
+                  <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mb-2 md:mb-3 flex-shrink-0" />
+                  <p className="font-semibold text-gray-800 text-sm md:text-base leading-tight">
                     {item.text}
                   </p>
-                  <p className="text-gray-500 text-xs md:text-sm mt-2">
+                  <p className="text-gray-500 text-xs md:text-sm mt-1 leading-tight">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -2987,18 +3014,18 @@ export default function Home() {
                 <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-5 lg:p-6">
                 <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
+                  <div className="text-center mb-1.5 sm:mb-2 md:mb-4">
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 md:w-10 md:h-10 lg:w-12 lg:h-12 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
+                      className="gold-text mb-0.5 sm:mb-1 md:mb-2"
                       data-text="Artisan Marketplace"
                     >
                       <span
@@ -3008,14 +3035,14 @@ export default function Home() {
                         Artisan Marketplace
                       </span>
                     </h2>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
                       Discover unique handcrafted products that support
                       communities and preserve traditional {countryMeta.demonym}{" "}
                       crafts.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-4">
                     {[
                       {
                         name: "Artisan Pottery Set",
@@ -3054,9 +3081,9 @@ export default function Home() {
                         className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-white/40 transition-all shadow-lg"
                       >
                         <div
-                          className={`bg-gradient-to-br ${product.gradient} p-2 sm:p-4 md:p-7 flex items-center justify-between relative h-14 sm:h-20 md:h-28`}
+                          className={`bg-gradient-to-br ${product.gradient} p-1.5 sm:p-3 md:p-5 flex items-center justify-between relative h-10 sm:h-14 md:h-20`}
                         >
-                          <span className="text-3xl sm:text-4xl md:text-6xl drop-shadow-lg group-hover:scale-125 transition-transform">
+                          <span className="text-2xl sm:text-3xl md:text-5xl drop-shadow-lg group-hover:scale-125 transition-transform">
                             {product.emoji}
                           </span>
                           <motion.span
@@ -3067,34 +3094,34 @@ export default function Home() {
                             {product.badge}
                           </motion.span>
                         </div>
-                        <div className="p-2 sm:p-3 md:p-4">
-                          <h3 className="text-xs sm:text-sm md:text-lg font-bold text-white mb-0.5 sm:mb-1 line-clamp-1">
+                        <div className="p-1.5 sm:p-2 md:p-3">
+                          <h3 className="text-[10px] sm:text-xs md:text-base font-bold text-white mb-0.5 line-clamp-1">
                             {product.name}
                           </h3>
-                          <p className="text-white/70 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2">
+                          <p className="text-white/70 text-[9px] sm:text-[10px] md:text-xs mb-0.5 sm:mb-1">
                             {product.type}
                           </p>
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <span className="text-sm sm:text-base md:text-lg font-bold text-amber-300">
+                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                            <span className="text-xs sm:text-sm md:text-base font-bold text-amber-300">
                               {product.price}
                             </span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
-                              <span className="text-white font-semibold text-xs sm:text-sm">
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-300 text-yellow-300" />
+                              <span className="text-white font-semibold text-[10px] sm:text-xs">
                                 {product.rating}
                               </span>
                             </div>
                           </div>
-                          <p className="text-white/60 text-[10px] sm:text-xs mb-1 sm:mb-2 font-medium">
+                          <p className="text-white/60 text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 font-medium hidden sm:block">
                             {product.sold}
                           </p>
                           <Link to="/blog">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-2 rounded-lg text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
+                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
                             >
-                              <ShoppingCart className="w-3 h-3" />
+                              <ShoppingCart className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                               <AnimatedKeyboardText
                                 text="Shop Now"
                                 variant="fast"
@@ -3110,9 +3137,9 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
                   >
-                    <h3 className="gold-text mb-1 sm:mb-2">
+                    <h3 className="gold-text mb-0.5 sm:mb-1">
                       <span
                         className="gold-text__shine"
                         data-text="Support Communities"
@@ -3120,7 +3147,7 @@ export default function Home() {
                         Support Communities
                       </span>
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-2 md:mb-4 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-1 sm:mb-1.5 md:mb-2 text-[10px] sm:text-xs md:text-sm">
                       Browse our collection and make a difference with every
                       purchase
                     </p>
@@ -3128,9 +3155,9 @@ export default function Home() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="bg-white text-amber-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                        className="bg-white text-amber-700 px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-1.5"
                       >
-                        <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         <AnimatedKeyboardText
                           text="Shop Now"
                           variant="fast"
@@ -3664,301 +3691,297 @@ export default function Home() {
         onToggle={() => toggleSection("annuaire")}
         gradient="bg-gradient-to-r from-purple-800 to-purple-900"
       >
-      <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 via-purple-900/60 to-slate-900 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Header */}
-          <div className="text-center mb-8 md:mb-16">
-            <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-purple-400 font-semibold text-sm md:text-lg mb-2 inline-flex items-center justify-center gap-2"
-            >
-              <Music className="w-5 h-5" />
-              Annuaire Musicale
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
-            >
-              Répertoire Complet des Artistes
-            </motion.h2>
-            <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
-              Explorez plus de {artistAnnuaireGenres.length} catégories
-              d'artistes à travers {countryMeta.name}
-            </p>
-          </div>
+        <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 via-purple-900/60 to-slate-900 relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Header */}
+            <div className="text-center mb-8 md:mb-16">
+              <motion.span
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="text-purple-400 font-semibold text-sm md:text-lg mb-2 inline-flex items-center justify-center gap-2"
+              >
+                <Music className="w-5 h-5" />
+                Annuaire Musicale
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
+              >
+                Répertoire Complet des Artistes
+              </motion.h2>
+              <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
+                Explorez plus de {artistAnnuaireGenres.length} catégories
+                d'artistes à travers {countryMeta.name}
+              </p>
+            </div>
 
-          {/* Search Card */}
-          <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl mb-12">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
-                  <Input
-                    type="text"
-                    value={artistAnnuaireQuery}
-                    onChange={(e) => setArtistAnnuaireQuery(e.target.value)}
-                    placeholder="Recherchez des artistes..."
-                    className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
-                  />
+            {/* Search Card */}
+            <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl mb-12">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
+                    <Input
+                      type="text"
+                      value={artistAnnuaireQuery}
+                      onChange={(e) => setArtistAnnuaireQuery(e.target.value)}
+                      placeholder="Recherchez des artistes..."
+                      className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
+                    />
+                  </div>
+
+                  {isArtistAnnuaireSearching && (
+                    <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                  )}
                 </div>
 
-                {isArtistAnnuaireSearching && (
-                  <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
-                )}
-              </div>
-
-              {/* Genre & Country Filters */}
-              <div className="pt-4 border-t border-purple-700 flex flex-col md:flex-row gap-4">
-                {/* Genre Dropdown */}
-                <div className="flex-1">
-                  <Label className="text-sm font-medium mb-2 block text-purple-300">
-                    Genre ({artistAnnuaireGenres.length} disponibles)
-                  </Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
-                      >
-                        <span className="text-sm">
-                          {selectedArtistGenre || "Tous les genres"}
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
-                      <DropdownMenuItem
-                        onClick={() => setSelectedArtistGenre("")}
-                      >
-                        <span
-                          className={
-                            !selectedArtistGenre
-                              ? "font-semibold text-purple-300"
-                              : "text-purple-200"
-                          }
+                {/* Genre & Country Filters */}
+                <div className="pt-4 border-t border-purple-700 flex flex-col md:flex-row gap-4">
+                  {/* Genre Dropdown */}
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                      Genre ({artistAnnuaireGenres.length} disponibles)
+                    </Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
                         >
-                          Tous les genres
-                        </span>
-                      </DropdownMenuItem>
-                      {artistAnnuaireGenres.map((genre) => (
+                          <span className="text-sm">
+                            {selectedArtistGenre || "Tous les genres"}
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
                         <DropdownMenuItem
-                          key={genre}
-                          onClick={() => setSelectedArtistGenre(genre)}
+                          onClick={() => setSelectedArtistGenre("")}
                         >
-                          {selectedArtistGenre === genre && (
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                          )}
                           <span
                             className={
-                              selectedArtistGenre === genre
+                              !selectedArtistGenre
                                 ? "font-semibold text-purple-300"
                                 : "text-purple-200"
                             }
                           >
-                            🎵 {genre}
+                            Tous les genres
                           </span>
                         </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* Country Dropdown */}
-                <div className="flex-1">
-                  <Label className="text-sm font-medium mb-2 block text-purple-300">
-                    Pays ({artistAnnuaireCountries.length} disponibles)
-                  </Label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
-                      >
-                        <span className="text-sm">
-                          {selectedArtistCountry
-                            ? `${getCountryMeta(selectedArtistCountry).flag} ${getCountryMeta(selectedArtistCountry).name}`
-                            : "Tous les pays"}
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
-                      <DropdownMenuItem
-                        onClick={() => setSelectedArtistCountry("")}
-                      >
-                        <span
-                          className={
-                            !selectedArtistCountry
-                              ? "font-semibold text-purple-300"
-                              : "text-purple-200"
-                          }
-                        >
-                          🌍 Tous les pays
-                        </span>
-                      </DropdownMenuItem>
-                      {artistAnnuaireCountries.map((code) => {
-                        const meta = getCountryMeta(code);
-                        return (
+                        {artistAnnuaireGenres.map((genre) => (
                           <DropdownMenuItem
-                            key={code}
-                            onClick={() => setSelectedArtistCountry(code)}
+                            key={genre}
+                            onClick={() => setSelectedArtistGenre(genre)}
                           >
-                            {selectedArtistCountry === code && (
+                            {selectedArtistGenre === genre && (
                               <CheckCircle className="h-4 w-4 mr-2" />
                             )}
                             <span
                               className={
-                                selectedArtistCountry === code
+                                selectedArtistGenre === genre
                                   ? "font-semibold text-purple-300"
                                   : "text-purple-200"
                               }
                             >
-                              {meta.flag} {meta.name}
+                              🎵 {genre}
                             </span>
                           </DropdownMenuItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Artist Results */}
-          {artistAnnuaireHasSearched ? (
-            <>
-              {artistAnnuaireResults.length > 0 ? (
-                <div>
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold flex items-center gap-2 text-white">
-                      <Music className="h-6 w-6 text-purple-400" />
-                      <span className="bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                        Artistes trouvés ({artistAnnuaireResults.length} sur{" "}
-                        {artistAnnuaireTotalResults})
-                      </span>
-                    </h3>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <AnimatePresence>
-                      {artistAnnuaireResults.map(
-                        (artist: any, index: number) => {
-                          const name = artist?.name || "Artiste inconnu";
-                          const genre = artist?.genre || "Divers";
-                          const initials = name
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .map((w: string) => w[0])
-                            .join("")
-                            .slice(0, 2)
-                            .toUpperCase();
+                  {/* Country Dropdown */}
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                      Pays ({artistAnnuaireCountries.length} disponibles)
+                    </Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                        >
+                          <span className="text-sm">
+                            {selectedArtistCountry
+                              ? `${getCountryMeta(selectedArtistCountry).flag} ${getCountryMeta(selectedArtistCountry).name}`
+                              : "Tous les pays"}
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                        <DropdownMenuItem
+                          onClick={() => setSelectedArtistCountry("")}
+                        >
+                          <span
+                            className={
+                              !selectedArtistCountry
+                                ? "font-semibold text-purple-300"
+                                : "text-purple-200"
+                            }
+                          >
+                            🌍 Tous les pays
+                          </span>
+                        </DropdownMenuItem>
+                        {artistAnnuaireCountries.map((code) => {
+                          const meta = getCountryMeta(code);
                           return (
-                            <motion.div
-                              key={artist.id || index}
-                              initial={{ opacity: 0, y: 40 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
+                            <DropdownMenuItem
+                              key={code}
+                              onClick={() => setSelectedArtistCountry(code)}
                             >
-                              <div className="h-2 bg-gradient-to-r from-purple-600 to-fuchsia-600" />
-                              {/* Avatar */}
-                              <div className="relative h-40 bg-gradient-to-br from-purple-800/40 to-slate-800 overflow-hidden flex items-center justify-center">
-                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl">
-                                  {initials}
+                              {selectedArtistCountry === code && (
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                              )}
+                              <span
+                                className={
+                                  selectedArtistCountry === code
+                                    ? "font-semibold text-purple-300"
+                                    : "text-purple-200"
+                                }
+                              >
+                                {meta.flag} {meta.name}
+                              </span>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Artist Results */}
+            {artistAnnuaireHasSearched ? (
+              <>
+                {artistAnnuaireResults.length > 0 ? (
+                  <div>
+                    <div className="mb-6">
+                      <h3 className="text-2xl font-bold flex items-center gap-2 text-white">
+                        <Music className="h-6 w-6 text-purple-400" />
+                        <span className="bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
+                          Artistes trouvés ({artistAnnuaireResults.length} sur{" "}
+                          {artistAnnuaireTotalResults})
+                        </span>
+                      </h3>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <AnimatePresence>
+                        {artistAnnuaireResults.map(
+                          (artist: any, index: number) => {
+                            const name = artist?.name || "Artiste inconnu";
+                            const genre = artist?.genre || "Divers";
+                            const initials = name
+                              .split(/\s+/)
+                              .filter(Boolean)
+                              .map((w: string) => w[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase();
+                            return (
+                              <motion.div
+                                key={artist.id || index}
+                                initial={{ opacity: 0, y: 40 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
+                              >
+                                <div className="h-2 bg-gradient-to-r from-purple-600 to-fuchsia-600" />
+                                {/* Avatar */}
+                                <div className="relative h-40 bg-gradient-to-br from-purple-800/40 to-slate-800 overflow-hidden flex items-center justify-center">
+                                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl">
+                                    {initials}
+                                  </div>
+                                  <div className="absolute top-3 right-3">
+                                    <Badge className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white border-0 shadow-lg text-xs">
+                                      🎵 {genre}
+                                    </Badge>
+                                  </div>
                                 </div>
-                                <div className="absolute top-3 right-3">
-                                  <Badge className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white border-0 shadow-lg text-xs">
-                                    🎵 {genre}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <div className="p-5">
-                                <h4 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
-                                  {name}
-                                </h4>
-                                <div className="flex items-center justify-between text-sm">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs border-purple-500/40 text-purple-300"
-                                  >
-                                    {artist.label_status === "signed"
-                                      ? "🏷️ Signé"
-                                      : artist.label_status === "independent"
-                                        ? "🎯 Indépendant"
-                                        : "🆓 Unsigned"}
-                                  </Badge>
-                                  {artist.spotify_url && (
-                                    <a
-                                      href={artist.spotify_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="flex items-center gap-1 text-green-400 hover:text-green-300 transition-colors text-xs"
+                                <div className="p-5">
+                                  <h4 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
+                                    {name}
+                                  </h4>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs border-purple-500/40 text-purple-300"
+                                    >
+                                      {artist.label_status === "signed"
+                                        ? "🏷️ Signé"
+                                        : artist.label_status === "independent"
+                                          ? "🎯 Indépendant"
+                                          : "🆓 Unsigned"}
+                                    </Badge>
+                                    <Link
+                                      href={`/artist-catalogue/${artist.id}`}
+                                      onClick={(e: any) => e.stopPropagation()}
+                                      className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors text-xs"
                                     >
                                       <Music className="h-3.5 w-3.5" />
-                                      Spotify
-                                    </a>
-                                  )}
+                                      Stream
+                                    </Link>
+                                  </div>
                                 </div>
-                              </div>
-                            </motion.div>
-                          );
-                        },
-                      )}
-                    </AnimatePresence>
+                              </motion.div>
+                            );
+                          },
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-300 mb-2">
-                    Aucun artiste trouvé
-                  </h3>
-                  <p className="text-gray-400 mb-6">
-                    Essayez un autre nom ou genre
-                  </p>
-                  <Button
-                    onClick={clearArtistAnnuaireFilters}
-                    className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
-                  >
-                    Réinitialiser les filtres
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <Music className="h-16 w-16 mx-auto text-purple-400/50 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">
-                Explorez l'annuaire musicale
-              </h3>
-              <p className="text-gray-400">
-                Sélectionnez un genre ou lancez votre recherche
-              </p>
-            </div>
-          )}
+                ) : (
+                  <div className="text-center py-12">
+                    <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      Aucun artiste trouvé
+                    </h3>
+                    <p className="text-gray-400 mb-6">
+                      Essayez un autre nom ou genre
+                    </p>
+                    <Button
+                      onClick={clearArtistAnnuaireFilters}
+                      className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+                    >
+                      Réinitialiser les filtres
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <Music className="h-16 w-16 mx-auto text-purple-400/50 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                  Explorez l'annuaire musicale
+                </h3>
+                <p className="text-gray-400">
+                  Sélectionnez un genre ou lancez votre recherche
+                </p>
+              </div>
+            )}
 
-          {/* CTA — Voir tous les artistes */}
-          <div className="text-center mt-10">
-            <Link to="/artistes">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold hover:from-purple-600 hover:to-fuchsia-600 transition-all inline-flex items-center gap-2 shadow-xl"
-              >
-                <Music className="w-5 h-5" />
-                Voir tous les artistes
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
-            </Link>
+            {/* CTA — Voir tous les artistes */}
+            <div className="text-center mt-10">
+              <Link to="/artistes">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold hover:from-purple-600 hover:to-fuchsia-600 transition-all inline-flex items-center gap-2 shadow-xl"
+                >
+                  <Music className="w-5 h-5" />
+                  Voir tous les artistes
+                  <ArrowRight className="w-5 h-5" />
+                </motion.button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </ShowcaseToggle>
 
       {/* Verso Air Music Artists Section */}
@@ -3969,51 +3992,51 @@ export default function Home() {
         onToggle={() => toggleSection("music")}
         gradient="bg-gradient-to-r from-indigo-800 to-purple-900"
       >
-      <section className="py-12 md:py-20 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvZz48L3N2Zz4=')] opacity-20" />
+        <section className="py-12 md:py-20 bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 relative overflow-hidden">
+          {/* Background Effects */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvZz48L3N2Zz4=')] opacity-20" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-8 md:mb-16">
-            <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-purple-400 font-semibold text-sm md:text-lg mb-2 inline-flex items-center justify-center gap-2"
-            >
-              <Music className="w-5 h-5" />
-              Verso Air ™️ Music Label
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
-            >
-              Registered Artists by Country
-            </motion.h2>
-            <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
-              Discover talented artists signed with Verso Air across the globe
-            </p>
-          </div>
-
-          <ArtistCarouselByCountry />
-
-          <div className="text-center mt-8 md:mt-12">
-            <Link to="/artist-portal">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2 shadow-xl"
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="text-center mb-8 md:mb-16">
+              <motion.span
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="text-purple-400 font-semibold text-sm md:text-lg mb-2 inline-flex items-center justify-center gap-2"
               >
                 <Music className="w-5 h-5" />
-                Visit Artist Portal
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
-            </Link>
+                Verso Air ™️ Music Label
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
+              >
+                Registered Artists by Country
+              </motion.h2>
+              <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
+                Discover talented artists signed with Verso Air across the globe
+              </p>
+            </div>
+
+            <ArtistCarouselByCountry />
+
+            <div className="text-center mt-8 md:mt-12">
+              <Link to="/artist-portal">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2 shadow-xl"
+                >
+                  <Music className="w-5 h-5" />
+                  Visit Artist Portal
+                  <ArrowRight className="w-5 h-5" />
+                </motion.button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </ShowcaseToggle>
 
       {/* Partners & Sponsors Section */}

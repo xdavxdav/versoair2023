@@ -1056,4 +1056,773 @@ router.post(
   }),
 );
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎵 ARTIST PORTAL AUTH — Real JWT authentication for StreamRoyale artists
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const artistRegisterSchema = z.object({
+  email: z.string().email("Invalid email address").max(254),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128)
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+  stageName: z.string().min(1, "Stage name is required").max(100),
+  legalName: z.string().max(200).optional(),
+  genre: z.array(z.string()).max(3, "Maximum 3 genres").optional(),
+  country: z.string().max(100).optional(),
+  bio: z.string().max(2000).optional(),
+  spotifyUrl: z.string().url().optional().or(z.literal("")),
+  instagramHandle: z.string().max(100).optional(),
+});
+
+const artistLoginSchema = z.object({
+  email: z.string().email("Invalid email address").max(254),
+  password: z.string().min(1, "Password is required").max(128),
+});
+
+/**
+ * POST /auth/artist/register
+ * Create an artist account + artist_profiles row
+ */
+router.post(
+  "/artist/register",
+  registerLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = artistRegisterSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const {
+      email,
+      password,
+      stageName,
+      legalName,
+      genre,
+      country,
+      bio,
+      spotifyUrl,
+      instagramHandle,
+    } = parsed.data;
+
+    // Check duplicate email
+    const existing = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const derivedUsername = `artist_${email.split("@")[0]}`;
+
+    // Create user with artist role
+    const [newUser] = await db
+      .insert(schema.users)
+      .values({
+        email: email.toLowerCase(),
+        username: derivedUsername,
+        password: hashedPassword,
+        role: "artist",
+        isVerified: false, // artists must verify email first
+      })
+      .returning({
+        id: schema.users.id,
+        email: schema.users.email,
+        role: schema.users.role,
+      });
+
+    // Send verification email
+    try {
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      await db.insert(schema.verificationTokens).values({
+        userId: newUser.id,
+        token: verificationToken,
+        type: "email_verification",
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      });
+      await sendVerificationEmail(
+        email.toLowerCase(),
+        verificationToken,
+        stageName,
+      );
+    } catch (e) {
+      console.error("[ARTIST AUTH] Failed to send verification email:", e);
+    }
+
+    // Determine league from country
+    let leagueId: number | undefined;
+    if (country) {
+      try {
+        const leagueResult = await db.execute(
+          sql`SELECT id FROM regional_leagues LIMIT 1`,
+        );
+        // Auto-assign based on country — simplified mapping
+        const countryLower = country.toLowerCase();
+        let leagueName = "Americas"; // default
+        const africaCountries = [
+          "nigeria",
+          "ghana",
+          "kenya",
+          "south africa",
+          "senegal",
+          "cameroon",
+          "ethiopia",
+          "tanzania",
+          "morocco",
+          "egypt",
+          "algeria",
+          "tunisia",
+          "congo",
+          "ivory coast",
+          "uganda",
+        ];
+        const europeCountries = [
+          "france",
+          "germany",
+          "uk",
+          "united kingdom",
+          "spain",
+          "italy",
+          "portugal",
+          "netherlands",
+          "belgium",
+          "sweden",
+          "norway",
+          "denmark",
+          "finland",
+          "ireland",
+          "austria",
+          "switzerland",
+          "poland",
+          "czech",
+          "romania",
+          "greece",
+        ];
+        const asiaCountries = [
+          "japan",
+          "china",
+          "korea",
+          "india",
+          "indonesia",
+          "thailand",
+          "vietnam",
+          "philippines",
+          "malaysia",
+          "singapore",
+          "australia",
+          "new zealand",
+          "pakistan",
+          "bangladesh",
+        ];
+        const middleEastCountries = [
+          "saudi",
+          "uae",
+          "qatar",
+          "kuwait",
+          "bahrain",
+          "oman",
+          "jordan",
+          "lebanon",
+          "israel",
+          "turkey",
+          "iran",
+          "iraq",
+        ];
+
+        if (africaCountries.some((c) => countryLower.includes(c)))
+          leagueName = "Africa";
+        else if (europeCountries.some((c) => countryLower.includes(c)))
+          leagueName = "Europe";
+        else if (asiaCountries.some((c) => countryLower.includes(c)))
+          leagueName = "Asia-Pacific";
+        else if (middleEastCountries.some((c) => countryLower.includes(c)))
+          leagueName = "Middle East";
+
+        const league = await db.execute(
+          sql`SELECT id FROM regional_leagues WHERE name = ${leagueName} LIMIT 1`,
+        );
+        if ((league.rows as any[]).length > 0) {
+          leagueId = (league.rows[0] as any).id;
+        }
+      } catch (e) {
+        // League table might not exist yet, skip
+      }
+    }
+
+    // Create artist profile
+    try {
+      await db.insert(schema.artistProfiles).values({
+        userId: newUser.id,
+        stageName,
+        legalName: legalName || null,
+        genre: genre || [],
+        country: country || null,
+        bio: bio || null,
+        spotifyUrl: spotifyUrl || null,
+        instagramHandle: instagramHandle || null,
+        leagueId: leagueId || null,
+        payoutEmail: email.toLowerCase(),
+      });
+    } catch (e) {
+      // If artist_profiles table doesn't exist yet, continue — will be created on db:push
+      console.warn("[ARTIST AUTH] Could not create artist profile:", e);
+    }
+
+    res.status(201).json({
+      success: true,
+      requiresVerification: true,
+      message:
+        "Artist account created! Check your email to verify before logging in.",
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        role: "artist",
+        stageName,
+        genre: genre || [],
+        country: country || null,
+      },
+    });
+  }),
+);
+
+/**
+ * POST /auth/artist/login
+ * Authenticate an artist and return JWT
+ */
+router.post(
+  "/artist/login",
+  loginLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = artistLoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const { email, password } = parsed.data;
+
+    // Find user
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!user) {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Check email verification — artists must verify before logging in
+    if (!user.isVerified) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message:
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+        email: user.email,
+      });
+      return;
+    }
+
+    // Check lockout
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      const remaining = Math.ceil(
+        (new Date(user.lockedUntil).getTime() - Date.now()) / 1000,
+      );
+      res.status(423).json({
+        success: false,
+        message: `Account temporarily locked. Try again in ${remaining} seconds.`,
+      });
+      return;
+    }
+
+    // Verify password
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      const attempts = (user.failedLoginAttempts || 0) + 1;
+      const updates: any = { failedLoginAttempts: attempts };
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      }
+      await db
+        .update(schema.users)
+        .set(updates)
+        .where(eq(schema.users.id, user.id));
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Reset failed attempts
+    await db
+      .update(schema.users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, user.id));
+
+    // If user exists but isn't role=artist, upgrade their role (allows existing users to be artists too)
+    const effectiveRole =
+      user.role === "artist" ? "artist" : user.role || "user";
+
+    // Get artist profile if exists
+    let artistProfile: any = null;
+    try {
+      const profiles = await db
+        .select()
+        .from(schema.artistProfiles)
+        .where(eq(schema.artistProfiles.userId, user.id))
+        .limit(1);
+      if (profiles.length > 0) artistProfile = profiles[0];
+    } catch (e) {
+      // Table might not exist yet
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: effectiveRole },
+      getJwtSecret(),
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    setAuthCookie(res, token);
+
+    res.json({
+      success: true,
+      message: "Artist login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: effectiveRole,
+        stageName: artistProfile?.stageName || user.username,
+        genre: artistProfile?.genre || [],
+        country: artistProfile?.country || null,
+        badgeTier: artistProfile?.currentBadgeTier || 1,
+        walletBalance: artistProfile?.walletBalance || "0.00",
+        lifetimeStreams: artistProfile?.lifetimeStreams || 0,
+        leagueId: artistProfile?.leagueId || null,
+      },
+    });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎫 SUBSCRIBER AUTH — Premium/GeoAdmin subscribers with self-registration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const subscriberRegisterSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  tier: z
+    .enum(["essential", "verified", "max", "enterprise"])
+    .default("essential"),
+  interests: z.array(z.string()).optional(),
+});
+
+const subscriberLoginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required"),
+});
+
+/**
+ * POST /auth/subscriber/register
+ * Create a subscriber account with a chosen subscription tier
+ */
+router.post(
+  "/subscriber/register",
+  registerLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = subscriberRegisterSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const { email, password, displayName, tier, interests } = parsed.data;
+
+    // Check duplicate email
+    const existing = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const derivedUsername = `sub_${email.split("@")[0]}`;
+
+    // Create user with subscriber role and chosen tier
+    // Note: displayName stored in username prefix (sub_) since firstName doesn't exist in schema
+    const [newUser] = await db
+      .insert(schema.users)
+      .values({
+        email: email.toLowerCase(),
+        username: derivedUsername,
+        password: hashedPassword,
+        role: "user", // subscribers start as users with premium tiers
+        subscriptionTier: tier,
+        subscriptionStatus: "active",
+        isVerified: false,
+      })
+      .returning({
+        id: schema.users.id,
+        email: schema.users.email,
+        role: schema.users.role,
+        subscriptionTier: schema.users.subscriptionTier,
+      });
+
+    // Send verification email
+    try {
+      const verificationToken = jwt.sign(
+        { userId: newUser.id, purpose: "email_verification" },
+        getJwtSecret(),
+        { expiresIn: "24h" },
+      );
+      await sendVerificationEmail(email, verificationToken, displayName);
+    } catch (e) {
+      console.error("[AUTH] Failed to send verification email:", e);
+    }
+
+    res.status(201).json({
+      success: true,
+      requiresVerification: true,
+      message:
+        "Subscriber account created! Check your email to verify before logging in.",
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        displayName,
+        role: newUser.role,
+        subscriptionTier: newUser.subscriptionTier,
+      },
+    });
+  }),
+);
+
+/**
+ * POST /auth/subscriber/login
+ * Authenticate a subscriber
+ */
+router.post(
+  "/subscriber/login",
+  loginLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = subscriberLoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const { email, password } = parsed.data;
+
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!user) {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Check lockout
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      const remaining = Math.ceil(
+        (new Date(user.lockedUntil).getTime() - Date.now()) / 1000,
+      );
+      res.status(423).json({
+        success: false,
+        message: `Account temporarily locked. Try again in ${remaining} seconds.`,
+      });
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      const attempts = (user.failedLoginAttempts || 0) + 1;
+      const updates: any = { failedLoginAttempts: attempts };
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      }
+      await db
+        .update(schema.users)
+        .set(updates)
+        .where(eq(schema.users.id, user.id));
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Reset failed attempts
+    await db
+      .update(schema.users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, user.id));
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role || "user",
+        subscriptionTier: user.subscriptionTier || "free",
+      },
+      getJwtSecret(),
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    setAuthCookie(res, token);
+
+    res.json({
+      success: true,
+      message: "Subscriber login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.firstName || user.username,
+        role: user.role,
+        subscriptionTier: user.subscriptionTier || "free",
+        subscriptionStatus: user.subscriptionStatus || "active",
+        premiumExpiresAt: user.premiumExpiresAt,
+      },
+    });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 💬 COMMUNITY AUTH — Blog/Community members with self-registration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const communityRegisterSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  interests: z.array(z.string()).optional(),
+});
+
+const communityLoginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required"),
+});
+
+/**
+ * POST /auth/community/register
+ * Create a community member account for blog/community access
+ */
+router.post(
+  "/community/register",
+  registerLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = communityRegisterSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const { email, password, displayName, interests } = parsed.data;
+
+    // Check duplicate email
+    const existing = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existing.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const derivedUsername = `community_${email.split("@")[0]}`;
+
+    // Create user with community role
+    // Note: displayName stored in username prefix since firstName doesn't exist in schema
+    const [newUser] = await db
+      .insert(schema.users)
+      .values({
+        email: email.toLowerCase(),
+        username: derivedUsername,
+        password: hashedPassword,
+        role: "user",
+        subscriptionTier: "free", // community members start free
+        isVerified: false,
+      })
+      .returning({
+        id: schema.users.id,
+        email: schema.users.email,
+        role: schema.users.role,
+      });
+
+    // Send verification email
+    try {
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      await db.insert(schema.verificationTokens).values({
+        userId: newUser.id,
+        token: verificationToken,
+        type: "email_verification",
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      });
+      await sendVerificationEmail(
+        email.toLowerCase(),
+        verificationToken,
+        displayName,
+      );
+    } catch (e) {
+      console.error("[COMMUNITY AUTH] Failed to send verification email:", e);
+    }
+
+    res.status(201).json({
+      success: true,
+      requiresVerification: true,
+      message:
+        "Community account created! Check your email to verify before logging in.",
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        displayName,
+        role: "user",
+      },
+    });
+  }),
+);
+
+/**
+ * POST /auth/community/login
+ * Authenticate a community member
+ */
+router.post(
+  "/community/login",
+  loginLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = communityLoginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
+
+    const { email, password } = parsed.data;
+
+    const [user] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!user) {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Check email verification — community members must verify before logging in
+    if (!user.isVerified) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message:
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+        email: user.email,
+      });
+      return;
+    }
+
+    // Check lockout
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      const remaining = Math.ceil(
+        (new Date(user.lockedUntil).getTime() - Date.now()) / 1000,
+      );
+      res.status(423).json({
+        success: false,
+        message: `Account temporarily locked. Try again in ${remaining} seconds.`,
+      });
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      const attempts = (user.failedLoginAttempts || 0) + 1;
+      const updates: any = { failedLoginAttempts: attempts };
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      }
+      await db
+        .update(schema.users)
+        .set(updates)
+        .where(eq(schema.users.id, user.id));
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Reset failed attempts
+    await db
+      .update(schema.users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, user.id));
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role || "user" },
+      getJwtSecret(),
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    setAuthCookie(res, token);
+
+    res.json({
+      success: true,
+      message: "Community login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.firstName || user.username,
+        role: user.role,
+      },
+    });
+  }),
+);
+
 export default router;

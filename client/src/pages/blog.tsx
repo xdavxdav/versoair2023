@@ -10,7 +10,6 @@ import PostCard from "@/components/PostCard";
 import UserProfileCard from "@/components/UserProfileCard";
 import CreatePostModal from "@/components/CreatePostModal";
 import UserConnectionModal from "@/components/UserConnectionModal";
-import BlogNavbar from "@/components/BlogNavbar";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
 import AdBanner from "@/components/AdBanner";
@@ -119,15 +118,35 @@ const generateMockUsers = (count: number) => {
 };
 
 export default function BlogPage() {
-  // Authentication state — persist via localStorage so user stays connected across navigation
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("blog_community_auth") === "true";
-  });
+  // Authentication state — check real auth on mount, persist display name in localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem("blog_community_user") || "User";
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  // Check real auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { checkAuth: authCheck } = await import("@/lib/auth");
+        const user = await authCheck();
+        if (user) {
+          setIsAuthenticated(true);
+          const displayName =
+            localStorage.getItem("blog_community_user") ||
+            user.email?.split("@")[0] ||
+            "User";
+          setUserName(displayName);
+        }
+      } catch {
+        // Not authenticated
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -141,43 +160,75 @@ export default function BlogPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Authentication handlers
+  // Authentication handlers — use real community auth endpoints
   const handleAuthenticate = async (
     email: string,
     password: string,
     isSignUp: boolean,
   ) => {
     setIsAuthLoading(true);
+    setAuthError("");
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const endpoint = isSignUp
+        ? "/auth/community/register"
+        : "/auth/community/login";
+      const body: Record<string, any> = { email, password };
+      if (isSignUp) {
+        body.displayName =
+          email.split("@")[0].charAt(0).toUpperCase() +
+          email.split("@")[0].slice(1);
+      }
 
-      // Extract name from email for display
-      const name =
-        email.split("@")[0].charAt(0).toUpperCase() +
-        email.split("@")[0].slice(1);
-      setUserName(name);
-      setIsAuthenticated(true);
-      setIsAuthModalOpen(false);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
 
-      // Persist blog community session
-      localStorage.setItem("blog_community_auth", "true");
-      localStorage.setItem("blog_community_user", name);
+      const data = await response.json();
 
-      console.log(isSignUp ? "Account created!" : "Logged in successfully!");
-    } catch (error) {
+      if (data.success) {
+        // Store token if provided
+        if (data.token) {
+          const { setAuthToken } = await import("@/lib/auth");
+          setAuthToken(data.token);
+        }
+
+        const name =
+          data.user?.displayName ||
+          email.split("@")[0].charAt(0).toUpperCase() +
+            email.split("@")[0].slice(1);
+        setUserName(name);
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+
+        // Persist display name for UI
+        localStorage.setItem("blog_community_user", name);
+
+        console.log(isSignUp ? "Account created!" : "Logged in successfully!");
+      } else {
+        setAuthError(data.message || "Authentication failed");
+      }
+    } catch (error: any) {
       console.error("Auth error:", error);
+      setAuthError(error.message || "Network error. Please try again.");
     } finally {
       setIsAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import("@/lib/auth");
+      await logout();
+    } catch {
+      // Logout anyway on error
+    }
     setIsAuthenticated(false);
     setUserName("User");
     setIsCreatePostOpen(false);
     // Clear persisted blog community session
-    localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
   };
 
@@ -271,10 +322,6 @@ export default function BlogPage() {
   if (!isAuthenticated) {
     return (
       <>
-        <BlogNavbar
-          isAuthenticated={false}
-          onLogin={() => setIsAuthModalOpen(true)}
-        />
         <ViewOnlyGate
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
@@ -298,16 +345,8 @@ export default function BlogPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
       <ScrollToTop />
 
-      {/* Blog Navbar - Hides on Scroll */}
-      <BlogNavbar
-        isAuthenticated={isAuthenticated}
-        userName={userName}
-        onLogout={handleLogout}
-        onLogin={() => setIsAuthModalOpen(true)}
-      />
-
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Feed Column */}
           <div className="lg:col-span-2 space-y-6">
@@ -502,9 +541,13 @@ export default function BlogPage() {
 
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setAuthError("");
+        }}
         onAuthenticate={handleAuthenticate}
         isLoading={isAuthLoading}
+        error={authError}
       />
     </div>
   );

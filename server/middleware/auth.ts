@@ -4,7 +4,14 @@ import jwt from "jsonwebtoken";
 export interface AuthUser {
   userId: string;
   email: string;
-  role: "admin" | "superuser" | "moderator" | "business_owner" | "user";
+  role:
+    | "admin"
+    | "superuser"
+    | "moderator"
+    | "business_owner"
+    | "user"
+    | "artist"
+    | "listener";
 }
 
 declare global {
@@ -44,6 +51,15 @@ const PUBLIC_PATHS: string[] = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
+  // Artist portal auth
+  "/auth/artist/login",
+  "/auth/artist/register",
+  // Subscriber portal auth (premium/GeoAdmin)
+  "/auth/subscriber/login",
+  "/auth/subscriber/register",
+  // Community/Blog portal auth
+  "/auth/community/login",
+  "/auth/community/register",
   // OAuth flows
   "/auth/google",
   "/auth/google/callback",
@@ -61,6 +77,10 @@ const PUBLIC_PATHS: string[] = [
   "/api/regions",
   "/api/cities",
   "/api/public/dashboard-stats",
+  // Submission requests (email-only, no DB writes)
+  "/api/request/business",
+  "/api/request/artist",
+  "/api/request/job",
 ];
 
 /**
@@ -76,6 +96,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/business/categories", // Business category listing
   "/api/businesses/pool/", // Business pool by category
   "/api/category/", // Category search
+  "/api/streamroyale/", // StreamRoyale public data (leaderboard, pool stats)
   "/api/jobs/search", // Public career portal
   "/api/commerce/", // Commerce search & analytics
   "/api/properties/", // Property search & analytics

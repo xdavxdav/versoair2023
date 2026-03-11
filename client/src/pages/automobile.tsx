@@ -596,7 +596,7 @@ export default function Automobile() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 via-purple-900/20 to-gray-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-gray-900 via-purple-900/20 to-gray-900 text-white">
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
@@ -608,7 +608,7 @@ export default function Automobile() {
       </div>
 
       {/* Hero + Carousel Container */}
-      <div className="relative h-[600px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
+      <div className="relative min-h-[100dvh] md:min-h-0 md:h-[600px] flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden py-8 md:py-0">
         {/* eslint-disable-next-line */}
         <div
           className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out`}
@@ -620,7 +620,7 @@ export default function Automobile() {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90"></div>
         </div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -636,7 +636,7 @@ export default function Automobile() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-2xl"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
             Automobile Business Database
           </motion.h1>
@@ -645,7 +645,7 @@ export default function Automobile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-xl mb-4 text-white/90"
+            className="text-base sm:text-lg md:text-xl mb-4 text-white/90"
           >
             Real-time PostgreSQL database with {totalResults.toLocaleString()}+
             car dealerships, auto services, and vehicle businesses
@@ -656,26 +656,26 @@ export default function Automobile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-4 mb-8"
+            className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8"
           >
             <Card className="bg-white/10 backdrop-blur-md border-purple-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-purple-400" />
                   <span className="text-sm text-purple-200">Live Database</span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {totalResults.toLocaleString()}+ Records
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-pink-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Car className="h-4 w-4 text-pink-400" />
                   <span className="text-sm text-pink-200">Auto Businesses</span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {searchResults.length} Loaded
                 </div>
               </CardContent>
@@ -683,7 +683,7 @@ export default function Automobile() {
           </motion.div>
 
           {/* Auto-sliding enterprises */}
-          <div className="w-full max-w-2xl mx-auto">
+          <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -691,7 +691,7 @@ export default function Automobile() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md rounded-xl p-6 shadow-lg border border-purple-500/20"
+                className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -707,7 +707,7 @@ export default function Automobile() {
                         />
                       ))}
                     </div>
-                    <h3 className="text-2xl font-semibold text-purple-300">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-purple-300">
                       {enterprises[currentIndex]?.name}
                     </h3>
                     <p className="text-gray-200 mt-2">
@@ -730,10 +730,10 @@ export default function Automobile() {
       </div>
 
       {/* Enhanced Search and Filter Section */}
-      <div className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
                 <Input
@@ -759,8 +759,8 @@ export default function Automobile() {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -782,12 +782,12 @@ export default function Automobile() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-[180px] bg-slate-700 border-purple-600 justify-between"
+                      className="w-full sm:w-[180px] bg-slate-700 border-purple-600 justify-between"
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc"
@@ -851,7 +851,7 @@ export default function Automobile() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-visible"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-800/50 rounded-lg border border-purple-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
                       Category
@@ -1020,9 +1020,9 @@ export default function Automobile() {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
         {/* Tabs Navigation */}
-        <div className="flex space-x-2 mb-8">
+        <div className="relative flex space-x-1 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pb-2 bg-slate-800/50 rounded-xl p-1.5 border border-purple-500/20 backdrop-blur-sm">
           {(
             [
               "analytics",
@@ -1031,19 +1031,32 @@ export default function Automobile() {
               "ads",
               "database",
             ] as TabType[]
-          ).map((tab) => (
-            <Button
+          ).map((tab, index) => (
+            <motion.button
               key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                delay: index * 0.08,
+                duration: 0.3,
+                ease: "easeOut",
+              }}
               onClick={() => setActiveTab(tab)}
-              className={`capitalize ${
+              className={`relative capitalize whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                 activeTab === tab
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : "border-purple-600 hover:bg-purple-800"
+                  ? "text-white"
+                  : "text-purple-300 hover:text-white hover:bg-white/5"
               }`}
             >
-              {tab}
-            </Button>
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="automobile-active-tab"
+                  className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg shadow-lg shadow-purple-500/25"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">{tab}</span>
+            </motion.button>
           ))}
         </div>
 
@@ -1052,8 +1065,8 @@ export default function Automobile() {
             {/* Live Search Results Section */}
             {hasSearched && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
                     <Database className="h-6 w-6 text-purple-400" />
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
@@ -1069,9 +1082,9 @@ export default function Automobile() {
 
                 {/* Loading State */}
                 {isInitialLoading ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md border border-purple-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1081,7 +1094,7 @@ export default function Automobile() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-purple-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-purple-300">
                               Loading auto businesses...
                             </h3>
                             <p className="text-gray-200 mt-2">
@@ -1093,7 +1106,7 @@ export default function Automobile() {
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md border border-purple-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1103,7 +1116,7 @@ export default function Automobile() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-purple-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-purple-300">
                               Fetching data...
                             </h3>
                             <p className="text-gray-200 mt-2">Please wait</p>
@@ -1115,17 +1128,17 @@ export default function Automobile() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                       <AnimatePresence>
                         {isSearching ? (
-                          <div className="col-span-full text-center py-12">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
                             <div className="relative w-20 h-20 mx-auto mb-4">
                               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full blur-xl opacity-50" />
                               <div className="relative w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-700 rounded-full flex items-center justify-center shadow-2xl">
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-xl font-bold text-purple-300 mb-2">
+                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-purple-300 mb-2">
                               Searching PostgreSQL Database...
                             </h3>
                             <p className="text-gray-300">
@@ -1139,15 +1152,15 @@ export default function Automobile() {
                               initial={{ opacity: 0, y: 40 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              whileHover={{ y: -10, scale: 1.03 }}
+                              whileHover={{ y: -5, scale: 1.01 }}
                               onClick={() => handleBusinessSelect(business)}
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-purple-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-purple-600 to-pink-600" />
-                              <div className="p-6">
+                              <div className="p-3 sm:p-4 md:p-6">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
+                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
                                       {business.title}
                                     </h4>
                                     <div className="flex items-center gap-2 text-gray-400">
@@ -1235,7 +1248,7 @@ export default function Automobile() {
                                   <div>
                                     {business.revenue && (
                                       <>
-                                        <span className="text-xl font-bold text-green-300">
+                                        <span className="text-base sm:text-lg md:text-xl font-bold text-green-300">
                                           €
                                           {(business.revenue / 1000).toFixed(0)}
                                           K
@@ -1280,9 +1293,9 @@ export default function Automobile() {
                             </motion.div>
                           ))
                         ) : (
-                          <div className="col-span-full text-center py-12">
-                            <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-300 mb-2">
                               No Businesses Found
                             </h3>
                             <p className="text-gray-400">
@@ -1343,8 +1356,8 @@ export default function Automobile() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <BarChart3 className="h-6 w-6" />
               Automobile Analytics
             </h2>
@@ -1355,7 +1368,7 @@ export default function Automobile() {
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8"
             >
               <AnalyticsCard
                 title="Service Center Rate"
@@ -1414,27 +1427,27 @@ export default function Automobile() {
             </motion.div>
 
             {/* Charts and Details */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+            <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">
                       Revenue & Sales Trends
                     </h3>
                     <Calendar className="h-5 w-5 text-purple-400" />
                   </div>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-xl font-semibold mb-6 text-white">
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-6 text-white">
                     Revenue by Category
                   </h3>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
                   </div>
                 </CardContent>
@@ -1442,10 +1455,10 @@ export default function Automobile() {
             </div>
 
             {/* Additional Metrics */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Top Categories
                   </h3>
                   <div className="space-y-4">
@@ -1518,9 +1531,9 @@ export default function Automobile() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Sales by Region
                   </h3>
                   <div className="space-y-4">
@@ -1582,9 +1595,9 @@ export default function Automobile() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Performance Metrics
                   </h3>
                   <div className="space-y-4">
@@ -1645,15 +1658,15 @@ export default function Automobile() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <DollarSign className="h-6 w-6" />
               Financial Dashboard
             </h2>
             <p className="text-gray-300 mb-6">
               Financial analytics and performance metrics for automobile sector.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 {
                   title: "Vehicle Sales Revenue",
@@ -1667,11 +1680,11 @@ export default function Automobile() {
                 { title: "ROI", value: "28%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-2xl font-bold text-purple-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-300 mb-1">
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
@@ -1685,8 +1698,8 @@ export default function Automobile() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <Sparkles className="h-6 w-6" />
               Advertising & Promotions
             </h2>
@@ -1694,7 +1707,7 @@ export default function Automobile() {
               Manage campaigns and promotional activities for automobile
               businesses.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 { title: "Active Campaigns", value: "15", status: "Running" },
                 { title: "Total Budget", value: "€150K", status: "Allocated" },
@@ -1708,9 +1721,11 @@ export default function Automobile() {
                 { title: "ROAS", value: "3.8x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">{ad.title}</h3>
-                    <div className="text-2xl font-bold text-purple-300 mb-1">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
+                      {ad.title}
+                    </h3>
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-300 mb-1">
                       {ad.value}
                     </div>
                     <div
@@ -1734,14 +1749,14 @@ export default function Automobile() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-4 text-purple-300 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-2">
               <Database className="h-6 w-6" />
               PostgreSQL Database Connection
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-purple-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
                   Database Stats
                 </h3>
                 <ul className="space-y-2">
@@ -1780,7 +1795,7 @@ export default function Automobile() {
                 </ul>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-purple-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
@@ -1809,27 +1824,27 @@ export default function Automobile() {
       </div>
 
       {/* Automobile Features Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
             Verso Air Automobile Network
           </span>
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-8">
           {automobileFeatures.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-purple-900/30 backdrop-blur-md rounded-xl p-6 text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-800/50 to-purple-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-white">
                 {feature.title}
               </h3>
               <p className="text-gray-300">{feature.description}</p>
@@ -1855,8 +1870,8 @@ export default function Automobile() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-purple-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-3 sm:p-4 md:p-6 flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedBusiness.title}
                 </h2>
                 <button
@@ -1867,7 +1882,7 @@ export default function Automobile() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -1897,7 +1912,7 @@ export default function Automobile() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                     Description
                   </h3>
                   <p className="text-gray-300">
@@ -1905,28 +1920,28 @@ export default function Automobile() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Revenue</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Employees</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
@@ -1934,7 +1949,7 @@ export default function Automobile() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Email</div>
                       <div className="text-sm font-semibold text-white truncate">
@@ -1947,7 +1962,7 @@ export default function Automobile() {
                 {(selectedBusiness as any).brands &&
                   (selectedBusiness as any).brands.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                         Featured Brands
                       </h3>
                       <div className="flex flex-wrap gap-2">
@@ -1969,7 +1984,7 @@ export default function Automobile() {
                 {selectedBusiness.services &&
                   selectedBusiness.services.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                         Services Offered
                       </h3>
                       <div className="flex flex-wrap gap-2">

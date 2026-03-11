@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +37,10 @@ import {
   XCircle,
   Receipt,
   ArrowUpRight,
+  Music,
+  Download,
+  Play,
+  Headphones,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -454,6 +459,18 @@ export default function CardVaultPage() {
   }
 
   // ─── Access check ───────────────────────────────────────────────────────────
+
+  // Music earnings from Artist Portal
+  const { data: musicEarnings, isLoading: musicLoading } = useQuery({
+    queryKey: ["/api/music/earnings"],
+    queryFn: async () => {
+      const res = await fetch("/api/music/earnings");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
 
   const isAdmin =
     user?.role === "admin" ||

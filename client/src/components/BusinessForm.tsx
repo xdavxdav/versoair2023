@@ -183,9 +183,20 @@ export function BusinessForm({
     try {
       setIsSubmitting(true);
 
+      // When requireApproval is true, send email notification only (no DB insert)
+      // Otherwise, create the business directly
       const endpoint = requireApproval
-        ? "/api/businesses/submit"
+        ? "/api/request/business"
         : "/api/businesses";
+
+      // Resolve category name for the email
+      let categoryName = "";
+      if (requireApproval && formData.categoryId) {
+        const cat = categories.find(
+          (c: any) => c.id === parseInt(formData.categoryId),
+        );
+        categoryName = cat?.name || "";
+      }
 
       // Ensure CSRF token is available
       let csrf = getCsrfToken();
@@ -204,9 +215,11 @@ export function BusinessForm({
         body: JSON.stringify({
           name: formData.name,
           categoryId: parseInt(formData.categoryId),
+          categoryName: categoryName || undefined,
           businessType: formData.businessType || null,
           countryCode: formData.countryCode,
           cityName: formData.cityName || null,
+          regionName: formData.regionName || null,
           address: formData.address || null,
           phone: formData.phone || null,
           email: formData.email || null,
@@ -225,9 +238,9 @@ export function BusinessForm({
       const result = await response.json();
 
       toast({
-        title: requireApproval ? "Submitted for Approval" : "Success",
+        title: requireApproval ? "Request Submitted ✉️" : "Success",
         description: requireApproval
-          ? `"${formData.name}" has been submitted. An admin will review it shortly.`
+          ? `Your request for "${formData.name}" has been sent to the admin team for review.`
           : `Business "${formData.name}" created successfully`,
       });
 
@@ -714,7 +727,11 @@ export function BusinessForm({
               className="gap-2 bg-blue-600 hover:bg-blue-700"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Creating..." : "Create Business"}
+              {isSubmitting
+                ? "Submitting..."
+                : requireApproval
+                  ? "Submit Request"
+                  : "Create Business"}
             </Button>
           </div>
         </form>

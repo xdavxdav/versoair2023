@@ -16,11 +16,15 @@ import faqApiRoutes from "./routes/faq-api";
 import ticketsRouter from "./routes/tickets";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
+import streamroyaleRouter from "./routes/streamroyale";
+import streamingRouter from "./routes/streaming";
+import artistContractsRouter from "./routes/artist-contracts";
 import artistsRouter from "./routes/artists";
 import dataDispatchRouter from "./routes/data-dispatch";
 import settingsRouter from "./routes/settings";
 import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
+import submissionRequestsRouter from "./routes/submission-requests";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -125,10 +129,14 @@ export async function registerRoutes(app: Express) {
   app.use("/api/tickets", ticketsRouter);
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
+  app.use("/api/streamroyale", streamroyaleRouter);
+  app.use("/api/streaming", streamingRouter);
+  app.use("/api/contracts", artistContractsRouter);
   app.use("/api/artists", artistsRouter);
   app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/home", homeStatsRouter);
+  app.use("/api/request", submissionRequestsRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

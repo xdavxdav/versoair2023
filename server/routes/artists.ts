@@ -51,7 +51,7 @@ router.get("/search", async (req, res) => {
       conditions.push(
         `(a.stage_name ILIKE $${paramIdx} OR a.genre ILIKE $${paramIdx})`,
       );
-      params.push(`${query.trim()}%`);
+      params.push(`%${query.trim()}%`);
       paramIdx++;
     }
     if (genre.trim()) {

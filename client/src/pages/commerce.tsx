@@ -730,7 +730,7 @@ export default function CommerceBusinessAds() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
@@ -742,7 +742,7 @@ export default function CommerceBusinessAds() {
       </div>
 
       {/* Hero + Carousel Container */}
-      <div className="relative h-[600px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
+      <div className="relative min-h-[100dvh] md:min-h-0 md:h-[600px] flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden py-8 md:py-0">
         <div
           className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out`}
           /* webhint-disable-next-line hint-no-inline-styles */
@@ -753,7 +753,7 @@ export default function CommerceBusinessAds() {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90"></div>
         </div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -769,7 +769,7 @@ export default function CommerceBusinessAds() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-2xl"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
             Business & Commerce Database
           </motion.h1>
@@ -778,7 +778,7 @@ export default function CommerceBusinessAds() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-xl mb-4 text-white/90"
+            className="text-base sm:text-lg md:text-xl mb-4 text-white/90"
           >
             Real-time PostgreSQL database with {totalResults.toLocaleString()}+
             businesses, retailers & services
@@ -789,28 +789,28 @@ export default function CommerceBusinessAds() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-4 mb-8"
+            className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8"
           >
             <Card className="bg-white/10 backdrop-blur-md border-blue-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-blue-400" />
                   <span className="text-sm text-blue-200">Live Database</span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {totalResults.toLocaleString()}+ Records
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-teal-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Store className="h-4 w-4 text-teal-400" />
                   <span className="text-sm text-teal-200">
                     Businesses & Retail
                   </span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {searchResults.length} Loaded
                 </div>
               </CardContent>
@@ -818,7 +818,7 @@ export default function CommerceBusinessAds() {
           </motion.div>
 
           {/* Auto-sliding enterprises */}
-          <div className="w-full max-w-2xl mx-auto">
+          <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -826,7 +826,7 @@ export default function CommerceBusinessAds() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md rounded-xl p-6 shadow-lg border border-blue-500/20"
+                className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -842,13 +842,13 @@ export default function CommerceBusinessAds() {
                         />
                       ))}
                     </div>
-                    <h3 className="text-2xl font-semibold text-blue-300">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
                       {enterprises[currentIndex]?.name}
                     </h3>
                     <p className="text-gray-200 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-4 mt-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
                       <div className="flex items-center gap-2 text-blue-200">
                         <MapPin className="h-4 w-4" />
                         <span>
@@ -875,10 +875,10 @@ export default function CommerceBusinessAds() {
       </div>
 
       {/* Enhanced Search and Filter Section */}
-      <div className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 backdrop-blur-md border-blue-700 shadow-2xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
                 <Input
@@ -904,8 +904,8 @@ export default function CommerceBusinessAds() {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -936,12 +936,12 @@ export default function CommerceBusinessAds() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-blue-600 bg-slate-800 hover:bg-slate-700 w-[180px] justify-between"
+                      className="border-blue-600 bg-slate-800 hover:bg-slate-700 w-full sm:w-[180px] justify-between"
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
@@ -956,7 +956,7 @@ export default function CommerceBusinessAds() {
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-blue-600 w-[180px]">
+                  <DropdownMenuContent className="bg-slate-800 border-blue-600 w-[200px]">
                     <DropdownMenuItem
                       onClick={() =>
                         setActiveFilters({
@@ -1058,7 +1058,7 @@ export default function CommerceBusinessAds() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-800/50 rounded-lg border border-blue-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
                       Business Type
@@ -1230,9 +1230,9 @@ export default function CommerceBusinessAds() {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
         {/* Tabs Navigation */}
-        <div className="flex space-x-2 mb-8">
+        <div className="relative flex space-x-1 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pb-2 bg-slate-800/50 rounded-xl p-1.5 border border-blue-500/20 backdrop-blur-sm">
           {(
             [
               "analytics",
@@ -1241,19 +1241,32 @@ export default function CommerceBusinessAds() {
               "ads",
               "database",
             ] as TabType[]
-          ).map((tab) => (
-            <Button
+          ).map((tab, index) => (
+            <motion.button
               key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                delay: index * 0.08,
+                duration: 0.3,
+                ease: "easeOut",
+              }}
               onClick={() => setActiveTab(tab)}
-              className={`capitalize ${
+              className={`relative capitalize whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                 activeTab === tab
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "border-blue-600 hover:bg-blue-800"
+                  ? "text-white"
+                  : "text-blue-300 hover:text-white hover:bg-white/5"
               }`}
             >
-              {tab}
-            </Button>
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="commerce-active-tab"
+                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg shadow-lg shadow-blue-500/25"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">{tab}</span>
+            </motion.button>
           ))}
         </div>
 
@@ -1262,8 +1275,8 @@ export default function CommerceBusinessAds() {
             {/* Live Search Results Section */}
             {hasSearched && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
                     <Database className="h-6 w-6 text-blue-400" />
                     <span className="bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
@@ -1279,9 +1292,9 @@ export default function CommerceBusinessAds() {
 
                 {/* Loading State */}
                 {isInitialLoading ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md border border-blue-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1291,7 +1304,7 @@ export default function CommerceBusinessAds() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-blue-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
                               Loading businesses...
                             </h3>
                             <p className="text-gray-200 mt-2">
@@ -1303,7 +1316,7 @@ export default function CommerceBusinessAds() {
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md border border-blue-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1313,7 +1326,7 @@ export default function CommerceBusinessAds() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-blue-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
                               Fetching data...
                             </h3>
                             <p className="text-gray-200 mt-2">Please wait</p>
@@ -1325,17 +1338,17 @@ export default function CommerceBusinessAds() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                       <AnimatePresence>
                         {isSearching ? (
-                          <div className="col-span-full text-center py-12">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
                             <div className="relative w-20 h-20 mx-auto mb-4">
                               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full blur-xl opacity-50" />
                               <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-teal-700 rounded-full flex items-center justify-center shadow-2xl">
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-xl font-bold text-blue-300 mb-2">
+                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-blue-300 mb-2">
                               Searching PostgreSQL Database...
                             </h3>
                             <p className="text-gray-300">
@@ -1349,15 +1362,15 @@ export default function CommerceBusinessAds() {
                               initial={{ opacity: 0, y: 40 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              whileHover={{ y: -10, scale: 1.03 }}
+                              whileHover={{ y: -5, scale: 1.01 }}
                               onClick={() => handleBusinessSelect(business)}
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-blue-600 to-teal-600" />
-                              <div className="p-6">
+                              <div className="p-3 sm:p-4 md:p-6">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
+                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
                                       {business.title}
                                     </h4>
                                     <div className="flex items-center gap-2 text-gray-400">
@@ -1445,7 +1458,7 @@ export default function CommerceBusinessAds() {
                                   <div>
                                     {business.revenue && (
                                       <>
-                                        <span className="text-xl font-bold text-green-300">
+                                        <span className="text-base sm:text-lg md:text-xl font-bold text-green-300">
                                           €
                                           {(business.revenue / 1000).toFixed(0)}
                                           K
@@ -1490,9 +1503,9 @@ export default function CommerceBusinessAds() {
                             </motion.div>
                           ))
                         ) : (
-                          <div className="col-span-full text-center py-12">
-                            <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-300 mb-2">
                               No Businesses Found
                             </h3>
                             <p className="text-gray-400">
@@ -1553,12 +1566,12 @@ export default function CommerceBusinessAds() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
             <AnimatedHeading
               text="Commerce Analytics"
               level={2}
               variant="slow"
-              className="text-2xl mb-6 flex items-center gap-2"
+              className="text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4 md:mb-6 flex items-center gap-2"
             />
 
             {/* Summary Cards */}
@@ -1567,7 +1580,7 @@ export default function CommerceBusinessAds() {
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8"
             >
               <AnalyticsCard
                 title="Total Revenue"
@@ -1624,27 +1637,27 @@ export default function CommerceBusinessAds() {
             </motion.div>
 
             {/* Charts and Details */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-blue-500/20">
+            <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">
                       Revenue & Ads Trends
                     </h3>
                     <Calendar className="h-5 w-5 text-blue-400" />
                   </div>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-xl font-semibold mb-6 text-white">
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-6 text-white">
                     Revenue by Category
                   </h3>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
                   </div>
                 </CardContent>
@@ -1652,10 +1665,10 @@ export default function CommerceBusinessAds() {
             </div>
 
             {/* Additional Metrics */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-blue-500/20">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Top Categories
                   </h3>
                   <div className="space-y-4">
@@ -1728,9 +1741,9 @@ export default function CommerceBusinessAds() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Sales by Region
                   </h3>
                   <div className="space-y-4">
@@ -1800,9 +1813,9 @@ export default function CommerceBusinessAds() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Performance Metrics
                   </h3>
                   <div className="space-y-4">
@@ -1865,15 +1878,15 @@ export default function CommerceBusinessAds() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <DollarSign className="h-6 w-6" />
               Financial Dashboard
             </h2>
             <p className="text-gray-300 mb-6">
               Financial analytics and performance metrics for commerce sector.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 { title: "Ad Spend", value: "€850K", change: "+22%" },
                 { title: "Ad Revenue", value: "€3.2M", change: "+18%" },
@@ -1883,11 +1896,11 @@ export default function CommerceBusinessAds() {
                 { title: "ROI", value: "4.2x", change: "+12%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-2xl font-bold text-blue-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-300 mb-1">
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
@@ -1901,8 +1914,8 @@ export default function CommerceBusinessAds() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <Megaphone className="h-6 w-6" />
               Advertising & Marketing
             </h2>
@@ -1910,7 +1923,7 @@ export default function CommerceBusinessAds() {
               Manage campaigns and promotional activities for commerce
               businesses.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 { title: "Active Campaigns", value: "42", status: "Running" },
                 { title: "Total Budget", value: "€285K", status: "Allocated" },
@@ -1924,9 +1937,11 @@ export default function CommerceBusinessAds() {
                 { title: "ROAS", value: "4.2x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">{ad.title}</h3>
-                    <div className="text-2xl font-bold text-blue-300 mb-1">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
+                      {ad.title}
+                    </h3>
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-300 mb-1">
                       {ad.value}
                     </div>
                     <div
@@ -1950,14 +1965,14 @@ export default function CommerceBusinessAds() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-2">
               <Database className="h-6 w-6" />
               PostgreSQL Database Connection
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-blue-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
                   Database Stats
                 </h3>
                 <ul className="space-y-2">
@@ -1994,7 +2009,7 @@ export default function CommerceBusinessAds() {
                 </ul>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-blue-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
@@ -2023,27 +2038,27 @@ export default function CommerceBusinessAds() {
       </div>
 
       {/* Commerce Features Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500 bg-clip-text text-transparent">
             Verso Air Commerce Network
           </span>
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-8">
           {commerceFeatures.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-blue-900/30 backdrop-blur-md rounded-xl p-6 text-center border border-blue-500/20 hover:border-blue-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-800/50 to-blue-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-blue-500/20 hover:border-blue-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-blue-600/20 to-teal-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-white">
                 {feature.title}
               </h3>
               <p className="text-gray-300">{feature.description}</p>
@@ -2069,8 +2084,8 @@ export default function CommerceBusinessAds() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-blue-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-3 sm:p-4 md:p-6 flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedBusiness.title}
                 </h2>
                 <button
@@ -2081,7 +2096,7 @@ export default function CommerceBusinessAds() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -2117,7 +2132,7 @@ export default function CommerceBusinessAds() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                     Description
                   </h3>
                   <p className="text-gray-300">
@@ -2125,28 +2140,28 @@ export default function CommerceBusinessAds() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Revenue</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Employees</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
@@ -2154,7 +2169,7 @@ export default function CommerceBusinessAds() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Email</div>
                       <div className="text-sm font-semibold text-white truncate">
@@ -2166,7 +2181,7 @@ export default function CommerceBusinessAds() {
 
                 {selectedBusiness.tags && selectedBusiness.tags.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                       Tags
                     </h3>
                     <div className="flex flex-wrap gap-2">

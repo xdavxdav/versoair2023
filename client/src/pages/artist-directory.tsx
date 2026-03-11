@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Link } from "wouter";
 import {
   Search,
   Filter,
@@ -768,18 +769,14 @@ export default function ArtistDirectory() {
                                     : "🆓 Unsigned"}
                               </Badge>
 
-                              {artist.spotify_url && (
-                                <a
-                                  href={artist.spotify_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1.5 text-green-400 hover:text-green-300 transition-colors text-xs font-medium bg-green-500/10 hover:bg-green-500/20 px-3 py-1.5 rounded-lg"
-                                >
-                                  <Music className="h-3.5 w-3.5" />
-                                  Spotify
-                                </a>
-                              )}
+                              <Link
+                                href={`/artist-catalogue/${artist.id}`}
+                                onClick={(e: any) => e.stopPropagation()}
+                                className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg"
+                              >
+                                <Music className="h-3.5 w-3.5" />
+                                Stream
+                              </Link>
                             </div>
                           </div>
                         </div>
@@ -968,18 +965,14 @@ export default function ArtistDirectory() {
                       </Card>
                     </div>
 
-                    {/* Spotify Link */}
-                    {selectedArtist.spotify_url && (
-                      <a
-                        href={selectedArtist.spotify_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-green-600 to-green-500 rounded-lg text-white font-semibold hover:from-green-700 hover:to-green-600 transition-all"
-                      >
-                        <Music className="h-5 w-5" />
-                        Écouter sur Spotify
-                      </a>
-                    )}
+                    {/* Stream on Verso Air */}
+                    <Link
+                      href={`/artist-catalogue/${selectedArtist.id}`}
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-white font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
+                    >
+                      <Music className="h-5 w-5" />
+                      Écouter sur Verso Air
+                    </Link>
                   </div>
                 </>
               ) : null}

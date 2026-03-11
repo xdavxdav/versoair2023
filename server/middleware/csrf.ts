@@ -35,6 +35,17 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/resend-verification", // resend verification email — must be exempt for unverified users
   "/api/ai/chat", // VersoAI chat — same-origin, uses credentials:include
   "/api/ai/status", // VersoAI status check
+  // GeoAdmin submission requests — email-only, no DB writes
+  "/api/request/business",
+  "/api/request/artist",
+  "/api/request/job",
+  // Portal-specific auth endpoints — exempt to bootstrap auth
+  "/auth/artist/login",
+  "/auth/artist/register",
+  "/auth/subscriber/login",
+  "/auth/subscriber/register",
+  "/auth/community/login",
+  "/auth/community/register",
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────

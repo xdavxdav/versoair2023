@@ -571,7 +571,7 @@ export default function Sante() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-red-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-red-900 to-slate-900 text-white">
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
@@ -583,7 +583,7 @@ export default function Sante() {
       </div>
 
       {/* Hero + Carousel Container */}
-      <div className="relative h-[600px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
+      <div className="relative min-h-[100dvh] md:min-h-0 md:h-[600px] flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden py-8 md:py-0">
         <div
           className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out`}
           style={{
@@ -609,7 +609,7 @@ export default function Sante() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-2xl"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
             Healthcare Providers Database
           </motion.h1>
@@ -618,7 +618,7 @@ export default function Sante() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-xl mb-4 text-white/90"
+            className="text-base sm:text-lg md:text-xl mb-4 text-white/90"
           >
             Real-time PostgreSQL database with {totalResults.toLocaleString()}+
             healthcare facilities
@@ -629,28 +629,28 @@ export default function Sante() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-4 mb-8"
+            className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8"
           >
             <Card className="bg-white/10 backdrop-blur-md border-red-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-red-400" />
                   <span className="text-sm text-red-200">Live Database</span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {totalResults.toLocaleString()}+ Records
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-orange-500/30">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-orange-400" />
                   <span className="text-sm text-orange-200">
                     Healthcare Facilities
                   </span>
                 </div>
-                <div className="text-xl font-bold text-white">
+                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                   {searchResults.length} Loaded
                 </div>
               </CardContent>
@@ -658,7 +658,7 @@ export default function Sante() {
           </motion.div>
 
           {/* Auto-sliding enterprises */}
-          <div className="w-full max-w-2xl mx-auto">
+          <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -666,7 +666,7 @@ export default function Sante() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md rounded-xl p-6 shadow-lg border border-red-500/20"
+                className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -682,7 +682,7 @@ export default function Sante() {
                         />
                       ))}
                     </div>
-                    <h3 className="text-2xl font-semibold text-red-300">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
                       {enterprises[currentIndex]?.name}
                     </h3>
                     <p className="text-gray-200 mt-2">
@@ -705,10 +705,10 @@ export default function Sante() {
       </div>
 
       {/* Enhanced Search and Filter Section */}
-      <div className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-red-900/90 backdrop-blur-md border-red-700 shadow-2xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-400" />
                 <Input
@@ -734,8 +734,8 @@ export default function Sante() {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -757,12 +757,12 @@ export default function Sante() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-red-600 bg-slate-800 hover:bg-slate-700 w-[180px] justify-between"
+                      className="border-red-600 bg-slate-800 hover:bg-slate-700 w-full sm:w-[180px] justify-between"
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
@@ -777,7 +777,7 @@ export default function Sante() {
                       <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-red-600 w-[180px]">
+                  <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
                     <DropdownMenuItem
                       onClick={() =>
                         setActiveFilters({
@@ -879,7 +879,7 @@ export default function Sante() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-800/50 rounded-lg border border-red-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-red-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
                       Category
@@ -1066,9 +1066,9 @@ export default function Sante() {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
         {/* Tabs Navigation */}
-        <div className="flex space-x-2 mb-8">
+        <div className="relative flex space-x-1 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pb-2 bg-slate-800/50 rounded-xl p-1.5 border border-red-500/20 backdrop-blur-sm">
           {(
             [
               "analytics",
@@ -1077,19 +1077,32 @@ export default function Sante() {
               "ads",
               "database",
             ] as TabType[]
-          ).map((tab) => (
-            <Button
+          ).map((tab, index) => (
+            <motion.button
               key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                delay: index * 0.08,
+                duration: 0.3,
+                ease: "easeOut",
+              }}
               onClick={() => setActiveTab(tab)}
-              className={`capitalize ${
+              className={`relative capitalize whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                 activeTab === tab
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "border-red-600 hover:bg-red-800"
+                  ? "text-white"
+                  : "text-red-300 hover:text-white hover:bg-white/5"
               }`}
             >
-              {tab}
-            </Button>
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="sante-active-tab"
+                  className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-lg shadow-lg shadow-red-500/25"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">{tab}</span>
+            </motion.button>
           ))}
         </div>
 
@@ -1098,8 +1111,8 @@ export default function Sante() {
             {/* Live Search Results Section */}
             {hasSearched && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
                     <Database className="h-6 w-6 text-red-400" />
                     <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
@@ -1115,9 +1128,9 @@ export default function Sante() {
 
                 {/* Loading State */}
                 {isInitialLoading ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md border border-red-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1127,7 +1140,7 @@ export default function Sante() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-red-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
                               Loading healthcare facilities...
                             </h3>
                             <p className="text-gray-200 mt-2">
@@ -1139,7 +1152,7 @@ export default function Sante() {
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md border border-red-500/20">
-                      <CardContent className="p-6">
+                      <CardContent className="p-3 sm:p-4 md:p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
@@ -1149,7 +1162,7 @@ export default function Sante() {
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-2xl font-semibold text-red-300">
+                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
                               Fetching data...
                             </h3>
                             <p className="text-gray-200 mt-2">Please wait</p>
@@ -1161,17 +1174,17 @@ export default function Sante() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                       <AnimatePresence>
                         {isSearching ? (
-                          <div className="col-span-full text-center py-12">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
                             <div className="relative w-20 h-20 mx-auto mb-4">
                               <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-600 rounded-full blur-xl opacity-50" />
                               <div className="relative w-20 h-20 bg-gradient-to-r from-red-600 to-orange-700 rounded-full flex items-center justify-center shadow-2xl">
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-xl font-bold text-red-300 mb-2">
+                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-red-300 mb-2">
                               Searching PostgreSQL Database...
                             </h3>
                             <p className="text-gray-300">
@@ -1185,15 +1198,15 @@ export default function Sante() {
                               initial={{ opacity: 0, y: 40 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              whileHover={{ y: -10, scale: 1.03 }}
+                              whileHover={{ y: -5, scale: 1.01 }}
                               onClick={() => handleBusinessSelect(business)}
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-red-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-red-600 to-orange-600" />
-                              <div className="p-6">
+                              <div className="p-3 sm:p-4 md:p-6">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-1">
+                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-1">
                                       {business.title}
                                     </h4>
                                     <div className="flex items-center gap-2 text-gray-400">
@@ -1281,7 +1294,7 @@ export default function Sante() {
                                   <div>
                                     {business.revenue && (
                                       <>
-                                        <span className="text-xl font-bold text-green-300">
+                                        <span className="text-base sm:text-lg md:text-xl font-bold text-green-300">
                                           €
                                           {(business.revenue / 1000).toFixed(0)}
                                           K
@@ -1326,9 +1339,9 @@ export default function Sante() {
                             </motion.div>
                           ))
                         ) : (
-                          <div className="col-span-full text-center py-12">
-                            <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-300 mb-2">
                               No Facilities Found
                             </h3>
                             <p className="text-gray-400">
@@ -1389,8 +1402,8 @@ export default function Sante() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <BarChart3 className="h-6 w-6" />
               Healthcare Analytics
             </h2>
@@ -1400,7 +1413,7 @@ export default function Sante() {
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8"
             >
               <AnalyticsCard
                 title="Patient Satisfaction"
@@ -1456,27 +1469,27 @@ export default function Sante() {
               />
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-red-500/20">
+            <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">
                       Revenue & Patient Trends
                     </h3>
                     <Calendar className="h-5 w-5 text-red-400" />
                   </div>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-lg border border-red-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20">
                 <CardContent>
-                  <h3 className="text-xl font-semibold mb-6 text-white">
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-6 text-white">
                     Revenue by Category
                   </h3>
-                  <div className="chart-container h-72">
+                  <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
                   </div>
                 </CardContent>
@@ -1486,12 +1499,12 @@ export default function Sante() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <DollarSign className="h-6 w-6" />
               Financial Dashboard
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 {
                   title: "Consultation Revenue",
@@ -1505,11 +1518,11 @@ export default function Sante() {
                 { title: "ROI", value: "25%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-2xl font-bold text-red-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-300 mb-1">
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
@@ -1523,12 +1536,12 @@ export default function Sante() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
               <Pill className="h-6 w-6" />
               Healthcare Campaigns
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[
                 { title: "Active Campaigns", value: "14", status: "Running" },
                 { title: "Total Budget", value: "€120K", status: "Allocated" },
@@ -1546,9 +1559,11 @@ export default function Sante() {
                 { title: "ROAS", value: "3.8x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">{ad.title}</h3>
-                    <div className="text-2xl font-bold text-red-300 mb-1">
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
+                      {ad.title}
+                    </h3>
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-300 mb-1">
                       {ad.value}
                     </div>
                     <div
@@ -1570,14 +1585,14 @@ export default function Sante() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-4 text-red-300 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-red-300 flex items-center gap-2">
               <Database className="h-6 w-6" />
               PostgreSQL Database Connection
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-red-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
                   Database Stats
                 </h3>
                 <ul className="space-y-2">
@@ -1610,7 +1625,7 @@ export default function Sante() {
                 </ul>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-red-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
@@ -1639,27 +1654,27 @@ export default function Sante() {
       </div>
 
       {/* Healthcare Features Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-red-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
             Verso Air Healthcare Network
           </span>
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-8">
           {healthcareFeatures.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-red-900/30 backdrop-blur-md rounded-xl p-6 text-center border border-red-500/20 hover:border-red-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-800/50 to-red-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-red-500/20 hover:border-red-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-white">
                 {feature.title}
               </h3>
               <p className="text-gray-300">{feature.description}</p>
@@ -1685,8 +1700,8 @@ export default function Sante() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-red-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-3 sm:p-4 md:p-6 flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedBusiness.title}
                 </h2>
                 <button
@@ -1697,7 +1712,7 @@ export default function Sante() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -1727,7 +1742,7 @@ export default function Sante() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                     Description
                   </h3>
                   <p className="text-gray-300">
@@ -1735,28 +1750,28 @@ export default function Sante() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Revenue</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
+                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Staff</div>
-                        <div className="text-xl font-bold text-white">
+                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Phone</div>
                       <div className="text-sm font-semibold text-white">
@@ -1764,7 +1779,7 @@ export default function Sante() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-4">
+                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Email</div>
                       <div className="text-sm font-semibold text-white truncate">

@@ -3143,7 +3143,7 @@ export default function DatabaseExpert({
                       }}
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      Add Job
+                      Request Job
                     </Button>
                   </div>
                 </div>
@@ -4077,10 +4077,11 @@ export default function DatabaseExpert({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-100">
               <Music className="h-5 w-5 text-purple-400" />
-              Add Artist
+              Submit Artist Request
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Add a new artist to the directory
+              Submit an artist for review — the admin team will be notified via
+              email
             </DialogDescription>
           </DialogHeader>
           <form
@@ -4096,7 +4097,7 @@ export default function DatabaseExpert({
               }
               setIsSubmittingArtist(true);
               try {
-                const res = await fetch(`${API_BASE_URL}/api/artists`, {
+                const res = await fetch(`${API_BASE_URL}/api/request/artist`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -4105,10 +4106,19 @@ export default function DatabaseExpert({
                     labelStatus: newArtist.labelStatus,
                     spotifyUrl: newArtist.spotifyUrl || null,
                     countryCode: newArtist.countryCode || null,
+                    username: username || "GeoAdmin User",
                   }),
                 });
-                if (!res.ok) throw new Error("Failed to create artist");
-                toast({ title: "Artist added successfully!" });
+                if (!res.ok) {
+                  const errData = await res.json().catch(() => ({}));
+                  throw new Error(
+                    errData.error || "Failed to submit artist request",
+                  );
+                }
+                toast({
+                  title: "Request Submitted ✉️",
+                  description: `Your request for "${newArtist.stageName}" has been sent to the admin team for review.`,
+                });
                 setNewArtist({
                   stageName: "",
                   genre: "",
@@ -4142,14 +4152,61 @@ export default function DatabaseExpert({
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Genre</Label>
-              <Input
-                value={newArtist.genre}
-                onChange={(e) =>
-                  setNewArtist({ ...newArtist, genre: e.target.value })
+              <Select
+                value={newArtist.genre || ""}
+                onValueChange={(val) =>
+                  setNewArtist({ ...newArtist, genre: val })
                 }
-                placeholder="e.g. Afrobeats, Hip-Hop"
-                className="bg-white/5 border-white/10 text-slate-100"
-              />
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue placeholder="Select genre" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                  {[
+                    "Afrobeats",
+                    "Afropop",
+                    "Amapiano",
+                    "Bikutsi",
+                    "Bongo Flava",
+                    "Coupé-Décalé",
+                    "Dancehall",
+                    "Drill",
+                    "Folk",
+                    "Funk",
+                    "Gospel",
+                    "Grime",
+                    "Highlife",
+                    "Hip-Hop",
+                    "House",
+                    "Jazz",
+                    "Kizomba",
+                    "Kuduro",
+                    "Makossa",
+                    "Mbalax",
+                    "Ndombolo",
+                    "Pop",
+                    "R&B",
+                    "Rap",
+                    "Reggae",
+                    "Rock",
+                    "Rumba",
+                    "Salsa",
+                    "Soul",
+                    "Trap",
+                    "Zouk",
+                    "Zouglou",
+                    "Other",
+                  ].map((genre) => (
+                    <SelectItem
+                      key={genre}
+                      value={genre}
+                      className="text-slate-100 hover:bg-white/10"
+                    >
+                      {genre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Label Status</Label>
@@ -4170,19 +4227,53 @@ export default function DatabaseExpert({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Country Code</Label>
-              <Input
-                value={newArtist.countryCode}
-                onChange={(e) =>
-                  setNewArtist({
-                    ...newArtist,
-                    countryCode: e.target.value.toUpperCase().slice(0, 2),
-                  })
+              <Label className="text-slate-300">Country</Label>
+              <Select
+                value={newArtist.countryCode || ""}
+                onValueChange={(val) =>
+                  setNewArtist({ ...newArtist, countryCode: val })
                 }
-                placeholder="e.g. CI, NG, US"
-                maxLength={2}
-                className="bg-white/5 border-white/10 text-slate-100"
-              />
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                  {(countriesList as any[]).length > 0
+                    ? (countriesList as any[])
+                        .sort((a: any, b: any) =>
+                          (a.name || "").localeCompare(b.name || ""),
+                        )
+                        .map((c: any) => (
+                          <SelectItem
+                            key={c.code}
+                            value={c.code}
+                            className="text-slate-100 hover:bg-white/10"
+                          >
+                            {c.name} ({c.code})
+                          </SelectItem>
+                        ))
+                    : [
+                        { code: "CI", name: "Côte d'Ivoire" },
+                        { code: "NG", name: "Nigeria" },
+                        { code: "US", name: "United States" },
+                        { code: "FR", name: "France" },
+                        { code: "GB", name: "United Kingdom" },
+                        { code: "GH", name: "Ghana" },
+                        { code: "CM", name: "Cameroon" },
+                        { code: "SN", name: "Senegal" },
+                        { code: "CD", name: "DR Congo" },
+                        { code: "ZA", name: "South Africa" },
+                      ].map((c) => (
+                        <SelectItem
+                          key={c.code}
+                          value={c.code}
+                          className="text-slate-100 hover:bg-white/10"
+                        >
+                          {c.name} ({c.code})
+                        </SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Spotify URL</Label>
@@ -4214,7 +4305,7 @@ export default function DatabaseExpert({
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {isSubmittingArtist ? "Adding…" : "Add Artist"}
+                {isSubmittingArtist ? "Submitting…" : "Submit Request"}
               </Button>
             </div>
           </form>
@@ -4227,10 +4318,11 @@ export default function DatabaseExpert({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-100">
               <Briefcase className="h-5 w-5 text-blue-400" />
-              Add Job Listing
+              Submit Job Request
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Post a new job listing to the directory
+              Submit a job listing for review — the admin team will be notified
+              via email
             </DialogDescription>
           </DialogHeader>
           <form
@@ -4246,7 +4338,7 @@ export default function DatabaseExpert({
               }
               setIsSubmittingJob(true);
               try {
-                const res = await fetch(`${API_BASE_URL}/api/jobs`, {
+                const res = await fetch(`${API_BASE_URL}/api/request/job`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -4259,10 +4351,19 @@ export default function DatabaseExpert({
                     description: newJob.description || null,
                     experienceLevel: newJob.experienceLevel || null,
                     isRemote: newJob.isRemote,
+                    username: username || "GeoAdmin User",
                   }),
                 });
-                if (!res.ok) throw new Error("Failed to create job");
-                toast({ title: "Job listing added successfully!" });
+                if (!res.ok) {
+                  const errData = await res.json().catch(() => ({}));
+                  throw new Error(
+                    errData.error || "Failed to submit job request",
+                  );
+                }
+                toast({
+                  title: "Request Submitted ✉️",
+                  description: `Your request for "${newJob.title}" at "${newJob.company}" has been sent to the admin team for review.`,
+                });
                 setNewJob({
                   title: "",
                   company: "",
@@ -4340,19 +4441,48 @@ export default function DatabaseExpert({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Country Code</Label>
-                <Input
-                  value={newJob.countryCode}
-                  onChange={(e) =>
-                    setNewJob({
-                      ...newJob,
-                      countryCode: e.target.value.toUpperCase().slice(0, 2),
-                    })
+                <Label className="text-slate-300">Country</Label>
+                <Select
+                  value={newJob.countryCode || ""}
+                  onValueChange={(val) =>
+                    setNewJob({ ...newJob, countryCode: val })
                   }
-                  placeholder="e.g. CI"
-                  maxLength={2}
-                  className="bg-white/5 border-white/10 text-slate-100"
-                />
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                    {(countriesList as any[]).length > 0
+                      ? (countriesList as any[])
+                          .sort((a: any, b: any) =>
+                            (a.name || "").localeCompare(b.name || ""),
+                          )
+                          .map((c: any) => (
+                            <SelectItem
+                              key={c.code}
+                              value={c.code}
+                              className="text-slate-100 hover:bg-white/10"
+                            >
+                              {c.name} ({c.code})
+                            </SelectItem>
+                          ))
+                      : [
+                          { code: "CI", name: "Côte d'Ivoire" },
+                          { code: "NG", name: "Nigeria" },
+                          { code: "US", name: "United States" },
+                          { code: "FR", name: "France" },
+                          { code: "GB", name: "United Kingdom" },
+                        ].map((c) => (
+                          <SelectItem
+                            key={c.code}
+                            value={c.code}
+                            className="text-slate-100 hover:bg-white/10"
+                          >
+                            {c.name} ({c.code})
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Experience Level</Label>
@@ -4435,7 +4565,7 @@ export default function DatabaseExpert({
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {isSubmittingJob ? "Adding…" : "Add Job"}
+                {isSubmittingJob ? "Submitting…" : "Submit Request"}
               </Button>
             </div>
           </form>
@@ -4510,14 +4640,61 @@ export default function DatabaseExpert({
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Genre</Label>
-              <Input
-                value={editArtist.genre}
-                onChange={(e) =>
-                  setEditArtist({ ...editArtist, genre: e.target.value })
+              <Select
+                value={editArtist.genre || ""}
+                onValueChange={(val) =>
+                  setEditArtist({ ...editArtist, genre: val })
                 }
-                placeholder="e.g. Afrobeats, Hip-Hop"
-                className="bg-white/5 border-white/10 text-slate-100"
-              />
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue placeholder="Select genre" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                  {[
+                    "Afrobeats",
+                    "Afropop",
+                    "Amapiano",
+                    "Bikutsi",
+                    "Bongo Flava",
+                    "Coupé-Décalé",
+                    "Dancehall",
+                    "Drill",
+                    "Folk",
+                    "Funk",
+                    "Gospel",
+                    "Grime",
+                    "Highlife",
+                    "Hip-Hop",
+                    "House",
+                    "Jazz",
+                    "Kizomba",
+                    "Kuduro",
+                    "Makossa",
+                    "Mbalax",
+                    "Ndombolo",
+                    "Pop",
+                    "R&B",
+                    "Rap",
+                    "Reggae",
+                    "Rock",
+                    "Rumba",
+                    "Salsa",
+                    "Soul",
+                    "Trap",
+                    "Zouk",
+                    "Zouglou",
+                    "Other",
+                  ].map((genre) => (
+                    <SelectItem
+                      key={genre}
+                      value={genre}
+                      className="text-slate-100 hover:bg-white/10"
+                    >
+                      {genre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Label Status</Label>
@@ -4538,19 +4715,53 @@ export default function DatabaseExpert({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Country Code</Label>
-              <Input
-                value={editArtist.countryCode}
-                onChange={(e) =>
-                  setEditArtist({
-                    ...editArtist,
-                    countryCode: e.target.value.toUpperCase().slice(0, 2),
-                  })
+              <Label className="text-slate-300">Country</Label>
+              <Select
+                value={editArtist.countryCode || ""}
+                onValueChange={(val) =>
+                  setEditArtist({ ...editArtist, countryCode: val })
                 }
-                placeholder="e.g. CI, NG, US"
-                maxLength={2}
-                className="bg-white/5 border-white/10 text-slate-100"
-              />
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                  {(countriesList as any[]).length > 0
+                    ? (countriesList as any[])
+                        .sort((a: any, b: any) =>
+                          (a.name || "").localeCompare(b.name || ""),
+                        )
+                        .map((c: any) => (
+                          <SelectItem
+                            key={c.code}
+                            value={c.code}
+                            className="text-slate-100 hover:bg-white/10"
+                          >
+                            {c.name} ({c.code})
+                          </SelectItem>
+                        ))
+                    : [
+                        { code: "CI", name: "Côte d'Ivoire" },
+                        { code: "NG", name: "Nigeria" },
+                        { code: "US", name: "United States" },
+                        { code: "FR", name: "France" },
+                        { code: "GB", name: "United Kingdom" },
+                        { code: "GH", name: "Ghana" },
+                        { code: "CM", name: "Cameroon" },
+                        { code: "SN", name: "Senegal" },
+                        { code: "CD", name: "DR Congo" },
+                        { code: "ZA", name: "South Africa" },
+                      ].map((c) => (
+                        <SelectItem
+                          key={c.code}
+                          value={c.code}
+                          className="text-slate-100 hover:bg-white/10"
+                        >
+                          {c.name} ({c.code})
+                        </SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Spotify URL</Label>
@@ -4670,10 +4881,11 @@ export default function DatabaseExpert({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-100">
               <Pencil className="h-5 w-5 text-blue-400" />
-              Edit Job Listing
+              Submit Job Edit Request
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Update job listing details
+              Submit updated job details for review — the admin team will be
+              notified via email
             </DialogDescription>
           </DialogHeader>
           <form
@@ -4693,27 +4905,32 @@ export default function DatabaseExpert({
               }
               setIsUpdatingJob(true);
               try {
-                const res = await fetch(
-                  `${API_BASE_URL}/api/v1/admin/jobs/${editingJob.id}`,
-                  {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                      title: editJob.title,
-                      company: editJob.company,
-                      location: editJob.location || null,
-                      type: editJob.type,
-                      sector: editJob.sector,
-                      countryCode: editJob.countryCode || null,
-                      description: editJob.description || null,
-                      experienceLevel: editJob.experienceLevel || null,
-                      isRemote: editJob.isRemote,
-                    }),
-                  },
-                );
-                if (!res.ok) throw new Error("Failed to update job");
-                toast({ title: "Job updated successfully!" });
+                const res = await fetch(`${API_BASE_URL}/api/request/job`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: editJob.title,
+                    company: editJob.company,
+                    location: editJob.location || null,
+                    type: editJob.type,
+                    sector: editJob.sector,
+                    countryCode: editJob.countryCode || null,
+                    description: editJob.description || null,
+                    experienceLevel: editJob.experienceLevel || null,
+                    isRemote: editJob.isRemote,
+                    username: username || "GeoAdmin User",
+                  }),
+                });
+                if (!res.ok) {
+                  const errData = await res.json().catch(() => ({}));
+                  throw new Error(
+                    errData.error || "Failed to submit job edit request",
+                  );
+                }
+                toast({
+                  title: "Edit Request Submitted ✉️",
+                  description: `Your edit request for "${editJob.title}" has been sent to the admin team for review.`,
+                });
                 setShowEditJob(false);
                 setEditingJob(null);
                 queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
@@ -4781,19 +4998,48 @@ export default function DatabaseExpert({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Country Code</Label>
-                <Input
-                  value={editJob.countryCode}
-                  onChange={(e) =>
-                    setEditJob({
-                      ...editJob,
-                      countryCode: e.target.value.toUpperCase().slice(0, 2),
-                    })
+                <Label className="text-slate-300">Country</Label>
+                <Select
+                  value={editJob.countryCode || ""}
+                  onValueChange={(val) =>
+                    setEditJob({ ...editJob, countryCode: val })
                   }
-                  placeholder="e.g. CI"
-                  maxLength={2}
-                  className="bg-white/5 border-white/10 text-slate-100"
-                />
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                    {(countriesList as any[]).length > 0
+                      ? (countriesList as any[])
+                          .sort((a: any, b: any) =>
+                            (a.name || "").localeCompare(b.name || ""),
+                          )
+                          .map((c: any) => (
+                            <SelectItem
+                              key={c.code}
+                              value={c.code}
+                              className="text-slate-100 hover:bg-white/10"
+                            >
+                              {c.name} ({c.code})
+                            </SelectItem>
+                          ))
+                      : [
+                          { code: "CI", name: "Côte d'Ivoire" },
+                          { code: "NG", name: "Nigeria" },
+                          { code: "US", name: "United States" },
+                          { code: "FR", name: "France" },
+                          { code: "GB", name: "United Kingdom" },
+                        ].map((c) => (
+                          <SelectItem
+                            key={c.code}
+                            value={c.code}
+                            className="text-slate-100 hover:bg-white/10"
+                          >
+                            {c.name} ({c.code})
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Experience Level</Label>
@@ -4878,7 +5124,7 @@ export default function DatabaseExpert({
                 ) : (
                   <Check className="h-4 w-4" />
                 )}
-                {isUpdatingJob ? "Updating…" : "Save Changes"}
+                {isUpdatingJob ? "Submitting…" : "Submit Edit Request"}
               </Button>
             </div>
           </form>
@@ -4896,11 +5142,11 @@ export default function DatabaseExpert({
               Delete Job
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
-              Are you sure you want to permanently delete{" "}
+              Request deletion of{" "}
               <strong className="text-slate-200">
                 {deleteJobTarget?.title}
               </strong>
-              ? This action cannot be undone.
+              ? The admin team will be notified via email.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -4919,18 +5165,26 @@ export default function DatabaseExpert({
                 setIsDeletingJob(true);
                 try {
                   const response = await fetch(
-                    `${API_BASE_URL}/api/v1/admin/jobs/${deleteJobTarget.id}`,
-                    { method: "DELETE", credentials: "include" },
+                    `${API_BASE_URL}/api/request/job`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        title: `[DELETE REQUEST] ${deleteJobTarget.title}`,
+                        company: "—",
+                        description: `GeoAdmin requested deletion of job listing: "${deleteJobTarget.title}" (ID: ${deleteJobTarget.id})`,
+                        username: username || "GeoAdmin User",
+                      }),
+                    },
                   );
                   if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "Delete failed");
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || "Request failed");
                   }
                   toast({
-                    title: "Deleted",
-                    description: `"${deleteJobTarget.title}" has been removed`,
+                    title: "Deletion Request Submitted ✉️",
+                    description: `Your request to delete "${deleteJobTarget.title}" has been sent to the admin team.`,
                   });
-                  queryClient.invalidateQueries({ queryKey: ["geo-jobs"] });
                   setDeleteJobTarget(null);
                 } catch (error) {
                   console.error("Delete job error:", error);
@@ -4950,10 +5204,10 @@ export default function DatabaseExpert({
               {isDeletingJob ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Deleting…
+                  Submitting…
                 </>
               ) : (
-                "Delete Job"
+                "Request Deletion"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 /* webhint-disable hint-no-inline-styles */
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
@@ -104,6 +104,7 @@ import {
   ShieldCheck,
   BadgeCheck,
   Crown,
+  Trophy,
   Sparkles,
   Rocket,
   TargetIcon,
@@ -237,7 +238,27 @@ import {
   useMusicArtists,
   useMusicTracks,
   useMusicAnalytics,
+  useMusicEarnings,
+  useInvalidateTracks,
+  useMyArtist,
+  uploadTrack,
+  deleteTrack,
+  updateTrackMonetization,
 } from "@/hooks/use-music";
+import {
+  checkAuth,
+  login as authLogin,
+  logout as authLogout,
+} from "@/lib/auth";
+import {
+  useArtistStats,
+  useLeaderboard,
+  useCurrentPool,
+  useRequestPayout,
+  usePayoutHistory,
+  useContractStatus,
+} from "@/hooks/use-streamroyale";
+import StreamRoyaleInfoWindow from "@/components/StreamRoyaleInfoWindow";
 import {
   Card,
   CardContent,
@@ -387,7 +408,12 @@ interface Release {
 }
 
 export default function ArtistPortal() {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [loginError, setLoginError] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [volume, setVolume] = useState([50]);
@@ -398,328 +424,292 @@ export default function ArtistPortal() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [notifications, setNotifications] = useState([
+  const [notifications, setNotifications] = useState<
     {
-      id: 1,
-      title: "New Royalty Payment",
-      description: "$1,234.56 has been deposited",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      title: "Track Approved",
-      description: "Your track 'Summer Vibes' has been approved",
-      time: "1 day ago",
-      read: false,
-    },
-    {
-      id: 3,
-      title: "Collaboration Request",
-      description: "@ProducerDJ wants to collaborate",
-      time: "3 days ago",
-      read: true,
-    },
-  ]);
+      id: number;
+      title: string;
+      description: string;
+      time: string;
+      read: boolean;
+    }[]
+  >([]);
 
   const { data: artists, isLoading: loadingArtists } = useMusicArtists();
   const { data: tracks, isLoading: loadingTracks } = useMusicTracks();
   const { data: analytics, isLoading: loadingAnalytics } = useMusicAnalytics();
+  const { data: earnings } = useMusicEarnings();
+  const invalidateTracks = useInvalidateTracks();
+  const { data: myArtist } = useMyArtist();
 
-  // Mock data for demonstration
-  const mockArtists: Artist[] = [
-    {
-      id: "1",
-      name: "Aurora Lights",
-      stageName: "Aurora Lights",
-      genre: "Electronic",
-      totalStreams: 12345678,
-      monthlyListeners: 543210,
-      avatar: "/api/placeholder/80/80",
-      status: "active",
-      earnings: 45678.9,
-      growth: 23.5,
-      socialMedia: [
-        { followers: 123456, platform: "Instagram" },
-        { followers: 78901, platform: "Twitter" },
-      ],
-    },
-    {
-      id: "2",
-      name: "Midnight Echo",
-      stageName: "Midnight Echo",
-      genre: "Hip Hop",
-      totalStreams: 8765432,
-      monthlyListeners: 321098,
-      avatar: "/api/placeholder/80/80",
-      status: "active",
-      earnings: 32109.87,
-      growth: 15.2,
-      socialMedia: [
-        { followers: 98765, platform: "Instagram" },
-        { followers: 54321, platform: "TikTok" },
-      ],
-    },
-    {
-      id: "3",
-      name: "Solar Flare",
-      stageName: "Solar Flare",
-      genre: "Rock",
-      totalStreams: 5432109,
-      monthlyListeners: 210987,
-      avatar: "/api/placeholder/80/80",
-      status: "active",
-      earnings: 21098.76,
-      growth: -5.3,
-      socialMedia: [
-        { followers: 65432, platform: "YouTube" },
-        { followers: 32109, platform: "Facebook" },
-      ],
-    },
-  ];
+  // ── Auth check on mount ──
+  useEffect(() => {
+    checkAuth()
+      .then((user) => {
+        setIsLoggedIn(!!user);
+        setAuthLoading(false);
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+        setAuthLoading(false);
+      });
+  }, []);
 
-  const mockTracks: Track[] = [
-    {
-      id: "1",
-      title: "Neon Dreams",
-      artistId: "1",
-      streams: 1234567,
-      duration: 214,
-      releaseDate: "2024-01-15",
-      status: "published",
-      revenue: 12345.67,
-      platform: "Spotify",
-      genre: "Electronic",
-      mood: "Energetic",
-      bpm: 128,
-      key: "C# Minor",
-    },
-    {
-      id: "2",
-      title: "Midnight Drive",
-      artistId: "2",
-      streams: 987654,
-      duration: 189,
-      releaseDate: "2024-02-20",
-      status: "published",
-      revenue: 8765.43,
-      platform: "Apple Music",
-      genre: "Hip Hop",
-      mood: "Chill",
-      bpm: 95,
-      key: "F Minor",
-    },
-    {
-      id: "3",
-      title: "Solar Winds",
-      artistId: "3",
-      streams: 654321,
-      duration: 234,
-      releaseDate: "2024-03-10",
-      status: "published",
-      revenue: 5432.1,
-      platform: "YouTube Music",
-      genre: "Rock",
-      mood: "Epic",
-      bpm: 140,
-      key: "G Major",
-    },
-    {
-      id: "4",
-      title: "Urban Legends",
-      artistId: "1",
-      streams: 432109,
-      duration: 198,
-      releaseDate: "2024-04-05",
-      status: "draft",
-      revenue: 3210.98,
-      platform: "SoundCloud",
-      genre: "Electronic",
-      mood: "Mysterious",
-      bpm: 110,
-      key: "A Minor",
-    },
-    {
-      id: "5",
-      title: "Cosmic Dance",
-      artistId: "2",
-      streams: 321098,
-      duration: 176,
-      releaseDate: "2024-05-12",
-      status: "scheduled",
-      revenue: 2109.87,
-      platform: "Deezer",
-      genre: "Hip Hop",
-      mood: "Upbeat",
-      bpm: 102,
-      key: "D# Minor",
-    },
-  ];
+  // ── Login handler ──
+  const handleLogin = useCallback(async () => {
+    if (!loginEmail || !loginPassword) {
+      setLoginError("Please enter both email and password");
+      return;
+    }
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      // Try artist-specific login first
+      const res = await fetch("/auth/artist/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Store token in memory for Authorization header
+        if (data.token) {
+          const { setAuthToken } = await import("@/lib/auth");
+          setAuthToken(data.token);
+        }
+        setIsLoggedIn(true);
+        setLoginEmail("");
+        setLoginPassword("");
+      } else {
+        setLoginError(data.message || "Login failed");
+      }
+    } catch (err: any) {
+      setLoginError(err.message || "Network error");
+    } finally {
+      setLoginLoading(false);
+    }
+  }, [loginEmail, loginPassword]);
 
-  const mockAnalytics: Analytics = {
-    totalStreams: 28765432,
-    totalRevenue: 98765.43,
-    monthlyGrowth: 12.5,
-    topCountries: [
-      { country: "United States", streams: 12345678 },
-      { country: "United Kingdom", streams: 4321098 },
-      { country: "Germany", streams: 3210987 },
-      { country: "France", streams: 2109876 },
-      { country: "Japan", streams: 1987654 },
-    ],
-    platformDistribution: [
-      { platform: "Spotify", percentage: 45 },
-      { platform: "Apple Music", percentage: 25 },
-      { platform: "YouTube Music", percentage: 15 },
-      { platform: "SoundCloud", percentage: 8 },
-      { platform: "Other", percentage: 7 },
-    ],
-    dailyStreams: Array.from({ length: 30 }, (_, i) => ({
-      date: `2024-06-${String(i + 1).padStart(2, "0")}`,
-      streams: Math.floor(Math.random() * 50000) + 10000,
-    })),
-  };
+  // ── Logout handler ──
+  const handleLogout = useCallback(async () => {
+    await authLogout();
+    setIsLoggedIn(false);
+  }, []);
 
-  const mockRoyaltyPayments: RoyaltyPayment[] = [
-    {
-      id: "1",
-      date: "2024-06-15",
-      amount: 12345.67,
-      status: "paid",
-      description: "Q2 2024 Royalties",
-      platform: "Spotify",
-    },
-    {
-      id: "2",
-      date: "2024-05-15",
-      amount: 9876.54,
-      status: "paid",
-      description: "Q1 2024 Royalties",
-      platform: "Apple Music",
-    },
-    {
-      id: "3",
-      date: "2024-07-15",
-      amount: 15432.1,
-      status: "pending",
-      description: "Q3 2024 Royalties",
-      platform: "All Platforms",
-    },
-    {
-      id: "4",
-      date: "2024-04-15",
-      amount: 8765.43,
-      status: "paid",
-      description: "YouTube Music Royalties",
-      platform: "YouTube",
-    },
-    {
-      id: "5",
-      date: "2024-08-15",
-      amount: 0,
-      status: "processing",
-      description: "Q4 2024 Advance",
-      platform: "Verso Air",
-    },
-  ];
+  // ── StreamRoyale hooks ──
+  const { data: artistStats } = useArtistStats();
+  const { data: poolData } = useCurrentPool();
+  const { data: payoutHistoryData } = usePayoutHistory();
+  const { data: contractData } = useContractStatus();
+  const payoutMutation = useRequestPayout();
+  const [showInfoWindow, setShowInfoWindow] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [leaderboardFilter, setLeaderboardFilter] = useState({
+    league: "all",
+    page: 1,
+  });
+  const { data: leaderboardData } = useLeaderboard(leaderboardFilter);
 
-  const mockCollaborations: Collaboration[] = [
-    {
-      id: "1",
-      artist: "Midnight Echo",
-      status: "active",
-      track: "Neon Dreams (Remix)",
-      revenueShare: 50,
-      date: "2024-06-01",
-    },
-    {
-      id: "2",
-      artist: "Solar Flare",
-      status: "pending",
-      track: "Cosmic Collab",
-      revenueShare: 30,
-      date: "2024-06-15",
-    },
-    {
-      id: "3",
-      artist: "Ocean Waves",
-      status: "completed",
-      track: "Deep Blue",
-      revenueShare: 40,
-      date: "2024-05-20",
-    },
-    {
-      id: "4",
-      artist: "Mountain Peak",
-      status: "active",
-      track: "Summit Sound",
-      revenueShare: 60,
-      date: "2024-06-10",
-    },
-  ];
+  // ── Upload state ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: "",
+    genre: "",
+    description: "",
+    price: "0.99",
+    bpm: "",
+    musicalKey: "",
+    mood: "",
+  });
 
-  const mockReleases: Release[] = [
-    {
-      id: "1",
-      title: "Neon Dreams",
-      type: "single",
-      releaseDate: "2024-01-15",
-      status: "released",
-      streams: 1234567,
-      revenue: 12345.67,
-    },
-    {
-      id: "2",
-      title: "Midnight Drive",
-      type: "single",
-      releaseDate: "2024-02-20",
-      status: "released",
-      streams: 987654,
-      revenue: 8765.43,
-    },
-    {
-      id: "3",
-      title: "Cosmic Dance EP",
-      type: "ep",
-      releaseDate: "2024-03-25",
-      status: "released",
-      streams: 432109,
-      revenue: 5432.1,
-    },
-    {
-      id: "4",
-      title: "Urban Legends",
-      type: "single",
-      releaseDate: "2024-07-01",
-      status: "scheduled",
-      streams: 0,
-      revenue: 0,
-    },
-    {
-      id: "5",
-      title: "Solar System Album",
-      type: "album",
-      releaseDate: "2024-12-01",
-      status: "draft",
-      streams: 0,
-      revenue: 0,
-    },
-  ];
+  // ── Monetization edit state ──
+  const [editingMonetization, setEditingMonetization] = useState<string | null>(
+    null,
+  );
+  const [editPrice, setEditPrice] = useState("");
 
-  // Use mock data while loading
-  const displayArtists = artists || mockArtists;
-  const displayTracks = tracks || mockTracks;
-  const displayAnalytics = analytics || mockAnalytics;
-  const displayRoyalties = mockRoyaltyPayments;
-  const displayCollaborations = mockCollaborations;
-  const displayReleases = mockReleases;
+  // Handle real file upload
+  const handleRealUpload = useCallback(async () => {
+    if (!uploadFile || !uploadForm.title) return;
+    setIsUploading(true);
+    setUploadProgress(0);
 
-  // Calculate totals
-  const totalStreams = (displayAnalytics as any)?.totalStreams || 0;
+    const formData = new FormData();
+    formData.append("audio", uploadFile);
+    formData.append("title", uploadForm.title);
+    formData.append("genre", uploadForm.genre);
+    formData.append("description", uploadForm.description);
+    formData.append("price", uploadForm.price);
+    if (uploadForm.bpm) formData.append("bpm", uploadForm.bpm);
+    if (uploadForm.musicalKey)
+      formData.append("musicalKey", uploadForm.musicalKey);
+    if (uploadForm.mood) formData.append("mood", uploadForm.mood);
+    // Attach authenticated artist's ID so the track is linked correctly
+    if (myArtist?.id) formData.append("artistId", String(myArtist.id));
+
+    // Simulate progress during upload
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => Math.min(prev + 8, 90));
+    }, 200);
+
+    try {
+      await uploadTrack(formData);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      invalidateTracks();
+      // Reset and close
+      setTimeout(() => {
+        setShowUploadModal(false);
+        setUploadFile(null);
+        setUploadProgress(0);
+        setIsUploading(false);
+        setUploadForm({
+          title: "",
+          genre: "",
+          description: "",
+          price: "0.99",
+          bpm: "",
+          musicalKey: "",
+          mood: "",
+        });
+      }, 500);
+    } catch (err: any) {
+      clearInterval(progressInterval);
+      setIsUploading(false);
+      setUploadProgress(0);
+      alert("Upload failed: " + (err.message || "Unknown error"));
+    }
+  }, [uploadFile, uploadForm, invalidateTracks, myArtist]);
+
+  // Handle track deletion
+  const handleDeleteTrack = useCallback(
+    async (trackId: number) => {
+      if (!confirm("Delete this track? This cannot be undone.")) return;
+      try {
+        await deleteTrack(trackId);
+        invalidateTracks();
+      } catch {
+        alert("Failed to delete track");
+      }
+    },
+    [invalidateTracks],
+  );
+
+  // Handle monetization update
+  const handleUpdatePrice = useCallback(
+    async (trackId: number, newPrice: string) => {
+      try {
+        await updateTrackMonetization(trackId, { price: newPrice });
+        invalidateTracks();
+        setEditingMonetization(null);
+      } catch {
+        alert("Failed to update price");
+      }
+    },
+    [invalidateTracks],
+  );
+
+  // ── Derive display data from real API hooks (no mock arrays) ──
+  const displayArtists = artists || [];
+  const displayTracks = tracks || [];
+
+  // Compute analytics from real data
+  const computedAnalytics = useMemo(() => {
+    const allTracks = displayTracks;
+    const allArtists = displayArtists;
+    const tStreams = allTracks.reduce(
+      (sum, t) => sum + ((t as any).streams || (t as any).playCount || 0),
+      0,
+    );
+    const tRevenue = allTracks.reduce(
+      (sum, t) => sum + parseFloat((t as any).revenue || "0"),
+      0,
+    );
+
+    // Genre distribution from tracks
+    const genreCounts: Record<string, number> = {};
+    allTracks.forEach((t) => {
+      const g = (t as any).genre || "Other";
+      genreCounts[g] =
+        (genreCounts[g] || 0) +
+        ((t as any).streams || (t as any).playCount || 0);
+    });
+    const genreDistribution = Object.entries(genreCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([genre, streams]) => ({
+        platform: genre,
+        percentage: tStreams > 0 ? Math.round((streams / tStreams) * 100) : 0,
+      }));
+
+    // Country distribution from artists
+    const countryCounts: Record<string, number> = {};
+    allArtists.forEach((a) => {
+      const c = (a as any).country || "Unknown";
+      countryCounts[c] =
+        (countryCounts[c] || 0) + ((a as any).totalStreams || 0);
+    });
+    const topCountries = Object.entries(countryCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([country, streams]) => ({ country, streams }));
+
+    return {
+      totalStreams: tStreams,
+      totalRevenue: tRevenue,
+      monthlyGrowth: 0,
+      topCountries,
+      platformDistribution: genreDistribution,
+      dailyStreams: [] as { date: string; streams: number }[],
+    };
+  }, [displayTracks, displayArtists]);
+
+  const displayAnalytics = analytics
+    ? {
+        ...analytics,
+        ...computedAnalytics,
+        totalStreams:
+          computedAnalytics.totalStreams ||
+          (analytics as any).totalStreams ||
+          0,
+      }
+    : computedAnalytics;
+
+  // Releases derived from real tracks
+  const displayReleases = useMemo(() => {
+    return displayTracks.map((t) => ({
+      id: String(t.id),
+      title: t.title,
+      type: "single" as const,
+      releaseDate: t.releaseDate
+        ? new Date(t.releaseDate).toISOString().split("T")[0]
+        : "—",
+      status: ((t as any).status === "published"
+        ? "released"
+        : (t as any).status === "draft"
+          ? "draft"
+          : "scheduled") as "released" | "scheduled" | "draft",
+      streams: (t as any).streams || t.playCount || 0,
+      revenue: parseFloat((t as any).revenue || "0"),
+    }));
+  }, [displayTracks]);
+
+  // Collaborations — no backend, show empty
+  const displayCollaborations: Collaboration[] = [];
+
+  // Calculate totals from real data
+  const totalStreams = computedAnalytics.totalStreams;
   const totalArtists = displayArtists?.length || 0;
   const totalTracks = displayTracks?.length || 0;
-  const totalRevenue = (displayAnalytics as any)?.totalRevenue || 0;
-  const monthlyGrowth = (displayAnalytics as any)?.monthlyGrowth || 0;
+  const totalRevenue = computedAnalytics.totalRevenue;
+
+  // Weekly stats from StreamRoyale
+  const weeklyStreams = artistStats?.thisWeek?.streams || 0;
+  const walletBal = artistStats?.profile?.walletBalance || 0;
+  const lifetimeStreams = artistStats?.profile?.lifetimeStreams || 0;
 
   // Filter tracks based on search and genre
   const filteredTracks = useMemo(() => {
@@ -788,6 +778,16 @@ export default function ArtistPortal() {
     }
   };
 
+  // Show loading spinner while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <Loader2 className="h-12 w-12 animate-spin text-white mb-4" />
+        <p className="text-purple-200 text-lg">Checking authentication...</p>
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -828,13 +828,22 @@ export default function ArtistPortal() {
                 <Input
                   type="email"
                   placeholder="Artist Email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="bg-white/20 border-white/30 text-white placeholder-purple-200"
                 />
                 <Input
                   type="password"
                   placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="bg-white/20 border-white/30 text-white placeholder-purple-200"
                 />
+                {loginError && (
+                  <p className="text-red-400 text-sm text-left">{loginError}</p>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Switch id="remember" />
@@ -849,29 +858,56 @@ export default function ArtistPortal() {
               </div>
 
               <Button
-                onClick={() => setIsLoggedIn(true)}
+                onClick={handleLogin}
+                disabled={loginLoading}
                 className="w-full mb-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-3 rounded-lg font-medium"
               >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Login to Artist Portal
+                {loginLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                )}
+                {loginLoading ? "Logging in..." : "Login to Artist Portal"}
               </Button>
 
               <Separator className="my-6 bg-white/20" />
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <p className="text-purple-200 text-xs text-center mb-3">
+                Or connect with your music platform
+              </p>
+              <div className="grid grid-cols-3 gap-3 mb-6">
                 <Button
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+                  className="border-white/30 text-white hover:bg-[#1DB954]/20 hover:border-[#1DB954] flex flex-col items-center gap-1.5 py-3 h-auto"
+                  onClick={() =>
+                    (window.location.href =
+                      "/auth/oauth/spotify?redirect=/artist-portal")
+                  }
                 >
-                  <GoogleIcon className="mr-2 h-4 w-4" />
-                  Google
+                  <SpotifyIcon className="h-5 w-5" />
+                  <span className="text-xs">Spotify</span>
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+                  className="border-white/30 text-white hover:bg-[#FC3C44]/20 hover:border-[#FC3C44] flex flex-col items-center gap-1.5 py-3 h-auto"
+                  onClick={() =>
+                    (window.location.href =
+                      "/auth/oauth/apple-music?redirect=/artist-portal")
+                  }
                 >
-                  <Apple className="mr-2 h-4 w-4" />
-                  Apple
+                  <AppleMusicIcon className="h-5 w-5" />
+                  <span className="text-xs">Apple Music</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-[#FFA200]/20 hover:border-[#FFA200] flex flex-col items-center gap-1.5 py-3 h-auto"
+                  onClick={() =>
+                    (window.location.href =
+                      "/auth/oauth/audiomack?redirect=/artist-portal")
+                  }
+                >
+                  <AudiomackIcon className="h-5 w-5" />
+                  <span className="text-xs">Audiomack</span>
                 </Button>
               </div>
 
@@ -937,7 +973,9 @@ export default function ArtistPortal() {
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
                     <span className="text-green-400 text-sm">
-                      +12.5% this month
+                      {weeklyStreams > 0
+                        ? `+${formatNumber(weeklyStreams)} this week`
+                        : "No streams yet"}
                     </span>
                   </div>
                 </div>
@@ -961,7 +999,9 @@ export default function ArtistPortal() {
                   <div className="flex items-center mt-2">
                     <DollarSign className="h-4 w-4 text-green-400 mr-1" />
                     <span className="text-green-400 text-sm">
-                      +8.3% from last month
+                      {walletBal > 0
+                        ? `${formatCurrency(walletBal)} in wallet`
+                        : "No earnings yet"}
                     </span>
                   </div>
                 </div>
@@ -982,12 +1022,13 @@ export default function ArtistPortal() {
                     Monthly Listeners
                   </p>
                   <p className="text-3xl font-bold text-white">
-                    {formatNumber(543210)}
+                    {formatNumber(lifetimeStreams)}
                   </p>
                   <div className="flex items-center mt-2">
                     <Users className="h-4 w-4 text-blue-400 mr-1" />
                     <span className="text-blue-400 text-sm">
-                      +2,345 new listeners
+                      {totalArtists} artist{totalArtists !== 1 ? "s" : ""} on
+                      label
                     </span>
                   </div>
                 </div>
@@ -1017,7 +1058,12 @@ export default function ArtistPortal() {
                   <div className="flex items-center mt-2">
                     <Users2 className="h-4 w-4 text-pink-400 mr-1" />
                     <span className="text-pink-400 text-sm">
-                      3 pending requests
+                      {
+                        displayCollaborations.filter(
+                          (c: any) => c.status === "pending",
+                        ).length
+                      }{" "}
+                      pending requests
                     </span>
                   </div>
                 </div>
@@ -1046,60 +1092,85 @@ export default function ArtistPortal() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-end space-x-1">
-              {((displayAnalytics as any)?.dailyStreams || [])
-                .slice(-30)
-                .map((day: any, i: number) => (
-                  <TooltipProvider key={i}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        {/* webhint-disable-next-line hint-no-inline-styles */}
-                        <div
-                          className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-sm"
-                          style={{ height: `${(day.streams / 50000) * 100}%` }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{formatNumber(day.streams)} streams</p>
-                        <p className="text-xs">{day.date}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
-            </div>
-            <div className="mt-4 grid grid-cols-7 text-xs text-purple-200">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                <div key={day} className="text-center">
-                  {day}
+            {((displayAnalytics as any)?.dailyStreams || []).length === 0 ? (
+              <div className="h-64 flex items-center justify-center text-white/30">
+                <div className="text-center">
+                  <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p>Stream data will appear here as your music gets played</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="h-64 flex items-end space-x-1">
+                {((displayAnalytics as any)?.dailyStreams || [])
+                  .slice(-30)
+                  .map((day: any, i: number) => (
+                    <TooltipProvider key={i}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          {/* webhint-disable-next-line hint-no-inline-styles */}
+                          <div
+                            className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-sm"
+                            style={{
+                              height: `${(day.streams / 50000) * 100}%`,
+                            }}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{formatNumber(day.streams)} streams</p>
+                          <p className="text-xs">{day.date}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+              </div>
+            )}
+            {((displayAnalytics as any)?.dailyStreams || []).length > 0 && (
+              <div className="mt-4 grid grid-cols-7 text-xs text-purple-200">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                  (day) => (
+                    <div key={day} className="text-center">
+                      {day}
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Platform Distribution</CardTitle>
+            <CardTitle className="text-white">Genre Distribution</CardTitle>
             <CardDescription className="text-purple-200">
-              Where your music is being streamed
+              Stream breakdown by genre
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {((displayAnalytics as any)?.platformDistribution || []).map(
-                (platform: any, i: number) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-white">{platform.platform}</span>
-                      <span className="text-purple-200">
-                        {platform.percentage}%
-                      </span>
+            {((displayAnalytics as any)?.platformDistribution || []).length ===
+            0 ? (
+              <div className="flex items-center justify-center py-8 text-white/30">
+                <div className="text-center">
+                  <Music2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p>Upload tracks to see genre breakdown</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {((displayAnalytics as any)?.platformDistribution || []).map(
+                  (platform: any, i: number) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-white">{platform.platform}</span>
+                        <span className="text-purple-200">
+                          {platform.percentage}%
+                        </span>
+                      </div>
+                      <Progress value={platform.percentage} className="h-2" />
                     </div>
-                    <Progress value={platform.percentage} className="h-2" />
-                  </div>
-                ),
-              )}
-            </div>
+                  ),
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -1341,6 +1412,11 @@ export default function ArtistPortal() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTracks.map((track) => {
             const artist = displayArtists.find((a) => a.id === track.artistId);
+            const hasAudio =
+              !!(track as any).hasAudio || !!(track as any).file_path;
+            const trackRevenue = parseFloat((track as any).revenue || "0");
+            const trackDownloads = (track as any).downloads || 0;
+            const trackPrice = (track as any).price || "0.99";
             return (
               <Card
                 key={track.id}
@@ -1349,23 +1425,53 @@ export default function ArtistPortal() {
                 <CardContent className="p-0">
                   <div className="relative aspect-square bg-gradient-to-br from-purple-500/20 to-pink-500/20">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Music2 className="h-16 w-16 text-white/30" />
+                      {hasAudio ? (
+                        <div className="text-center">
+                          <Music2 className="h-14 w-14 text-purple-400/60 mx-auto" />
+                          <span className="text-[10px] text-green-400/70 mt-1 block">
+                            ♦ UPLOADED
+                          </span>
+                        </div>
+                      ) : (
+                        <Music2 className="h-16 w-16 text-white/30" />
+                      )}
                     </div>
+                    {/* Price tag */}
+                    {hasAudio && (
+                      <div className="absolute top-3 right-3 bg-green-500/90 text-white text-xs font-bold px-2 py-1 rounded-md shadow-lg">
+                        ${trackPrice}
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-4 left-4 right-4">
+                      <div className="absolute bottom-4 left-4 right-4 flex gap-2">
                         <Button
                           onClick={() => handlePlayTrack(track)}
-                          className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+                          className="flex-1 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+                          disabled={!hasAudio}
                         >
-                          <Play className="mr-2 h-4 w-4" />
-                          Play Now
+                          <Play className="mr-1 h-4 w-4" />
+                          Play
                         </Button>
+                        {hasAudio && (
+                          <Button
+                            onClick={() => {
+                              window.open(
+                                `/api/music/tracks/${track.id}/download`,
+                                "_blank",
+                              );
+                            }}
+                            className="bg-green-600/80 hover:bg-green-500 text-white"
+                            size="icon"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="p-4">
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <h3 className="text-white font-semibold truncate">
                           {track.title}
                         </h3>
@@ -1387,27 +1493,66 @@ export default function ArtistPortal() {
                           align="end"
                           className="bg-gray-900 border-white/20"
                         >
-                          <DropdownMenuItem className="text-white">
-                            <Play className="mr-2 h-4 w-4" />
-                            Play
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-white">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
+                          {hasAudio && (
+                            <DropdownMenuItem
+                              className="text-white"
+                              onClick={() => handlePlayTrack(track)}
+                            >
+                              <Play className="mr-2 h-4 w-4" />
+                              Play
+                            </DropdownMenuItem>
+                          )}
+                          {hasAudio && (
+                            <DropdownMenuItem
+                              className="text-white"
+                              onClick={() =>
+                                window.open(
+                                  `/api/music/tracks/${track.id}/download`,
+                                  "_blank",
+                                )
+                              }
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="text-white">
                             <Share2 className="mr-2 h-4 w-4" />
                             Share
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/20" />
-                          <DropdownMenuItem className="text-red-400">
+                          <DropdownMenuItem
+                            className="text-red-400"
+                            onClick={() => handleDeleteTrack(Number(track.id))}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <div className="mt-4 flex items-center justify-between">
+                    {/* Revenue & Downloads bar */}
+                    {hasAudio && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="bg-green-500/10 rounded-lg px-2 py-1.5 text-center border border-green-500/20">
+                          <p className="text-green-400 font-bold text-sm">
+                            {formatCurrency(trackRevenue)}
+                          </p>
+                          <p className="text-green-300/60 text-[10px]">
+                            Revenue
+                          </p>
+                        </div>
+                        <div className="bg-blue-500/10 rounded-lg px-2 py-1.5 text-center border border-blue-500/20">
+                          <p className="text-blue-400 font-bold text-sm">
+                            {trackDownloads}
+                          </p>
+                          <p className="text-blue-300/60 text-[10px]">
+                            Downloads
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center justify-between">
                       <Badge
                         className={getStatusColor(
                           (track as any).status || "published",
@@ -1424,16 +1569,18 @@ export default function ArtistPortal() {
                         <p className="text-purple-200 text-xs">streams</p>
                       </div>
                     </div>
-                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-purple-200">
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-purple-200">
                       <div className="text-center">
                         <p className="font-medium text-white">
-                          {(track as any).bpm || 120}
+                          {(track as any).bpm || "—"}
                         </p>
                         <p>BPM</p>
                       </div>
                       <div className="text-center">
                         <p className="font-medium text-white">
-                          {(track as any).key || "C"}
+                          {(track as any).musicalKey ||
+                            (track as any).key ||
+                            "—"}
                         </p>
                         <p>Key</p>
                       </div>
@@ -1454,6 +1601,11 @@ export default function ArtistPortal() {
         <div className="space-y-2">
           {filteredTracks.map((track) => {
             const artist = displayArtists.find((a) => a.id === track.artistId);
+            const hasAudio =
+              !!(track as any).hasAudio || !!(track as any).file_path;
+            const trackRevenue = parseFloat((track as any).revenue || "0");
+            const trackDownloads = (track as any).downloads || 0;
+            const trackPrice = (track as any).price || "0.99";
             return (
               <div
                 key={track.id}
@@ -1461,29 +1613,57 @@ export default function ArtistPortal() {
               >
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${hasAudio ? "bg-gradient-to-br from-green-500 to-emerald-600" : "bg-gradient-to-br from-purple-500 to-pink-500"}`}
+                    >
                       <Music2 className="h-6 w-6 text-white" />
                     </div>
-                    <button
-                      onClick={() => handlePlayTrack(track)}
-                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-opacity"
-                    >
-                      <Play className="h-4 w-4 text-white" />
-                    </button>
+                    {hasAudio && (
+                      <button
+                        onClick={() => handlePlayTrack(track)}
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-opacity"
+                      >
+                        <Play className="h-4 w-4 text-white" />
+                      </button>
+                    )}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{track.title}</p>
+                    <p className="text-white font-medium">
+                      {track.title}
+                      {hasAudio && (
+                        <span className="ml-2 text-[10px] text-green-400">
+                          ♦ AUDIO
+                        </span>
+                      )}
+                    </p>
                     <p className="text-purple-200 text-sm">
-                      {artist?.stageName} • {(track as any).genre || "Unknown"}{" "}
-                      • {(track as any).bpm || 120} BPM •{" "}
-                      {(track as any).key || "C"}
+                      {artist?.stageName || "Unknown"} •{" "}
+                      {(track as any).genre || "Unknown"} •{" "}
+                      {(track as any).bpm || "—"} BPM •{" "}
+                      {(track as any).musicalKey || (track as any).key || "—"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-6">
+                  {hasAudio && (
+                    <div className="text-right hidden lg:block">
+                      <p className="text-green-400 font-medium">
+                        ${trackPrice}
+                      </p>
+                      <p className="text-green-300/50 text-xs">price</p>
+                    </div>
+                  )}
+                  {hasAudio && (
+                    <div className="text-right hidden md:block">
+                      <p className="text-blue-400 font-medium">
+                        {trackDownloads}
+                      </p>
+                      <p className="text-blue-300/50 text-xs">downloads</p>
+                    </div>
+                  )}
                   <div className="text-right hidden md:block">
-                    <p className="text-white">
-                      {formatCurrency((track as any).revenue || 0)}
+                    <p className="text-green-400">
+                      {formatCurrency(trackRevenue)}
                     </p>
                     <p className="text-purple-200 text-sm">revenue</p>
                   </div>
@@ -1502,6 +1682,21 @@ export default function ArtistPortal() {
                   >
                     {(track as any).status || "published"}
                   </Badge>
+                  {hasAudio && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                      onClick={() =>
+                        window.open(
+                          `/api/music/tracks/${track.id}/download`,
+                          "_blank",
+                        )
+                      }
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -1516,17 +1711,40 @@ export default function ArtistPortal() {
                       align="end"
                       className="bg-gray-900 border-white/20"
                     >
-                      <DropdownMenuItem className="text-white">
-                        <Play className="mr-2 h-4 w-4" />
-                        Play
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-white">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
+                      {hasAudio && (
+                        <DropdownMenuItem
+                          className="text-white"
+                          onClick={() => handlePlayTrack(track)}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Play
+                        </DropdownMenuItem>
+                      )}
+                      {hasAudio && (
+                        <DropdownMenuItem
+                          className="text-white"
+                          onClick={() =>
+                            window.open(
+                              `/api/music/tracks/${track.id}/download`,
+                              "_blank",
+                            )
+                          }
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem className="text-white">
                         <Share2 className="mr-2 h-4 w-4" />
                         Share
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-white/20" />
+                      <DropdownMenuItem
+                        className="text-red-400"
+                        onClick={() => handleDeleteTrack(Number(track.id))}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1535,6 +1753,57 @@ export default function ArtistPortal() {
             );
           })}
         </div>
+      )}
+
+      {/* ── Earnings Summary Card ── */}
+      {earnings?.summary && (
+        <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-400" />
+                Music Earnings Summary
+              </h3>
+              <Badge className="bg-green-500/20 text-green-400">
+                {earnings.summary.total_tracks} uploaded tracks
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                <p className="text-2xl font-bold text-green-400">
+                  $
+                  {parseFloat(earnings.summary.total_revenue || "0").toFixed(2)}
+                </p>
+                <p className="text-green-300/60 text-xs mt-1">Total Revenue</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                <p className="text-2xl font-bold text-blue-400">
+                  {earnings.summary.total_downloads}
+                </p>
+                <p className="text-blue-300/60 text-xs mt-1">Total Downloads</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                <p className="text-2xl font-bold text-purple-400">
+                  {formatNumber(earnings.summary.total_streams)}
+                </p>
+                <p className="text-purple-300/60 text-xs mt-1">Total Streams</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                <p className="text-2xl font-bold text-amber-400">
+                  $
+                  {parseFloat(
+                    earnings.summary.revenue_this_month || "0",
+                  ).toFixed(2)}
+                </p>
+                <p className="text-amber-300/60 text-xs mt-1">This Month</p>
+              </div>
+            </div>
+            <p className="text-white/30 text-[10px] mt-3 text-center">
+              💳 Earnings are reflected in your Card Vault • Revenue updates on
+              each download
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -1578,124 +1847,144 @@ export default function ArtistPortal() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/20">
-                  <TableHead className="text-purple-200">Country</TableHead>
-                  <TableHead className="text-purple-200">Streams</TableHead>
-                  <TableHead className="text-purple-200">Percentage</TableHead>
-                  <TableHead className="text-purple-200">Growth</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {((displayAnalytics as any)?.topCountries || []).map(
-                  (country: any, i: number) => (
-                    <TableRow key={i} className="border-white/10">
-                      <TableCell className="font-medium text-white">
-                        <div className="flex items-center space-x-2">
-                          <Globe className="h-4 w-4 text-purple-400" />
-                          <span>{country.country}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-white">
-                        {formatNumber(country.streams)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <div className="w-24 bg-white/20 rounded-full h-2 mr-2">
-                            <div
-                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
-                              style={{
-                                width: `${
-                                  (country.streams /
-                                    (((displayAnalytics as any)?.topCountries ||
-                                      [])[0]?.streams || 1)) *
-                                  100
-                                }%`,
-                              }}
-                            />
+            <div className="overflow-x-auto -mx-6 px-6">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/20">
+                    <TableHead className="text-purple-200 text-xs sm:text-sm">
+                      Country
+                    </TableHead>
+                    <TableHead className="text-purple-200 text-xs sm:text-sm">
+                      Streams
+                    </TableHead>
+                    <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
+                      Percentage
+                    </TableHead>
+                    <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
+                      Growth
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {((displayAnalytics as any)?.topCountries || []).map(
+                    (country: any, i: number) => (
+                      <TableRow key={i} className="border-white/10">
+                        <TableCell className="font-medium text-white text-xs sm:text-sm">
+                          <div className="flex items-center space-x-2">
+                            <Globe className="h-4 w-4 text-purple-400 hidden sm:block" />
+                            <span>{country.country}</span>
                           </div>
-                          <span className="text-purple-200 text-sm">
-                            {((country.streams / totalStreams) * 100).toFixed(
-                              1,
-                            )}
-                            %
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          className={`flex items-center ${
-                            i % 3 === 0 ? "text-green-400" : "text-red-400"
-                          }`}
-                        >
-                          {i % 3 === 0 ? (
-                            <TrendingUp className="h-4 w-4 mr-1" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 mr-1" />
-                          )}
-                          {i % 3 === 0 ? "+" : "-"}
-                          {Math.floor(Math.random() * 15) + 5}%
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ),
-                )}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell className="text-white text-xs sm:text-sm">
+                          {formatNumber(country.streams)}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex items-center">
+                            <div className="w-24 bg-white/20 rounded-full h-2 mr-2">
+                              <div
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                                style={{
+                                  width: `${
+                                    (country.streams /
+                                      (((displayAnalytics as any)
+                                        ?.topCountries || [])[0]?.streams ||
+                                        1)) *
+                                    100
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-purple-200 text-sm">
+                              {((country.streams / totalStreams) * 100).toFixed(
+                                1,
+                              )}
+                              %
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="text-white/40 text-sm">—</div>
+                        </TableCell>
+                      </TableRow>
+                    ),
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
         {/* Audience Insights */}
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Audience Insights</CardTitle>
+            <CardTitle className="text-white">Catalog Insights</CardTitle>
             <CardDescription className="text-purple-200">
-              Your listener demographics
+              Your music catalog breakdown
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Age 18-24</span>
-                <span className="text-purple-200 text-sm">42%</span>
+                <span className="text-white text-sm">Total Tracks</span>
+                <span className="text-purple-200 text-sm">{totalTracks}</span>
               </div>
-              <Progress value={42} className="h-2" />
+              <Progress
+                value={Math.min(totalTracks * 10, 100)}
+                className="h-2"
+              />
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Age 25-34</span>
-                <span className="text-purple-200 text-sm">35%</span>
+                <span className="text-white text-sm">Total Artists</span>
+                <span className="text-purple-200 text-sm">{totalArtists}</span>
               </div>
-              <Progress value={35} className="h-2" />
+              <Progress
+                value={Math.min(totalArtists * 20, 100)}
+                className="h-2"
+              />
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Age 35-44</span>
-                <span className="text-purple-200 text-sm">15%</span>
+                <span className="text-white text-sm">Lifetime Streams</span>
+                <span className="text-purple-200 text-sm">
+                  {formatNumber(lifetimeStreams)}
+                </span>
               </div>
-              <Progress value={15} className="h-2" />
+              <Progress
+                value={Math.min(lifetimeStreams / 100, 100)}
+                className="h-2"
+              />
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Age 45+</span>
-                <span className="text-purple-200 text-sm">8%</span>
+                <span className="text-white text-sm">Total Revenue</span>
+                <span className="text-purple-200 text-sm">
+                  {formatCurrency(totalRevenue)}
+                </span>
               </div>
-              <Progress value={8} className="h-2" />
+              <Progress
+                value={Math.min(totalRevenue / 10, 100)}
+                className="h-2"
+              />
             </div>
             <Separator className="bg-white/20" />
             <div className="pt-2">
-              <p className="text-purple-200 text-sm mb-2">Top Cities</p>
+              <p className="text-purple-200 text-sm mb-2">Top Genres</p>
               <div className="space-y-2">
-                {["Los Angeles", "New York", "London", "Tokyo", "Berlin"].map(
-                  (city, i) => (
-                    <div key={city} className="flex justify-between">
-                      <span className="text-white text-sm">{city}</span>
-                      <span className="text-purple-200 text-sm">
-                        {Math.floor(Math.random() * 20) + 5}%
-                      </span>
-                    </div>
-                  ),
+                {((displayAnalytics as any)?.platformDistribution || [])
+                  .length === 0 ? (
+                  <p className="text-white/30 text-sm">No genre data yet</p>
+                ) : (
+                  ((displayAnalytics as any)?.platformDistribution || []).map(
+                    (g: any, i: number) => (
+                      <div key={i} className="flex justify-between">
+                        <span className="text-white text-sm">{g.platform}</span>
+                        <span className="text-purple-200 text-sm">
+                          {g.percentage}%
+                        </span>
+                      </div>
+                    ),
+                  )
                 )}
               </div>
             </div>
@@ -1706,199 +1995,548 @@ export default function ArtistPortal() {
       {/* Platform Performance */}
       <Card className="bg-white/5 backdrop-blur-md border-white/20">
         <CardHeader>
-          <CardTitle className="text-white">Platform Performance</CardTitle>
+          <CardTitle className="text-white">Genre Performance</CardTitle>
           <CardDescription className="text-purple-200">
-            Revenue breakdown by platform
+            Revenue breakdown by genre
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {((displayAnalytics as any)?.platformDistribution || []).map(
-              (platform: any, i: number) => {
-                const colors = [
-                  "from-purple-500 to-pink-500",
-                  "from-blue-500 to-cyan-500",
-                  "from-green-500 to-emerald-500",
-                  "from-yellow-500 to-orange-500",
-                  "from-red-500 to-rose-500",
-                ];
-                return (
-                  <div key={i} className="text-center">
-                    <div className="relative h-32 w-32 mx-auto mb-4">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                          className={`h-24 w-24 rounded-full bg-gradient-to-br ${colors[i]} opacity-20`}
-                        />
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-white">
-                            {platform.percentage}%
-                          </p>
-                          <p className="text-sm text-purple-200">share</p>
+          {((displayAnalytics as any)?.platformDistribution || []).length ===
+          0 ? (
+            <div className="flex items-center justify-center py-12 text-white/30">
+              <div className="text-center">
+                <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p>Upload tracks to see genre performance</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {((displayAnalytics as any)?.platformDistribution || []).map(
+                (platform: any, i: number) => {
+                  const colors = [
+                    "from-purple-500 to-pink-500",
+                    "from-blue-500 to-cyan-500",
+                    "from-green-500 to-emerald-500",
+                    "from-yellow-500 to-orange-500",
+                    "from-red-500 to-rose-500",
+                  ];
+                  return (
+                    <div key={i} className="text-center">
+                      <div className="relative h-32 w-32 mx-auto mb-4">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div
+                            className={`h-24 w-24 rounded-full bg-gradient-to-br ${colors[i]} opacity-20`}
+                          />
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-white">
+                              {platform.percentage}%
+                            </p>
+                            <p className="text-sm text-purple-200">share</p>
+                          </div>
                         </div>
                       </div>
+                      <p className="text-white font-medium">
+                        {platform.platform}
+                      </p>
+                      <p className="text-purple-200 text-sm">
+                        {formatCurrency(
+                          totalRevenue * (platform.percentage / 100),
+                        )}
+                      </p>
                     </div>
-                    <p className="text-white font-medium">
-                      {platform.platform}
-                    </p>
-                    <p className="text-purple-200 text-sm">
-                      {formatCurrency(
-                        totalRevenue * (platform.percentage / 100),
-                      )}
-                    </p>
+                  );
+                },
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderRoyalties = () => {
+    const profile = artistStats?.profile;
+    const badge = artistStats?.badge;
+    const thisWeek = artistStats?.thisWeek;
+    const earningsHistory = artistStats?.earningsHistory || [];
+    const walletBalance = profile?.walletBalance || 0;
+    const pool = poolData?.pool;
+    const payouts = payoutHistoryData?.payouts || [];
+    const BADGE_TIERS = artistStats?.allBadgeTiers || [];
+    const contract = contractData?.contract;
+    const gradeInfo: Record<
+      string,
+      { label: string; share: number; color: string; perStream: string }
+    > = {
+      S: {
+        label: "S — Elite",
+        share: 85,
+        color: "#FFD700",
+        perStream: "$0.0085",
+      },
+      A: {
+        label: "A — Premier",
+        share: 75,
+        color: "#C0C0C0",
+        perStream: "$0.0075",
+      },
+      B: {
+        label: "B — Standard",
+        share: 65,
+        color: "#CD7F32",
+        perStream: "$0.0065",
+      },
+      C: {
+        label: "C — Entry",
+        share: 55,
+        color: "#9CA3AF",
+        perStream: "$0.0055",
+      },
+    };
+    const currentGrade = contract?.grade ? gradeInfo[contract.grade] : null;
+
+    return (
+      <div className="space-y-6">
+        {/* Informative Welcome Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 rounded-2xl p-5"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-500 flex items-center justify-center flex-shrink-0">
+              <Music className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h3 className="text-white font-bold text-lg">
+                How You Earn Royalties
+              </h3>
+              <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-blue-400 text-xs font-bold">1</span>
                   </div>
-                );
-              },
+                  <p className="text-white/50">
+                    <span className="text-white font-medium">
+                      Listeners stream your music
+                    </span>{" "}
+                    — every play ≥30 seconds counts as a valid stream
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-purple-400 text-xs font-bold">2</span>
+                  </div>
+                  <p className="text-white/50">
+                    <span className="text-white font-medium">
+                      Weekly pool fills up
+                    </span>{" "}
+                    — listener subscriptions fund the royalty pool every week
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-green-400 text-xs font-bold">3</span>
+                  </div>
+                  <p className="text-white/50">
+                    <span className="text-white font-medium">You get paid</span>{" "}
+                    — every Monday, 90% of the pool is distributed to artists
+                    based on performance
+                  </p>
+                </div>
+              </div>
+              {currentGrade && (
+                <div className="flex items-center gap-3 pt-1">
+                  <Badge
+                    className="text-xs font-bold"
+                    style={{
+                      backgroundColor: currentGrade.color + "20",
+                      color: currentGrade.color,
+                    }}
+                  >
+                    Grade {currentGrade.label}
+                  </Badge>
+                  <span className="text-white/40 text-xs">
+                    {currentGrade.share}% artist share •{" "}
+                    {currentGrade.perStream}/stream
+                  </span>
+                </div>
+              )}
+              {!contract && (
+                <p className="text-amber-400/70 text-xs flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  No active contract —{" "}
+                  <a
+                    href="/artist-portal-welcome"
+                    className="underline hover:text-amber-300"
+                  >
+                    apply now
+                  </a>{" "}
+                  for higher per-stream rates & featuring privileges
+                </p>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-purple-300 hover:text-white hover:bg-white/10 flex-shrink-0"
+              onClick={() => setShowInfoWindow(true)}
+            >
+              <HelpCircle className="mr-1 h-4 w-4" />
+              Full Guide
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Contract Grade Strip */}
+        {contract && currentGrade && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 flex flex-wrap items-center gap-4"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: currentGrade.color + "20" }}
+              >
+                <FileText
+                  className="w-5 h-5"
+                  style={{ color: currentGrade.color }}
+                />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">
+                  Verso Air Contract
+                </p>
+                <p className="text-white/30 text-xs">
+                  Grade {contract.grade} • Active
+                </p>
+              </div>
+            </div>
+            <Separator
+              orientation="vertical"
+              className="h-8 bg-white/10 hidden sm:block"
+            />
+            <div className="text-center px-3">
+              <p className="text-white font-bold">{currentGrade.share}%</p>
+              <p className="text-white/30 text-[10px]">Your Share</p>
+            </div>
+            <div className="text-center px-3">
+              <p className="text-white font-bold">{currentGrade.perStream}</p>
+              <p className="text-white/30 text-[10px]">Per Stream</p>
+            </div>
+            {contract.canBeFeatured && (
+              <Badge className="bg-amber-500/20 text-amber-300 text-xs">
+                <Star className="w-3 h-3 mr-1" />
+                Featured Eligible
+              </Badge>
+            )}
+            {contract.hdAudioAccess && (
+              <Badge className="bg-blue-500/20 text-blue-300 text-xs">
+                <Volume2 className="w-3 h-3 mr-1" />
+                HD Audio
+              </Badge>
+            )}
+          </motion.div>
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">
+              StreamRoyale — Royalties & Earnings
+            </h2>
+            <p className="text-purple-200">
+              Live competition data • Weekly distribution every Monday 06:00 UTC
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10"
+              onClick={() => setShowInfoWindow(true)}
+            >
+              <HelpCircle className="mr-2 h-4 w-4" />
+              How It Works
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              onClick={() => {
+                if (walletBalance < 10) return;
+                payoutMutation.mutate({
+                  amount: parseFloat(payoutAmount) || walletBalance,
+                  method: "paypal",
+                });
+              }}
+              disabled={walletBalance < 10 || payoutMutation.isPending}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              {payoutMutation.isPending ? "Requesting..." : "Request Payout"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Badge & Rank Strip */}
+        {badge && (
+          <div className="bg-gradient-to-r from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 rounded-2xl p-4 flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">
+                {["🌱", "🥉", "🥈", "🥇", "💎", "👑", "⚡"][badge.tier - 1] ||
+                  "🌱"}
+              </div>
+              <div>
+                <p className="text-white font-bold">{badge.name}</p>
+                <p className="text-white/40 text-xs">Tier {badge.tier}</p>
+              </div>
+            </div>
+            {badge.revenueBoost > 0 && (
+              <div className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full">
+                +{badge.revenueBoost}% Revenue Boost
+              </div>
+            )}
+            {badge.nextTier && (
+              <div className="flex-1 min-w-[200px]">
+                <div className="flex justify-between text-xs text-white/40 mb-1">
+                  <span>Progress to {badge.nextTier.name}</span>
+                  <span>{badge.nextTier.progress.toFixed(1)}%</span>
+                </div>
+                <Progress value={badge.nextTier.progress} className="h-2" />
+                <p className="text-white/20 text-[10px] mt-1">
+                  {(profile?.lifetimeStreams || 0).toLocaleString()} /{" "}
+                  {badge.nextTier.threshold.toLocaleString()} streams
+                </p>
+              </div>
+            )}
+            {thisWeek && thisWeek.rank > 0 && (
+              <div className="text-right">
+                <p className="text-white font-bold text-lg">#{thisWeek.rank}</p>
+                <p className="text-white/40 text-xs">
+                  of {thisWeek.totalArtists} this week
+                </p>
+              </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        )}
 
-  const renderRoyalties = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white">
-            Royalties & Payments
-          </h2>
-          <p className="text-purple-200">
-            Track your earnings and payment history
-          </p>
+        {/* Balance & Pool Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardContent className="p-5 text-center">
+              <p className="text-purple-200 text-sm mb-1">Wallet Balance</p>
+              <p className="text-3xl font-bold text-white">
+                {formatCurrency(walletBalance)}
+              </p>
+              {walletBalance < 10 && (
+                <p className="text-yellow-400 text-xs mt-1">
+                  Min $10 to withdraw
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardContent className="p-5 text-center">
+              <p className="text-purple-200 text-sm mb-1">This Week</p>
+              <p className="text-3xl font-bold text-white">
+                {(thisWeek?.streams || 0).toLocaleString()}
+              </p>
+              <p className="text-white/40 text-xs mt-1">valid streams</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardContent className="p-5 text-center">
+              <p className="text-purple-200 text-sm mb-1">Lifetime Streams</p>
+              <p className="text-3xl font-bold text-white">
+                {(profile?.lifetimeStreams || 0).toLocaleString()}
+              </p>
+              <p className="text-white/40 text-xs mt-1">
+                {profile?.leagueName || "—"} league
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardContent className="p-5 text-center">
+              <p className="text-purple-200 text-sm mb-1">Weekly Pool</p>
+              <p className="text-3xl font-bold text-green-400">
+                {formatCurrency(pool?.totalPool || 0)}
+              </p>
+              <p className="text-white/40 text-xs mt-1">
+                {(pool?.totalStreams || 0).toLocaleString()} streams
+              </p>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            className="border-white/30 text-white hover:bg-white/10"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download Statement
-          </Button>
-          <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-            <Wallet className="mr-2 h-4 w-4" />
-            Withdraw Funds
-          </Button>
-        </div>
+
+        {/* Earnings History Table */}
+        <Card className="bg-white/5 backdrop-blur-md border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white">Earnings History</CardTitle>
+            <CardDescription className="text-purple-200">
+              Weekly royalty distributions from StreamRoyale
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {earningsHistory.length === 0 ? (
+              <div className="text-center py-10 text-white/30">
+                <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="text-white/50 font-medium mb-1">
+                  No royalty distributions yet
+                </p>
+                <p className="text-white/30 text-sm max-w-md mx-auto">
+                  When listeners stream your tracks, you earn from the weekly
+                  royalty pool. Distributions happen every Monday at 06:00 UTC —
+                  your earnings will appear here.
+                </p>
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-white/20 text-white/50 hover:text-white hover:bg-white/10"
+                    onClick={() => setShowInfoWindow(true)}
+                  >
+                    <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+                    How It Works
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-white/20 text-white/50 hover:text-white hover:bg-white/10"
+                    onClick={() => setActiveTab("music")}
+                  >
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                    Upload Music
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-6 px-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/20">
+                      <TableHead className="text-purple-200 text-xs sm:text-sm">
+                        Week
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
+                        Streams
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
+                        Guaranteed
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
+                        Performance
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm">
+                        Total
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
+                        Rank
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden lg:table-cell">
+                        Pool Share
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {earningsHistory.map((entry: any, idx: number) => (
+                      <TableRow key={idx} className="border-white/10">
+                        <TableCell className="font-medium text-white text-xs sm:text-sm">
+                          W{entry.weekNumber} / {entry.yearNumber}
+                        </TableCell>
+                        <TableCell className="text-white text-xs sm:text-sm hidden sm:table-cell">
+                          {entry.streamCount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-green-400 text-xs sm:text-sm hidden md:table-cell">
+                          {formatCurrency(entry.guaranteedAmount)}
+                        </TableCell>
+                        <TableCell className="text-purple-400 text-xs sm:text-sm hidden md:table-cell">
+                          {formatCurrency(entry.performanceAmount)}
+                        </TableCell>
+                        <TableCell className="text-white font-bold text-xs sm:text-sm">
+                          {formatCurrency(entry.totalEarnings)}
+                        </TableCell>
+                        <TableCell className="text-white text-xs sm:text-sm hidden sm:table-cell">
+                          #{entry.globalRank || "—"}
+                        </TableCell>
+                        <TableCell className="text-white/60 text-xs sm:text-sm hidden lg:table-cell">
+                          {entry.poolSharePercent?.toFixed(2)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payout History */}
+        {payouts.length > 0 && (
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white">Payout Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto -mx-6 px-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/20">
+                      <TableHead className="text-purple-200 text-xs sm:text-sm">
+                        Date
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm">
+                        Amount
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
+                        Method
+                      </TableHead>
+                      <TableHead className="text-purple-200 text-xs sm:text-sm">
+                        Status
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {payouts.map((p: any) => (
+                      <TableRow key={p.id} className="border-white/10">
+                        <TableCell className="text-white text-xs sm:text-sm">
+                          {new Date(p.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-white font-medium text-xs sm:text-sm">
+                          {formatCurrency(p.amount)}
+                        </TableCell>
+                        <TableCell className="text-white/60 text-xs sm:text-sm hidden sm:table-cell">
+                          {p.method}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={`text-xs ${
+                              p.status === "completed"
+                                ? "bg-green-500/20 text-green-400"
+                                : p.status === "rejected"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : "bg-yellow-500/20 text-yellow-400"
+                            }`}
+                          >
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <StreamRoyaleInfoWindow
+          isOpen={showInfoWindow}
+          onClose={() => setShowInfoWindow(false)}
+        />
       </div>
-
-      {/* Balance Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-white/5 backdrop-blur-md border-white/20">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-purple-200 mb-2">Available Balance</p>
-              <p className="text-4xl font-bold text-white">
-                {formatCurrency(15432.1)}
-              </p>
-              <p className="text-green-400 text-sm mt-2">
-                +$2,345.67 this month
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 backdrop-blur-md border-white/20">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-purple-200 mb-2">Pending Payments</p>
-              <p className="text-4xl font-bold text-white">
-                {formatCurrency(2345.67)}
-              </p>
-              <p className="text-yellow-400 text-sm mt-2">
-                Processing - est. 7-10 days
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/5 backdrop-blur-md border-white/20">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-purple-200 mb-2">Total Earned</p>
-              <p className="text-4xl font-bold text-white">
-                {formatCurrency(totalRevenue)}
-              </p>
-              <p className="text-blue-400 text-sm mt-2">All-time earnings</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Payment History */}
-      <Card className="bg-white/5 backdrop-blur-md border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white">Payment History</CardTitle>
-          <CardDescription className="text-purple-200">
-            Recent royalty payments and transactions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/20">
-                <TableHead className="text-purple-200">Date</TableHead>
-                <TableHead className="text-purple-200">Description</TableHead>
-                <TableHead className="text-purple-200">Platform</TableHead>
-                <TableHead className="text-purple-200">Amount</TableHead>
-                <TableHead className="text-purple-200">Status</TableHead>
-                <TableHead className="text-purple-200">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayRoyalties.map((payment) => (
-                <TableRow key={payment.id} className="border-white/10">
-                  <TableCell className="font-medium text-white">
-                    {payment.date}
-                  </TableCell>
-                  <TableCell className="text-white">
-                    {payment.description}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="border-purple-400 text-purple-400"
-                    >
-                      {payment.platform}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-white font-medium">
-                    {payment.amount > 0
-                      ? formatCurrency(payment.amount)
-                      : "Pending"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(payment.status)}>
-                      {payment.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-purple-200"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-purple-200"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    );
+  };
 
   const renderCollaborations = () => (
     <div className="space-y-6">
@@ -1935,53 +2573,64 @@ export default function ArtistPortal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {displayCollaborations
-                .filter((c) => c.status === "active")
-                .map((collab) => (
-                  <div
-                    key={collab.id}
-                    className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                              {collab.artist.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <p className="text-white font-medium">
-                            {collab.artist}
+              {displayCollaborations.filter((c) => c.status === "active")
+                .length === 0 ? (
+                <div className="text-center py-8 text-white/30">
+                  <Users2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No active collaborations yet</p>
+                  <p className="text-xs mt-1 text-white/20">
+                    Use "Find Artists" to connect with other creators
+                  </p>
+                </div>
+              ) : (
+                displayCollaborations
+                  .filter((c) => c.status === "active")
+                  .map((collab) => (
+                    <div
+                      key={collab.id}
+                      className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                                {collab.artist.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-white font-medium">
+                              {collab.artist}
+                            </p>
+                            <Badge className="bg-green-500/20 text-green-400">
+                              Active
+                            </Badge>
+                          </div>
+                          <p className="text-purple-200 text-sm mb-2">
+                            Track: {collab.track}
                           </p>
-                          <Badge className="bg-green-500/20 text-green-400">
-                            Active
-                          </Badge>
-                        </div>
-                        <p className="text-purple-200 text-sm mb-2">
-                          Track: {collab.track}
-                        </p>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="text-white">
-                            Revenue Share:{" "}
-                            <span className="font-medium">
-                              {collab.revenueShare}%
+                          <div className="flex items-center space-x-4 text-sm">
+                            <span className="text-white">
+                              Revenue Share:{" "}
+                              <span className="font-medium">
+                                {collab.revenueShare}%
+                              </span>
                             </span>
-                          </span>
-                          <span className="text-purple-200">
-                            Started: {collab.date}
-                          </span>
+                            <span className="text-purple-200">
+                              Started: {collab.date}
+                            </span>
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-purple-200"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-purple-200"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1996,52 +2645,63 @@ export default function ArtistPortal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {displayCollaborations
-                .filter((c) => c.status === "pending")
-                .map((collab) => (
-                  <div
-                    key={collab.id}
-                    className="p-4 rounded-lg bg-white/5 border border-yellow-500/20"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-                              {collab.artist.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <p className="text-white font-medium">
-                            {collab.artist}
+              {displayCollaborations.filter((c) => c.status === "pending")
+                .length === 0 ? (
+                <div className="text-center py-8 text-white/30">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No pending requests</p>
+                  <p className="text-xs mt-1 text-white/20">
+                    Invitations from other artists will appear here
+                  </p>
+                </div>
+              ) : (
+                displayCollaborations
+                  .filter((c) => c.status === "pending")
+                  .map((collab) => (
+                    <div
+                      key={collab.id}
+                      className="p-4 rounded-lg bg-white/5 border border-yellow-500/20"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+                                {collab.artist.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-white font-medium">
+                              {collab.artist}
+                            </p>
+                          </div>
+                          <p className="text-purple-200 text-sm">
+                            Wants to collaborate on: {collab.track}
                           </p>
                         </div>
-                        <p className="text-purple-200 text-sm">
-                          Wants to collaborate on: {collab.track}
-                        </p>
+                        <Badge className="bg-yellow-500/20 text-yellow-400">
+                          Pending
+                        </Badge>
                       </div>
-                      <Badge className="bg-yellow-500/20 text-yellow-400">
-                        Pending
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
+                        >
+                          <Check className="mr-2 h-3 w-3" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
+                        >
+                          <X className="mr-2 h-3 w-3" />
+                          Decline
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
-                      >
-                        <Check className="mr-2 h-3 w-3" />
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
-                      >
-                        <X className="mr-2 h-3 w-3" />
-                        Decline
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -2288,7 +2948,7 @@ export default function ArtistPortal() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-400"
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
@@ -2299,53 +2959,60 @@ export default function ArtistPortal() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mt-4">
+          <div className="mt-4 overflow-x-auto -mx-4 px-4 scrollbar-hide">
             <Tabs
               defaultValue="dashboard"
               value={activeTab}
               onValueChange={setActiveTab}
             >
-              <TabsList className="bg-white/10 backdrop-blur-md border border-white/20">
+              <TabsList className="bg-white/10 backdrop-blur-md border border-white/20 w-max min-w-full flex">
                 <TabsTrigger
                   value="dashboard"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <LayoutDashboard className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Dashboard
                 </TabsTrigger>
                 <TabsTrigger
                   value="music"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Music2 className="mr-2 h-4 w-4" />
+                  <Music2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Music
                 </TabsTrigger>
                 <TabsTrigger
                   value="analytics"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <BarChart3 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Analytics
                 </TabsTrigger>
                 <TabsTrigger
                   value="royalties"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <DollarSign className="mr-2 h-4 w-4" />
+                  <DollarSign className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Royalties
                 </TabsTrigger>
                 <TabsTrigger
-                  value="collaborations"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  value="leaderboard"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Users2 className="mr-2 h-4 w-4" />
-                  Collaborations
+                  <Trophy className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Leaderboard
+                </TabsTrigger>
+                <TabsTrigger
+                  value="collaborations"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
+                >
+                  <Users2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Collabs
                 </TabsTrigger>
                 <TabsTrigger
                   value="releases"
-                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
+                  className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
-                  <Calendar className="mr-2 h-4 w-4" />
+                  <Calendar className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Releases
                 </TabsTrigger>
               </TabsList>
@@ -2382,6 +3049,189 @@ export default function ArtistPortal() {
 
             <TabsContent value="royalties" className="space-y-6">
               {renderRoyalties()}
+            </TabsContent>
+
+            <TabsContent value="leaderboard" className="space-y-6">
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      🏆 StreamRoyale Leaderboard
+                    </h2>
+                    <p className="text-purple-200">
+                      Week {leaderboardData?.weekNumber || "—"} • Global
+                      competition rankings
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={leaderboardFilter.league}
+                      onValueChange={(v) =>
+                        setLeaderboardFilter((f) => ({
+                          ...f,
+                          league: v,
+                          page: 1,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="w-[160px] bg-white/5 border-white/20 text-white">
+                        <SelectValue placeholder="All Leagues" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Leagues</SelectItem>
+                        {(leaderboardData?.leagues || []).map((l: any) => (
+                          <SelectItem key={l.id} value={String(l.id)}>
+                            {l.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Pool stats bar */}
+                {poolData?.pool && (
+                  <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-4 flex flex-wrap items-center gap-6">
+                    <div>
+                      <p className="text-white/40 text-xs">Weekly Pool</p>
+                      <p className="text-green-400 text-xl font-bold">
+                        {formatCurrency(poolData.pool.totalPool)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-white/40 text-xs">Total Streams</p>
+                      <p className="text-white text-xl font-bold">
+                        {(poolData.pool.totalStreams || 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-white/40 text-xs">
+                        Qualifying Artists
+                      </p>
+                      <p className="text-white text-xl font-bold">
+                        {poolData.pool.qualifyingArtists}
+                      </p>
+                    </div>
+                    <div className="flex-1 text-right">
+                      <p className="text-white/20 text-xs">
+                        {poolData.splitRules?.description}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Leaderboard table */}
+                <Card className="bg-white/5 backdrop-blur-md border-white/20">
+                  <CardContent className="p-0">
+                    {!leaderboardData?.leaderboard?.length ? (
+                      <div className="text-center py-12 text-white/30">
+                        <Trophy className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                        <p>No rankings yet for this week. Start streaming!</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-white/20">
+                              <TableHead className="text-purple-200 w-12 sm:w-16 text-xs sm:text-sm">
+                                #
+                              </TableHead>
+                              <TableHead className="text-purple-200 text-xs sm:text-sm">
+                                Artist
+                              </TableHead>
+                              <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
+                                Badge
+                              </TableHead>
+                              <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
+                                League
+                              </TableHead>
+                              <TableHead className="text-purple-200 text-right text-xs sm:text-sm">
+                                Weekly
+                              </TableHead>
+                              <TableHead className="text-purple-200 text-right text-xs sm:text-sm hidden sm:table-cell">
+                                Lifetime
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {leaderboardData.leaderboard.map((artist: any) => (
+                              <TableRow
+                                key={artist.artistId}
+                                className={`border-white/10 ${artist.rank <= 3 ? "bg-yellow-500/5" : ""}`}
+                              >
+                                <TableCell className="font-bold text-white text-sm sm:text-lg">
+                                  {artist.rank <= 3
+                                    ? ["🥇", "🥈", "🥉"][artist.rank - 1]
+                                    : `#${artist.rank}`}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
+                                      {artist.stageName?.charAt(0) || "?"}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-white font-medium text-xs sm:text-sm truncate">
+                                        {artist.stageName}
+                                      </p>
+                                      <p className="text-white/30 text-[10px] sm:text-xs truncate">
+                                        {artist.country}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell">
+                                  <span className="text-xs sm:text-sm">
+                                    {artist.badgeName}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-white/60 text-xs sm:text-sm hidden md:table-cell">
+                                  {artist.leagueName || "—"}
+                                </TableCell>
+                                <TableCell className="text-right text-white font-medium text-xs sm:text-sm">
+                                  {artist.weeklyStreams.toLocaleString()}
+                                </TableCell>
+                                <TableCell className="text-right text-white/40 text-xs sm:text-sm hidden sm:table-cell">
+                                  {artist.lifetimeStreams.toLocaleString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Pagination */}
+                {leaderboardData?.pagination &&
+                  leaderboardData.pagination.pages > 1 && (
+                    <div className="flex justify-center gap-2">
+                      {Array.from({
+                        length: Math.min(5, leaderboardData.pagination.pages),
+                      }).map((_, i) => (
+                        <Button
+                          key={i}
+                          size="sm"
+                          variant={
+                            leaderboardFilter.page === i + 1
+                              ? "default"
+                              : "outline"
+                          }
+                          className={
+                            leaderboardFilter.page === i + 1
+                              ? "bg-purple-600"
+                              : "border-white/20 text-white"
+                          }
+                          onClick={() =>
+                            setLeaderboardFilter((f) => ({ ...f, page: i + 1 }))
+                          }
+                        >
+                          {i + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+              </div>
             </TabsContent>
 
             <TabsContent value="collaborations" className="space-y-6">
@@ -2505,7 +3355,12 @@ export default function ArtistPortal() {
                               Album Releases
                             </span>
                           </div>
-                          <span className="text-purple-200 text-sm">2</span>
+                          <span className="text-purple-200 text-sm">
+                            {
+                              displayReleases.filter((r) => r.type === "album")
+                                .length
+                            }
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -2514,7 +3369,12 @@ export default function ArtistPortal() {
                               EP Releases
                             </span>
                           </div>
-                          <span className="text-purple-200 text-sm">1</span>
+                          <span className="text-purple-200 text-sm">
+                            {
+                              displayReleases.filter((r) => r.type === "ep")
+                                .length
+                            }
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -2523,7 +3383,12 @@ export default function ArtistPortal() {
                               Single Releases
                             </span>
                           </div>
-                          <span className="text-purple-200 text-sm">3</span>
+                          <span className="text-purple-200 text-sm">
+                            {
+                              displayReleases.filter((r) => r.type === "single")
+                                .length
+                            }
+                          </span>
                         </div>
                       </div>
                     </CardContent>
@@ -2536,74 +3401,247 @@ export default function ArtistPortal() {
       </div>
 
       {/* Upload Modal */}
-      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
-        <DialogContent className="sm:max-w-[500px] bg-gray-900 border-white/20 text-white">
+      <Dialog
+        open={showUploadModal}
+        onOpenChange={(open) => {
+          if (!isUploading) setShowUploadModal(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[540px] bg-gray-900 border-white/20 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload New Track</DialogTitle>
             <DialogDescription className="text-purple-200">
-              Upload your music to all major streaming platforms
+              Upload your music — set a price and start earning per download
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Track Title */}
             <div className="space-y-2">
-              <Label htmlFor="track-title">Track Title</Label>
+              <Label htmlFor="track-title">Track Title *</Label>
               <Input
                 id="track-title"
                 placeholder="Enter track title"
                 className="bg-white/10 border-white/30"
+                value={uploadForm.title}
+                onChange={(e) =>
+                  setUploadForm((prev) => ({ ...prev, title: e.target.value }))
+                }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="genre">Genre</Label>
-              <Select>
-                <SelectTrigger className="bg-white/10 border-white/30">
-                  <SelectValue placeholder="Select genre" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-white/20">
-                  <SelectItem value="electronic">Electronic</SelectItem>
-                  <SelectItem value="hip-hop">Hip Hop</SelectItem>
-                  <SelectItem value="rock">Rock</SelectItem>
-                  <SelectItem value="pop">Pop</SelectItem>
-                  <SelectItem value="r&b">R&B</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Upload Files</Label>
-              <div className="border-2 border-dashed border-white/30 rounded-lg p-8 text-center">
-                <UploadCloud className="h-12 w-12 text-purple-400 mx-auto mb-4" />
-                <p className="text-white mb-2">Drop your audio files here</p>
-                <p className="text-purple-200 text-sm mb-4">
-                  Supports: WAV, MP3, FLAC, AIFF
-                </p>
-                <Button
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+
+            {/* Genre + Price row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Genre</Label>
+                <Select
+                  value={uploadForm.genre}
+                  onValueChange={(v) =>
+                    setUploadForm((prev) => ({ ...prev, genre: v }))
+                  }
                 >
-                  Browse Files
-                </Button>
+                  <SelectTrigger className="bg-white/10 border-white/30">
+                    <SelectValue placeholder="Select genre" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20">
+                    <SelectItem value="Afrobeats">Afrobeats</SelectItem>
+                    <SelectItem value="R&B">R&B</SelectItem>
+                    <SelectItem value="Hip Hop">Hip Hop</SelectItem>
+                    <SelectItem value="Pop">Pop</SelectItem>
+                    <SelectItem value="Jazz">Jazz</SelectItem>
+                    <SelectItem value="Soul">Soul</SelectItem>
+                    <SelectItem value="Reggae">Reggae</SelectItem>
+                    <SelectItem value="Electronic">Electronic</SelectItem>
+                    <SelectItem value="Rock">Rock</SelectItem>
+                    <SelectItem value="Classical">Classical</SelectItem>
+                    <SelectItem value="Gospel">Gospel</SelectItem>
+                    <SelectItem value="Latin">Latin</SelectItem>
+                    <SelectItem value="Dancehall">Dancehall</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Price per Download ($)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.99"
+                  className="bg-white/10 border-white/30"
+                  value={uploadForm.price}
+                  onChange={(e) =>
+                    setUploadForm((prev) => ({
+                      ...prev,
+                      price: e.target.value,
+                    }))
+                  }
+                />
               </div>
             </div>
+
+            {/* BPM / Key / Mood row */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>BPM</Label>
+                <Input
+                  type="number"
+                  placeholder="120"
+                  className="bg-white/10 border-white/30"
+                  value={uploadForm.bpm}
+                  onChange={(e) =>
+                    setUploadForm((prev) => ({ ...prev, bpm: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Key</Label>
+                <Input
+                  placeholder="C minor"
+                  className="bg-white/10 border-white/30"
+                  value={uploadForm.musicalKey}
+                  onChange={(e) =>
+                    setUploadForm((prev) => ({
+                      ...prev,
+                      musicalKey: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Mood</Label>
+                <Input
+                  placeholder="Chill"
+                  className="bg-white/10 border-white/30"
+                  value={uploadForm.mood}
+                  onChange={(e) =>
+                    setUploadForm((prev) => ({ ...prev, mood: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* File upload zone */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label>Audio File *</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setUploadFile(f);
+                }}
+              />
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  uploadFile
+                    ? "border-green-400/50 bg-green-500/10"
+                    : "border-white/30 hover:border-purple-400/50 hover:bg-white/5"
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) setUploadFile(f);
+                }}
+              >
+                {uploadFile ? (
+                  <div className="space-y-2">
+                    <FileMusic className="h-10 w-10 text-green-400 mx-auto" />
+                    <p className="text-green-300 font-medium">
+                      {uploadFile.name}
+                    </p>
+                    <p className="text-green-200/60 text-sm">
+                      {(uploadFile.size / 1024 / 1024).toFixed(1)} MB •{" "}
+                      {uploadFile.type || "audio"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUploadFile(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <UploadCloud className="h-10 w-10 text-purple-400 mx-auto mb-3" />
+                    <p className="text-white mb-1">
+                      Drop your audio file here or click to browse
+                    </p>
+                    <p className="text-purple-200 text-sm">
+                      Supports: MP3, WAV, FLAC, AIFF, OGG • Max 100 MB
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="upload-desc">Description</Label>
               <Textarea
-                id="description"
+                id="upload-desc"
                 placeholder="Tell us about this track..."
-                className="bg-white/10 border-white/30 min-h-[100px]"
+                className="bg-white/10 border-white/30 min-h-[80px]"
+                value={uploadForm.description}
+                onChange={(e) =>
+                  setUploadForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
               />
             </div>
+
+            {/* Upload progress */}
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-purple-200">Uploading...</span>
+                  <span className="text-white font-medium">
+                    {uploadProgress}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowUploadModal(false)}
+              onClick={() => {
+                setShowUploadModal(false);
+                setUploadFile(null);
+                setUploadProgress(0);
+              }}
               className="border-white/30 text-white hover:bg-white/10"
+              disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+            <Button
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              onClick={handleRealUpload}
+              disabled={isUploading || !uploadFile || !uploadForm.title}
+            >
               <Upload className="mr-2 h-4 w-4" />
-              Upload Track
+              {isUploading ? "Uploading..." : "Upload Track"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2742,5 +3780,24 @@ const Apple = ({ className }: { className?: string }) => (
       fill="currentColor"
       d="M14.94 5.19A4.38 4.38 0 0 0 16 2a4.44 4.44 0 0 0-3 1.52 4.17 4.17 0 0 0-1 3.09 3.69 3.69 0 0 0 2.94-1.42zm2.52 7.44a4.51 4.51 0 0 1 2.16-3.81 4.66 4.66 0 0 0-3.66-2c-1.56-.16-3 .91-3.83.91s-2-.89-3.3-.87a4.92 4.92 0 0 0-4.14 2.53C2.93 12.45 4.24 17 6 19.47c.8 1.21 1.8 2.58 3.12 2.53s1.75-.76 3.28-.76 2 .76 3.3.73 2.22-1.24 3.06-2.45a11 11 0 0 0 1.38-2.85 4.41 4.41 0 0 1-2.68-4.04z"
     />
+  </svg>
+);
+
+// Music Platform SSO Icons
+const SpotifyIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+  </svg>
+);
+
+const AppleMusicIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043a5.022 5.022 0 00-1.877-.726 10.496 10.496 0 00-1.564-.15c-.04-.003-.083-.01-.124-.013H5.99c-.152.01-.303.017-.455.026-.747.043-1.49.123-2.193.4-1.336.53-2.3 1.452-2.865 2.78-.192.448-.292.925-.363 1.408-.056.392-.088.785-.1 1.18 0 .032-.007.062-.01.093v12.223c.01.14.017.283.027.424.05.815.154 1.624.497 2.373.65 1.42 1.738 2.353 3.234 2.801.42.127.856.187 1.293.228.555.053 1.11.06 1.667.06h11.03c.525 0 1.048-.034 1.57-.1.823-.106 1.597-.35 2.296-.81.84-.553 1.472-1.287 1.88-2.208.186-.42.293-.87.37-1.324.113-.675.138-1.358.137-2.04-.002-3.8 0-7.595-.003-11.393zm-6.423 3.99v5.712c0 .417-.058.827-.244 1.206-.29.59-.76.962-1.388 1.14-.35.1-.706.157-1.07.173-.95.042-1.785-.49-2.166-1.373-.253-.59-.254-1.2-.087-1.81.25-.914.9-1.483 1.778-1.806.3-.11.616-.173.928-.247.46-.11.92-.213 1.378-.335.2-.053.343-.186.37-.398.006-.04.015-.08.015-.122V7.833c0-.15-.06-.267-.202-.318-.117-.042-.24-.063-.36-.088L10.2 6.422c-.252-.052-.505-.104-.757-.156-.093-.02-.2-.003-.266.085-.058.078-.086.18-.086.282v8.318c0 .136-.004.274-.016.41-.073.83-.386 1.543-1.077 2.054-.467.344-1 .53-1.578.58-.562.05-1.114.012-1.638-.205-.618-.257-1.066-.665-1.323-1.28-.195-.466-.242-.952-.187-1.45.1-.882.535-1.574 1.317-2.03.376-.218.787-.356 1.217-.424.39-.062.787-.093 1.176-.16.295-.05.582-.12.835-.274.147-.09.255-.21.294-.385.009-.04.02-.08.02-.122V4.074c0-.072.002-.146.016-.217.038-.193.176-.313.362-.35.147-.03.298-.045.447-.065l3.426-.62c1.082-.193 2.164-.388 3.246-.583.226-.04.454-.082.682-.117.15-.022.28.053.333.185.025.063.042.13.042.197v6.59z" />
+  </svg>
+);
+
+const AudiomackIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.97 17.403c-.2.334-.534.534-.868.534-.2 0-.334-.067-.534-.134-1.134-.668-2.535-1.001-4.002-1.001-1.134 0-2.268.2-3.335.534-.134.067-.267.067-.4.067-.468 0-.868-.334-1.001-.801-.134-.468.133-.935.534-1.068 1.267-.401 2.668-.601 4.135-.601 1.668 0 3.335.4 4.802 1.134.467.201.668.735.468 1.135zm1.134-2.735c-.268.4-.668.601-1.068.601-.2 0-.4-.067-.6-.2-1.402-.868-3.336-1.335-5.203-1.335-1.267 0-2.535.2-3.669.601-.133.067-.267.067-.4.067-.534 0-1.001-.4-1.134-.934-.2-.534.066-1.135.533-1.335 1.401-.468 2.935-.735 4.602-.735 2.201 0 4.402.534 6.27 1.602.467.267.668.868.467 1.401zm1.268-3.135c-.267.467-.734.734-1.268.734-.2 0-.4-.067-.6-.134-1.735-1.001-4.136-1.601-6.537-1.601-1.468 0-2.935.2-4.269.601-.133.067-.333.067-.467.067-.6 0-1.134-.467-1.268-1.068-.2-.6.134-1.268.668-1.468 1.534-.534 3.268-.801 5.269-.801 2.802 0 5.604.668 7.806 1.868.534.267.801.935.534 1.535z" />
   </svg>
 );
