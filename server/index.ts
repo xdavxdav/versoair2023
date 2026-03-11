@@ -38,6 +38,7 @@ import { initializeEmailTransporter } from "./services/email-service";
 import { autoSeedArtists } from "./services/auto-seed-artists";
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
+import { setupRoyaltyEngine } from "./services/royalty-engine";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 import { globalAuthGate } from "./middleware/auth";
 
@@ -181,6 +182,10 @@ app.use((req, res, next) => {
   // Setup subscription expiry check (runs daily)
   setupSubscriptionExpiryCron();
   console.log("✅ [SERVER] Subscription expiry cron scheduled");
+
+  // Setup StreamRoyale royalty distribution engine (weekly Monday 06:00 UTC)
+  setupRoyaltyEngine();
+  console.log("✅ [SERVER] StreamRoyale royalty engine started");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

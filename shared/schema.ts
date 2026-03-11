@@ -287,17 +287,46 @@ export const ngoCharges = pgTable("ngo_charges", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const musicTracks = pgTable("music_tracks", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  artistId: integer("artist_id"),
-  duration: integer("duration"),
-  streams: integer("streams").default(0),
-  playCount: integer("play_count").default(0), // Alias for streams in some contexts
-  releaseDate: timestamp("release_date"),
-  genre: text("genre"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const musicTracks = pgTable(
+  "music_tracks",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    artistId: integer("artist_id"),
+    albumId: integer("album_id"), // FK to albums table
+    trackNumber: integer("track_number"), // position in album
+    duration: integer("duration"),
+    streams: integer("streams").default(0),
+    playCount: integer("play_count").default(0),
+    likes: integer("likes").default(0),
+    releaseDate: timestamp("release_date"),
+    genre: text("genre"),
+    // ── Upload / monetization fields ──
+    filePath: text("file_path"),
+    fileName: text("file_name"),
+    fileSize: integer("file_size"),
+    mimeType: text("mime_type"),
+    audioUrl: text("audio_url"), // external audio URL (for demo/placeholder)
+    description: text("description"),
+    price: text("price").default("0.99"),
+    downloads: integer("downloads").default(0),
+    revenue: text("revenue").default("0.00"),
+    status: text("status").default("published"),
+    bpm: integer("bpm"),
+    musicalKey: text("musical_key"),
+    mood: text("mood"),
+    coverArt: text("cover_art"),
+    wikiUrl: text("wiki_url"), // Wikipedia link for the track
+    isExplicit: boolean("is_explicit").default(false),
+    lyrics: text("lyrics"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("music_tracks_artist_idx").on(t.artistId),
+    albumIdx: index("music_tracks_album_idx").on(t.albumId),
+    genreIdx: index("music_tracks_genre_idx").on(t.genre),
+  }),
+);
 
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey(),
@@ -517,16 +546,38 @@ export const musicAnalytics = pgTable("music_analytics", {
 });
 
 // Dedicated music_artists table (separate from the legacy 'artists' table)
-export const musicArtists = pgTable("music_artists", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  genre: text("genre"),
-  biography: text("biography"),
-  imageUrl: text("image_url"),
-  totalStreams: integer("total_streams").default(0),
-  monthlyListeners: integer("monthly_listeners").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const musicArtists = pgTable(
+  "music_artists",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    genre: text("genre"),
+    biography: text("biography"),
+    imageUrl: text("image_url"),
+    coverImageUrl: text("cover_image_url"), // banner image
+    country: varchar("country", { length: 100 }),
+    countryCode: varchar("country_code", { length: 2 }),
+    labelStatus: varchar("label_status", { length: 20 }).default("signed"),
+    spotifyUrl: text("spotify_url"),
+    wikiUrl: text("wiki_url"),
+    instagramUrl: text("instagram_url"),
+    twitterUrl: text("twitter_url"),
+    websiteUrl: text("website_url"),
+    totalStreams: integer("total_streams").default(0),
+    monthlyListeners: integer("monthly_listeners").default(0),
+    followers: integer("followers").default(0),
+    totalTracks: integer("total_tracks").default(0),
+    totalAlbums: integer("total_albums").default(0),
+    verified: boolean("verified").default(false),
+    featuredTrackId: integer("featured_track_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    nameIdx: index("music_artists_name_idx").on(t.name),
+    genreIdx: index("music_artists_genre_idx").on(t.genre),
+    countryIdx: index("music_artists_country_idx").on(t.countryCode),
+  }),
+);
 
 // --- 6b. BUSINESS ADMIN MESSAGES (Teams-style thread per business) ---
 export const businessMessages = pgTable(
@@ -965,3 +1016,598 @@ export const insertIssuedCardSchema = createInsertSchema(issuedCards);
 export const insertPointsLedgerSchema = createInsertSchema(pointsLedger);
 export const insertPointsRedemptionSchema =
   createInsertSchema(pointsRedemptions);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🎵 STREAMROYALE — Competition Streaming Platform
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// --- ARTIST PROFILES (StreamRoyale competition data) ---
+export const artistProfiles = pgTable(
+  "artist_profiles",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    stageName: text("stage_name").notNull(),
+    legalName: text("legal_name"),
+    genre: jsonb("genre").$type<string[]>().default([]), // max 3 genres
+    country: varchar("country", { length: 100 }),
+    countryCode: varchar("country_code", { length: 2 }),
+    bio: text("bio"),
+    spotifyUrl: text("spotify_url"),
+    instagramHandle: text("instagram_handle"),
+    profileImageUrl: text("profile_image_url"),
+    // League & competition
+    leagueId: integer("league_id"),
+    lifetimeStreams: integer("lifetime_streams").default(0),
+    weeklyStreams: integer("weekly_streams").default(0),
+    currentBadgeTier: integer("current_badge_tier").default(1), // 1=Initiate → 7=Legendary Titan
+    // Wallet & payouts
+    walletBalance: decimal("wallet_balance", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"),
+    payoutEmail: text("payout_email"),
+    payoutMethod: varchar("payout_method", { length: 20 }).default("paypal"), // paypal, bank, credits
+    verifiedForPayout: boolean("verified_for_payout").default(false),
+    revenueBoostPercent: decimal("revenue_boost_percent", {
+      precision: 4,
+      scale: 2,
+    }).default("0.00"), // badge bonus
+    // Status
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("artist_profiles_user_idx").on(t.userId),
+    leagueIdx: index("artist_profiles_league_idx").on(t.leagueId),
+    badgeIdx: index("artist_profiles_badge_idx").on(t.currentBadgeTier),
+    streamsIdx: index("artist_profiles_streams_idx").on(t.lifetimeStreams),
+  }),
+);
+
+// --- REGIONAL LEAGUES ---
+export const regionalLeagues = pgTable("regional_leagues", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // Africa, Americas, Asia-Pacific, Europe, Middle East
+  description: text("description"),
+  iconUrl: text("icon_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- STREAMING PLANS (Listener subscriptions) ---
+export const streamingPlans = pgTable("streaming_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(), // Supporter, Champion, Patron
+  monthlyFee: decimal("monthly_fee", { precision: 8, scale: 2 }).notNull(), // 4.99, 9.99, 19.99
+  streamLimit: integer("stream_limit"), // null = unlimited
+  poolContributionPercent: integer("pool_contribution_percent").notNull(), // 70, 75, 80
+  boostCredits: integer("boost_credits").default(0), // 0, 5, 20
+  stripePriceId: varchar("stripe_price_id", { length: 255 }),
+  stripeProductId: varchar("stripe_product_id", { length: 255 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- LISTENER SUBSCRIPTIONS ---
+export const listenerSubscriptions = pgTable(
+  "listener_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    planId: integer("plan_id")
+      .references(() => streamingPlans.id)
+      .notNull(),
+    status: varchar("status", { length: 20 }).default("active"), // active, cancelled, past_due, trialing
+    stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    boostCreditsRemaining: integer("boost_credits_remaining").default(0),
+    cancelledAt: timestamp("cancelled_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_subs_user_idx").on(t.userId),
+    statusIdx: index("listener_subs_status_idx").on(t.status),
+  }),
+);
+
+// --- STREAM EVENTS (Individual validated stream records) ---
+export const streamEvents = pgTable(
+  "stream_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id").references(() => users.id),
+    trackId: integer("track_id").references(() => musicTracks.id),
+    artistProfileId: integer("artist_profile_id").references(
+      () => artistProfiles.id,
+    ),
+    sessionId: varchar("session_id", { length: 64 }), // nanoid per play session
+    duration: integer("duration").notNull(), // seconds listened
+    isValid: boolean("is_valid").default(false), // true if ≥30s
+    isSelfStream: boolean("is_self_stream").default(false),
+    boosted: boolean("boosted").default(false),
+    boostMultiplier: decimal("boost_multiplier", {
+      precision: 4,
+      scale: 2,
+    }).default("1.00"),
+    superStream: boolean("super_stream").default(false), // 5x multiplier
+    weekNumber: integer("week_number").notNull(),
+    yearNumber: integer("year_number").notNull(),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("stream_events_user_idx").on(t.userId),
+    trackIdx: index("stream_events_track_idx").on(t.trackId),
+    artistIdx: index("stream_events_artist_idx").on(t.artistProfileId),
+    weekIdx: index("stream_events_week_idx").on(t.weekNumber, t.yearNumber),
+    validIdx: index("stream_events_valid_idx").on(t.isValid),
+  }),
+);
+
+// --- WEEKLY POOLS (Competition cycle) ---
+export const weeklyPools = pgTable(
+  "weekly_pools",
+  {
+    id: serial("id").primaryKey(),
+    weekNumber: integer("week_number").notNull(),
+    yearNumber: integer("year_number").notNull(),
+    totalPool: decimal("total_pool", { precision: 12, scale: 2 }).default(
+      "0.00",
+    ),
+    guaranteedFund: decimal("guaranteed_fund", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"), // 20%
+    performancePool: decimal("performance_pool", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"), // 70%
+    platformCut: decimal("platform_cut", { precision: 12, scale: 2 }).default(
+      "0.00",
+    ), // 10%
+    totalStreams: integer("total_streams").default(0),
+    qualifyingArtists: integer("qualifying_artists").default(0),
+    status: varchar("status", { length: 20 }).default("open"), // open, locked, distributed
+    distributedAt: timestamp("distributed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    weekYearIdx: unique("weekly_pools_week_year_uniq").on(
+      t.weekNumber,
+      t.yearNumber,
+    ),
+    statusIdx: index("weekly_pools_status_idx").on(t.status),
+  }),
+);
+
+// --- ARTIST ROYALTIES (Per-artist per-week earnings) ---
+export const artistRoyalties = pgTable(
+  "artist_royalties",
+  {
+    id: serial("id").primaryKey(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    weekNumber: integer("week_number").notNull(),
+    yearNumber: integer("year_number").notNull(),
+    guaranteedAmount: decimal("guaranteed_amount", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"),
+    performanceAmount: decimal("performance_amount", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"),
+    badgeBonus: decimal("badge_bonus", { precision: 12, scale: 2 }).default(
+      "0.00",
+    ),
+    tipIncome: decimal("tip_income", { precision: 12, scale: 2 }).default(
+      "0.00",
+    ),
+    totalEarnings: decimal("total_earnings", {
+      precision: 12,
+      scale: 2,
+    }).default("0.00"),
+    streamCount: integer("stream_count").default(0),
+    poolSharePercent: decimal("pool_share_percent", {
+      precision: 8,
+      scale: 4,
+    }).default("0.00"),
+    globalRank: integer("global_rank"),
+    regionalRank: integer("regional_rank"),
+    paidOut: boolean("paid_out").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    artistWeekIdx: unique("artist_royalties_artist_week_uniq").on(
+      t.artistProfileId,
+      t.weekNumber,
+      t.yearNumber,
+    ),
+    weekIdx: index("artist_royalties_week_idx").on(t.weekNumber, t.yearNumber),
+  }),
+);
+
+// --- ARTIST BADGES (Warrior experience tiers) ---
+export const artistBadges = pgTable(
+  "artist_badges",
+  {
+    id: serial("id").primaryKey(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    tier: integer("tier").notNull(), // 1-7
+    badgeName: varchar("badge_name", { length: 50 }).notNull(),
+    lifetimeStreamsAtUnlock: integer("lifetime_streams_at_unlock").default(0),
+    revenueBoostPercent: decimal("revenue_boost_percent", {
+      precision: 4,
+      scale: 2,
+    }).default("0.00"),
+    unlockedAt: timestamp("unlocked_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("artist_badges_artist_idx").on(t.artistProfileId),
+    tierIdx: index("artist_badges_tier_idx").on(t.tier),
+  }),
+);
+
+// --- PAYOUT REQUESTS ---
+export const payoutRequests = pgTable(
+  "payout_requests",
+  {
+    id: serial("id").primaryKey(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+    method: varchar("method", { length: 20 }).notNull(), // paypal, bank, credits
+    status: varchar("status", { length: 20 }).default("pending"), // pending, processing, completed, rejected
+    paypalEmail: text("paypal_email"),
+    bankDetails: jsonb("bank_details"),
+    notes: text("notes"),
+    processedAt: timestamp("processed_at"),
+    processedBy: integer("processed_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("payout_requests_artist_idx").on(t.artistProfileId),
+    statusIdx: index("payout_requests_status_idx").on(t.status),
+  }),
+);
+
+// StreamRoyale insert schemas & types
+export const insertArtistProfileSchema = createInsertSchema(artistProfiles);
+export const insertStreamEventSchema = createInsertSchema(streamEvents);
+export const insertWeeklyPoolSchema = createInsertSchema(weeklyPools);
+export const insertArtistRoyaltySchema = createInsertSchema(artistRoyalties);
+export const insertArtistBadgeSchema = createInsertSchema(artistBadges);
+export const insertPayoutRequestSchema = createInsertSchema(payoutRequests);
+
+export type ArtistProfile = typeof artistProfiles.$inferSelect;
+export type InsertArtistProfile = typeof artistProfiles.$inferInsert;
+export type StreamEvent = typeof streamEvents.$inferSelect;
+export type WeeklyPool = typeof weeklyPools.$inferSelect;
+export type ArtistRoyalty = typeof artistRoyalties.$inferSelect;
+export type ArtistBadge = typeof artistBadges.$inferSelect;
+export type PayoutRequest = typeof payoutRequests.$inferSelect;
+
+// ══════════════════════════════════════════════════════════════════
+// VERSO AIR STREAMING PLATFORM TABLES
+// ══════════════════════════════════════════════════════════════════
+
+// --- ALBUMS ---
+export const albums = pgTable(
+  "albums",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    artistId: integer("artist_id").references(() => musicArtists.id, {
+      onDelete: "cascade",
+    }),
+    coverArt: text("cover_art"),
+    releaseDate: timestamp("release_date"),
+    genre: text("genre"),
+    description: text("description"),
+    albumType: varchar("album_type", { length: 20 }).default("album"), // album, single, ep
+    totalTracks: integer("total_tracks").default(0),
+    totalDuration: integer("total_duration").default(0), // seconds
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("albums_artist_idx").on(t.artistId),
+  }),
+);
+
+// --- PLAYLISTS ---
+export const playlists = pgTable(
+  "playlists",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    coverArt: text("cover_art"),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    isPublic: boolean("is_public").default(true),
+    isSystem: boolean("is_system").default(false), // for "Liked Songs" etc.
+    totalTracks: integer("total_tracks").default(0),
+    totalDuration: integer("total_duration").default(0),
+    plays: integer("plays").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("playlists_user_idx").on(t.userId),
+  }),
+);
+
+// --- PLAYLIST TRACKS (join table with ordering) ---
+export const playlistTracks = pgTable(
+  "playlist_tracks",
+  {
+    id: serial("id").primaryKey(),
+    playlistId: integer("playlist_id")
+      .references(() => playlists.id, { onDelete: "cascade" })
+      .notNull(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    position: integer("position").notNull().default(0),
+    addedAt: timestamp("added_at").defaultNow(),
+  },
+  (t) => ({
+    playlistIdx: index("playlist_tracks_playlist_idx").on(t.playlistId),
+    trackIdx: index("playlist_tracks_track_idx").on(t.trackId),
+    uniqueEntry: unique("playlist_tracks_unique").on(t.playlistId, t.trackId),
+  }),
+);
+
+// --- STREAM PLAYS (individual play records for analytics — distinct from StreamRoyale competition) ---
+export const streamPlays = pgTable(
+  "stream_plays",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id").references(() => users.id),
+    artistId: integer("artist_id").references(() => musicArtists.id),
+    duration: integer("duration").default(0), // seconds listened
+    completed: boolean("completed").default(false), // listened ≥30s
+    sessionId: varchar("session_id", { length: 64 }),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("stream_plays_track_idx").on(t.trackId),
+    userIdx: index("stream_plays_user_idx").on(t.userId),
+    artistIdx: index("stream_plays_artist_idx").on(t.artistId),
+    dateIdx: index("stream_plays_date_idx").on(t.createdAt),
+  }),
+);
+
+// --- TRACK LIKES ---
+export const trackLikes = pgTable(
+  "track_likes",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    uniqueLike: unique("track_likes_unique").on(t.trackId, t.userId),
+    trackIdx: index("track_likes_track_idx").on(t.trackId),
+    userIdx: index("track_likes_user_idx").on(t.userId),
+  }),
+);
+
+// --- TRACK COMMENTS ---
+export const trackComments = pgTable(
+  "track_comments",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    content: text("content").notNull(),
+    parentId: integer("parent_id"), // for replies
+    likes: integer("likes").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("track_comments_track_idx").on(t.trackId),
+    userIdx: index("track_comments_user_idx").on(t.userId),
+  }),
+);
+
+// --- ARTIST FOLLOWS ---
+export const artistFollows = pgTable(
+  "artist_follows",
+  {
+    id: serial("id").primaryKey(),
+    artistId: integer("artist_id")
+      .references(() => musicArtists.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    uniqueFollow: unique("artist_follows_unique").on(t.artistId, t.userId),
+    artistIdx: index("artist_follows_artist_idx").on(t.artistId),
+    userIdx: index("artist_follows_user_idx").on(t.userId),
+  }),
+);
+
+// --- USER SUBSCRIPTION TIERS (for the streaming platform) ---
+export const streamingSubscriptions = pgTable(
+  "streaming_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    tier: varchar("tier", { length: 20 }).default("free").notNull(), // free, premium, artist
+    stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+    stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+    monthlyPrice: decimal("monthly_price", { precision: 8, scale: 2 }).default(
+      "0.00",
+    ),
+    maxDownloadsPerMonth: integer("max_downloads_per_month").default(0),
+    downloadsUsed: integer("downloads_used").default(0),
+    noAds: boolean("no_ads").default(false),
+    highQuality: boolean("high_quality").default(false),
+    offlineAccess: boolean("offline_access").default(false),
+    status: varchar("status", { length: 20 }).default("active"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("streaming_subs_user_idx").on(t.userId),
+    tierIdx: index("streaming_subs_tier_idx").on(t.tier),
+  }),
+);
+
+// --- LISTENING HISTORY (for "Recently Played") ---
+export const listeningHistory = pgTable(
+  "listening_history",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    playedAt: timestamp("played_at").defaultNow(),
+    duration: integer("duration").default(0),
+  },
+  (t) => ({
+    userIdx: index("listening_history_user_idx").on(t.userId),
+    dateIdx: index("listening_history_date_idx").on(t.playedAt),
+  }),
+);
+
+// Streaming platform insert schemas & types
+export const insertAlbumSchema = createInsertSchema(albums);
+export const insertPlaylistSchema = createInsertSchema(playlists);
+export const insertPlaylistTrackSchema = createInsertSchema(playlistTracks);
+export const insertStreamPlaySchema = createInsertSchema(streamPlays);
+export const insertTrackLikeSchema = createInsertSchema(trackLikes);
+export const insertTrackCommentSchema = createInsertSchema(trackComments);
+export const insertArtistFollowSchema = createInsertSchema(artistFollows);
+export const insertStreamingSubscriptionSchema = createInsertSchema(
+  streamingSubscriptions,
+);
+export const insertListeningHistorySchema =
+  createInsertSchema(listeningHistory);
+
+export type Album = typeof albums.$inferSelect;
+export type InsertAlbum = typeof albums.$inferInsert;
+export type Playlist = typeof playlists.$inferSelect;
+export type InsertPlaylist = typeof playlists.$inferInsert;
+export type PlaylistTrack = typeof playlistTracks.$inferSelect;
+export type StreamPlay = typeof streamPlays.$inferSelect;
+export type TrackLike = typeof trackLikes.$inferSelect;
+export type TrackComment = typeof trackComments.$inferSelect;
+export type ArtistFollow = typeof artistFollows.$inferSelect;
+export type StreamingSubscription = typeof streamingSubscriptions.$inferSelect;
+export type ListeningHistory = typeof listeningHistory.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════
+// ARTIST CONTRACT APPLICATION & GRADE SYSTEM
+// Artists submit applications → admin reviews → approve with grade → benefits unlock
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Grade tiers determine revenue share and platform benefits:
+ *  S  — Elite / Exclusive  → 85% artist share, featured homepage, priority support, FLAC, unlimited
+ *  A  — Established        → 75% artist share, featured rotation, analytics pro, 320kbps, 50 downloads/mo
+ *  B  — Rising             → 65% artist share, standard featuring, basic analytics, 256kbps, 20 downloads/mo
+ *  C  — Entry              → 55% artist share, catalog listing only, 128kbps, 5 downloads/mo
+ *  pending — Application submitted, awaiting review
+ *  rejected — Application denied (can reapply after cooldown)
+ */
+export const artistContracts = pgTable(
+  "artist_contracts",
+  {
+    id: serial("id").primaryKey(),
+    // Link to the music_artists row (nullable until approved/created)
+    artistId: integer("artist_id").references(() => musicArtists.id, {
+      onDelete: "cascade",
+    }),
+    // Applicant identity
+    userId: integer("user_id").references(() => users.id),
+    email: text("email").notNull(),
+    stageName: text("stage_name").notNull(),
+    legalName: text("legal_name").notNull(),
+    // Application details
+    genre: varchar("genre", { length: 100 }),
+    country: varchar("country", { length: 100 }),
+    countryCode: varchar("country_code", { length: 2 }),
+    biography: text("biography"),
+    portfolioUrl: text("portfolio_url"), // link to existing work (Spotify, YouTube, SoundCloud, etc.)
+    spotifyUrl: text("spotify_url"),
+    instagramUrl: text("instagram_url"),
+    websiteUrl: text("website_url"),
+    sampleTrackUrl: text("sample_track_url"), // uploaded demo or link
+    motivation: text("motivation"), // why they want to join Verso Air
+    monthlyListeners: integer("monthly_listeners").default(0), // self-reported
+    yearsActive: integer("years_active").default(0),
+    // Contract terms
+    grade: varchar("grade", { length: 10 }).default("pending"), // S, A, B, C, pending, rejected
+    revenueShareArtist: integer("revenue_share_artist").default(0), // percentage (0-100)
+    revenueSharePlatform: integer("revenue_share_platform").default(0),
+    maxDownloadsPerMonth: integer("max_downloads_per_month").default(0),
+    audioQuality: varchar("audio_quality", { length: 10 }).default("128"), // 128, 256, 320, flac
+    canBeFeatured: boolean("can_be_featured").default(false),
+    hasAnalyticsAccess: boolean("has_analytics_access").default(false),
+    hasPrioritySupport: boolean("has_priority_support").default(false),
+    // Workflow
+    status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, under_review, approved, rejected, suspended, expired
+    reviewedBy: integer("reviewed_by").references(() => users.id),
+    reviewNotes: text("review_notes"),
+    rejectionReason: text("rejection_reason"),
+    // Terms acceptance
+    agreedToTerms: boolean("agreed_to_terms").default(false),
+    agreedToRevShare: boolean("agreed_to_rev_share").default(false),
+    // Dates
+    appliedAt: timestamp("applied_at").defaultNow(),
+    reviewedAt: timestamp("reviewed_at"),
+    contractStartDate: timestamp("contract_start_date"),
+    contractEndDate: timestamp("contract_end_date"), // null = indefinite
+    lastModified: timestamp("last_modified").defaultNow(),
+  },
+  (t) => ({
+    emailIdx: index("artist_contracts_email_idx").on(t.email),
+    statusIdx: index("artist_contracts_status_idx").on(t.status),
+    gradeIdx: index("artist_contracts_grade_idx").on(t.grade),
+    artistIdx: index("artist_contracts_artist_idx").on(t.artistId),
+  }),
+);
+
+export const insertArtistContractSchema = createInsertSchema(artistContracts);
+export type ArtistContract = typeof artistContracts.$inferSelect;
+export type InsertArtistContract = typeof artistContracts.$inferInsert;

@@ -1694,8 +1694,16 @@ export default function ArtistPortalWelcome() {
     bio: "",
     spotifyUrl: "",
     instagramHandle: "",
+    motivation: "",
+    monthlyListeners: "",
+    yearsActive: "",
+    sampleTrackUrl: "",
+    websiteUrl: "",
     agreeTerms: false,
   });
+
+  const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const genres = [
     "Afrobeats",
@@ -1732,10 +1740,50 @@ export default function ArtistPortalWelcome() {
       return;
     }
     setIsAuthLoading(true);
-    setTimeout(() => {
+    setApplyError(null);
+
+    try {
+      const res = await fetch("/api/contracts/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: applyForm.email,
+          stageName: applyForm.stageName,
+          legalName: applyForm.legalName,
+          genre: applyForm.genre,
+          country: applyForm.country,
+          biography: applyForm.bio,
+          spotifyUrl: applyForm.spotifyUrl || undefined,
+          instagramUrl: applyForm.instagramHandle
+            ? `https://instagram.com/${applyForm.instagramHandle.replace("@", "")}`
+            : undefined,
+          motivation: applyForm.motivation || undefined,
+          monthlyListeners: applyForm.monthlyListeners
+            ? parseInt(applyForm.monthlyListeners)
+            : 0,
+          yearsActive: applyForm.yearsActive
+            ? parseInt(applyForm.yearsActive)
+            : 0,
+          sampleTrackUrl: applyForm.sampleTrackUrl || undefined,
+          websiteUrl: applyForm.websiteUrl || undefined,
+          agreedToTerms: applyForm.agreeTerms,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApplyError(data.error || "Erreur lors de la soumission");
+        setIsAuthLoading(false);
+        return;
+      }
+
+      setApplySuccess(true);
       setIsAuthLoading(false);
-      navigate("/artist-portal/dashboard");
-    }, 2000);
+    } catch (err) {
+      setApplyError("Erreur réseau. Réessayez.");
+      setIsAuthLoading(false);
+    }
   };
 
   const handlePortalEnter = useCallback(() => {
@@ -2739,6 +2787,59 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                          Why do you want to join Verso Air?
+                        </label>
+                        <textarea
+                          value={applyForm.motivation}
+                          onChange={(e) =>
+                            setApplyForm({
+                              ...applyForm,
+                              motivation: e.target.value,
+                            })
+                          }
+                          placeholder="What motivates you to join our platform..."
+                          rows={2}
+                          className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm resize-none"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                            Monthly Listeners
+                          </label>
+                          <input
+                            type="number"
+                            value={applyForm.monthlyListeners}
+                            onChange={(e) =>
+                              setApplyForm({
+                                ...applyForm,
+                                monthlyListeners: e.target.value,
+                              })
+                            }
+                            placeholder="e.g. 5000"
+                            className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                            Years Active
+                          </label>
+                          <input
+                            type="number"
+                            value={applyForm.yearsActive}
+                            onChange={(e) =>
+                              setApplyForm({
+                                ...applyForm,
+                                yearsActive: e.target.value,
+                              })
+                            }
+                            placeholder="e.g. 3"
+                            className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
                           Spotify Profile URL{" "}
                           <span className="text-white/15">(optional)</span>
                         </label>
@@ -2773,6 +2874,42 @@ export default function ArtistPortalWelcome() {
                           className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                         />
                       </div>
+                      <div>
+                        <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                          Sample Track URL{" "}
+                          <span className="text-white/15">(optional)</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={applyForm.sampleTrackUrl}
+                          onChange={(e) =>
+                            setApplyForm({
+                              ...applyForm,
+                              sampleTrackUrl: e.target.value,
+                            })
+                          }
+                          placeholder="Link to your best track (SoundCloud, YouTube, etc.)"
+                          className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                          Website{" "}
+                          <span className="text-white/15">(optional)</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={applyForm.websiteUrl}
+                          onChange={(e) =>
+                            setApplyForm({
+                              ...applyForm,
+                              websiteUrl: e.target.value,
+                            })
+                          }
+                          placeholder="https://yoursite.com"
+                          className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                        />
+                      </div>
                       <label className="flex items-start gap-3 cursor-pointer mt-4">
                         <input
                           type="checkbox"
@@ -2795,7 +2932,9 @@ export default function ArtistPortalWelcome() {
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
                             Artist Agreement
                           </span>
-                          . I confirm all information provided is accurate.
+                          . I understand that approved artists receive revenue
+                          share based on their assigned grade tier (S/A/B/C). I
+                          confirm all information provided is accurate.
                         </span>
                       </label>
                     </motion.div>
@@ -2804,7 +2943,7 @@ export default function ArtistPortalWelcome() {
 
                 {/* Navigation Buttons */}
                 <div className="flex gap-3 pt-2">
-                  {applyStep > 1 && (
+                  {applyStep > 1 && !applySuccess && (
                     <motion.button
                       type="button"
                       onClick={() => setApplyStep(applyStep - 1)}
@@ -2814,48 +2953,99 @@ export default function ArtistPortalWelcome() {
                       Back
                     </motion.button>
                   )}
-                  <motion.button
-                    type="submit"
-                    disabled={isAuthLoading}
-                    className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold text-sm relative overflow-hidden disabled:opacity-50"
-                    whileHover={{
-                      scale: 1.01,
-                      boxShadow: "0 0 30px rgba(168,85,247,0.3)",
-                    }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      {isAuthLoading ? (
-                        <motion.div
-                          className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        />
-                      ) : applyStep < 3 ? (
-                        <>
-                          Continue <ArrowRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" /> Submit Application
-                        </>
-                      )}
-                    </span>
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                      animate={{ x: ["-200%", "200%"] }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear",
+                  {!applySuccess && (
+                    <motion.button
+                      type="submit"
+                      disabled={isAuthLoading}
+                      className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold text-sm relative overflow-hidden disabled:opacity-50"
+                      whileHover={{
+                        scale: 1.01,
+                        boxShadow: "0 0 30px rgba(168,85,247,0.3)",
                       }}
-                    />
-                  </motion.button>
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        {isAuthLoading ? (
+                          <motion.div
+                            className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                          />
+                        ) : applyStep < 3 ? (
+                          <>
+                            Continue <ArrowRight className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" /> Submit Application
+                          </>
+                        )}
+                      </span>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                        animate={{ x: ["-200%", "200%"] }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      />
+                    </motion.button>
+                  )}
                 </div>
+
+                {/* Error message */}
+                {applyError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
+                  >
+                    {applyError}
+                  </motion.div>
+                )}
+
+                {/* Success state */}
+                {applySuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
+                      <Check className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <h3 className="text-emerald-400 font-bold text-lg">
+                      Candidature Envoyée!
+                    </h3>
+                    <p className="text-white/40 text-sm leading-relaxed">
+                      Votre candidature a été soumise avec succès. Notre équipe
+                      l'examinera sous{" "}
+                      <span className="text-white/60 font-medium">
+                        5 à 7 jours ouvrables
+                      </span>
+                      . Vous recevrez une notification par email avec votre
+                      grade attribué (S, A, B, ou C).
+                    </p>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("signin");
+                          setApplyStep(1);
+                          setApplySuccess(false);
+                        }}
+                        className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
+                      >
+                        ← Retour à la connexion
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </motion.form>
             )}
           </AnimatePresence>

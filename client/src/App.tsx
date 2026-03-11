@@ -69,6 +69,7 @@ import ArtisanWorkshops from "@/pages/artisan-workshops";
 import ArtistPortalWelcome from "@/pages/artist-portal-welcome";
 import ArtistPortalSignIn from "@/pages/artist-portal-signin";
 import ArtistPortalDashboard from "@/pages/artist-portal";
+import ArtistPortalGate from "@/components/ArtistPortalGate";
 import ArtistDirectory from "@/pages/artist-directory";
 import OngCulturelle from "@/pages/ong-culturelle";
 
@@ -79,6 +80,7 @@ import SignIn from "@/pages/signin";
 import SignInSimple from "@/pages/signin-simple";
 import OAuthComplete from "@/pages/oauth-complete";
 import PasswordPage from "@/pages/password";
+import ApplyPage from "@/pages/apply";
 
 // ─────────────────────────────────────────────────────
 // 🌍 Geo Admin Portal (subscriber-gated)
@@ -96,6 +98,8 @@ import AdminDashboard from "@/pages/dashboard-admin";
 import DatabaseManagementCenter from "@/components/DatabaseManagementCenter";
 import VerificationPage from "@/pages/admin/verification";
 import AdminTicketManagement from "@/pages/admin/ticket-management";
+import StreamRoyaleAdmin from "@/pages/streamroyale-admin";
+import ArtistContractsAdmin from "@/pages/admin/artist-contracts";
 
 // ─────────────────────────────────────────────────────
 // 🔒 Route Guards
@@ -139,11 +143,23 @@ import Sponsorship from "@/pages/sponsorship";
 import MusicPortal from "@/components/ui/music-portal";
 
 // ─────────────────────────────────────────────────────
+// 🎧 Streaming Platform
+// ─────────────────────────────────────────────────────
+import { AudioProvider } from "@/lib/audio-context";
+import AudioPlayer from "@/components/audio/AudioPlayer";
+import StreamPage from "@/pages/stream";
+import TrackDetailPage from "@/pages/track-detail";
+import ArtistCataloguePage from "@/pages/artist-catalogue";
+import LibraryPage from "@/pages/library";
+import AnalyticsStreamingPage from "@/pages/analytics-streaming";
+
+// ─────────────────────────────────────────────────────
 // 🧩 Layout Components
 // ─────────────────────────────────────────────────────
 import Navbar from "@/components/ui/navbar";
 import Footer from "@/components/ui/footer";
 import LocationPanel from "@/components/ui/location-panel";
+import BlogNavbar from "@/components/BlogNavbar";
 import LoadingEagle from "@/components/ui/loading-eagle";
 import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
@@ -235,10 +251,26 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal" component={ArtistPortalWelcome} />
-      <Route path="/artist-portal/signin" component={ArtistPortalSignIn} />
+      <Route path="/artist-portal">
+        {() => (
+          <ArtistPortalGate>
+            <ArtistPortalWelcome />
+          </ArtistPortalGate>
+        )}
+      </Route>
+      <Route path="/artist-portal/signin">
+        {() => (
+          <ArtistPortalGate>
+            <ArtistPortalSignIn />
+          </ArtistPortalGate>
+        )}
+      </Route>
       <Route path="/artist-portal/dashboard">
-        {() => <ProtectedRoute component={ArtistPortalDashboard} />}
+        {() => (
+          <ArtistPortalGate>
+            <ArtistPortalDashboard />
+          </ArtistPortalGate>
+        )}
       </Route>
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
@@ -260,6 +292,11 @@ function Router() {
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
 
       {/* ═══════════════════════════════════════════════
+          🎯 UNIFIED APPLY PAGE — Portal selection & registration
+          ═══════════════════════════════════════════════ */}
+      <Route path="/apply" component={ApplyPage} />
+
+      {/* ═══════════════════════════════════════════════
           🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
       <Route path="/geo-admin" component={GeoAdminPage} />
@@ -269,14 +306,7 @@ function Router() {
       <Route path="/geo-admin/immobilier">
         {() => <ProtectedRoute component={ImmobilierPortal} />}
       </Route>
-      <Route path="/geo-admin/dashboard">
-        {() => (
-          <ProtectedRoute
-            component={AdminDashboard}
-            roles={["admin", "moderator"]}
-          />
-        )}
-      </Route>
+      <Route path="/geo-admin/dashboard">{() => <AdminDashboard />}</Route>
 
       {/* ═══════════════════════════════════════════════
           🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
@@ -308,6 +338,16 @@ function Router() {
             component={AdminTicketManagement}
             roles={["admin", "moderator"]}
           />
+        )}
+      </Route>
+      <Route path="/admin/streamroyale">
+        {() => (
+          <ProtectedRoute component={StreamRoyaleAdmin} roles={["admin"]} />
+        )}
+      </Route>
+      <Route path="/admin/contracts">
+        {() => (
+          <ProtectedRoute component={ArtistContractsAdmin} roles={["admin"]} />
         )}
       </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
@@ -352,6 +392,15 @@ function Router() {
       <Route path="/explore">{() => <Redirect to="/about" />}</Route>
       <Route path="/sectors">{() => <Redirect to="/about" />}</Route>
       <Route path="/careers">{() => <Redirect to="/services/careers" />}</Route>
+
+      {/* ═══════════════════════════════════════════════
+          🎧 STREAMING — Verso Air Stream platform
+          ═══════════════════════════════════════════════ */}
+      <Route path="/stream" component={StreamPage} />
+      <Route path="/track/:id" component={TrackDetailPage} />
+      <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
+      <Route path="/library" component={LibraryPage} />
+      <Route path="/analytics" component={AnalyticsStreamingPage} />
 
       {/* 404 Fallback */}
       <Route component={NotFound} />
@@ -510,6 +559,9 @@ function AppContent() {
             </div>
           </div>
         )}
+
+        {/* Blog Navbar — sits right under the amber banner on /blog */}
+        {currentPath === "/blog" && <BlogNavbar />}
       </div>
       {/* Spacer for fixed header */}
       <div style={{ height: headerHeight }} />
@@ -547,7 +599,7 @@ function AppContent() {
 
       {/* Main Router */}
       <main
-        className={`flex-1 transition-opacity duration-300 ${
+        className={`flex-1 overflow-x-hidden transition-opacity duration-300 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
@@ -582,7 +634,10 @@ function App() {
           <AuthProvider>
             <TooltipProvider>
               <LoadingProvider>
-                <AppContent />
+                <AudioProvider>
+                  <AppContent />
+                  <AudioPlayer />
+                </AudioProvider>
                 <InactivityGuard />
                 <Toaster />
               </LoadingProvider>

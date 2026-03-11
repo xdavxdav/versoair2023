@@ -90,7 +90,21 @@ export default function SignIn() {
   const [loginError, setLoginError] = useState("");
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
   const [, navigate] = useLocation();
-  const { login: authLogin } = useAuthContext();
+  const { user: authUser, login: authLogin } = useAuthContext();
+
+  // Recall returning user's first name from localStorage
+  const returningName = (() => {
+    if (authUser?.name) return authUser.name.split(" ")[0];
+    try {
+      const cached = localStorage.getItem("auth_user");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.name) return parsed.name.split(" ")[0];
+      }
+    } catch {}
+    return "";
+  })();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -758,9 +772,15 @@ export default function SignIn() {
                   <User className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Welcome Back
+                  {returningName
+                    ? `Welcome Back, ${returningName}`
+                    : "Welcome Back"}
                 </h2>
-                <p className="text-gray-600 mt-2">Sign in to your account</p>
+                <p className="text-gray-600 mt-2">
+                  {returningName
+                    ? "Sign in to continue"
+                    : "Sign in to your account"}
+                </p>
               </div>
 
               {/* Verification status banners */}

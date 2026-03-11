@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LogOut,
@@ -12,9 +12,10 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Link } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface BlogNavbarProps {
-  isAuthenticated: boolean;
+  isAuthenticated?: boolean;
   userName?: string;
   onLogout?: () => void;
   onLogin?: () => void;
@@ -30,48 +31,33 @@ const navLinks = [
 ];
 
 export default function BlogNavbar({
-  isAuthenticated,
-  userName = "User",
-  onLogout,
+  isAuthenticated: isAuthProp,
+  userName: userNameProp,
+  onLogout: onLogoutProp,
   onLogin,
 }: BlogNavbarProps) {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const { user, logout } = useAuthContext();
+  const isAuthenticated = isAuthProp ?? !!user;
+  const userName = userNameProp ?? user?.email?.split("@")[0] ?? "User";
+  const onLogout = onLogoutProp ?? logout;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      } else if (currentScrollY > 50 && currentScrollY > lastScrollY) {
-        setIsVisible(false);
-        setMobileMenuOpen(false);
-      }
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   return (
     <>
-      <motion.nav
-        initial={{ y: 0 }}
-        animate={{ y: isVisible ? 0 : -100 }}
-        transition={{ duration: 0.3 }}
-        className="fixed top-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-white/10"
-      >
+      <nav className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-between gap-4">
-            {/* Logo */}
+            {/* Logo — Cyan on Blog */}
             <Link href="/blog">
               <a className="flex-shrink-0">
                 <img
                   src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
                   alt="Verso"
-                  className="h-16 w-auto filter brightness-110"
+                  className="h-12 w-auto transition-all duration-300"
+                  style={{
+                    filter:
+                      "brightness(1.1) sepia(1) saturate(5) hue-rotate(155deg)",
+                  }}
                 />
               </a>
             </Link>
@@ -159,7 +145,7 @@ export default function BlogNavbar({
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.nav>
+      </nav>
     </>
   );
 }

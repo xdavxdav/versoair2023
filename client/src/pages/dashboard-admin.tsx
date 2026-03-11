@@ -795,6 +795,7 @@ const BusinessManagement = ({
     description: "",
     // Location
     regionId: "",
+    regionName: "",
     cityName: "",
     countryCode: "",
     latitude: "",
@@ -980,17 +981,28 @@ const BusinessManagement = ({
         if (countryFilter && countryFilter !== "all")
           params.set("countryCode", countryFilter);
 
-        const url = `${API_BASE_URL}/api/v1/admin/businesses?${params.toString()}`;
-        console.log("[Business Filter] Fetching from:", url, {
-          searchTerm,
-          categoryFilter,
-          countryFilter,
-        });
+        // Try admin endpoint first, fall back to public endpoint
+        let businessData: any = null;
+        const adminUrl = `${API_BASE_URL}/api/v1/admin/businesses?${params.toString()}`;
+        const publicUrl = `${API_BASE_URL}/api/businesses?${params.toString()}`;
 
-        const businessRes = await authenticatedFetch(url);
-        const businessData = await businessRes.json();
+        try {
+          const businessRes = await authenticatedFetch(adminUrl);
+          if (businessRes.ok) {
+            businessData = await businessRes.json();
+          }
+        } catch {
+          // Admin endpoint failed — try public
+        }
 
-        if (businessData.success || businessData.data) {
+        if (!businessData?.success && !businessData?.data) {
+          const publicRes = await fetch(publicUrl);
+          if (publicRes.ok) {
+            businessData = await publicRes.json();
+          }
+        }
+
+        if (businessData?.success || businessData?.data) {
           setBusinesses(businessData.data || []);
           if (businessData.pagination) {
             setTotalPages(
@@ -998,7 +1010,7 @@ const BusinessManagement = ({
                 businessData.pagination.pages ||
                 1,
             );
-            setTotalCount(businessData.pagination.total || 0);
+            setTotalCount(Number(businessData.pagination.total) || 0);
           } else {
             setTotalPages(1);
             setTotalCount(businessData.data?.length || 0);
@@ -1215,6 +1227,7 @@ const BusinessManagement = ({
           address: "",
           description: "",
           regionId: "",
+          regionName: "",
           cityName: "",
           countryCode: "",
           latitude: "",
@@ -3775,6 +3788,7 @@ const JobManagement = () => {
           benefits: "",
           isRemote: false,
           isFeatured: false,
+          countryCode: "",
         });
         toast({
           title: "Success",
@@ -6552,11 +6566,9 @@ export default function AdminDashboard() {
     setIsLoadingHealth(true);
     try {
       const [healthRes, statusRes, adminHealthRes] = await Promise.all([
-        authenticatedFetch(`${API_BASE_URL}/api/health`),
-        authenticatedFetch(`${API_BASE_URL}/api/status`),
-        authenticatedFetch(`${API_BASE_URL}/api/admin/health`).catch(
-          () => null,
-        ),
+        fetch(`${API_BASE_URL}/api/health`),
+        fetch(`${API_BASE_URL}/api/status`),
+        fetch(`${API_BASE_URL}/api/admin/health`).catch(() => null),
       ]);
       setDbConnected(healthRes.ok);
       if (healthRes.ok) {
@@ -6568,14 +6580,12 @@ export default function AdminDashboard() {
         let businessCount = 0;
         try {
           const [bizRes, catRes] = await Promise.all([
-            authenticatedFetch(`${API_BASE_URL}/api/businesses?limit=1`),
-            authenticatedFetch(
-              `${API_BASE_URL}/api/v1/admin/categories?limit=1`,
-            ),
+            fetch(`${API_BASE_URL}/api/businesses?limit=1`),
+            fetch(`${API_BASE_URL}/api/categories`),
           ]);
           const bizData = await bizRes.json();
           const catData = await catRes.json();
-          businessCount = bizData.pagination?.total || 0;
+          businessCount = Number(bizData.pagination?.total) || 0;
           categoryCount = Array.isArray(catData)
             ? catData.length
             : catData.data?.length || 0;
@@ -6622,7 +6632,7 @@ export default function AdminDashboard() {
     fetchDatabaseHealth();
     const interval = setInterval(fetchDatabaseHealth, 30000);
     return () => clearInterval(interval);
-  }, [fetchDatabaseHealth]);
+  }, [fetchDatabaseHealth, isAdminGateAuthenticated]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

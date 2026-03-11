@@ -59,6 +59,8 @@ export default function ArtistPortalSignIn() {
   const [activeTab, setActiveTab] = useState<AuthTab>("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
   const [step, setStep] = useState(1); // For multi-step apply form
 
   // Sign in form state
@@ -102,30 +104,91 @@ export default function ArtistPortalSignIn() {
     "Other",
   ];
 
-  // Handle sign in
+  // Handle sign in — real JWT auth
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulated auth — will connect to real backend
-    setTimeout(() => {
+    setAuthError("");
+    try {
+      const res = await fetch("/auth/artist/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: signInForm.email,
+          password: signInForm.password,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setAuthError(
+          data.message || "Login failed. Please check your credentials.",
+        );
+        setIsLoading(false);
+        return;
+      }
+      // Store artist data for portal usage
+      localStorage.setItem("artist_token", data.token);
+      localStorage.setItem("artist_profile", JSON.stringify(data.user));
       setIsLoading(false);
       navigate("/artist-portal/dashboard");
-    }, 1500);
+    } catch (err: any) {
+      setAuthError(err.message || "Network error. Please try again.");
+      setIsLoading(false);
+    }
   };
 
-  // Handle apply
+  // Handle apply — real artist registration
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError("");
     if (step < 3) {
       setStep(step + 1);
       return;
     }
+    // Validate passwords match
+    if (applyForm.password !== applyForm.confirmPassword) {
+      setAuthError("Passwords do not match.");
+      return;
+    }
+    if (!applyForm.agreeTerms) {
+      setAuthError("You must agree to the terms.");
+      return;
+    }
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/auth/artist/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: applyForm.email,
+          password: applyForm.password,
+          stageName: applyForm.stageName,
+          legalName: applyForm.legalName,
+          genre: applyForm.genre ? [applyForm.genre] : ["Other"],
+          country: applyForm.country || "United States",
+          bio: applyForm.bio,
+          spotifyUrl: applyForm.spotifyUrl,
+          instagramHandle: applyForm.instagramHandle,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setAuthError(data.message || "Registration failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      // Store artist data
+      localStorage.setItem("artist_token", data.token);
+      localStorage.setItem("artist_profile", JSON.stringify(data.user));
+      setAuthSuccess("Account created successfully! Redirecting...");
       setIsLoading(false);
-      // Show success or redirect
-      navigate("/artist-portal/dashboard");
-    }, 2000);
+      setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
+    } catch (err: any) {
+      setAuthError(err.message || "Network error. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -216,6 +279,28 @@ export default function ArtistPortalSignIn() {
               Apply
             </button>
           </div>
+
+          {/* ═══════════════════════════════
+              AUTH MESSAGES
+              ═══════════════════════════════ */}
+          {authError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm text-center"
+            >
+              {authError}
+            </motion.div>
+          )}
+          {authSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-300 text-sm text-center"
+            >
+              {authSuccess}
+            </motion.div>
+          )}
 
           {/* ═══════════════════════════════
               SIGN IN FORM
