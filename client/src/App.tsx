@@ -67,7 +67,6 @@ import Communities from "@/pages/communities";
 import CommunityDetail from "@/pages/community";
 import ArtisanWorkshops from "@/pages/artisan-workshops";
 import ArtistPortalWelcome from "@/pages/artist-portal-welcome";
-import ArtistPortalSignIn from "@/pages/artist-portal-signin";
 import ArtistPortalDashboard from "@/pages/artist-portal";
 import ArtistPortalGate from "@/components/ArtistPortalGate";
 import ArtistDirectory from "@/pages/artist-directory";
@@ -255,13 +254,6 @@ function Router() {
         {() => (
           <ArtistPortalGate>
             <ArtistPortalWelcome />
-          </ArtistPortalGate>
-        )}
-      </Route>
-      <Route path="/artist-portal/signin">
-        {() => (
-          <ArtistPortalGate>
-            <ArtistPortalSignIn />
           </ArtistPortalGate>
         )}
       </Route>
