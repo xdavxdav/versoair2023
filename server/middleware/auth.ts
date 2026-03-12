@@ -110,7 +110,9 @@ const PUBLIC_PATH_PREFIXES: string[] = [
 function isPublicPath(path: string, method: string): boolean {
   // Exact match (any method — login/register/logout use POST)
   if (PUBLIC_PATHS.includes(path)) return true;
-  // Prefix match for OAuth sub-routes (e.g. /auth/google/callback?code=...)
+  // OAuth flows — all /auth/oauth/* paths must be public (initiate + callback)
+  if (path.startsWith("/auth/oauth/")) return true;
+  // Prefix match for legacy OAuth sub-routes (e.g. /auth/google/callback?code=...)
   if (path.startsWith("/auth/google/") || path.startsWith("/auth/facebook/"))
     return true;
   // Prefix match for public data endpoints — GET only (read-only)
