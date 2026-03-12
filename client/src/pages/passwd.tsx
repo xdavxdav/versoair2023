@@ -1,10 +1,11 @@
 /**
  * CREDENTIALS VAULT
- * Development/Admin credential storage for rapid account switching
+ * Single master credential for ALL portals
  * FOR DEVELOPMENT & ADMIN USE ONLY
  *
- * All accounts use the same password: VersoTest2026!
- * These match the actual users in the PostgreSQL database.
+ * One account — superadmin@versoair.test / JoeyD000
+ * Works on: /auth/login, /auth/artist/login, /auth/community/login,
+ *           /auth/subscriber/login, /auth/admin-gate, /api/vault/authorize
  */
 
 export interface Credential {
@@ -24,83 +25,18 @@ export interface Credential {
 
 export const CREDENTIALS: Credential[] = [
   {
-    id: "superuser-1",
+    id: "superuser-master",
     username: "superadmin_test",
     email: "superadmin@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "Super",
-    lastName: "Admin",
-    businessName: "Verso Air - Master Control",
+    password: "JoeyD000",
+    firstName: "Joel",
+    lastName: "D",
+    businessName: "Verso Air — Master Control",
     role: "superuser",
-    description: "Master superuser - Full system control",
+    description:
+      "Universal master account — connects to General, Artist Portal, Blog/Community, Geo-Admin, Vault, and all portals",
     color: "from-red-600 to-pink-600",
     icon: "crown",
-  },
-  {
-    id: "superuser-2",
-    username: "sys_operator",
-    email: "operator@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "System",
-    lastName: "Operator",
-    businessName: "Verso Air - Operations",
-    role: "superuser",
-    description: "System operator - Infrastructure and database ops",
-    color: "from-red-700 to-orange-600",
-    icon: "zap",
-  },
-  {
-    id: "admin-1",
-    username: "admin_test",
-    email: "admin@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "Platform",
-    lastName: "Admin",
-    businessName: "Admin Dashboard",
-    role: "admin",
-    sector: "administration",
-    description: "General admin - Platform management",
-    color: "from-blue-600 to-cyan-600",
-    icon: "shield",
-  },
-  {
-    id: "moderator-1",
-    username: "moderator_test",
-    email: "moderator@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "Community",
-    lastName: "Moderator",
-    businessName: "Moderation Team",
-    role: "moderator",
-    description: "Community moderator",
-    color: "from-teal-600 to-green-600",
-    icon: "wrench",
-  },
-  {
-    id: "business-1",
-    username: "business_owner_test",
-    email: "owner@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "Business",
-    lastName: "Owner",
-    businessName: "Test Business",
-    role: "business-owner",
-    description: "Business owner account",
-    color: "from-amber-500 to-orange-500",
-    icon: "store",
-  },
-  {
-    id: "user-1",
-    username: "free_user_test",
-    email: "freeuser@versoair.test",
-    password: "VersoTest2026!",
-    firstName: "Free",
-    lastName: "User",
-    businessName: "Personal Profile",
-    role: "user",
-    description: "Free tier user account",
-    color: "from-slate-400 to-zinc-400",
-    icon: "user",
   },
 ];
 
