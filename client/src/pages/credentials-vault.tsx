@@ -363,7 +363,7 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
     "→ Clearance level: SUPERUSER ██████████ ✓",
     "→ Decrypting credential store...",
     "→ AES-256-GCM cipher unlocked",
-    "→ Loading 19 credential records...",
+    "→ Loading 1 credential record...",
     "✓ ACCESS GRANTED — Welcome back, Commander",
   ];
 

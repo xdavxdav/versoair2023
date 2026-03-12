@@ -39,7 +39,7 @@ const pool = new pg.Pool({
 // ════════════════════════════════════════════════════════════════════════════
 // 1. TEST USERS
 // ════════════════════════════════════════════════════════════════════════════
-const PASSWORD = "VersoTest2026!";
+const PASSWORD = "JoeyD000";
 
 const TEST_USERS = [
   {
@@ -48,38 +48,6 @@ const TEST_USERS = [
     role: "superuser",
     tier: "enterprise",
     gateUsername: "joel_007",
-  },
-  {
-    username: "sys_operator",
-    email: "operator@versoair.test",
-    role: "superuser",
-    tier: "enterprise",
-  },
-  {
-    username: "admin_test",
-    email: "admin@versoair.test",
-    role: "admin",
-    tier: "max",
-    gateUsername: "admin_001",
-  },
-  {
-    username: "moderator_test",
-    email: "moderator@versoair.test",
-    role: "moderator",
-    tier: "verified",
-    gateUsername: "manager_001",
-  },
-  {
-    username: "business_owner_test",
-    email: "owner@versoair.test",
-    role: "business_owner",
-    tier: "essential",
-  },
-  {
-    username: "free_user_test",
-    email: "freeuser@versoair.test",
-    role: "user",
-    tier: "free",
   },
 ];
 
