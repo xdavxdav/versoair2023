@@ -4895,11 +4895,6 @@ function CommandCenter() {
                     emoji="🎤"
                   />
                   <RouteLink
-                    path="/artist-portal/signin"
-                    label="Artist Sign In"
-                    emoji="🔑"
-                  />
-                  <RouteLink
                     path="/artist-portal/dashboard"
                     label="Artist Dashboard"
                     emoji="📊"

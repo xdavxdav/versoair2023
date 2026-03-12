@@ -1704,6 +1704,8 @@ export default function ArtistPortalWelcome() {
 
   const [applySuccess, setApplySuccess] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
 
   const genres = [
     "Afrobeats",
@@ -1727,10 +1729,32 @@ export default function ArtistPortalWelcome() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAuthLoading(true);
-    setTimeout(() => {
+    setAuthError("");
+    try {
+      const res = await fetch("/auth/artist/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: signInForm.email,
+          password: signInForm.password,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setAuthError(data.message || "Login failed. Please check your credentials.");
+        setIsAuthLoading(false);
+        return;
+      }
+      // Store artist data for portal usage
+      localStorage.setItem("artist_token", data.token);
+      localStorage.setItem("artist_profile", JSON.stringify(data.user));
       setIsAuthLoading(false);
       navigate("/artist-portal/dashboard");
-    }, 1500);
+    } catch (err: any) {
+      setAuthError(err.message || "Network error. Please try again.");
+      setIsAuthLoading(false);
+    }
   };
 
   const handleApply = async (e: React.FormEvent) => {
@@ -1739,49 +1763,84 @@ export default function ArtistPortalWelcome() {
       setApplyStep(applyStep + 1);
       return;
     }
+    // Validate passwords match
+    if (applyForm.password !== applyForm.confirmPassword) {
+      setApplyError("Passwords do not match.");
+      return;
+    }
+    if (!applyForm.agreeTerms) {
+      setApplyError("You must agree to the terms.");
+      return;
+    }
     setIsAuthLoading(true);
     setApplyError(null);
 
     try {
-      const res = await fetch("/api/contracts/apply", {
+      // Step 1: Register the artist account
+      const regRes = await fetch("/auth/artist/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: applyForm.email,
+          password: applyForm.password,
           stageName: applyForm.stageName,
           legalName: applyForm.legalName,
-          genre: applyForm.genre,
-          country: applyForm.country,
-          biography: applyForm.bio,
-          spotifyUrl: applyForm.spotifyUrl || undefined,
-          instagramUrl: applyForm.instagramHandle
-            ? `https://instagram.com/${applyForm.instagramHandle.replace("@", "")}`
-            : undefined,
-          motivation: applyForm.motivation || undefined,
-          monthlyListeners: applyForm.monthlyListeners
-            ? parseInt(applyForm.monthlyListeners)
-            : 0,
-          yearsActive: applyForm.yearsActive
-            ? parseInt(applyForm.yearsActive)
-            : 0,
-          sampleTrackUrl: applyForm.sampleTrackUrl || undefined,
-          websiteUrl: applyForm.websiteUrl || undefined,
-          agreedToTerms: applyForm.agreeTerms,
+          genre: applyForm.genre ? [applyForm.genre] : ["Other"],
+          country: applyForm.country || "United States",
+          bio: applyForm.bio,
+          spotifyUrl: applyForm.spotifyUrl,
+          instagramHandle: applyForm.instagramHandle,
         }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setApplyError(data.error || "Erreur lors de la soumission");
+      const regData = await regRes.json();
+      if (!regRes.ok || !regData.success) {
+        setApplyError(regData.message || "Registration failed. Please try again.");
         setIsAuthLoading(false);
         return;
+      }
+      // Store artist data
+      localStorage.setItem("artist_token", regData.token);
+      localStorage.setItem("artist_profile", JSON.stringify(regData.user));
+
+      // Step 2: Also submit contract application
+      try {
+        await fetch("/api/contracts/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: applyForm.email,
+            stageName: applyForm.stageName,
+            legalName: applyForm.legalName,
+            genre: applyForm.genre,
+            country: applyForm.country,
+            biography: applyForm.bio,
+            spotifyUrl: applyForm.spotifyUrl || undefined,
+            instagramUrl: applyForm.instagramHandle
+              ? `https://instagram.com/${applyForm.instagramHandle.replace("@", "")}`
+              : undefined,
+            motivation: applyForm.motivation || undefined,
+            monthlyListeners: applyForm.monthlyListeners
+              ? parseInt(applyForm.monthlyListeners)
+              : 0,
+            yearsActive: applyForm.yearsActive
+              ? parseInt(applyForm.yearsActive)
+              : 0,
+            sampleTrackUrl: applyForm.sampleTrackUrl || undefined,
+            websiteUrl: applyForm.websiteUrl || undefined,
+            agreedToTerms: applyForm.agreeTerms,
+          }),
+        });
+      } catch {
+        // Contract application is optional — don't block the flow
       }
 
       setApplySuccess(true);
       setIsAuthLoading(false);
-    } catch (err) {
-      setApplyError("Erreur réseau. Réessayez.");
+      // Redirect to dashboard after a brief success message
+      setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
+    } catch (err: any) {
+      setApplyError(err.message || "Network error. Please try again.");
       setIsAuthLoading(false);
     }
   };
@@ -2366,13 +2425,33 @@ export default function ArtistPortalWelcome() {
             </button>
           </motion.div>
 
+          {/* Auth Messages */}
+          {authError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm text-center"
+            >
+              {authError}
+            </motion.div>
+          )}
+          {authSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-300 text-sm text-center"
+            >
+              {authSuccess}
+            </motion.div>
+          )}
+
           {/* ── SIGN IN FORM ── */}
           <AnimatePresence mode="wait">
             {activeTab === "signin" && (
               <motion.form
                 key="signin"
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleSignIn}
