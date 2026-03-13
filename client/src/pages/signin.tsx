@@ -14,9 +14,20 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  isValidEmail,
+  isPasswordStrong,
+  checkPasswordLength,
+  checkPasswordUpper,
+  checkPasswordNumber,
+  passwordStrengthLevel,
+  isValidPhone,
+  validateRegistrationForm,
+} from "@/lib/auth-validation";
 
 // Helper to get query params
 const getQueryParam = (param: string) => {
@@ -88,6 +99,7 @@ export default function SignIn() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [registerError, setRegisterError] = useState("");
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
@@ -245,8 +257,16 @@ export default function SignIn() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+    setRegisterError("");
+
+    const validation = validateRegistrationForm({
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      phone: formData.phone,
+    });
+    if (!validation.valid) {
+      setRegisterError(validation.error);
       return;
     }
 
@@ -295,11 +315,11 @@ export default function SignIn() {
           }
         }
       } else {
-        alert(data.message || "Registration failed");
+        setRegisterError(data.message || "Registration failed");
       }
     } catch (error) {
       console.error("Register error:", error);
-      alert("Registration failed. Please try again.");
+      setRegisterError("Registration failed. Please try again.");
     }
   };
 
@@ -552,10 +572,31 @@ export default function SignIn() {
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
+                      className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent ${
+                        formData.email && !isValidEmail(formData.email)
+                          ? "border-red-400"
+                          : formData.email && isValidEmail(formData.email)
+                            ? "border-green-400"
+                            : "border-gray-300"
+                      }`}
                       placeholder="john@business.com"
                     />
+                    {formData.email && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {isValidEmail(formData.email) ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
                   </div>
+                  {formData.email && !isValidEmail(formData.email) && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Enter a valid email
+                      (e.g. name@example.com)
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -570,10 +611,22 @@ export default function SignIn() {
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent ${
+                        formData.phone && !isValidPhone(formData.phone)
+                          ? "border-red-400"
+                          : formData.phone && isValidPhone(formData.phone)
+                            ? "border-green-400"
+                            : "border-gray-300"
+                      }`}
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
+                  {formData.phone && !isValidPhone(formData.phone) && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Enter a valid phone
+                      number
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -603,6 +656,60 @@ export default function SignIn() {
                       )}
                     </button>
                   </div>
+                  {/* Password strength bar */}
+                  {formData.password && (
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded-full transition-colors ${
+                              passwordStrengthLevel(formData.password) >= level
+                                ? passwordStrengthLevel(formData.password) === 1
+                                  ? "bg-red-400"
+                                  : passwordStrengthLevel(formData.password) ===
+                                      2
+                                    ? "bg-amber-400"
+                                    : "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-1 gap-0.5">
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordLength(formData.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordLength(formData.password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          At least 8 characters
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordUpper(formData.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordUpper(formData.password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One uppercase letter (A–Z)
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordNumber(formData.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordNumber(formData.password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One number (0–9)
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -620,11 +727,42 @@ export default function SignIn() {
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
+                      className={`w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent ${
+                        formData.confirmPassword &&
+                        formData.password !== formData.confirmPassword
+                          ? "border-red-400"
+                          : formData.confirmPassword &&
+                              formData.password === formData.confirmPassword
+                            ? "border-green-400"
+                            : "border-gray-300"
+                      }`}
                       placeholder="Confirm your password"
                     />
+                    {formData.confirmPassword && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {formData.password === formData.confirmPassword ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
                   </div>
+                  {formData.confirmPassword &&
+                    formData.password !== formData.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" /> Passwords do not
+                        match
+                      </p>
+                    )}
                 </div>
+
+                {/* Registration Error */}
+                {registerError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {registerError}
+                  </div>
+                )}
 
                 <Button
                   className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"

@@ -66,6 +66,7 @@ router.get(
           subscriptionStatus: users.subscriptionStatus,
           failedLoginAttempts: users.failedLoginAttempts,
           lockedUntil: users.lockedUntil,
+          portalAccess: users.portalAccess,
           createdAt: users.createdAt,
         })
         .from(users)
@@ -103,9 +104,18 @@ router.get(
  */
 router.post(
   "/",
-  requireAuth(["admin"]),
+  requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
-    const { username, email, password, role = "user", gateUsername } = req.body;
+    const {
+      username,
+      email,
+      password,
+      role = "user",
+      gateUsername,
+      isVerified,
+      subscriptionTier,
+      portalAccess,
+    } = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -115,6 +125,36 @@ router.post(
         error: {
           code: "VALIDATION_ERROR",
           message: "Username, email, and password are required",
+        },
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid email format",
+        },
+      });
+    }
+
+    // Validate password strength
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message:
+            "Password must be 8+ characters with an uppercase letter and a number",
         },
       });
     }
@@ -145,10 +185,16 @@ router.post(
       email,
       password: hashedPassword,
       role,
-      isVerified: false,
+      isVerified: isVerified === true,
     };
     if (gateUsername && gateUsername.trim()) {
       insertValues.gateUsername = gateUsername.trim().toLowerCase();
+    }
+    if (subscriptionTier) {
+      insertValues.subscriptionTier = subscriptionTier;
+    }
+    if (portalAccess && Array.isArray(portalAccess)) {
+      insertValues.portalAccess = portalAccess;
     }
 
     const [user] = await db.insert(users).values(insertValues).returning({
@@ -208,6 +254,7 @@ router.get(
         subscriptionStatus: users.subscriptionStatus,
         failedLoginAttempts: users.failedLoginAttempts,
         lockedUntil: users.lockedUntil,
+        portalAccess: users.portalAccess,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -253,6 +300,7 @@ router.put(
       password,
       subscriptionTier,
       gateUsername,
+      portalAccess,
     } = req.body;
     const userId = parseInt(id, 10);
 
@@ -290,6 +338,9 @@ router.put(
           ? gateUsername.trim().toLowerCase()
           : null;
     }
+    if (portalAccess !== undefined && Array.isArray(portalAccess)) {
+      updates.portalAccess = portalAccess;
+    }
     if (password !== undefined) {
       updates.password = await bcrypt.hash(password, 10);
     }
@@ -318,6 +369,7 @@ router.put(
         isVerified: users.isVerified,
         verifiedAt: users.verifiedAt,
         subscriptionTier: users.subscriptionTier,
+        portalAccess: users.portalAccess,
         lockedUntil: users.lockedUntil,
         createdAt: users.createdAt,
       });

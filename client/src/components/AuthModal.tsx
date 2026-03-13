@@ -8,8 +8,18 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import {
+  isValidEmail,
+  checkPasswordLength,
+  checkPasswordUpper,
+  checkPasswordNumber,
+  passwordStrengthLevel,
+  validateRegistrationForm,
+} from "@/lib/auth-validation";
 
 function BlogSsoButtons() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -144,12 +154,13 @@ export default function AuthModal({
         setError("Please enter your full name");
         return;
       }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters");
+      const validation = validateRegistrationForm({
+        email,
+        password,
+        confirmPassword,
+      });
+      if (!validation.valid) {
+        setError(validation.error);
         return;
       }
     }
@@ -293,6 +304,60 @@ export default function AuthModal({
                       </button>
                     </div>
                   </div>
+
+                  {/* Password strength (signup only) */}
+                  {mode === "signup" && password && (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded-full transition-colors ${
+                              passwordStrengthLevel(password) >= level
+                                ? passwordStrengthLevel(password) === 1
+                                  ? "bg-red-400"
+                                  : passwordStrengthLevel(password) === 2
+                                    ? "bg-amber-400"
+                                    : "bg-green-400"
+                                : "bg-white/10"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-1 gap-0.5">
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordLength(password) ? "text-green-400" : "text-slate-500"}`}
+                        >
+                          {checkPasswordLength(password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          At least 8 characters
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordUpper(password) ? "text-green-400" : "text-slate-500"}`}
+                        >
+                          {checkPasswordUpper(password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One uppercase letter (A–Z)
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${checkPasswordNumber(password) ? "text-green-400" : "text-slate-500"}`}
+                        >
+                          {checkPasswordNumber(password) ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One number (0–9)
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Confirm Password (Sign Up Only) */}
                   {mode === "signup" && (

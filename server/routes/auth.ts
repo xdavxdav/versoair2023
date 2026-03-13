@@ -1719,7 +1719,12 @@ router.post(
 
 const communityRegisterSchema = z.object({
   email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128)
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
   displayName: z.string().min(2, "Display name must be at least 2 characters"),
   interests: z.array(z.string()).optional(),
 });
