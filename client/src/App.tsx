@@ -179,7 +179,13 @@ function Router() {
       return;
     }
     if (location !== previousLocation) {
-      showEagleLoader();
+      // Skip eagle loader for artist portal routes — they have their own cinematic transitions
+      const isArtistPortalNav =
+        location.startsWith("/artist-portal") ||
+        previousLocation.startsWith("/artist-portal");
+      if (!isArtistPortalNav) {
+        showEagleLoader();
+      }
       setPreviousLocation(location);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }

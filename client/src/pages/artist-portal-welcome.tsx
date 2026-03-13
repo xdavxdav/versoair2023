@@ -1706,6 +1706,8 @@ export default function ArtistPortalWelcome() {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const [transitioning, setTransitioning] = useState(false);
+  const [transitionArtist, setTransitionArtist] = useState("");
 
   const genres = [
     "Afrobeats",
@@ -1742,15 +1744,29 @@ export default function ArtistPortalWelcome() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setAuthError(data.message || "Login failed. Please check your credentials.");
+        setAuthError(
+          data.message || "Login failed. Please check your credentials.",
+        );
         setIsAuthLoading(false);
         return;
       }
       // Store artist data for portal usage
       localStorage.setItem("artist_token", data.token);
       localStorage.setItem("artist_profile", JSON.stringify(data.user));
+      // Set in-memory auth token so dashboard's checkAuth() finds it
+      if (data.token) {
+        const { setAuthToken } = await import("@/lib/auth");
+        setAuthToken(data.token);
+      }
       setIsAuthLoading(false);
-      navigate("/artist-portal/dashboard");
+      // Trigger cinematic transition instead of abrupt navigate
+      setTransitionArtist(
+        data.user?.stageName ||
+          data.user?.name ||
+          signInForm.email.split("@")[0],
+      );
+      setTransitioning(true);
+      setTimeout(() => navigate("/artist-portal/dashboard"), 2400);
     } catch (err: any) {
       setAuthError(err.message || "Network error. Please try again.");
       setIsAuthLoading(false);
@@ -1795,13 +1811,20 @@ export default function ArtistPortalWelcome() {
       });
       const regData = await regRes.json();
       if (!regRes.ok || !regData.success) {
-        setApplyError(regData.message || "Registration failed. Please try again.");
+        setApplyError(
+          regData.message || "Registration failed. Please try again.",
+        );
         setIsAuthLoading(false);
         return;
       }
       // Store artist data
       localStorage.setItem("artist_token", regData.token);
       localStorage.setItem("artist_profile", JSON.stringify(regData.user));
+      // Set in-memory auth token so dashboard's checkAuth() finds it
+      if (regData.token) {
+        const { setAuthToken } = await import("@/lib/auth");
+        setAuthToken(regData.token);
+      }
 
       // Step 2: Also submit contract application
       try {
@@ -1837,8 +1860,16 @@ export default function ArtistPortalWelcome() {
 
       setApplySuccess(true);
       setIsAuthLoading(false);
-      // Redirect to dashboard after a brief success message
-      setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
+      // Trigger cinematic transition instead of abrupt navigate
+      setTransitionArtist(
+        applyForm.stageName ||
+          applyForm.legalName ||
+          applyForm.email.split("@")[0],
+      );
+      setTimeout(() => {
+        setTransitioning(true);
+        setTimeout(() => navigate("/artist-portal/dashboard"), 2400);
+      }, 800);
     } catch (err: any) {
       setApplyError(err.message || "Network error. Please try again.");
       setIsAuthLoading(false);
@@ -2451,7 +2482,7 @@ export default function ArtistPortalWelcome() {
               <motion.form
                 key="signin"
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}}
+                animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
                 onSubmit={handleSignIn}
@@ -2581,31 +2612,76 @@ export default function ArtistPortalWelcome() {
                   <div className="flex-1 h-px bg-white/[0.06]" />
                 </div>
 
-                {/* OAuth buttons */}
+                {/* Music Platform OAuth */}
                 <div className="grid grid-cols-3 gap-3">
-                  {[
-                    {
-                      name: "Google",
-                      icon: "G",
-                      color: "hover:border-red-500/30",
-                    },
-                    { name: "Apple", icon: "", color: "hover:border-white/30" },
-                    {
-                      name: "Spotify",
-                      icon: "♪",
-                      color: "hover:border-green-500/30",
-                    },
-                  ].map((provider) => (
+                  <motion.button
+                    type="button"
+                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#1DB954]/40 hover:bg-[#1DB954]/10 hover:text-[#1DB954] transition-all flex flex-col items-center gap-1.5"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      (window.location.href =
+                        "/auth/oauth/spotify?redirect=/artist-portal/dashboard")
+                    }
+                  >
+                    <span className="text-lg">♪</span>
+                    <span className="text-[10px] opacity-60">Spotify</span>
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#FC3C44]/40 hover:bg-[#FC3C44]/10 hover:text-[#FC3C44] transition-all flex flex-col items-center gap-1.5"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      (window.location.href =
+                        "/auth/oauth/apple-music?redirect=/artist-portal/dashboard")
+                    }
+                  >
+                    <span className="text-lg"></span>
+                    <span className="text-[10px] opacity-60">Apple Music</span>
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#FFA200]/40 hover:bg-[#FFA200]/10 hover:text-[#FFA200] transition-all flex flex-col items-center gap-1.5"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      (window.location.href =
+                        "/auth/oauth/audiomack?redirect=/artist-portal/dashboard")
+                    }
+                  >
+                    <span className="text-lg">🎵</span>
+                    <span className="text-[10px] opacity-60">Audiomack</span>
+                  </motion.button>
+                </div>
+
+                {/* Contracts & Apply links */}
+                <div className="mt-2 pt-4 border-t border-white/[0.06]">
+                  <p className="text-white/20 text-xs text-center mb-3">
+                    Not a certified artist yet?
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
                     <motion.button
-                      key={provider.name}
                       type="button"
-                      className={`py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium ${provider.color} transition-all`}
+                      className="py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/40 text-xs font-medium hover:border-purple-500/30 hover:text-purple-300 hover:bg-purple-500/5 transition-all flex items-center justify-center gap-2"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => window.open("/contracts", "_blank")}
                     >
-                      <span className="text-lg">{provider.icon}</span>
+                      📄 View Contracts
                     </motion.button>
-                  ))}
+                    <motion.button
+                      type="button"
+                      className="py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/40 text-xs font-medium hover:border-fuchsia-500/30 hover:text-fuchsia-300 hover:bg-fuchsia-500/5 transition-all flex items-center justify-center gap-2"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setActiveTab("apply");
+                      }}
+                    >
+                      ✨ Apply Now
+                    </motion.button>
+                  </div>
                 </div>
               </motion.form>
             )}
@@ -3213,6 +3289,164 @@ export default function ArtistPortalWelcome() {
           </p>
         </div>
       </footer>
+
+      {/* ═══════════════════════════════════════════════
+          CINEMATIC TRANSITION OVERLAY — Auth → Dashboard
+          ═══════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {transitioning && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            {/* Background layers */}
+            <motion.div
+              className="absolute inset-0 bg-[#06020f]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            />
+            <motion.div
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.3 }}
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(147,51,234,0.3) 0%, rgba(88,28,135,0.15) 30%, transparent 70%)",
+              }}
+            />
+
+            {/* Sweep light effect */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              initial={{ x: "-100%", opacity: 0 }}
+              animate={{ x: "200%", opacity: [0, 0.6, 0] }}
+              transition={{ duration: 1.5, delay: 0.4, ease: "easeInOut" }}
+            >
+              <div
+                className="h-full w-1/3"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(168,85,247,0.2), rgba(255,255,255,0.1), transparent)",
+                }}
+              />
+            </motion.div>
+
+            {/* Central content */}
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Logo pulse */}
+              <motion.div
+                className="relative mb-8"
+                initial={{ scale: 0.3, opacity: 0, rotate: -180 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.2,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                }}
+              >
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/40">
+                  <Music className="w-12 h-12 text-white" />
+                </div>
+                {/* Ring pulse */}
+                <motion.div
+                  className="absolute inset-0 rounded-full border-2 border-purple-400/50"
+                  initial={{ scale: 1, opacity: 0.8 }}
+                  animate={{ scale: 2.5, opacity: 0 }}
+                  transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-full border border-fuchsia-400/30"
+                  initial={{ scale: 1, opacity: 0.6 }}
+                  animate={{ scale: 3.5, opacity: 0 }}
+                  transition={{ duration: 1.5, delay: 0.7, ease: "easeOut" }}
+                />
+              </motion.div>
+
+              {/* Welcome text */}
+              <motion.p
+                className="text-purple-300/80 text-sm font-medium tracking-[0.3em] uppercase mb-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                Welcome to the Studio
+              </motion.p>
+
+              {/* Artist name */}
+              <motion.h2
+                className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-fuchsia-200 bg-clip-text text-transparent mb-6"
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.9,
+                  type: "spring",
+                  stiffness: 100,
+                }}
+              >
+                {transitionArtist}
+              </motion.h2>
+
+              {/* Loading bar */}
+              <motion.div
+                className="w-48 h-1 rounded-full overflow-hidden bg-white/10"
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                transition={{ duration: 0.4, delay: 1.2 }}
+              >
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1.0, delay: 1.3, ease: "easeInOut" }}
+                />
+              </motion.div>
+
+              <motion.p
+                className="text-white/30 text-xs mt-4 tracking-wider"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.5 }}
+              >
+                Preparing your dashboard…
+              </motion.p>
+            </div>
+
+            {/* Floating particles during transition */}
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: 3 + Math.random() * 4,
+                  height: 3 + Math.random() * 4,
+                  background: `rgba(${168 + Math.random() * 87}, ${85 + Math.random() * 100}, ${247}, ${0.3 + Math.random() * 0.4})`,
+                  left: `${10 + Math.random() * 80}%`,
+                  top: `${10 + Math.random() * 80}%`,
+                }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{
+                  opacity: [0, 1, 0],
+                  scale: [0, 1.5, 0],
+                  y: [0, -60 - Math.random() * 80],
+                }}
+                transition={{
+                  duration: 1.5 + Math.random(),
+                  delay: 0.3 + Math.random() * 1.2,
+                  ease: "easeOut",
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

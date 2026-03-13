@@ -76,7 +76,7 @@ export default function StreamRoyaleAdmin() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/40 hover:text-white"
+              className="text-white/40 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>

@@ -430,7 +430,7 @@ export default function ArtistDirectory() {
                     variant="ghost"
                     size="sm"
                     onClick={clearAllFilters}
-                    className="text-purple-300 hover:text-white"
+                    className="text-purple-300 hover:text-white hover:bg-white/10"
                   >
                     <X size={14} className="mr-1" />
                     Réinitialiser

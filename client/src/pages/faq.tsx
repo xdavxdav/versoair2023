@@ -3,6 +3,7 @@
 // Location: client/src/pages/faq.tsx
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, Link } from "wouter";
 import {
@@ -361,6 +362,7 @@ function timeAgo(dateStr: string): string {
 // FAQ PAGE COMPONENT
 // ═════════════════════════════════════════════════════════
 export default function FaqPage() {
+  const { user: faqUser } = useAuth();
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(location.split("?")[1] || "");
   const initialSearch = params.get("search") || "";
@@ -519,7 +521,7 @@ export default function FaqPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          authorId: 1, // TODO: use real auth
+          authorId: faqUser?.id ? parseInt(faqUser.id) : 1,
           content: replyContent,
           parentCommentId: replyingTo,
         }),
@@ -574,7 +576,7 @@ export default function FaqPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          authorId: 1, // TODO: use real auth
+          authorId: faqUser?.id ? parseInt(faqUser.id) : 1,
           title: newTitle,
           content: newContent,
           faqCategory: newCategory,

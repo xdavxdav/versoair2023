@@ -155,6 +155,7 @@ interface PublicStats {
   totalBusinesses: number;
   businessesByCountry: Record<string, number>;
   categoriesCount: number;
+  countriesCount: number;
   jobListings: number;
   recentListings: Array<{ id: string; name: string; location: string }>;
   topCategories: Array<{ name: string; count: number }>;
@@ -1514,7 +1515,7 @@ export default function UserDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden text-slate-300 hover:text-white"
+                className="lg:hidden text-slate-300 hover:text-white hover:bg-slate-700/50"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
               >
                 {showMobileMenu ? (
@@ -1528,7 +1529,7 @@ export default function UserDashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-slate-300 hover:text-white"
+                  className="gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50"
                 >
                   <Home className="h-4 w-4" />
                   <span className="hidden sm:inline">Home</span>
@@ -2171,9 +2172,10 @@ export default function UserDashboard() {
                           Countries
                         </span>
                         <span className="text-lg font-bold text-emerald-400">
-                          {stats?.businessesByCountry
-                            ? Object.keys(stats.businessesByCountry).length
-                            : 0}
+                          {stats?.countriesCount ||
+                            (stats?.businessesByCountry
+                              ? Object.keys(stats.businessesByCountry).length
+                              : 0)}
                         </span>
                       </div>
                     </div>
@@ -2784,9 +2786,10 @@ export default function UserDashboard() {
                   <PublicStatCard
                     title="Countries"
                     value={
-                      stats?.businessesByCountry
+                      stats?.countriesCount ||
+                      (stats?.businessesByCountry
                         ? Object.keys(stats.businessesByCountry).length
-                        : 0
+                        : 0)
                     }
                     icon={MapPin}
                   />
