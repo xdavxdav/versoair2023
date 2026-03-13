@@ -370,7 +370,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
  */
 router.get("/billing-history", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId || req.query.userId;
+    const userId = req.user?.userId || req.query.userId;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = (page - 1) * limit;
@@ -381,13 +381,25 @@ router.get("/billing-history", async (req: Request, res: Response) => {
         .json({ success: false, error: "Authentication required" });
     }
 
+    // Check if transactions table exists before querying
+    const tableCheck = await pool.query(
+      `SELECT to_regclass('public.transactions') AS tbl`,
+    );
+    if (!tableCheck.rows[0]?.tbl) {
+      return res.json({
+        success: true,
+        transactions: [],
+        pagination: { page, limit, total: 0, pages: 0 },
+      });
+    }
+
     const [countResult, dataResult] = await Promise.all([
       pool.query(
         `SELECT COUNT(*) as total FROM transactions WHERE user_id = $1`,
         [userId],
       ),
       pool.query(
-        `SELECT id, amount, type, status, reference, created_at
+        `SELECT id, amount, type, status, reference AS description, created_at AS "createdAt"
          FROM transactions
          WHERE user_id = $1
          ORDER BY created_at DESC
@@ -400,7 +412,7 @@ router.get("/billing-history", async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: dataResult.rows,
+      transactions: dataResult.rows,
       pagination: {
         page,
         limit,
@@ -639,7 +651,7 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const userId = (req as any).userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res
         .status(401)
@@ -881,7 +893,7 @@ router.post("/save-card", async (req: Request, res: Response) => {
  */
 router.get("/my-cards", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res
         .status(401)
@@ -915,7 +927,7 @@ router.get("/my-cards", async (req: Request, res: Response) => {
  */
 router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user?.userId;
     const { cardId } = req.params;
 
     if (!userId) {
@@ -1077,7 +1089,7 @@ router.post("/charge", async (req: Request, res: Response) => {
     const card = cardResult.rows[0];
 
     // Admin role check — admins can charge any card on demand
-    const callerId = (req as any).userId;
+    const callerId = req.user?.userId;
     let isAdminCaller = false;
     if (callerId) {
       const roleCheck = await pool.query(

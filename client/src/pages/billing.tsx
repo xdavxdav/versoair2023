@@ -39,10 +39,24 @@ export default function BillingPage() {
   async function fetchBillingHistory() {
     try {
       setLoading(true);
+      setError(null);
       const res = await authenticatedFetch("/api/v1/payments/billing-history");
-      if (!res.ok) throw new Error("Failed to load billing history");
+      if (!res.ok) {
+        // Surface the actual server error message if available
+        try {
+          const errData = await res.json();
+          const msg = errData?.error?.message || errData?.error || errData?.message;
+          if (res.status === 401) {
+            throw new Error("Session expired. Please sign in again.");
+          }
+          throw new Error(msg || `Failed to load billing history (${res.status})`);
+        } catch (parseErr: any) {
+          if (parseErr.message.includes("Session expired") || parseErr.message.includes("Failed to load")) throw parseErr;
+          throw new Error(`Failed to load billing history (${res.status})`);
+        }
+      }
       const data = await res.json();
-      setTransactions(data.transactions || []);
+      setTransactions(data.transactions || data.data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -53,7 +67,7 @@ export default function BillingPage() {
   async function openCustomerPortal() {
     try {
       setPortalLoading(true);
-      const res = await authenticatedFetch("/api/v1/payments/customer-portal", {
+      const res = await authenticatedFetch("/api/v1/payments/create-portal", {
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to open billing portal");

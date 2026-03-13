@@ -215,7 +215,7 @@ router.post("/subscribe", async (req: Request, res: Response) => {
  */
 router.get("/my", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId || req.query.userId;
+    const userId = req.user?.userId || req.query.userId;
     if (!userId) {
       return res
         .status(401)
@@ -328,7 +328,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).userId || req.body.userId || req.query.userId;
+    const userId = req.user?.userId || req.body.userId || req.query.userId;
 
     if (!userId) {
       return res

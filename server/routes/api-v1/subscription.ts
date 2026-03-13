@@ -193,8 +193,8 @@ function getEffectiveTier(user: any): TierKey {
  */
 router.get("/status", async (req: Request, res: Response) => {
   try {
-    // In production, get userId from auth middleware
-    const userId = (req as any).userId || req.query.userId;
+    // Get userId from auth middleware (globalAuthGate sets req.user)
+    const userId = req.user?.userId || req.query.userId;
     if (!userId) {
       return res
         .status(401)

@@ -112,240 +112,16 @@ const CATEGORIES = [
   },
 ];
 
-// ─── Mock listings ───
-const generateListings = () => [
-  {
-    id: 1,
-    title: "Hand-Carved Mahogany Sculpture",
-    price: 320,
-    image:
-      "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=400&h=400&fit=crop",
-    category: "handmade",
-    condition: "New",
-    seller: {
-      name: "Amara Diallo",
-      avatar:
-        "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop",
-      rating: 4.9,
-      verified: true,
-      memberSince: "2023",
-    },
-    location: "Dakar, Senegal",
-    posted: "2h ago",
-    description:
-      "One-of-a-kind hand-carved sculpture from sustainably sourced mahogany. Each piece tells a story of West African heritage.",
-    views: 342,
-    saves: 28,
-    messages: 5,
-  },
-  {
-    id: 2,
-    title: "Handwoven Kente Cloth — Limited Edition",
-    price: 185,
-    image:
-      "https://images.unsplash.com/photo-1590735213920-68192a487bc2?w=400&h=400&fit=crop",
-    category: "fashion",
-    condition: "New",
-    seller: {
-      name: "Kwame Asante",
-      avatar:
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
-      rating: 5.0,
-      verified: true,
-      memberSince: "2022",
-    },
-    location: "Accra, Ghana",
-    posted: "5h ago",
-    description:
-      "Authentic handwoven Kente cloth with traditional Ashanti patterns. Perfect for ceremonies and art display.",
-    views: 567,
-    saves: 45,
-    messages: 12,
-  },
-  {
-    id: 3,
-    title: 'Professional Studio Monitor 8"',
-    price: 450,
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
-    category: "instruments",
-    condition: "Like New",
-    seller: {
-      name: "Léa Dubois",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-      rating: 4.7,
-      verified: false,
-      memberSince: "2024",
-    },
-    location: "Paris, France",
-    posted: "1d ago",
-    description:
-      "Near-mint condition studio monitors, barely used. Perfect for music production and mastering.",
-    views: 189,
-    saves: 14,
-    messages: 3,
-  },
-  {
-    id: 4,
-    title: "Ceramic Vase Collection — Artisan Series",
-    price: 95,
-    image:
-      "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&h=400&fit=crop",
-    category: "home",
-    condition: "New",
-    seller: {
-      name: "Sofia Martínez",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-      rating: 4.8,
-      verified: true,
-      memberSince: "2023",
-    },
-    location: "Barcelona, Spain",
-    posted: "3h ago",
-    description:
-      "Set of 3 handmade ceramic vases with unique glazing techniques. Each piece is one-of-a-kind.",
-    views: 421,
-    saves: 38,
-    messages: 9,
-  },
-  {
-    id: 5,
-    title: "Leather Workshop — 2-Day Masterclass",
-    price: 120,
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
-    category: "services",
-    condition: "Service",
-    seller: {
-      name: "Marcus Johnson",
-      avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-      rating: 4.9,
-      verified: true,
-      memberSince: "2021",
-    },
-    location: "London, UK",
-    posted: "6h ago",
-    description:
-      "Learn traditional leather crafting techniques in this immersive 2-day hands-on workshop.",
-    views: 654,
-    saves: 52,
-    messages: 18,
-  },
-  {
-    id: 6,
-    title: "Vintage Film Camera — Canon AE-1",
-    price: 280,
-    image:
-      "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=400&fit=crop",
-    category: "photography",
-    condition: "Very Good",
-    seller: {
-      name: "Yuki Tanaka",
-      avatar:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-      rating: 4.6,
-      verified: false,
-      memberSince: "2024",
-    },
-    location: "Tokyo, Japan",
-    posted: "8h ago",
-    description:
-      "Classic Canon AE-1 film camera in excellent working condition. Includes 50mm f/1.8 lens.",
-    views: 312,
-    saves: 22,
-    messages: 7,
-  },
-  {
-    id: 7,
-    title: "Afrobeat Djembe Drum — Hand-carved",
-    price: 210,
-    image:
-      "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=400&h=400&fit=crop",
-    category: "instruments",
-    condition: "New",
-    seller: {
-      name: "Ibrahim Koné",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-      rating: 5.0,
-      verified: true,
-      memberSince: "2022",
-    },
-    location: "Bamako, Mali",
-    posted: "12h ago",
-    description:
-      "Authentic hand-carved djembe drum with goatskin head. Rich, warm tones for professional performance.",
-    views: 478,
-    saves: 41,
-    messages: 15,
-  },
-  {
-    id: 8,
-    title: "Community Garden Plot — Shared Space",
-    price: 0,
-    image:
-      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
-    category: "community",
-    condition: "Free",
-    seller: {
-      name: "Community Collective",
-      avatar:
-        "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=100&h=100&fit=crop",
-      rating: 4.9,
-      verified: true,
-      memberSince: "2020",
-    },
-    location: "Montreal, Canada",
-    posted: "1d ago",
-    description:
-      "Free community garden plot available for members. Share seeds, tools, and harvest with neighbors.",
-    views: 892,
-    saves: 67,
-    messages: 34,
-  },
-];
+// ─── Listings (populated from API / user submissions) ───
+const generateListings = (): any[] => [];
 
-// ─── Community activity feed ───
-const COMMUNITY_ACTIVITY = [
-  {
-    user: "Amara D.",
-    action: "listed a new sculpture",
-    time: "2m ago",
-    avatar:
-      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=40&h=40&fit=crop",
-  },
-  {
-    user: "Kwame A.",
-    action: "joined the Artisan Guild",
-    time: "15m ago",
-    avatar:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop",
-  },
-  {
-    user: "Sofia M.",
-    action: "completed a custom order",
-    time: "1h ago",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop",
-  },
-  {
-    user: "Marcus J.",
-    action: "is hosting a workshop",
-    time: "2h ago",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop",
-  },
-  {
-    user: "Ibrahim K.",
-    action: "shared a creation process",
-    time: "3h ago",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop",
-  },
-];
+// ─── Community activity feed (populated from real events) ───
+const COMMUNITY_ACTIVITY: {
+  user: string;
+  action: string;
+  time: string;
+  avatar: string;
+}[] = [];
 
 // ─── Condition badge colors ───
 const conditionStyle = (c: string) => {
@@ -1130,22 +906,32 @@ export default function MarketplacePage() {
                   <Search className={`w-8 h-8 ${t.textMuted}`} />
                 </div>
                 <p className={`text-lg font-semibold ${t.text} mb-1`}>
-                  No listings found
+                  {listings.length === 0
+                    ? "Marketplace is ready!"
+                    : "No listings found"}
                 </p>
                 <p className={`text-sm ${t.textMuted} mb-4`}>
-                  Try adjusting your filters or search query
+                  {listings.length === 0
+                    ? "Be the first to create a listing and start the community."
+                    : "Try adjusting your filters or search query"}
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
-                    setActiveCategory("all");
-                    setSearchQuery("");
-                    setPriceRange([0, 5000]);
+                    if (listings.length === 0) {
+                      setShowCreateListing(true);
+                    } else {
+                      setActiveCategory("all");
+                      setSearchQuery("");
+                      setPriceRange([0, 5000]);
+                    }
                   }}
                   className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
                 >
-                  Clear All Filters
+                  {listings.length === 0
+                    ? "Create First Listing"
+                    : "Clear All Filters"}
                 </motion.button>
               </motion.div>
             )}
@@ -1211,40 +997,47 @@ export default function MarketplacePage() {
                 <h3 className={`font-bold ${t.text}`}>Artisan Spotlight</h3>
               </div>
               <div className="space-y-3">
-                {listings.slice(0, 3).map((item) => (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ x: 4 }}
-                    className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} cursor-pointer transition-all`}
-                  >
-                    <img
-                      src={item.seller.avatar}
-                      alt={item.seller.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm font-medium ${t.text} flex items-center gap-1`}
-                      >
-                        {item.seller.name}
-                        {item.seller.verified && (
-                          <BadgeCheck className="w-3.5 h-3.5 text-blue-400" />
-                        )}
-                      </p>
-                      <p className={`text-xs ${t.textMuted}`}>
-                        Member since {item.seller.memberSince}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-cyan-400 text-cyan-400" />
-                      <span
-                        className={`text-xs font-medium ${t.textSecondary}`}
-                      >
-                        {item.seller.rating}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
+                {listings.length > 0 ? (
+                  listings.slice(0, 3).map((item) => (
+                    <motion.div
+                      key={item.id}
+                      whileHover={{ x: 4 }}
+                      className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} cursor-pointer transition-all`}
+                    >
+                      <img
+                        src={item.seller.avatar}
+                        alt={item.seller.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium ${t.text} flex items-center gap-1`}
+                        >
+                          {item.seller.name}
+                          {item.seller.verified && (
+                            <BadgeCheck className="w-3.5 h-3.5 text-blue-400" />
+                          )}
+                        </p>
+                        <p className={`text-xs ${t.textMuted}`}>
+                          Member since {item.seller.memberSince}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Star className="w-3 h-3 fill-cyan-400 text-cyan-400" />
+                        <span
+                          className={`text-xs font-medium ${t.textSecondary}`}
+                        >
+                          {item.seller.rating}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className={`text-xs ${t.textMuted} text-center py-4`}>
+                    Artisan spotlight will appear as sellers join the
+                    marketplace.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1260,9 +1053,13 @@ export default function MarketplacePage() {
               </p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 {[
-                  { label: "Artisans", value: "2.4K" },
-                  { label: "Listings", value: "8.9K" },
-                  { label: "Countries", value: "47" },
+                  {
+                    label: "Artisans",
+                    value:
+                      listings.filter((l) => l.seller?.verified).length || "—",
+                  },
+                  { label: "Listings", value: listings.length || "—" },
+                  { label: "Categories", value: CATEGORIES.length - 1 },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -1385,20 +1182,24 @@ export default function MarketplacePage() {
               className="fixed inset-0 bg-black/60 z-[70] backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
+              drag
+              dragMomentum={false}
+              dragElastic={0.05}
+              initial={{ opacity: 0, scale: 0.92, x: "-50%", y: "-50%" }}
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ type: "spring", damping: 26, stiffness: 320 }}
-              className={`fixed z-[70] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${t.bgCard} rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
+              style={{ top: "50%", left: "50%" }}
+              className={`fixed z-[70] w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${t.bgCard} rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 shrink-0">
+              {/* Header — drag handle */}
+              <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing select-none">
                 <div>
                   <h2 className={`text-base font-bold ${t.text}`}>
                     New Listing
                   </h2>
                   <p className={`text-xs ${t.textMuted} mt-0.5`}>
-                    Share with the community
+                    Share with the community · drag to move
                   </p>
                 </div>
                 <motion.button
