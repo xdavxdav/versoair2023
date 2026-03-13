@@ -15,9 +15,14 @@ const isRemoteDb =
   !databaseUrl.includes("localhost") &&
   !databaseUrl.includes("127.0.0.1");
 
+// Ensure sslmode is in the connection string for Neon
+const connectionStringWithSsl = databaseUrl && !databaseUrl.includes('sslmode=')
+  ? `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=require`
+  : databaseUrl;
+
 const poolConfig = isRemoteDb
   ? {
-      connectionString: databaseUrl,
+      connectionString: connectionStringWithSsl,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
