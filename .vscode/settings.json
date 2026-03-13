@@ -31,5 +31,7 @@
   "javascript.suggest.autoImports": true,
   "editor.quickSuggestions": {
     "strings": true
-  }
+  },
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env"
 }

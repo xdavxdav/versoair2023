@@ -793,7 +793,7 @@ export default function ArtistPortal() {
     return displayTracks.map((t) => ({
       id: String(t.id),
       title: t.title,
-      type: "single" as const,
+      type: ((t as any).type || "single") as "single" | "album" | "ep",
       releaseDate: t.releaseDate
         ? new Date(t.releaseDate).toISOString().split("T")[0]
         : "—",
@@ -829,7 +829,7 @@ export default function ArtistPortal() {
         track.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
         displayArtists
           .find((a) => a.id === track.artistId)
-          ?.stageName.toLowerCase()
+          ?.name.toLowerCase()
           .startsWith(searchQuery.toLowerCase());
       const matchesGenre =
         selectedGenre === "all" || (track as any).genre === selectedGenre;
@@ -1179,8 +1179,7 @@ export default function ArtistPortal() {
                       <div>
                         <p className="text-white font-medium">{track.title}</p>
                         <p className="text-purple-200 text-sm">
-                          {artist?.stageName} •{" "}
-                          {(track as any).genre || "Unknown"}
+                          {artist?.name} • {(track as any).genre || "Unknown"}
                         </p>
                       </div>
                     </div>
@@ -1236,14 +1235,12 @@ export default function ArtistPortal() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={(artist as any).avatar || ""} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                        {artist.stageName?.charAt(0) ?? "?"}
+                        {artist.name?.charAt(0) ?? "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <p className="text-white font-medium">
-                          {artist.stageName}
-                        </p>
+                        <p className="text-white font-medium">{artist.name}</p>
                         <Badge
                           variant="outline"
                           className="border-purple-400 text-purple-400 text-xs"
@@ -1437,7 +1434,7 @@ export default function ArtistPortal() {
                           {track.title}
                         </h3>
                         <p className="text-purple-200 text-sm truncate">
-                          {artist?.stageName || "Unknown"}
+                          {artist?.name || "Unknown"}
                         </p>
                       </div>
                       <DropdownMenu>
@@ -1598,7 +1595,7 @@ export default function ArtistPortal() {
                       )}
                     </p>
                     <p className="text-purple-200 text-sm">
-                      {artist?.stageName || "Unknown"} •{" "}
+                      {artist?.name || "Unknown"} •{" "}
                       {(track as any).genre || "Unknown"} •{" "}
                       {(track as any).bpm || "—"} BPM •{" "}
                       {(track as any).musicalKey || (track as any).key || "—"}
@@ -2695,7 +2692,7 @@ export default function ArtistPortal() {
                   <p className="text-purple-200 text-sm">
                     {
                       displayArtists.find((a) => a.id === currentTrack.artistId)
-                        ?.stageName
+                        ?.name
                     }
                   </p>
                 </div>

@@ -36,6 +36,7 @@ import { setupCategoryIntegrityCheck } from "./services/category-integrity-check
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { autoSeedArtists } from "./services/auto-seed-artists";
+import { ensureAllTables } from "./services/ensure-tables";
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { setupRoyaltyEngine } from "./services/royalty-engine";
@@ -161,6 +162,10 @@ app.use((req, res, next) => {
   // Initialize email transporter for notifications
   initializeEmailTransporter();
   console.log("✅ [SERVER] Email service initialized");
+
+  // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
+  await ensureAllTables();
+  console.log("✅ [SERVER] Database tables verified");
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
