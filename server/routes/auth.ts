@@ -983,7 +983,284 @@ router.post(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 🔐 SUPERUSER ADMIN ENDPOINTS — credential & user management from Vault
+// � USER ACCOUNT — self-service profile, password, and preferences
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /auth/account/profile
+ * Get current user's profile information
+ */
+router.get(
+  "/account/profile",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    const [user] = await db
+      .select({
+        id: schema.users.id,
+        username: schema.users.username,
+        email: schema.users.email,
+        role: schema.users.role,
+        isVerified: schema.users.isVerified,
+        subscriptionTier: schema.users.subscriptionTier,
+        subscriptionStatus: schema.users.subscriptionStatus,
+        oauthProvider: schema.users.oauthProvider,
+        createdAt: schema.users.createdAt,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    res.json({ success: true, profile: user });
+  }),
+);
+
+/**
+ * PUT /auth/account/profile
+ * Update current user's display name (username)
+ */
+router.put(
+  "/account/profile",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    const { username } = req.body;
+    if (
+      !username ||
+      typeof username !== "string" ||
+      username.trim().length < 2
+    ) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Username must be at least 2 characters",
+        });
+      return;
+    }
+    // Check uniqueness
+    const existing = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(
+        and(eq(schema.users.username, username.trim()), sql`id != ${userId}`),
+      )
+      .limit(1);
+    if (existing.length > 0) {
+      res
+        .status(409)
+        .json({ success: false, message: "Username already taken" });
+      return;
+    }
+    await db
+      .update(schema.users)
+      .set({ username: username.trim() })
+      .where(eq(schema.users.id, userId));
+    res.json({ success: true, message: "Profile updated" });
+  }),
+);
+
+/**
+ * POST /auth/account/change-password
+ * Authenticated user changes their own password
+ */
+router.post(
+  "/account/change-password",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "Both current and new password required",
+        });
+      return;
+    }
+    if (newPassword.length < 8) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: "New password must be at least 8 characters",
+        });
+      return;
+    }
+    const [user] = await db
+      .select({
+        password: schema.users.password,
+        oauthProvider: schema.users.oauthProvider,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    if (user.oauthProvider) {
+      res
+        .status(400)
+        .json({
+          success: false,
+          message: `Cannot change password for ${user.oauthProvider} accounts`,
+        });
+      return;
+    }
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      res
+        .status(401)
+        .json({ success: false, message: "Current password is incorrect" });
+      return;
+    }
+    const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await db
+      .update(schema.users)
+      .set({ password: hashed })
+      .where(eq(schema.users.id, userId));
+    res.json({ success: true, message: "Password changed successfully" });
+  }),
+);
+
+/**
+ * GET /auth/account/preferences
+ * Get current user's preferences (stored as user_settings with sector='account')
+ */
+router.get(
+  "/account/preferences",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    const settings = await db
+      .select()
+      .from(schema.userSettings)
+      .where(
+        and(
+          eq(schema.userSettings.userId, userId),
+          eq(schema.userSettings.sector, "account"),
+        ),
+      );
+    // Convert to a simple key-value object
+    const prefs: Record<string, any> = {};
+    for (const s of settings) {
+      try {
+        prefs[s.settingKey] =
+          s.dataType === "boolean"
+            ? s.settingValue === "true"
+            : s.dataType === "number"
+              ? Number(s.settingValue)
+              : s.dataType === "json"
+                ? JSON.parse(s.settingValue || "{}")
+                : s.settingValue;
+      } catch {
+        prefs[s.settingKey] = s.settingValue;
+      }
+    }
+    res.json({ success: true, preferences: prefs });
+  }),
+);
+
+/**
+ * PUT /auth/account/preferences
+ * Save user preferences (bulk upsert)
+ */
+router.put(
+  "/account/preferences",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    const { preferences } = req.body;
+    if (!preferences || typeof preferences !== "object") {
+      res
+        .status(400)
+        .json({ success: false, message: "preferences object required" });
+      return;
+    }
+    // Upsert each preference key
+    for (const [key, value] of Object.entries(preferences)) {
+      const dataType =
+        typeof value === "boolean"
+          ? "boolean"
+          : typeof value === "number"
+            ? "number"
+            : typeof value === "object"
+              ? "json"
+              : "string";
+      const settingValue =
+        typeof value === "object" ? JSON.stringify(value) : String(value);
+
+      await db
+        .insert(schema.userSettings)
+        .values({
+          userId,
+          sector: "account",
+          settingKey: key,
+          settingValue,
+          dataType,
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.userSettings.userId,
+            schema.userSettings.sector,
+            schema.userSettings.settingKey,
+          ],
+          set: { settingValue, dataType, updatedAt: new Date() },
+        });
+    }
+    res.json({ success: true, message: "Preferences saved" });
+  }),
+);
+
+/**
+ * DELETE /auth/account
+ * Soft-delete: user can request account deletion
+ */
+router.delete(
+  "/account",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+    // Soft delete: scramble email & username, mark as deactivated
+    const scramble = `deleted_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    await db
+      .update(schema.users)
+      .set({
+        email: `${scramble}@deleted.versoair.local`,
+        username: scramble,
+        role: "deleted",
+        isVerified: false,
+      })
+      .where(eq(schema.users.id, userId));
+    res.json({ success: true, message: "Account deleted" });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// �🔐 SUPERUSER ADMIN ENDPOINTS — credential & user management from Vault
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Middleware: verify the caller is an authenticated superuser */

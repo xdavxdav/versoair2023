@@ -7,8 +7,8 @@ import {
   Globe,
   Lock,
   LogOut,
-  CreditCard,
   ShoppingBag,
+  User,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -40,6 +40,7 @@ export default function Navbar({
   const [isMobile, setIsMobile] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [marketplaceSos, setMarketplaceSos] = useState(false);
+
   const [location, navigate] = useLocation();
   const { isAuthenticated, loading: authLoading, tier } = useSubscription();
   const { user, logout } = useAuthContext();
@@ -167,19 +168,12 @@ export default function Navbar({
           </Link>
 
           {/* Main Navigation - Desktop */}
-          <div className="hidden xl:flex items-center space-x-3 flex-shrink-0">
+          <div className="hidden xl:flex items-center space-x-1 flex-shrink-0">
             <Link
               href="/"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
             >
               Home
-            </Link>
-
-            <Link
-              href="/about"
-              className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
-            >
-              About
             </Link>
 
             {/* 🌍 Geo Admin Portal Link */}
@@ -207,40 +201,6 @@ export default function Navbar({
                 </span>
               </Link>
             )}
-
-            {/* Services Dropdown */}
-            <div className="relative group">
-              <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
-                Services <ChevronDown className="ml-1 h-3 w-3" />
-              </button>
-              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
-                <Link
-                  href="/services"
-                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-                >
-                  All Services
-                </Link>
-                <div className="border-t border-gray-200 my-1"></div>
-                <Link
-                  href="/services/news"
-                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-                >
-                  News & Updates
-                </Link>
-                <Link
-                  href="/services/careers"
-                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-                >
-                  Careers
-                </Link>
-                <Link
-                  href="/services/contractors"
-                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
-                >
-                  Contractors
-                </Link>
-              </div>
-            </div>
 
             {/* Entreprises Dropdown */}
             <div className="relative group">
@@ -307,6 +267,47 @@ export default function Navbar({
               </div>
             </div>
 
+            {/* Services & More Dropdown */}
+            <div className="relative group">
+              <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
+                Services <ChevronDown className="ml-1 h-3 w-3" />
+              </button>
+              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
+                <Link
+                  href="/services"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap font-medium"
+                >
+                  All Services
+                </Link>
+                <div className="border-t border-gray-200 my-1"></div>
+                <Link
+                  href="/services/news"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  News & Updates
+                </Link>
+                <Link
+                  href="/services/careers"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  Careers
+                </Link>
+                <Link
+                  href="/services/contractors"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  Contractors
+                </Link>
+                <div className="border-t border-gray-200 my-1"></div>
+                <Link
+                  href="/about"
+                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  About Us
+                </Link>
+              </div>
+            </div>
+
             <Link
               href="/reservations"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
@@ -343,7 +344,7 @@ export default function Navbar({
               <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
                 Assistance <ChevronDown className="ml-1 h-3 w-3" />
               </button>
-              <div className="absolute top-full left-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
+              <div className="absolute top-full right-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
                 <Link
                   href="/sav"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
@@ -576,40 +577,27 @@ export default function Navbar({
               <MapPin className="h-4 w-4" />
             </Button>
 
-            {/* Search: Loupe icon (tablet md–lg only), original input (lg+) */}
+            {/* Search icon — opens modal on all screen sizes */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="hidden md:block lg:hidden text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
+              className="hidden md:block text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
             </button>
-            <div className="hidden lg:block flex-shrink-0">
-              <label className="search relative" htmlFor="inpt_search">
-                <input
-                  id="inpt_search"
-                  type="text"
-                  placeholder="Search..."
-                  className="w-32 xl:w-36 px-3 py-2 pl-8 pr-3 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent transition-all duration-300"
-                />
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
-              </label>
-            </div>
 
             {/* User Actions - Always visible */}
             {user ? (
               <div className="flex items-center gap-1.5">
-                {(user.role === "admin" ||
-                  user.role === "moderator" ||
-                  user.role === "superuser" ||
-                  user.isAdmin) && (
-                  <Link href="/account/cards" className="flex-shrink-0">
-                    <button className="flex items-center gap-1 bg-amber-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-amber-700 transition-colors text-xs font-medium whitespace-nowrap">
-                      <CreditCard className="h-3 w-3" />
-                      <span className="hidden lg:inline">Card Vault</span>
-                    </button>
-                  </Link>
-                )}
+                <button
+                  onClick={() => {
+                    navigate("/dashboard?from=sv");
+                  }}
+                  className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
+                  title="Dashboard"
+                >
+                  <User className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={async () => {
                     await logout();
@@ -638,6 +626,7 @@ export default function Navbar({
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
       />
+
     </nav>
   );
 }

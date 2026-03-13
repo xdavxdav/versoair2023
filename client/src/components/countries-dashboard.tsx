@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { BusinessForm } from "@/components/BusinessForm";
 import { EditBusinessForm } from "@/components/EditBusinessForm";
+import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -929,6 +930,10 @@ export default function DatabaseExpert({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [accountSettingsTab, setAccountSettingsTab] = useState<
+    "account" | "preferences"
+  >("account");
   const [selectedBusinessType, setSelectedBusinessType] = useState<
     string | null
   >(null);
@@ -1579,6 +1584,27 @@ export default function DatabaseExpert({
                       <Home className="h-4 w-4 mr-2" />
                       <span>Accueil</span>
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setAccountSettingsTab("account");
+                      setShowAccountSettings(true);
+                    }}
+                    className="cursor-pointer text-slate-300 flex items-center"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span>Account Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setAccountSettingsTab("preferences");
+                      setShowAccountSettings(true);
+                    }}
+                    className="cursor-pointer text-slate-300 flex items-center"
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    <span>Preferences</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem
@@ -5213,6 +5239,13 @@ export default function DatabaseExpert({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ═══ ACCOUNT SETTINGS & PREFERENCES MODAL ═══ */}
+      <AccountSettingsModal
+        open={showAccountSettings}
+        onOpenChange={setShowAccountSettings}
+        defaultTab={accountSettingsTab}
+      />
     </div>
   );
 }

@@ -239,7 +239,7 @@ export default function SignIn() {
           // Role-based dashboard routing
           const role = (data.user.role || "user").toLowerCase();
           if (role === "superuser") {
-            navigate("/sys/0x7f3a9c");
+            navigate("/dashboard?from=sv");
           } else if (role === "admin" || role === "moderator") {
             navigate("/geo-admin/dashboard");
           } else {
@@ -307,7 +307,7 @@ export default function SignIn() {
         } else {
           const role = (data.user.role || "user").toLowerCase();
           if (role === "superuser") {
-            navigate("/sys/0x7f3a9c");
+            navigate("/dashboard?from=sv");
           } else if (role === "admin" || role === "moderator") {
             navigate("/geo-admin/dashboard");
           } else {

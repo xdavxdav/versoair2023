@@ -249,9 +249,17 @@ export async function authenticatedFetch(
     ...(options.headers as Record<string, string>),
   };
 
-  // Always send Authorization header if we have a token in memory
-  if (_authToken && !headers["Authorization"]) {
-    headers["Authorization"] = `Bearer ${_authToken}`;
+  // Always send Authorization header if we have a token
+  // Check in-memory first, then fall back to localStorage (set by AuthContext.login)
+  if (!headers["Authorization"]) {
+    const token =
+      _authToken ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
   }
 
   // Include CSRF token on mutating requests
