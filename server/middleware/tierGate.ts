@@ -52,7 +52,7 @@ async function getEffectiveTier(userId: number): Promise<string> {
 export function requireTier(minimumTier: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).userId || req.query.userId;
+      const userId = req.user?.userId || req.query.userId;
 
       if (!userId) {
         return res.status(401).json({

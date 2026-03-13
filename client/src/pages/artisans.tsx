@@ -42,89 +42,8 @@ interface Artisan {
   specializations: string[];
 }
 
-// Mock artisan data - replace with API call
-const ARTISANS: Artisan[] = [
-  {
-    id: "1",
-    name: "Jean Koffi - Master Weaver",
-    specialty: "Traditional Textile Weaving",
-    location: "Abidjan, Ivory Coast",
-    rating: 4.8,
-    reviews: 52,
-    yearsOfExperience: 25,
-    phone: "+225 XX XX XX XX",
-    email: "jean.koffi@artisans.ci",
-    specializations: ["Hand weaving", "Kente cloth", "Geometric patterns"],
-  },
-  {
-    id: "2",
-    name: "Marie Diallo - Ceramics Artist",
-    specialty: "Handcrafted Pottery",
-    location: "Yamoussoukro, Ivory Coast",
-    rating: 4.9,
-    reviews: 38,
-    yearsOfExperience: 18,
-    phone: "+225 XX XX XX XX",
-    email: "marie.diallo@artisans.ci",
-    specializations: [
-      "Ceramic vessels",
-      "Decorative tiles",
-      "Sculptural forms",
-    ],
-  },
-  {
-    id: "3",
-    name: "Amara Traore - Metalwork Master",
-    specialty: "Traditional Metalwork",
-    location: "Bouaké, Ivory Coast",
-    rating: 4.7,
-    reviews: 45,
-    yearsOfExperience: 30,
-    phone: "+225 XX XX XX XX",
-    email: "amara.traore@artisans.ci",
-    specializations: ["Copper work", "Iron gates", "Decorative sculptures"],
-  },
-  {
-    id: "4",
-    name: "Yacine Coulibaly - Wood Carver",
-    specialty: "Traditional Wood Carving",
-    location: "Korhogo, Ivory Coast",
-    rating: 4.6,
-    reviews: 41,
-    yearsOfExperience: 22,
-    phone: "+225 XX XX XX XX",
-    email: "yacine.coulibaly@artisans.ci",
-    specializations: ["Mask carving", "Furniture design", "Relief sculptures"],
-  },
-  {
-    id: "5",
-    name: "Awa Sow - Leather Craftsperson",
-    specialty: "Leather Goods Crafting",
-    location: "San Pédro, Ivory Coast",
-    rating: 4.8,
-    reviews: 36,
-    yearsOfExperience: 16,
-    phone: "+225 XX XX XX XX",
-    email: "awa.sow@artisans.ci",
-    specializations: [
-      "Leather bags",
-      "Traditional belts",
-      "Decorative pouches",
-    ],
-  },
-  {
-    id: "6",
-    name: "Ousmane Ba - Jewelry Designer",
-    specialty: "Traditional Jewelry",
-    location: "Daloa, Ivory Coast",
-    rating: 4.9,
-    reviews: 50,
-    yearsOfExperience: 20,
-    phone: "+225 XX XX XX XX",
-    email: "ousmane.ba@artisans.ci",
-    specializations: ["Gold work", "Beaded jewelry", "Silver crafting"],
-  },
-];
+// Artisan data — populated as craftspeople join the platform
+const ARTISANS: Artisan[] = [];
 
 export default function ArtisansDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -357,22 +276,32 @@ export default function ArtisansDirectory() {
           </motion.div>
         ) : (
           <Card className="text-center py-12 border-0 shadow-lg bg-gray-50">
-            <Search className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <Award className="h-12 w-12 mx-auto text-emerald-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
-              No artisans found
+              {ARTISANS.length === 0 &&
+              !searchQuery &&
+              selectedSpecialty === "all"
+                ? "Artisan Directory Ready"
+                : "No artisans found"}
             </h3>
             <p className="text-gray-500 mb-4">
-              Try adjusting your search or filter criteria
+              {ARTISANS.length === 0 &&
+              !searchQuery &&
+              selectedSpecialty === "all"
+                ? "Artisan profiles will appear here as craftspeople join the platform."
+                : "Try adjusting your search or filter criteria"}
             </p>
-            <Button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedSpecialty("all");
-              }}
-              variant="outline"
-            >
-              Clear Filters
-            </Button>
+            {(searchQuery || selectedSpecialty !== "all") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedSpecialty("all");
+                }}
+                variant="outline"
+              >
+                Clear Filters
+              </Button>
+            )}
           </Card>
         )}
 

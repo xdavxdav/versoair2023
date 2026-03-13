@@ -71,6 +71,8 @@ interface Pagination {
 interface UserFormData {
   username: string;
   email: string;
+  emailLocalPart: string;
+  emailDomain: string;
   password: string;
   role: string;
   gateUsername: string;
@@ -197,6 +199,27 @@ const SPECIALIZATIONS = [
   "Other",
 ];
 
+const EMAIL_DOMAIN_OPTIONS = [
+  {
+    value: ".test",
+    label: ".test",
+    desc: "Testing — general access, auto-verified",
+    color: "text-purple-600",
+  },
+  {
+    value: ".ca",
+    label: ".ca",
+    desc: "Internal employee",
+    color: "text-blue-600",
+  },
+  {
+    value: ".com",
+    label: ".com",
+    desc: "External employee",
+    color: "text-slate-600",
+  },
+];
+
 const API_BASE_URL =
   typeof window !== "undefined" ? import.meta.env.VITE_API_URL || "" : "";
 
@@ -226,6 +249,8 @@ export function UsersSection() {
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
     email: "",
+    emailLocalPart: "",
+    emailDomain: ".com",
     password: "",
     role: "user",
     gateUsername: "",
@@ -289,7 +314,18 @@ export function UsersSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.username || !formData.email) {
+
+    // For new users, construct email from parts
+    let finalEmail = formData.email;
+    if (!editingUser && formData.emailLocalPart) {
+      finalEmail = `${formData.emailLocalPart}@versoair${formData.emailDomain}`;
+    }
+
+    if (
+      !formData.username ||
+      (!editingUser && !formData.emailLocalPart) ||
+      (editingUser && !formData.email)
+    ) {
       setError("Username and email are required");
       return;
     }
@@ -297,7 +333,7 @@ export function UsersSection() {
       setError("Password is required for new users");
       return;
     }
-    if (!isValidEmail(formData.email)) {
+    if (!isValidEmail(finalEmail)) {
       setError("Please enter a valid email address");
       return;
     }
@@ -314,6 +350,9 @@ export function UsersSection() {
       return;
     }
 
+    // Auto-verify .test domain accounts
+    const autoVerify = !editingUser && formData.emailDomain === ".test";
+
     setSubmitting(true);
     setError("");
 
@@ -325,10 +364,10 @@ export function UsersSection() {
 
       const payload: Record<string, any> = {
         username: formData.username,
-        email: formData.email,
+        email: finalEmail,
         role: formData.role,
         gateUsername: formData.gateUsername || null,
-        isVerified: formData.isVerified,
+        isVerified: autoVerify ? true : formData.isVerified,
         subscriptionTier: formData.subscriptionTier,
         portalAccess: formData.portalAccess,
       };
@@ -433,6 +472,8 @@ export function UsersSection() {
     setFormData({
       username: "",
       email: "",
+      emailLocalPart: "",
+      emailDomain: ".com",
       password: "",
       role: "user",
       gateUsername: "",
@@ -452,9 +493,13 @@ export function UsersSection() {
 
   const openEdit = (user: User) => {
     setEditingUser(user);
+    // Parse existing email into parts if it's a versoair address
+    const emailParts = user.email.match(/^(.+)@versoair(\..+)$/);
     setFormData({
       username: user.username,
       email: user.email,
+      emailLocalPart: emailParts ? emailParts[1] : user.email.split("@")[0],
+      emailDomain: emailParts ? emailParts[2] : ".com",
       password: "",
       role: user.role,
       gateUsername: user.gateUsername || "",
@@ -943,32 +988,102 @@ export function UsersSection() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Email *
                 </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className={`w-full px-3 py-2 pr-9 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                      formData.email && !isValidEmail(formData.email)
-                        ? "border-red-400"
-                        : formData.email && isValidEmail(formData.email)
-                          ? "border-green-400"
-                          : "border-slate-300"
-                    }`}
-                    placeholder="user@example.com"
-                  />
-                  {formData.email && (
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                      {isValidEmail(formData.email) ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-400" />
-                      )}
+                {editingUser ? (
+                  /* Editing: show full email field */
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className={`w-full px-3 py-2 pr-9 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                        formData.email && !isValidEmail(formData.email)
+                          ? "border-red-400"
+                          : formData.email && isValidEmail(formData.email)
+                            ? "border-green-400"
+                            : "border-slate-300"
+                      }`}
+                      placeholder="user@example.com"
+                    />
+                    {formData.email && (
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                        {isValidEmail(formData.email) ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Creating: username + @versoair + domain picker */
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-0">
+                      <input
+                        type="text"
+                        value={formData.emailLocalPart}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            emailLocalPart: e.target.value.replace(
+                              /[^a-zA-Z0-9._-]/g,
+                              "",
+                            ),
+                          })
+                        }
+                        className="flex-1 px-3 py-2 border border-slate-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="username"
+                      />
+                      <span className="px-2 py-2 bg-slate-100 border-y border-slate-300 text-sm text-slate-500 font-mono whitespace-nowrap">
+                        @versoair
+                      </span>
+                      <select
+                        value={formData.emailDomain}
+                        onChange={(e) => {
+                          const domain = e.target.value;
+                          setFormData({
+                            ...formData,
+                            emailDomain: domain,
+                            // Auto-verify .test accounts
+                            isVerified:
+                              domain === ".test" ? true : formData.isVerified,
+                          });
+                        }}
+                        className="px-2 py-2 border border-slate-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white font-mono"
+                      >
+                        {EMAIL_DOMAIN_OPTIONS.map((d) => (
+                          <option key={d.value} value={d.value}>
+                            {d.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
-                </div>
+                    {formData.emailLocalPart && (
+                      <p className="text-xs text-slate-500">
+                        →{" "}
+                        <span className="font-mono text-blue-600">
+                          {formData.emailLocalPart}@versoair
+                          {formData.emailDomain}
+                        </span>
+                      </p>
+                    )}
+                    <div className="flex gap-1.5">
+                      {EMAIL_DOMAIN_OPTIONS.map((d) => (
+                        <span
+                          key={d.value}
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            formData.emailDomain === d.value
+                              ? "bg-blue-100 text-blue-700 font-medium"
+                              : "bg-slate-50 text-slate-400"
+                          }`}
+                        >
+                          {d.label} — {d.desc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Phone */}

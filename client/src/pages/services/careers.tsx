@@ -470,12 +470,24 @@ export default function Careers() {
           role: data.user.role,
         });
         setShowAuthPopup(false);
-        setAuthForm({ email: "", password: "", confirmPassword: "", username: "" });
+        setAuthForm({
+          email: "",
+          password: "",
+          confirmPassword: "",
+          username: "",
+        });
         toast({ title: "Welcome!", description: "You're now signed in." });
       } else if (data.success || data.requiresVerification) {
-        // Account created but needs email verification — show in-popup success
+        // Needs email verification — show in-popup verification view
         setAuthVerificationEmail(data.email || authForm.email);
-        setResendMessage("");
+        // If this was a LOGIN attempt that bounced, tell the user they're not verified yet
+        if (authMode === "login" && data.requiresVerification) {
+          setResendMessage(
+            "⚠️ Email not verified yet — check your inbox and click the link first.",
+          );
+        } else {
+          setResendMessage("");
+        }
       } else {
         setAuthError(
           data.message || data.error?.message || "Authentication failed",
@@ -2063,14 +2075,19 @@ export default function Careers() {
                   <Mail className="h-7 w-7 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Check Your Email</h3>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Check Your Email
+                  </h3>
                   <p className="text-sm text-gray-500 mt-1">
                     We sent a verification link to
                   </p>
-                  <p className="text-sm font-semibold text-blue-700 mt-0.5">{authVerificationEmail}</p>
+                  <p className="text-sm font-semibold text-blue-700 mt-0.5">
+                    {authVerificationEmail}
+                  </p>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  Click the link in your email to verify your account, then come back here and sign in.
+                  Click the link in your email to verify your account, then come
+                  back here and sign in.
                 </p>
                 <div className="flex flex-col gap-2 pt-1">
                   <Button
@@ -2084,10 +2101,14 @@ export default function Careers() {
                         const r = await fetch("/auth/resend-verification", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ email: authVerificationEmail }),
+                          body: JSON.stringify({
+                            email: authVerificationEmail,
+                          }),
                         });
                         const d = await r.json();
-                        setResendMessage(d.message || "Verification email resent!");
+                        setResendMessage(
+                          d.message || "Verification email resent!",
+                        );
                       } catch {
                         setResendMessage("Failed to resend. Try again.");
                       } finally {
@@ -2096,11 +2117,17 @@ export default function Careers() {
                     }}
                     className="w-full gap-2"
                   >
-                    {resendingVerification ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {resendingVerification ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
                     Resend Verification Email
                   </Button>
                   {resendMessage && (
-                    <p className="text-xs text-blue-600 font-medium">{resendMessage}</p>
+                    <p className="text-xs text-blue-600 font-medium">
+                      {resendMessage}
+                    </p>
                   )}
                   <Button
                     size="sm"
@@ -2109,7 +2136,12 @@ export default function Careers() {
                       setAuthVerificationEmail("");
                       setAuthMode("login");
                       setAuthError("");
-                      setAuthForm({ email: authVerificationEmail, password: "", confirmPassword: "", username: "" });
+                      setAuthForm({
+                        email: authVerificationEmail,
+                        password: "",
+                        confirmPassword: "",
+                        username: "",
+                      });
                     }}
                   >
                     <User className="h-3.5 w-3.5 mr-1.5" />
@@ -2118,144 +2150,46 @@ export default function Careers() {
                 </div>
               </div>
             ) : (
-            <form onSubmit={handleAuthSubmit} className="p-5 space-y-3">
-              {authMode === "register" && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Username
-                  </label>
-                  <Input
-                    placeholder="Choose a username"
-                    value={authForm.username}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, username: e.target.value })
-                    }
-                    autoComplete="username"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={authForm.email}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, email: e.target.value })
-                    }
-                    autoComplete="email"
-                    className={
-                      authForm.email && !isValidEmail(authForm.email)
-                        ? "border-red-400 pr-8"
-                        : authForm.email && isValidEmail(authForm.email)
-                          ? "border-green-400 pr-8"
-                          : ""
-                    }
-                  />
-                  {authForm.email && (
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                      {isValidEmail(authForm.email) ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-400" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Password
-                </label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={authForm.password}
-                  onChange={(e) =>
-                    setAuthForm({ ...authForm, password: e.target.value })
-                  }
-                  autoComplete={
-                    authMode === "login" ? "current-password" : "new-password"
-                  }
-                />
-                {authMode === "register" && authForm.password && (
-                  <div className="mt-1.5 space-y-1">
-                    <div className="flex gap-1">
-                      {[1, 2, 3].map((level) => (
-                        <div
-                          key={level}
-                          className={`h-1 flex-1 rounded-full transition-colors ${passwordStrengthLevel(authForm.password) >= level ? (passwordStrengthLevel(authForm.password) === 1 ? "bg-red-400" : passwordStrengthLevel(authForm.password) === 2 ? "bg-amber-400" : "bg-green-500") : "bg-gray-200"}`}
-                        />
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-1 gap-0">
-                      <p
-                        className={`text-[11px] flex items-center gap-1 ${checkPasswordLength(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                      >
-                        {checkPasswordLength(authForm.password) ? (
-                          <CheckCircle className="h-3 w-3" />
-                        ) : (
-                          <XCircle className="h-3 w-3" />
-                        )}{" "}
-                        8+ characters
-                      </p>
-                      <p
-                        className={`text-[11px] flex items-center gap-1 ${checkPasswordUpper(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                      >
-                        {checkPasswordUpper(authForm.password) ? (
-                          <CheckCircle className="h-3 w-3" />
-                        ) : (
-                          <XCircle className="h-3 w-3" />
-                        )}{" "}
-                        Uppercase letter
-                      </p>
-                      <p
-                        className={`text-[11px] flex items-center gap-1 ${checkPasswordNumber(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                      >
-                        {checkPasswordNumber(authForm.password) ? (
-                          <CheckCircle className="h-3 w-3" />
-                        ) : (
-                          <XCircle className="h-3 w-3" />
-                        )}{" "}
-                        Number
-                      </p>
-                    </div>
+              <form onSubmit={handleAuthSubmit} className="p-5 space-y-3">
+                {authMode === "register" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Username
+                    </label>
+                    <Input
+                      placeholder="Choose a username"
+                      value={authForm.username}
+                      onChange={(e) =>
+                        setAuthForm({ ...authForm, username: e.target.value })
+                      }
+                      autoComplete="username"
+                    />
                   </div>
                 )}
-              </div>
-              {authMode === "register" && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Confirm Password
+                    Email
                   </label>
                   <div className="relative">
                     <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={authForm.confirmPassword}
+                      type="email"
+                      placeholder="you@example.com"
+                      value={authForm.email}
                       onChange={(e) =>
-                        setAuthForm({
-                          ...authForm,
-                          confirmPassword: e.target.value,
-                        })
+                        setAuthForm({ ...authForm, email: e.target.value })
                       }
-                      autoComplete="new-password"
+                      autoComplete="email"
                       className={
-                        authForm.confirmPassword &&
-                        authForm.confirmPassword !== authForm.password
-                          ? "border-red-400"
-                          : authForm.confirmPassword &&
-                              authForm.confirmPassword === authForm.password
-                            ? "border-green-400"
+                        authForm.email && !isValidEmail(authForm.email)
+                          ? "border-red-400 pr-8"
+                          : authForm.email && isValidEmail(authForm.email)
+                            ? "border-green-400 pr-8"
                             : ""
                       }
                     />
-                    {authForm.confirmPassword && (
+                    {authForm.email && (
                       <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                        {authForm.confirmPassword === authForm.password ? (
+                        {isValidEmail(authForm.email) ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />
                         ) : (
                           <XCircle className="h-4 w-4 text-red-400" />
@@ -2264,59 +2198,158 @@ export default function Careers() {
                     )}
                   </div>
                 </div>
-              )}
-
-              {authError && (
-                <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
-                  <XCircle className="h-3.5 w-3.5 flex-shrink-0" /> {authError}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={authForm.password}
+                    onChange={(e) =>
+                      setAuthForm({ ...authForm, password: e.target.value })
+                    }
+                    autoComplete={
+                      authMode === "login" ? "current-password" : "new-password"
+                    }
+                  />
+                  {authMode === "register" && authForm.password && (
+                    <div className="mt-1.5 space-y-1">
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded-full transition-colors ${passwordStrengthLevel(authForm.password) >= level ? (passwordStrengthLevel(authForm.password) === 1 ? "bg-red-400" : passwordStrengthLevel(authForm.password) === 2 ? "bg-amber-400" : "bg-green-500") : "bg-gray-200"}`}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-1 gap-0">
+                        <p
+                          className={`text-[11px] flex items-center gap-1 ${checkPasswordLength(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordLength(authForm.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}{" "}
+                          8+ characters
+                        </p>
+                        <p
+                          className={`text-[11px] flex items-center gap-1 ${checkPasswordUpper(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordUpper(authForm.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}{" "}
+                          Uppercase letter
+                        </p>
+                        <p
+                          className={`text-[11px] flex items-center gap-1 ${checkPasswordNumber(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                        >
+                          {checkPasswordNumber(authForm.password) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}{" "}
+                          Number
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={authSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all"
-              >
-                {authSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <User className="h-4 w-4 mr-2" />
+                {authMode === "register" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        value={authForm.confirmPassword}
+                        onChange={(e) =>
+                          setAuthForm({
+                            ...authForm,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        autoComplete="new-password"
+                        className={
+                          authForm.confirmPassword &&
+                          authForm.confirmPassword !== authForm.password
+                            ? "border-red-400"
+                            : authForm.confirmPassword &&
+                                authForm.confirmPassword === authForm.password
+                              ? "border-green-400"
+                              : ""
+                        }
+                      />
+                      {authForm.confirmPassword && (
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                          {authForm.confirmPassword === authForm.password ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-400" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-                {authMode === "login" ? "Sign In" : "Create Account"}
-              </Button>
 
-              <p className="text-center text-xs text-gray-400 pt-1">
-                {authMode === "login" ? (
-                  <>
-                    Don't have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode("register");
-                        setAuthError("");
-                      }}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Register
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode("login");
-                        setAuthError("");
-                      }}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Sign In
-                    </button>
-                  </>
+                {authError && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+                    <XCircle className="h-3.5 w-3.5 flex-shrink-0" />{" "}
+                    {authError}
+                  </div>
                 )}
-              </p>
-            </form>
+
+                <Button
+                  type="submit"
+                  disabled={authSubmitting}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all"
+                >
+                  {authSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <User className="h-4 w-4 mr-2" />
+                  )}
+                  {authMode === "login" ? "Sign In" : "Create Account"}
+                </Button>
+
+                <p className="text-center text-xs text-gray-400 pt-1">
+                  {authMode === "login" ? (
+                    <>
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("register");
+                          setAuthError("");
+                        }}
+                        className="text-blue-600 hover:underline font-medium"
+                      >
+                        Register
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("login");
+                          setAuthError("");
+                        }}
+                        className="text-blue-600 hover:underline font-medium"
+                      >
+                        Sign In
+                      </button>
+                    </>
+                  )}
+                </p>
+              </form>
             )}
           </motion.div>
         </div>

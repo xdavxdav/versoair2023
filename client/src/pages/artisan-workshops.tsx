@@ -39,120 +39,8 @@ interface Workshop {
   image?: string;
 }
 
-const WORKSHOPS: Workshop[] = [
-  {
-    id: "w1",
-    title: "Traditional Hand Weaving Masterclass",
-    artisan: "Jean Koffi",
-    specialty: "Textile Weaving",
-    date: "2026-02-15",
-    time: "10:00 AM - 12:30 PM",
-    location: "Abidjan Workshop Center",
-    duration: "2.5 hours",
-    level: "Beginner",
-    price: 45000,
-    capacity: 12,
-    enrolled: 8,
-    description:
-      "Learn the fundamentals of traditional hand weaving techniques passed down through generations. Create your own small textile piece.",
-    skills: ["Basic weaving", "Pattern recognition", "Traditional methods"],
-  },
-  {
-    id: "w2",
-    title: "Ceramic Wheel Throwing",
-    artisan: "Marie Diallo",
-    specialty: "Ceramics",
-    date: "2026-02-18",
-    time: "2:00 PM - 5:00 PM",
-    location: "Yamoussoukro Art Studio",
-    duration: "3 hours",
-    level: "Intermediate",
-    price: 55000,
-    capacity: 10,
-    enrolled: 6,
-    description:
-      "Master the pottery wheel and create functional ceramic vessels. All materials and firing included.",
-    skills: ["Wheel throwing", "Clay preparation", "Glazing basics"],
-  },
-  {
-    id: "w3",
-    title: "Metalwork Sculpture Fundamentals",
-    artisan: "Amara Traore",
-    specialty: "Metalwork",
-    date: "2026-02-22",
-    time: "9:00 AM - 1:00 PM",
-    location: "Bouaké Metal Workshop",
-    duration: "4 hours",
-    level: "Beginner",
-    price: 60000,
-    capacity: 8,
-    enrolled: 5,
-    description:
-      "Introduction to metalworking tools and safety. Design and craft your first metal sculpture.",
-    skills: ["Tool safety", "Metal bending", "Basic welding", "Finishing"],
-  },
-  {
-    id: "w4",
-    title: "Wood Carving: Mask Design",
-    artisan: "Yacine Coulibaly",
-    specialty: "Wood Carving",
-    date: "2026-02-25",
-    time: "10:00 AM - 3:00 PM",
-    location: "Korhogo Cultural Center",
-    duration: "5 hours",
-    level: "Intermediate",
-    price: 70000,
-    capacity: 10,
-    enrolled: 7,
-    description:
-      "Learn traditional mask carving techniques. Design and create an authentic Ivorian-inspired mask.",
-    skills: [
-      "Wood selection",
-      "Carving techniques",
-      "Traditional patterns",
-      "Finishing",
-    ],
-  },
-  {
-    id: "w5",
-    title: "Leather Working: Bag Crafting",
-    artisan: "Awa Sow",
-    specialty: "Leather Work",
-    date: "2026-03-01",
-    time: "11:00 AM - 2:00 PM",
-    location: "San Pédro Workshop",
-    duration: "3 hours",
-    level: "Beginner",
-    price: 50000,
-    capacity: 12,
-    enrolled: 9,
-    description:
-      "Create a hand-stitched leather bag from start to finish. Learn traditional techniques and modern design.",
-    skills: [
-      "Leather cutting",
-      "Hand stitching",
-      "Hardware installation",
-      "Finishing",
-    ],
-  },
-  {
-    id: "w6",
-    title: "Jewelry Design: Gold & Silver",
-    artisan: "Ousmane Ba",
-    specialty: "Jewelry",
-    date: "2026-03-05",
-    time: "3:00 PM - 5:30 PM",
-    location: "Daloa Jewelry Studio",
-    duration: "2.5 hours",
-    level: "Beginner",
-    price: 55000,
-    capacity: 8,
-    enrolled: 4,
-    description:
-      "Design and create your own jewelry piece. Learn metalworking, stone setting, and finishing techniques.",
-    skills: ["Design basics", "Metal work", "Stone setting", "Polishing"],
-  },
-];
+// Workshop data — populated as artisans schedule workshops
+const WORKSHOPS: Workshop[] = [];
 
 export default function ArtisanWorkshops() {
   const [selectedLevel, setSelectedLevel] = useState("All");
@@ -371,20 +259,28 @@ export default function ArtisanWorkshops() {
           </div>
         ) : (
           <Card className="text-center py-12 border-0 shadow-lg bg-gray-50">
-            <BookOpen className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <BookOpen className="h-12 w-12 mx-auto text-emerald-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
-              No workshops found
+              {WORKSHOPS.length === 0 && !searchQuery && selectedLevel === "All"
+                ? "Workshop Schedule Ready"
+                : "No workshops found"}
             </h3>
-            <p className="text-gray-500 mb-4">Try adjusting your filters</p>
-            <Button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedLevel("All");
-              }}
-              variant="outline"
-            >
-              Clear Filters
-            </Button>
+            <p className="text-gray-500 mb-4">
+              {WORKSHOPS.length === 0 && !searchQuery && selectedLevel === "All"
+                ? "Workshops will appear here as artisans schedule new sessions."
+                : "Try adjusting your filters"}
+            </p>
+            {(searchQuery || selectedLevel !== "All") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedLevel("All");
+                }}
+                variant="outline"
+              >
+                Clear Filters
+              </Button>
+            )}
           </Card>
         )}
 
