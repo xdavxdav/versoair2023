@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import { AlertTriangle, Music, ArrowRight, Shield, X } from "lucide-react";
 
 const COUNTDOWN_SECONDS = 13;
@@ -19,6 +20,7 @@ interface ArtistPortalGateProps {
 
 export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
   const { user } = useAuthContext();
+  const { hasPortal } = useCapabilities();
   const [hasPassedGate, setHasPassedGate] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [cancelled, setCancelled] = useState(false);
@@ -28,6 +30,13 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     user?.role === "superuser" ||
     user?.role === "SuperAdmin" ||
     user?.isAdmin === true;
+
+  // Real auth check: user must have artist role or artist portal access
+  const hasArtistAccess =
+    isSuperAdmin ||
+    user?.role === "artist" ||
+    hasPortal("artist") ||
+    user?.portals?.includes("artist");
 
   // Check sessionStorage so gate only shows once per browser session
   useEffect(() => {
@@ -73,6 +82,42 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
   // SuperAdmin or already passed → render children directly
   if (hasPassedGate) {
     return <>{children}</>;
+  }
+
+  // 🔒 Not authorized for artist portal → show upgrade prompt
+  if (!hasArtistAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#06020f] p-4">
+        <div className="max-w-md w-full bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mb-4">
+            <Music className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-white text-xl font-bold mb-2">
+            Artist Portal Access Required
+          </h2>
+          <p className="text-white/50 text-sm mb-6">
+            You need an artist profile to access this portal. Create one from
+            your profile page or register as an artist.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => window.history.back()}
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-all text-sm font-medium"
+            >
+              Go Back
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = "/apply";
+              }}
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold hover:from-purple-500 hover:to-pink-500 transition-all"
+            >
+              Become an Artist
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Gate screen

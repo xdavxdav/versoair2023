@@ -8,6 +8,7 @@ import {
   Lock,
   LogOut,
   CreditCard,
+  ShoppingBag,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -38,8 +39,9 @@ export default function Navbar({
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [marketplaceSos, setMarketplaceSos] = useState(false);
   const [location, navigate] = useLocation();
-  const { isAuthenticated, loading: authLoading } = useSubscription();
+  const { isAuthenticated, loading: authLoading, tier } = useSubscription();
   const { user, logout } = useAuthContext();
 
   useEffect(() => {
@@ -55,6 +57,20 @@ export default function Navbar({
         handler as EventListener,
       );
   }, []);
+
+  // Listen for Shop Now SOS signal
+  useEffect(() => {
+    const handleSos = () => {
+      setMarketplaceSos(true);
+      // Flash for 4 seconds then auto-navigate to marketplace
+      setTimeout(() => {
+        setMarketplaceSos(false);
+        navigate("/marketplace");
+      }, 4000);
+    };
+    window.addEventListener("marketplace-sos", handleSos);
+    return () => window.removeEventListener("marketplace-sos", handleSos);
+  }, [navigate]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -82,8 +98,8 @@ export default function Navbar({
     return () => window.removeEventListener("scroll", controlNavbar);
   }, [lastScrollY, isMobile]);
 
-  // Don't render navbar on /blog page (AFTER all hooks)
-  if (location === "/blog") {
+  // Don't render navbar on /blog or /marketplace pages (AFTER all hooks)
+  if (location === "/blog" || location === "/marketplace") {
     return null;
   }
 
@@ -167,7 +183,7 @@ export default function Navbar({
             </Link>
 
             {/* 🌍 Geo Admin Portal Link */}
-            {isAuthenticated ? (
+            {isAuthenticated && tier !== "free" ? (
               <Link
                 href="/geo-admin"
                 className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap flex items-center"
@@ -177,13 +193,17 @@ export default function Navbar({
               </Link>
             ) : (
               <Link
-                href="/geo-admin"
+                href={
+                  isAuthenticated ? "/pricing?source=geo-admin" : "/geo-admin"
+                }
                 className="text-gray-400 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
               >
                 <Lock className="h-3 w-3 text-gray-400" />
                 <span className="text-gray-400">Geo Admin</span>
                 <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Sign in to access
+                  {isAuthenticated
+                    ? "Premium subscription required"
+                    : "Sign in to access"}
                 </span>
               </Link>
             )}
@@ -294,6 +314,30 @@ export default function Navbar({
               Reservations
             </Link>
 
+            {/* Marketplace with SOS signal animation */}
+            <Link
+              href="/marketplace"
+              className={`relative px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 transition-all duration-300 ${
+                marketplaceSos
+                  ? "text-amber-600 font-bold scale-110"
+                  : "text-gray-600 hover:text-primary"
+              }`}
+            >
+              {marketplaceSos && (
+                <>
+                  <span className="absolute -inset-2 bg-amber-400/20 rounded-lg animate-ping" />
+                  <span className="absolute -inset-1 bg-gradient-to-r from-amber-400/30 to-orange-400/30 rounded-lg animate-pulse" />
+                  <span className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold animate-bounce whitespace-nowrap shadow-lg z-50">
+                    👆 CLICK HERE
+                  </span>
+                </>
+              )}
+              <ShoppingBag
+                className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
+              />
+              <span className="relative">Marketplace</span>
+            </Link>
+
             {/* Assistance Dropdown */}
             <div className="relative group">
               <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
@@ -327,7 +371,7 @@ export default function Navbar({
             </Link>
 
             {/* 2. Geo Admin */}
-            {isAuthenticated ? (
+            {isAuthenticated && tier !== "free" ? (
               <Link
                 href="/geo-admin"
                 className="text-gray-600 hover:text-primary text-xs px-1 flex items-center whitespace-nowrap"
@@ -337,7 +381,9 @@ export default function Navbar({
               </Link>
             ) : (
               <Link
-                href="/geo-admin"
+                href={
+                  isAuthenticated ? "/pricing?source=geo-admin" : "/geo-admin"
+                }
                 className="text-gray-400 text-xs px-1 flex items-center gap-1 relative group cursor-pointer whitespace-nowrap"
               >
                 <Lock className="h-3 w-3 text-gray-400" />
@@ -345,7 +391,7 @@ export default function Navbar({
                   Geo Admin
                 </span>
                 <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  Sign in to access
+                  {isAuthenticated ? "Premium required" : "Sign in to access"}
                 </span>
               </Link>
             )}
@@ -464,6 +510,29 @@ export default function Navbar({
               <span className="lg:hidden">RES</span>
             </Link>
 
+            {/* 5b. Marketplace with SOS */}
+            <Link
+              href="/marketplace"
+              className={`relative text-xs px-1 whitespace-nowrap flex items-center gap-0.5 transition-all duration-300 ${
+                marketplaceSos
+                  ? "text-amber-600 font-bold scale-110"
+                  : "text-gray-600 hover:text-primary"
+              }`}
+            >
+              {marketplaceSos && (
+                <>
+                  <span className="absolute -inset-1 bg-amber-400/20 rounded-lg animate-ping" />
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold animate-bounce whitespace-nowrap shadow-lg z-50">
+                    👆 HERE
+                  </span>
+                </>
+              )}
+              <ShoppingBag
+                className={`h-3 w-3 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
+              />
+              <span className="hidden lg:inline">Marketplace</span>
+            </Link>
+
             {/* 6. Support Dropdown (SAV + VersoAI) */}
             <div className="relative group">
               <button className="text-gray-600 hover:text-primary transition-colors flex items-center text-xs px-1 whitespace-nowrap">
@@ -554,7 +623,7 @@ export default function Navbar({
               </div>
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">
-                <Button className="bg-primary text-white px-2 md:px-4 py-2 rounded-md hover:bg-primary/90 transition-colors text-xs font-medium whitespace-nowrap">
+                <Button className="bg-slate-800 text-slate-200 px-2 md:px-4 py-2 rounded-md hover:bg-slate-700 transition-colors text-xs font-medium whitespace-nowrap border border-slate-600">
                   <span className="hidden sm:inline">Sign In</span>
                   <span className="sm:hidden">Sign</span>
                 </Button>

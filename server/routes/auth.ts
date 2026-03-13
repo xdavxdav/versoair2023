@@ -16,6 +16,7 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "../services/email-service";
+import { computeUserCapabilities } from "./capabilities";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -249,6 +250,20 @@ router.post(
       return;
     }
 
+    // Detect OAuth-only users (they have random hex passwords, not user-set)
+    const oauthCheck = await db.execute(
+      sql`SELECT oauth_provider FROM users WHERE id = ${user.id} AND oauth_provider IS NOT NULL LIMIT 1`,
+    );
+    if ((oauthCheck.rows?.length ?? 0) > 0) {
+      const provider = (oauthCheck.rows[0] as any).oauth_provider;
+      res.status(400).json({
+        success: false,
+        message: `This account uses ${provider} sign-in. Please sign in with ${provider} instead.`,
+        oauthProvider: provider,
+      });
+      return;
+    }
+
     const passwordValid = await bcrypt.compare(password, user.password);
 
     if (!passwordValid) {
@@ -302,6 +317,14 @@ router.post(
 
     setAuthCookie(res, token);
 
+    // Compute capabilities for portal access info
+    let capabilities: any = null;
+    try {
+      capabilities = await computeUserCapabilities(user.id);
+    } catch (e) {
+      console.warn("[AUTH] Could not compute capabilities on login:", e);
+    }
+
     res.json({
       success: true,
       token,
@@ -314,6 +337,9 @@ router.post(
         subscriptionStatus: user.subscription_status || "active",
         trialTier: user.trial_tier || null,
         trialExpiresAt: user.trial_expires_at || null,
+        portals: capabilities?.portals || ["general"],
+        hasArtistProfile: capabilities?.hasArtistProfile || false,
+        isContractor: capabilities?.isContractor || false,
       },
     });
   }),
@@ -533,6 +559,14 @@ router.get(
         (dbUser?.role || decoded.role) === "superuser" ||
         (dbUser?.role || decoded.role) === "moderator";
 
+      // Fetch capabilities for portal access detection
+      let capabilities: any = null;
+      try {
+        capabilities = await computeUserCapabilities(Number(userId));
+      } catch (e) {
+        console.warn("[AUTH] Could not compute capabilities:", e);
+      }
+
       res.json({
         success: true,
         user: {
@@ -551,6 +585,12 @@ router.get(
           trialTier: dbUser?.trial_tier || null,
           trialStartedAt: dbUser?.trial_started_at || null,
           trialExpiresAt: dbUser?.trial_expires_at || null,
+          // Portal capabilities
+          portals: capabilities?.portals || ["general"],
+          hasArtistProfile: capabilities?.hasArtistProfile || false,
+          isContractor: capabilities?.isContractor || false,
+          hasOAuthAccount: capabilities?.hasOAuthAccount || false,
+          canAccessBlog: capabilities?.canAccessBlog || false,
         },
       });
     } catch {
@@ -630,8 +670,9 @@ router.post(
  */
 router.post(
   "/admin-gate",
+  loginLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.body;
+    const { username, password } = req.body;
 
     if (!username) {
       return res.status(403).json({
@@ -640,11 +681,19 @@ router.post(
       });
     }
 
-    // Look up user by gate_username column (select only needed fields to avoid missing-column errors)
+    if (!password) {
+      return res.status(403).json({
+        success: false,
+        message: "Password is required for gate access.",
+      });
+    }
+
+    // Look up user by gate_username column
     const [user] = await db
       .select({
         id: schema.users.id,
         email: schema.users.email,
+        password: schema.users.password,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
       })
@@ -655,7 +704,16 @@ router.post(
     if (!user) {
       return res.status(403).json({
         success: false,
-        message: "Invalid gate username.",
+        message: "Invalid credentials.",
+      });
+    }
+
+    // 🔐 Verify password — closes the no-password vulnerability
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid credentials.",
       });
     }
 
@@ -672,14 +730,23 @@ router.post(
 
     setAuthCookie(res, token);
 
+    // Compute capabilities for portal access
+    let capabilities: any = null;
+    try {
+      capabilities = await computeUserCapabilities(user.id);
+    } catch (e) {
+      console.warn("[AUTH] Could not compute capabilities on admin-gate:", e);
+    }
+
     res.json({
       success: true,
       token,
       user: {
         id: String(user.id),
         email: user.email,
-        username: user.username || username,
+        username: username,
         role: user.role || "admin",
+        portals: capabilities?.portals || ["general"],
       },
     });
   }),
@@ -1406,6 +1473,14 @@ router.post(
 
     setAuthCookie(res, token);
 
+    // Compute capabilities for unified portal access
+    let capabilities: any = null;
+    try {
+      capabilities = await computeUserCapabilities(user.id);
+    } catch (e) {
+      console.warn("[AUTH] Could not compute capabilities on artist login:", e);
+    }
+
     res.json({
       success: true,
       message: "Artist login successful",
@@ -1421,6 +1496,7 @@ router.post(
         walletBalance: artistProfile?.walletBalance || "0.00",
         lifetimeStreams: artistProfile?.lifetimeStreams || 0,
         leagueId: artistProfile?.leagueId || null,
+        portals: capabilities?.portals || ["general", "artist"],
       },
     });
   }),
@@ -1608,6 +1684,17 @@ router.post(
 
     setAuthCookie(res, token);
 
+    // Compute capabilities for unified portal access
+    let capabilitiesSub: any = null;
+    try {
+      capabilitiesSub = await computeUserCapabilities(user.id);
+    } catch (e) {
+      console.warn(
+        "[AUTH] Could not compute capabilities on subscriber login:",
+        e,
+      );
+    }
+
     res.json({
       success: true,
       message: "Subscriber login successful",
@@ -1620,6 +1707,7 @@ router.post(
         subscriptionTier: user.subscriptionTier || "free",
         subscriptionStatus: user.subscriptionStatus || "active",
         premiumExpiresAt: user.premiumExpiresAt,
+        portals: capabilitiesSub?.portals || ["general"],
       },
     });
   }),
@@ -1814,6 +1902,17 @@ router.post(
 
     setAuthCookie(res, token);
 
+    // Compute capabilities for unified portal access
+    let capabilitiesComm: any = null;
+    try {
+      capabilitiesComm = await computeUserCapabilities(user.id);
+    } catch (e) {
+      console.warn(
+        "[AUTH] Could not compute capabilities on community login:",
+        e,
+      );
+    }
+
     res.json({
       success: true,
       message: "Community login successful",
@@ -1823,6 +1922,7 @@ router.post(
         email: user.email,
         displayName: user.firstName || user.username,
         role: user.role,
+        portals: capabilitiesComm?.portals || ["general", "community"],
       },
     });
   }),

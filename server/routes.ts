@@ -25,6 +25,7 @@ import settingsRouter from "./routes/settings";
 import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
+import capabilitiesRouter from "./routes/capabilities";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -137,6 +138,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/settings", settingsRouter);
   app.use("/api/home", homeStatsRouter);
   app.use("/api/request", submissionRequestsRouter);
+  app.use("/api/user", capabilitiesRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

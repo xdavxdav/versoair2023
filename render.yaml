@@ -22,6 +22,8 @@ services:
         generateValue: true
       - key: SESSION_SECRET
         generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: VITE_API_URL

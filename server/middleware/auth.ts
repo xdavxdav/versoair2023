@@ -81,6 +81,11 @@ const PUBLIC_PATHS: string[] = [
   "/api/request/business",
   "/api/request/artist",
   "/api/request/job",
+  // VersoAI chat — public so the assistant works before login
+  "/api/ai/status",
+  "/api/ai/chat",
+  "/api/ai/ask",
+  "/api/ai/connectors",
 ];
 
 /**

@@ -18,6 +18,7 @@ import {
   LogOut,
 } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
+import PortalSelector from "@/components/PortalSelector";
 
 interface UserProfile {
   id: number;
@@ -468,6 +469,18 @@ export default function ProfilePage() {
             </div>
           </motion.div>
         )}
+
+        {/* ═══════════════════════════════════════════════
+            🚀 MY PORTALS — Quick access to all enabled portals
+            ═══════════════════════════════════════════════ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-10 bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+        >
+          <PortalSelector showHeading compact className="" />
+        </motion.div>
       </div>
     </div>
   );

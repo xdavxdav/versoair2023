@@ -160,6 +160,7 @@ import Footer from "@/components/ui/footer";
 import LocationPanel from "@/components/ui/location-panel";
 import BlogNavbar from "@/components/BlogNavbar";
 import LoadingEagle from "@/components/ui/loading-eagle";
+import PullToRefresh from "@/components/PullToRefresh";
 import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
 import { SponsorsSection } from "@/components/ui/sponsors-section";
@@ -258,16 +259,24 @@ function Router() {
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal">
         {() => (
-          <ArtistPortalGate>
-            <ArtistPortalWelcome />
-          </ArtistPortalGate>
+          <ProtectedRoute
+            component={() => (
+              <ArtistPortalGate>
+                <ArtistPortalWelcome />
+              </ArtistPortalGate>
+            )}
+          />
         )}
       </Route>
       <Route path="/artist-portal/dashboard">
         {() => (
-          <ArtistPortalGate>
-            <ArtistPortalDashboard />
-          </ArtistPortalGate>
+          <ProtectedRoute
+            component={() => (
+              <ArtistPortalGate>
+                <ArtistPortalDashboard />
+              </ArtistPortalGate>
+            )}
+          />
         )}
       </Route>
       <Route path="/programs" component={CulturalPrograms} />
@@ -297,14 +306,23 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
-      <Route path="/geo-admin" component={GeoAdminPage} />
+      <Route path="/geo-admin">
+        {() => <ProtectedRoute component={GeoAdminPage} />}
+      </Route>
       <Route path="/geo-admin/business-verification">
         {() => <ProtectedRoute component={BusinessVerification} />}
       </Route>
       <Route path="/geo-admin/immobilier">
         {() => <ProtectedRoute component={ImmobilierPortal} />}
       </Route>
-      <Route path="/geo-admin/dashboard">{() => <AdminDashboard />}</Route>
+      <Route path="/geo-admin/dashboard">
+        {() => (
+          <ProtectedRoute
+            component={AdminDashboard}
+            roles={["admin", "moderator"]}
+          />
+        )}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
@@ -484,86 +502,112 @@ function AppContent() {
     trackPageView(currentPath);
   }, [currentPath]);
 
+  // Listen for marketplace modal open/close to hide BlogNavbar
+  const [marketplaceModalOpen, setMarketplaceModalOpen] = useState(false);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const open = Boolean((e as CustomEvent).detail?.open);
+      setMarketplaceModalOpen(open);
+    };
+    window.addEventListener("marketplace-modal", handler);
+    return () => window.removeEventListener("marketplace-modal", handler);
+  }, []);
+
+  // Listen for VersoAI fullscreen to hide the fixed header
+  const [versoaiFullscreen, setVersoaiFullscreen] = useState(false);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const fs = Boolean((e as CustomEvent).detail?.fullscreen);
+      setVersoaiFullscreen(fs);
+    };
+    window.addEventListener("versoai-fullscreen", handler);
+    return () => window.removeEventListener("versoai-fullscreen", handler);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
-      <div
-        ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-[60] flex flex-col transition-transform duration-300 ${
-          headerVisible ? "translate-y-0" : "-translate-y-full"
-        }`}
-      >
-        {/* Top Banner */}
+      {!versoaiFullscreen && (
         <div
-          className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
-          style={{ overflow: "visible" }}
+          ref={headerRef}
+          className={`fixed top-0 left-0 right-0 z-[60] flex flex-col transition-transform duration-300 ${
+            headerVisible ? "translate-y-0" : "-translate-y-full"
+          }`}
         >
+          {/* Top Banner */}
           <div
-            className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
             style={{ overflow: "visible" }}
           >
-            {/* Left: Portal label */}
-            <span className="font-medium flex-1 min-w-0 truncate">
-              Business Intelligence Portal
-            </span>
+            <div
+              className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
+              style={{ overflow: "visible" }}
+            >
+              {/* Left: Portal label */}
+              <span className="font-medium flex-1 min-w-0 truncate">
+                Business Intelligence Portal
+              </span>
 
-            {/* Center: Country filter dropdown */}
-            <div className="flex-shrink-0" style={{ overflow: "visible" }}>
-              <CountryDropdown />
-            </div>
+              {/* Center: Country filter dropdown */}
+              <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+                <CountryDropdown />
+              </div>
 
-            {/* Right: Action buttons */}
-            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
-              <button
-                onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
-                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-              >
-                <span>🎵</span>
-                <span className="hidden sm:inline">Verso Air</span>
-                <span className="sm:hidden">VA</span>
-              </button>
-              <button
-                onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-              >
-                <span>📍</span>
-                <span className="hidden sm:inline">GPS Services</span>
-              </button>
+              {/* Right: Action buttons */}
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+                <button
+                  onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+                >
+                  <span>🎵</span>
+                  <span className="hidden sm:inline">Verso Air</span>
+                  <span className="sm:hidden">VA</span>
+                </button>
+                <button
+                  onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+                >
+                  <span>📍</span>
+                  <span className="hidden sm:inline">GPS Services</span>
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Scrolling ticker — always visible while sticky block is on screen */}
+          {currentPath !== "/blog" && currentPath !== "/marketplace" && (
+            <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
+              <div className="animate-scroll-continuous flex">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex flex-shrink-0">
+                    <span className="flex-shrink-0 px-4 md:px-8">
+                      Welcome to Verso Air ™️ — Business Intelligence Platform
+                    </span>
+                    <span className="flex-shrink-0 px-4 md:px-8">
+                      Analyze • Optimize • Visualize • Grow
+                    </span>
+                    <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
+                      24 Industry Sectors • Live Analytics • Global Coverage
+                    </span>
+                    <span className="hidden md:inline-flex flex-shrink-0 px-8">
+                      Commerce • Hospitality • Construction • Automotive •
+                      Finance • Entertainment
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Blog Navbar — sits right under the amber banner on /blog and /marketplace */}
+          {(currentPath === "/blog" || currentPath === "/marketplace") &&
+            !marketplaceModalOpen && <BlogNavbar />}
         </div>
-
-        {/* Scrolling ticker — always visible while sticky block is on screen */}
-        {currentPath !== "/blog" && (
-          <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
-            <div className="animate-scroll-continuous flex">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex flex-shrink-0">
-                  <span className="flex-shrink-0 px-4 md:px-8">
-                    Welcome to Verso Air ™️ — Business Intelligence Platform
-                  </span>
-                  <span className="flex-shrink-0 px-4 md:px-8">
-                    Analyze • Optimize • Visualize • Grow
-                  </span>
-                  <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                    24 Industry Sectors • Live Analytics • Global Coverage
-                  </span>
-                  <span className="hidden md:inline-flex flex-shrink-0 px-8">
-                    Commerce • Hospitality • Construction • Automotive • Finance
-                    • Entertainment
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Blog Navbar — sits right under the amber banner on /blog */}
-        {currentPath === "/blog" && <BlogNavbar />}
-      </div>
+      )}
       {/* Spacer for fixed header */}
-      <div style={{ height: headerHeight }} />
+      {!versoaiFullscreen && <div style={{ height: headerHeight }} />}
 
+      <PullToRefresh />
       <MobileMenuBubble />
       <div
         className={`hidden md:block transition-opacity duration-300 ${

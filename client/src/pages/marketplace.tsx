@@ -433,6 +433,21 @@ export default function MarketplacePage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   useScrollLock(showCreateListing || showMobileSidebar);
+
+  // Dispatch event to hide BlogNavbar when create listing modal is open
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("marketplace-modal", {
+        detail: { open: showCreateListing },
+      }),
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("marketplace-modal", { detail: { open: false } }),
+      );
+    };
+  }, [showCreateListing]);
+
   const [listings] = useState(generateListings);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -448,9 +463,9 @@ export default function MarketplacePage() {
     textSecondary: darkMode ? "text-[#b0b3b8]" : "text-gray-600",
     textMuted: darkMode ? "text-[#8a8d91]" : "text-gray-400",
     border: darkMode ? "border-[#3a3b3c]" : "border-gray-200",
-    accent: "text-amber-500",
-    accentBg: "bg-amber-500",
-    accentHover: "hover:bg-amber-600",
+    accent: "text-cyan-500",
+    accentBg: "bg-cyan-500",
+    accentHover: "hover:bg-cyan-600",
   };
 
   // Filter & sort
@@ -556,12 +571,12 @@ export default function MarketplacePage() {
                 placeholder="Search Marketplace…  /"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full ${t.bgInput} ${t.text} rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all`}
+                className={`w-full ${t.bgInput} ${t.text} rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${t.textMuted} hover:text-amber-500`}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${t.textMuted} hover:text-cyan-500`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -573,7 +588,7 @@ export default function MarketplacePage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowCreateListing(true)}
-              className={`w-full flex items-center justify-center gap-2 ${t.accentBg} text-white font-semibold py-3 rounded-xl mb-6 shadow-lg shadow-amber-500/20 ${t.accentHover} transition-all`}
+              className={`w-full flex items-center justify-center gap-2 ${t.accentBg} text-white font-semibold py-3 rounded-xl mb-6 shadow-lg shadow-cyan-500/20 ${t.accentHover} transition-all`}
             >
               <Plus className="w-5 h-5" />
               Create New Listing
@@ -679,7 +694,7 @@ export default function MarketplacePage() {
                   onChange={(e) =>
                     setPriceRange([priceRange[0], Number(e.target.value)])
                   }
-                  className="w-full accent-amber-500 cursor-pointer"
+                  className="w-full accent-cyan-500 cursor-pointer"
                 />
               </div>
             </div>
@@ -707,7 +722,7 @@ export default function MarketplacePage() {
                   {
                     label: "Trending",
                     icon: TrendingUp,
-                    color: "text-amber-400",
+                    color: "text-cyan-400",
                   },
                 ].map((f) => (
                   <motion.button
@@ -751,7 +766,7 @@ export default function MarketplacePage() {
                     placeholder="Search…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50`}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50`}
                   />
                 </div>
 
@@ -765,7 +780,7 @@ export default function MarketplacePage() {
                     listings
                   </span>
                   {activeCategory !== "all" && (
-                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-xs font-medium">
+                    <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-500 rounded-full text-xs font-medium">
                       {CATEGORIES.find((c) => c.id === activeCategory)?.label}
                       <button
                         onClick={() => setActiveCategory("all")}
@@ -822,7 +837,7 @@ export default function MarketplacePage() {
                             }}
                             className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
                               sortBy === s.id
-                                ? `${t.accent} bg-amber-500/10 font-medium`
+                                ? `${t.accent} bg-cyan-500/10 font-medium`
                                 : `${t.textSecondary} ${t.bgHover}`
                             }`}
                           >
@@ -897,14 +912,14 @@ export default function MarketplacePage() {
                       onMouseLeave={() => setHoveredCard(null)}
                       className={
                         viewMode === "list"
-                          ? `flex gap-4 ${t.bgCard} rounded-2xl p-3 border ${t.border} ${t.bgHover} transition-all cursor-pointer`
+                          ? `flex gap-4 ${t.bgCard} rounded-2xl p-3 border ${t.border} hover:border-cyan-500/40 ${t.bgHover} transition-all cursor-pointer`
                           : ""
                       }
                     >
                       {viewMode === "grid" ? (
                         /* ═══ GRID CARD ═══ */
                         <div
-                          className={`group ${t.bgCard} rounded-2xl overflow-hidden border ${t.border} hover:border-amber-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/5`}
+                          className={`group ${t.bgCard} rounded-2xl overflow-hidden border ${t.border} hover:border-cyan-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/10`}
                         >
                           {/* Image */}
                           <div className="relative aspect-square overflow-hidden">
@@ -926,7 +941,7 @@ export default function MarketplacePage() {
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
-                                  className="flex-1 py-2 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                                  className="flex-1 py-2 bg-cyan-600 text-white text-sm font-semibold rounded-xl hover:bg-cyan-700 transition-colors"
                                 >
                                   View Details
                                 </motion.button>
@@ -940,7 +955,7 @@ export default function MarketplacePage() {
                                   className="p-2 bg-white/20 backdrop-blur-sm rounded-xl text-white hover:bg-white/30 transition-colors"
                                 >
                                   {saved.includes(item.id) ? (
-                                    <BookmarkCheck className="w-5 h-5 text-amber-400" />
+                                    <BookmarkCheck className="w-5 h-5 text-cyan-400" />
                                   ) : (
                                     <Bookmark className="w-5 h-5" />
                                   )}
@@ -1068,7 +1083,7 @@ export default function MarketplacePage() {
                                   className={`p-2 rounded-full ${t.bgInput}`}
                                 >
                                   {saved.includes(item.id) ? (
-                                    <BookmarkCheck className="w-4 h-4 text-amber-400" />
+                                    <BookmarkCheck className="w-4 h-4 text-cyan-400" />
                                   ) : (
                                     <Bookmark
                                       className={`w-4 h-4 ${t.textMuted}`}
@@ -1128,7 +1143,7 @@ export default function MarketplacePage() {
                     setSearchQuery("");
                     setPriceRange([0, 5000]);
                   }}
-                  className="px-6 py-2.5 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors"
+                  className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
                 >
                   Clear All Filters
                 </motion.button>
@@ -1167,7 +1182,7 @@ export default function MarketplacePage() {
                     <img
                       src={act.avatar}
                       alt={act.user}
-                      className="w-9 h-9 rounded-full object-cover ring-2 ring-amber-500/20"
+                      className="w-9 h-9 rounded-full object-cover ring-2 ring-cyan-500/20"
                     />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm ${t.text}`}>
@@ -1190,7 +1205,7 @@ export default function MarketplacePage() {
             {/* Artisan Spotlight */}
             <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <h3 className={`font-bold ${t.text}`}>Artisan Spotlight</h3>
@@ -1221,7 +1236,7 @@ export default function MarketplacePage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <Star className="w-3 h-3 fill-cyan-400 text-cyan-400" />
                       <span
                         className={`text-xs font-medium ${t.textSecondary}`}
                       >
@@ -1234,9 +1249,9 @@ export default function MarketplacePage() {
             </div>
 
             {/* Verso Air Info Card */}
-            <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-2xl p-4 border border-amber-500/20">
+            <div className="bg-gradient-to-br from-cyan-500/20 to-teal-500/20 rounded-2xl p-4 border border-cyan-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <Globe className="w-5 h-5 text-amber-500" />
+                <Globe className="w-5 h-5 text-cyan-500" />
                 <h3 className={`font-bold ${t.text}`}>Verso Air Marketplace</h3>
               </div>
               <p className={`text-xs ${t.textMuted} mb-3`}>
@@ -1367,66 +1382,78 @@ export default function MarketplacePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCreateListing(false)}
-              className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 z-[70] backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg ${t.bgCard} rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[90vh] overflow-y-auto`}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              className={`fixed z-[70] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${t.bgCard} rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
             >
-              <div
-                className={`flex items-center justify-between p-4 border-b ${t.border}`}
-              >
-                <h2 className={`text-lg font-bold ${t.text}`}>
-                  Create New Listing
-                </h2>
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 shrink-0">
+                <div>
+                  <h2 className={`text-base font-bold ${t.text}`}>
+                    New Listing
+                  </h2>
+                  <p className={`text-xs ${t.textMuted} mt-0.5`}>
+                    Share with the community
+                  </p>
+                </div>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowCreateListing(false)}
-                  className={`p-2 rounded-full ${t.bgInput}`}
+                  className={`p-1.5 rounded-full ${t.bgInput} hover:opacity-80 transition-opacity`}
                 >
-                  <X className={`w-5 h-5 ${t.textSecondary}`} />
+                  <X className={`w-4 h-4 ${t.textSecondary}`} />
                 </motion.button>
               </div>
-              <div className="p-6 space-y-4">
+
+              <div className={`mx-4 sm:mx-5 border-t ${t.border}`} />
+
+              {/* Scrollable form */}
+              <div className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
                 <div>
                   <label
-                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                   >
                     Title
                   </label>
                   <input
-                    className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50`}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-shadow`}
                     placeholder="What are you selling?"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+
+                <div className="flex gap-3">
+                  <div className="flex-1 min-w-0">
                     <label
-                      className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                      className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                     >
                       Price
                     </label>
                     <div
-                      className={`flex items-center gap-2 ${t.bgInput} rounded-xl px-4 py-3`}
+                      className={`flex items-center gap-2 ${t.bgInput} rounded-lg px-3.5 py-2`}
                     >
-                      <DollarSign className={`w-4 h-4 ${t.textMuted}`} />
+                      <DollarSign
+                        className={`w-3.5 h-3.5 shrink-0 ${t.textMuted}`}
+                      />
                       <input
-                        className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none`}
+                        className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none w-0`}
                         placeholder="0.00"
                         type="number"
                       />
                     </div>
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <label
-                      className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                      className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                     >
                       Category
                     </label>
                     <select
-                      className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none`}
+                      className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none cursor-pointer`}
                     >
                       {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
                         <option key={c.id} value={c.id}>
@@ -1436,40 +1463,50 @@ export default function MarketplacePage() {
                     </select>
                   </div>
                 </div>
+
                 <div>
                   <label
-                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                   >
                     Description
                   </label>
                   <textarea
-                    rows={3}
-                    className={`w-full ${t.bgInput} ${t.text} rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none`}
+                    rows={2}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-none transition-shadow`}
                     placeholder="Describe your item…"
                   />
                 </div>
+
                 <div>
                   <label
-                    className={`text-sm font-medium ${t.textSecondary} block mb-1.5`}
+                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                   >
                     Photos
                   </label>
                   <div
-                    className={`border-2 border-dashed ${t.border} rounded-xl p-8 text-center cursor-pointer ${t.bgHover} transition-colors`}
+                    className={`border border-dashed ${t.border} rounded-lg p-4 text-center cursor-pointer ${t.bgHover} transition-colors group`}
                   >
-                    <Camera className={`w-8 h-8 mx-auto mb-2 ${t.textMuted}`} />
-                    <p className={`text-sm ${t.textMuted}`}>
-                      Click or drag photos here
+                    <div className="w-9 h-9 mx-auto mb-1.5 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                      <Camera className="w-4 h-4 text-cyan-500" />
+                    </div>
+                    <p className={`text-xs font-medium ${t.textSecondary}`}>
+                      Tap to add photos
                     </p>
-                    <p className={`text-xs ${t.textMuted} mt-1`}>
-                      Up to 10 photos
+                    <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                      Up to 10 · JPG, PNG
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Footer — always visible */}
+              <div
+                className={`px-4 sm:px-5 py-3 border-t ${t.border} shrink-0`}
+              >
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full bg-amber-500 text-white font-semibold py-3 rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold py-2.5 rounded-xl hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/15"
                 >
                   Publish Listing
                 </motion.button>
@@ -1484,7 +1521,7 @@ export default function MarketplacePage() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowCreateListing(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-amber-500 text-white rounded-full shadow-xl shadow-amber-500/30 flex items-center justify-center hover:bg-amber-600 transition-colors"
+        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center hover:bg-cyan-700 transition-colors"
       >
         <Plus className="w-6 h-6" />
       </motion.button>
