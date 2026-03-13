@@ -45,13 +45,20 @@ export default function BillingPage() {
         // Surface the actual server error message if available
         try {
           const errData = await res.json();
-          const msg = errData?.error?.message || errData?.error || errData?.message;
+          const msg =
+            errData?.error?.message || errData?.error || errData?.message;
           if (res.status === 401) {
             throw new Error("Session expired. Please sign in again.");
           }
-          throw new Error(msg || `Failed to load billing history (${res.status})`);
+          throw new Error(
+            msg || `Failed to load billing history (${res.status})`,
+          );
         } catch (parseErr: any) {
-          if (parseErr.message.includes("Session expired") || parseErr.message.includes("Failed to load")) throw parseErr;
+          if (
+            parseErr.message.includes("Session expired") ||
+            parseErr.message.includes("Failed to load")
+          )
+            throw parseErr;
           throw new Error(`Failed to load billing history (${res.status})`);
         }
       }

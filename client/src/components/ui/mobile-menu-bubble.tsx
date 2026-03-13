@@ -30,10 +30,13 @@ import {
   CreditCard,
   Wallet,
   Receipt,
+  Settings,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 
 // ─── Grouped Navigation ────────────────────────────────────────
 
@@ -189,6 +192,12 @@ export function MobileMenuBubble() {
   const { user, logout, loading: authLoading } = useAuthContext();
   const isSuperuser = user?.role === "superuser";
   const isAdmin = user?.role === "admin" || user?.role === "moderator";
+
+  // ── Account Settings Modal ──
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [accountSettingsTab, setAccountSettingsTab] = useState<
+    "account" | "preferences"
+  >("account");
 
   // ── Draggable state — default: bottom-right like Messenger ──
   const BUBBLE_SIZE = 48;
@@ -580,6 +589,34 @@ export function MobileMenuBubble() {
                     </button>
                   </Link>
 
+                  {/* Account Settings & Preferences */}
+                  <button
+                    onClick={() => {
+                      close();
+                      setAccountSettingsTab("account");
+                      setShowAccountSettings(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
+                  >
+                    <Settings className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="text-[13px] font-medium">
+                      Account Settings
+                    </span>
+                    <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      close();
+                      setAccountSettingsTab("preferences");
+                      setShowAccountSettings(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
+                  >
+                    <Bell className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="text-[13px] font-medium">Preferences</span>
+                    <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
+                  </button>
+
                   {/* Logout */}
                   <button
                     onClick={async () => {
@@ -617,6 +654,13 @@ export function MobileMenuBubble() {
           <div className="fixed inset-0 bg-black/20 -z-10" onClick={close} />
         )}
       </div>
+
+      {/* ═══ ACCOUNT SETTINGS & PREFERENCES MODAL ═══ */}
+      <AccountSettingsModal
+        open={showAccountSettings}
+        onOpenChange={setShowAccountSettings}
+        defaultTab={accountSettingsTab}
+      />
     </>
   );
 }

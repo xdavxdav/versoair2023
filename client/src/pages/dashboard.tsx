@@ -100,6 +100,7 @@ import {
   generateCategoryInsights,
   getTierStatRecommendations,
 } from "@/lib/mock-stat-generator";
+import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -689,6 +690,12 @@ export default function UserDashboard() {
   const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
   const [showBusinessSwitcher, setShowBusinessSwitcher] = useState(false);
   const [showDossier, setShowDossier] = useState(false);
+
+  // ── Account Settings Modal ──
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [accountSettingsTab, setAccountSettingsTab] = useState<
+    "account" | "preferences"
+  >("account");
 
   // ── Auth ──
   const { data: userSession } = useQuery<{ user: CurrentUser } | null>({
@@ -1604,11 +1611,21 @@ export default function UserDashboard() {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAccountSettingsTab("account");
+                        setShowAccountSettings(true);
+                      }}
+                    >
                       <Settings className="h-4 w-4 mr-2" />
                       Account Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAccountSettingsTab("preferences");
+                        setShowAccountSettings(true);
+                      }}
+                    >
                       <Bell className="h-4 w-4 mr-2" />
                       Preferences
                     </DropdownMenuItem>
@@ -1723,6 +1740,36 @@ export default function UserDashboard() {
               >
                 <Link href="/communities">👥 Communities</Link>
               </Button>
+              {isLoggedIn && (
+                <>
+                  <div className="border-t border-slate-700/50 my-2" />
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">
+                    Account
+                  </p>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    onClick={() => {
+                      setAccountSettingsTab("account");
+                      setShowAccountSettings(true);
+                      setShowMobileMenu(false);
+                    }}
+                  >
+                    ⚙️ Account Settings
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    onClick={() => {
+                      setAccountSettingsTab("preferences");
+                      setShowAccountSettings(true);
+                      setShowMobileMenu(false);
+                    }}
+                  >
+                    🔔 Preferences
+                  </Button>
+                </>
+              )}
               {cameFromGeoAdmin && (
                 <>
                   <div className="border-t border-slate-700/50 my-2" />
@@ -2988,6 +3035,14 @@ export default function UserDashboard() {
 
       {/* ═══ BUSINESS DOSSIER MODAL ═══ */}
       {renderDossierModal()}
+
+      {/* ═══ ACCOUNT SETTINGS & PREFERENCES MODAL ═══ */}
+      <AccountSettingsModal
+        open={showAccountSettings}
+        onOpenChange={setShowAccountSettings}
+        defaultTab={accountSettingsTab}
+        onBackToDashboard={() => setShowAccountSettings(false)}
+      />
     </div>
   );
 }
