@@ -411,6 +411,9 @@ export default function Careers() {
   });
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authVerificationEmail, setAuthVerificationEmail] = useState("");
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -459,6 +462,7 @@ export default function Careers() {
       const data = await res.json();
 
       if (data.success && data.token && data.user) {
+        // Fully authenticated — login and close popup
         authLogin(data.token, {
           id: data.user.id,
           email: data.user.email,
@@ -466,13 +470,12 @@ export default function Careers() {
           role: data.user.role,
         });
         setShowAuthPopup(false);
-        setAuthForm({
-          email: "",
-          password: "",
-          confirmPassword: "",
-          username: "",
-        });
+        setAuthForm({ email: "", password: "", confirmPassword: "", username: "" });
         toast({ title: "Welcome!", description: "You're now signed in." });
+      } else if (data.success || data.requiresVerification) {
+        // Account created but needs email verification — show in-popup success
+        setAuthVerificationEmail(data.email || authForm.email);
+        setResendMessage("");
       } else {
         setAuthError(
           data.message || data.error?.message || "Authentication failed",
@@ -1102,6 +1105,7 @@ export default function Careers() {
                     onClick={() => {
                       setAuthMode("login");
                       setAuthError("");
+                      setAuthVerificationEmail("");
                       setShowAuthPopup(true);
                     }}
                     className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg"
@@ -2053,6 +2057,67 @@ export default function Careers() {
             </div>
 
             {/* body */}
+            {authVerificationEmail ? (
+              <div className="p-6 text-center space-y-4">
+                <div className="mx-auto w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Mail className="h-7 w-7 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Check Your Email</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    We sent a verification link to
+                  </p>
+                  <p className="text-sm font-semibold text-blue-700 mt-0.5">{authVerificationEmail}</p>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Click the link in your email to verify your account, then come back here and sign in.
+                </p>
+                <div className="flex flex-col gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={resendingVerification}
+                    onClick={async () => {
+                      setResendingVerification(true);
+                      setResendMessage("");
+                      try {
+                        const r = await fetch("/auth/resend-verification", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: authVerificationEmail }),
+                        });
+                        const d = await r.json();
+                        setResendMessage(d.message || "Verification email resent!");
+                      } catch {
+                        setResendMessage("Failed to resend. Try again.");
+                      } finally {
+                        setResendingVerification(false);
+                      }
+                    }}
+                    className="w-full gap-2"
+                  >
+                    {resendingVerification ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Resend Verification Email
+                  </Button>
+                  {resendMessage && (
+                    <p className="text-xs text-blue-600 font-medium">{resendMessage}</p>
+                  )}
+                  <Button
+                    size="sm"
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600"
+                    onClick={() => {
+                      setAuthVerificationEmail("");
+                      setAuthMode("login");
+                      setAuthError("");
+                      setAuthForm({ email: authVerificationEmail, password: "", confirmPassword: "", username: "" });
+                    }}
+                  >
+                    <User className="h-3.5 w-3.5 mr-1.5" />
+                    I've Verified — Sign In
+                  </Button>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleAuthSubmit} className="p-5 space-y-3">
               {authMode === "register" && (
                 <div>
@@ -2252,6 +2317,7 @@ export default function Careers() {
                 )}
               </p>
             </form>
+            )}
           </motion.div>
         </div>
       )}
