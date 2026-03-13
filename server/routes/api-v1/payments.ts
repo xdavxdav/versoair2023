@@ -239,6 +239,27 @@ router.post("/webhook", async (req: Request, res: Response) => {
           console.log(
             `✅ Payment processed: User ${userId} → ${targetTier} (expires ${expiresAt.toISOString()})`,
           );
+
+          // 3. Update portal_access to include "geo-admin" for paid subscribers
+          try {
+            await pool.query(
+              `UPDATE users
+               SET portal_access = (
+                 SELECT jsonb_agg(DISTINCT val ORDER BY val)
+                 FROM (
+                   SELECT jsonb_array_elements_text(COALESCE(portal_access, '["general"]'::jsonb)) AS val
+                   UNION SELECT 'geo-admin'
+                 ) sub
+               )
+               WHERE id = $1`,
+              [userId],
+            );
+            console.log(
+              `✅ Portal access updated: User ${userId} → added geo-admin`,
+            );
+          } catch (portalErr) {
+            console.error("⚠️ Could not update portal_access:", portalErr);
+          }
         } catch (dbError) {
           await client.query("ROLLBACK");
           console.error("❌ DB error processing payment:", dbError);

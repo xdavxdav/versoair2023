@@ -161,6 +161,26 @@ const PORTALS: Portal[] = [
     redirectPath: "/profile",
     badge: "Business",
   },
+  {
+    id: "contractor",
+    name: "Contractor / Freelancer",
+    description:
+      "Join as a contractor — find projects, manage contracts, and connect with businesses seeking your skills.",
+    icon: Briefcase,
+    color: "orange",
+    gradient: "from-orange-500 to-red-500",
+    features: [
+      "Browse & apply to projects",
+      "Contractor profile & portfolio",
+      "Contract management",
+      "Hourly rate & availability",
+      "Direct business connections",
+    ],
+    registerEndpoint: "/auth/register",
+    loginEndpoint: "/auth/login",
+    redirectPath: "/services/contractors",
+    badge: "Contractor",
+  },
 ];
 
 const SUBSCRIPTION_TIERS = [
@@ -205,6 +225,8 @@ export default function ApplyPage() {
     genre: "",
     country: "",
     tier: "essential",
+    specialization: "",
+    hourlyRate: "",
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -272,6 +294,30 @@ export default function ApplyPage() {
           const { setAuthToken } = await import("@/lib/auth");
           setAuthToken(data.token);
         }
+
+        // If contractor portal, also create the contractor profile
+        if (selectedPortal.id === "contractor" && data.token) {
+          try {
+            await fetch("/api/contractors", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.token}`,
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                name: formData.displayName || formData.email.split("@")[0],
+                email: formData.email,
+                specialization: formData.specialization || "General",
+                hourlyRate: formData.hourlyRate || null,
+                isAvailable: true,
+              }),
+            });
+          } catch {
+            // Non-blocking — account was still created
+          }
+        }
+
         setSuccess(true);
         // Redirect after short delay
         setTimeout(() => {
@@ -583,6 +629,62 @@ export default function ApplyPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                )}
+
+                {/* Contractor-specific fields */}
+                {selectedPortal.id === "contractor" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Specialization</Label>
+                      <Select
+                        value={formData.specialization}
+                        onValueChange={(v) =>
+                          handleInputChange("specialization", v)
+                        }
+                      >
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue placeholder="Select your field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            "General Construction",
+                            "Electrical",
+                            "Plumbing",
+                            "HVAC",
+                            "Carpentry",
+                            "Painting",
+                            "Roofing",
+                            "Landscaping",
+                            "Web Development",
+                            "Graphic Design",
+                            "Marketing",
+                            "Consulting",
+                            "IT Services",
+                            "Photography",
+                            "Catering",
+                            "Cleaning",
+                            "Other",
+                          ].map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Hourly Rate (USD)</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 45"
+                        value={formData.hourlyRate}
+                        onChange={(e) =>
+                          handleInputChange("hourlyRate", e.target.value)
+                        }
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                      />
+                    </div>
+                  </>
                 )}
 
                 {/* Email */}

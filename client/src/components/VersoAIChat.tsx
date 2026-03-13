@@ -155,9 +155,27 @@ export default function VersoAIChat() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [aiStatus, setAiStatus] = useState<"ollama" | "fallback" | null>(null);
+  const [aiStatus, setAiStatus] = useState<
+    "ollama" | "groq" | "fallback" | null
+  >(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Notify App to hide header when fullscreen
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("versoai-fullscreen", {
+        detail: { fullscreen: isExpanded && isOpen },
+      }),
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("versoai-fullscreen", {
+          detail: { fullscreen: false },
+        }),
+      );
+    };
+  }, [isExpanded, isOpen]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -327,15 +345,18 @@ export default function VersoAIChat() {
 
   const showQuickActions = messages.length <= 1;
 
-  const chatWidth = isExpanded ? "w-[480px]" : "w-96";
-  const chatHeight = isExpanded ? "h-[640px]" : "h-[520px]";
-
   return (
     <>
       {/* ── Chat Window ── */}
       {isOpen && (
         <div
-          className={`fixed bottom-24 right-6 ${chatWidth} ${chatHeight} bg-slate-900/97 backdrop-blur-xl border border-blue-500/30 rounded-2xl shadow-2xl shadow-blue-900/40 z-50 flex flex-col transition-all duration-200 overscroll-contain`}
+          className={`fixed z-50 flex flex-col bg-slate-900/97 backdrop-blur-xl border border-blue-500/30 shadow-2xl shadow-blue-900/40 transition-all duration-200 overscroll-contain
+            ${
+              isExpanded
+                ? "inset-0 rounded-none"
+                : "bottom-24 right-4 w-[min(340px,calc(100vw-2rem))] h-[min(400px,calc(100vh-8rem))] rounded-2xl"
+            }
+          `}
           onWheel={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -355,7 +376,9 @@ export default function VersoAIChat() {
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse inline-block" />
                   {aiStatus === "ollama"
                     ? "AI · Full mode · Grounded"
-                    : "AI · Smart mode · Grounded"}
+                    : aiStatus === "groq"
+                      ? "AI · Cloud mode · Grounded"
+                      : "AI · Smart mode · Grounded"}
                 </p>
               </div>
             </div>
@@ -415,7 +438,7 @@ export default function VersoAIChat() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[85%] sm:max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words overflow-hidden ${
                     msg.role === "user"
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-sm"
                       : "bg-slate-800/70 border border-blue-500/15 text-blue-100 rounded-bl-sm"
@@ -462,7 +485,7 @@ export default function VersoAIChat() {
                 <p className="text-xs text-blue-400/70 mb-2 pl-8">
                   Quick actions:
                 </p>
-                <div className="flex flex-wrap gap-2 pl-8">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 pl-8 pr-2">
                   {QUICK_ACTIONS.map((action) => (
                     <button
                       key={action}
@@ -489,7 +512,7 @@ export default function VersoAIChat() {
           </div>
 
           {/* Input */}
-          <div className="px-4 pb-4 pt-2 border-t border-blue-500/20 shrink-0">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t border-blue-500/20 shrink-0">
             <div className="flex gap-2 items-center">
               <input
                 ref={inputRef}
@@ -497,10 +520,10 @@ export default function VersoAIChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask VersoAI… (prefix ? for grounded search)"
+                placeholder="Ask VersoAI…"
                 disabled={isLoading}
                 maxLength={1000}
-                className="flex-1 bg-slate-800/50 border border-blue-500/20 focus:border-blue-400/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-blue-300/40 focus:outline-none transition-colors disabled:opacity-50"
+                className="flex-1 min-w-0 bg-slate-800/50 border border-blue-500/20 focus:border-blue-400/60 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-white placeholder-blue-300/40 focus:outline-none transition-colors disabled:opacity-50"
               />
               <button
                 onClick={() => sendMessage(input)}
@@ -516,7 +539,7 @@ export default function VersoAIChat() {
 
       {/* ── Floating Trigger Button (hidden when chat is open) ── */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 group">
+        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 group">
           <button
             onClick={() => setIsOpen(true)}
             className="relative w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-2xl shadow-blue-900/60 hover:shadow-blue-500/50 hover:scale-110 flex items-center justify-center transition-all"

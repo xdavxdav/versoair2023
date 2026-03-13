@@ -3,6 +3,9 @@ import { buildAIContext, groundedSearch, type AIContext } from "./ai-context";
 // ─── Configuration ────────────────────────────────────────────────────────────
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
+const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
+const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface ChatMessage {
@@ -17,7 +20,7 @@ export interface ChatSource {
 
 export interface ChatResult {
   reply: string;
-  provider: "ollama" | "fallback";
+  provider: "ollama" | "groq" | "fallback";
   sources?: ChatSource[];
   searchMethod?: string;
 }
@@ -128,6 +131,37 @@ async function callOllama(messages: ChatMessage[]): Promise<string> {
   const content: string = data?.message?.content ?? data?.response ?? "";
 
   if (!content) throw new Error("Ollama returned empty content");
+  return content.trim();
+}
+
+// ─── Groq cloud call (free Llama hosting — works on Render) ─────────────────
+async function callGroq(messages: ChatMessage[]): Promise<string> {
+  if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not set");
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      temperature: 0.7,
+      max_tokens: 512,
+      top_p: 0.9,
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`Groq API ${res.status}: ${err.substring(0, 200)}`);
+  }
+
+  const data = (await res.json()) as Record<string, any>;
+  const content: string = data?.choices?.[0]?.message?.content ?? "";
+  if (!content) throw new Error("Groq returned empty content");
   return content.trim();
 }
 
@@ -502,7 +536,7 @@ export async function chat(
   // Build the full message list for LLM (system + last 12 conversation turns)
   const llmMessages: ChatMessage[] = [systemMessage, ...messages.slice(-12)];
 
-  // ── Try Ollama ──
+  // ── Try Ollama (local, free, unlimited) ──
   try {
     const reply = await callOllama(llmMessages);
     console.log("[VersoAI] Ollama responded successfully");
@@ -513,13 +547,26 @@ export async function chat(
       searchMethod: ctx.searchMethod,
     };
   } catch (err: any) {
-    console.warn(
-      "[VersoAI] Ollama unavailable, using smart fallback:",
-      err?.message ?? err,
-    );
+    console.warn("[VersoAI] Ollama unavailable:", err?.message ?? err);
   }
 
-  // ── Smart fallback ──
+  // ── Try Groq (cloud, free tier — works on Render) ──
+  if (GROQ_API_KEY) {
+    try {
+      const reply = await callGroq(llmMessages);
+      console.log("[VersoAI] Groq responded successfully");
+      return {
+        reply,
+        provider: "groq",
+        sources,
+        searchMethod: ctx.searchMethod,
+      };
+    } catch (err: any) {
+      console.warn("[VersoAI] Groq unavailable:", err?.message ?? err);
+    }
+  }
+
+  // ── Smart fallback (rule-based, no LLM needed) ──
   const reply = smartFallback(lastUserMsg, ctx, messages);
   return {
     reply,
@@ -573,13 +620,14 @@ QUESTION: ${question}
 
 ANSWER (be specific, cite sources by name):`;
 
-  // Try Ollama for grounded response
-  try {
-    const reply = await callOllama([
-      { role: "system", content: groundedPrompt },
-      { role: "user", content: question },
-    ]);
+  // Try Ollama → Groq for grounded response
+  const groundedMessages: ChatMessage[] = [
+    { role: "system", content: groundedPrompt },
+    { role: "user", content: question },
+  ];
 
+  try {
+    const reply = await callOllama(groundedMessages);
     return {
       answer: reply,
       sources,
@@ -587,7 +635,25 @@ ANSWER (be specific, cite sources by name):`;
       confidence: results.length > 0 ? 0.9 : 0.2,
     };
   } catch {
-    // Fallback: format results directly without LLM
+    // Ollama unavailable — try Groq
+  }
+
+  if (GROQ_API_KEY) {
+    try {
+      const reply = await callGroq(groundedMessages);
+      return {
+        answer: reply,
+        sources,
+        searchMethod,
+        confidence: results.length > 0 ? 0.85 : 0.2,
+      };
+    } catch {
+      // Groq unavailable — fall through to rule-based
+    }
+  }
+
+  // Fallback: format results directly without LLM
+  {
     if (results.length === 0) {
       return {
         answer:

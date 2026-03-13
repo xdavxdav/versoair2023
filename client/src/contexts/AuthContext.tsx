@@ -14,6 +14,14 @@ export interface AuthUser {
   name?: string;
   role?: string;
   isAdmin?: boolean;
+  // Portal capabilities
+  portals?: string[];
+  hasArtistProfile?: boolean;
+  isContractor?: boolean;
+  hasOAuthAccount?: boolean;
+  canAccessBlog?: boolean;
+  subscriptionTier?: string;
+  subscriptionStatus?: string;
 }
 
 interface AuthContextType {

@@ -3115,7 +3115,7 @@ export default function Home() {
                           <p className="text-white/60 text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 font-medium hidden sm:block">
                             {product.sold}
                           </p>
-                          <Link to="/blog">
+                          <Link to="/marketplace">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -3151,21 +3151,29 @@ export default function Home() {
                       Browse our collection and make a difference with every
                       purchase
                     </p>
-                    <Link to="/blog">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-white text-amber-700 px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        <AnimatedKeyboardText
-                          text="Shop Now"
-                          variant="fast"
-                          delay={50}
-                          className="text-amber-700"
-                        />
-                      </motion.button>
-                    </Link>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        // Dispatch SOS signal to navbar Marketplace button
+                        window.dispatchEvent(
+                          new CustomEvent("marketplace-sos", {
+                            detail: { from: "shop-now" },
+                          }),
+                        );
+                        // Scroll to top so user sees the navbar flash
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="bg-white text-amber-700 px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-1.5"
+                    >
+                      <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      <AnimatedKeyboardText
+                        text="Shop Now"
+                        variant="fast"
+                        delay={50}
+                        className="text-amber-700"
+                      />
+                    </motion.button>
                   </motion.div>
                 </div>
               </div>

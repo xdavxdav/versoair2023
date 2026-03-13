@@ -11,7 +11,7 @@ import {
   Headphones,
   ShoppingBag,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 interface BlogNavbarProps {
@@ -37,10 +37,30 @@ export default function BlogNavbar({
   onLogin,
 }: BlogNavbarProps) {
   const { user, logout } = useAuthContext();
-  const isAuthenticated = isAuthProp ?? !!user;
-  const userName = userNameProp ?? user?.email?.split("@")[0] ?? "User";
-  const onLogout = onLogoutProp ?? logout;
+
+  // Check both global auth and marketplace community auth (localStorage)
+  const marketplaceAuth =
+    localStorage.getItem("blog_community_auth") === "true";
+  const marketplaceUser = localStorage.getItem("blog_community_user") || "User";
+
+  const isAuthenticated = isAuthProp ?? (!!user || marketplaceAuth);
+  const userName =
+    userNameProp ??
+    user?.email?.split("@")[0] ??
+    (marketplaceAuth ? marketplaceUser : "User");
+  const handleLogout = () => {
+    if (onLogoutProp) {
+      onLogoutProp();
+    } else if (user) {
+      logout();
+    }
+    // Also clear marketplace community session
+    localStorage.removeItem("blog_community_auth");
+    localStorage.removeItem("blog_community_user");
+    window.location.reload();
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentPath] = useLocation();
 
   return (
     <>
@@ -64,14 +84,22 @@ export default function BlogNavbar({
 
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-1 flex-1 justify-center">
-              {navLinks.map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href}>
-                  <a className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-                    <Icon className="w-3.5 h-3.5" />
-                    {label}
-                  </a>
-                </Link>
-              ))}
+              {navLinks
+                .filter(
+                  (l) =>
+                    !(
+                      l.href === "/marketplace" &&
+                      currentPath === "/marketplace"
+                    ),
+                )
+                .map(({ href, label, icon: Icon }) => (
+                  <Link key={href} href={href}>
+                    <a className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
+                    </a>
+                  </Link>
+                ))}
             </div>
 
             {/* Auth + Mobile Toggle */}
@@ -83,7 +111,7 @@ export default function BlogNavbar({
                     <span className="text-slate-300">{userName}</span>
                   </div>
                   <button
-                    onClick={onLogout}
+                    onClick={handleLogout}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-sm"
                   >
                     <LogOut className="w-4 h-4" />
@@ -118,29 +146,25 @@ export default function BlogNavbar({
               className="md:hidden border-t border-white/10 overflow-hidden"
             >
               <div className="px-4 py-3 flex flex-col gap-1">
-                {navLinks.map(({ href, label, icon: Icon }) => (
-                  <Link key={href} href={href}>
-                    <a
-                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Icon className="w-4 h-4 text-cyan-400" />
-                      {label}
-                    </a>
-                  </Link>
-                ))}
-                {isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      onLogout?.();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all mt-1 border-t border-white/10 pt-3"
-                  >
-                    <LogOut className="w-4 h-4 text-red-400" />
-                    Sign Out
-                  </button>
-                )}
+                {navLinks
+                  .filter(
+                    (l) =>
+                      !(
+                        l.href === "/marketplace" &&
+                        currentPath === "/marketplace"
+                      ),
+                  )
+                  .map(({ href, label, icon: Icon }) => (
+                    <Link key={href} href={href}>
+                      <a
+                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Icon className="w-4 h-4 text-cyan-400" />
+                        {label}
+                      </a>
+                    </Link>
+                  ))}
               </div>
             </motion.div>
           )}

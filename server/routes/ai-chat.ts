@@ -108,13 +108,24 @@ router.get("/status", async (_req: Request, res: Response) => {
     ollamaOnline = false;
   }
 
+  const groqConfigured = !!process.env.GROQ_API_KEY;
+  const status = ollamaOnline ? "ollama" : groqConfigured ? "groq" : "fallback";
+  const model = ollamaOnline
+    ? (process.env.OLLAMA_MODEL ?? "llama3.2")
+    : groqConfigured
+      ? (process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile")
+      : "rule-based";
+  const message = ollamaOnline
+    ? "Ollama is running — full AI mode active"
+    : groqConfigured
+      ? "Groq cloud AI active — full conversational mode"
+      : "Smart fallback mode — set GROQ_API_KEY for full AI capabilities";
+
   return res.json({
     success: true,
-    status: ollamaOnline ? "ollama" : "fallback",
-    model: process.env.OLLAMA_MODEL ?? "llama3.2",
-    message: ollamaOnline
-      ? "Ollama is running — full AI mode active"
-      : "Smart fallback mode — install Ollama for full AI capabilities",
+    status,
+    model,
+    message,
     features: {
       fullTextSearch: true,
       groundedResponses: true,
