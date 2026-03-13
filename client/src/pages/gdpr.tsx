@@ -1,0 +1,488 @@
+import { Link } from "wouter";
+import { ShieldCheck, ArrowLeft, Globe } from "lucide-react";
+import ScrollableNavbar from "@/components/ScrollableNavbar";
+import { useState, useEffect, useMemo } from "react";
+
+type RegionKey = "eu" | "us" | "br" | "ca" | "za" | "au" | "jp" | "in" | "kr" | "uk" | "global";
+
+interface RegionInfo {
+  key: RegionKey;
+  flag: string;
+  label: string;
+  law: string;
+  description: string;
+  color: string;
+  borderColor: string;
+  textColor: string;
+}
+
+const REGIONS: Record<RegionKey, RegionInfo> = {
+  eu: {
+    key: "eu", flag: "🇪🇺", label: "EU/EEA Users", law: "GDPR",
+    description: "Your rights under the General Data Protection Regulation (EU) 2016/679.",
+    color: "bg-blue-500/10", borderColor: "border-blue-500/30", textColor: "text-blue-400",
+  },
+  uk: {
+    key: "uk", flag: "🇬🇧", label: "UK Users", law: "UK GDPR",
+    description: "Your rights under the UK General Data Protection Regulation & Data Protection Act 2018.",
+    color: "bg-blue-500/10", borderColor: "border-blue-500/30", textColor: "text-blue-400",
+  },
+  us: {
+    key: "us", flag: "🇺🇸", label: "US Users", law: "CCPA / CPRA",
+    description: "Your rights under the California Consumer Privacy Act and California Privacy Rights Act.",
+    color: "bg-red-500/10", borderColor: "border-red-500/30", textColor: "text-red-400",
+  },
+  br: {
+    key: "br", flag: "🇧🇷", label: "Brazilian Users", law: "LGPD",
+    description: "Seus direitos sob a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).",
+    color: "bg-green-500/10", borderColor: "border-green-500/30", textColor: "text-green-400",
+  },
+  ca: {
+    key: "ca", flag: "🇨🇦", label: "Canadian Users", law: "PIPEDA",
+    description: "Your rights under the Personal Information Protection and Electronic Documents Act.",
+    color: "bg-red-500/10", borderColor: "border-red-500/30", textColor: "text-red-400",
+  },
+  za: {
+    key: "za", flag: "🇿🇦", label: "South African Users", law: "POPIA",
+    description: "Your rights under the Protection of Personal Information Act (Act 4 of 2013).",
+    color: "bg-emerald-500/10", borderColor: "border-emerald-500/30", textColor: "text-emerald-400",
+  },
+  au: {
+    key: "au", flag: "🇦🇺", label: "Australian Users", law: "Privacy Act / APPs",
+    description: "Your rights under the Privacy Act 1988 and Australian Privacy Principles.",
+    color: "bg-yellow-500/10", borderColor: "border-yellow-500/30", textColor: "text-yellow-400",
+  },
+  jp: {
+    key: "jp", flag: "🇯🇵", label: "Japanese Users", law: "APPI",
+    description: "Act on the Protection of Personal Information.",
+    color: "bg-pink-500/10", borderColor: "border-pink-500/30", textColor: "text-pink-400",
+  },
+  in: {
+    key: "in", flag: "🇮🇳", label: "Indian Users", law: "DPDPA",
+    description: "Your rights under the Digital Personal Data Protection Act, 2023.",
+    color: "bg-orange-500/10", borderColor: "border-orange-500/30", textColor: "text-orange-400",
+  },
+  kr: {
+    key: "kr", flag: "🇰🇷", label: "South Korean Users", law: "PIPA",
+    description: "Personal Information Protection Act.",
+    color: "bg-sky-500/10", borderColor: "border-sky-500/30", textColor: "text-sky-400",
+  },
+  global: {
+    key: "global", flag: "🌍", label: "All Users", law: "Global Data Protection",
+    description: "Verso Air respects data protection rights worldwide. Select your region below.",
+    color: "bg-amber-500/10", borderColor: "border-amber-500/30", textColor: "text-amber-400",
+  },
+};
+
+function detectRegion(): RegionKey {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    const t = tz.toLowerCase();
+    if (["europe/london","europe/belfast","europe/jersey","europe/guernsey","europe/isle_of_man"].some(z => t.startsWith(z))) return "uk";
+    if (t.startsWith("europe/")) return "eu";
+    if (["us/","america/new_york","america/chicago","america/denver","america/los_angeles","america/phoenix","america/anchorage","pacific/honolulu","america/boise","america/detroit","america/indiana","america/kentucky","america/menominee","america/nome","america/adak","america/juneau","america/sitka","america/yakutat","america/north_dakota"].some(z => t.startsWith(z))) return "us";
+    if (["canada/","america/toronto","america/vancouver","america/winnipeg","america/edmonton","america/halifax","america/st_johns","america/regina","america/moncton","america/iqaluit","america/whitehorse","america/yellowknife","america/dawson","america/thunder_bay"].some(z => t.startsWith(z))) return "ca";
+    if (["brazil/","america/sao_paulo","america/fortaleza","america/recife","america/bahia","america/belem","america/manaus","america/cuiaba","america/campo_grande","america/porto_velho","america/boa_vista","america/rio_branco","america/noronha","america/maceio","america/araguaina","america/santarem"].some(z => t.startsWith(z))) return "br";
+    if (t.startsWith("africa/johannesburg")) return "za";
+    if (t.startsWith("australia/")) return "au";
+    if (t.startsWith("asia/tokyo") || t === "japan") return "jp";
+    if (t.startsWith("asia/kolkata") || t.startsWith("asia/calcutta")) return "in";
+    if (t.startsWith("asia/seoul") || t === "rok") return "kr";
+    if (t.startsWith("africa/")) return "za";
+    return "global";
+  } catch {
+    return "global";
+  }
+}
+
+interface ComplianceSection {
+  regionKey: RegionKey;
+  title: string;
+  rights: { icon: string; title: string; description: string }[];
+  authority?: { name: string; url: string };
+  extraNote?: string;
+}
+
+const COMPLIANCE_SECTIONS: ComplianceSection[] = [
+  {
+    regionKey: "eu", title: "🇪🇺 GDPR — European Union",
+    rights: [
+      { icon: "📋", title: "Right of Access (Art. 15)", description: "Request a copy of all personal data we hold about you in a structured format (JSON/CSV) within 30 days." },
+      { icon: "✏️", title: "Right to Rectification (Art. 16)", description: "Request correction of inaccurate or incomplete personal data." },
+      { icon: "🗑️", title: "Right to Erasure (Art. 17)", description: "Request deletion of your personal data ('right to be forgotten')." },
+      { icon: "⏸️", title: "Right to Restrict Processing (Art. 18)", description: "Limit how we use your data while a dispute is resolved or accuracy is verified." },
+      { icon: "📦", title: "Right to Data Portability (Art. 20)", description: "Receive your data in machine-readable format (JSON) and transmit it to another provider." },
+      { icon: "🚫", title: "Right to Object (Art. 21)", description: "Object to processing based on legitimate interest, including profiling." },
+      { icon: "🤖", title: "Right Against Automated Decisions (Art. 22)", description: "Not be subject to decisions based solely on automated processing (including VersoAI)." },
+    ],
+    authority: { name: "EU Data Protection Board", url: "https://edpb.europa.eu/about-edpb/about-edpb/members_en" },
+  },
+  {
+    regionKey: "uk", title: "🇬🇧 UK GDPR — United Kingdom",
+    rights: [
+      { icon: "📋", title: "Right of Access", description: "Request all personal data we hold about you. We respond within 30 days." },
+      { icon: "✏️", title: "Right to Rectification", description: "Correct inaccurate personal data we hold." },
+      { icon: "🗑️", title: "Right to Erasure", description: "Request deletion of your data where no legal basis for retention exists." },
+      { icon: "⏸️", title: "Right to Restrict Processing", description: "Limit processing while disputes are resolved." },
+      { icon: "📦", title: "Right to Data Portability", description: "Receive your data in a commonly used, machine-readable format." },
+      { icon: "🚫", title: "Right to Object", description: "Object to processing for direct marketing or legitimate interests." },
+      { icon: "🤖", title: "Right re: Automated Decision-Making", description: "Challenge decisions made solely by automated means." },
+    ],
+    authority: { name: "ICO (Information Commissioner's Office)", url: "https://ico.org.uk/make-a-complaint/" },
+  },
+  {
+    regionKey: "us", title: "🇺🇸 CCPA / CPRA — United States (California)",
+    rights: [
+      { icon: "🔍", title: "Right to Know", description: "Request disclosure of categories and specific pieces of personal information collected about you." },
+      { icon: "🗑️", title: "Right to Delete", description: "Request deletion of personal information, subject to certain exceptions." },
+      { icon: "🚫", title: "Right to Opt-Out of Sale/Sharing", description: "Verso Air does NOT sell personal information. We do not share data for cross-context behavioral advertising." },
+      { icon: "✏️", title: "Right to Correct", description: "Request correction of inaccurate personal information." },
+      { icon: "⚖️", title: "Right to Non-Discrimination", description: "We will not discriminate against you for exercising your privacy rights." },
+      { icon: "🔒", title: "Right to Limit Sensitive Data Use", description: "Limit how we use sensitive personal information (if applicable)." },
+    ],
+    authority: { name: "California Privacy Protection Agency", url: "https://cppa.ca.gov/" },
+    extraNote: "Verso Air collects the categories of personal information described in our Privacy Policy. We do not sell your data.",
+  },
+  {
+    regionKey: "br", title: "🇧🇷 LGPD — Brasil",
+    rights: [
+      { icon: "✅", title: "Confirmação e Acesso", description: "Confirmar a existência de tratamento e acessar seus dados pessoais coletados." },
+      { icon: "✏️", title: "Correção", description: "Solicitar a correção de dados pessoais incompletos, inexatos ou desatualizados." },
+      { icon: "🚫", title: "Anonimização / Bloqueio / Eliminação", description: "Solicitar anonimização, bloqueio ou eliminação de dados desnecessários ou excessivos." },
+      { icon: "📦", title: "Portabilidade", description: "Solicitar a portabilidade dos dados a outro fornecedor de serviço." },
+      { icon: "🗑️", title: "Eliminação", description: "Solicitar a eliminação dos dados pessoais tratados com o seu consentimento." },
+      { icon: "ℹ️", title: "Informação", description: "Ser informado sobre as entidades com as quais compartilhamos seus dados." },
+      { icon: "↩️", title: "Revogação do Consentimento", description: "Revogar o consentimento a qualquer momento, de forma gratuita e facilitada." },
+    ],
+    authority: { name: "ANPD (Autoridade Nacional de Proteção de Dados)", url: "https://www.gov.br/anpd" },
+  },
+  {
+    regionKey: "ca", title: "🇨🇦 PIPEDA — Canada",
+    rights: [
+      { icon: "📋", title: "Right of Access", description: "Request access to your personal information held by Verso Air and learn how it has been used." },
+      { icon: "✏️", title: "Right to Correct", description: "Challenge the accuracy of your personal information and have it amended." },
+      { icon: "🔒", title: "Consent-Based Processing", description: "Your personal information is collected, used, and disclosed only with your knowledge and consent." },
+      { icon: "🎯", title: "Limited Collection", description: "We collect only information necessary for the purposes identified to you." },
+      { icon: "📌", title: "Accountability", description: "Verso Air has designated a Privacy Officer accountable for personal information." },
+      { icon: "🚫", title: "Right to Withdraw Consent", description: "Withdraw consent at any time, subject to legal or contractual restrictions." },
+    ],
+    authority: { name: "Office of the Privacy Commissioner of Canada", url: "https://www.priv.gc.ca/en/report-a-concern/" },
+  },
+  {
+    regionKey: "za", title: "🇿🇦 POPIA — South Africa",
+    rights: [
+      { icon: "📋", title: "Right to Access", description: "Request confirmation of whether we hold personal information about you and access a copy." },
+      { icon: "✏️", title: "Right to Correction", description: "Request correction or deletion of inaccurate, irrelevant, or outdated personal information." },
+      { icon: "🗑️", title: "Right to Deletion", description: "Request destruction or deletion of personal information that is no longer needed." },
+      { icon: "🚫", title: "Right to Object", description: "Object to processing of personal information for direct marketing purposes." },
+      { icon: "📣", title: "Right to Be Informed", description: "Be notified that personal information about you has been accessed by an unauthorized person." },
+      { icon: "⚖️", title: "Right to Lodge Complaint", description: "Submit a complaint to the Information Regulator regarding your personal information." },
+    ],
+    authority: { name: "Information Regulator (South Africa)", url: "https://inforegulator.org.za/" },
+  },
+  {
+    regionKey: "au", title: "🇦🇺 Privacy Act / APPs — Australia",
+    rights: [
+      { icon: "📋", title: "Right to Access (APP 12)", description: "Request access to the personal information we hold about you." },
+      { icon: "✏️", title: "Right to Correction (APP 13)", description: "Request correction of personal information that is inaccurate or incomplete." },
+      { icon: "🔒", title: "Anonymity / Pseudonymity (APP 2)", description: "Option to deal with us anonymously or using a pseudonym where practicable." },
+      { icon: "🚫", title: "Right to Opt-Out of Marketing", description: "Opt out of receiving direct marketing communications at any time." },
+      { icon: "📢", title: "Right to Be Notified (APP 5)", description: "Be notified at or before the time of collection about the purposes of data collection." },
+      { icon: "🌏", title: "Cross-Border Disclosure (APP 8)", description: "Before we disclose data overseas, we ensure overseas recipients comply with the APPs." },
+    ],
+    authority: { name: "OAIC (Australian Information Commissioner)", url: "https://www.oaic.gov.au/privacy/privacy-complaints" },
+  },
+  {
+    regionKey: "jp", title: "🇯🇵 APPI — Japan",
+    rights: [
+      { icon: "📋", title: "Right to Disclosure", description: "Request disclosure of personal information retained by Verso Air." },
+      { icon: "✏️", title: "Right to Correction", description: "Request correction, addition, or deletion of inaccurate personal information." },
+      { icon: "⏹️", title: "Right to Cease Use", description: "Request cessation of use or deletion of personal information obtained improperly." },
+      { icon: "🔍", title: "Right to Know Purpose", description: "Be informed of the purpose of use of your personal information." },
+      { icon: "🚫", title: "Right to Cease Third-Party Provision", description: "Request that we cease providing your personal information to third parties." },
+    ],
+    authority: { name: "PPC (Personal Information Protection Commission)", url: "https://www.ppc.go.jp/en/" },
+  },
+  {
+    regionKey: "in", title: "🇮🇳 DPDPA — India",
+    rights: [
+      { icon: "📋", title: "Right to Access Information", description: "Obtain a summary of your personal data being processed and the processing activities." },
+      { icon: "✏️", title: "Right to Correction & Erasure", description: "Correct, complete, update, or erase your personal data." },
+      { icon: "📢", title: "Right to Grievance Redressal", description: "Raise grievances about data processing to the Data Protection Officer." },
+      { icon: "↩️", title: "Right to Withdraw Consent", description: "Withdraw consent for processing at any time with the ease with which it was given." },
+    ],
+    authority: { name: "Data Protection Board of India", url: "https://www.meity.gov.in/" },
+  },
+  {
+    regionKey: "kr", title: "🇰🇷 PIPA — South Korea",
+    rights: [
+      { icon: "📋", title: "Right of Access", description: "Request access to personal information processed by Verso Air." },
+      { icon: "✏️", title: "Right to Correct/Delete", description: "Request correction or deletion of inaccurate personal information." },
+      { icon: "⏹️", title: "Right to Suspend Processing", description: "Request suspension of processing of your personal information." },
+      { icon: "↩️", title: "Right to Withdraw Consent", description: "Withdraw consent for data processing at any time." },
+      { icon: "📢", title: "Right to Be Notified of Breaches", description: "Be promptly notified of data breaches involving your personal information." },
+    ],
+    authority: { name: "PIPC (Personal Information Protection Commission)", url: "https://www.pipc.go.kr/eng/" },
+  },
+];
+
+export default function GDPRCompliance() {
+  const [detectedRegion, setDetectedRegion] = useState<RegionKey>("global");
+  const [selectedRegion, setSelectedRegion] = useState<RegionKey | null>(null);
+
+  useEffect(() => {
+    const region = detectRegion();
+    setDetectedRegion(region);
+    setSelectedRegion(region === "global" ? null : region);
+  }, []);
+
+  const activeRegion = selectedRegion || detectedRegion;
+  const regionInfo = REGIONS[activeRegion];
+
+  const sortedSections = useMemo(() => {
+    const detected = COMPLIANCE_SECTIONS.find(s => s.regionKey === activeRegion);
+    const rest = COMPLIANCE_SECTIONS.filter(s => s.regionKey !== activeRegion);
+    return detected ? [detected, ...rest] : COMPLIANCE_SECTIONS;
+  }, [activeRegion]);
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <ScrollableNavbar isAuthenticated={false} />
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <Link href="/">
+          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </a>
+        </Link>
+
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Data Protection & Compliance</h1>
+            <p className="text-gray-400 text-sm flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              Your rights under global data protection laws
+            </p>
+          </div>
+        </div>
+
+        {/* Dynamic Region Banner */}
+        <div className={`${regionInfo.color} border ${regionInfo.borderColor} rounded-xl p-4 mb-6 flex items-start gap-3`}>
+          <span className="text-2xl">{regionInfo.flag}</span>
+          <div className="flex-1">
+            <p className={`${regionInfo.textColor} font-semibold text-sm`}>
+              {regionInfo.law} &mdash; For {regionInfo.label}
+            </p>
+            <p className="text-gray-300 text-sm">{regionInfo.description}</p>
+          </div>
+        </div>
+
+        {/* Region Selector Pills */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {Object.values(REGIONS).filter(r => r.key !== "global").map(r => (
+            <button
+              key={r.key}
+              onClick={() => setSelectedRegion(r.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                activeRegion === r.key
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                  : "bg-white/5 border-gray-700 text-gray-400 hover:bg-white/10 hover:text-gray-200"
+              }`}
+            >
+              {r.flag} {r.law}
+            </button>
+          ))}
+        </div>
+
+        <div className="prose prose-invert prose-amber max-w-none space-y-8">
+          {/* Data Controller */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Controller</h2>
+            <p className="text-gray-300 leading-relaxed">
+              Verso Air™ acts as the data controller for personal data processed through the Platform.
+            </p>
+            <div className="bg-white/5 rounded-lg p-4 border border-gray-800 mt-3">
+              <p className="text-white font-medium">Data Controller</p>
+              <p className="text-gray-400 text-sm">Verso Air™</p>
+              <p className="text-gray-400 text-sm">Data Protection Officer: dpo@versoair.com</p>
+            </div>
+          </section>
+
+          {/* Lawful Basis */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Lawful Basis for Processing</h2>
+            <div className="space-y-3 mt-4">
+              <div className="flex gap-3">
+                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Consent</span>
+                <p className="text-gray-300 text-sm">Analytics cookies, marketing emails &mdash; you can withdraw consent at any time</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Contract</span>
+                <p className="text-gray-300 text-sm">Account creation, subscription management, marketplace transactions</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Legitimate Interest</span>
+                <p className="text-gray-300 text-sm">Security (rate limiting, fraud detection), Platform improvement, internal analytics</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Legal Obligation</span>
+                <p className="text-gray-300 text-sm">Financial record keeping, responding to legal requests, tax compliance</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Region-Specific Rights */}
+          {sortedSections.map((section, idx) => {
+            const sRegion = REGIONS[section.regionKey];
+            const isHighlighted = section.regionKey === activeRegion;
+            return (
+              <section key={section.regionKey} id={section.regionKey}>
+                <h2 className={`text-xl font-semibold border-b pb-2 ${
+                  isHighlighted ? `${sRegion.textColor} border-gray-700` : "text-gray-400 border-gray-800"
+                }`}>
+                  {idx === 0 && isHighlighted && (
+                    <span className="text-[10px] font-medium uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full mr-2">
+                      Your Region
+                    </span>
+                  )}
+                  {section.title}
+                </h2>
+                <div className={`grid gap-3 mt-4 ${isHighlighted ? "" : "opacity-80"}`}>
+                  {section.rights.map((right, rIdx) => (
+                    <div key={rIdx} className={`bg-white/5 border rounded-lg p-4 ${
+                      isHighlighted ? "border-gray-700" : "border-gray-800"
+                    }`}>
+                      <h3 className="text-white font-semibold flex items-center gap-2">
+                        <span className="text-amber-400">{right.icon}</span> {right.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mt-1">{right.description}</p>
+                    </div>
+                  ))}
+                </div>
+                {section.extraNote && (
+                  <p className="text-gray-400 text-sm mt-3 italic">{section.extraNote}</p>
+                )}
+                {section.authority && (
+                  <p className="text-gray-400 text-sm mt-3">
+                    Supervisory Authority:{" "}
+                    <a href={section.authority.url} target="_blank" rel="noopener noreferrer"
+                      className="text-amber-400 underline">{section.authority.name}</a>
+                  </p>
+                )}
+              </section>
+            );
+          })}
+
+          {/* International Data Transfers */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">International Data Transfers</h2>
+            <p className="text-gray-300 leading-relaxed">
+              Verso Air's infrastructure is hosted on Render (US) and Neon PostgreSQL (US). Your data may be transferred to and processed in the United States. We ensure adequate safeguards through:
+            </p>
+            <ul className="list-disc list-inside text-gray-300 space-y-1 mt-2">
+              <li>Standard Contractual Clauses (SCCs) with data processors</li>
+              <li>Encryption in transit (TLS 1.3) and at rest (AES-256)</li>
+              <li>Data minimization &mdash; we only transfer what is necessary</li>
+              <li>Regular security audits of infrastructure providers</li>
+            </ul>
+          </section>
+
+          {/* Data Processors */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Processors</h2>
+            <div className="overflow-x-auto mt-3">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Processor</th>
+                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Purpose</th>
+                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Location</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-300">
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Render</td><td className="py-2 px-2">Application hosting</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Neon</td><td className="py-2 px-2">PostgreSQL database</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Stripe</td><td className="py-2 px-2">Payment processing</td><td className="py-2 px-2">US / EU</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Groq</td><td className="py-2 px-2">AI inference (VersoAI)</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Google</td><td className="py-2 px-2">Analytics</td><td className="py-2 px-2">US / EU</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Data Retention */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Retention</h2>
+            <div className="space-y-2 mt-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">Account data</span>
+                <span className="text-white text-sm">Until account deletion + 30 days</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">Business listings</span>
+                <span className="text-white text-sm">Until removed by user</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">Marketplace transactions</span>
+                <span className="text-white text-sm">7 years (legal requirement)</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">VersoAI conversations</span>
+                <span className="text-white text-sm">Session only (not stored)</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">Analytics data</span>
+                <span className="text-white text-sm">26 months (Google default)</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
+                <span className="text-gray-300">Server logs</span>
+                <span className="text-white text-sm">90 days</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Exercise Your Rights */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">How to Exercise Your Rights</h2>
+            <p className="text-gray-300 leading-relaxed">
+              Regardless of your location, you can exercise your data protection rights by contacting our Data Protection Officer:
+            </p>
+            <div className="bg-white/5 rounded-xl p-4 mt-3 border border-gray-800">
+              <p className="text-white font-medium">Data Protection Officer</p>
+              <p className="text-gray-400 text-sm">Email: dpo@versoair.com</p>
+              <p className="text-gray-400 text-sm">Response time: Within 30 days (extendable by 60 days for complex requests)</p>
+              <p className="text-gray-400 text-sm mt-2">
+                We may verify your identity before processing. All requests are logged and handled in compliance with applicable law.
+              </p>
+            </div>
+          </section>
+
+          {/* Related Policies */}
+          <section>
+            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Related Policies</h2>
+            <div className="flex flex-wrap gap-3 mt-3">
+              <Link href="/privacy">
+                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                  Privacy Policy →
+                </a>
+              </Link>
+              <Link href="/cookies">
+                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                  Cookie Policy →
+                </a>
+              </Link>
+              <Link href="/terms">
+                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                  Terms of Service →
+                </a>
+              </Link>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

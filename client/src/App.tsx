@@ -133,6 +133,14 @@ import Documentation from "@/pages/docs";
 import APITestPage from "@/pages/api-test";
 
 // ─────────────────────────────────────────────────────
+// ⚖️ Legal Pages
+// ─────────────────────────────────────────────────────
+import PrivacyPolicy from "@/pages/privacy";
+import TermsOfService from "@/pages/terms";
+import CookiePolicy from "@/pages/cookies";
+import GDPRCompliance from "@/pages/gdpr";
+
+// ─────────────────────────────────────────────────────
 // 👥 Team & Sponsors
 // ─────────────────────────────────────────────────────
 import TeamMember from "@/pages/team-member";
@@ -392,6 +400,14 @@ function Router() {
       <Route path="/api" component={APIDocumentation} />
       <Route path="/api-test" component={APITestPage} />
       <Route path="/docs" component={Documentation} />
+
+      {/* ═══════════════════════════════════════════════
+          ⚖️ LEGAL PAGES
+          ═══════════════════════════════════════════════ */}
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
+      <Route path="/cookies" component={CookiePolicy} />
+      <Route path="/gdpr" component={GDPRCompliance} />
 
       {/* ═══════════════════════════════════════════════
           👥 TEAM & SPONSORS

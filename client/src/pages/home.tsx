@@ -785,197 +785,152 @@ const MagneticInput = ({ children, className }: MagneticInputProps) => {
   );
 };
 
-// Responsive Footer Component
+// NGO Impact Footer
 const ResponsiveFooter = ({
   countryMeta,
 }: {
   countryMeta: ReturnType<typeof getCountryMeta>;
 }) => {
   const { isAuthenticated } = useSubscription();
+
   return (
-    <footer className="bg-slate-900 text-white pt-12 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="relative bg-slate-950 text-white overflow-hidden">
+      <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-emerald-500/[0.03] blur-3xl rounded-full pointer-events-none" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        {/* Impact Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">150+</p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Communities Reached</p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">2,400+</p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Artisans Supported</p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">35</p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Countries Active</p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">80+</p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Programs Running</p>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-800/60 mb-12" />
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AH</span>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <span className="text-white font-bold text-xs tracking-tight">AH</span>
               </div>
-              <span className="font-bold text-xl">ArtiHuman Foundation</span>
+              <span className="font-bold text-lg tracking-tight">ArtiHuman Foundation</span>
             </div>
-            <p className="text-gray-400 text-sm mb-4">
-              Empowering artisans and uplifting communities through humanitarian
-              innovation across {countryMeta.name}.
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
+              Empowering artisans and uplifting communities through humanitarian innovation across {countryMeta.name}.
             </p>
-            <div className="flex space-x-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="Facebook"
-              >
-                <Facebook size={20} />
+            <div className="flex gap-2">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+                <Facebook size={14} />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="Twitter"
-              >
-                <Twitter size={20} />
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+                <Twitter size={14} />
               </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="Instagram"
-              >
-                <Instagram size={20} />
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+                <Instagram size={14} />
               </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="TikTok"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .56.04.82.1v-3.53a6.37 6.37 0 0 0-.82-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.17a8.16 8.16 0 0 0 4.76 1.54v-3.45a4.85 4.85 0 0 1-1-.57z" />
-                </svg>
-              </a>
-              <a
-                href="https://wa.me/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="WhatsApp"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={20} />
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+                <Linkedin size={14} />
               </a>
             </div>
           </div>
 
+          {/* Programs */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-gray-400 hover:text-white text-sm">
-                  Home
-                </Link>
-              </li>
-              <li>
-                {isAuthenticated ? (
-                  <Link
-                    to="/geo-admin"
-                    className="text-gray-400 hover:text-emerald-400 text-sm flex items-center gap-2"
-                  >
-                    <Database size={16} />
-                    Geo Admin
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Programs</h4>
+            <ul className="space-y-3">
+              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Cultural Programs</Link></li>
+              <li><Link to="/artisan" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Artisan Training</Link></li>
+              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Humanitarian Aid</Link></li>
+              <li><Link to="/commerce" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Artisan Marketplace</Link></li>
+              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Community Impact</Link></li>
+            </ul>
+          </div>
+
+          {/* Get Involved */}
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Get Involved</h4>
+            <ul className="space-y-3">
+              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Donate</Link></li>
+              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Volunteer</Link></li>
+              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Partner With Us</Link></li>
+              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Sponsor a Program</Link></li>
+              {isAuthenticated ? (
+                <li>
+                  <Link to="/geo-admin" className="text-emerald-400 text-sm inline-flex items-center gap-1.5">
+                    <Database size={13} /> Geo Admin
                   </Link>
-                ) : (
-                  <Link
-                    to="/geo-admin"
-                    className="text-gray-600 text-sm flex items-center gap-2 cursor-pointer group"
-                  >
-                    <Lock size={14} className="text-gray-600" />
-                    <span className="text-gray-600">Geo Admin</span>
-                    <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full ml-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                </li>
+              ) : (
+                <li>
+                  <Link to="/geo-admin" className="text-gray-600 text-sm inline-flex items-center gap-1.5 group">
+                    <Lock size={12} /> Geo Admin
+                    <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
                       Sign in
                     </span>
                   </Link>
-                )}
-              </li>
-              <li>
-                <Link
-                  to="/programs"
-                  className="text-gray-400 hover:text-white text-sm"
-                >
-                  Cultural Programs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/commerce"
-                  className="text-gray-400 hover:text-white text-sm"
-                >
-                  Marketplace
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/support"
-                  className="text-gray-400 hover:text-white text-sm"
-                >
-                  Support
-                </Link>
-              </li>
+                </li>
+              )}
             </ul>
           </div>
 
+          {/* Contact & Newsletter */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Contact Us</h3>
-            <ul className="space-y-2">
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Contact</h4>
+            <ul className="space-y-3 mb-6">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <Phone size={16} />
-                <span>{countryMeta.phone}</span>
+                <Phone size={14} className="text-emerald-500/50" />
+                {countryMeta.phone}
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <Mail size={16} />
-                <span>contact@artihuman{countryMeta.tld}</span>
+                <Mail size={14} className="text-emerald-500/50" />
+                contact@artihuman{countryMeta.tld}
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <GlobeIcon size={16} />
-                <span>
-                  {countryMeta.flag} {countryMeta.name}
-                </span>
+                <GlobeIcon size={14} className="text-emerald-500/50" />
+                {countryMeta.flag} {countryMeta.name}
               </li>
             </ul>
-          </div>
 
-          <div>
-            <h3 className="font-bold text-lg mb-4">Newsletter</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Subscribe to get updates on our programs and impact.
-            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mb-3">Newsletter</p>
             <div className="flex">
               <input
                 type="email"
                 placeholder="Your email"
-                className="flex-1 px-4 py-2 rounded-l-lg bg-slate-800 text-white text-sm focus:outline-none"
+                className="flex-1 min-w-0 px-3 py-2 rounded-l-lg bg-white/[0.03] border border-slate-800 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/40"
               />
-              <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 rounded-r-lg text-sm font-medium">
-                Subscribe
+              <button className="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 rounded-r-lg text-sm font-medium hover:from-emerald-400 hover:to-teal-500 transition-all">
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-          <p>© 2024 ArtiHuman Foundation. All rights reserved.</p>
+        <div className="h-px bg-slate-800/60 mb-6" />
+
+        <div className="text-center">
+          <p className="text-gray-600 text-xs">
+            © {new Date().getFullYear()} ArtiHuman Foundation. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
@@ -2282,6 +2237,21 @@ export default function Home() {
               </Button>
             </Link>
           </motion.div>
+
+          {/* Signature watermark */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 1.5 }}
+            className="mt-10 text-white/25 select-none pointer-events-none"
+            style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: "0.75rem",
+              letterSpacing: "0.5em",
+            }}
+          >
+            STRΔΦGHT TΩ THΞ PΩΦΠT
+          </motion.p>
         </div>
 
         {showScrollIndicator && (

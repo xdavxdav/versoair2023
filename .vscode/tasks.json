@@ -107,6 +107,16 @@
 			"label": "Full Log",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -10"
+		},
+		{
+			"label": "Sync Neon DB",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_neon.cjs"
+		},
+		{
+			"label": "Sync Neon Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_neon.cjs"
 		}
 	]
 }
