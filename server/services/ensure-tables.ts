@@ -48,6 +48,25 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    // ── Column drift fix: ensure users table has all schema columns ──
+    // Tables created before schema updates may be missing newer columns.
+    const USERS_COLUMN_ADDITIONS = [
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12) UNIQUE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by INTEGER`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider VARCHAR(20)`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider_id TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS gate_username TEXT UNIQUE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS portal_access JSONB DEFAULT '["general"]'`,
+    ];
+    for (const alt of USERS_COLUMN_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+        // Column may already exist — that's fine
+      }
+    }
+
     // Create indexes after all tables exist (separate pass to avoid FK issues)
     for (const idx of INDEX_STATEMENTS) {
       try {

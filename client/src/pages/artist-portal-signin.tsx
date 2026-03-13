@@ -17,7 +17,17 @@ import {
   Mic2,
   Globe,
   Check,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
+import {
+  isValidEmail,
+  checkPasswordLength,
+  checkPasswordUpper,
+  checkPasswordNumber,
+  passwordStrengthLevel,
+  validateRegistrationForm,
+} from "@/lib/auth-validation";
 
 // ─── Floating Background Particles (lighter version) ─
 function LightParticles() {
@@ -153,6 +163,16 @@ export default function ArtistPortalSignIn() {
     }
     if (!applyForm.agreeTerms) {
       setAuthError("You must agree to the terms.");
+      return;
+    }
+    // Full validation
+    const validation = validateRegistrationForm({
+      email: applyForm.email,
+      password: applyForm.password,
+      confirmPassword: applyForm.confirmPassword,
+    });
+    if (!validation.valid) {
+      setAuthError(validation.error);
       return;
     }
     setIsLoading(true);
@@ -565,7 +585,64 @@ export default function ArtistPortalSignIn() {
                           />
                         </div>
                       </div>
-
+                      {/* Password strength feedback */}
+                      {applyForm.password && (
+                        <div className="space-y-1.5">
+                          <div className="flex gap-1">
+                            {[1, 2, 3].map((level) => (
+                              <div
+                                key={level}
+                                className={`h-1 flex-1 rounded-full transition-colors ${
+                                  passwordStrengthLevel(applyForm.password) >=
+                                  level
+                                    ? passwordStrengthLevel(
+                                        applyForm.password,
+                                      ) === 1
+                                      ? "bg-red-400"
+                                      : passwordStrengthLevel(
+                                            applyForm.password,
+                                          ) === 2
+                                        ? "bg-amber-400"
+                                        : "bg-green-400"
+                                    : "bg-white/10"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-1 gap-0.5">
+                            <p
+                              className={`text-xs flex items-center gap-1 ${checkPasswordLength(applyForm.password) ? "text-green-400" : "text-white/30"}`}
+                            >
+                              {checkPasswordLength(applyForm.password) ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                              At least 8 characters
+                            </p>
+                            <p
+                              className={`text-xs flex items-center gap-1 ${checkPasswordUpper(applyForm.password) ? "text-green-400" : "text-white/30"}`}
+                            >
+                              {checkPasswordUpper(applyForm.password) ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                              One uppercase letter (A–Z)
+                            </p>
+                            <p
+                              className={`text-xs flex items-center gap-1 ${checkPasswordNumber(applyForm.password) ? "text-green-400" : "text-white/30"}`}
+                            >
+                              {checkPasswordNumber(applyForm.password) ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                              One number (0–9)
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
                           Confirm Password

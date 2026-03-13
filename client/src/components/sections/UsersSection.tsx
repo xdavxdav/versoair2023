@@ -20,9 +20,22 @@ import {
   Crown,
   Eye,
   RefreshCw,
+  Music,
+  Briefcase,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import {
+  isValidEmail,
+  checkPasswordLength,
+  checkPasswordUpper,
+  checkPasswordNumber,
+  passwordStrengthLevel,
+  isPasswordStrong,
+  isValidPhone,
+} from "@/lib/auth-validation";
 
 // -------------------------------------------------------------------
 // Types
@@ -43,6 +56,7 @@ interface User {
   failedLoginAttempts: number | null;
   lockedUntil: string | null;
   createdAt: string | null;
+  portalAccess?: string[] | null;
 }
 
 interface Pagination {
@@ -61,6 +75,16 @@ interface UserFormData {
   role: string;
   gateUsername: string;
   isVerified: boolean;
+  phone: string;
+  subscriptionTier: string;
+  portalAccess: string[];
+  // Artist-specific
+  stageName: string;
+  genre: string;
+  country: string;
+  // Contractor-specific
+  specialization: string;
+  hourlyRate: string;
 }
 
 // -------------------------------------------------------------------
@@ -95,6 +119,18 @@ const ROLE_CONFIG: Record<
     bgColor: "bg-purple-100",
     icon: <ShieldAlert className="h-3 w-3" />,
   },
+  artist: {
+    label: "Artist",
+    color: "text-fuchsia-700",
+    bgColor: "bg-fuchsia-100",
+    icon: <Music className="h-3 w-3" />,
+  },
+  contractor: {
+    label: "Contractor",
+    color: "text-amber-700",
+    bgColor: "bg-amber-50",
+    icon: <Briefcase className="h-3 w-3" />,
+  },
   user: {
     label: "User",
     color: "text-gray-700",
@@ -104,6 +140,62 @@ const ROLE_CONFIG: Record<
 };
 
 const ROLES = Object.keys(ROLE_CONFIG);
+
+const PORTAL_OPTIONS = [
+  "general",
+  "artist",
+  "subscriber",
+  "community",
+  "contractor",
+  "business",
+];
+
+const TIER_OPTIONS = [
+  { value: "free", label: "Free" },
+  { value: "essential", label: "Essential" },
+  { value: "verified", label: "Verified" },
+  { value: "max", label: "Max" },
+  { value: "enterprise", label: "Enterprise" },
+];
+
+const GENRES = [
+  "Pop",
+  "Hip-Hop",
+  "R&B",
+  "Rock",
+  "Electronic",
+  "Jazz",
+  "Classical",
+  "Afrobeats",
+  "Reggae",
+  "Latin",
+  "Country",
+  "Gospel",
+  "Dancehall",
+  "Soul",
+  "Indie",
+  "Other",
+];
+
+const SPECIALIZATIONS = [
+  "General Construction",
+  "Electrical",
+  "Plumbing",
+  "HVAC",
+  "Carpentry",
+  "Painting",
+  "Roofing",
+  "Landscaping",
+  "Web Development",
+  "Graphic Design",
+  "Marketing",
+  "Consulting",
+  "IT Services",
+  "Photography",
+  "Catering",
+  "Cleaning",
+  "Other",
+];
 
 const API_BASE_URL =
   typeof window !== "undefined" ? import.meta.env.VITE_API_URL || "" : "";
@@ -138,6 +230,14 @@ export function UsersSection() {
     role: "user",
     gateUsername: "",
     isVerified: false,
+    phone: "",
+    subscriptionTier: "free",
+    portalAccess: ["general"],
+    stageName: "",
+    genre: "",
+    country: "",
+    specialization: "",
+    hourlyRate: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -197,6 +297,22 @@ export function UsersSection() {
       setError("Password is required for new users");
       return;
     }
+    if (!isValidEmail(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (formData.password && !isPasswordStrong(formData.password)) {
+      setError("Password must be 8+ chars with uppercase letter and number");
+      return;
+    }
+    if (formData.phone && !isValidPhone(formData.phone)) {
+      setError("Please enter a valid phone number");
+      return;
+    }
+    if (formData.role === "artist" && !editingUser && !formData.stageName) {
+      setError("Stage name is required for artist accounts");
+      return;
+    }
 
     setSubmitting(true);
     setError("");
@@ -213,8 +329,11 @@ export function UsersSection() {
         role: formData.role,
         gateUsername: formData.gateUsername || null,
         isVerified: formData.isVerified,
+        subscriptionTier: formData.subscriptionTier,
+        portalAccess: formData.portalAccess,
       };
       if (formData.password) payload.password = formData.password;
+      if (formData.phone) payload.phone = formData.phone;
 
       const res = await authenticatedFetch(url, {
         method,
@@ -227,8 +346,53 @@ export function UsersSection() {
         throw new Error(data.error?.message || "Failed to save user");
       }
 
+      const createdUserId = data.data?.id;
+
+      // If creating an artist, also create artist profile
+      if (!editingUser && formData.role === "artist" && createdUserId) {
+        try {
+          await authenticatedFetch(`${API_BASE_URL}/api/artists`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: createdUserId,
+              stage_name: formData.stageName,
+              email: formData.email,
+              genre: formData.genre || "Other",
+              country_code: formData.country || "US",
+              label_status: "independent",
+            }),
+          });
+        } catch {
+          console.warn("Artist profile creation failed (non-blocking)");
+        }
+      }
+
+      // If creating a contractor, also create contractor profile
+      if (!editingUser && formData.role === "contractor" && createdUserId) {
+        try {
+          await authenticatedFetch(`${API_BASE_URL}/api/contractors`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: formData.username,
+              email: formData.email,
+              specialization: formData.specialization || "General",
+              hourlyRate: formData.hourlyRate
+                ? parseFloat(formData.hourlyRate)
+                : null,
+              isAvailable: true,
+            }),
+          });
+        } catch {
+          console.warn("Contractor profile creation failed (non-blocking)");
+        }
+      }
+
       setSuccess(
-        editingUser ? "User updated successfully" : "User created successfully",
+        editingUser
+          ? "User updated successfully"
+          : `User created successfully${formData.role === "artist" ? " (+ artist profile)" : formData.role === "contractor" ? " (+ contractor profile)" : ""}`,
       );
       resetForm();
       fetchUsers(pagination.page);
@@ -273,6 +437,14 @@ export function UsersSection() {
       role: "user",
       gateUsername: "",
       isVerified: false,
+      phone: "",
+      subscriptionTier: "free",
+      portalAccess: ["general"],
+      stageName: "",
+      genre: "",
+      country: "",
+      specialization: "",
+      hourlyRate: "",
     });
     setEditingUser(null);
     setIsModalOpen(false);
@@ -287,6 +459,14 @@ export function UsersSection() {
       role: user.role,
       gateUsername: user.gateUsername || "",
       isVerified: user.isVerified,
+      phone: "",
+      subscriptionTier: user.subscriptionTier || "free",
+      portalAccess: user.portalAccess || ["general"],
+      stageName: "",
+      genre: "",
+      country: "",
+      specialization: "",
+      hourlyRate: "",
     });
     setIsModalOpen(true);
   };
@@ -350,7 +530,8 @@ export function UsersSection() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
           <p className="text-sm text-slate-500 mt-1">
-            {pagination.total} total user{pagination.total !== 1 ? "s" : ""}
+            {pagination.total} total user{pagination.total !== 1 ? "s" : ""} —
+            Create & manage all account types
           </p>
         </div>
         <div className="flex gap-2">
@@ -697,10 +878,10 @@ export function UsersSection() {
           ================================================================ */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex justify-between items-center p-6 border-b border-slate-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
               <h3 className="text-lg font-bold text-slate-900">
-                {editingUser ? "Edit User" : "New User"}
+                {editingUser ? "Edit User" : "Create New User"}
               </h3>
               <button
                 onClick={resetForm}
@@ -711,6 +892,36 @@ export function UsersSection() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Account Type (role) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Account Type *
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_CONFIG[r].label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400 mt-1">
+                  {formData.role === "artist" &&
+                    "Will also create an artist profile automatically"}
+                  {formData.role === "contractor" &&
+                    "Will also create a contractor profile automatically"}
+                  {formData.role === "business_owner" &&
+                    "Business owner with directory listing access"}
+                  {formData.role === "superuser" &&
+                    "⚠️ Full system access — use with caution"}
+                </p>
+              </div>
+
               {/* Username */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -732,14 +943,52 @@ export function UsersSection() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Email *
                 </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className={`w-full px-3 py-2 pr-9 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                      formData.email && !isValidEmail(formData.email)
+                        ? "border-red-400"
+                        : formData.email && isValidEmail(formData.email)
+                          ? "border-green-400"
+                          : "border-slate-300"
+                    }`}
+                    placeholder="user@example.com"
+                  />
+                  {formData.email && (
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                      {isValidEmail(formData.email) ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Phone{" "}
+                  <span className="text-xs text-slate-400">(optional)</span>
+                </label>
                 <input
-                  type="email"
-                  value={formData.email}
+                  type="tel"
+                  value={formData.phone}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, phone: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="user@example.com"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                    formData.phone && !isValidPhone(formData.phone)
+                      ? "border-red-400"
+                      : "border-slate-300"
+                  }`}
+                  placeholder="+1 555 123 4567"
                 />
               </div>
 
@@ -757,27 +1006,218 @@ export function UsersSection() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="••••••••"
                 />
+                {formData.password && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            passwordStrengthLevel(formData.password) >= level
+                              ? passwordStrengthLevel(formData.password) === 1
+                                ? "bg-red-400"
+                                : passwordStrengthLevel(formData.password) === 2
+                                  ? "bg-amber-400"
+                                  : "bg-green-500"
+                              : "bg-slate-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-0.5">
+                      <p
+                        className={`text-xs flex items-center gap-1 ${checkPasswordLength(formData.password) ? "text-green-600" : "text-slate-400"}`}
+                      >
+                        {checkPasswordLength(formData.password) ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}
+                        At least 8 characters
+                      </p>
+                      <p
+                        className={`text-xs flex items-center gap-1 ${checkPasswordUpper(formData.password) ? "text-green-600" : "text-slate-400"}`}
+                      >
+                        {checkPasswordUpper(formData.password) ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}
+                        One uppercase letter (A–Z)
+                      </p>
+                      <p
+                        className={`text-xs flex items-center gap-1 ${checkPasswordNumber(formData.password) ? "text-green-600" : "text-slate-400"}`}
+                      >
+                        {checkPasswordNumber(formData.password) ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}
+                        One number (0–9)
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Role */}
+              {/* Subscription Tier */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Role
+                  Subscription Tier
                 </label>
                 <select
-                  value={formData.role}
+                  value={formData.subscriptionTier}
                   onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
+                    setFormData({
+                      ...formData,
+                      subscriptionTier: e.target.value,
+                    })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {ROLE_CONFIG[r].label}
+                  {TIER_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
                     </option>
                   ))}
                 </select>
               </div>
+
+              {/* Portal Access */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Portal Access
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PORTAL_OPTIONS.map((portal) => (
+                    <button
+                      key={portal}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.portalAccess;
+                        const next = current.includes(portal)
+                          ? current.filter((p) => p !== portal)
+                          : [...current, portal];
+                        setFormData({
+                          ...formData,
+                          portalAccess: next.length > 0 ? next : ["general"],
+                        });
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        formData.portalAccess.includes(portal)
+                          ? "bg-blue-100 border-blue-300 text-blue-700"
+                          : "bg-white border-slate-200 text-slate-500 hover:border-blue-300"
+                      }`}
+                    >
+                      {portal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Artist-specific fields */}
+              {formData.role === "artist" && !editingUser && (
+                <div className="p-4 bg-fuchsia-50 border border-fuchsia-200 rounded-lg space-y-3">
+                  <p className="text-sm font-medium text-fuchsia-700 flex items-center gap-2">
+                    <Music className="h-4 w-4" /> Artist Profile
+                  </p>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Stage Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.stageName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stageName: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      placeholder="Artist / stage name"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Genre
+                      </label>
+                      <select
+                        value={formData.genre}
+                        onChange={(e) =>
+                          setFormData({ ...formData, genre: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      >
+                        <option value="">Select</option>
+                        {GENRES.map((g) => (
+                          <option key={g} value={g}>
+                            {g}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">
+                        Country
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.country}
+                        onChange={(e) =>
+                          setFormData({ ...formData, country: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                        placeholder="e.g. US, FR"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contractor-specific fields */}
+              {formData.role === "contractor" && !editingUser && (
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg space-y-3">
+                  <p className="text-sm font-medium text-orange-700 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Contractor Profile
+                  </p>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Specialization
+                    </label>
+                    <select
+                      value={formData.specialization}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          specialization: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    >
+                      <option value="">Select</option>
+                      {SPECIALIZATIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Hourly Rate (USD){" "}
+                      <span className="text-slate-400">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.hourlyRate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, hourlyRate: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      placeholder="e.g. 45"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* GeoAdmin Gate Username */}
               <div>
@@ -824,6 +1264,14 @@ export function UsersSection() {
                   />
                 </button>
               </div>
+
+              {/* Error in modal */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  {error}
+                </div>
+              )}
 
               {/* Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

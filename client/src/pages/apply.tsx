@@ -21,6 +21,10 @@ import {
   Heart,
   BookOpen,
   Briefcase,
+  Phone,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,6 +219,9 @@ export default function ApplyPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Track which fields the user has interacted with (for real-time validation)
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   // Form state
   const [formData, setFormData] = useState({
     email: "",
@@ -227,27 +234,83 @@ export default function ApplyPage() {
     tier: "essential",
     specialization: "",
     hourlyRate: "",
+    phone: "",
   });
+
+  // ─── Validation helpers ───────────────────────────────
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const PHONE_REGEX = /^[+]?[\d\s\-().]{7,20}$/;
+
+  const validations = {
+    email: formData.email.length > 0 && EMAIL_REGEX.test(formData.email),
+    emailFormat:
+      formData.email.length === 0 || EMAIL_REGEX.test(formData.email),
+    passwordLength: formData.password.length >= 8,
+    passwordUpper: /[A-Z]/.test(formData.password),
+    passwordNumber: /[0-9]/.test(formData.password),
+    passwordStrong:
+      formData.password.length >= 8 &&
+      /[A-Z]/.test(formData.password) &&
+      /[0-9]/.test(formData.password),
+    passwordsMatch:
+      formData.confirmPassword.length === 0 ||
+      formData.password === formData.confirmPassword,
+    phone: formData.phone.length === 0 || PHONE_REGEX.test(formData.phone),
+  };
+
+  const passwordStrengthLevel = [
+    validations.passwordLength,
+    validations.passwordUpper,
+    validations.passwordNumber,
+  ].filter(Boolean).length; // 0-3
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
   };
 
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
   const handleRegister = async () => {
     if (!selectedPortal) return;
+
+    // Mark all fields as touched to show any remaining errors
+    setTouched({
+      email: true,
+      password: true,
+      confirmPassword: true,
+      phone: true,
+    });
 
     // Validation
     if (!formData.email || !formData.password) {
       setError("Email and password are required");
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+    if (!EMAIL_REGEX.test(formData.email)) {
+      setError("Please enter a valid email address (e.g. name@example.com)");
       return;
     }
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters");
+      return;
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      setError("Password must contain at least one uppercase letter");
+      return;
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      setError("Password must contain at least one number");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (formData.phone && !PHONE_REGEX.test(formData.phone)) {
+      setError("Please enter a valid phone number");
       return;
     }
 
@@ -259,6 +322,7 @@ export default function ApplyPage() {
       let body: Record<string, any> = {
         email: formData.email,
         password: formData.password,
+        ...(formData.phone && { phone: formData.phone }),
       };
 
       if (selectedPortal.id === "artist") {
@@ -476,6 +540,7 @@ export default function ApplyPage() {
             setSelectedPortal(null);
             setError("");
             setSuccess(false);
+            setTouched({});
           }}
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
@@ -689,28 +754,104 @@ export default function ApplyPage() {
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label className="text-white/80">Email</Label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-                  />
+                  <Label className="text-white/80">Email *</Label>
+                  <div className="relative">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.email}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      onBlur={() => handleBlur("email")}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10 ${
+                        touched.email && !validations.emailFormat
+                          ? "border-red-500/70 focus:border-red-500"
+                          : touched.email && validations.email
+                            ? "border-green-500/70"
+                            : ""
+                      }`}
+                    />
+                    {touched.email && formData.email.length > 0 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {validations.email ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {touched.email && !validations.emailFormat && (
+                    <p className="text-red-400 text-xs flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Enter a valid email (e.g. name@example.com)
+                    </p>
+                  )}
+                </div>
+
+                {/* Phone (optional) */}
+                <div className="space-y-2">
+                  <Label className="text-white/80">
+                    Phone
+                    <span className="text-white/40 text-xs ml-1">
+                      (optional)
+                    </span>
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <Input
+                      type="tel"
+                      placeholder="+1 555 123 4567"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      onBlur={() => handleBlur("phone")}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10 ${
+                        touched.phone &&
+                        formData.phone.length > 0 &&
+                        !validations.phone
+                          ? "border-red-500/70 focus:border-red-500"
+                          : touched.phone &&
+                              formData.phone.length > 0 &&
+                              validations.phone
+                            ? "border-green-500/70"
+                            : ""
+                      }`}
+                    />
+                  </div>
+                  {touched.phone &&
+                    formData.phone.length > 0 &&
+                    !validations.phone && (
+                      <p className="text-red-400 text-xs flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Enter a valid phone number (e.g. +1 555 123 4567)
+                      </p>
+                    )}
                 </div>
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <Label className="text-white/80">Password</Label>
+                  <Label className="text-white/80">Password *</Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Min 8 characters"
+                      placeholder="Min 8 chars, uppercase + number"
                       value={formData.password}
                       onChange={(e) =>
                         handleInputChange("password", e.target.value)
                       }
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10"
+                      onBlur={() => handleBlur("password")}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10 ${
+                        touched.password &&
+                        formData.password.length > 0 &&
+                        !validations.passwordStrong
+                          ? "border-amber-500/70"
+                          : touched.password && validations.passwordStrong
+                            ? "border-green-500/70"
+                            : ""
+                      }`}
                     />
                     <button
                       type="button"
@@ -724,27 +865,116 @@ export default function ApplyPage() {
                       )}
                     </button>
                   </div>
+                  {/* Password strength bar */}
+                  {formData.password.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded-full transition-colors ${
+                              passwordStrengthLevel >= level
+                                ? passwordStrengthLevel === 1
+                                  ? "bg-red-400"
+                                  : passwordStrengthLevel === 2
+                                    ? "bg-amber-400"
+                                    : "bg-green-400"
+                                : "bg-white/10"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        <p
+                          className={`text-xs flex items-center gap-1 ${validations.passwordLength ? "text-green-400" : "text-white/40"}`}
+                        >
+                          {validations.passwordLength ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          At least 8 characters
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${validations.passwordUpper ? "text-green-400" : "text-white/40"}`}
+                        >
+                          {validations.passwordUpper ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One uppercase letter (A–Z)
+                        </p>
+                        <p
+                          className={`text-xs flex items-center gap-1 ${validations.passwordNumber ? "text-green-400" : "text-white/40"}`}
+                        >
+                          {validations.passwordNumber ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          One number (0–9)
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Confirm Password */}
                 <div className="space-y-2">
-                  <Label className="text-white/80">Confirm Password</Label>
-                  <Input
-                    type="password"
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      handleInputChange("confirmPassword", e.target.value)
-                    }
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-                  />
+                  <Label className="text-white/80">Confirm Password *</Label>
+                  <div className="relative">
+                    <Input
+                      type="password"
+                      placeholder="Re-enter your password"
+                      value={formData.confirmPassword}
+                      onChange={(e) =>
+                        handleInputChange("confirmPassword", e.target.value)
+                      }
+                      onBlur={() => handleBlur("confirmPassword")}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10 ${
+                        touched.confirmPassword &&
+                        formData.confirmPassword.length > 0 &&
+                        !validations.passwordsMatch
+                          ? "border-red-500/70 focus:border-red-500"
+                          : touched.confirmPassword &&
+                              formData.confirmPassword.length > 0 &&
+                              validations.passwordsMatch
+                            ? "border-green-500/70"
+                            : ""
+                      }`}
+                    />
+                    {formData.confirmPassword.length > 0 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {validations.passwordsMatch ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {touched.confirmPassword && !validations.passwordsMatch && (
+                    <p className="text-red-400 text-xs flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Passwords do not match
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
                 <Button
                   onClick={handleRegister}
-                  disabled={loading}
-                  className={`w-full bg-gradient-to-r ${selectedPortal.gradient} hover:opacity-90 text-white mt-6`}
+                  disabled={
+                    loading ||
+                    !formData.email ||
+                    !formData.password ||
+                    !validations.email ||
+                    !validations.passwordStrong ||
+                    !validations.passwordsMatch ||
+                    formData.confirmPassword.length === 0
+                  }
+                  className={`w-full bg-gradient-to-r ${selectedPortal.gradient} hover:opacity-90 text-white mt-6 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {loading ? (
                     <>

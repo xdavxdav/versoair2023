@@ -23,10 +23,12 @@ interface AdminAccessGateProps {
 export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
   const [accessCode, setAccessCode] = useState<string>("");
   const [userInput, setUserInput] = useState<string>("");
+  const [adminPassword, setAdminPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [codeCopied, setCodeCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Generate initial code on mount
   useEffect(() => {
@@ -39,6 +41,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
     setError("");
     setSuccess("");
     setUserInput("");
+    setAdminPassword("");
     setCodeCopied(false);
   };
 
@@ -60,26 +63,33 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
     const validation = validateAdminAccess(userInput, accessCode);
 
     if (validation.isValid && validation.user) {
+      if (!adminPassword) {
+        setError("Please enter your account password.");
+        setIsLoading(false);
+        return;
+      }
       // Get JWT token from the server for admin access
       try {
         const tokenResponse = await fetch(`${API_BASE_URL}/auth/admin-gate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ username: validation.user.username }),
+          body: JSON.stringify({
+            username: validation.user.username,
+            password: adminPassword,
+          }),
         });
 
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-          if (tokenData.token) {
-            // Store JWT in memory so authenticatedFetch sends Authorization header
-            setAuthToken(tokenData.token);
-          }
+        const tokenData = await tokenResponse.json();
+        if (tokenResponse.ok && tokenData.token) {
+          // Store JWT in memory so authenticatedFetch sends Authorization header
+          setAuthToken(tokenData.token);
         } else {
-          console.error(
-            "Admin gate token request failed:",
-            tokenResponse.status,
+          setError(
+            tokenData.message || "Invalid credentials. Check your password.",
           );
+          setIsLoading(false);
+          return;
         }
         // Always initialize CSRF token after auth
         await initializeCsrfToken();
@@ -209,9 +219,33 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
               </p>
             </div>
 
+            <div>
+              <Label className="text-gray-300 text-sm mb-2 block">
+                Account Password
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your account password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  className="bg-gray-900/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-indigo-500 focus:ring-indigo-500/20 text-sm pr-10"
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
             <Button
               type="submit"
-              disabled={!userInput || isLoading}
+              disabled={!userInput || !adminPassword || isLoading}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium"
             >
               {isLoading ? (

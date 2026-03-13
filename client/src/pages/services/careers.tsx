@@ -53,7 +53,6 @@ import {
   Star,
   Calendar,
   MessageCircle,
-  HardHat,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -96,6 +95,15 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  isValidEmail,
+  checkPasswordLength,
+  checkPasswordUpper,
+  checkPasswordNumber,
+  passwordStrengthLevel,
+  isPasswordStrong,
+  validateRegistrationForm,
+} from "@/lib/auth-validation";
 import EmailSubscribeCTA from "@/components/EmailSubscribeCTA";
 import {
   JobApplicationModal,
@@ -369,7 +377,12 @@ const getSectorDef = (sector: string) =>
 
 export default function Careers() {
   /* ── Main Platform auth ── */
-  const { user: platformUser, token: authToken } = useAuthContext();
+  const {
+    user: platformUser,
+    token: authToken,
+    login: authLogin,
+    logout: authLogout,
+  } = useAuthContext();
 
   /* ── Application modal state ── */
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -387,50 +400,89 @@ export default function Careers() {
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
-  const [blogAuth, setBlogAuth] = useState(() => ({
-    connected: localStorage.getItem("blog_community_auth") === "true",
-    user: localStorage.getItem("blog_community_user") || "",
-  }));
-  // Shared auth with Contractors page
-  const [careersAuth, setCareersAuth] = useState(() => ({
-    on: localStorage.getItem("careers_auth") === "true",
-    user: localStorage.getItem("careers_auth_user") || "",
-    role: (localStorage.getItem("careers_auth_role") || "job-seeker") as
-      | "job-seeker"
-      | "contractor",
-  }));
-  const [showCareersAuth, setShowCareersAuth] = useState(false);
-  const [careersForm, setCareersForm] = useState({
-    name: "",
+  // ── Real auth popup state ──
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authForm, setAuthForm] = useState({
     email: "",
-    role: "job-seeker" as "job-seeker" | "contractor",
+    password: "",
+    confirmPassword: "",
+    username: "",
   });
+  const [authError, setAuthError] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
-  const handleCareersSignIn = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("careers_auth", "true");
-    localStorage.setItem("careers_auth_user", careersForm.name);
-    localStorage.setItem("careers_auth_role", careersForm.role);
-    setCareersAuth({
-      on: true,
-      user: careersForm.name,
-      role: careersForm.role,
-    });
-    setShowCareersAuth(false);
-  };
-  const handleCareersSignOut = () => {
-    localStorage.removeItem("careers_auth");
-    localStorage.removeItem("careers_auth_user");
-    localStorage.removeItem("careers_auth_role");
-    setCareersAuth({ on: false, user: "", role: "job-seeker" });
-  };
-  const flipCareersRole = () => {
-    const nr =
-      careersAuth.role === "job-seeker"
-        ? ("contractor" as const)
-        : ("job-seeker" as const);
-    localStorage.setItem("careers_auth_role", nr);
-    setCareersAuth((p) => ({ ...p, role: nr }));
+    setAuthError("");
+
+    if (authMode === "register") {
+      const v = validateRegistrationForm({
+        email: authForm.email,
+        password: authForm.password,
+        confirmPassword: authForm.confirmPassword,
+      });
+      if (!v.valid) {
+        setAuthError(v.error);
+        return;
+      }
+      if (!authForm.username.trim()) {
+        setAuthError("Username is required");
+        return;
+      }
+    } else {
+      if (!authForm.email || !authForm.password) {
+        setAuthError("Email and password are required");
+        return;
+      }
+    }
+
+    setAuthSubmitting(true);
+    try {
+      const url = authMode === "login" ? "/auth/login" : "/auth/register";
+      const body =
+        authMode === "login"
+          ? { email: authForm.email, password: authForm.password }
+          : {
+              username: authForm.username,
+              email: authForm.email,
+              password: authForm.password,
+              role: "user",
+            };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      if (data.success && data.token && data.user) {
+        authLogin(data.token, {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name || data.user.username,
+          role: data.user.role,
+        });
+        setShowAuthPopup(false);
+        setAuthForm({
+          email: "",
+          password: "",
+          confirmPassword: "",
+          username: "",
+        });
+        toast({ title: "Welcome!", description: "You're now signed in." });
+      } else {
+        setAuthError(
+          data.message || data.error?.message || "Authentication failed",
+        );
+      }
+    } catch {
+      setAuthError("Network error — please try again");
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
   const [databaseHealth, setDatabaseHealth] = useState<DatabaseHealth | null>(
@@ -1015,27 +1067,6 @@ export default function Careers() {
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-3">
-                {careersAuth.on && (
-                  <button
-                    onClick={flipCareersRole}
-                    className={
-                      "hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all " +
-                      (careersAuth.role === "job-seeker"
-                        ? "bg-blue-100 text-blue-800 border-blue-300"
-                        : "bg-amber-100 text-amber-800 border-amber-300")
-                    }
-                  >
-                    {careersAuth.role === "job-seeker" ? (
-                      <Briefcase className="h-3.5 w-3.5" />
-                    ) : (
-                      <HardHat className="h-3.5 w-3.5" />
-                    )}
-                    {careersAuth.role === "job-seeker"
-                      ? "Job Seeker"
-                      : "Contractor"}
-                    <ChevronRight className="h-3 w-3" />
-                  </button>
-                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -1045,15 +1076,22 @@ export default function Careers() {
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Refresh Jobs</span>
                 </Button>
-                {careersAuth.on ? (
+                {platformUser ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">
-                      {careersAuth.user}
-                    </span>
+                    <div className="hidden sm:flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white text-xs font-bold">
+                        {(platformUser.name ||
+                          platformUser.email ||
+                          "?")[0].toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                        {platformUser.name || platformUser.email}
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleCareersSignOut}
+                      onClick={authLogout}
                       className="text-gray-500 hover:text-red-600"
                     >
                       Sign Out
@@ -1061,7 +1099,11 @@ export default function Careers() {
                   </div>
                 ) : (
                   <Button
-                    onClick={() => setShowCareersAuth(true)}
+                    onClick={() => {
+                      setAuthMode("login");
+                      setAuthError("");
+                      setShowAuthPopup(true);
+                    }}
                     className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <User className="h-4 w-4" />
@@ -1430,15 +1472,17 @@ export default function Careers() {
               <Card className="mt-6 border border-gray-200/80 shadow-sm overflow-hidden">
                 <div className="h-1.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600" />
                 <CardContent className="pt-5 pb-5">
-                  {blogAuth.connected ? (
+                  {platformUser ? (
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {blogAuth.user.charAt(0).toUpperCase()}
+                          {(platformUser.name ||
+                            platformUser.email ||
+                            "?")[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">
-                            {blogAuth.user}
+                            {platformUser.name || platformUser.email}
                           </p>
                           <p className="text-xs text-emerald-600 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -1959,107 +2003,256 @@ export default function Careers() {
         </div>
       </div>
 
-      {/* ── Shared Careers / Contractors Auth Modal ── */}
-      {showCareersAuth && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      {/* ── Real Auth Popup ── */}
+      {showAuthPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAuthPopup(false);
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+          >
             {/* header */}
-            <div
-              className={`p-6 text-white ${careersAuth.role === "contractor" ? "bg-gradient-to-r from-amber-600 to-orange-600" : "bg-gradient-to-r from-blue-600 to-cyan-600"}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">
-                  {careersAuth.role === "contractor"
-                    ? "Contractor Sign In"
-                    : "Job Seeker Sign In"}
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-5 text-white">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold">
+                  {authMode === "login" ? "Sign In" : "Create Account"}
                 </h2>
                 <button
-                  onClick={() => setShowCareersAuth(false)}
-                  className="text-white/80 hover:text-white text-2xl leading-none"
+                  onClick={() => setShowAuthPopup(false)}
+                  className="text-white/80 hover:text-white text-xl leading-none"
                 >
                   &times;
                 </button>
               </div>
-              {/* role toggle */}
-              <div className="flex bg-white/20 rounded-lg p-1 gap-1">
+              <div className="flex bg-white/20 rounded-lg p-0.5 gap-0.5">
                 <button
-                  onClick={() => flipCareersRole()}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${careersAuth.role === "job-seeker" ? "bg-white text-blue-700 shadow" : "text-white/80 hover:text-white"}`}
+                  onClick={() => {
+                    setAuthMode("login");
+                    setAuthError("");
+                  }}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${authMode === "login" ? "bg-white text-blue-700 shadow" : "text-white/80 hover:text-white"}`}
                 >
-                  <Briefcase className="h-4 w-4" /> Job Seeker
+                  Sign In
                 </button>
                 <button
-                  onClick={() => flipCareersRole()}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${careersAuth.role === "contractor" ? "bg-white text-amber-700 shadow" : "text-white/80 hover:text-white"}`}
+                  onClick={() => {
+                    setAuthMode("register");
+                    setAuthError("");
+                  }}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${authMode === "register" ? "bg-white text-blue-700 shadow" : "text-white/80 hover:text-white"}`}
                 >
-                  <HardHat className="h-4 w-4" /> Contractor
+                  Register
                 </button>
               </div>
             </div>
+
             {/* body */}
-            <div className="p-6 space-y-4">
+            <form onSubmit={handleAuthSubmit} className="p-5 space-y-3">
+              {authMode === "register" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Username
+                  </label>
+                  <Input
+                    placeholder="Choose a username"
+                    value={authForm.username}
+                    onChange={(e) =>
+                      setAuthForm({ ...authForm, username: e.target.value })
+                    }
+                    autoComplete="username"
+                  />
+                </div>
+              )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <Input
-                  placeholder="Enter your name"
-                  value={careersForm.name}
-                  onChange={(e) =>
-                    setCareersForm({ ...careersForm, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">
                   Email
                 </label>
+                <div className="relative">
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={authForm.email}
+                    onChange={(e) =>
+                      setAuthForm({ ...authForm, email: e.target.value })
+                    }
+                    autoComplete="email"
+                    className={
+                      authForm.email && !isValidEmail(authForm.email)
+                        ? "border-red-400 pr-8"
+                        : authForm.email && isValidEmail(authForm.email)
+                          ? "border-green-400 pr-8"
+                          : ""
+                    }
+                  />
+                  {authForm.email && (
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                      {isValidEmail(authForm.email) ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Password
+                </label>
                 <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={careersForm.email}
+                  type="password"
+                  placeholder="••••••••"
+                  value={authForm.password}
                   onChange={(e) =>
-                    setCareersForm({ ...careersForm, email: e.target.value })
+                    setAuthForm({ ...authForm, password: e.target.value })
+                  }
+                  autoComplete={
+                    authMode === "login" ? "current-password" : "new-password"
                   }
                 />
-              </div>
-              <Button
-                className={`w-full ${careersAuth.role === "contractor" ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700" : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"}`}
-                onClick={handleCareersSignIn}
-                disabled={!careersForm.name.trim() || !careersForm.email.trim()}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Sign In as{" "}
-                {careersAuth.role === "contractor"
-                  ? "Contractor"
-                  : "Job Seeker"}
-              </Button>
-              <div className="text-center text-sm text-gray-500 mt-3">
-                {careersAuth.role === "job-seeker" ? (
-                  <span>
-                    Looking for contract work?{" "}
-                    <Link
-                      href="/services/contractors"
-                      className="text-amber-600 hover:underline font-medium"
-                    >
-                      Browse Contracts{" "}
-                      <ChevronRight className="inline h-3 w-3" />
-                    </Link>
-                  </span>
-                ) : (
-                  <span>
-                    Looking for full-time roles?{" "}
-                    <Link
-                      href="/services/careers"
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Browse Careers <ChevronRight className="inline h-3 w-3" />
-                    </Link>
-                  </span>
+                {authMode === "register" && authForm.password && (
+                  <div className="mt-1.5 space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-1 flex-1 rounded-full transition-colors ${passwordStrengthLevel(authForm.password) >= level ? (passwordStrengthLevel(authForm.password) === 1 ? "bg-red-400" : passwordStrengthLevel(authForm.password) === 2 ? "bg-amber-400" : "bg-green-500") : "bg-gray-200"}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-0">
+                      <p
+                        className={`text-[11px] flex items-center gap-1 ${checkPasswordLength(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                      >
+                        {checkPasswordLength(authForm.password) ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}{" "}
+                        8+ characters
+                      </p>
+                      <p
+                        className={`text-[11px] flex items-center gap-1 ${checkPasswordUpper(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                      >
+                        {checkPasswordUpper(authForm.password) ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}{" "}
+                        Uppercase letter
+                      </p>
+                      <p
+                        className={`text-[11px] flex items-center gap-1 ${checkPasswordNumber(authForm.password) ? "text-green-600" : "text-gray-400"}`}
+                      >
+                        {checkPasswordNumber(authForm.password) ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}{" "}
+                        Number
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
+              {authMode === "register" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={authForm.confirmPassword}
+                      onChange={(e) =>
+                        setAuthForm({
+                          ...authForm,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      autoComplete="new-password"
+                      className={
+                        authForm.confirmPassword &&
+                        authForm.confirmPassword !== authForm.password
+                          ? "border-red-400"
+                          : authForm.confirmPassword &&
+                              authForm.confirmPassword === authForm.password
+                            ? "border-green-400"
+                            : ""
+                      }
+                    />
+                    {authForm.confirmPassword && (
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                        {authForm.confirmPassword === authForm.password ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {authError && (
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+                  <XCircle className="h-3.5 w-3.5 flex-shrink-0" /> {authError}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={authSubmitting}
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transition-all"
+              >
+                {authSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <User className="h-4 w-4 mr-2" />
+                )}
+                {authMode === "login" ? "Sign In" : "Create Account"}
+              </Button>
+
+              <p className="text-center text-xs text-gray-400 pt-1">
+                {authMode === "login" ? (
+                  <>
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("register");
+                        setAuthError("");
+                      }}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      Register
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("login");
+                        setAuthError("");
+                      }}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      Sign In
+                    </button>
+                  </>
+                )}
+              </p>
+            </form>
+          </motion.div>
         </div>
       )}
 

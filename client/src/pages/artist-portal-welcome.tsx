@@ -38,7 +38,10 @@ import {
   Fingerprint,
   User,
   Check,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
+import { validateRegistrationForm } from "@/lib/auth-validation";
 
 // ─── Types ───────────────────────────────────────────
 interface Particle {
@@ -1786,6 +1789,16 @@ export default function ArtistPortalWelcome() {
     }
     if (!applyForm.agreeTerms) {
       setApplyError("You must agree to the terms.");
+      return;
+    }
+    // Full validation (email format, password strength)
+    const validationResult = validateRegistrationForm({
+      email: applyForm.email,
+      password: applyForm.password,
+      confirmPassword: applyForm.confirmPassword,
+    });
+    if (!validationResult.valid) {
+      setApplyError(validationResult.error);
       return;
     }
     setIsAuthLoading(true);
