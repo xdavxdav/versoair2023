@@ -24,8 +24,7 @@ router.use("/referral", referralRouter);
 router.use("/cards/webhook/issuing", raw({ type: "application/json" }));
 router.use("/cards", cardsRouter);
 
-// TODO: Add public and private routes as they're created
-// router.use('/public', publicRouter);
-// router.use('/private', privateRouter);
+// All domain routers are mounted above (admin, connections, subscription,
+// email-subscriptions, payments, referral, cards).
 
 export default router;

@@ -93,8 +93,12 @@ const testUsers = [
   console.log(`  Password: ${password}`);
   console.log(`  Role:     superuser`);
   console.log(`  Gate:     joel_007`);
-  console.log("\n  Works on: /auth/login, /auth/artist/login, /auth/community/login,");
-  console.log("            /auth/subscriber/login, /auth/admin-gate, /api/vault/authorize");
+  console.log(
+    "\n  Works on: /auth/login, /auth/artist/login, /auth/community/login,",
+  );
+  console.log(
+    "            /auth/subscriber/login, /auth/admin-gate, /api/vault/authorize",
+  );
   console.log("─".repeat(70));
 
   await pool.end();

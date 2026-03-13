@@ -95,7 +95,10 @@ const resetPasswordSchema = z.object({
 
 const SALT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 2 * 60 * 1000; // 2 minutes (was 15 — reduced to avoid long waits during dev)
+const LOCK_DURATION_MS =
+  process.env.NODE_ENV === "production"
+    ? 15 * 60 * 1000 // 15 minutes in production
+    : 2 * 60 * 1000; // 2 minutes in development
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // ─── Routes ───────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 /* webhint-disable hint-no-inline-styles */
 import { Link, useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   fadeInUp,
   staggerContainer,
@@ -410,6 +410,14 @@ interface Release {
 export default function ArtistPortal() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [portalRevealed, setPortalRevealed] = useState(false);
+  const [connectedUser, setConnectedUser] = useState<{
+    name: string;
+    email: string;
+    role: string;
+    initials: string;
+    tier: string;
+  }>({ name: "", email: "", role: "", initials: "", tier: "Artist" });
   const [loginError, setLoginError] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -441,18 +449,115 @@ export default function ArtistPortal() {
   const invalidateTracks = useInvalidateTracks();
   const { data: myArtist } = useMyArtist();
 
+  // ── Resolve connected user display info ──
+  const resolveConnectedUser = useCallback(
+    (authUser?: { id?: string; email?: string; role?: string } | null) => {
+      // Try artist_profile from localStorage (set during sign-in on welcome page)
+      let artistProfile: any = null;
+      try {
+        const stored = localStorage.getItem("artist_profile");
+        if (stored) artistProfile = JSON.parse(stored);
+      } catch {
+        /* ignore */
+      }
+
+      // Try auth_user from localStorage
+      let cachedUser: any = null;
+      try {
+        const stored = localStorage.getItem("auth_user");
+        if (stored) cachedUser = JSON.parse(stored);
+      } catch {
+        /* ignore */
+      }
+
+      const displayName =
+        artistProfile?.stageName ||
+        artistProfile?.name ||
+        myArtist?.stageName ||
+        authUser?.email?.split("@")[0] ||
+        cachedUser?.email?.split("@")[0] ||
+        "Artist";
+
+      const email =
+        authUser?.email || artistProfile?.email || cachedUser?.email || "";
+      const role =
+        authUser?.role || artistProfile?.role || cachedUser?.role || "artist";
+
+      // Build initials from display name
+      const initials =
+        displayName
+          .split(/\s+/)
+          .map((w: string) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2) || "VA";
+
+      // Determine tier from role
+      const tier =
+        role === "superuser" || role === "admin"
+          ? "Pro Tier"
+          : role === "premium"
+            ? "Premium"
+            : "Artist";
+
+      setConnectedUser({ name: displayName, email, role, initials, tier });
+    },
+    [myArtist],
+  );
+
+  // Re-resolve display name when myArtist hook loads (async, may arrive later)
+  useEffect(() => {
+    if (myArtist && isLoggedIn) resolveConnectedUser();
+  }, [myArtist, isLoggedIn, resolveConnectedUser]);
+
   // ── Auth check on mount ──
   useEffect(() => {
+    // Hydrate in-memory auth token from localStorage before checking
+    const storedToken = localStorage.getItem("artist_token");
+    if (storedToken) {
+      import("@/lib/auth").then(({ setAuthToken }) =>
+        setAuthToken(storedToken),
+      );
+    }
+
     checkAuth()
       .then((user) => {
-        setIsLoggedIn(!!user);
-        setAuthLoading(false);
+        if (user) {
+          setIsLoggedIn(true);
+          setAuthLoading(false);
+          resolveConnectedUser(user);
+          setTimeout(() => setPortalRevealed(true), 200);
+        } else if (storedToken) {
+          // Server session expired but we have a local token — trust the stored profile
+          const profile = localStorage.getItem("artist_profile");
+          if (profile) {
+            setIsLoggedIn(true);
+            setAuthLoading(false);
+            resolveConnectedUser(JSON.parse(profile));
+            setTimeout(() => setPortalRevealed(true), 200);
+            return;
+          }
+          setIsLoggedIn(false);
+          setAuthLoading(false);
+        } else {
+          setIsLoggedIn(false);
+          setAuthLoading(false);
+        }
       })
       .catch(() => {
-        setIsLoggedIn(false);
-        setAuthLoading(false);
+        // Even on network error, if we have stored credentials, stay logged in
+        const profile = localStorage.getItem("artist_profile");
+        if (storedToken && profile) {
+          setIsLoggedIn(true);
+          setAuthLoading(false);
+          resolveConnectedUser(JSON.parse(profile));
+          setTimeout(() => setPortalRevealed(true), 200);
+        } else {
+          setIsLoggedIn(false);
+          setAuthLoading(false);
+        }
       });
-  }, []);
+  }, [resolveConnectedUser]);
 
   // ── Login handler ──
   const handleLogin = useCallback(async () => {
@@ -480,6 +585,8 @@ export default function ArtistPortal() {
         setIsLoggedIn(true);
         setLoginEmail("");
         setLoginPassword("");
+        resolveConnectedUser({ email: loginEmail });
+        setTimeout(() => setPortalRevealed(true), 200);
       } else {
         setLoginError(data.message || "Login failed");
       }
@@ -491,10 +598,13 @@ export default function ArtistPortal() {
   }, [loginEmail, loginPassword]);
 
   // ── Logout handler ──
+  const [, navigate] = useLocation();
   const handleLogout = useCallback(async () => {
     await authLogout();
-    setIsLoggedIn(false);
-  }, []);
+    localStorage.removeItem("artist_token");
+    localStorage.removeItem("artist_profile");
+    navigate("/artist-portal");
+  }, [navigate]);
 
   // ── StreamRoyale hooks ──
   const { data: artistStats } = useArtistStats();
@@ -789,166 +899,9 @@ export default function ArtistPortal() {
   }
 
   if (!isLoggedIn) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="mb-8">
-              <Music className="mx-auto h-20 w-20 text-white mb-6" />
-              <motion.h1
-                variants={fadeInUp}
-                initial="hidden"
-                animate="visible"
-                className="text-4xl font-bold text-white mb-4"
-              >
-                Verso Air ™️ Music Label
-              </motion.h1>
-              <motion.p
-                variants={fadeInUp}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.15 }}
-                className="text-xl text-purple-200 mb-8"
-              >
-                Exclusive portal for certified artists
-              </motion.p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-              <h2 className="text-2xl font-bold text-white mb-6">
-                Artist Login
-              </h2>
-              <p className="text-purple-200 mb-6">
-                This portal is exclusively for artists signed to Verso Air ™️
-                Music Label. Only certified artists with active contracts can
-                access this platform.
-              </p>
-
-              <div className="space-y-4 mb-6">
-                <Input
-                  type="email"
-                  placeholder="Artist Email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  className="bg-white/20 border-white/30 text-white placeholder-purple-200"
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  className="bg-white/20 border-white/30 text-white placeholder-purple-200"
-                />
-                {loginError && (
-                  <p className="text-red-400 text-sm text-left">{loginError}</p>
-                )}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Switch id="remember" />
-                    <Label htmlFor="remember" className="text-purple-200">
-                      Remember me
-                    </Label>
-                  </div>
-                  <Button variant="link" className="text-purple-300">
-                    Forgot password?
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleLogin}
-                disabled={loginLoading}
-                className="w-full mb-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-3 rounded-lg font-medium"
-              >
-                {loginLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                )}
-                {loginLoading ? "Logging in..." : "Login to Artist Portal"}
-              </Button>
-
-              <Separator className="my-6 bg-white/20" />
-
-              <p className="text-purple-200 text-xs text-center mb-3">
-                Or connect with your music platform
-              </p>
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <Button
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-[#1DB954]/20 hover:border-[#1DB954] flex flex-col items-center gap-1.5 py-3 h-auto"
-                  onClick={() =>
-                    (window.location.href =
-                      "/auth/oauth/spotify?redirect=/artist-portal")
-                  }
-                >
-                  <SpotifyIcon className="h-5 w-5" />
-                  <span className="text-xs">Spotify</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-[#FC3C44]/20 hover:border-[#FC3C44] flex flex-col items-center gap-1.5 py-3 h-auto"
-                  onClick={() =>
-                    (window.location.href =
-                      "/auth/oauth/apple-music?redirect=/artist-portal")
-                  }
-                >
-                  <AppleMusicIcon className="h-5 w-5" />
-                  <span className="text-xs">Apple Music</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-[#FFA200]/20 hover:border-[#FFA200] flex flex-col items-center gap-1.5 py-3 h-auto"
-                  onClick={() =>
-                    (window.location.href =
-                      "/auth/oauth/audiomack?redirect=/artist-portal")
-                  }
-                >
-                  <AudiomackIcon className="h-5 w-5" />
-                  <span className="text-xs">Audiomack</span>
-                </Button>
-              </div>
-
-              <div className="border-t border-white/20 pt-6">
-                <p className="text-purple-200 text-sm mb-4">
-                  Not a certified artist yet? Interested in joining our label?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    className="border-white/30 text-white hover:bg-white/10"
-                    onClick={() => window.open("/contracts", "_blank")}
-                  >
-                    <Award className="mr-2 h-4 w-4" />
-                    View Contracts
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-white/30 text-white hover:bg-white/10"
-                    onClick={() => window.open("/apply", "_blank")}
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Apply Now
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <Link href="/">
-              <Button
-                variant="ghost"
-                className="mt-6 text-purple-200 hover:text-white"
-              >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    // Redirect to the welcome page for authentication
+    navigate("/artist-portal");
+    return null;
   }
 
   const renderDashboard = () => (
@@ -1191,7 +1144,11 @@ export default function ArtistPortal() {
                 Your latest releases
               </CardDescription>
             </div>
-            <Button size="sm" variant="ghost" className="text-purple-200">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-purple-200 hover:text-white hover:bg-white/10"
+            >
               View All
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
@@ -1259,7 +1216,11 @@ export default function ArtistPortal() {
                 Label performance ranking
               </CardDescription>
             </div>
-            <Button size="sm" variant="ghost" className="text-purple-200">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-purple-200 hover:text-white hover:bg-white/10"
+            >
               View All
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
@@ -1484,7 +1445,7 @@ export default function ArtistPortal() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-purple-200"
+                            className="text-purple-200 hover:text-white hover:bg-white/10"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
@@ -1702,7 +1663,7 @@ export default function ArtistPortal() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-purple-200"
+                        className="text-purple-200 hover:text-white hover:bg-white/10"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
@@ -2623,7 +2584,7 @@ export default function ArtistPortal() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-purple-200"
+                          className="text-purple-200 hover:text-white hover:bg-white/10"
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
@@ -2710,7 +2671,16 @@ export default function ArtistPortal() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <motion.div
+      className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900"
+      initial={{ opacity: 0, scale: 1.02, filter: "blur(8px)" }}
+      animate={
+        portalRevealed
+          ? { opacity: 1, scale: 1, filter: "blur(0px)" }
+          : { opacity: 0, scale: 1.02, filter: "blur(8px)" }
+      }
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+    >
       {/* Now Playing Bar */}
       {currentTrack && (
         <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/20 z-50">
@@ -2732,7 +2702,7 @@ export default function ArtistPortal() {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="text-purple-200 hover:text-white"
+                  className="text-purple-200 hover:text-white hover:bg-white/10"
                   onClick={() => setIsPlaying(!isPlaying)}
                 >
                   {isPlaying ? (
@@ -2762,14 +2732,14 @@ export default function ArtistPortal() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-purple-200 hover:text-white"
+                    className="text-purple-200 hover:text-white hover:bg-white/10"
                   >
                     <SkipBack className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-purple-200 hover:text-white"
+                    className="text-purple-200 hover:text-white hover:bg-white/10"
                   >
                     {isPlaying ? (
                       <Pause className="h-4 w-4" />
@@ -2780,7 +2750,7 @@ export default function ArtistPortal() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-purple-200 hover:text-white"
+                    className="text-purple-200 hover:text-white hover:bg-white/10"
                   >
                     <SkipForward className="h-4 w-4" />
                   </Button>
@@ -2802,38 +2772,6 @@ export default function ArtistPortal() {
         </div>
       )}
 
-      {/* Cultural Navigation */}
-      <div className="bg-black/30 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto text-sm">
-          <Link href="/">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🏠 Accueil
-            </span>
-          </Link>
-          <span className="text-purple-400/50">|</span>
-          <Link href="/artisans">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🎨 Artisans
-            </span>
-          </Link>
-          <Link href="/programs">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🎭 Programmes
-            </span>
-          </Link>
-          <Link href="/communities">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              👥 Communautés
-            </span>
-          </Link>
-          <Link href="/divertissement">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer whitespace-nowrap">
-              🎪 Divertissement
-            </span>
-          </Link>
-        </div>
-      </div>
-
       {/* Artist Portal Header */}
       <div className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-8 z-40">
         <div className="container mx-auto px-4 py-3">
@@ -2847,10 +2785,10 @@ export default function ArtistPortal() {
                 <div className="flex items-center space-x-2">
                   <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                     <Crown className="h-3 w-3 mr-1" />
-                    Pro Tier
+                    {connectedUser.tier}
                   </Badge>
                   <span className="text-purple-200 text-sm">
-                    Welcome back, Aurora Lights
+                    Welcome back, {connectedUser.name}
                   </span>
                 </div>
               </div>
@@ -2910,15 +2848,15 @@ export default function ArtistPortal() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-purple-200 hover:text-white"
+                    className="text-purple-200 hover:text-white hover:bg-white/10"
                   >
                     <Avatar className="h-8 w-8 mr-2">
                       <AvatarImage src="/api/placeholder/32/32" />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                        AL
+                        {connectedUser.initials}
                       </AvatarFallback>
                     </Avatar>
-                    Aurora Lights
+                    {connectedUser.name}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -3748,7 +3686,7 @@ export default function ArtistPortal() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
 

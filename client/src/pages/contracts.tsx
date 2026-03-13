@@ -288,7 +288,7 @@ export default function Contracts() {
             <Link href="/artist-portal">
               <Button
                 variant="ghost"
-                className="text-purple-200 hover:text-white"
+                className="text-purple-200 hover:text-white hover:bg-white/10"
               >
                 ← Back to Artist Portal
               </Button>

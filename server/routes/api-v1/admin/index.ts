@@ -80,10 +80,7 @@ router.get(
   }),
 );
 
-// TODO: Add more admin route modules as they're created
-// router.use('/advertising', advertisingRouter);
-// router.use('/users', usersRouter);
-// router.use('/analytics', analyticsRouter);
-// router.use('/system', systemRouter);
+// All admin route modules are mounted above (businesses, categories, artists,
+// campaigns, jobs, gtm-events, verification, security, users, roles).
 
 export default router;
