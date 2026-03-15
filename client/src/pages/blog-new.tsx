@@ -199,7 +199,7 @@ export default function BlogPage() {
 
       {/* Navigation */}
       <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="w-6 h-6 text-cyan-400" />
@@ -236,7 +236,7 @@ export default function BlogPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Feed Column */}
           <div className="lg:col-span-2 space-y-6">

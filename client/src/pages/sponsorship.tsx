@@ -304,7 +304,7 @@ export default function Sponsorship() {
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-[95vw] mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -367,7 +367,7 @@ export default function Sponsorship() {
 
       {/* ── WHY SPONSOR ───────────────────────────────────────── */}
       <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -420,7 +420,7 @@ export default function Sponsorship() {
 
       {/* ── SPONSORSHIP OPTIONS ───────────────────────────────── */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -487,7 +487,7 @@ export default function Sponsorship() {
 
       {/* ── SPONSORSHIP TIERS ─────────────────────────────────── */}
       <section id="tiers" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -629,7 +629,7 @@ export default function Sponsorship() {
 
       {/* ── HOW IT WORKS ──────────────────────────────────────── */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-emerald-50">
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -687,7 +687,7 @@ export default function Sponsorship() {
             backgroundSize: "40px 40px",
           }}
         />
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="max-w-[95vw] mx-auto px-6 relative z-10">
           <motion.div
             variants={fadeInUp}
             initial="hidden"

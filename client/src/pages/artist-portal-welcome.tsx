@@ -122,7 +122,7 @@ function AudioVisualizer({
   const BAR_COUNT = 32;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
-  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
 
   const fallbackBars = useRef(
     Array.from({ length: BAR_COUNT }, (_, i) => ({
@@ -134,9 +134,7 @@ function AudioVisualizer({
   // Allocate data array when analyser changes
   useEffect(() => {
     if (analyser) {
-      dataArrayRef.current = new Uint8Array(
-        analyser.frequencyBinCount,
-      ) as Uint8Array<ArrayBuffer>;
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
     } else {
       dataArrayRef.current = null;
     }
@@ -2126,7 +2124,7 @@ export default function ArtistPortalWelcome() {
         </div>
 
         <motion.div
-          className="max-w-6xl mx-auto text-center"
+          className="max-w-[95vw] mx-auto text-center"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -2206,7 +2204,7 @@ export default function ArtistPortalWelcome() {
         </div>
 
         <motion.div
-          className="max-w-5xl mx-auto"
+          className="max-w-[95vw] mx-auto"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -3273,7 +3271,7 @@ export default function ArtistPortalWelcome() {
           FOOTER — Minimal universe footer
           ═══════════════════════════════════════════════ */}
       <footer className="relative z-10 py-12 px-4 border-t border-white/[0.04]">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="max-w-[95vw] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center">
               <Music className="w-3 h-3 text-white" />

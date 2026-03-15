@@ -698,7 +698,7 @@ export default function BusinessesDirectory() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
       <header className="bg-[#0A1628] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
@@ -743,7 +743,7 @@ export default function BusinessesDirectory() {
           <div className="absolute bottom-20 left-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-pulse delay-700" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -826,7 +826,7 @@ export default function BusinessesDirectory() {
       {/* Categories Section or Search Results */}
       {!hasSearched ? (
         <section className="relative -mt-16 pb-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -873,7 +873,7 @@ export default function BusinessesDirectory() {
       ) : (
         // Search Results Section
         <section className="relative -mt-16 pb-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
             {/* Results Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -960,7 +960,7 @@ export default function BusinessesDirectory() {
                                   {business.location}
                                 </span>
                               </div>
-                              {business.is_verified && (
+                              {(business as any).is_verified && (
                                 <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
                                   <CheckCircle className="w-3 h-3 mr-1" />
                                   Verified
@@ -1242,7 +1242,7 @@ export default function BusinessesDirectory() {
 
       {/* Footer */}
       <footer className="bg-[#0A1628] text-white py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">

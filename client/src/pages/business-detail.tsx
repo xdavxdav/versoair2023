@@ -268,7 +268,7 @@ export default function BusinessDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-6">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-16 space-y-6">
           <Skeleton className="h-10 w-2/3 bg-white/5" />
           <Skeleton className="h-6 w-1/2 bg-white/5" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -318,7 +318,7 @@ export default function BusinessDetailPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-10">
+      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
         {/* ══════════════ HERO SECTION ══════════════ */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8 md:p-10">
           <div className="flex flex-col md:flex-row md:items-start gap-6">

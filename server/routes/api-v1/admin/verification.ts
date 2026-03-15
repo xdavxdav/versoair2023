@@ -1,9 +1,7 @@
 import { Router } from "express";
-import { db } from "../../../db";
+import { pool } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
-import { businesses, auditLogs } from "../../../../shared/schema";
-import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -24,7 +22,8 @@ router.get(
 
     // Get unverified and rejected businesses
     const [items, totalResult] = await Promise.all([
-      db.execute(`
+      pool.query(
+        `
         SELECT 
           b.id,
           b.name,
@@ -48,8 +47,10 @@ router.get(
           CASE WHEN b.verification_status = 'unverified' THEN 1 ELSE 2 END,
           b.created_at ASC
         LIMIT $1 OFFSET $2
-      `),
-      db.execute(`
+      `,
+        [limitNum, offset],
+      ),
+      pool.query(`
         SELECT COUNT(*) as count
         FROM businesses
         WHERE verification_status IN ('unverified', 'rejected')
@@ -96,15 +97,13 @@ router.patch(
     }
 
     if (action === "reject" && !reason) {
-      return res
-        .status(400)
-        .json({
-          error: "Rejection reason is required when rejecting a business",
-        });
+      return res.status(400).json({
+        error: "Rejection reason is required when rejecting a business",
+      });
     }
 
     // Get current business
-    const businessResult = await db.execute(
+    const businessResult = await pool.query(
       "SELECT * FROM businesses WHERE id = $1",
       [id],
     );
@@ -117,7 +116,7 @@ router.patch(
     // Update verification status
     const newStatus: VerificationStatus =
       action === "approve" ? "verified" : "rejected";
-    const updateResult = await db.execute(
+    const updateResult = await pool.query(
       `
         UPDATE businesses 
         SET 
@@ -134,7 +133,7 @@ router.patch(
     const updatedBusiness = updateResult.rows[0];
 
     // Log to audit trail
-    await db.execute(
+    await pool.query(
       `
         INSERT INTO audit_logs (admin_id, action, target_type, target_id, details, created_at)
         VALUES ($1, $2, $3, $4, $5, NOW())
@@ -188,7 +187,7 @@ router.patch(
     const { is_active } = req.body;
 
     // Get current business
-    const businessResult = await db.execute(
+    const businessResult = await pool.query(
       "SELECT * FROM businesses WHERE id = $1",
       [id],
     );
@@ -207,7 +206,7 @@ router.patch(
     }
 
     // Update is_active
-    const updateResult = await db.execute(
+    const updateResult = await pool.query(
       `UPDATE businesses SET is_active = $1 WHERE id = $2 RETURNING *`,
       [is_active, id],
     );
@@ -216,7 +215,7 @@ router.patch(
 
     // Log to audit trail
     const adminId = (req.user as any)?.id;
-    await db.execute(
+    await pool.query(
       `
         INSERT INTO audit_logs (admin_id, action, target_type, target_id, details, created_at)
         VALUES ($1, $2, $3, $4, $5, NOW())
@@ -256,7 +255,7 @@ router.get(
   "/stats",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
-    const result = await db.execute(`
+    const result = await pool.query(`
       SELECT 
         COUNT(*) FILTER (WHERE verification_status = 'unverified') as pending,
         COUNT(*) FILTER (WHERE verification_status = 'verified') as approved,
@@ -268,10 +267,10 @@ router.get(
     const stats = result.rows[0];
 
     res.json({
-      pending: parseInt(stats.pending) || 0,
-      approved: parseInt(stats.approved) || 0,
-      rejected: parseInt(stats.rejected) || 0,
-      total: parseInt(stats.total) || 0,
+      pending: parseInt(String(stats.pending)) || 0,
+      approved: parseInt(String(stats.approved)) || 0,
+      rejected: parseInt(String(stats.rejected)) || 0,
+      total: parseInt(String(stats.total)) || 0,
     });
   }),
 );
@@ -287,7 +286,7 @@ router.get(
     const { id } = req.params;
 
     // Get all audit logs related to this business
-    const result = await db.execute(
+    const result = await pool.query(
       `
         SELECT 
           al.id,

@@ -12,6 +12,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  username?: string;
   role?: string;
   isAdmin?: boolean;
   // Portal capabilities
@@ -21,6 +22,7 @@ export interface AuthUser {
   hasOAuthAccount?: boolean;
   canAccessBlog?: boolean;
   subscriptionTier?: string;
+  subscription_tier?: string;
   subscriptionStatus?: string;
 }
 

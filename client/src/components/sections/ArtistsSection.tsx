@@ -22,6 +22,7 @@ interface Artist {
   genre?: string;
   labelStatus?: string;
   spotifyUrl?: string;
+  countryCode?: string;
 }
 
 interface CreateArtistInput {

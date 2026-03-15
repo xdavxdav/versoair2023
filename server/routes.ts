@@ -26,6 +26,7 @@ import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
 import capabilitiesRouter from "./routes/capabilities";
+import marketingRouter from "./routes/marketing";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -139,6 +140,9 @@ export async function registerRoutes(app: Express) {
   app.use("/api/home", homeStatsRouter);
   app.use("/api/request", submissionRequestsRouter);
   app.use("/api/user", capabilitiesRouter);
+
+  // Register marketing platform routes (journal, packs, print, cart, orders, newsletters)
+  app.use("/api/marketing", marketingRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {
@@ -4011,6 +4015,19 @@ export async function registerRoutes(app: Express) {
         "GET /api/settings",
         "GET /api/settings/:sector",
         "POST /api/settings/:sector",
+        "GET /api/marketing/journal/listings",
+        "POST /api/marketing/journal/listings",
+        "GET /api/marketing/journal/pdf/:type",
+        "GET /api/marketing/packs",
+        "GET /api/marketing/print/products",
+        "POST /api/marketing/print/upload",
+        "GET /api/marketing/cart",
+        "POST /api/marketing/cart",
+        "POST /api/marketing/cart/checkout",
+        "GET /api/marketing/orders",
+        "POST /api/marketing/newsletters/subscribe",
+        "GET /api/marketing/newsletters/archive",
+        "GET /api/marketing/analytics",
       ],
     });
   });

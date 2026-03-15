@@ -335,7 +335,7 @@ export default function ImmobilierPortal() {
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-teal-600/10 to-amber-600/20" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(16,185,129,0.1),transparent_50%)]" />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-8">
+        <div className="relative max-w-[95vw] mx-auto px-4 py-8">
           {/* Back link */}
           <Link href="/geo-admin">
             <Button
@@ -412,7 +412,7 @@ export default function ImmobilierPortal() {
       </div>
 
       {/* ─── Tab Navigation ────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 mt-4">
+      <div className="max-w-[95vw] mx-auto px-4 mt-4">
         <div className="flex gap-2 overflow-x-auto pb-2 border-b border-white/10">
           {[
             {
@@ -450,7 +450,7 @@ export default function ImmobilierPortal() {
       </div>
 
       {/* ─── Content ───────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           {/* ═══ DASHBOARD TAB ═══════════════════════════════════════════════ */}
           {activeTab === "dashboard" && (

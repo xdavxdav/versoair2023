@@ -161,6 +161,18 @@ import LibraryPage from "@/pages/library";
 import AnalyticsStreamingPage from "@/pages/analytics-streaming";
 
 // ─────────────────────────────────────────────────────
+// 📢 Marketing Platform
+// ─────────────────────────────────────────────────────
+import MarketingHub from "@/pages/marketing-hub";
+import JournalPage from "@/pages/marketing-journal";
+import PacksPage from "@/pages/marketing-packs";
+import PrintServicesPage from "@/pages/marketing-print";
+import NewslettersPage from "@/pages/marketing-newsletters";
+import CartPage from "@/pages/marketing-cart";
+import OrderTrackingPage from "@/pages/marketing-orders";
+import AdminPrintshop from "@/pages/admin-printshop";
+
+// ─────────────────────────────────────────────────────
 // 🧩 Layout Components
 // ─────────────────────────────────────────────────────
 import Navbar from "@/components/ui/navbar";
@@ -314,9 +326,7 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
-      <Route path="/geo-admin">
-        {() => <ProtectedRoute component={GeoAdminPage} />}
-      </Route>
+      <Route path="/geo-admin" component={GeoAdminPage} />
       <Route path="/geo-admin/business-verification">
         {() => <ProtectedRoute component={BusinessVerification} />}
       </Route>
@@ -327,7 +337,7 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdminDashboard}
-            roles={["admin", "moderator"]}
+            roles={["admin", "superuser"]}
           />
         )}
       </Route>
@@ -336,12 +346,7 @@ function Router() {
           🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
           ═══════════════════════════════════════════════ */}
       <Route path="/dashboard">
-        {() => (
-          <ProtectedRoute
-            component={Dashboard}
-            roles={["admin", "moderator"]}
-          />
-        )}
+        {() => <ProtectedRoute component={Dashboard} roles={["admin"]} />}
       </Route>
       <Route path="/admin/database">
         {() => (
@@ -358,10 +363,7 @@ function Router() {
       </Route>
       <Route path="/admin/tickets">
         {() => (
-          <ProtectedRoute
-            component={AdminTicketManagement}
-            roles={["admin", "moderator"]}
-          />
+          <ProtectedRoute component={AdminTicketManagement} roles={["admin"]} />
         )}
       </Route>
       <Route path="/admin/streamroyale">
@@ -424,6 +426,22 @@ function Router() {
       <Route path="/explore">{() => <Redirect to="/about" />}</Route>
       <Route path="/sectors">{() => <Redirect to="/about" />}</Route>
       <Route path="/careers">{() => <Redirect to="/services/careers" />}</Route>
+
+      {/* ═══════════════════════════════════════════════
+          📢 MARKETING — Journal, Packs, Print, Newsletters
+          ═══════════════════════════════════════════════ */}
+      <Route path="/marketing" component={MarketingHub} />
+      <Route path="/marketing/journal" component={JournalPage} />
+      <Route path="/marketing/packs" component={PacksPage} />
+      <Route path="/marketing/print" component={PrintServicesPage} />
+      <Route path="/marketing/newsletters" component={NewslettersPage} />
+      <Route path="/marketing/cart" component={CartPage} />
+      <Route path="/marketing/order-tracking">
+        {() => <ProtectedRoute component={OrderTrackingPage} />}
+      </Route>
+      <Route path="/admin/printshop">
+        {() => <ProtectedRoute component={AdminPrintshop} roles={["admin"]} />}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           🎧 STREAMING — Verso Air Stream platform

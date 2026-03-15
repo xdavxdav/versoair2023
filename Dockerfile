@@ -13,6 +13,9 @@ COPY tailwind.config.ts ./
 COPY postcss.config.js ./
 COPY drizzle.config.ts ./
 
+# Install native dependencies for sharp (image processing)
+RUN apk add --no-cache vips-dev build-base
+
 # Install dependencies
 RUN npm ci
 
@@ -35,6 +38,9 @@ RUN adduser -S verso -u 1001
 
 # Copy package files
 COPY package*.json ./
+
+# Install runtime dependency for sharp
+RUN apk add --no-cache vips
 
 # Install production dependencies only
 RUN npm ci --only=production && npm cache clean --force

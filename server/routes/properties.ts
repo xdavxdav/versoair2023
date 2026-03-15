@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { db } from "../db";
+import { db, pool } from "../db";
 import { properties } from "@shared/schema";
 import { eq, and, gte, lte, like, desc, asc, or } from "drizzle-orm";
 

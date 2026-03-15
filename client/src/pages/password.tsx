@@ -70,7 +70,7 @@ export default function PasswordPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Quick Navigation Bar */}
       <div className="bg-slate-900/50 border-b border-slate-700 sticky top-0 z-50 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-400">🔐 Secured Session</span>
           </div>
@@ -99,7 +99,7 @@ export default function PasswordPage() {
 
       {/* Header */}
       <div className="border-b border-slate-700 sticky top-0 z-40 bg-slate-900/95 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-[95vw] mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold text-white flex items-center gap-3">
@@ -163,7 +163,7 @@ export default function PasswordPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         {displayedCredentials.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">
@@ -345,7 +345,7 @@ export default function PasswordPage() {
       </div>
 
       {/* Security Warning */}
-      <div className="max-w-7xl mx-auto px-4 py-8 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-8 border-t border-slate-700">
         <div className="bg-red-950/30 border border-red-700/50 rounded-lg p-6 text-red-200 text-sm">
           <p className="font-semibold mb-2">⚠️ Security Notice</p>
           <ul className="list-disc list-inside space-y-1">
@@ -370,7 +370,7 @@ export default function PasswordPage() {
       </div>
 
       {/* Footer Info */}
-      <div className="max-w-7xl mx-auto px-4 py-12 text-center text-slate-500 text-xs">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 text-center text-slate-500 text-xs">
         <p>Verso Air Business Intelligence Platform — Credentials Vault</p>
         <p>Last Updated: {new Date().toLocaleDateString()}</p>
       </div>
@@ -380,7 +380,7 @@ export default function PasswordPage() {
           ═══════════════════════════════════════════════════════════════════════════════ */}
 
       {/* SECTION 1: ADMIN ACCESS GUIDE */}
-      <div className="max-w-7xl mx-auto px-4 py-12 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 border-t border-slate-700">
         <h2 className="text-3xl font-bold text-white mb-8">
           📍 Admin Section Access Guide
         </h2>
@@ -500,7 +500,7 @@ export default function PasswordPage() {
       </div>
 
       {/* SECTION 2: PERFORMANCE OPTIMIZATION */}
-      <div className="max-w-7xl mx-auto px-4 py-12 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 border-t border-slate-700">
         <h2 className="text-3xl font-bold text-white mb-8">
           ⚡ Performance Optimization Checklist
         </h2>
@@ -569,7 +569,7 @@ export default function PasswordPage() {
       </div>
 
       {/* SECTION 3: PRODUCTION DEPLOYMENT */}
-      <div className="max-w-7xl mx-auto px-4 py-12 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 border-t border-slate-700">
         <h2 className="text-3xl font-bold text-white mb-8">
           🚀 Production Deployment Checklist
         </h2>
@@ -702,7 +702,7 @@ export default function PasswordPage() {
       </div>
 
       {/* SECTION 4: CREDENTIALS REFERENCE */}
-      <div className="max-w-7xl mx-auto px-4 py-12 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 border-t border-slate-700">
         <h2 className="text-3xl font-bold text-white mb-8">
           🔑 Credentials Format & Reference
         </h2>
@@ -792,7 +792,7 @@ export default function PasswordPage() {
       </div>
 
       {/* FOOTER */}
-      <div className="max-w-7xl mx-auto px-4 py-12 text-center text-slate-500 text-xs border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-12 text-center text-slate-500 text-xs border-t border-slate-700">
         <p className="mb-2">
           🔐 Verso Air Business Intelligence Platform — Complete Developer
           Reference

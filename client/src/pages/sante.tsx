@@ -618,7 +618,7 @@ export default function Sante() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-base sm:text-lg md:text-xl mb-4 text-white/90"
+            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
             Real-time PostgreSQL database with {totalResults.toLocaleString()}+
             healthcare facilities
@@ -629,28 +629,28 @@ export default function Sante() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8"
+            className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
             <Card className="bg-white/10 backdrop-blur-md border-red-500/30">
               <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-red-400" />
+                <div className="flex items-center gap-[0.5vw]">
+                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
                   <span className="text-sm text-red-200">Live Database</span>
                 </div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {totalResults.toLocaleString()}+ Records
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-orange-500/30">
               <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-orange-400" />
+                <div className="flex items-center gap-[0.5vw]">
+                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                   <span className="text-sm text-orange-200">
                     Healthcare Facilities
                   </span>
                 </div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {searchResults.length} Loaded
                 </div>
               </CardContent>
@@ -666,7 +666,7 @@ export default function Sante() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20"
+                className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -678,18 +678,18 @@ export default function Sante() {
                       ].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400"
                         />
                       ))}
                     </div>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
+                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
                       {enterprises[currentIndex]?.name}
                     </h3>
                     <p className="text-gray-200 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-2 mt-3 text-red-200">
-                      <MapPin className="h-4 w-4" />
+                    <div className="flex items-center gap-[0.5vw] mt-3 text-red-200">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
                           "Location not specified"}
@@ -705,10 +705,10 @@ export default function Sante() {
       </div>
 
       {/* Enhanced Search and Filter Section */}
-      <div className="max-w-5xl mx-auto px-2 sm:px-4 -mt-8 relative z-20">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-red-900/90 backdrop-blur-md border-red-700 shadow-2xl">
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
+          <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
+            <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-400" />
                 <Input
@@ -734,8 +734,8 @@ export default function Sante() {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-[0.75vw] md:gap-[1vw]">
+              <div className="flex flex-wrap items-center gap-[0.5vw] sm:gap-[1vw]">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -757,7 +757,7 @@ export default function Sante() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <div className="flex flex-wrap items-center gap-[0.5vw] sm:gap-[1vw]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -774,7 +774,7 @@ export default function Sante() {
                         {activeFilters.sort_by === "name_asc" && "Name A-Z"}
                         {!activeFilters.sort_by && "Sort by"}
                       </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                      <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
@@ -787,7 +787,7 @@ export default function Sante() {
                       }
                     >
                       {activeFilters.sort_by === "rating_desc" && (
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                       )}
                       <span
                         className={
@@ -808,7 +808,7 @@ export default function Sante() {
                       }
                     >
                       {activeFilters.sort_by === "star_desc" && (
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                       )}
                       <span
                         className={
@@ -829,7 +829,7 @@ export default function Sante() {
                       }
                     >
                       {activeFilters.sort_by === "revenue_desc" && (
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                       )}
                       <span
                         className={
@@ -850,7 +850,7 @@ export default function Sante() {
                       }
                     >
                       {activeFilters.sort_by === "name_asc" && (
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                       )}
                       <span
                         className={
@@ -879,7 +879,7 @@ export default function Sante() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-red-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-red-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
                       Category
@@ -895,7 +895,7 @@ export default function Sante() {
                               (c) => c.value === activeFilters.category,
                             )?.label || "All Categories"}
                           </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
@@ -925,7 +925,7 @@ export default function Sante() {
                             }
                           >
                             {activeFilters.category === cat.value && (
-                              <Check className="h-4 w-4 mr-2" />
+                              <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                             )}
                             <span
                               className={
@@ -996,7 +996,7 @@ export default function Sante() {
                               (s) => s.value === activeFilters.status,
                             )?.label || "Any Status"}
                           </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
@@ -1026,7 +1026,7 @@ export default function Sante() {
                             }
                           >
                             {activeFilters.status === status.value && (
-                              <Check className="h-4 w-4 mr-2" />
+                              <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                             )}
                             <span
                               className={
@@ -1043,7 +1043,7 @@ export default function Sante() {
                     </DropdownMenu>
                   </div>
 
-                  <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-2 mt-4">
+                  <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-[0.5vw] mt-4">
                     <Button
                       variant="outline"
                       onClick={clearAllFilters}
@@ -1066,44 +1066,46 @@ export default function Sante() {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-[2vh] sm:py-[3vh] md:py-[4vh]">
         {/* Tabs Navigation */}
-        <div className="relative flex space-x-1 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pb-2 bg-slate-800/50 rounded-xl p-1.5 border border-red-500/20 backdrop-blur-sm">
-          {(
-            [
-              "analytics",
-              "businesses",
-              "finance",
-              "ads",
-              "database",
-            ] as TabType[]
-          ).map((tab, index) => (
-            <motion.button
-              key={tab}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                delay: index * 0.08,
-                duration: 0.3,
-                ease: "easeOut",
-              }}
-              onClick={() => setActiveTab(tab)}
-              className={`relative capitalize whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                activeTab === tab
-                  ? "text-white"
-                  : "text-red-300 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="sante-active-tab"
-                  className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-lg shadow-lg shadow-red-500/25"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                />
-              )}
-              <span className="relative z-10">{tab}</span>
-            </motion.button>
-          ))}
+        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-slate-800/50 rounded-xl p-[0.4vw] border border-red-500/20 backdrop-blur-sm">
+          <div className="flex w-fit mx-auto">
+            {(
+              [
+                "analytics",
+                "businesses",
+                "finance",
+                "ads",
+                "database",
+              ] as TabType[]
+            ).map((tab, index) => (
+              <motion.button
+                key={tab}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: index * 0.08,
+                  duration: 0.3,
+                  ease: "easeOut",
+                }}
+                onClick={() => setActiveTab(tab)}
+                className={`relative capitalize whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 ${
+                  activeTab === tab
+                    ? "text-white"
+                    : "text-red-300 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="sante-active-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-lg shadow-lg shadow-red-500/25"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10">{tab}</span>
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         {activeTab === "businesses" && (
@@ -1111,8 +1113,8 @@ export default function Sante() {
             {/* Live Search Results Section */}
             {hasSearched && (
               <div>
-                <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between mb-[1vw]">
+                  <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-red-400" />
                     <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
@@ -1128,19 +1130,19 @@ export default function Sante() {
 
                 {/* Loading State */}
                 {isInitialLoading ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
                     <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md border border-red-500/20">
-                      <CardContent className="p-3 sm:p-4 md:p-6">
+                      <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
                               Loading healthcare facilities...
                             </h3>
                             <p className="text-gray-200 mt-2">
@@ -1152,17 +1154,17 @@ export default function Sante() {
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md border border-red-500/20">
-                      <CardContent className="p-3 sm:p-4 md:p-6">
+                      <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
                               Fetching data...
                             </h3>
                             <p className="text-gray-200 mt-2">Please wait</p>
@@ -1174,17 +1176,17 @@ export default function Sante() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1.5vw]">
                       <AnimatePresence>
                         {isSearching ? (
-                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                          <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <div className="relative w-20 h-20 mx-auto mb-4">
                               <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-600 rounded-full blur-xl opacity-50" />
                               <div className="relative w-20 h-20 bg-gradient-to-r from-red-600 to-orange-700 rounded-full flex items-center justify-center shadow-2xl">
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-red-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-red-300 mb-2">
                               Searching PostgreSQL Database...
                             </h3>
                             <p className="text-gray-300">
@@ -1203,35 +1205,35 @@ export default function Sante() {
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-red-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-red-600 to-orange-600" />
-                              <div className="p-3 sm:p-4 md:p-6">
+                              <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
                                     <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-1">
                                       {business.title}
                                     </h4>
-                                    <div className="flex items-center gap-2 text-gray-400">
-                                      <Building className="h-4 w-4 text-red-500" />
+                                    <div className="flex items-center gap-[0.5vw] text-gray-400">
+                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-500" />
                                       <span className="text-sm capitalize font-medium">
                                         {business.address || business.location}
                                       </span>
                                       {business.is_verified && (
                                         <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
-                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                           Verified
                                         </Badge>
                                       )}
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-2 bg-gradient-to-br from-red-400 to-orange-500 px-3 py-2 rounded-xl shadow-xl">
-                                      <Star className="h-4 w-4 text-white" />
+                                    <div className="flex items-center gap-[0.5vw] bg-gradient-to-br from-red-400 to-orange-500 px-3 py-2 rounded-xl shadow-xl">
+                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-white" />
                                       <span className="text-sm font-bold text-white">
                                         {business.rating}
                                       </span>
                                     </div>
                                     {business.status === "premium" && (
                                       <Badge className="bg-green-900/30 text-green-300 border-green-500/30 text-xs">
-                                        <Stethoscope className="h-3 w-3 mr-1" />
+                                        <Stethoscope className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                         Premium
                                       </Badge>
                                     )}
@@ -1242,32 +1244,32 @@ export default function Sante() {
                                   {business.description}
                                 </p>
 
-                                <div className="space-y-3 mb-4">
+                                <div className="space-y-[0.75vw] mb-4">
                                   <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-red-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
                                       <span className="text-gray-300">
                                         {business.reviews?.toLocaleString() ||
                                           0}{" "}
                                         reviews
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Stethoscope className="h-4 w-4 text-orange-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <Stethoscope className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                                       <span className="text-gray-300">
                                         {business.rating || 5}★ Facility
                                       </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="h-4 w-4 text-blue-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
                                       <span className="text-gray-300 capitalize">
                                         {business.location}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Tag className="h-4 w-4 text-orange-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <Tag className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                                       <span className="text-gray-300 capitalize">
                                         {business.category}
                                       </span>
@@ -1290,11 +1292,11 @@ export default function Sante() {
                                     )}
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-between pt-4 border-t border-gray-700 gap-3">
+                                <div className="flex flex-wrap items-center justify-between pt-[1vw] border-t border-gray-700 gap-[0.75vw]">
                                   <div>
                                     {business.revenue && (
                                       <>
-                                        <span className="text-base sm:text-lg md:text-xl font-bold text-green-300">
+                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
                                           €
                                           {(business.revenue / 1000).toFixed(0)}
                                           K
@@ -1311,7 +1313,7 @@ export default function Sante() {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-[0.5vw]">
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -1320,7 +1322,7 @@ export default function Sante() {
                                         e.stopPropagation();
                                       }}
                                     >
-                                      <Heart className="h-4 w-4 text-gray-400" />
+                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1330,7 +1332,7 @@ export default function Sante() {
                                         handleBusinessSelect(business);
                                       }}
                                     >
-                                      <Phone className="h-4 w-4 mr-2" />
+                                      <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                                       Contact
                                     </Button>
                                   </div>
@@ -1339,9 +1341,9 @@ export default function Sante() {
                             </motion.div>
                           ))
                         ) : (
-                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                          <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
                               No Facilities Found
                             </h3>
                             <p className="text-gray-400">
@@ -1360,7 +1362,7 @@ export default function Sante() {
 
                     {/* Pagination */}
                     {searchResults.length > 0 && (
-                      <div className="flex justify-center items-center gap-2 mt-8">
+                      <div className="flex justify-center items-center gap-[1vw] mt-[2vw]">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1372,10 +1374,10 @@ export default function Sante() {
                           disabled={currentPage === 1}
                           className="border-red-600 hover:bg-red-800"
                         >
-                          <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
+                          <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
                           Previous
                         </Button>
-                        <span className="text-red-400 text-sm">
+                        <span className="text-red-400 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} of {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
@@ -1390,7 +1392,7 @@ export default function Sante() {
                           className="border-red-600 hover:bg-red-800"
                         >
                           Next
-                          <ChevronRight className="h-4 w-4 ml-1" />
+                          <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
                     )}
@@ -1402,8 +1404,8 @@ export default function Sante() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
               Healthcare Analytics
             </h2>
@@ -1413,7 +1415,7 @@ export default function Sante() {
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
                 title="Patient Satisfaction"
@@ -1469,11 +1471,11 @@ export default function Sante() {
               />
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20">
+            <div className="grid lg:grid-cols-2 gap-[1vw] mb-[1.5vw]">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">
+                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
                       Revenue & Patient Trends
                     </h3>
                     <Calendar className="h-5 w-5 text-red-400" />
@@ -1484,9 +1486,9 @@ export default function Sante() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-red-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
                 <CardContent>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-6 text-white">
+                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
                     Revenue by Category
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
@@ -1499,12 +1501,12 @@ export default function Sante() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
               Financial Dashboard
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
                   title: "Consultation Revenue",
@@ -1518,7 +1520,7 @@ export default function Sante() {
                 { title: "ROI", value: "25%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-3 sm:p-4 md:p-6">
+                  <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
@@ -1536,12 +1538,12 @@ export default function Sante() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Pill className="h-6 w-6" />
               Healthcare Campaigns
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 { title: "Active Campaigns", value: "14", status: "Running" },
                 { title: "Total Budget", value: "€120K", status: "Allocated" },
@@ -1559,7 +1561,7 @@ export default function Sante() {
                 { title: "ROAS", value: "3.8x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
-                  <CardContent className="p-3 sm:p-4 md:p-6">
+                  <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {ad.title}
                     </h3>
@@ -1585,12 +1587,12 @@ export default function Sante() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-red-300 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-red-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               PostgreSQL Database Connection
             </h2>
-            <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
                   Database Stats
@@ -1628,7 +1630,7 @@ export default function Sante() {
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
                   Quick Actions
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-[0.75vw]">
                   <Button
                     onClick={() =>
                       window.open(`${API_BASE_URL}/api/health`, "_blank")
@@ -1654,27 +1656,27 @@ export default function Sante() {
       </div>
 
       {/* Healthcare Features Section */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-red-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
             Verso Air Healthcare Network
           </span>
         </h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
           {healthcareFeatures.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-red-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-red-500/20 hover:border-red-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-800/50 to-red-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-red-500/20 hover:border-red-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-white">
+              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-white">
                 {feature.title}
               </h3>
               <p className="text-gray-300">{feature.description}</p>
@@ -1700,7 +1702,7 @@ export default function Sante() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-red-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-3 sm:p-4 md:p-6 flex justify-between items-center">
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
                 <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedBusiness.title}
                 </h2>
@@ -1712,16 +1714,16 @@ export default function Sante() {
                 </button>
               </div>
 
-              <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+              <div className="p-[clamp(0.75rem,2vw,2.5rem)] space-y-4 sm:space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-[0.5vw] mb-2">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
                       <span className="text-gray-300">
                         {selectedBusiness.location}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-[0.5vw]">
                       <Badge
                         variant="outline"
                         className="bg-red-900/30 text-red-300 border-red-500/30"
@@ -1729,7 +1731,7 @@ export default function Sante() {
                         {selectedBusiness.category}
                       </Badge>
                       <div className="flex items-center gap-1 bg-red-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
-                        <Star className="h-3 w-3 fill-current" />
+                        <Star className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] fill-current" />
                         <span className="font-bold">
                           {selectedBusiness.rating}
                         </span>
@@ -1750,12 +1752,12 @@ export default function Sante() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[0.75vw] sm:gap-[1vw]">
                   {selectedBusiness.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Revenue</div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
@@ -1765,7 +1767,7 @@ export default function Sante() {
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">Staff</div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>

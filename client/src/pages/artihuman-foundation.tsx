@@ -8,7 +8,7 @@ export default function ArtiHumanFoundation() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
             ArtiHuman Foundation
           </h1>
@@ -19,7 +19,7 @@ export default function ArtiHumanFoundation() {
       </div>
 
       {/* Mission Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-8 mb-16">
           <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-2">
             <Sparkles className="h-8 w-8 text-emerald-400" />

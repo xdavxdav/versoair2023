@@ -30,7 +30,7 @@ export default function OngCulturelle() {
           <div className="absolute bottom-10 left-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto z-10">
+        <div className="relative max-w-[95vw] mx-auto z-10">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -70,7 +70,7 @@ export default function OngCulturelle() {
 
       {/* The Vision Section */}
       <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -137,7 +137,7 @@ export default function OngCulturelle() {
 
       {/* Pillars Section */}
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"
@@ -308,7 +308,7 @@ export default function OngCulturelle() {
 
       {/* Impact Section */}
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"
@@ -363,7 +363,7 @@ export default function OngCulturelle() {
 
       {/* Values Section */}
       <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"

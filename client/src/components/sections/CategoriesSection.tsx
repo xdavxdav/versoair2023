@@ -253,7 +253,7 @@ export function CategoriesSection() {
       {/* Table */}
       <DataTable
         data={categories.filter(
-          (cat) =>
+          (cat: any) =>
             !searchQuery ||
             cat.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
             cat.slug.toLowerCase().startsWith(searchQuery.toLowerCase()) ||

@@ -51,7 +51,7 @@ export default function Contact() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
@@ -91,7 +91,7 @@ export default function Contact() {
       </div>
 
       {/* Contact Content */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <motion.div
           variants={staggerContainer}
           initial="hidden"

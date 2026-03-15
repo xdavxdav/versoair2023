@@ -86,7 +86,7 @@ export default function Pricing() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-12 px-4">
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-[95vw] mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
             Grow Your Visibility
           </h1>
@@ -128,7 +128,7 @@ export default function Pricing() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5">
           {TIER_ORDER.map((tierKey) => {
             const tier = TIERS[tierKey];

@@ -279,7 +279,7 @@ export default function Services() {
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary via-primary/90 to-secondary py-24 overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
-        <div className="relative max-w-7xl mx-auto px-6 text-center">
+        <div className="relative max-w-[95vw] mx-auto px-6 text-center">
           <motion.div variants={fadeInUp} initial="hidden" animate="visible">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
               <Award className="h-4 w-4 text-white" />
@@ -340,7 +340,7 @@ export default function Services() {
 
       {/* Platform Overview */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Verso Air Platform Overview
@@ -486,7 +486,7 @@ export default function Services() {
 
       {/* Industries Section */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Industry-Specific Solutions
@@ -556,7 +556,7 @@ export default function Services() {
 
       {/* Pricing Tiers */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Service Packages
@@ -701,7 +701,7 @@ export default function Services() {
 
       {/* Service Links & Resources */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Additional Resources

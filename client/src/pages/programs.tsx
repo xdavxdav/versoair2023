@@ -114,7 +114,7 @@ export default function CulturalPrograms() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
@@ -165,7 +165,7 @@ export default function CulturalPrograms() {
       </div>
 
       {/* Programs Overview Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-[95vw] mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-8">Our Programs</h2>
 
         <motion.div

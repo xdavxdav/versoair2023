@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TierKey } from "@/lib/tiers";
 import { TIERS, TIER_ORDER } from "@/lib/tiers";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
@@ -42,7 +43,15 @@ interface GeoAdminAuthGateProps {
 export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
-  const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
+  const { login: authContextLogin } = useAuthContext();
+  const [mode, setMode] = useState<
+    | "gate"
+    | "signin"
+    | "geoadmin"
+    | "selectCategory"
+    | "subscriberType"
+    | "subscriberSignin"
+  >("signin");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -50,6 +59,64 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [subscriberEmail, setSubscriberEmail] = useState("");
+  const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
+
+  // User types for subscriber category selection
+  const subscriberTypes = [
+    {
+      id: "business-owner",
+      label: "🧑‍💼 Business Owner",
+      description: "Owns and runs the business (main buyer)",
+    },
+    {
+      id: "commerce-owner",
+      label: "🧾 Small Commerce Owner",
+      description: "Retail/shop owner — small-scale operations",
+    },
+    {
+      id: "service-provider",
+      label: "💼 Service Provider",
+      description: "Runs a hands-on trade or service business",
+    },
+    {
+      id: "freelancer",
+      label: "🧑‍🔧 Self-Employed / Freelancer",
+      description: "One-person operation (e.g., plumber, tutor)",
+    },
+    {
+      id: "trader",
+      label: "🧑‍🌾 Independent Trader",
+      description: "Informal or market-based business operator",
+    },
+    {
+      id: "franchise-manager",
+      label: "🏢 Local Franchise Manager",
+      description: "Manages a branded location (e.g., Subway)",
+    },
+    {
+      id: "side-hustler",
+      label: "🪪 Side Hustler",
+      description: "Part-time business, may want exposure",
+    },
+    {
+      id: "traditional-owner",
+      label: "🧓 Traditional Business Owner",
+      description: "Older clients used to print directories",
+    },
+  ];
+
+  // Handle selecting user type and moving to signin form
+  const handleUserTypeSelect = (userType: string) => {
+    setSelectedUserType(userType);
+    localStorage.setItem("geoadmin_user_type", userType);
+    setError("");
+    setEmail("");
+    setPassword("");
+    // Move to subscriber signin form - MUST enter credentials
+    setMode("subscriberSignin");
+  };
 
   const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +140,10 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("geoadmin_username", email.split("@")[0]);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
         setAuthToken(data.token);
+        // Sync into AuthContext so ProtectedRoute recognizes the session
+        if (data.user) {
+          authContextLogin(data.token, data.user);
+        }
         await initializeCsrfToken();
         setIsSuccess(true);
         onSignInSuccess(email.split("@")[0]);
@@ -89,6 +160,13 @@ export default function GeoAdminAuthGate({
   const handleGeoAdminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const code = username.trim().toLowerCase();
+    if (!code) {
+      setError("Enter your access code");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -96,7 +174,7 @@ export default function GeoAdminAuthGate({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: username.toLowerCase() }),
+        body: JSON.stringify({ username: code }),
       });
 
       const data = await res.json();
@@ -105,14 +183,18 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("geoadmin_session", "true");
-        localStorage.setItem("geoadmin_username", username.toLowerCase());
+        localStorage.setItem("geoadmin_username", code);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
         setAuthToken(data.token);
+        // Sync into AuthContext so ProtectedRoute recognizes the session
+        if (data.user) {
+          authContextLogin(data.token, data.user);
+        }
         await initializeCsrfToken();
         setIsSuccess(true);
-        onSignInSuccess(username.toLowerCase());
+        onSignInSuccess(code);
       } else {
-        setError(data.message || "Invalid username. Use format: username_xxx");
+        setError(data.message || "Invalid access code.");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -212,7 +294,13 @@ export default function GeoAdminAuthGate({
 
               <div className="space-y-4">
                 <Button
-                  onClick={() => onSignInSuccess(email.split("@")[0])}
+                  onClick={() =>
+                    onSignInSuccess(
+                      username
+                        ? username.trim().toLowerCase()
+                        : email.split("@")[0],
+                    )
+                  }
                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
                 >
                   <ArrowRight className="mr-2 h-4 w-4" />
@@ -405,15 +493,18 @@ export default function GeoAdminAuthGate({
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => {
-                  setMode("signin");
+                  setMode("subscriberType");
                   setError("");
                   setEmail("");
                   setPassword("");
                   setUsername("");
                   setShowPassword(false);
+                  setSelectedUserType(null);
                 }}
                 className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-                  mode === "signin"
+                  mode === "signin" ||
+                  mode === "subscriberType" ||
+                  mode === "subscriberSignin"
                     ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
                     : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                 }`}
@@ -448,7 +539,230 @@ export default function GeoAdminAuthGate({
               </div>
             )}
 
+            {/* SUBSCRIBER TYPE SELECTION */}
+            {mode === "subscriberType" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white text-sm font-bold">
+                    1
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Select your business type
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-slate-300 mb-4 text-center">
+                    Tell us about your business
+                  </p>
+                  {subscriberTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => handleUserTypeSelect(type.id)}
+                      disabled={loading}
+                      className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group"
+                    >
+                      <h4 className="text-white font-medium text-sm">
+                        {type.label}
+                      </h4>
+                      <p className="text-slate-400 text-xs mt-1">
+                        {type.description}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* SUBSCRIBER SIGN-IN FORM */}
+            {mode === "subscriberSignin" && (
+              <form onSubmit={handleSubscriberSignIn} className="space-y-4">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-white text-xs font-bold">
+                    ✓
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Step 1 complete
+                  </span>
+                  <span className="text-xs text-slate-500 mx-2">→</span>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white text-sm font-bold">
+                    2
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Enter credentials
+                  </span>
+                </div>
+                <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <p className="text-xs text-emerald-300">
+                    Business Type:{" "}
+                    <strong>
+                      {
+                        subscriberTypes.find((t) => t.id === selectedUserType)
+                          ?.label
+                      }
+                    </strong>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@business.com"
+                      required
+                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading || !email || !password}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in…
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Sign In & Access Dashboard
+                    </>
+                  )}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("subscriberType");
+                    setEmail("");
+                    setPassword("");
+                  }}
+                  className="w-full text-sm text-slate-400 hover:text-slate-300 py-2"
+                >
+                  ← Change business type
+                </button>
+
+                {/* ─── SSO Divider ─── */}
+                <div className="flex items-center gap-3 mt-5">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-xs text-slate-500 font-medium">
+                    or continue with
+                  </span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+
+                {/* ─── SSO Providers ─── */}
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {/* Google */}
+                  <button
+                    type="button"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Google
+                  </button>
+                  {/* Microsoft */}
+                  <button
+                    type="button"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                      <rect
+                        x="13"
+                        y="1"
+                        width="10"
+                        height="10"
+                        fill="#7FBA00"
+                      />
+                      <rect
+                        x="1"
+                        y="13"
+                        width="10"
+                        height="10"
+                        fill="#00A4EF"
+                      />
+                      <rect
+                        x="13"
+                        y="13"
+                        width="10"
+                        height="10"
+                        fill="#FFB900"
+                      />
+                    </svg>
+                    Microsoft
+                  </button>
+                  {/* Apple */}
+                  <button
+                    type="button"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                    </svg>
+                    Apple
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* SUBSCRIBER SIGN-IN FORM (Old - for mode === "signin") */}
             {mode === "signin" && (
               <form onSubmit={handleSubscriberSignIn} className="space-y-4">
                 <div>
@@ -604,30 +918,34 @@ export default function GeoAdminAuthGate({
               <form onSubmit={handleGeoAdminSignIn} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Username
+                    Access Code
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter your username"
+                      placeholder="username_xxx"
                       required
+                      autoComplete="off"
                       className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />
                   </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5">
+                    Enter your personnel access code
+                  </p>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
+                  disabled={loading || username.trim().length < 3}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Authenticating…
+                      Verifying…
                     </>
                   ) : (
                     <>

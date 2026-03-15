@@ -400,7 +400,7 @@ export function Tickets() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Quick Navigation Bar - Top Priority */}
       <div className="bg-slate-900/50 border-b border-slate-700 backdrop-blur dark:bg-slate-950/50">
-        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center justify-between">
+        <div className="max-w-[95vw] mx-auto px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
               className="text-sm text-slate-400 transition-all duration-300"
@@ -840,7 +840,7 @@ export function Tickets() {
             </DialogHeader>
             <TicketDetailView
               ticket={selectedTicket}
-              onStatusChange={(status) => {
+              onStatusChange={(status: Ticket["status"]) => {
                 updateTicketMutation.mutate({
                   id: selectedTicket.id,
                   updates: { status },
@@ -1010,7 +1010,7 @@ function CreateTicketForm({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    priority: "medium",
+    priority: "medium" as Ticket["priority"],
     category: "general",
     requesterEmail: "",
     source: "portal",
@@ -1048,7 +1048,12 @@ function CreateTicketForm({
           <Label className="dark:text-gray-300">Priority</Label>
           <Select
             value={formData.priority}
-            onValueChange={(priority) => setFormData({ ...formData, priority })}
+            onValueChange={(priority) =>
+              setFormData({
+                ...formData,
+                priority: priority as Ticket["priority"],
+              })
+            }
           >
             <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-white">
               <SelectValue />
@@ -1111,7 +1116,7 @@ function TicketDetailView({
   isUpdating,
 }: {
   ticket: Ticket;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: Ticket["status"]) => void;
   onDelete: () => void;
   isUpdating: boolean;
 }) {

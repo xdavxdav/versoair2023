@@ -898,7 +898,7 @@ export default function BatimentDashboard() {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90"></div>
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto w-full">
+        <div className="relative z-10 w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -923,7 +923,7 @@ export default function BatimentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-base sm:text-lg md:text-xl mb-4 text-white/90"
+            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
             Real-time PostgreSQL database with {totalResults.toLocaleString()}+
             construction sites, contractors & building projects
@@ -934,39 +934,39 @@ export default function BatimentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8"
+            className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
             <Card className="bg-white/10 backdrop-blur-md border-blue-500/30">
               <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <Database className="h-4 w-4 text-blue-400" />
+                <div className="flex items-center gap-[0.5vw]">
+                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
                   <span className="text-sm text-blue-200">Live Database</span>
                 </div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {totalResults.toLocaleString()}+ Records
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-teal-500/30">
               <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-teal-400" />
+                <div className="flex items-center gap-[0.5vw]">
+                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-400" />
                   <span className="text-sm text-teal-200">
                     Construction Sites
                   </span>
                 </div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {searchResults.length} Loaded
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-white/10 backdrop-blur-md border-blue-500/30">
               <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4 text-blue-400" />
+                <div className="flex items-center gap-[0.5vw]">
+                  <Wrench className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
                   <span className="text-sm text-blue-200">Active Workers</span>
                 </div>
-                <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {searchResults
                     .reduce((acc, f) => acc + (f.workers_count || 0), 0)
                     .toLocaleString()}
@@ -985,7 +985,7 @@ export default function BatimentDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20"
+                className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -997,18 +997,18 @@ export default function BatimentDashboard() {
                       ].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400"
                         />
                       ))}
                     </div>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
+                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
                       {enterprises[currentIndex]?.name}
                     </h3>
                     <p className="text-gray-200 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-2 mt-3 text-blue-200">
-                      <MapPin className="h-4 w-4" />
+                    <div className="flex items-center gap-[0.5vw] mt-3 text-blue-200">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
                           "Location not specified"}
@@ -1024,10 +1024,10 @@ export default function BatimentDashboard() {
       </div>
 
       {/* Enhanced Search and Filter Section - SAME LAYOUT */}
-      <div className="max-w-5xl mx-auto px-2 sm:px-4 -mt-8 relative z-20">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 backdrop-blur-md border-blue-700 shadow-2xl">
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
+          <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
+            <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
                 <Input
@@ -1053,8 +1053,8 @@ export default function BatimentDashboard() {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-[0.75vw] md:gap-[1vw]">
+              <div className="flex flex-wrap items-center gap-[0.5vw] sm:gap-[1vw]">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -1076,7 +1076,7 @@ export default function BatimentDashboard() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <div className="flex flex-wrap items-center gap-[0.5vw] sm:gap-[1vw]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -1088,7 +1088,7 @@ export default function BatimentDashboard() {
                           (o) => o.value === activeFilters.sort_by,
                         )?.label || "Sort by"}
                       </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                      <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-slate-800 border-blue-600 w-[200px]">
@@ -1104,7 +1104,7 @@ export default function BatimentDashboard() {
                         }}
                       >
                         {activeFilters.sort_by === option.value && (
-                          <Check className="h-4 w-4 mr-2" />
+                          <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                         )}
                         <span
                           className={
@@ -1134,7 +1134,7 @@ export default function BatimentDashboard() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-visible"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
                       Facility Type
@@ -1150,7 +1150,7 @@ export default function BatimentDashboard() {
                               (c) => c.value === activeFilters.category,
                             )?.label || "All Types"}
                           </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -1171,7 +1171,7 @@ export default function BatimentDashboard() {
                             }}
                           >
                             {activeFilters.category === cat.value && (
-                              <Check className="h-4 w-4 mr-2" />
+                              <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                             )}
                             <span
                               className={
@@ -1203,7 +1203,7 @@ export default function BatimentDashboard() {
                               (s) => s.value === activeFilters.specialization,
                             )?.label || "Any Specialization"}
                           </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -1224,7 +1224,7 @@ export default function BatimentDashboard() {
                             }}
                           >
                             {activeFilters.specialization === spec.value && (
-                              <Check className="h-4 w-4 mr-2" />
+                              <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                             )}
                             <span
                               className={
@@ -1331,7 +1331,7 @@ export default function BatimentDashboard() {
                               (s) => s.value === activeFilters.status,
                             )?.label || "Any Status"}
                           </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -1352,7 +1352,7 @@ export default function BatimentDashboard() {
                             }}
                           >
                             {activeFilters.status === status.value && (
-                              <Check className="h-4 w-4 mr-2" />
+                              <Check className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                             )}
                             <span
                               className={
@@ -1387,7 +1387,7 @@ export default function BatimentDashboard() {
                     />
                   </div>
 
-                  <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-2 mt-4">
+                  <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-[0.5vw] mt-4">
                     <Button
                       variant="outline"
                       onClick={clearAllFilters}
@@ -1410,51 +1410,63 @@ export default function BatimentDashboard() {
       </div>
 
       {/* Main Content with Tabs - SAME STRUCTURE */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-[2vh] sm:py-[3vh] md:py-[4vh]">
         {/* Tabs Navigation */}
-        <div className="relative flex space-x-1 mb-4 sm:mb-6 md:mb-8 overflow-x-auto pb-2 bg-slate-800/50 rounded-xl p-1.5 border border-blue-500/20 backdrop-blur-sm">
-          {(
-            [
-              "analytics",
-              "facilities",
-              "patients",
-              "resources",
-              "database",
-            ] as TabType[]
-          ).map((tab, index) => (
-            <motion.button
-              key={tab}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                delay: index * 0.08,
-                duration: 0.3,
-                ease: "easeOut",
-              }}
-              onClick={() => setActiveTab(tab)}
-              className={`relative capitalize whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center ${
-                activeTab === tab
-                  ? "text-white"
-                  : "text-blue-300 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="batiment-active-tab"
-                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg shadow-lg shadow-blue-500/25"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                />
-              )}
-              <span className="relative z-10 flex items-center">
-                {tab === "facilities" && <HardHat className="h-4 w-4 mr-2" />}
-                {tab === "analytics" && <BarChart3 className="h-4 w-4 mr-2" />}
-                {tab === "patients" && <Users className="h-4 w-4 mr-2" />}
-                {tab === "resources" && <Activity className="h-4 w-4 mr-2" />}
-                {tab === "database" && <Database className="h-4 w-4 mr-2" />}
-                {tab}
-              </span>
-            </motion.button>
-          ))}
+        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-slate-800/50 rounded-xl p-[0.4vw] border border-blue-500/20 backdrop-blur-sm">
+          <div className="flex w-fit mx-auto">
+            {(
+              [
+                "analytics",
+                "facilities",
+                "patients",
+                "resources",
+                "database",
+              ] as TabType[]
+            ).map((tab, index) => (
+              <motion.button
+                key={tab}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: index * 0.08,
+                  duration: 0.3,
+                  ease: "easeOut",
+                }}
+                onClick={() => setActiveTab(tab)}
+                className={`relative capitalize whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 flex items-center ${
+                  activeTab === tab
+                    ? "text-white"
+                    : "text-blue-300 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="batiment-active-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg shadow-lg shadow-blue-500/25"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center">
+                  {tab === "facilities" && (
+                    <HardHat className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
+                  )}
+                  {tab === "analytics" && (
+                    <BarChart3 className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
+                  )}
+                  {tab === "patients" && (
+                    <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
+                  )}
+                  {tab === "resources" && (
+                    <Activity className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
+                  )}
+                  {tab === "database" && (
+                    <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
+                  )}
+                  {tab}
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         {activeTab === "facilities" && (
@@ -1462,8 +1474,8 @@ export default function BatimentDashboard() {
             {/* Live Search Results Section - SAME LAYOUT */}
             {hasSearched && (
               <div>
-                <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between mb-[1vw]">
+                  <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-blue-400" />
                     <span className="bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
@@ -1479,19 +1491,19 @@ export default function BatimentDashboard() {
 
                 {/* Loading State - SAME COMPONENT */}
                 {isInitialLoading ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
                     <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md border border-blue-500/20">
-                      <CardContent className="p-3 sm:p-4 md:p-6">
+                      <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
                               Loading construction contractors...
                             </h3>
                             <p className="text-gray-200 mt-2">
@@ -1503,17 +1515,17 @@ export default function BatimentDashboard() {
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 backdrop-blur-md border border-blue-500/20">
-                      <CardContent className="p-3 sm:p-4 md:p-6">
+                      <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
-                            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
                               Fetching data...
                             </h3>
                             <p className="text-gray-200 mt-2">Please wait</p>
@@ -1525,17 +1537,17 @@ export default function BatimentDashboard() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1.5vw]">
                       <AnimatePresence>
                         {isSearching ? (
-                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                          <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <div className="relative w-20 h-20 mx-auto mb-4">
                               <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full blur-xl opacity-50" />
                               <div className="relative w-20 h-20 bg-gradient-to-r from-blue-600 to-teal-700 rounded-full flex items-center justify-center shadow-2xl">
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-base sm:text-lg md:text-xl font-bold text-blue-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-blue-300 mb-2">
                               Searching PostgreSQL Database...
                             </h3>
                             <p className="text-gray-300">
@@ -1554,35 +1566,35 @@ export default function BatimentDashboard() {
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-blue-600 to-teal-600" />
-                              <div className="p-3 sm:p-4 md:p-6">
+                              <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
                                     <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
                                       {facility.title}
                                     </h4>
-                                    <div className="flex items-center gap-2 text-gray-400">
-                                      <Building className="h-4 w-4 text-blue-500" />
+                                    <div className="flex items-center gap-[0.5vw] text-gray-400">
+                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-500" />
                                       <span className="text-sm capitalize font-medium">
                                         {facility.address || facility.location}
                                       </span>
                                       {facility.is_verified && (
                                         <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
-                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                           Verified
                                         </Badge>
                                       )}
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-2 bg-gradient-to-br from-blue-400 to-teal-500 px-3 py-2 rounded-xl shadow-xl">
-                                      <Star className="h-4 w-4 text-white" />
+                                    <div className="flex items-center gap-[0.5vw] bg-gradient-to-br from-blue-400 to-teal-500 px-3 py-2 rounded-xl shadow-xl">
+                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-white" />
                                       <span className="text-sm font-bold text-white">
                                         {facility.rating?.toFixed(1) || "4.5"}
                                       </span>
                                     </div>
                                     {facility.emergency_services && (
                                       <Badge className="bg-red-900/30 text-red-300 border-red-500/30 text-xs">
-                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                        <AlertCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                         Emergency
                                       </Badge>
                                     )}
@@ -1593,32 +1605,32 @@ export default function BatimentDashboard() {
                                   {facility.description}
                                 </p>
 
-                                <div className="space-y-3 mb-4">
+                                <div className="space-y-[0.75vw] mb-4">
                                   <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-blue-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
                                       <span className="text-gray-300">
                                         {facility.reviews?.toLocaleString() ||
                                           0}{" "}
                                         reviews
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Hammer className="h-4 w-4 text-teal-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <Hammer className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-400" />
                                       <span className="text-gray-300">
                                         {facility.project_count || 0} Projects
                                       </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="h-4 w-4 text-blue-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
                                       <span className="text-gray-300 capitalize">
                                         {facility.location}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <HardHat className="h-4 w-4 text-orange-400" />
+                                    <div className="flex items-center gap-[0.5vw]">
+                                      <HardHat className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                                       <span className="text-gray-300 capitalize">
                                         {(
                                           facility.category ?? "unknown"
@@ -1643,11 +1655,11 @@ export default function BatimentDashboard() {
                                     )}
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-between pt-4 border-t border-gray-700 gap-3">
+                                <div className="flex flex-wrap items-center justify-between pt-[1vw] border-t border-gray-700 gap-[0.75vw]">
                                   <div>
                                     {facility.revenue && (
                                       <>
-                                        <span className="text-base sm:text-lg md:text-xl font-bold text-green-300">
+                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
                                           €
                                           {(facility.revenue / 1000).toFixed(0)}
                                           K
@@ -1664,7 +1676,7 @@ export default function BatimentDashboard() {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-[0.5vw]">
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -1673,7 +1685,7 @@ export default function BatimentDashboard() {
                                         e.stopPropagation();
                                       }}
                                     >
-                                      <Heart className="h-4 w-4 text-gray-400" />
+                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1683,7 +1695,7 @@ export default function BatimentDashboard() {
                                         handleFacilitySelect(facility);
                                       }}
                                     >
-                                      <Phone className="h-4 w-4 mr-2" />
+                                      <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                                       Contact
                                     </Button>
                                   </div>
@@ -1692,9 +1704,9 @@ export default function BatimentDashboard() {
                             </motion.div>
                           ))
                         ) : (
-                          <div className="col-span-full text-center py-6 sm:py-8 md:py-12">
+                          <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
                               No Construction Contractors Found
                             </h3>
                             <p className="text-gray-400">
@@ -1713,7 +1725,7 @@ export default function BatimentDashboard() {
 
                     {/* Pagination - SAME COMPONENT */}
                     {searchResults.length > 0 && (
-                      <div className="flex justify-center items-center gap-2 mt-8">
+                      <div className="flex justify-center items-center gap-[1vw] mt-[2vw]">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1725,10 +1737,10 @@ export default function BatimentDashboard() {
                           disabled={currentPage === 1}
                           className="border-blue-600 hover:bg-blue-800"
                         >
-                          <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
+                          <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
                           Previous
                         </Button>
-                        <span className="text-blue-400 text-sm">
+                        <span className="text-blue-400 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} of {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
@@ -1743,7 +1755,7 @@ export default function BatimentDashboard() {
                           className="border-blue-600 hover:bg-blue-800"
                         >
                           Next
-                          <ChevronRight className="h-4 w-4 ml-1" />
+                          <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
                     )}
@@ -1755,8 +1767,8 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
               Construction Analytics Dashboard
             </h2>
@@ -1767,7 +1779,7 @@ export default function BatimentDashboard() {
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
                 title="Total Revenue"
@@ -1836,11 +1848,11 @@ export default function BatimentDashboard() {
             </motion.div>
 
             {/* Charts and Details - SAME LAYOUT */}
-            <div className="grid lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
+            <div className="grid lg:grid-cols-2 gap-[1vw] mb-[1.5vw]">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">
+                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
                       Revenue & Patient Trends
                     </h3>
                     <Calendar className="h-5 w-5 text-blue-400" />
@@ -1851,9 +1863,9 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-6 text-white">
+                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
                     Revenue by Facility Type
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
@@ -1864,8 +1876,8 @@ export default function BatimentDashboard() {
             </div>
 
             {/* Additional Metrics - SAME STRUCTURE */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1.5vw]">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Top Facility Types
@@ -1941,7 +1953,7 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Patients by Region
@@ -2019,7 +2031,7 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
                     Performance Metrics
@@ -2086,15 +2098,15 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "patients" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Users className="h-6 w-6" />
               Patient Analytics
             </h2>
             <p className="text-gray-300 mb-6">
               Project statistics and construction performance metrics.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
                   title: "Total Patients",
@@ -2137,7 +2149,7 @@ export default function BatimentDashboard() {
                   key={index}
                   className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors"
                 >
-                  <CardContent className="p-3 sm:p-4 md:p-6">
+                  <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`p-2 bg-blue-600/20 rounded-lg`}>
                         <div className={`text-blue-400`}>{metric.icon}</div>
@@ -2168,15 +2180,15 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "resources" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Activity className="h-6 w-6" />
               Medical Resources
             </h2>
             <p className="text-gray-300 mb-6">
               Medical equipment, staff, and resource management.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
                   title: "Active Workers",
@@ -2219,7 +2231,7 @@ export default function BatimentDashboard() {
                   key={index}
                   className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors"
                 >
-                  <CardContent className="p-3 sm:p-4 md:p-6">
+                  <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`p-2 bg-blue-600/20 rounded-lg`}>
                         <div className={`text-blue-400`}>{resource.icon}</div>
@@ -2250,12 +2262,12 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/20">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-2">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               PostgreSQL Database Connection
             </h2>
-            <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
                   Database Stats
@@ -2307,7 +2319,7 @@ export default function BatimentDashboard() {
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
                   Quick Actions
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-[0.75vw]">
                   <Button
                     onClick={() =>
                       window.open(`${API_BASE_URL}/api/health`, "_blank")
@@ -2338,27 +2350,27 @@ export default function BatimentDashboard() {
       </div>
 
       {/* Construction Features Section - SAME LAYOUT */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+      <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500 bg-clip-text text-transparent">
             Construction Intelligence Platform
           </span>
         </h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
           {batimentFeatures.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-blue-900/30 backdrop-blur-md rounded-xl p-3 sm:p-4 md:p-6 text-center border border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg"
+              className="bg-gradient-to-br from-slate-800/50 to-blue-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-blue-600/20 to-teal-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 text-white">
+              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-white">
                 {feature.title}
               </h3>
               <p className="text-gray-300">{feature.description}</p>
@@ -2384,7 +2396,7 @@ export default function BatimentDashboard() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-blue-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-3 sm:p-4 md:p-6 flex justify-between items-center">
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
                 <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedFacility.title}
                 </h2>
@@ -2396,16 +2408,16 @@ export default function BatimentDashboard() {
                 </button>
               </div>
 
-              <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+              <div className="p-[clamp(0.75rem,2vw,2.5rem)] space-y-4 sm:space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-[0.5vw] mb-2">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
                       <span className="text-gray-300">
                         {selectedFacility.location}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-[0.5vw]">
                       <Badge
                         variant="outline"
                         className="bg-blue-900/30 text-blue-300 border-blue-500/30 capitalize"
@@ -2416,7 +2428,7 @@ export default function BatimentDashboard() {
                         )}
                       </Badge>
                       <div className="flex items-center gap-1 bg-blue-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
-                        <Star className="h-3 w-3 fill-current" />
+                        <Star className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] fill-current" />
                         <span className="font-bold">
                           {selectedFacility.rating?.toFixed(1) || "4.5"}
                         </span>
@@ -2437,14 +2449,14 @@ export default function BatimentDashboard() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[0.75vw] sm:gap-[1vw]">
                   {selectedFacility.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">
                           Annual Revenue
                         </div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedFacility.revenue.toLocaleString()}
                         </div>
                       </CardContent>
@@ -2456,7 +2468,7 @@ export default function BatimentDashboard() {
                         <div className="text-sm text-gray-400">
                           Completed Projects
                         </div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedFacility.project_count}
                         </div>
                       </CardContent>
@@ -2468,7 +2480,7 @@ export default function BatimentDashboard() {
                         <div className="text-sm text-gray-400">
                           Workers Employed
                         </div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedFacility.workers_count}+
                         </div>
                       </CardContent>
@@ -2480,7 +2492,7 @@ export default function BatimentDashboard() {
                         <div className="text-sm text-gray-400">
                           Equipment Available
                         </div>
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-green-400">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-400">
                           Yes
                         </div>
                       </CardContent>
@@ -2510,7 +2522,7 @@ export default function BatimentDashboard() {
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                         Specializations
                       </h3>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedFacility.specialization.map((spec, index) => (
                           <Badge
                             key={index}
@@ -2530,7 +2542,7 @@ export default function BatimentDashboard() {
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                         Services & Amenities
                       </h3>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedFacility.amenities.map((amenity, index) => (
                           <Badge
                             key={index}
@@ -2544,7 +2556,7 @@ export default function BatimentDashboard() {
                     </div>
                   )}
 
-                <div className="flex gap-4 pt-6 border-t border-slate-700">
+                <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
                     Contact Facility
                   </Button>

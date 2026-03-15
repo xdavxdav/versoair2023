@@ -268,6 +268,45 @@ router.post("/webhook", async (req: Request, res: Response) => {
         }
       }
 
+      // ── Marketing order payment: mark order as paid + clear cart ──
+      if (type === "marketing_order" && session.metadata?.orderId) {
+        const orderId = session.metadata.orderId;
+        const client2 = await pool.connect();
+        try {
+          await client2.query("BEGIN");
+
+          // 1. Update order status to paid
+          await client2.query(
+            `UPDATE orders SET status = 'paid', stripe_session_id = $1, updated_at = NOW() WHERE id = $2`,
+            [session.id, orderId],
+          );
+
+          // 2. Record transaction
+          await client2.query(
+            `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
+             VALUES (NULL, $1, $2, 'marketing_order', 'completed', $3)`,
+            [
+              userId,
+              ((session.amount_total || 0) / 100).toFixed(2),
+              session.id,
+            ],
+          );
+
+          // 3. Clear user's cart
+          await client2.query(`DELETE FROM cart_items WHERE user_id = $1`, [
+            userId,
+          ]);
+
+          await client2.query("COMMIT");
+          console.log(`✅ Marketing order ${orderId} paid by user ${userId}`);
+        } catch (dbError) {
+          await client2.query("ROLLBACK");
+          console.error("❌ DB error processing marketing order:", dbError);
+        } finally {
+          client2.release();
+        }
+      }
+
       // ── Auto-save the payment method used in this checkout ──
       try {
         const numericUserId = parseInt(userId);
@@ -668,7 +707,7 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
 
     const user = userResult.rows[0];
     const customerId = await getOrCreateStripeCustomer(
-      userId,
+      Number(userId),
       user.email,
       user.username,
     );

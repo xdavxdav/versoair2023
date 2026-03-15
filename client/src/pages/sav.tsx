@@ -363,7 +363,7 @@ export default function SAV() {
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 py-20 overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-6">
           <div className="text-center">
             <motion.div variants={fadeInUp} initial="hidden" animate="visible">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
@@ -445,7 +445,7 @@ export default function SAV() {
 
       {/* Navigation Tabs */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="flex overflow-x-auto">
             {[
               "overview",
@@ -471,7 +471,7 @@ export default function SAV() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-[95vw] mx-auto px-6 py-12">
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">

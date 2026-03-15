@@ -8,7 +8,7 @@ export default function Impact() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
             Our Impact
           </h1>
@@ -19,7 +19,7 @@ export default function Impact() {
       </div>
 
       {/* Key Metrics */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {[
             {

@@ -1,0 +1,214 @@
+import { useQuery } from "@tanstack/react-query";
+import { Package, Check, X, Star, ShoppingCart, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+
+export default function PacksPage() {
+  const { addItem, isAdding } = useCart();
+  const { toast } = useToast();
+
+  const { data: packs, isLoading } = useQuery({
+    queryKey: ["marketing", "packs"],
+    queryFn: async () => {
+      const res = await fetch("/api/marketing/packs");
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  const tierColors: Record<
+    string,
+    { border: string; bg: string; badge: string }
+  > = {
+    basic: {
+      border: "border-gray-600",
+      bg: "bg-gray-500/10",
+      badge: "bg-gray-500/20 text-gray-300",
+    },
+    standard: {
+      border: "border-blue-500/50",
+      bg: "bg-blue-500/10",
+      badge: "bg-blue-500/20 text-blue-400",
+    },
+    premium: {
+      border: "border-amber-500",
+      bg: "bg-amber-500/10",
+      badge: "bg-amber-500/20 text-amber-400",
+    },
+    pro: {
+      border: "border-purple-500/50",
+      bg: "bg-purple-500/10",
+      badge: "bg-purple-500/20 text-purple-400",
+    },
+  };
+
+  const handleAddToCart = async (pack: any) => {
+    try {
+      await addItem({
+        item_type: "pack",
+        item_id: pack.id,
+        item_name: pack.name,
+        price_cents: pack.price_cents,
+      });
+      toast({
+        title: "Added to cart!",
+        description: `${pack.name} added to your cart`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to add to cart",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+      <div className="max-w-[95vw] mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-400 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <Package className="h-4 w-4" />
+            Marketing Packs
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Choose Your Marketing Pack
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Professional marketing bundles designed to help your business grow.
+            Each pack includes high-quality materials ready for print and
+            digital use.
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="text-gray-400 text-center py-12">
+            Loading packs...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {(packs || []).map((pack: any) => {
+              const colors = tierColors[pack.tier] || tierColors.basic;
+              const items = pack.items || [];
+
+              return (
+                <Card
+                  key={pack.id}
+                  className={`bg-gray-800/50 ${colors.border} relative ${
+                    pack.tier === "premium"
+                      ? "ring-1 ring-amber-500/30 scale-[1.02]"
+                      : ""
+                  }`}
+                >
+                  {pack.tier === "premium" && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-amber-500 text-black font-semibold">
+                        <Star className="h-3 w-3 mr-1 fill-current" />
+                        MOST POPULAR
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="text-center pb-2">
+                    <Badge
+                      className={`${colors.badge} w-fit mx-auto mb-2 uppercase text-xs`}
+                    >
+                      {pack.tier}
+                    </Badge>
+                    <CardTitle className="text-white text-xl">
+                      {pack.name}
+                    </CardTitle>
+                    <div className="mt-2">
+                      <span className="text-4xl font-bold text-white">
+                        ${(pack.price_cents / 100).toFixed(0)}
+                      </span>
+                      <span className="text-gray-400 text-sm">/pack</span>
+                    </div>
+                    <p className="text-gray-400 text-sm mt-2">
+                      {pack.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2.5 mb-6">
+                      {items.map((item: any) => (
+                        <li
+                          key={item.id}
+                          className="flex items-start gap-2 text-sm"
+                        >
+                          {item.included ? (
+                            <Check className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
+                          ) : (
+                            <X className="h-4 w-4 text-gray-600 mt-0.5 shrink-0" />
+                          )}
+                          <span
+                            className={
+                              item.included ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
+                            {item.name}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className={`w-full ${
+                        pack.tier === "premium"
+                          ? "bg-amber-500 hover:bg-amber-600 text-black"
+                          : "bg-gray-700 hover:bg-gray-600 text-white"
+                      }`}
+                      onClick={() => handleAddToCart(pack)}
+                      disabled={isAdding}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* What's included breakdown */}
+        <section className="mt-16 text-center">
+          <h2 className="text-2xl font-bold text-white mb-8">
+            What Every Pack Includes
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Zap,
+                title: "Print-Ready Files",
+                desc: "High-resolution PDF, CMYK-optimized files ready for any printer",
+              },
+              {
+                icon: Star,
+                title: "Digital Assets",
+                desc: "Social media templates, email headers, and web banners included",
+              },
+              {
+                icon: Package,
+                title: "Brand Consistency",
+                desc: "All materials follow your brand colors, fonts, and style guide",
+              },
+            ].map((item) => (
+              <Card key={item.title} className="bg-gray-800/30 border-gray-700">
+                <CardContent className="p-6 text-center">
+                  <item.icon className="h-8 w-8 text-amber-400 mx-auto mb-3" />
+                  <h3 className="text-white font-semibold mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm">{item.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

@@ -285,7 +285,7 @@ export default function GetInvolved() {
           <div className="absolute bottom-0 left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto z-10">
+        <div className="relative max-w-[95vw] mx-auto z-10">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -325,7 +325,7 @@ export default function GetInvolved() {
 
       {/* ONG Culturelle Banner */}
       <section className="py-16 px-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-y border-amber-500/30">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -352,7 +352,7 @@ export default function GetInvolved() {
 
       {/* Activity Cards - Carousel Style */}
       <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -410,7 +410,7 @@ export default function GetInvolved() {
 
       {/* Benefits Section */}
       <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"
