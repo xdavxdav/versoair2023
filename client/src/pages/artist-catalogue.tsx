@@ -134,7 +134,7 @@ export default function ArtistCataloguePage() {
           </div>
         )}
 
-        <div className="relative max-w-5xl mx-auto px-4 pt-6 pb-8">
+        <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-8">
           <Link href="/stream">
             <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-8">
               <ChevronLeft className="w-4 h-4" />
@@ -314,7 +314,7 @@ export default function ArtistCataloguePage() {
       {/* ═══════════════════════════════════════════ */}
       {/* TABS */}
       {/* ═══════════════════════════════════════════ */}
-      <div className="max-w-5xl mx-auto px-4 mt-6 mb-6">
+      <div className="max-w-[95vw] mx-auto px-4 mt-6 mb-6">
         <div className="flex gap-1 bg-gray-800/30 rounded-lg p-1 w-fit">
           {[
             { key: "discography" as const, label: "Discographie" },
@@ -339,7 +339,7 @@ export default function ArtistCataloguePage() {
       {/* DISCOGRAPHY TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "discography" && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           {/* Top Tracks */}
           <div className="mb-10">
             <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-1.5">
@@ -485,7 +485,7 @@ export default function ArtistCataloguePage() {
       {/* ABOUT TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "about" && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           {/* Bio */}
           {artist.bio && (
             <div className="mb-8">
@@ -605,7 +605,7 @@ export default function ArtistCataloguePage() {
       {/* RELATED ARTISTS */}
       {/* ═══════════════════════════════════════════ */}
       {relatedArtists.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 mt-8 mb-16">
+        <section className="max-w-[95vw] mx-auto px-4 mt-8 mb-16">
           <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-1.5">
             <Users className="w-4 h-4 text-amber-400" />
             Artistes similaires

@@ -96,7 +96,7 @@ export default function APIDocumentation() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Network className="h-8 w-8 text-emerald-400" />
             <h1 className="text-5xl md:text-6xl font-bold text-white">
@@ -139,7 +139,7 @@ export default function APIDocumentation() {
       </div>
 
       {/* Purpose & Scope Section */}
-      <div className="max-w-6xl mx-auto px-4 py-16 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-16 border-t border-slate-700">
         <div className="grid md:grid-cols-2 gap-8">
           {/* FOR */}
           <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 border border-emerald-700/50 rounded-xl p-8">
@@ -276,7 +276,7 @@ export default function APIDocumentation() {
       </div>
 
       {/* API Architecture & Network */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
           <Code2 className="h-8 w-8 text-emerald-400" />
           Technical Architecture
@@ -355,7 +355,7 @@ export default function APIDocumentation() {
       </div>
 
       {/* Live Endpoint Tester */}
-      <div className="max-w-6xl mx-auto px-4 py-16 border-t border-slate-700">
+      <div className="max-w-[95vw] mx-auto px-4 py-16 border-t border-slate-700">
         <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
           <Zap className="h-8 w-8 text-yellow-400" />
           Live Endpoint Tester
@@ -462,7 +462,7 @@ export default function APIDocumentation() {
       </div>
 
       {/* Core Sections */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 gap-6 mb-16">
           {[
             {

@@ -59,7 +59,7 @@ export default function DatabaseResults() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <div className="relative pt-20 pb-16 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <h1 className="text-5xl font-bold text-white mb-3">
             Database Results
           </h1>
@@ -68,7 +68,7 @@ export default function DatabaseResults() {
       </div>
 
       {/* Filters and View */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           {/* Filters */}
           <div className="md:w-64">
@@ -190,7 +190,7 @@ export default function DatabaseResults() {
       </div>
 
       {/* CTA */}
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
         <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
           <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-2">
             <BarChart3 className="h-8 w-8" />

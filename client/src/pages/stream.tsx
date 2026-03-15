@@ -174,7 +174,7 @@ export default function StreamPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-purple-900/10 via-transparent to-transparent" />
 
-        <div className="relative max-w-7xl mx-auto px-4 pt-8 pb-12">
+        <div className="relative max-w-[95vw] mx-auto px-4 pt-8 pb-12">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -433,7 +433,7 @@ export default function StreamPage() {
       {/* ARTISTS SPOTLIGHT */}
       {/* ═══════════════════════════════════════════ */}
       {artists.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 mb-12 relative">
+        <section className="max-w-[95vw] mx-auto px-4 mb-12 relative">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-amber-400" />
             <h2 className="text-lg font-semibold">Artistes Verso Air</h2>
@@ -494,7 +494,7 @@ export default function StreamPage() {
       {/* NEW RELEASES */}
       {/* ═══════════════════════════════════════════ */}
       {newReleases.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 mb-12">
+        <section className="max-w-[95vw] mx-auto px-4 mb-12">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-5 h-5 text-amber-400" />
             <h2 className="text-lg font-semibold">Nouveautés</h2>
@@ -541,7 +541,7 @@ export default function StreamPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* FILTERS & GENRE PILLS */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 mb-6">
+      <section className="max-w-[95vw] mx-auto px-4 mb-6">
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -656,7 +656,7 @@ export default function StreamPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* ALL TRACKS GRID */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 mb-12">
+      <section className="max-w-[95vw] mx-auto px-4 mb-12">
         <div className="flex items-center gap-2 mb-4">
           <Music className="w-5 h-5 text-amber-400" />
           <h2 className="text-lg font-semibold">
@@ -831,7 +831,7 @@ export default function StreamPage() {
       {/* SUBSCRIPTION CTA */}
       {/* ═══════════════════════════════════════════ */}
       {plansData?.plans && (
-        <section className="max-w-7xl mx-auto px-4 mb-16">
+        <section className="max-w-[95vw] mx-auto px-4 mb-16">
           <div className="bg-gradient-to-br from-amber-900/30 via-gray-900 to-purple-900/20 rounded-2xl border border-amber-500/20 p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />

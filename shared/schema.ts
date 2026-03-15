@@ -1615,3 +1615,333 @@ export const artistContracts = pgTable(
 export const insertArtistContractSchema = createInsertSchema(artistContracts);
 export type ArtistContract = typeof artistContracts.$inferSelect;
 export type InsertArtistContract = typeof artistContracts.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 📢 MARKETING PLATFORM — Journal, Packs, Print Services, Orders, Newsletters
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// --- AD JOURNAL LISTINGS (Free & Premium classifieds) ---
+export const adJournalListings = pgTable(
+  "ad_journal_listings",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    description: text("description"), // HTML from rich-text editor
+    category: varchar("category", { length: 100 }).notNull(), // promotions, services, events, jobs, real-estate
+    type: varchar("type", { length: 20 }).default("free"), // 'free' | 'premium'
+    status: varchar("status", { length: 20 }).default("draft"), // 'draft' | 'pending' | 'active' | 'expired' | 'rejected'
+    images: jsonb("images").$type<string[]>().default([]),
+    contactEmail: varchar("contact_email"),
+    contactPhone: varchar("contact_phone"),
+    businessName: text("business_name"),
+    location: text("location"),
+    expiresAt: timestamp("expires_at"),
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("ad_journal_status_idx").on(t.status),
+    categoryIdx: index("ad_journal_category_idx").on(t.category),
+    userIdx: index("ad_journal_user_idx").on(t.userId),
+    typeIdx: index("ad_journal_type_idx").on(t.type),
+  }),
+);
+
+// --- JOURNAL EDITIONS (Generated PDF archive) ---
+export const journalEditions = pgTable(
+  "journal_editions",
+  {
+    id: serial("id").primaryKey(),
+    editionDate: date("edition_date").notNull(),
+    type: varchar("type", { length: 20 }).notNull(), // 'weekly' | 'monthly' | 'on_demand'
+    filePath: text("file_path").notNull(),
+    listingCount: integer("listing_count").default(0),
+    generatedAt: timestamp("generated_at").defaultNow(),
+  },
+  (t) => ({
+    typeIdx: index("journal_editions_type_idx").on(t.type),
+    dateIdx: index("journal_editions_date_idx").on(t.editionDate),
+  }),
+);
+
+// --- MARKETING PACKS (Bundled marketing products) ---
+export const marketingPacks = pgTable(
+  "marketing_packs",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: varchar("slug", { length: 100 }).notNull().unique(),
+    tier: varchar("tier", { length: 20 }).notNull(), // 'basic' | 'standard' | 'premium' | 'pro'
+    description: text("description"),
+    priceCents: integer("price_cents").notNull(),
+    features: jsonb("features").$type<string[]>().default([]),
+    active: boolean("active").default(true),
+    sortOrder: integer("sort_order").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    tierIdx: index("marketing_packs_tier_idx").on(t.tier),
+    activeIdx: index("marketing_packs_active_idx").on(t.active),
+  }),
+);
+
+// --- PACK ITEMS (Individual items within a marketing pack) ---
+export const packItems = pgTable(
+  "pack_items",
+  {
+    id: serial("id").primaryKey(),
+    packId: integer("pack_id")
+      .references(() => marketingPacks.id, { onDelete: "cascade" })
+      .notNull(),
+    itemType: varchar("item_type", { length: 50 }).notNull(), // 'journal_insertion', 'flyer', 'poster', 'newsletter', 'training'
+    description: text("description"),
+    quantity: integer("quantity").default(1),
+  },
+  (t) => ({
+    packIdx: index("pack_items_pack_idx").on(t.packId),
+  }),
+);
+
+// --- PRINT PRODUCTS (Catalog of print services) ---
+export const printProducts = pgTable(
+  "print_products",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: varchar("slug", { length: 100 }).notNull().unique(),
+    category: varchar("category", { length: 30 }).notNull(), // 'flyer' | 'card' | 'brochure' | 'poster' | 'catalog'
+    description: text("description"),
+    specs: jsonb("specs")
+      .$type<{
+        width_mm: number;
+        height_mm: number;
+        dpi_min: number;
+        bleed_mm: number;
+        color_space: string;
+      }>()
+      .default({
+        width_mm: 210,
+        height_mm: 297,
+        dpi_min: 300,
+        bleed_mm: 3,
+        color_space: "CMYK",
+      }),
+    priceCents: integer("price_cents").notNull(),
+    turnaroundDays: integer("turnaround_days").default(3),
+    active: boolean("active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    categoryIdx: index("print_products_category_idx").on(t.category),
+    activeIdx: index("print_products_active_idx").on(t.active),
+  }),
+);
+
+// --- PRINT JOBS (Production queue) ---
+export const printJobs = pgTable(
+  "print_jobs",
+  {
+    id: serial("id").primaryKey(),
+    orderItemId: integer("order_item_id"), // linked after order
+    printProductId: integer("print_product_id").references(
+      () => printProducts.id,
+    ),
+    userId: integer("user_id").references(() => users.id),
+    filePath: text("file_path"),
+    fileName: text("file_name"),
+    validationReport: jsonb("validation_report").$type<{
+      checks: Array<{
+        name: string;
+        status: "pass" | "warn" | "fail" | "skip";
+        detail: string;
+      }>;
+    }>(),
+    status: varchar("status", { length: 30 }).default("received"), // 'received' | 'layout' | 'sent_to_printer' | 'printing' | 'printed' | 'distributed' | 'complete'
+    quantity: integer("quantity").default(1),
+    notes: text("notes"),
+    assignedAt: timestamp("assigned_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("print_jobs_status_idx").on(t.status),
+    userIdx: index("print_jobs_user_idx").on(t.userId),
+  }),
+);
+
+// --- CART ITEMS (Shared cart — polymorphic) ---
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    sessionId: varchar("session_id", { length: 64 }), // for anonymous cart merge
+    itemType: varchar("item_type", { length: 30 }).notNull(), // 'pack' | 'print' | 'ad_upgrade' | 'journal_premium'
+    itemId: integer("item_id").notNull(), // FK to the relevant product table
+    quantity: integer("quantity").default(1),
+    priceSnapshotCents: integer("price_snapshot_cents").notNull(), // price at time of add
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("cart_items_user_idx").on(t.userId),
+    sessionIdx: index("cart_items_session_idx").on(t.sessionId),
+  }),
+);
+
+// --- ORDERS (Completed purchases) ---
+export const orders = pgTable(
+  "orders",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id)
+      .notNull(),
+    stripeSessionId: varchar("stripe_session_id", { length: 255 }),
+    status: varchar("status", { length: 20 }).default("pending"), // 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+    totalCents: integer("total_cents").notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    paidAt: timestamp("paid_at"),
+  },
+  (t) => ({
+    userIdx: index("orders_user_idx").on(t.userId),
+    statusIdx: index("orders_status_idx").on(t.status),
+    stripeIdx: index("orders_stripe_idx").on(t.stripeSessionId),
+  }),
+);
+
+// --- ORDER ITEMS (Line items in an order) ---
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .references(() => orders.id, { onDelete: "cascade" })
+      .notNull(),
+    itemType: varchar("item_type", { length: 30 }).notNull(), // 'pack' | 'print' | 'ad_upgrade' | 'journal_premium'
+    itemId: integer("item_id").notNull(),
+    itemName: text("item_name"), // denormalized for display
+    quantity: integer("quantity").default(1),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    orderIdx: index("order_items_order_idx").on(t.orderId),
+  }),
+);
+
+// --- NEWSLETTER CAMPAIGNS (Rich content campaigns) ---
+export const newsletterCampaigns = pgTable(
+  "newsletter_campaigns",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    subject: text("subject"),
+    content: text("content"), // HTML from editor
+    editorType: varchar("editor_type", { length: 20 }).default("tiptap"), // 'tiptap' | 'quill'
+    status: varchar("status", { length: 20 }).default("draft"), // 'draft' | 'scheduled' | 'sending' | 'sent'
+    scheduledAt: timestamp("scheduled_at"),
+    sentAt: timestamp("sent_at"),
+    recipientCount: integer("recipient_count").default(0),
+    openCount: integer("open_count").default(0),
+    clickCount: integer("click_count").default(0),
+    createdBy: integer("created_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("newsletter_campaigns_status_idx").on(t.status),
+    scheduledIdx: index("newsletter_campaigns_scheduled_idx").on(t.scheduledAt),
+  }),
+);
+
+// --- NEWSLETTER SUBSCRIBERS (Public opt-in list) ---
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 255 }).notNull(),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    name: text("name"),
+    isActive: boolean("is_active").default(true),
+    journalPdfPreference: varchar("journal_pdf_preference", {
+      length: 20,
+    }).default("on_demand"), // 'on_demand' | 'weekly' | 'monthly' | 'both'
+    unsubscribeToken: text("unsubscribe_token").notNull().unique(),
+    subscribedAt: timestamp("subscribed_at").defaultNow(),
+    unsubscribedAt: timestamp("unsubscribed_at"),
+  },
+  (t) => ({
+    emailIdx: unique("newsletter_subscribers_email_uniq").on(t.email),
+    userIdx: index("newsletter_subscribers_user_idx").on(t.userId),
+    activeIdx: index("newsletter_subscribers_active_idx").on(t.isActive),
+    tokenIdx: index("newsletter_subscribers_token_idx").on(t.unsubscribeToken),
+  }),
+);
+
+// --- Marketing Platform Relations ---
+export const marketingPackRelations = relations(marketingPacks, ({ many }) => ({
+  items: many(packItems),
+}));
+
+export const packItemRelations = relations(packItems, ({ one }) => ({
+  pack: one(marketingPacks, {
+    fields: [packItems.packId],
+    references: [marketingPacks.id],
+  }),
+}));
+
+export const orderRelations = relations(orders, ({ one, many }) => ({
+  user: one(users, { fields: [orders.userId], references: [users.id] }),
+  items: many(orderItems),
+}));
+
+export const orderItemRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+}));
+
+// --- Marketing Platform Zod Schemas & Types ---
+export const insertAdJournalListingSchema =
+  createInsertSchema(adJournalListings);
+export const insertJournalEditionSchema = createInsertSchema(journalEditions);
+export const insertMarketingPackSchema = createInsertSchema(marketingPacks);
+export const insertPackItemSchema = createInsertSchema(packItems);
+export const insertPrintProductSchema = createInsertSchema(printProducts);
+export const insertPrintJobSchema = createInsertSchema(printJobs);
+export const insertCartItemSchema = createInsertSchema(cartItems);
+export const insertOrderSchema = createInsertSchema(orders);
+export const insertOrderItemSchema = createInsertSchema(orderItems);
+export const insertNewsletterCampaignSchema =
+  createInsertSchema(newsletterCampaigns);
+export const insertNewsletterSubscriberSchema = createInsertSchema(
+  newsletterSubscribers,
+);
+
+export type AdJournalListing = typeof adJournalListings.$inferSelect;
+export type InsertAdJournalListing = typeof adJournalListings.$inferInsert;
+export type JournalEdition = typeof journalEditions.$inferSelect;
+export type MarketingPack = typeof marketingPacks.$inferSelect;
+export type InsertMarketingPack = typeof marketingPacks.$inferInsert;
+export type PackItem = typeof packItems.$inferSelect;
+export type PrintProduct = typeof printProducts.$inferSelect;
+export type PrintJob = typeof printJobs.$inferSelect;
+export type InsertPrintJob = typeof printJobs.$inferInsert;
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = typeof cartItems.$inferInsert;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type NewsletterCampaign = typeof newsletterCampaigns.$inferSelect;
+export type InsertNewsletterCampaign = typeof newsletterCampaigns.$inferInsert;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

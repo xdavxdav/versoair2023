@@ -1,6 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/card";
+
+// Alert components inline since no separate alert.tsx exists
+const Alert = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={`rounded-lg border p-4 ${className}`}>{children}</div>;
+const AlertDescription = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => <div className={`text-sm ${className}`}>{children}</div>;
 import { authenticatedFetch } from "@/lib/auth";
 import { AlertCircle, CheckCircle, TrendingUp } from "lucide-react";
 

@@ -17,12 +17,16 @@ export default function GeoAdminPage() {
   const [, setLocation] = useLocation();
   const [startingTrial, setStartingTrial] = useState(false);
 
-  // GeoAdmins are tech agents / managers — full access, no subscription needed
+  // GeoAdmins are tech agents / moderators / IT staff — full access granted based on role
+  // Superusers always bypass tier checks. Admins + moderators need max/enterprise tier.
   const isGeoAdmin =
     user?.isAdmin ||
     user?.role === "admin" ||
     user?.role === "superuser" ||
     user?.role === "moderator";
+
+  // Superuser always has full access regardless of tier
+  const isSuperuser = user?.role === "superuser";
 
   // Initialize CSRF token on component mount
   useEffect(() => {
@@ -35,10 +39,10 @@ export default function GeoAdminPage() {
   // Also checks geoadmin_session which persists even after JWT expiry
   // (only cleared on explicit Sign Out in the auth gate)
   const [gateBypass, setGateBypass] = useState(() => {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+    // Only bypass the auth gate if there's an active geoadmin session
+    // (not just any auth token from elsewhere on the site)
     const geoSession = localStorage.getItem("geoadmin_session");
-    return !!token || !!geoSession;
+    return !!geoSession;
   });
 
   const handleGeoSessionExpired = useCallback(() => {
@@ -59,10 +63,8 @@ export default function GeoAdminPage() {
     formatTimeLeft,
   } = useSessionTimer(gateBypass, true, handleGeoSessionExpired); // enableTimeout=true for geo-admin
   const [isStillConnected, setIsStillConnected] = useState(() => {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("authToken");
     const geoSession = localStorage.getItem("geoadmin_session");
-    return !!token || !!geoSession;
+    return !!geoSession;
   });
   const [username, setUsername] = useState<string | null>(() => {
     return localStorage.getItem("geoadmin_username") || null;
@@ -76,11 +78,10 @@ export default function GeoAdminPage() {
     username ||
     null;
 
-  // Maintain session across route changes - don't show gate if token exists
+  // Maintain session across route changes - only restore if geoadmin_session is active
   useEffect(() => {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-    if (token && !gateBypass) {
+    const geoSession = localStorage.getItem("geoadmin_session");
+    if (geoSession && !gateBypass) {
       setGateBypass(true);
       setIsStillConnected(true);
     }
@@ -131,7 +132,11 @@ export default function GeoAdminPage() {
     const token =
       localStorage.getItem("auth_token") || localStorage.getItem("authToken");
     if (!token) {
-      setLocation("/auth/signin?redirect=/geo-admin");
+      toast({
+        title: "Session required",
+        description: "Please sign in through the Geo Admin gate first.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -195,6 +200,68 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
+  // Tier check for gate users: must be max or enterprise
+  // Superusers bypass this check entirely — they own the whole platform
+  const isMaxOrEnterprise = tier === "max" || tier === "enterprise";
+
+  if (gateBypass && !isMaxOrEnterprise && !isSuperuser) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
+        {/* Connection status dot */}
+        {isStillConnected && (
+          <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
+        )}
+
+        {/* Session Timer Bar */}
+        {gateBypass && (
+          <div className="px-4 py-2 sm:px-6 sm:py-3">
+            <SessionTimerBar
+              sessionTimeLeft={sessionTimeLeft}
+              sessionProgress={sessionProgress}
+              isSessionCritical={isSessionCritical}
+              isSessionLow={isSessionLow}
+              onExtendSession={handleExtendSession}
+              formatTimeLeft={formatTimeLeft}
+            />
+          </div>
+        )}
+
+        {/* Upgrade required banner — gate users must have max/enterprise */}
+        <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 border-b border-red-500/30">
+          <div className="max-w-[95vw] mx-auto px-4 py-6 sm:py-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex-shrink-0">
+                  <Lock className="h-6 w-6 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white text-base sm:text-lg">
+                    GeoAdmin access requires an Enterprise plan
+                  </h3>
+                  <p className="text-red-200/80 text-sm sm:text-base mt-2">
+                    Your current tier{" "}
+                    <span className="font-mono font-bold text-red-300">
+                      {tier}
+                    </span>{" "}
+                    doesn't include GeoAdmin access. Only Pro Max and Enterprise
+                    subscribers can use this portal. Please upgrade to continue.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setLocation("/pricing?plan=max")}
+                className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-6 py-2 text-sm font-semibold"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Upgrade Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Signed in as Free tier (non-admin subscribers only) → show upgrade banner
   // GeoAdmins (admins/managers) always get full access — no tier required
   if (tier === "free" && !isGeoAdmin && isAuthenticated && gateBypass) {
@@ -221,7 +288,7 @@ export default function GeoAdminPage() {
 
         {/* Upgrade banner for free users */}
         <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-b border-amber-500/30">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:py-5">
+          <div className="max-w-[95vw] mx-auto px-4 py-4 sm:py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="mt-1 flex-shrink-0">
@@ -288,7 +355,7 @@ export default function GeoAdminPage() {
         <div
           className={`border-b ${sessionTimeLeft > 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-amber-500/10 border-amber-500/20"}`}
         >
-          <div className="max-w-7xl mx-auto px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div className="max-w-[95vw] mx-auto px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <p
               className={`text-xs sm:text-sm ${sessionTimeLeft > 0 ? "text-emerald-300" : "text-amber-300"}`}
             >
@@ -324,7 +391,7 @@ export default function GeoAdminPage() {
       {/* Role / tier indicator */}
       {isGeoAdmin ? (
         <div className="bg-indigo-500/10 border-b border-indigo-500/20">
-          <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="max-w-[95vw] mx-auto px-4 py-2">
             <p className="text-indigo-300 text-xs sm:text-sm">
               <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
               Geo Admin — full access granted
@@ -334,7 +401,7 @@ export default function GeoAdminPage() {
         </div>
       ) : tier && tier !== "free" ? (
         <div className="bg-emerald-500/10 border-b border-emerald-500/20">
-          <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="max-w-[95vw] mx-auto px-4 py-2">
             <p className="text-emerald-300 text-xs sm:text-sm">
               <TrendingUp className="inline-block h-4 w-4 mr-1.5" />
               You're viewing Geo Admin as a{" "}

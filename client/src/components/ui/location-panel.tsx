@@ -249,10 +249,11 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
 
     (async () => {
       // Run both in parallel — don't wait for IP if browser geo is fast
-      const [ipData, coords] = await Promise.all([
+      const [rawIpData, coords] = await Promise.all([
         fetchIPData().catch(() => ({})),
         getBrowserCoords().catch(() => null),
       ]);
+      const ipData = rawIpData as Record<string, any>;
 
       if (cancelled) return;
 

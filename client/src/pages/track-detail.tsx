@@ -135,7 +135,7 @@ export default function TrackDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
       {/* Back nav */}
-      <div className="max-w-5xl mx-auto px-4 pt-6">
+      <div className="max-w-[95vw] mx-auto px-4 pt-6">
         <Link href="/stream">
           <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-6">
             <ChevronLeft className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function TrackDetailPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* HERO: Track Info + Play */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-5xl mx-auto px-4 mb-10">
+      <section className="max-w-[95vw] mx-auto px-4 mb-10">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Album Art */}
           <motion.div
@@ -305,7 +305,7 @@ export default function TrackDetailPage() {
       {/* LYRICS (if present) */}
       {/* ═══════════════════════════════════════════ */}
       {track.lyrics && (
-        <section className="max-w-5xl mx-auto px-4 mb-10">
+        <section className="max-w-[95vw] mx-auto px-4 mb-10">
           <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700/40">
             <h3 className="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-1.5">
               <Music className="w-4 h-4" />
@@ -322,7 +322,7 @@ export default function TrackDetailPage() {
       {/* ALBUM TRACKS */}
       {/* ═══════════════════════════════════════════ */}
       {albumTracks.length > 1 && (
-        <section className="max-w-5xl mx-auto px-4 mb-10">
+        <section className="max-w-[95vw] mx-auto px-4 mb-10">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center gap-1.5">
               <ListMusic className="w-4 h-4 text-amber-400" />
@@ -375,7 +375,7 @@ export default function TrackDetailPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* COMMENTS */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-5xl mx-auto px-4 mb-10">
+      <section className="max-w-[95vw] mx-auto px-4 mb-10">
         <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-4">
           <MessageCircle className="w-4 h-4 text-amber-400" />
           Commentaires ({comments.length})
@@ -447,7 +447,7 @@ export default function TrackDetailPage() {
       {/* RELATED TRACKS */}
       {/* ═══════════════════════════════════════════ */}
       {related.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 mb-16">
+        <section className="max-w-[95vw] mx-auto px-4 mb-16">
           <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-4">
             <Shuffle className="w-4 h-4 text-amber-400" />
             Titres similaires

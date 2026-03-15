@@ -12,6 +12,11 @@ import {
   LogIn,
   LogOut,
   Globe,
+  Megaphone,
+  Newspaper,
+  Package,
+  Printer,
+  Mail,
   Lock,
   Building2,
   ShoppingCart,
@@ -78,6 +83,14 @@ const serviceItems: NavItem[] = [
   { href: "/services/careers", label: "Careers", icon: Building2 },
   { href: "/services/contractors", label: "Contractors", icon: HardHat },
   { href: "/reservations", label: "Réservations", icon: Calendar },
+];
+
+const marketingItems: NavItem[] = [
+  { href: "/marketing", label: "Marketing Hub", icon: Megaphone },
+  { href: "/marketing/journal", label: "Free Ad Journal", icon: Newspaper },
+  { href: "/marketing/packs", label: "Marketing Packs", icon: Package },
+  { href: "/marketing/print", label: "Print Services", icon: Printer },
+  { href: "/marketing/newsletters", label: "Newsletter", icon: Mail },
 ];
 
 const moreItems: NavItem[] = [
@@ -449,6 +462,20 @@ export function MobileMenuBubble() {
               <SectionLabel text="Services" />
               <div className="space-y-0.5 mb-3">
                 {serviceItems.map((item) => (
+                  <NavRow
+                    key={item.href}
+                    item={item}
+                    isActive={location === item.href}
+                    isLocked={false}
+                    onNavigate={close}
+                  />
+                ))}
+              </div>
+
+              {/* ── Marketing ── */}
+              <SectionLabel text="Marketing" />
+              <div className="space-y-0.5 mb-3">
+                {marketingItems.map((item) => (
                   <NavRow
                     key={item.href}
                     item={item}

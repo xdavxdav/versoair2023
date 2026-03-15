@@ -268,7 +268,7 @@ export default function AnnuaireTV() {
     >
       {/* ── Top Bar ───────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           {/* Left: Title */}
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30">

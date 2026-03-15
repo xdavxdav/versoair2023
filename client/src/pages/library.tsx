@@ -118,7 +118,7 @@ export default function LibraryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
       {/* Header */}
-      <div className="max-w-5xl mx-auto px-4 pt-6">
+      <div className="max-w-[95vw] mx-auto px-4 pt-6">
         <Link href="/stream">
           <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-4">
             <ChevronLeft className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function LibraryPage() {
       {/* PLAYLISTS TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "playlists" && !selectedPlaylist && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           {playlists.length === 0 ? (
             <div className="text-center py-16">
               <ListMusic className="w-16 h-16 text-gray-700 mx-auto mb-4" />
@@ -260,7 +260,7 @@ export default function LibraryPage() {
       {activeTab === "playlists" &&
         selectedPlaylist &&
         selectedPlaylistData && (
-          <div className="max-w-5xl mx-auto px-4">
+          <div className="max-w-[95vw] mx-auto px-4">
             <button
               onClick={() => setSelectedPlaylist(null)}
               className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-4"
@@ -354,7 +354,7 @@ export default function LibraryPage() {
       {/* LIKED TRACKS TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "liked" && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           {likedTracks.length === 0 ? (
             <div className="text-center py-16">
               <Heart className="w-16 h-16 text-gray-700 mx-auto mb-4" />
@@ -430,7 +430,7 @@ export default function LibraryPage() {
       {/* HISTORY TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "history" && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-[95vw] mx-auto px-4">
           {history.length === 0 ? (
             <div className="text-center py-16">
               <History className="w-16 h-16 text-gray-700 mx-auto mb-4" />

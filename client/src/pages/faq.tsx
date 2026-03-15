@@ -884,7 +884,7 @@ export default function FaqPage() {
 
       {/* Header */}
       <div className="bg-gradient-to-b from-slate-900 to-transparent border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14">
+        <div className="max-w-[95vw] mx-auto px-4 py-10 sm:py-14">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -936,7 +936,7 @@ export default function FaqPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-[95vw] mx-auto px-4 py-6">
         {/* Mobile/Tablet: Horizontal category pills */}
         <div className="lg:hidden mb-4">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">

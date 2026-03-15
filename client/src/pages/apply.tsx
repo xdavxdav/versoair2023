@@ -434,7 +434,7 @@ export default function ApplyPage() {
           </motion.div>
 
           {/* Portal Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[95vw] mx-auto">
             {PORTALS.map((portal, index) => (
               <motion.div
                 key={portal.id}

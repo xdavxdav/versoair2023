@@ -197,15 +197,18 @@ router.post(
       insertValues.portalAccess = portalAccess;
     }
 
-    const [user] = await db.insert(users).values(insertValues).returning({
-      id: users.id,
-      username: users.username,
-      email: users.email,
-      role: users.role,
-      gateUsername: users.gateUsername,
-      isVerified: users.isVerified,
-      createdAt: users.createdAt,
-    });
+    const [user] = await db
+      .insert(users)
+      .values(insertValues as any)
+      .returning({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        role: users.role,
+        gateUsername: users.gateUsername,
+        isVerified: users.isVerified,
+        createdAt: users.createdAt,
+      });
 
     // Audit log (skip if fails)
     await db

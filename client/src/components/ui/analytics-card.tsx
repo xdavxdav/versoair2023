@@ -1,13 +1,14 @@
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface AnalyticsCardProps {
   title: string;
-  value: string;
+  value: string | number;
   change?: string | number;
   trend?: "up" | "down";
   color?: string; // allow arbitrary color names used across the app
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | React.ComponentType<any>;
 }
 
 export default function AnalyticsCard({
@@ -36,7 +37,15 @@ export default function AnalyticsCard({
     <Card className="bg-white shadow-lg">
       <CardHeader className="pb-2 flex items-center justify-between">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          {icon && <span className="opacity-90">{icon}</span>}
+          {icon && (
+            <span className="opacity-90">
+              {typeof icon === "function"
+                ? React.createElement(icon as React.ComponentType<any>, {
+                    className: "h-5 w-5",
+                  })
+                : icon}
+            </span>
+          )}
           {title}
         </CardTitle>
       </CardHeader>

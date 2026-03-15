@@ -472,7 +472,7 @@ export default function Logement() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 -mt-8 relative z-20 mb-12">
+      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20 mb-12">
         <Card className="bg-gradient-to-br from-slate-800/90 to-cyan-900/90 backdrop-blur-md border-cyan-700 shadow-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
@@ -654,7 +654,7 @@ export default function Logement() {
         </Card>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-[95vw] mx-auto px-4 py-12">
         <div className="flex space-x-2 mb-8">
           {(
             ["analytics", "businesses", "finance", "database"] as TabType[]
@@ -797,10 +797,10 @@ export default function Logement() {
                                 📐 {property.area} m²
                               </Badge>
                             )}
-                            {property.rating && property.rating > 0 && (
+                            {property.rating && Number(property.rating) > 0 && (
                               <Badge className="bg-amber-500/20 text-amber-300 border-amber-600 text-xs">
                                 <Star className="h-3 w-3 mr-1" />{" "}
-                                {property.rating.toFixed(1)}
+                                {Number(property.rating).toFixed(1)}
                               </Badge>
                             )}
                           </div>
@@ -885,7 +885,7 @@ export default function Logement() {
       </div>
 
       {/* ─── Premium CTA: Immobilier Portal ──────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pb-12">
+      <div className="max-w-[95vw] mx-auto px-4 pb-12">
         <Card className="bg-gradient-to-r from-emerald-900/40 via-teal-900/30 to-amber-900/30 border-emerald-500/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="p-8 relative">

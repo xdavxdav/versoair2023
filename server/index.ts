@@ -36,10 +36,13 @@ import { setupCategoryIntegrityCheck } from "./services/category-integrity-check
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { autoSeedArtists } from "./services/auto-seed-artists";
+import { autoSeedMarketingData } from "./services/auto-seed-marketing";
 import { ensureAllTables } from "./services/ensure-tables";
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { setupRoyaltyEngine } from "./services/royalty-engine";
+import { setupJournalCron } from "./services/journal-cron";
+import { setupNewsletterCron } from "./services/newsletter-cron";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 import { globalAuthGate } from "./middleware/auth";
 
@@ -174,6 +177,9 @@ app.use((req, res, next) => {
   // Auto-seed artists if table is empty (idempotent)
   await autoSeedArtists();
 
+  // Auto-seed marketing packs + print products (idempotent)
+  await autoSeedMarketingData();
+
   // Setup category integrity check (runs daily + on startup)
   setupCategoryIntegrityCheck();
   console.log("✅ [SERVER] Category integrity check scheduled");
@@ -191,6 +197,13 @@ app.use((req, res, next) => {
   // Setup StreamRoyale royalty distribution engine (weekly Monday 06:00 UTC)
   setupRoyaltyEngine();
   console.log("✅ [SERVER] StreamRoyale royalty engine started");
+
+  // Setup marketing cron jobs (journal generation + newsletter dispatch)
+  setupJournalCron();
+  console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
+
+  setupNewsletterCron();
+  console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

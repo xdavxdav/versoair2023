@@ -356,7 +356,7 @@ export default function SponsorsDirectory() {
           variants={stagger}
           className="py-20 px-4 sm:px-6 lg:px-8"
         >
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-[95vw] mx-auto">
             <motion.h2
               variants={fadeInUp}
               className="text-4xl font-bold mb-4 text-center text-white"
@@ -458,7 +458,7 @@ export default function SponsorsDirectory() {
           variants={stagger}
           className="py-20 px-4 sm:px-6 lg:px-8 bg-black/30"
         >
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-[95vw] mx-auto">
             <motion.h2
               variants={fadeInUp}
               className="text-4xl font-bold mb-4 text-center text-white"

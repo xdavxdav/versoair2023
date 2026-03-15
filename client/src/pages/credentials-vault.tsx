@@ -4480,7 +4480,7 @@ function CommandCenter() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-12 border-t border-gray-800/50">
+    <section className="max-w-[95vw] mx-auto px-6 py-12 border-t border-gray-800/50">
       {/* Section header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -6587,7 +6587,7 @@ export default function CredentialsVault() {
       <div className="relative z-10">
         {/* ═══════════ HEADER ═══════════ */}
         <header className="border-b border-gray-800/50 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="max-w-[95vw] mx-auto px-6 py-4">
             {/* Top row */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
@@ -6779,7 +6779,7 @@ export default function CredentialsVault() {
         </header>
 
         {/* ═══════════ MAIN CONTENT ═══════════ */}
-        <main className="max-w-7xl mx-auto px-6 py-8">
+        <main className="max-w-[95vw] mx-auto px-6 py-8">
           {/* Results count */}
           <div className="flex items-center justify-between mb-6">
             <p className="text-gray-500 text-xs font-mono">
@@ -6837,7 +6837,7 @@ export default function CredentialsVault() {
         <CommandCenter />
 
         {/* ═══════════ SECURITY FOOTER ═══════════ */}
-        <footer className="max-w-7xl mx-auto px-6 py-8 border-t border-gray-800/50">
+        <footer className="max-w-[95vw] mx-auto px-6 py-8 border-t border-gray-800/50">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

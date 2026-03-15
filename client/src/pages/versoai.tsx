@@ -808,7 +808,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20"></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 bg-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
@@ -1572,7 +1572,7 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950"></div>
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-6">
               Enterprise-Grade Features
@@ -1615,7 +1615,7 @@ export default function Home() {
       {/* Industries Section */}
       <section id="industries" className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/30 to-slate-950/50"></div>
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-6">
               Serving All Major Industries
@@ -1674,7 +1674,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-blue-500/20 pt-12 pb-8 relative">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-6">

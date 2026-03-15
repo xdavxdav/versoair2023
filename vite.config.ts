@@ -20,6 +20,22 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-tiptap": [
+            "@tiptap/react",
+            "@tiptap/starter-kit",
+            "@tiptap/extension-image",
+            "@tiptap/extension-link",
+            "@tiptap/extension-text-align",
+            "@tiptap/extension-color",
+            "@tiptap/extension-text-style",
+          ],
+          "vendor-quill": ["react-quill"],
+        },
+      },
+    },
   },
 
   // ✅ SERVER CONFIG - Single port 5003 for frontend + backend

@@ -169,7 +169,7 @@ export default function CategoryDetail() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-[95vw] mx-auto px-4 py-4 flex items-center justify-between">
           <Button
             variant="ghost"
             onClick={() => setLocation("/businesses-directory")}
@@ -189,7 +189,7 @@ export default function CategoryDetail() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white border-b"
       >
-        <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="max-w-[95vw] mx-auto px-4 py-12">
           <div className="flex items-center gap-3 mb-4">
             <Tag className="h-8 w-8 text-blue-600" />
             <h1 className="text-4xl font-bold text-gray-900">
@@ -216,7 +216,7 @@ export default function CategoryDetail() {
       </motion.div>
 
       {/* Controls & Results */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         {/* Search & Filter Bar */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">

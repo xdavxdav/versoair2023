@@ -111,6 +111,7 @@ interface CurrentUser {
   email: string;
   name: string;
   isAdmin: boolean;
+  role?: string;
   subscriptionTier?: TierKey;
   subscriptionStatus?: string;
   premiumExpiresAt?: string;
@@ -1027,7 +1028,7 @@ export default function UserDashboard() {
           if (e.target === e.currentTarget) setShowDossier(false);
         }}
       >
-        <div className="w-full max-w-5xl h-[85vh] bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-full max-w-[95vw] h-[85vh] bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Modal Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/60">
             <div className="flex items-center gap-3">
@@ -1516,7 +1517,7 @@ export default function UserDashboard() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* ── NAVIGATION ─────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -1788,7 +1789,7 @@ export default function UserDashboard() {
       </div>
 
       {/* ── MAIN CONTENT ───────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* ── THE "AHA!" MOMENT — hidden searches alert (subscribers only) ── */}
         {isLoggedIn && !isStaffRole && (
           <HiddenSearchesAlert
@@ -2918,7 +2919,7 @@ export default function UserDashboard() {
 
       {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
       <footer className="mt-20 bg-gray-900 text-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="font-semibold text-white mb-4">Platform</h3>

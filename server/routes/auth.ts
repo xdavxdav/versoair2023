@@ -700,26 +700,23 @@ router.post(
 
 /**
  * POST /auth/admin-gate
- * Issues a JWT for users who have a gate_username set in the DB.
- * The admin dashboard Users CRUD controls who gets gate access.
+ * Authenticates personnel for GeoAdmin portal access using their unique code.
+ * Each allowed user has a gate_username (e.g. joel_007) — no password needed.
+ *
+ * Access Rules:
+ *   - gate_username must exist in the users table
+ *   - role must be in ['admin', 'moderator', 'superuser']
+ *   - subscriptionTier must be in ['max', 'enterprise'] OR role='superuser' (bypass)
  */
 router.post(
   "/admin-gate",
-  loginLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { username } = req.body;
 
     if (!username) {
       return res.status(403).json({
         success: false,
-        message: "Username is required.",
-      });
-    }
-
-    if (!password) {
-      return res.status(403).json({
-        success: false,
-        message: "Password is required for gate access.",
+        message: "Access code is required.",
       });
     }
 
@@ -728,7 +725,6 @@ router.post(
       .select({
         id: schema.users.id,
         email: schema.users.email,
-        password: schema.users.password,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
       })
@@ -739,16 +735,30 @@ router.post(
     if (!user) {
       return res.status(403).json({
         success: false,
-        message: "Invalid credentials.",
+        message: "Invalid access code.",
       });
     }
 
-    // 🔐 Verify password — closes the no-password vulnerability
-    const passwordValid = await bcrypt.compare(password, user.password);
-    if (!passwordValid) {
+    // ─── ROLE CHECK: Only admins, moderators, superusers can access gate ─────────
+    const userRole = (user.role || "user").toLowerCase();
+    const allowedRoles = ["admin", "moderator", "superuser"];
+
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
-        message: "Invalid credentials.",
+        message:
+          "Your account does not have permission to access the admin gate.",
+      });
+    }
+
+    // ─── TIER CHECK: Moderators/admins need max/enterprise, superuser exempt ─────
+    const userTier = (user.subscriptionTier || "free").toLowerCase();
+    const allowedTiers = ["max", "enterprise"];
+
+    if (userRole !== "superuser" && !allowedTiers.includes(userTier)) {
+      return res.status(403).json({
+        success: false,
+        message: `GeoAdmin requires a ${allowedTiers.join("/")} subscription. Your tier is "${userTier}". Please upgrade to access.`,
       });
     }
 
@@ -1039,12 +1049,10 @@ router.put(
       typeof username !== "string" ||
       username.trim().length < 2
     ) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username must be at least 2 characters",
-        });
+      res.status(400).json({
+        success: false,
+        message: "Username must be at least 2 characters",
+      });
       return;
     }
     // Check uniqueness
@@ -1083,21 +1091,17 @@ router.post(
     }
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "Both current and new password required",
-        });
+      res.status(400).json({
+        success: false,
+        message: "Both current and new password required",
+      });
       return;
     }
     if (newPassword.length < 8) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: "New password must be at least 8 characters",
-        });
+      res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters",
+      });
       return;
     }
     const [user] = await db
@@ -1113,12 +1117,10 @@ router.post(
       return;
     }
     if (user.oauthProvider) {
-      res
-        .status(400)
-        .json({
-          success: false,
-          message: `Cannot change password for ${user.oauthProvider} accounts`,
-        });
+      res.status(400).json({
+        success: false,
+        message: `Cannot change password for ${user.oauthProvider} accounts`,
+      });
       return;
     }
     const valid = await bcrypt.compare(currentPassword, user.password);
@@ -1535,11 +1537,7 @@ router.post(
         type: "email_verification",
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       });
-      await sendVerificationEmail(
-        email.toLowerCase(),
-        verificationToken,
-        stageName,
-      );
+      await sendVerificationEmail(email.toLowerCase(), verificationToken);
     } catch (e) {
       console.error("[ARTIST AUTH] Failed to send verification email:", e);
     }
@@ -1896,7 +1894,7 @@ router.post(
         getJwtSecret(),
         { expiresIn: "24h" },
       );
-      await sendVerificationEmail(email, verificationToken, displayName);
+      await sendVerificationEmail(email, verificationToken);
     } catch (e) {
       console.error("[AUTH] Failed to send verification email:", e);
     }
@@ -2026,7 +2024,7 @@ router.post(
       user: {
         id: user.id,
         email: user.email,
-        displayName: user.firstName || user.username,
+        displayName: user.username || user.username,
         role: user.role,
         subscriptionTier: user.subscriptionTier || "free",
         subscriptionStatus: user.subscriptionStatus || "active",
@@ -2121,11 +2119,7 @@ router.post(
         type: "email_verification",
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       });
-      await sendVerificationEmail(
-        email.toLowerCase(),
-        verificationToken,
-        displayName,
-      );
+      await sendVerificationEmail(email.toLowerCase(), verificationToken);
     } catch (e) {
       console.error("[COMMUNITY AUTH] Failed to send verification email:", e);
     }
@@ -2249,7 +2243,7 @@ router.post(
       user: {
         id: user.id,
         email: user.email,
-        displayName: user.firstName || user.username,
+        displayName: user.username || user.username,
         role: user.role,
         portals: capabilitiesComm?.portals || ["general", "community"],
       },

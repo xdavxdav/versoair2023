@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
       {/* Header */}
-      <div className="max-w-6xl mx-auto px-4 pt-6">
+      <div className="max-w-[95vw] mx-auto px-4 pt-6">
         <Link href="/stream">
           <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-4">
             <ChevronLeft className="w-4 h-4" />
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* KPI CARDS */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-6xl mx-auto px-4 mb-10">
+      <section className="max-w-[95vw] mx-auto px-4 mb-10">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {stats.map((stat, i) => {
             const c = colorMap[stat.color];
@@ -245,7 +245,7 @@ export default function AnalyticsPage() {
       {/* STREAM TREND CHART */}
       {/* ═══════════════════════════════════════════ */}
       {overview.dailyStreams && overview.dailyStreams.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 mb-10">
+        <section className="max-w-[95vw] mx-auto px-4 mb-10">
           <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-6">
             <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-4">
               <TrendingUp className="w-4 h-4 text-amber-400" />
@@ -280,7 +280,7 @@ export default function AnalyticsPage() {
         </section>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+      <div className="max-w-[95vw] mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
         {/* ═══════════════════════════════════════════ */}
         {/* TOP ARTISTS */}
         {/* ═══════════════════════════════════════════ */}
@@ -393,7 +393,7 @@ export default function AnalyticsPage() {
       {/* GENRE BREAKDOWN */}
       {/* ═══════════════════════════════════════════ */}
       {overview.genreBreakdown && overview.genreBreakdown.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 mb-10">
+        <section className="max-w-[95vw] mx-auto px-4 mb-10">
           <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-6">
             <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-4">
               <Disc3 className="w-4 h-4 text-amber-400" />
@@ -435,7 +435,7 @@ export default function AnalyticsPage() {
       {/* REVENUE / BENEFIT CHART */}
       {/* ═══════════════════════════════════════════ */}
       {benefitChart && (
-        <section className="max-w-6xl mx-auto px-4 mb-10">
+        <section className="max-w-[95vw] mx-auto px-4 mb-10">
           <div className="bg-gradient-to-br from-amber-900/20 via-gray-900 to-purple-900/10 border border-amber-500/20 rounded-xl p-6">
             <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
               <Crown className="w-4 h-4 text-amber-400" />
@@ -591,7 +591,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Revenue per stream info */}
-      <section className="max-w-6xl mx-auto px-4 mb-16">
+      <section className="max-w-[95vw] mx-auto px-4 mb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-5 text-center">
             <DollarSign className="w-8 h-8 text-green-400 mx-auto mb-2" />

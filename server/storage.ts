@@ -182,18 +182,7 @@ export class DatabaseStorage implements IStorage {
       const [business] = await db
         .insert(businesses)
         .values(insertBusiness as any)
-        .returning({
-          id: businesses.id,
-          name: businesses.name,
-          categoryId: businesses.categoryId,
-          description: businesses.description,
-          email: businesses.email,
-          phone: businesses.phone,
-          address: businesses.address,
-          isActive: businesses.isActive,
-          rating: businesses.rating,
-          createdAt: businesses.createdAt,
-        });
+        .returning();
       return business;
     } catch (error) {
       console.error("Error creating business:", error);
@@ -210,33 +199,49 @@ export class DatabaseStorage implements IStorage {
 
       if (!category) {
         return {
-          id: 0,
-          categoryId: 0,
-          businessId: null,
-          totalReservations: 0,
+          id: "00000000-0000-0000-0000-000000000000",
+          entityType: "category",
+          entityId: 0,
+          pageViews: 0,
+          uniqueVisitors: 0,
+          clicks: 0,
+          conversions: 0,
           revenue: "0",
-          recordedAt: new Date(),
-        };
+          period: "daily",
+          date: new Date(),
+          createdAt: new Date(),
+        } as unknown as Analytics;
       }
 
       const result = await db
         .select()
         .from(analytics)
-        .where(eq(analytics.categoryId, category.id))
-        .orderBy(desc(analytics.recordedAt))
+        .where(
+          and(
+            eq(analytics.entityId, category.id),
+            eq(analytics.entityType, "category"),
+          ),
+        )
+        .orderBy(desc(analytics.date))
         .limit(1);
 
       const analyticsData = result[0];
 
       return (
-        analyticsData || {
-          id: 0,
-          categoryId: category.id,
-          businessId: null,
-          totalReservations: 0,
+        analyticsData ||
+        ({
+          id: "00000000-0000-0000-0000-000000000000",
+          entityType: "category",
+          entityId: category.id,
+          pageViews: 0,
+          uniqueVisitors: 0,
+          clicks: 0,
+          conversions: 0,
           revenue: "0",
-          recordedAt: new Date(),
-        }
+          period: "daily",
+          date: new Date(),
+          createdAt: new Date(),
+        } as unknown as Analytics)
       );
     } catch (error) {
       console.error("Error getting analytics by category:", error);
@@ -249,21 +254,32 @@ export class DatabaseStorage implements IStorage {
       const result = await db
         .select()
         .from(analytics)
-        .where(eq(analytics.businessId, businessId))
-        .orderBy(desc(analytics.recordedAt))
+        .where(
+          and(
+            eq(analytics.entityId, businessId),
+            eq(analytics.entityType, "business"),
+          ),
+        )
+        .orderBy(desc(analytics.date))
         .limit(1);
 
       const analyticsData = result[0];
 
       return (
-        analyticsData || {
-          id: 0,
-          categoryId: 0,
-          businessId,
-          totalReservations: 0,
+        analyticsData ||
+        ({
+          id: "00000000-0000-0000-0000-000000000000",
+          entityType: "business",
+          entityId: businessId,
+          pageViews: 0,
+          uniqueVisitors: 0,
+          clicks: 0,
+          conversions: 0,
           revenue: "0",
-          recordedAt: new Date(),
-        }
+          period: "daily",
+          date: new Date(),
+          createdAt: new Date(),
+        } as unknown as Analytics)
       );
     } catch (error) {
       console.error("Error getting analytics by business:", error);
@@ -364,27 +380,27 @@ export class DatabaseStorage implements IStorage {
         .orderBy(countries.name);
 
       console.log("✅ [DEBUG] Countries length:", dbCountries.length);
-      return dbCountries;
+      return dbCountries as unknown as Country[];
     } catch (error) {
       console.error("Error fetching countries:", error);
       // Return mock data as fallback ONLY for countries since we know this works
       console.log("Using mock countries data as fallback");
       return [
-        { id: 1, name: "United States", code: "US", createdAt: new Date() },
-        { id: 2, name: "Canada", code: "CA", createdAt: new Date() },
-        { id: 3, name: "France", code: "FR", createdAt: new Date() },
-        { id: 4, name: "Côte d'Ivoire", code: "CI", createdAt: new Date() },
-        { id: 5, name: "Germany", code: "DE", createdAt: new Date() },
-        { id: 6, name: "United Kingdom", code: "GB", createdAt: new Date() },
-        { id: 7, name: "Sénégal", code: "SN", createdAt: new Date() },
-        { id: 8, name: "Cameroun", code: "CM", createdAt: new Date() },
-        { id: 9, name: "Belgium", code: "BE", createdAt: new Date() },
-        { id: 10, name: "Switzerland", code: "CH", createdAt: new Date() },
-        { id: 11, name: "Mali", code: "ML", createdAt: new Date() },
-        { id: 12, name: "Haïti", code: "HT", createdAt: new Date() },
-        { id: 13, name: "Maroc", code: "MA", createdAt: new Date() },
-        { id: 14, name: "Algérie", code: "DZ", createdAt: new Date() },
-        { id: 15, name: "Tunisie", code: "TN", createdAt: new Date() },
+        { id: 1, name: "United States", code: "US" },
+        { id: 2, name: "Canada", code: "CA" },
+        { id: 3, name: "France", code: "FR" },
+        { id: 4, name: "Côte d'Ivoire", code: "CI" },
+        { id: 5, name: "Germany", code: "DE" },
+        { id: 6, name: "United Kingdom", code: "GB" },
+        { id: 7, name: "Sénégal", code: "SN" },
+        { id: 8, name: "Cameroun", code: "CM" },
+        { id: 9, name: "Belgium", code: "BE" },
+        { id: 10, name: "Switzerland", code: "CH" },
+        { id: 11, name: "Mali", code: "ML" },
+        { id: 12, name: "Haïti", code: "HT" },
+        { id: 13, name: "Maroc", code: "MA" },
+        { id: 14, name: "Algérie", code: "DZ" },
+        { id: 15, name: "Tunisie", code: "TN" },
       ] as Country[];
     }
   }

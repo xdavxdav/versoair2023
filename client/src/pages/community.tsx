@@ -11,7 +11,7 @@ export default function CommunityDetail() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <div className="relative pt-20 pb-16 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[95vw] mx-auto">
           <div className="flex items-start justify-between mb-8">
             <div>
               <h1 className="text-5xl font-bold text-white mb-3">
@@ -51,7 +51,7 @@ export default function CommunityDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-[95vw] mx-auto px-4 py-8">
         <div className="flex gap-4 border-b border-slate-700 mb-8">
           {["overview", "members", "discussions", "events"].map((tab) => (
             <button

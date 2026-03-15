@@ -705,7 +705,7 @@ const CookieConsentBanner = ({
       exit={{ y: 100, opacity: 0 }}
       className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 md:p-6 shadow-2xl border-t border-blue-500/30 z-[9999]"
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-[95vw] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-start gap-3 md:gap-4">
           <Cookie className="w-6 h-6 md:w-8 md:h-8 text-blue-400 flex-shrink-0" />
           <div>
@@ -798,7 +798,7 @@ const ResponsiveFooter = ({
       <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-emerald-500/[0.03] blur-3xl rounded-full pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+      <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         {/* Impact Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
           <div className="text-center">
@@ -2156,7 +2156,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="relative z-10 text-center text-white max-w-5xl mx-auto px-4">
+        <div className="relative z-10 text-center text-white max-w-[95vw] mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -2274,7 +2274,7 @@ export default function Home() {
         className="flex flex-col min-h-screen bg-gradient-to-br from-white to-emerald-50 items-center justify-center"
         ref={helpSectionRef}
       >
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        <div className="w-full max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -2290,7 +2290,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="max-w-6xl mx-auto mb-8 md:mb-12">
+          <div className="max-w-[95vw] mx-auto mb-8 md:mb-12">
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl md:rounded-[2rem] shadow-2xl p-4 md:p-6 border border-white/10">
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                 <MagneticInput className="flex-1">
@@ -2384,7 +2384,7 @@ export default function Home() {
                 animate={{ opacity: 1, height: "auto", y: 0 }}
                 exit={{ opacity: 0, height: 0, y: -20 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="max-w-6xl mx-auto mb-8 md:mb-12 overflow-hidden"
+                className="max-w-[95vw] mx-auto mb-8 md:mb-12 overflow-hidden"
               >
                 <div className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl md:rounded-[2rem] p-6 md:p-10 shadow-2xl border border-emerald-200">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -2460,18 +2460,18 @@ export default function Home() {
           </AnimatePresence>
 
           {locationError && (
-            <div className="max-w-6xl mx-auto mb-4 p-3 md:p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm md:text-base text-center">
+            <div className="max-w-[95vw] mx-auto mb-4 p-3 md:p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm md:text-base text-center">
               {locationError}
             </div>
           )}
           {userLocation && (
-            <div className="max-w-6xl mx-auto mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm md:text-base text-center">
+            <div className="max-w-[95vw] mx-auto mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm md:text-base text-center">
               ✅ Location detected - Showing results near you
             </div>
           )}
 
           {/* CARDS SECTION - Fixed cards display */}
-          <div className="max-w-7xl mx-auto" ref={cardsSectionRef}>
+          <div className="max-w-[95vw] mx-auto" ref={cardsSectionRef}>
             {isSearching && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -2792,9 +2792,9 @@ export default function Home() {
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+                <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-[1vw]">
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{
@@ -2823,7 +2823,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
                       className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
@@ -2985,7 +2985,7 @@ export default function Home() {
                 <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
               </div>
               <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-5 lg:p-6">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
+                <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-1.5 sm:mb-2 md:mb-4">
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
@@ -3012,7 +3012,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 w-full max-w-[95vw] mb-1.5 sm:mb-2 md:mb-4">
                     {[
                       {
                         name: "Artisan Pottery Set",
@@ -3162,9 +3162,9 @@ export default function Home() {
                   style={{ animationDelay: "1s" }}
                 ></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+                <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-[1vw]">
                     <motion.div
                       animate={{ rotate: [0, 5, -5, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
@@ -3189,7 +3189,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-4 w-full max-w-5xl mb-1.5 sm:mb-2 md:mb-6">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-4 w-full max-w-[95vw] mb-1.5 sm:mb-2 md:mb-6">
                     {[
                       {
                         value:
@@ -3249,7 +3249,7 @@ export default function Home() {
                     ))}
                   </div>
 
-                  <div className="w-full max-w-5xl grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-6 mb-1.5 sm:mb-2 md:mb-6">
+                  <div className="w-full max-w-[95vw] grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-6 mb-1.5 sm:mb-2 md:mb-6">
                     <motion.div
                       whileHover={{ scale: 1.02 }}
                       className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
@@ -3402,9 +3402,9 @@ export default function Home() {
                   style={{ animationDelay: "0.5s" }}
                 ></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
-                <div className="max-w-6xl w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-3 sm:mb-4 md:mb-6">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+                <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
+                  <div className="text-center mb-[1vw]">
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -3429,7 +3429,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-5xl mb-2 sm:mb-3 md:mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
                     {[
                       {
                         title: "Volunteer",
@@ -3534,7 +3534,7 @@ export default function Home() {
 
       {/* Featured Artisans Section */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
             <span className="text-emerald-400 font-semibold text-sm md:text-lg mb-2 block">
               Meet Our Artisans
@@ -3670,7 +3670,7 @@ export default function Home() {
         gradient="bg-gradient-to-r from-purple-800 to-purple-900"
       >
         <section className="py-12 md:py-20 bg-gradient-to-b from-slate-900 via-purple-900/60 to-slate-900 relative overflow-hidden">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             {/* Header */}
             <div className="text-center mb-8 md:mb-16">
               <motion.span
@@ -3974,7 +3974,7 @@ export default function Home() {
           {/* Background Effects */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvZz48L3N2Zz4=')] opacity-20" />
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-8 md:mb-16">
               <motion.span
                 initial={{ opacity: 0 }}
@@ -4019,7 +4019,7 @@ export default function Home() {
 
       {/* Partners & Sponsors Section */}
       <section className="py-12 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
             <motion.span
               initial={{ opacity: 0 }}
@@ -4095,7 +4095,7 @@ export default function Home() {
         </div>
       </section>
       <section className="py-12 md:py-20 bg-gradient-to-br from-emerald-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
             <motion.span
               initial={{ opacity: 0 }}

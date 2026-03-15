@@ -4,8 +4,10 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  username?: string;
   isAdmin: boolean;
   role: string;
+  subscriptionTier?: string;
 }
 
 export interface UseAuthReturn {

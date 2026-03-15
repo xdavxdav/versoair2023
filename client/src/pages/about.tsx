@@ -343,7 +343,7 @@ export default function About() {
 
         <div
           ref={heroRef}
-          className="relative z-10 max-w-7xl mx-auto px-4 py-20"
+          className="relative z-10 max-w-[95vw] mx-auto px-4 py-20"
         >
           <div className="text-center">
             {/* Main Title */}
@@ -463,7 +463,7 @@ export default function About() {
       {/* Live Data Dashboard Strip */}
       {!loading && (
         <section className="relative py-8 border-y border-slate-800/50 bg-slate-900/30 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-[95vw] mx-auto px-4">
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -526,7 +526,7 @@ export default function About() {
       <section className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950" />
 
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
@@ -681,7 +681,7 @@ export default function About() {
       {categoryStats.length > 0 && (
         <section className="py-16 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-slate-900/50" />
-          <div className="relative max-w-7xl mx-auto px-4">
+          <div className="relative max-w-[95vw] mx-auto px-4">
             <FloatingElement>
               <div className="text-center mb-12">
                 <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
@@ -764,7 +764,7 @@ export default function About() {
       {/* Top Locations */}
       {topLocations.length > 0 && (
         <section className="py-12 relative">
-          <div className="relative max-w-7xl mx-auto px-4">
+          <div className="relative max-w-[95vw] mx-auto px-4">
             <FloatingElement>
               <div className="text-center mb-10">
                 <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
@@ -812,7 +812,7 @@ export default function About() {
       <section className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/30 to-slate-950" />
 
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
@@ -881,7 +881,7 @@ export default function About() {
       <section className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950" />
 
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">

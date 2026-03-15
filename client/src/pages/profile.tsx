@@ -188,7 +188,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 -mt-20 relative z-10 pb-12">
+      <div className="max-w-[95vw] mx-auto px-4 -mt-20 relative z-10 pb-12">
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           {/* Avatar */}

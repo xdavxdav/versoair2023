@@ -510,7 +510,7 @@ export default function Annuaire() {
       </div>
 
       {/* Search Section */}
-      <div className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 backdrop-blur-md border-blue-700 shadow-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
@@ -682,7 +682,7 @@ export default function Annuaire() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-[95vw] mx-auto px-4 py-12">
         {/* Tabs */}
         <div className="flex space-x-2 mb-8">
           {(["businesses", "categories", "database"] as TabType[]).map(

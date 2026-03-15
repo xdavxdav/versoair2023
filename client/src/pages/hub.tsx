@@ -206,7 +206,7 @@ export default function HubPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
 
-        <div className="relative max-w-7xl mx-auto px-4 text-center">
+        <div className="relative max-w-[95vw] mx-auto px-4 text-center">
           <motion.div variants={fadeInUp} initial="hidden" animate="visible">
             <Badge className="mb-6 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all">
               <Sparkles className="h-3 w-3 mr-2" />
@@ -311,7 +311,7 @@ export default function HubPage() {
       {/* ── Sector Quick-Nav ─────────────────────────────────────── */}
       <section className="py-16 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <motion.div
             variants={sectionReveal}
             initial="hidden"
@@ -378,7 +378,7 @@ export default function HubPage() {
 
       {/* ── Services & Tools ─────────────────────────────────────── */}
       <section className="py-16 relative">
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <motion.div
             variants={sectionReveal}
             initial="hidden"
@@ -447,7 +447,7 @@ export default function HubPage() {
       {/* ── Platform Features ────────────────────────────────────── */}
       <section className="py-16 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/5 to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4">
+        <div className="relative max-w-[95vw] mx-auto px-4">
           <motion.div
             variants={sectionReveal}
             initial="hidden"
