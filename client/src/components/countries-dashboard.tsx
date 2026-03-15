@@ -509,7 +509,7 @@ ConnectionStatusBadge.displayName = "ConnectionStatusBadge";
 
 const AdminOnlyBanner = memo(
   ({
-    message = "Pour modifier les données, utilisez le panneau Admin.",
+    message = "Les données affichées sont en lecture seule. Les opérations CRUD sont réservées aux administrateurs autorisés via Geo Admin.",
   }: {
     message?: string;
   }) => (
@@ -522,16 +522,15 @@ const AdminOnlyBanner = memo(
           Mode lecture seule
         </p>
         <p className="text-xs text-slate-400 mt-0.5">{message}</p>
+        <div className="flex items-center gap-3 mt-2">
+          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <Eye className="h-3 w-3" /> Consultation
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+            <Shield className="h-3 w-3" /> CRUD sous permission
+          </span>
+        </div>
       </div>
-      <Link href="/geo-admin/dashboard">
-        <Button
-          size="sm"
-          className="gap-2 bg-gradient-to-r from-amber-500/90 to-orange-600/90 text-white hover:from-amber-500 hover:to-orange-600 shadow-lg transition-all duration-300"
-        >
-          <Shield className="h-4 w-4" />
-          Admin Dashboard
-        </Button>
-      </Link>
     </div>
   ),
 );

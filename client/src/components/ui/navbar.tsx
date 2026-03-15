@@ -197,9 +197,7 @@ export default function Navbar({
               </Link>
             ) : (
               <Link
-                href={
-                  isAuthenticated ? "/pricing?source=geo-admin" : "/geo-admin"
-                }
+                href="/geo-admin"
                 className="text-gray-400 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
               >
                 <Lock className="h-3 w-3 text-gray-400" />
@@ -408,10 +406,17 @@ export default function Navbar({
           {/* padding-bottom extends the overflow clip region downward so dropdown menus aren't clipped;
               negative margin-bottom cancels the extra space in layout flow */}
           <nav
-            className="hidden md:flex xl:hidden flex-1 min-w-0 items-center mx-1 lg:mx-2 overflow-x-auto scrollbar-hide"
-            style={{ paddingBottom: "22rem", marginBottom: "-22rem" }}
+            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 overflow-x-auto scrollbar-hide"
+            style={{
+              paddingBottom: "22rem",
+              marginBottom: "-22rem",
+              pointerEvents: "none",
+            }}
           >
-            <div className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0">
+            <div
+              className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
+              style={{ pointerEvents: "auto" }}
+            >
               {/* Home — purple (brand) */}
               <Link
                 href="/"
@@ -432,9 +437,7 @@ export default function Navbar({
                 </Link>
               ) : (
                 <Link
-                  href={
-                    isAuthenticated ? "/pricing?source=geo-admin" : "/geo-admin"
-                  }
+                  href="/geo-admin"
                   className="text-sky-300 hover:bg-sky-50 text-[clamp(0.65rem,1.2vw,0.78rem)] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-0.5 whitespace-nowrap transition-colors relative group shrink-0"
                 >
                   <Lock className="h-3 w-3" />
