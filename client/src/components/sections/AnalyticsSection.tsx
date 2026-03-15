@@ -124,12 +124,12 @@ export function AnalyticsSection() {
     trend?: number;
     icon: React.ComponentType<any> | React.ForwardRefExoticComponent<any>;
   }) => (
-    <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+    <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-slate-600">{title}</h3>
+        <h3 className="text-sm font-medium text-slate-300">{title}</h3>
         <Icon size={20} className="text-blue-600" />
       </div>
-      <p className="text-3xl font-bold text-slate-900">{value}</p>
+      <p className="text-3xl font-bold text-white">{value}</p>
       {trend !== undefined && (
         <p
           className={`text-sm mt-2 ${
@@ -137,7 +137,7 @@ export function AnalyticsSection() {
               ? "text-green-600"
               : trend < 0
                 ? "text-red-600"
-                : "text-slate-600"
+                : "text-slate-400"
           }`}
         >
           {trend > 0 ? "↑" : trend < 0 ? "↓" : "→"} {Math.abs(trend)}% from last{" "}
@@ -152,7 +152,7 @@ export function AnalyticsSection() {
       {/* Header with View-Only Badge */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-slate-900">Analytics</h2>
+          <h2 className="text-2xl font-bold text-white">Analytics</h2>
           <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
             View Only
           </span>
@@ -165,7 +165,7 @@ export function AnalyticsSection() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 period === p
                   ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
               }`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -177,14 +177,14 @@ export function AnalyticsSection() {
       {/* Google Tag Manager Live Metrics */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="text-lg font-semibold text-white">
             Google Tag Manager - Real-Time Tracking
           </h3>
           <div className="flex items-center gap-2">
             <select
               value={hoursBack}
               onChange={(e) => setHoursBack(parseInt(e.target.value))}
-              className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg bg-white text-slate-700 cursor-pointer hover:border-slate-400"
+              className={`px-3 py-1.5 text-sm border border-slate-600 rounded-lg bg-slate-800 text-slate-200 cursor-pointer hover:border-slate-400`}
             >
               <option value={1}>Last 1 Hour</option>
               <option value={6}>Last 6 Hours</option>
@@ -202,8 +202,8 @@ export function AnalyticsSection() {
         </div>
 
         {gtmLoading ? (
-          <div className="bg-white rounded-lg shadow border border-slate-200 p-8 flex items-center justify-center">
-            <div className="text-slate-500 flex items-center gap-2">
+          <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700 p-8 flex items-center justify-center">
+            <div className="text-slate-400 flex items-center gap-2">
               <div className="animate-spin">
                 <BarChart3 className="h-5 w-5" />
               </div>
@@ -284,69 +284,69 @@ export function AnalyticsSection() {
 
             {/* Engagement Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+              <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
                 <div className="flex items-center gap-2 mb-3">
-                  <Clock className="h-5 w-5 text-cyan-600" />
-                  <h4 className="font-semibold text-slate-900">
+                  <Clock className="h-5 w-5 text-cyan-400" />
+                  <h4 className="font-semibold text-white">
                     Avg Session Duration
                   </h4>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-2xl font-bold text-white">
                   {gtmStats.avgSessionDuration}s
                 </p>
-                <p className="text-xs text-slate-600 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   Average time per session
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+              <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
                 <div className="flex items-center gap-2 mb-3">
-                  <Percent className="h-5 w-5 text-red-600" />
-                  <h4 className="font-semibold text-slate-900">Bounce Rate</h4>
+                  <Percent className="h-5 w-5 text-red-400" />
+                  <h4 className="font-semibold text-white">Bounce Rate</h4>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-2xl font-bold text-white">
                   {gtmStats.bounceRate}%
                 </p>
-                <p className="text-xs text-slate-600 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   Single-page sessions
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+              <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-5 w-5 text-emerald-600" />
-                  <h4 className="font-semibold text-slate-900">
+                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  <h4 className="font-semibold text-white">
                     Events Per Session
                   </h4>
                 </div>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-2xl font-bold text-white">
                   {(gtmStats.totalEvents / gtmStats.uniqueSessions).toFixed(2)}
                 </p>
-                <p className="text-xs text-slate-600 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   Average interaction depth
                 </p>
               </div>
             </div>
 
             {/* Top Events */}
-            <div className="bg-white rounded-lg shadow border border-slate-200 p-6 mb-6">
-              <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-600" />
+            <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700 p-6 mb-6">
+              <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-400" />
                 Top Events
               </h4>
               <div className="space-y-3">
                 {gtmStats.topEvents.map((event, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg"
                   >
-                    <span className="text-sm font-medium text-slate-900 capitalize">
+                    <span className="text-sm font-medium text-white capitalize">
                       {event.name.replace(/_/g, " ")}
                     </span>
                     <div className="flex items-center gap-3">
-                      <div className="w-32 bg-slate-200 rounded-full h-2">
+                      <div className="w-32 bg-slate-600 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-blue-500 h-2 rounded-full"
                           style={{
                             width: `${
                               (event.count / gtmStats.topEvents[0].count) * 100
@@ -354,7 +354,7 @@ export function AnalyticsSection() {
                           }}
                         />
                       </div>
-                      <span className="text-sm font-bold text-slate-900 w-16 text-right">
+                      <span className="text-sm font-bold text-white w-16 text-right">
                         {event.count.toLocaleString()}
                       </span>
                     </div>
@@ -366,9 +366,9 @@ export function AnalyticsSection() {
             {/* Device & Geography Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Device Breakdown */}
-              <div className="bg-white rounded-lg shadow border border-slate-200 p-6">
-                <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Smartphone className="h-5 w-5 text-indigo-600" />
+              <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700 p-6">
+                <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                  <Smartphone className="h-5 w-5 text-indigo-400" />
                   Device Breakdown
                 </h4>
                 <div className="space-y-2">
@@ -378,13 +378,13 @@ export function AnalyticsSection() {
                         key={device}
                         className="flex items-center justify-between"
                       >
-                        <span className="text-sm text-slate-600 capitalize">
+                        <span className="text-sm text-slate-300 capitalize">
                           {device}
                         </span>
                         <div className="flex items-center gap-2">
-                          <div className="w-24 bg-slate-200 rounded h-1.5">
+                          <div className="w-24 bg-slate-600 rounded h-1.5">
                             <div
-                              className="bg-indigo-600 h-1.5 rounded"
+                              className="bg-indigo-400 h-1.5 rounded"
                               style={{
                                 width: `${
                                   (count / gtmStats.totalEvents) * 100
@@ -392,7 +392,7 @@ export function AnalyticsSection() {
                               }}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-slate-900 w-12 text-right">
+                          <span className="text-xs font-semibold text-white w-12 text-right">
                             {((count / gtmStats.totalEvents) * 100).toFixed(1)}%
                           </span>
                         </div>
@@ -403,9 +403,9 @@ export function AnalyticsSection() {
               </div>
 
               {/* Top Countries */}
-              <div className="bg-white rounded-lg shadow border border-slate-200 p-6">
-                <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-teal-600" />
+              <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700 p-6">
+                <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-teal-400" />
                   Top Countries
                 </h4>
                 <div className="space-y-2">
@@ -417,13 +417,13 @@ export function AnalyticsSection() {
                         key={country}
                         className="flex items-center justify-between"
                       >
-                        <span className="text-sm text-slate-600 font-medium">
+                        <span className="text-sm text-slate-300 font-medium">
                           {country}
                         </span>
                         <div className="flex items-center gap-2">
-                          <div className="w-24 bg-slate-200 rounded h-1.5">
+                          <div className="w-24 bg-slate-600 rounded h-1.5">
                             <div
-                              className="bg-teal-600 h-1.5 rounded"
+                              className="bg-teal-400 h-1.5 rounded"
                               style={{
                                 width: `${
                                   (count / gtmStats.totalEvents) * 100
@@ -431,7 +431,7 @@ export function AnalyticsSection() {
                               }}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-slate-900 w-12 text-right">
+                          <span className="text-xs font-semibold text-white w-12 text-right">
                             {((count / gtmStats.totalEvents) * 100).toFixed(1)}%
                           </span>
                         </div>
@@ -442,43 +442,43 @@ export function AnalyticsSection() {
             </div>
           </>
         ) : (
-          <div className="bg-white rounded-lg shadow border border-slate-200 p-8 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-slate-400" />
-            <p className="text-slate-600">No GTM data available yet</p>
+          <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700 p-8 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-slate-500" />
+            <p className="text-slate-400">No GTM data available yet</p>
           </div>
         )}
       </div>
 
       {/* Activity Log */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+        <h3 className="text-lg font-semibold text-white mb-4">
           Recent Activity
         </h3>
-        <div className="bg-white rounded-lg shadow border border-slate-200">
+        <div className="bg-slate-800/60 rounded-lg shadow border border-slate-700">
           {activityLoading ? (
             <div className="flex items-center justify-center p-8">
-              <div className="text-slate-500">Loading activity log...</div>
+              <div className="text-slate-400">Loading activity log...</div>
             </div>
           ) : activityLog.length === 0 ? (
             <div className="flex items-center justify-center p-8">
-              <div className="text-slate-500">No activity recorded yet</div>
+              <div className="text-slate-400">No activity recorded yet</div>
             </div>
           ) : (
             <div className="divide-y">
               {activityLog.map((log: ActivityLog) => (
                 <div
                   key={log.id}
-                  className="p-4 hover:bg-slate-50 transition-colors"
+                  className="p-4 hover:bg-slate-700/50 transition-colors"
                 >
                   <div className="flex items-start gap-4">
                     <div className="mt-1">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full" />
+                      <div className="w-2 h-2 bg-blue-400 rounded-full" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-white">
                         {log.action}
                       </p>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-sm text-slate-400 mt-1">
                         {log.entity} • {log.user}
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
@@ -495,37 +495,35 @@ export function AnalyticsSection() {
 
       {/* System Health */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">
-          System Health
-        </h3>
+        <h3 className="text-lg font-semibold text-white mb-4">System Health</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+          <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-green-600 rounded-full" />
-              <h4 className="font-medium text-slate-900">Database</h4>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <h4 className="font-medium text-white">Database</h4>
             </div>
-            <p className="text-sm text-slate-600">Connected and operational</p>
+            <p className="text-sm text-slate-400">Connected and operational</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+          <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-green-600 rounded-full" />
-              <h4 className="font-medium text-slate-900">API Server</h4>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <h4 className="font-medium text-white">API Server</h4>
             </div>
-            <p className="text-sm text-slate-600">Responding normally</p>
+            <p className="text-sm text-slate-400">Responding normally</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+          <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-green-600 rounded-full" />
-              <h4 className="font-medium text-slate-900">Cache</h4>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <h4 className="font-medium text-white">Cache</h4>
             </div>
-            <p className="text-sm text-slate-600">Active and optimized</p>
+            <p className="text-sm text-slate-400">Active and optimized</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+          <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-3 h-3 bg-green-600 rounded-full" />
-              <h4 className="font-medium text-slate-900">Authentication</h4>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <h4 className="font-medium text-white">Authentication</h4>
             </div>
-            <p className="text-sm text-slate-600">JWT tokens valid</p>
+            <p className="text-sm text-slate-400">JWT tokens valid</p>
           </div>
         </div>
       </div>
