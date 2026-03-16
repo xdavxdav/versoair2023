@@ -2766,6 +2766,7 @@ export default function Home() {
       <div
         className="panels-wrapper relative h-[100dvh] overflow-hidden"
         ref={panelsWrapperRef}
+        style={{ overscrollBehavior: "contain" }}
       >
         <div
           className="h-[100dvh] w-full overflow-hidden"
