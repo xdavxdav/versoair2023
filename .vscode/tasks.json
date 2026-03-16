@@ -177,6 +177,21 @@
 			"label": "Git Push Panels Fix",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet cant scroll past GSAP panels in home.tsx' -m '- Removed overscrollBehavior:contain from panels wrapper and inner div' -m '- Removed touchAction:pan-y pinch-zoom from inner div (was trapping scroll on Android)' -m '- Removed overscroll-contain class from all 4 panel elements' -m '- These CSS properties created a scroll trap on Android where touch events' -m '  were swallowed instead of reaching the document scroll GSAP listens to' && git push origin main 2>&1"
+		},
+		{
+			"label": "Check Diff",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager diff 300a3d6^..300a3d6 -- client/src/pages/home.tsx"
+		},
+		{
+			"label": "Check Diff 2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager diff e655ff3..300a3d6 -- client/src/pages/home.tsx"
+		},
+		{
+			"label": "Git Push Restore",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: restore overscrollBehavior on panels wrapper for scroll chaining' && git push origin main 2>&1"
 		}
 	]
 }
