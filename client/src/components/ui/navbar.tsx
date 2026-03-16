@@ -418,7 +418,7 @@ export default function Navbar({
           >
             <div
               className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
-              style={{ pointerEvents: "auto" }}
+              style={{ pointerEvents: "auto", touchAction: "pan-y" }}
             >
               {/* Home — purple (brand) */}
               <Link
