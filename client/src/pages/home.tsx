@@ -2766,14 +2766,9 @@ export default function Home() {
       <div
         className="panels-wrapper relative h-[100dvh] overflow-hidden"
         ref={panelsWrapperRef}
-        style={{ overscrollBehavior: "contain" }}
       >
         <div
           className="h-[100dvh] w-full overflow-hidden"
-          style={{
-            overscrollBehavior: "contain",
-            touchAction: "pan-y pinch-zoom",
-          }}
         >
           <div
             ref={panelsContainerRef}
@@ -2784,7 +2779,7 @@ export default function Home() {
           >
             {/* PANEL 1: ArtiHuman Foundation - Emerald Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
               style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
@@ -2976,7 +2971,7 @@ export default function Home() {
 
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
               style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
@@ -3151,7 +3146,7 @@ export default function Home() {
 
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
               style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
@@ -3391,7 +3386,7 @@ export default function Home() {
 
             {/* PANEL 4: Get Involved - Teal Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden overscroll-contain"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
               style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
