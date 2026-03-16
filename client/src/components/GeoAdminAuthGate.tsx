@@ -26,6 +26,8 @@ import {
   CheckCircle,
   Database,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +54,7 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showTiers, setShowTiers] = useState(false);
 
   const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,8 +286,20 @@ export default function GeoAdminAuthGate({
             </p>
           </div>
 
-          {/* Tier Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
+          {/* Tier Cards — collapsible */}
+          <div className="text-center mb-6">
+            <button
+              onClick={() => setShowTiers(!showTiers)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-sm font-medium"
+            >
+              <Eye className="h-4 w-4 text-emerald-400" />
+              {showTiers ? "Hide" : "View"} Subscription Tiers
+              {showTiers ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          </div>
+
+          {showTiers && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12 animate-in fade-in slide-in-from-top-4 duration-300">
             {tierHighlights.map(({ tier, icon, features }) => {
               const t = TIERS[tier];
               const isPopular = t.popular;
@@ -340,6 +355,7 @@ export default function GeoAdminAuthGate({
               );
             })}
           </div>
+          )}
 
           {/* CTA */}
           <div className="text-center space-y-4">

@@ -252,6 +252,11 @@
 			"label": "Git push hint removal",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove admin username hint from GeoAdmin auth gate' && git push"
+		},
+		{
+			"label": "Git push collapsible tiers",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: collapse tier cards behind toggle on GeoAdmin gate — less scrolling' && git push"
 		}
 	]
 }
