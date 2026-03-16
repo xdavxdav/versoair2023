@@ -247,6 +247,11 @@
 			"label": "Git push GeoAdmin restore",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: restore Subscriber + GeoAdmin auth tabs on Geo Admin gate' && git push"
+		},
+		{
+			"label": "Git push hint removal",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove admin username hint from GeoAdmin auth gate' && git push"
 		}
 	]
 }
