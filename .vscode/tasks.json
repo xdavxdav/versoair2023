@@ -192,6 +192,11 @@
 			"label": "Git Push Restore",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: restore overscrollBehavior on panels wrapper for scroll chaining' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git Push Panels Unified",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: unify all 4 home panels with identical layout structure' -m '- All panels: same outer padding p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8' -m '- All panels: same icon size w-5..lg:w-16, same gold-text heading, same subtitle sizing' -m '- All panels: same 2-col card grid with identical card classes and spacing' -m '- All panels: same bottom CTA with 2-button layout (primary + secondary)' -m '- Panel 2 (Marketplace): restructured from 3-col product cards to 2-col info layout' -m '- Panel 3 (Impact): merged 4-col stats + 2-col charts into unified 2-col cards' -m '- Panel 4 (Get Involved): restructured from 3-col vertical cards to 2-col layout' && git push origin main 2>&1"
 		}
 	]
 }

@@ -2980,18 +2980,18 @@ export default function Home() {
                 <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
               </div>
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3 md:p-5 lg:p-6">
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
-                  <div className="text-center mb-1.5 sm:mb-2 md:mb-4">
+                  <div className="text-center mb-[1vw]">
                     <motion.div
                       animate={{ y: [0, -10, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="inline-block"
                     >
-                      <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 md:w-10 md:h-10 lg:w-12 lg:h-12 mx-auto mb-0.5 sm:mb-1 md:mb-2 text-white" />
+                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-0.5 sm:mb-1 md:mb-2"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Artisan Marketplace"
                     >
                       <span
@@ -3001,145 +3001,148 @@ export default function Home() {
                         Artisan Marketplace
                       </span>
                     </h2>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-white/90 mb-0.5 sm:mb-1 md:mb-2 text-center max-w-2xl mx-auto px-2">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Discover unique handcrafted products that support
                       communities and preserve traditional {countryMeta.demonym}{" "}
                       crafts.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 w-full max-w-[95vw] mb-1.5 sm:mb-2 md:mb-4">
-                    {[
-                      {
-                        name: "Artisan Pottery Set",
-                        type: "Traditional Ceramics",
-                        price: `149.99 ${countryMeta.currencySymbol}`,
-                        rating: 4.8,
-                        emoji: "🏺",
-                        gradient: "from-orange-400 to-amber-600",
-                        badge: "Bestseller",
-                        sold: "2.4K sold",
-                      },
-                      {
-                        name: "Handwoven Textile Collection",
-                        type: "Handwoven Textiles",
-                        price: `89.99 ${countryMeta.currencySymbol}`,
-                        rating: 4.9,
-                        emoji: "🧵",
-                        gradient: "from-indigo-500 to-purple-600",
-                        badge: "New Arrival",
-                        sold: "1.8K sold",
-                      },
-                      {
-                        name: "Wooden Sculptures",
-                        type: "Wood Crafts",
-                        price: `199.99 ${countryMeta.currencySymbol}`,
-                        rating: 5.0,
-                        emoji: "🪵",
-                        gradient: "from-emerald-500 to-teal-600",
-                        badge: "Premium",
-                        sold: "3.2K sold",
-                      },
-                    ].map((product, i) => (
-                      <motion.div
-                        key={i}
-                        whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden group cursor-pointer hover:border-white/40 transition-all shadow-lg"
-                      >
-                        <div
-                          className={`bg-gradient-to-br ${product.gradient} p-1.5 sm:p-3 md:p-5 flex items-center justify-between relative h-10 sm:h-14 md:h-20`}
-                        >
-                          <span className="text-2xl sm:text-3xl md:text-5xl drop-shadow-lg group-hover:scale-125 transition-transform">
-                            {product.emoji}
-                          </span>
-                          <motion.span
-                            animate={{ rotate: [0, 5, 0] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className="text-[10px] sm:text-xs font-bold bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full border border-white/30"
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
+                    {/* Left card: Featured Products */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                    >
+                      <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
+                        <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-amber-300 transition-colors" />
+                        Featured Products
+                      </h3>
+                      <div className="space-y-1 sm:space-y-2">
+                        {[
+                          {
+                            name: "Artisan Pottery Set",
+                            price: `149.99 ${countryMeta.currencySymbol}`,
+                            rating: 4.8,
+                            badge: "Bestseller",
+                            emoji: "🏺",
+                          },
+                          {
+                            name: "Handwoven Textiles",
+                            price: `89.99 ${countryMeta.currencySymbol}`,
+                            rating: 4.9,
+                            badge: "New Arrival",
+                            emoji: "🧵",
+                          },
+                          {
+                            name: "Wooden Sculptures",
+                            price: `199.99 ${countryMeta.currencySymbol}`,
+                            rating: 5.0,
+                            badge: "Premium",
+                            emoji: "🪵",
+                          },
+                        ].map((item, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="flex items-center gap-2"
                           >
-                            {product.badge}
-                          </motion.span>
-                        </div>
-                        <div className="p-1.5 sm:p-2 md:p-3">
-                          <h3 className="text-[10px] sm:text-xs md:text-base font-bold text-white mb-0.5 line-clamp-1">
-                            {product.name}
-                          </h3>
-                          <p className="text-white/70 text-[9px] sm:text-[10px] md:text-xs mb-0.5 sm:mb-1">
-                            {product.type}
-                          </p>
-                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                            <span className="text-xs sm:text-sm md:text-base font-bold text-amber-300">
-                              {product.price}
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-300 rounded-full flex-shrink-0"></div>
+                            <span className="text-white/90 text-xs sm:text-sm">
+                              <span className="font-bold text-amber-300">
+                                {item.emoji} {item.name}
+                              </span>{" "}
+                              — {item.price}
                             </span>
-                            <div className="flex items-center gap-0.5">
-                              <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-300 text-yellow-300" />
-                              <span className="text-white font-semibold text-[10px] sm:text-xs">
-                                {product.rating}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="text-white/60 text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 font-medium hidden sm:block">
-                            {product.sold}
-                          </p>
-                          <Link to="/marketplace">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="w-full bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-amber-900 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 group-hover:shadow-lg shadow-md flex items-center justify-center gap-1"
-                            >
-                              <ShoppingCart className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                              <AnimatedKeyboardText
-                                text="Shop Now"
-                                variant="fast"
-                                delay={50}
-                                className="text-amber-900"
-                              />
-                            </motion.button>
-                          </Link>
-                        </div>
-                      </motion.div>
-                    ))}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Right card: Shop Categories */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                    >
+                      <div className="text-center mb-1 sm:mb-2">
+                        <Sparkles
+                          className="mx-auto mb-0.5 sm:mb-1 text-white"
+                          size={14}
+                        />
+                        <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
+                          Shop Categories
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
+                        {[
+                          { icon: Palette, label: "Ceramics" },
+                          { icon: Music, label: "Textiles" },
+                          { icon: Trees, label: "Woodwork" },
+                          { icon: Star, label: "Jewelry" },
+                        ].map((item, i) => (
+                          <motion.div
+                            key={i}
+                            whileHover={{ scale: 1.05, rotate: 5 }}
+                            className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
+                          >
+                            <item.icon
+                              className="mx-auto mb-0.5 sm:mb-1 text-amber-300"
+                              size={16}
+                            />
+                            <span className="text-white text-[10px] sm:text-xs md:text-sm font-semibold">
+                              {item.label}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                      <Link to="/marketplace">
+                        <button className="w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
+                          <ShoppingBag size={14} className="inline mr-1 sm:mr-2" />
+                          Browse Marketplace
+                        </button>
+                      </Link>
+                    </motion.div>
                   </div>
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-1.5 sm:p-2 md:p-4 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="gold-text mb-0.5 sm:mb-1">
-                      <span
-                        className="gold-text__shine"
-                        data-text="Support Communities"
-                      >
-                        Support Communities
-                      </span>
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors">
+                      Support Communities
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-1.5 md:mb-2 text-[10px] sm:text-xs md:text-sm">
+                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
                       Browse our collection and make a difference with every
                       purchase
                     </p>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        // Dispatch SOS signal to navbar Marketplace button
-                        window.dispatchEvent(
-                          new CustomEvent("marketplace-sos", {
-                            detail: { from: "shop-now" },
-                          }),
-                        );
-                        // Scroll to top so user sees the navbar flash
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="bg-white text-amber-700 px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-1.5"
-                    >
-                      <ShoppingBag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      <AnimatedKeyboardText
-                        text="Shop Now"
-                        variant="fast"
-                        delay={50}
-                        className="text-amber-700"
-                      />
-                    </motion.button>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Link to="/marketplace">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-white text-amber-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
+                        >
+                          Shop Now
+                        </motion.button>
+                      </Link>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          window.dispatchEvent(
+                            new CustomEvent("marketplace-sos", {
+                              detail: { from: "shop-now" },
+                            }),
+                          );
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
+                      >
+                        Quick Shop ↑
+                      </motion.button>
+                    </div>
                   </motion.div>
                 </div>
               </div>
@@ -3180,183 +3183,125 @@ export default function Home() {
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Track our collective impact on artisan communities across
+                      Track our collective impact on artisan communities across{" "}
                       {countryMeta.name}.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1 sm:gap-2 md:gap-4 w-full max-w-[95vw] mb-1.5 sm:mb-2 md:mb-6">
-                    {[
-                      {
-                        value:
-                          homeStats.artisanCount > 0
-                            ? `${homeStats.artisanCount}+`
-                            : "—",
-                        label: "Artisans Supported",
-                        icon: Users,
-                        delay: 0,
-                      },
-                      {
-                        value:
-                          homeStats.businessCount > 0
-                            ? `${homeStats.businessCount}+`
-                            : "—",
-                        label: "Businesses Registered",
-                        icon: Heart,
-                        delay: 0.2,
-                      },
-                      {
-                        value:
-                          homeStats.categoryCount > 0
-                            ? `${homeStats.categoryCount}`
-                            : "—",
-                        label: "Categories",
-                        icon: Building2,
-                        delay: 0.4,
-                      },
-                      {
-                        value: countryMeta.flag,
-                        label: countryMeta.name,
-                        icon: MapPin,
-                        delay: 0.6,
-                      },
-                    ].map((stat, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: stat.delay }}
-                        whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-lg sm:rounded-xl p-1 sm:p-2 md:p-4 text-center border border-white/20 hover:border-white/40 transition-all cursor-pointer group shadow-lg hover:shadow-xl"
-                      >
-                        <stat.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-8 md:h-8 mx-auto mb-0 sm:mb-1 md:mb-2 text-emerald-200 group-hover:text-emerald-100 transition-colors" />
-                        <motion.span
-                          className="text-xs sm:text-base md:text-2xl font-bold text-white block"
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          transition={{ delay: stat.delay + 0.3 }}
-                        >
-                          {stat.value}
-                        </motion.span>
-                        <span className="text-white/80 text-[8px] sm:text-[10px] md:text-sm font-semibold group-hover:text-white/90 transition-colors leading-tight">
-                          {stat.label}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className="w-full max-w-[95vw] grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-6 mb-1.5 sm:mb-2 md:mb-6">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
+                    {/* Left card: Community Growth */}
                     <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
-                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
-                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                      <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
                         Community Growth
                       </h3>
-                      <div className="space-y-1 sm:space-y-1.5 md:space-y-3">
+                      <div className="space-y-1 sm:space-y-2">
                         {[
                           {
-                            label: "Active Programs",
-                            value: 98,
-                            color: "from-emerald-400 to-emerald-600",
+                            stat:
+                              homeStats.artisanCount > 0
+                                ? `${homeStats.artisanCount}+`
+                                : "—",
+                            label: "artisans supported",
                           },
                           {
-                            label: "Skill Training",
-                            value: 95,
-                            color: "from-green-400 to-green-600",
+                            stat:
+                              homeStats.businessCount > 0
+                                ? `${homeStats.businessCount}+`
+                                : "—",
+                            label: "businesses registered",
                           },
                           {
-                            label: "Cultural Events",
-                            value: 87,
-                            color: "from-teal-400 to-teal-600",
+                            stat:
+                              homeStats.categoryCount > 0
+                                ? `${homeStats.categoryCount}`
+                                : "—",
+                            label: "industry categories",
                           },
-                        ].map((item, i) => (
-                          <div key={i}>
-                            <div className="flex justify-between mb-0.5 sm:mb-1">
-                              <span className="text-white/90 text-[9px] sm:text-xs md:text-sm font-semibold">
-                                {item.label}
-                              </span>
-                              <span className="text-emerald-300 font-bold text-[9px] sm:text-xs md:text-sm">
-                                {item.value}%
-                              </span>
-                            </div>
-                            <motion.div
-                              className="h-1 sm:h-1.5 md:h-2 bg-white/10 rounded-full overflow-hidden"
-                              initial={{ scaleX: 0 }}
-                              whileInView={{ scaleX: 1 }}
-                              transition={{ delay: i * 0.2, duration: 1 }}
-                            >
-                              <motion.div
-                                className={`h-full bg-gradient-to-r ${item.color}`}
-                                initial={{ scaleX: 0 }}
-                                whileInView={{ scaleX: item.value / 100 }}
-                                transition={{
-                                  delay: i * 0.2 + 0.3,
-                                  duration: 1,
-                                }}
-                                style={{ originX: 0 }}
-                              />
-                            </motion.div>
-                          </div>
+                          { stat: "98%", label: "active programs" },
+                          { stat: "95%", label: "skill training" },
+                          { stat: "87%", label: "cultural events" },
+                        ].map((item, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="flex items-center gap-2"
+                          >
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-300 rounded-full flex-shrink-0"></div>
+                            <span className="text-white/90 text-xs sm:text-sm">
+                              <span className="font-bold text-emerald-300">
+                                {item.stat}
+                              </span>{" "}
+                              {item.label}
+                            </span>
+                          </motion.div>
                         ))}
                       </div>
                     </motion.div>
 
+                    {/* Right card: Country Overview */}
                     <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all"
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
-                      <h3 className="text-[10px] sm:text-sm md:text-lg font-bold text-white mb-1 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-2">
-                        <Globe className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                        {countryMeta.name} Overview
-                      </h3>
-                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-3">
+                      <div className="text-center mb-1 sm:mb-2">
+                        <Globe
+                          className="mx-auto mb-0.5 sm:mb-1 text-white"
+                          size={14}
+                        />
+                        <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
+                          {countryMeta.name} Overview
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
-                          {
-                            region: "Businesses",
-                            artisans: homeStats.businessCount,
-                          },
-                          {
-                            region: "Artisans",
-                            artisans: homeStats.artisanCount,
-                          },
-                          {
-                            region: "Categories",
-                            artisans: homeStats.categoryCount,
-                          },
-                          {
-                            region: "Currency",
-                            artisans: countryMeta.currencySymbol,
-                          },
+                          { icon: Building2, label: "Businesses", value: homeStats.businessCount },
+                          { icon: Users, label: "Artisans", value: homeStats.artisanCount },
+                          { icon: Target, label: "Categories", value: homeStats.categoryCount },
+                          { icon: MapPin, label: countryMeta.name, value: countryMeta.flag },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
                             initial={{ opacity: 0, scale: 0.8 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-gradient-to-br from-white/10 to-white/5 rounded-lg p-1 sm:p-2 md:p-3 text-center border border-white/10"
+                            className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
                           >
-                            <span className="text-white/80 text-[8px] sm:text-[10px] md:text-xs font-semibold">
-                              {item.region}
+                            <item.icon
+                              className="mx-auto mb-0.5 sm:mb-1 text-emerald-300"
+                              size={16}
+                            />
+                            <span className="text-white text-[10px] sm:text-xs md:text-sm font-semibold block">
+                              {item.label}
                             </span>
-                            <div className="text-sm sm:text-base md:text-xl font-bold text-emerald-300 mt-0.5">
-                              {item.artisans}
-                            </div>
+                            <span className="text-emerald-300 font-bold text-xs sm:text-sm md:text-base">
+                              {item.value}
+                            </span>
                           </motion.div>
                         ))}
                       </div>
+                      <Link to="/impact">
+                        <button className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
+                          <TrendingUp size={14} className="inline mr-1 sm:mr-2" />
+                          View Full Report
+                        </button>
+                      </Link>
                     </motion.div>
                   </div>
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
                       See Our Impact in Action
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
                       Track real-time progress and community transformation
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -3364,9 +3309,8 @@ export default function Home() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-2"
+                          className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
-                          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                           View Impact
                         </motion.button>
                       </Link>
@@ -3425,101 +3369,119 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
-                    {[
-                      {
-                        title: "Volunteer",
-                        desc: "Share your skills with artisan communities",
-                        icon: Users,
-                        action: "Join Team",
-                        href: "/get-involved",
-                        color: "from-teal-400 to-teal-600",
-                        count: "245+ volunteers",
-                      },
-                      {
-                        title: "Donate",
-                        desc: "Support our programs and initiatives",
-                        icon: Heart,
-                        action: "Give Now",
-                        href: "/artihuman-foundation",
-                        color: "from-rose-400 to-pink-600",
-                        count: "$125K+ raised",
-                      },
-                      {
-                        title: "Partner",
-                        desc: "Collaborate with us for greater impact",
-                        icon: Handshake,
-                        action: "Partner Up",
-                        href: "/partners",
-                        color: "from-indigo-400 to-purple-600",
-                        count: "50+ partners",
-                      },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.15 }}
-                        whileHover={{ y: -6, scale: 1.05 }}
-                        className="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 text-center group shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                      >
-                        <div
-                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-16 md:h-16 mx-auto mb-1 sm:mb-2 md:mb-3 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
-                        >
-                          <item.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-8 md:h-8 text-white" />
-                        </div>
-                        <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-0.5 sm:mb-1">
-                          {item.title}
-                        </h3>
-                        <p className="text-white/80 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-2 md:mb-4">
-                          {item.desc}
-                        </p>
-                        <motion.div
-                          className="inline-block mb-1 sm:mb-2 md:mb-4 px-2 py-0.5 sm:px-3 sm:py-1 bg-white/10 rounded-full border border-white/20"
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            delay: i * 0.3,
-                          }}
-                        >
-                          <span className="text-emerald-300 font-bold text-[10px] sm:text-xs md:text-sm">
-                            {item.count}
-                          </span>
-                        </motion.div>
-                        <Link to={item.href}>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-full bg-gradient-to-r from-white to-teal-100 text-teal-700 py-1.5 sm:py-2 rounded-lg font-bold hover:from-teal-50 hover:to-teal-200 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-md hover:shadow-lg group-hover:shadow-xl"
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
+                    {/* Left card: Ways to Help */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                    >
+                      <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
+                        <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-teal-300 transition-colors" />
+                        Ways to Help
+                      </h3>
+                      <div className="space-y-1 sm:space-y-2">
+                        {[
+                          { stat: "245+", label: "volunteers active" },
+                          { stat: "$125K+", label: "raised for communities" },
+                          { stat: "50+", label: "partner organizations" },
+                          { stat: "Cultural", label: "heritage programs" },
+                          { stat: "Skill", label: "training initiatives" },
+                          { stat: "Global", label: "impact network" },
+                        ].map((item, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="flex items-center gap-2"
                           >
-                            {item.action}
-                          </motion.button>
-                        </Link>
-                      </motion.div>
-                    ))}
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-teal-300 rounded-full flex-shrink-0"></div>
+                            <span className="text-white/90 text-xs sm:text-sm">
+                              <span className="font-bold text-teal-300">
+                                {item.stat}
+                              </span>{" "}
+                              {item.label}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Right card: Take Action */}
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                    >
+                      <div className="text-center mb-1 sm:mb-2">
+                        <Handshake
+                          className="mx-auto mb-0.5 sm:mb-1 text-white"
+                          size={14}
+                        />
+                        <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
+                          Take Action
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
+                        {[
+                          { icon: Users, label: "Volunteer" },
+                          { icon: Heart, label: "Donate" },
+                          { icon: Handshake, label: "Partner" },
+                          { icon: Globe, label: "Spread Word" },
+                        ].map((item, i) => (
+                          <motion.div
+                            key={i}
+                            whileHover={{ scale: 1.05, rotate: 5 }}
+                            className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
+                          >
+                            <item.icon
+                              className="mx-auto mb-0.5 sm:mb-1 text-teal-300"
+                              size={16}
+                            />
+                            <span className="text-white text-[10px] sm:text-xs md:text-sm font-semibold">
+                              {item.label}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                      <Link to="/get-involved">
+                        <button className="w-full bg-gradient-to-r from-teal-400 to-teal-300 text-teal-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-teal-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
+                          <Handshake size={14} className="inline mr-1 sm:mr-2" />
+                          Get Started
+                        </button>
+                      </Link>
+                    </motion.div>
                   </div>
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all group"
+                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors">
                       Transform Lives Through Art
                     </h3>
-                    <p className="text-white/90 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
+                    <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
                       Your support creates lasting change in artisan communities
                     </p>
-                    <Link to="/get-involved">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-white text-teal-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-teal-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg inline-flex items-center gap-2"
-                      >
-                        <Handshake className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Start Making a Difference
-                      </motion.button>
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Link to="/get-involved">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-white text-teal-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-teal-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
+                        >
+                          Start Making a Difference
+                        </motion.button>
+                      </Link>
+                      <Link to="/artihuman-foundation">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
+                        >
+                          Support Us
+                        </motion.button>
+                      </Link>
+                    </div>
                   </motion.div>
                 </div>
               </div>
