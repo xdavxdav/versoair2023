@@ -1516,7 +1516,7 @@ export default function UserDashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* ── NAVIGATION ─────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
+      <div className="sticky top-0 z-30 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

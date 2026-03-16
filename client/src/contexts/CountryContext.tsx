@@ -7,7 +7,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-const CACHE_KEY = "fsa_detected_country";
+const CACHE_KEY = "fsa_detected_country_v2"; // v2: removed locale fallback that mis-detected CA→US
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -192,12 +192,9 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // Last-resort fallback: browser locale region (e.g. fr-CA → CA)
-        const localeCode = detectFromBrowserLocale();
-        if (!cancelled && localeCode) {
-          setSelectedCountryState(localeCode);
-          setCache(localeCode, false);
-        }
+        // Do NOT fall back to browser locale — navigator.language "en-US"
+        // means the user prefers English (US), NOT that they are in the US.
+        // A Canadian user with en-US locale would be mis-detected as US.
       } catch {
         /* all failed — keep whatever was cached or stay empty */
       } finally {
