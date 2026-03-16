@@ -292,12 +292,8 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal">
-        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
-      </Route>
-      <Route path="/artist-portal/dashboard">
-        {() => <ProtectedRoute component={ArtistPortalDashboardPage} />}
-      </Route>
+      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
+      <Route path="/artist-portal/dashboard" component={ArtistPortalDashboardPage} />
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
