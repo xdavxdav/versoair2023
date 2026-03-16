@@ -802,20 +802,36 @@ const ResponsiveFooter = ({
         {/* Impact Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">150+</p>
-            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Communities Reached</p>
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              150+
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Communities Reached
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">2,400+</p>
-            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Artisans Supported</p>
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              2,400+
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Artisans Supported
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">35</p>
-            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Countries Active</p>
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              35
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Countries Active
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">80+</p>
-            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">Programs Running</p>
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              80+
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Programs Running
+            </p>
           </div>
         </div>
 
@@ -827,28 +843,53 @@ const ResponsiveFooter = ({
           <div>
             <div className="flex items-center gap-2.5 mb-4">
               <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <span className="text-white font-bold text-xs tracking-tight">AH</span>
+                <span className="text-white font-bold text-xs tracking-tight">
+                  AH
+                </span>
               </div>
-              <span className="font-bold text-lg tracking-tight">ArtiHuman Foundation</span>
+              <span className="font-bold text-lg tracking-tight">
+                ArtiHuman Foundation
+              </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
-              Empowering artisans and uplifting communities through humanitarian innovation across {countryMeta.name}.
+              Empowering artisans and uplifting communities through humanitarian
+              innovation across {countryMeta.name}.
             </p>
             <div className="flex gap-2">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
+              >
                 <Facebook size={14} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
+              >
                 <Twitter size={14} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
+              >
                 <Instagram size={14} />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
+              >
                 <Linkedin size={14} />
               </a>
             </div>
@@ -856,33 +897,106 @@ const ResponsiveFooter = ({
 
           {/* Programs */}
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Programs</h4>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Programs
+            </h4>
             <ul className="space-y-3">
-              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Cultural Programs</Link></li>
-              <li><Link to="/artisan" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Artisan Training</Link></li>
-              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Humanitarian Aid</Link></li>
-              <li><Link to="/commerce" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Artisan Marketplace</Link></li>
-              <li><Link to="/programs" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Community Impact</Link></li>
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Cultural Programs
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/artisan"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Artisan Training
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Humanitarian Aid
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/commerce"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Artisan Marketplace
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Community Impact
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Get Involved */}
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Get Involved</h4>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Get Involved
+            </h4>
             <ul className="space-y-3">
-              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Donate</Link></li>
-              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Volunteer</Link></li>
-              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Partner With Us</Link></li>
-              <li><Link to="/support" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">Sponsor a Program</Link></li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Donate
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Volunteer
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Partner With Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Sponsor a Program
+                </Link>
+              </li>
               {isAuthenticated ? (
                 <li>
-                  <Link to="/geo-admin" className="text-emerald-400 text-sm inline-flex items-center gap-1.5">
+                  <Link
+                    to="/geo-admin"
+                    className="text-emerald-400 text-sm inline-flex items-center gap-1.5"
+                  >
                     <Database size={13} /> Geo Admin
                   </Link>
                 </li>
               ) : (
                 <li>
-                  <Link to="/geo-admin" className="text-gray-600 text-sm inline-flex items-center gap-1.5 group">
+                  <Link
+                    to="/geo-admin"
+                    className="text-gray-600 text-sm inline-flex items-center gap-1.5 group"
+                  >
                     <Lock size={12} /> Geo Admin
                     <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
                       Sign in
@@ -895,7 +1009,9 @@ const ResponsiveFooter = ({
 
           {/* Contact & Newsletter */}
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">Contact</h4>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Contact
+            </h4>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Phone size={14} className="text-emerald-500/50" />
@@ -911,7 +1027,9 @@ const ResponsiveFooter = ({
               </li>
             </ul>
 
-            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mb-3">Newsletter</p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mb-3">
+              Newsletter
+            </p>
             <div className="flex">
               <input
                 type="email"
@@ -929,7 +1047,8 @@ const ResponsiveFooter = ({
 
         <div className="text-center">
           <p className="text-gray-600 text-xs">
-            © {new Date().getFullYear()} ArtiHuman Foundation. All rights reserved.
+            © {new Date().getFullYear()} ArtiHuman Foundation. All rights
+            reserved.
           </p>
         </div>
       </div>
@@ -1650,7 +1769,8 @@ export default function Home() {
     // pinned elements on mobile/tablet where touch events inside a
     // position:fixed + overflow:hidden element don't generate document
     // scroll events, causing the scrub animation to freeze.
-    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isTouchDevice =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
     if (isTouchDevice) {
       ScrollTrigger.normalizeScroll(true);
       ScrollTrigger.config({ ignoreMobileResize: true });
@@ -2794,7 +2914,12 @@ export default function Home() {
             {/* PANEL 1: ArtiHuman Foundation - Emerald Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
+              style={{
+                flexBasis: "100%",
+                width: "100%",
+                maxWidth: "100vw",
+                touchAction: "pan-y",
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
@@ -2986,7 +3111,12 @@ export default function Home() {
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
+              style={{
+                flexBasis: "100%",
+                width: "100%",
+                maxWidth: "100vw",
+                touchAction: "pan-y",
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
               <div className="absolute inset-0 opacity-20">
@@ -3112,7 +3242,10 @@ export default function Home() {
                       </div>
                       <Link to="/marketplace">
                         <button className="w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
-                          <ShoppingBag size={14} className="inline mr-1 sm:mr-2" />
+                          <ShoppingBag
+                            size={14}
+                            className="inline mr-1 sm:mr-2"
+                          />
                           Browse Marketplace
                         </button>
                       </Link>
@@ -3164,7 +3297,12 @@ export default function Home() {
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
+              style={{
+                flexBasis: "100%",
+                width: "100%",
+                maxWidth: "100vw",
+                touchAction: "pan-y",
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
@@ -3273,10 +3411,26 @@ export default function Home() {
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
-                          { icon: Building2, label: "Businesses", value: homeStats.businessCount },
-                          { icon: Users, label: "Artisans", value: homeStats.artisanCount },
-                          { icon: Target, label: "Categories", value: homeStats.categoryCount },
-                          { icon: MapPin, label: countryMeta.name, value: countryMeta.flag },
+                          {
+                            icon: Building2,
+                            label: "Businesses",
+                            value: homeStats.businessCount,
+                          },
+                          {
+                            icon: Users,
+                            label: "Artisans",
+                            value: homeStats.artisanCount,
+                          },
+                          {
+                            icon: Target,
+                            label: "Categories",
+                            value: homeStats.categoryCount,
+                          },
+                          {
+                            icon: MapPin,
+                            label: countryMeta.name,
+                            value: countryMeta.flag,
+                          },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
@@ -3300,7 +3454,10 @@ export default function Home() {
                       </div>
                       <Link to="/impact">
                         <button className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
-                          <TrendingUp size={14} className="inline mr-1 sm:mr-2" />
+                          <TrendingUp
+                            size={14}
+                            className="inline mr-1 sm:mr-2"
+                          />
                           View Full Report
                         </button>
                       </Link>
@@ -3345,7 +3502,12 @@ export default function Home() {
             {/* PANEL 4: Get Involved - Teal Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
+              style={{
+                flexBasis: "100%",
+                width: "100%",
+                maxWidth: "100vw",
+                touchAction: "pan-y",
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
               <div className="absolute inset-0 opacity-20">
@@ -3458,7 +3620,10 @@ export default function Home() {
                       </div>
                       <Link to="/get-involved">
                         <button className="w-full bg-gradient-to-r from-teal-400 to-teal-300 text-teal-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-teal-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
-                          <Handshake size={14} className="inline mr-1 sm:mr-2" />
+                          <Handshake
+                            size={14}
+                            className="inline mr-1 sm:mr-2"
+                          />
                           Get Started
                         </button>
                       </Link>

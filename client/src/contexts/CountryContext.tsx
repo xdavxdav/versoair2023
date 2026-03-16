@@ -117,10 +117,17 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const detectFromBrowserLocale = () => {
-    const locale = navigator.languages?.[0] || navigator.language;
-    const region = (locale || "").split("-")[1] || "";
-    return normalizeCode(region);
+  const detectFromCountryIs = async () => {
+    try {
+      const res = await fetch("https://api.country.is", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return "";
+      const data = await res.json();
+      return normalizeCode(data?.country || "");
+    } catch {
+      return "";
+    }
   };
 
   const setSelectedCountry = (code: string) => {
@@ -169,13 +176,14 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        // IP-based strategies give actual geographic location;
-        // browser locale only reflects language preference (en-US ≠ in the US).
-        // ipwho.is is first because ipapi.co frequently rate-limits.
+        // Backend is tried first because our server always gets the real
+        // client IP via x-forwarded-for and is never blocked by ad-blockers.
+        // Browser-side IP APIs can be blocked by content filters.
         const strategies = [
+          detectFromBackend,
           detectFromIpWhoIs,
           detectFromIpApiCo,
-          detectFromBackend,
+          detectFromCountryIs,
         ];
 
         for (const detect of strategies) {

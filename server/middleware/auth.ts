@@ -70,6 +70,9 @@ const PUBLIC_PATHS: string[] = [
   // Basic health check (load balancers / uptime monitors)
   "/api/status",
   "/api/health",
+  // Geolocation — needed before login for country auto-detection
+  "/api/location/country",
+  "/api/location/ip-data",
   // Public-facing data (needed by home page & components before login)
   "/api/countries",
   "/api/categories",

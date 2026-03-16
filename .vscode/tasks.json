@@ -202,6 +202,21 @@
 			"label": "Git commit and push GSAP scroll fix",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet GSAP ScrollTrigger panels scroll blocked — enable normalizeScroll + touchAction pan-y' && git push"
+		},
+		{
+			"label": "Test geo APIs",
+			"type": "shell",
+			"command": "curl -s https://verso-air-online.onrender.com/api/location/country && echo '' && echo '---' && curl -s https://ipwho.is/?fields=success,country_code && echo '' && echo '---' && curl -s https://api.country.is && echo ''"
+		},
+		{
+			"label": "Test geo APIs 2",
+			"type": "shell",
+			"command": "curl -s 'https://ipwho.is/?fields=success,country_code' && echo '' && echo '---' && curl -s 'https://ipapi.co/json/' | head -c 200"
+		},
+		{
+			"label": "Git push autodetect fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: country auto-detection broken — /api/location/country was blocked by auth gate (401), reorder detection strategies, add api.country.is fallback' && git push"
 		}
 	]
 }
