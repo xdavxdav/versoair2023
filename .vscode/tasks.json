@@ -257,6 +257,11 @@
 			"label": "Git push collapsible tiers",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: collapse tier cards behind toggle on GeoAdmin gate — less scrolling' && git push"
+		},
+		{
+			"label": "Git push tier dropdown",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: replace tier cards grid with compact dropdown selector on GeoAdmin gate' && git push"
 		}
 	]
 }

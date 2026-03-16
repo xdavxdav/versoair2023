@@ -27,14 +27,13 @@ import {
   Database,
   Loader2,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TierKey } from "@/lib/tiers";
-import { TIERS, TIER_ORDER } from "@/lib/tiers";
+import { TIERS } from "@/lib/tiers";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -54,7 +53,7 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [showTiers, setShowTiers] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<TierKey | "">("")
 
   const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,66 +285,58 @@ export default function GeoAdminAuthGate({
             </p>
           </div>
 
-          {/* Tier Cards — collapsible */}
-          <div className="text-center mb-6">
-            <button
-              onClick={() => setShowTiers(!showTiers)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-sm font-medium"
-            >
-              <Eye className="h-4 w-4 text-emerald-400" />
-              {showTiers ? "Hide" : "View"} Subscription Tiers
-              {showTiers ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </button>
-          </div>
+          {/* Tier Dropdown */}
+          <div className="max-w-md mx-auto mb-8">
+            <label className="block text-xs font-medium text-slate-400 mb-2 text-center">Explore Subscription Tiers</label>
+            <div className="relative">
+              <select
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(e.target.value as TierKey | "")}
+                className="w-full appearance-none bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none cursor-pointer"
+              >
+                <option value="" className="bg-slate-900 text-slate-300">Select a tier to view details…</option>
+                {tierHighlights.map(({ tier }) => {
+                  const t = TIERS[tier];
+                  return (
+                    <option key={tier} value={tier} className="bg-slate-900 text-white">
+                      {t.icon} {t.name} — {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}/mo`}{t.popular ? " ★ Popular" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+            </div>
 
-          {showTiers && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-12 animate-in fade-in slide-in-from-top-4 duration-300">
-            {tierHighlights.map(({ tier, icon, features }) => {
-              const t = TIERS[tier];
-              const isPopular = t.popular;
+            {/* Selected tier detail */}
+            {selectedTier && (() => {
+              const th = tierHighlights.find(h => h.tier === selectedTier);
+              const t = TIERS[selectedTier];
+              if (!th || !t) return null;
               return (
-                <Card
-                  key={tier}
-                  className={`relative bg-white/5 border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 ${
-                    isPopular
-                      ? "ring-2 ring-emerald-500/50 bg-emerald-500/5"
-                      : ""
-                  }`}
-                >
-                  {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-emerald-500 text-white text-xs">
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg">{t.icon}</span>
-                      <div>
-                        <h3 className="text-white font-semibold text-sm">
-                          {t.name}
-                        </h3>
-                        <p className="text-slate-500 text-xs">{t.tagline}</p>
+                <Card className={`mt-4 bg-white/5 border-white/10 backdrop-blur-sm ${t.popular ? "ring-1 ring-emerald-500/40" : ""}`}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{t.icon}</span>
+                        <div>
+                          <h3 className="text-white font-semibold text-base">{t.name}</h3>
+                          <p className="text-slate-500 text-xs">{t.tagline}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-white">
+                          {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}`}
+                        </span>
+                        {t.monthlyPrice > 0 && <span className="text-slate-500 text-xs">/mo</span>}
                       </div>
                     </div>
-
-                    <div className="mb-3">
-                      <span className="text-xl font-bold text-white">
-                        {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}`}
-                      </span>
-                      {t.monthlyPrice > 0 && (
-                        <span className="text-slate-500 text-xs">/mo</span>
-                      )}
-                    </div>
-
-                    <ul className="space-y-1.5">
-                      {features.map((f, i) => (
-                        <li
-                          key={i}
-                          className="flex items-start gap-2 text-xs text-slate-300"
-                        >
-                          <CheckCircle className="h-3 w-3 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    {t.popular && (
+                      <Badge className="bg-emerald-500 text-white text-xs mb-3">Most Popular</Badge>
+                    )}
+                    <ul className="space-y-2">
+                      {th.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                          <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
                           <span>{f}</span>
                         </li>
                       ))}
@@ -353,9 +344,8 @@ export default function GeoAdminAuthGate({
                   </CardContent>
                 </Card>
               );
-            })}
+            })()}
           </div>
-          )}
 
           {/* CTA */}
           <div className="text-center space-y-4">
