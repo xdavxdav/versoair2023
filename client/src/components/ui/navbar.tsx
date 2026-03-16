@@ -187,7 +187,8 @@ export default function Navbar({
             </Link>
 
             {/* 🌍 Geo Admin Portal Link */}
-            {isAuthenticated && tier !== "free" ? (
+            {isAuthenticated &&
+            (tier !== "free" || user?.role === "superuser" || user?.isAdmin) ? (
               <Link
                 href="/geo-admin"
                 className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap flex items-center"
@@ -403,13 +404,15 @@ export default function Navbar({
           </div>
 
           {/* Tablet Navigation — scrollable colored strip */}
-          {/* padding-bottom extends the overflow clip region downward so dropdown menus aren't clipped;
-              negative margin-bottom cancels the extra space in layout flow */}
+          {/* padding-bottom extends the clip region so dropdown menus aren't cut off;
+              negative margin-bottom removes the extra space from layout flow.
+              pointerEvents:none on the outer nav prevents the padded area from
+              blocking touch/scroll on page content beneath. */}
           <nav
             className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 overflow-x-auto scrollbar-hide"
             style={{
-              paddingBottom: "22rem",
-              marginBottom: "-22rem",
+              paddingBottom: "18rem",
+              marginBottom: "-18rem",
               pointerEvents: "none",
             }}
           >
@@ -426,7 +429,10 @@ export default function Navbar({
               </Link>
 
               {/* Geo Admin — sky */}
-              {isAuthenticated && tier !== "free" ? (
+              {isAuthenticated &&
+              (tier !== "free" ||
+                user?.role === "superuser" ||
+                user?.isAdmin) ? (
                 <Link
                   href="/geo-admin"
                   className="text-sky-600 hover:text-sky-800 hover:bg-sky-50 text-[clamp(0.65rem,1.2vw,0.78rem)] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-0.5 whitespace-nowrap transition-colors font-medium shrink-0"

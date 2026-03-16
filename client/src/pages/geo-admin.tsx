@@ -10,6 +10,7 @@ import { Loader2, TrendingUp, Lock, Zap, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { ADMIN_USERS } from "@/lib/admin-auth";
 
 export default function GeoAdminPage() {
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
@@ -18,15 +19,22 @@ export default function GeoAdminPage() {
   const [startingTrial, setStartingTrial] = useState(false);
 
   // GeoAdmins are tech agents / moderators / IT staff — full access granted based on role
-  // Superusers always bypass tier checks. Admins + moderators need max/enterprise tier.
+  // Also check localStorage geoadmin_username against ADMIN_USERS (set by auth gate)
+  const storedAdminUsername = localStorage.getItem("geoadmin_username");
+  const gateAdminUser = storedAdminUsername
+    ? ADMIN_USERS.find((a) => a.username === storedAdminUsername)
+    : null;
+
   const isGeoAdmin =
     user?.isAdmin ||
     user?.role === "admin" ||
     user?.role === "superuser" ||
-    user?.role === "moderator";
+    user?.role === "moderator" ||
+    !!gateAdminUser;
 
   // Superuser always has full access regardless of tier
-  const isSuperuser = user?.role === "superuser";
+  const isSuperuser =
+    user?.role === "superuser" || gateAdminUser?.role === "SuperAdmin";
 
   // Initialize CSRF token on component mount
   useEffect(() => {
@@ -200,11 +208,14 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  // Tier check for gate users: must be max or enterprise
-  // Superusers bypass this check entirely — they own the whole platform
+  // Tier check for regular subscribers who didn't come through the admin gate
+  // Gate-authenticated users (gateBypass) already proved access via /auth/admin-gate
+  // Superusers and GeoAdmins always bypass tier checks
   const isMaxOrEnterprise = tier === "max" || tier === "enterprise";
+  const hasGateAccess =
+    gateBypass && !!localStorage.getItem("geoadmin_session");
 
-  if (gateBypass && !isMaxOrEnterprise && !isSuperuser) {
+  if (!isMaxOrEnterprise && !isSuperuser && !isGeoAdmin && !hasGateAccess) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
         {/* Connection status dot */}
@@ -262,9 +273,15 @@ export default function GeoAdminPage() {
     );
   }
 
-  // Signed in as Free tier (non-admin subscribers only) → show upgrade banner
-  // GeoAdmins (admins/managers) always get full access — no tier required
-  if (tier === "free" && !isGeoAdmin && isAuthenticated && gateBypass) {
+  // Signed in as Free tier (non-admin, non-gate subscribers only) → show upgrade banner
+  // GeoAdmins and gate-authenticated users always get full access — no tier required
+  if (
+    tier === "free" &&
+    !isGeoAdmin &&
+    !hasGateAccess &&
+    isAuthenticated &&
+    gateBypass
+  ) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
         {/* Connection status dot */}

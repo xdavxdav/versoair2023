@@ -157,6 +157,16 @@
 			"label": "Git Commit and Push",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && echo '=== STATUS ===' && git status --short && echo '=== ADD ===' && git add -A && echo '=== COMMIT ===' && git commit -m 'feat: 2FA admin gate, clipboard fixes, analytics dark theme, geo auth simplification' -m '- AdminAccessGate: 2FA with generated 6-digit code + CODE/username validation' -m '- Clipboard: execCommand copy/paste fallback for blocked Clipboard API' -m '- AnalyticsSection: full dark theme overhaul for DashboardLayout compatibility' -m '- GeoAdminAuthGate: simplified to single-field access gate' -m '- countries-dashboard: AdminOnlyBanner read-only message update' -m '- navbar: geo-admin routing fix, tablet nav pointer-events fix' && echo '=== PUSH ===' && git push origin main 2>&1 && echo '=== DONE ==='"
+		},
+		{
+			"label": "Verify Commit",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -5"
+		},
+		{
+			"label": "Git Commit Push",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: superadmin tier bypass, tablet scroll/dropdown, geolocation accuracy' -m '- navbar: superadmin/admin bypass tier gate for Geo Admin link (desktop+tablet)' -m '- navbar: tablet nav padding 22rem→18rem with pointerEvents pattern for Android' -m '- geo-admin: gate-authenticated users bypass all tier checks (hasGateAccess)' -m '- geo-admin: ADMIN_USERS lookup from localStorage geoadmin_username' -m '- dashboard: sticky nav z-50→z-30 to prevent overlapping navbar dropdowns' -m '- CountryContext: removed locale fallback (en-US≠in USA), bumped cache to v2' && git push origin main 2>&1"
 		}
 	]
 }
