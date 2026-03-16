@@ -73,13 +73,9 @@ import ArtistDirectory from "@/pages/artist-directory";
 
 // Stable wrapper components — MUST be defined at module level (not inline)
 // so React keeps the same component identity across re-renders.
-// Using inline `component={() => ...}` would create a new function on every
-// render, causing React to unmount+remount the entire page ("reload" effect).
-const ArtistPortalWelcomePage = () => (
-  <ArtistPortalGate>
-    <ArtistPortalWelcome />
-  </ArtistPortalGate>
-);
+// Welcome page is public (it has its own sign-in/register forms).
+// Only the dashboard is gated for authenticated artists.
+const ArtistPortalWelcomePage = ArtistPortalWelcome;
 const ArtistPortalDashboardPage = () => (
   <ArtistPortalGate>
     <ArtistPortalDashboard />
@@ -293,7 +289,10 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
-      <Route path="/artist-portal/dashboard" component={ArtistPortalDashboardPage} />
+      <Route
+        path="/artist-portal/dashboard"
+        component={ArtistPortalDashboardPage}
+      />
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
