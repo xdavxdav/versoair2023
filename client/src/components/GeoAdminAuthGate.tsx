@@ -53,7 +53,7 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<TierKey | "">("")
+  const [selectedTier, setSelectedTier] = useState<TierKey | "">("");
 
   const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,19 +287,31 @@ export default function GeoAdminAuthGate({
 
           {/* Tier Dropdown */}
           <div className="max-w-md mx-auto mb-8">
-            <label className="block text-xs font-medium text-slate-400 mb-2 text-center">Explore Subscription Tiers</label>
+            <label className="block text-xs font-medium text-slate-400 mb-2 text-center">
+              Explore Subscription Tiers
+            </label>
             <div className="relative">
               <select
                 value={selectedTier}
-                onChange={(e) => setSelectedTier(e.target.value as TierKey | "")}
+                onChange={(e) =>
+                  setSelectedTier(e.target.value as TierKey | "")
+                }
                 className="w-full appearance-none bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none cursor-pointer"
               >
-                <option value="" className="bg-slate-900 text-slate-300">Select a tier to view details…</option>
+                <option value="" className="bg-slate-900 text-slate-300">
+                  Select a tier to view details…
+                </option>
                 {tierHighlights.map(({ tier }) => {
                   const t = TIERS[tier];
                   return (
-                    <option key={tier} value={tier} className="bg-slate-900 text-white">
-                      {t.icon} {t.name} — {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}/mo`}{t.popular ? " ★ Popular" : ""}
+                    <option
+                      key={tier}
+                      value={tier}
+                      className="bg-slate-900 text-white"
+                    >
+                      {t.icon} {t.name} —{" "}
+                      {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}/mo`}
+                      {t.popular ? " ★ Popular" : ""}
                     </option>
                   );
                 })}
@@ -308,43 +320,59 @@ export default function GeoAdminAuthGate({
             </div>
 
             {/* Selected tier detail */}
-            {selectedTier && (() => {
-              const th = tierHighlights.find(h => h.tier === selectedTier);
-              const t = TIERS[selectedTier];
-              if (!th || !t) return null;
-              return (
-                <Card className={`mt-4 bg-white/5 border-white/10 backdrop-blur-sm ${t.popular ? "ring-1 ring-emerald-500/40" : ""}`}>
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{t.icon}</span>
-                        <div>
-                          <h3 className="text-white font-semibold text-base">{t.name}</h3>
-                          <p className="text-slate-500 text-xs">{t.tagline}</p>
+            {selectedTier &&
+              (() => {
+                const th = tierHighlights.find((h) => h.tier === selectedTier);
+                const t = TIERS[selectedTier];
+                if (!th || !t) return null;
+                return (
+                  <Card
+                    className={`mt-4 bg-white/5 border-white/10 backdrop-blur-sm ${t.popular ? "ring-1 ring-emerald-500/40" : ""}`}
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{t.icon}</span>
+                          <div>
+                            <h3 className="text-white font-semibold text-base">
+                              {t.name}
+                            </h3>
+                            <p className="text-slate-500 text-xs">
+                              {t.tagline}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-bold text-white">
+                            {t.monthlyPrice === 0
+                              ? "Free"
+                              : `$${t.monthlyPrice}`}
+                          </span>
+                          {t.monthlyPrice > 0 && (
+                            <span className="text-slate-500 text-xs">/mo</span>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xl font-bold text-white">
-                          {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}`}
-                        </span>
-                        {t.monthlyPrice > 0 && <span className="text-slate-500 text-xs">/mo</span>}
-                      </div>
-                    </div>
-                    {t.popular && (
-                      <Badge className="bg-emerald-500 text-white text-xs mb-3">Most Popular</Badge>
-                    )}
-                    <ul className="space-y-2">
-                      {th.features.map((f, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                          <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })()}
+                      {t.popular && (
+                        <Badge className="bg-emerald-500 text-white text-xs mb-3">
+                          Most Popular
+                        </Badge>
+                      )}
+                      <ul className="space-y-2">
+                        {th.features.map((f, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-sm text-slate-300"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
           </div>
 
           {/* CTA */}

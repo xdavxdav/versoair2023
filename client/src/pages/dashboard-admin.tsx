@@ -3245,7 +3245,10 @@ const CategoryManagement = ({
                 if (!catSearch.trim()) return true;
                 const q = catSearch.toLowerCase();
                 const subs = categories.filter((s: any) => s.parentId === c.id);
-                return c.name.toLowerCase().includes(q) || subs.some((s: any) => s.name.toLowerCase().includes(q));
+                return (
+                  c.name.toLowerCase().includes(q) ||
+                  subs.some((s: any) => s.name.toLowerCase().includes(q))
+                );
               })
               .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((mainCat: any) => {
@@ -3261,12 +3264,15 @@ const CategoryManagement = ({
                 const isExpanded = expandedCats.has(mainCat.id);
 
                 return (
-                  <div key={mainCat.id} className="border rounded-lg overflow-hidden">
+                  <div
+                    key={mainCat.id}
+                    className="border rounded-lg overflow-hidden"
+                  >
                     {/* Collapsed header row */}
                     <div
                       className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => {
-                        setExpandedCats(prev => {
+                        setExpandedCats((prev) => {
                           const next = new Set(prev);
                           if (next.has(mainCat.id)) next.delete(mainCat.id);
                           else next.add(mainCat.id);
@@ -3275,19 +3281,34 @@ const CategoryManagement = ({
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
+                        <ChevronRight
+                          className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+                        />
                         <div className={`p-1.5 rounded-md ${bgColor}`}>
                           <Icon className={`h-4 w-4 ${color}`} />
                         </div>
-                        <span className="font-medium text-sm truncate">{mainCat.name}</span>
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0 flex-shrink-0">Main</Badge>
+                        <span className="font-medium text-sm truncate">
+                          {mainCat.name}
+                        </span>
+                        <Badge
+                          variant="default"
+                          className="text-[10px] px-1.5 py-0 flex-shrink-0"
+                        >
+                          Main
+                        </Badge>
                         {subs.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 flex-shrink-0"
+                          >
                             {subs.length} sub{subs.length !== 1 ? "s" : ""}
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="flex items-center gap-1 flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           size="sm"
                           variant="ghost"
@@ -3324,10 +3345,18 @@ const CategoryManagement = ({
                             >
                               <span className="truncate">{sub.name}</span>
                               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                >
                                   <Edit className="h-3 w-3" />
                                 </Button>
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500 hover:text-red-700">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
                               </div>
