@@ -70,6 +70,21 @@ import ArtistPortalWelcome from "@/pages/artist-portal-welcome";
 import ArtistPortalDashboard from "@/pages/artist-portal";
 import ArtistPortalGate from "@/components/ArtistPortalGate";
 import ArtistDirectory from "@/pages/artist-directory";
+
+// Stable wrapper components — MUST be defined at module level (not inline)
+// so React keeps the same component identity across re-renders.
+// Using inline `component={() => ...}` would create a new function on every
+// render, causing React to unmount+remount the entire page ("reload" effect).
+const ArtistPortalWelcomePage = () => (
+  <ArtistPortalGate>
+    <ArtistPortalWelcome />
+  </ArtistPortalGate>
+);
+const ArtistPortalDashboardPage = () => (
+  <ArtistPortalGate>
+    <ArtistPortalDashboard />
+  </ArtistPortalGate>
+);
 import OngCulturelle from "@/pages/ong-culturelle";
 
 // ─────────────────────────────────────────────────────
@@ -278,26 +293,10 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal">
-        {() => (
-          <ProtectedRoute
-            component={() => (
-              <ArtistPortalGate>
-                <ArtistPortalWelcome />
-              </ArtistPortalGate>
-            )}
-          />
-        )}
+        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
       </Route>
       <Route path="/artist-portal/dashboard">
-        {() => (
-          <ProtectedRoute
-            component={() => (
-              <ArtistPortalGate>
-                <ArtistPortalDashboard />
-              </ArtistPortalGate>
-            )}
-          />
-        )}
+        {() => <ProtectedRoute component={ArtistPortalDashboardPage} />}
       </Route>
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
