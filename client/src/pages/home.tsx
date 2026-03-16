@@ -1646,6 +1646,16 @@ export default function Home() {
   useLayoutEffect(() => {
     if (!panelsWrapperRef.current || !panelsContainerRef.current) return;
 
+    // Enable normalizeScroll on touch devices — GSAP's built-in fix for
+    // pinned elements on mobile/tablet where touch events inside a
+    // position:fixed + overflow:hidden element don't generate document
+    // scroll events, causing the scrub animation to freeze.
+    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      ScrollTrigger.normalizeScroll(true);
+      ScrollTrigger.config({ ignoreMobileResize: true });
+    }
+
     // Kill all existing ScrollTriggers for panels
     ScrollTrigger.getAll().forEach((trigger: ScrollTrigger) => {
       if (trigger.vars.id === "panels-scroll") {
@@ -1800,6 +1810,8 @@ export default function Home() {
     return () => {
       ctx.revert();
       clearTimeout(refreshTimeout);
+      // Disable normalizeScroll on cleanup
+      ScrollTrigger.normalizeScroll(false);
     };
   }, []);
 
@@ -2766,10 +2778,11 @@ export default function Home() {
       <div
         className="panels-wrapper relative h-[100dvh] overflow-hidden"
         ref={panelsWrapperRef}
-        style={{ overscrollBehavior: "contain" }}
+        style={{ touchAction: "pan-y" }}
       >
         <div
           className="h-[100dvh] w-full overflow-hidden"
+          style={{ touchAction: "pan-y" }}
         >
           <div
             ref={panelsContainerRef}
@@ -2781,7 +2794,7 @@ export default function Home() {
             {/* PANEL 1: ArtiHuman Foundation - Emerald Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
@@ -2973,7 +2986,7 @@ export default function Home() {
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
               <div className="absolute inset-0 opacity-20">
@@ -3151,7 +3164,7 @@ export default function Home() {
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20">
@@ -3332,7 +3345,7 @@ export default function Home() {
             {/* PANEL 4: Get Involved - Teal Gradient */}
             <div
               className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
-              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw" }}
+              style={{ flexBasis: "100%", width: "100%", maxWidth: "100vw", touchAction: "pan-y" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
               <div className="absolute inset-0 opacity-20">
