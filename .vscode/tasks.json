@@ -222,6 +222,11 @@
 			"label": "Git push artist portal fix",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: artist portal page reloads itself — inline component functions caused React to remount on every re-render, whitelist /auth/verify and /auth/session in auth gate' && git push"
+		},
+		{
+			"label": "Git push artist portal auth fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove ProtectedRoute from artist portal — artists have their own auth flow on the welcome page, no business account needed' && git push"
 		}
 	]
 }
