@@ -2944,6 +2944,8 @@ const CategoryManagement = ({
   sharedCategories?: any[];
 }) => {
   const [categories, setCategories] = useState<any[]>([]);
+  const [expandedCats, setExpandedCats] = useState<Set<number>>(new Set());
+  const [catSearch, setCatSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -3226,9 +3228,25 @@ const CategoryManagement = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-1">
+            {/* Search filter */}
+            <div className="mb-4">
+              <Input
+                placeholder="Search categories…"
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+
             {categories
               .filter((c: any) => !c.parentId)
+              .filter((c: any) => {
+                if (!catSearch.trim()) return true;
+                const q = catSearch.toLowerCase();
+                const subs = categories.filter((s: any) => s.parentId === c.id);
+                return c.name.toLowerCase().includes(q) || subs.some((s: any) => s.name.toLowerCase().includes(q));
+              })
               .sort((a: any, b: any) => a.name.localeCompare(b.name))
               .map((mainCat: any) => {
                 const subs = categories
@@ -3240,102 +3258,90 @@ const CategoryManagement = ({
                 const Icon = fallback?.icon || Tag;
                 const color = fallback?.color || "text-gray-600";
                 const bgColor = fallback?.bgColor || "bg-gray-50";
+                const isExpanded = expandedCats.has(mainCat.id);
 
                 return (
-                  <Card key={mainCat.id} className="border shadow-sm">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${bgColor}`}>
-                            <Icon className={`h-5 w-5 ${color}`} />
-                          </div>
-                          <div>
-                            <CardTitle className="text-base flex items-center gap-2">
-                              {mainCat.name}
-                              <Badge
-                                variant="default"
-                                className="text-[10px] px-1.5 py-0"
-                              >
-                                Main
-                              </Badge>
-                            </CardTitle>
-                            <CardDescription className="text-xs">
-                              {mainCat.slug}{" "}
-                              {mainCat.description
-                                ? `— ${mainCat.description}`
-                                : ""}
-                            </CardDescription>
-                          </div>
+                  <div key={mainCat.id} className="border rounded-lg overflow-hidden">
+                    {/* Collapsed header row */}
+                    <div
+                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setExpandedCats(prev => {
+                          const next = new Set(prev);
+                          if (next.has(mainCat.id)) next.delete(mainCat.id);
+                          else next.add(mainCat.id);
+                          return next;
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
+                        <div className={`p-1.5 rounded-md ${bgColor}`}>
+                          <Icon className={`h-4 w-4 ${color}`} />
                         </div>
-                        <div className="flex items-center gap-2">
-                          {subs.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {subs.length} sub{subs.length !== 1 ? "s" : ""}
-                            </Badge>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setCurrentCategory(mainCat);
-                              setShowEditDialog(true);
-                            }}
-                          >
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              setCurrentCategory(mainCat);
-                              setShowDeleteDialog(true);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            Delete
-                          </Button>
+                        <span className="font-medium text-sm truncate">{mainCat.name}</span>
+                        <Badge variant="default" className="text-[10px] px-1.5 py-0 flex-shrink-0">Main</Badge>
+                        {subs.length > 0 && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+                            {subs.length} sub{subs.length !== 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          onClick={() => {
+                            setCurrentCategory(mainCat);
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            setCurrentCategory(mainCat);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Expanded subcategories */}
+                    {isExpanded && subs.length > 0 && (
+                      <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t">
+                        <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
+                          {subs.map((sub: any) => (
+                            <div
+                              key={sub.id}
+                              className="flex items-center justify-between p-2 rounded-md bg-white border border-gray-100 hover:bg-gray-50 transition-colors group text-sm"
+                            >
+                              <span className="truncate">{sub.name}</span>
+                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500 hover:text-red-700">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    </CardHeader>
-                    {subs.length > 0 && (
-                      <CardContent className="pt-0">
-                        <div className="ml-6 pl-4 border-l-2 border-gray-200">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                            {subs.map((sub: any) => (
-                              <div
-                                key={sub.id}
-                                className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors group"
-                              >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm truncate">
-                                    {sub.name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0"
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
                     )}
-                  </Card>
+                    {isExpanded && subs.length === 0 && (
+                      <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t text-xs text-gray-400 ml-12">
+                        No subcategories
+                      </div>
+                    )}
+                  </div>
                 );
               })}
           </div>
