@@ -3076,7 +3076,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors" style={{ fontFamily: "'Alegreya', Georgia, serif" }}>
                       Join Our Movement
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
@@ -3256,7 +3256,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors">
+                    <h3 className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors" style={{ fontFamily: "'Alegreya', Georgia, serif" }}>
                       Support Communities
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
@@ -3468,7 +3468,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
+                    <h3 className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors" style={{ fontFamily: "'Alegreya', Georgia, serif" }}>
                       See Our Impact in Action
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
@@ -3634,7 +3634,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
-                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors">
+                    <h3 className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors" style={{ fontFamily: "'Alegreya', Georgia, serif" }}>
                       Transform Lives Through Art
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">

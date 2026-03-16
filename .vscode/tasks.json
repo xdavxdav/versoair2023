@@ -267,6 +267,11 @@
 			"label": "Git push categories accordion",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: collapse admin categories into accordion rows with search filter' && git push"
+		},
+		{
+			"label": "Git push panel titles",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: larger Alegreya serif font on all 4 panel card titles' && git push"
 		}
 	]
 }
