@@ -167,6 +167,11 @@
 			"label": "Git Commit Push",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: superadmin tier bypass, tablet scroll/dropdown, geolocation accuracy' -m '- navbar: superadmin/admin bypass tier gate for Geo Admin link (desktop+tablet)' -m '- navbar: tablet nav padding 22rem→18rem with pointerEvents pattern for Android' -m '- geo-admin: gate-authenticated users bypass all tier checks (hasGateAccess)' -m '- geo-admin: ADMIN_USERS lookup from localStorage geoadmin_username' -m '- dashboard: sticky nav z-50→z-30 to prevent overlapping navbar dropdowns' -m '- CountryContext: removed locale fallback (en-US≠in USA), bumped cache to v2' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git Push Android Fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet nav strip blocking vertical scroll' -m '- Added touchAction: pan-y to tablet nav inner div' -m '- Allows vertical page scroll when touching the nav strip on Android' -m '- Fixes Lenovo Tab M10 scroll issue (iOS was unaffected)' && git push origin main 2>&1"
 		}
 	]
 }
