@@ -217,6 +217,11 @@
 			"label": "Git push autodetect fix",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: country auto-detection broken — /api/location/country was blocked by auth gate (401), reorder detection strategies, add api.country.is fallback' && git push"
+		},
+		{
+			"label": "Git push artist portal fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: artist portal page reloads itself — inline component functions caused React to remount on every re-render, whitelist /auth/verify and /auth/session in auth gate' && git push"
 		}
 	]
 }

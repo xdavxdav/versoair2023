@@ -46,6 +46,8 @@ const PUBLIC_PATHS: string[] = [
   "/auth/logout",
   "/auth/verify-token",
   "/auth/verify-email",
+  "/auth/verify",
+  "/auth/session",
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh-token",
