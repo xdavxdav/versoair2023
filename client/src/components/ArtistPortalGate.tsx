@@ -39,8 +39,9 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     user?.portals?.includes("artist");
 
   // Check sessionStorage so gate only shows once per browser session
+  // Users who already have artist access bypass the gate entirely
   useEffect(() => {
-    if (isSuperAdmin) {
+    if (isSuperAdmin || hasArtistAccess) {
       setHasPassedGate(true);
       return;
     }
@@ -48,7 +49,7 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     if (passed === "true") {
       setHasPassedGate(true);
     }
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, hasArtistAccess]);
 
   // Countdown timer
   useEffect(() => {

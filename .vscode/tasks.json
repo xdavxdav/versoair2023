@@ -227,6 +227,11 @@
 			"label": "Git push artist portal auth fix",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove ProtectedRoute from artist portal — artists have their own auth flow on the welcome page, no business account needed' && git push"
+		},
+		{
+			"label": "Git push artist gate bypass",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: bypass artist portal gate for users who already have artist access — no 13s countdown for existing artists' && git push"
 		}
 	]
 }
