@@ -237,6 +237,11 @@
 			"label": "Git push remove gate from welcome",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove gate from artist portal welcome page — it IS the sign-in page, gate only on dashboard' && git push"
+		},
+		{
+			"label": "Git push contracts restyle",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'style: contracts page — match Artist Portal dark theme (bg-[#06020f], purple/fuchsia gradients, ambient radials, glass cards)' && git push"
 		}
 	]
 }
