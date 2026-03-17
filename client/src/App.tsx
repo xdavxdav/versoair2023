@@ -645,9 +645,9 @@ function AppContent() {
         }`}
       >
         <Navbar
-          onMusicPortalToggle={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+          onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
           onLocationPanelToggle={() =>
-            setIsLocationPanelOpen(!isLocationPanelOpen)
+            setIsLocationPanelOpen((prev) => !prev)
           }
           isMusicPortalOpen={isMusicPortalOpen}
           isLocationPanelOpen={isLocationPanelOpen}

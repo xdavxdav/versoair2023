@@ -126,17 +126,20 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[10000]"
-          onClick={onClose}
+          onPointerDown={onClose}
         />
       )}
 
       {/* Panel */}
       <div
-        className={`fixed top-4 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[90vh] overflow-y-auto music-portal-scroll bg-gradient-to-b from-purple-900 to-pink-900 shadow-2xl z-[10001] p-4 md:p-6 rounded-lg text-white transition-all duration-300 ${
+        className={`fixed top-4 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[90vh] overflow-y-auto music-portal-scroll bg-gradient-to-b from-purple-900 to-pink-900 shadow-2xl z-[10001] p-4 md:p-6 rounded-lg text-white transition-all duration-300 touch-pan-y overscroll-contain ${
           isOpen
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-4 pointer-events-none"
         }`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold">Verso Air Musical Label</h3>

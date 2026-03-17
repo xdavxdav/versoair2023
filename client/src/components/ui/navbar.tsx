@@ -32,6 +32,11 @@ export default function Navbar({
   isMusicPortalOpen,
   isLocationPanelOpen,
 }: NavbarProps) {
+  const tabletNavItemClass =
+    "text-sm px-3 py-1.5 rounded-md whitespace-nowrap transition-colors font-medium shrink-0 select-none touch-pan-x";
+  const tabletNavIconItemClass =
+    "text-sm px-3 py-1.5 rounded-md flex items-center whitespace-nowrap transition-colors font-medium shrink-0 select-none touch-pan-x";
+
   // Call ALL hooks FIRST before any conditional logic
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [brandHovered, setBrandHovered] = useState(false);
@@ -407,21 +412,23 @@ export default function Navbar({
               pointerEvents:none on the outer nav prevents the padded area from
               blocking touch/scroll on page content beneath. */}
           <nav
-            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide"
+            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide touch-pan-x"
             style={{
               paddingBottom: "18rem",
               marginBottom: "-18rem",
               pointerEvents: "none",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehaviorX: "contain",
             }}
           >
             <div
               className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
-              style={{ pointerEvents: "auto", touchAction: "pan-x pan-y" }}
+              style={{ pointerEvents: "auto", touchAction: "pan-x" }}
             >
               {/* Home — purple (brand) */}
               <Link
                 href="/"
-                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap transition-colors font-medium shrink-0"
+                className={`text-purple-600 hover:text-purple-800 hover:bg-purple-50 ${tabletNavItemClass}`}
               >
                 Home
               </Link>
@@ -433,20 +440,18 @@ export default function Navbar({
                 user?.isAdmin) ? (
                 <Link
                   href="/geo-admin"
-                  className="text-sky-600 hover:text-sky-800 hover:bg-sky-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium shrink-0"
+                  className={`text-sky-600 hover:text-sky-800 hover:bg-sky-50 gap-1.5 ${tabletNavIconItemClass}`}
                 >
-                  <Globe className="h-3 w-3" />
-                  <span className="hidden lg:inline">Geo Admin</span>
-                  <span className="lg:hidden">Geo</span>
+                  <Globe className="h-4 w-4" />
+                  Geo
                 </Link>
               ) : (
                 <Link
                   href="/geo-admin"
-                  className="text-sky-300 hover:bg-sky-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors relative group shrink-0"
+                  className={`text-sky-300 hover:bg-sky-50 gap-1.5 relative group ${tabletNavIconItemClass}`}
                 >
-                  <Lock className="h-3 w-3" />
-                  <span className="hidden lg:inline">Geo Admin</span>
-                  <span className="lg:hidden">Geo</span>
+                  <Lock className="h-4 w-4" />
+                  Geo
                   <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                     {isAuthenticated ? "Premium required" : "Sign in to access"}
                   </span>
@@ -457,8 +462,10 @@ export default function Navbar({
 
               {/* Entreprises — amber */}
               <div className="relative group shrink-0">
-                <button className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
-                  Entreprises <ChevronDown className="h-3 w-3" />
+                <button
+                  className={`text-amber-600 hover:text-amber-800 hover:bg-amber-50 gap-1 ${tabletNavIconItemClass}`}
+                >
+                  Entreprises <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-3 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-amber-100">
                   <div className="grid grid-cols-2 gap-0.5 px-1">
@@ -524,8 +531,10 @@ export default function Navbar({
 
               {/* Services — emerald */}
               <div className="relative group shrink-0">
-                <button className="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
-                  Services <ChevronDown className="h-3 w-3" />
+                <button
+                  className={`text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 gap-1 ${tabletNavIconItemClass}`}
+                >
+                  Services <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-emerald-100">
                   <Link
@@ -564,8 +573,10 @@ export default function Navbar({
 
               {/* Marketing — pink */}
               <div className="relative group shrink-0">
-                <button className="text-pink-600 hover:text-pink-800 hover:bg-pink-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
-                  Marketing <ChevronDown className="h-3 w-3" />
+                <button
+                  className={`text-pink-600 hover:text-pink-800 hover:bg-pink-50 gap-1 ${tabletNavIconItemClass}`}
+                >
+                  Marketing <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-pink-100">
                   <Link
@@ -607,7 +618,7 @@ export default function Navbar({
               {/* Reservations — indigo */}
               <Link
                 href="/reservations"
-                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap transition-colors font-medium shrink-0"
+                className={`text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 ${tabletNavItemClass}`}
               >
                 Reservations
               </Link>
@@ -615,7 +626,7 @@ export default function Navbar({
               {/* Marketplace — violet */}
               <Link
                 href="/marketplace"
-                className={`relative text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap flex items-center gap-1 transition-all duration-300 font-medium shrink-0 ${
+                className={`relative gap-1 ${tabletNavIconItemClass} transition-all duration-300 ${
                   marketplaceSos
                     ? "text-amber-600 font-bold bg-amber-50 scale-105"
                     : "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
@@ -630,7 +641,7 @@ export default function Navbar({
                   </>
                 )}
                 <ShoppingBag
-                  className={`h-3 w-3 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
+                  className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
                 />
                 <span className="hidden lg:inline">Marketplace</span>
                 <span className="lg:hidden">Shop</span>
@@ -638,8 +649,10 @@ export default function Navbar({
 
               {/* Support — teal */}
               <div className="relative group shrink-0">
-                <button className="text-teal-600 hover:text-teal-800 hover:bg-teal-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
-                  Support <ChevronDown className="h-3 w-3" />
+                <button
+                  className={`text-teal-600 hover:text-teal-800 hover:bg-teal-50 gap-1 ${tabletNavIconItemClass}`}
+                >
+                  Support <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full right-0 bg-white shadow-xl rounded-xl mt-2 py-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-teal-100">
                   <Link
