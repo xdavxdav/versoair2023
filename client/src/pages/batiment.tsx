@@ -65,6 +65,7 @@ import {
 import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
+import SectorBusinessCard from "@/components/SectorBusinessCard";
 
 // Database API configuration - EXACT SAME AS HOSPITALITY
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -1549,152 +1550,15 @@ export default function BatimentDashboard() {
                           </div>
                         ) : searchResults.length > 0 ? (
                           searchResults.map((facility, index) => (
-                            <motion.div
+                            <SectorBusinessCard
                               key={facility.id}
-                              initial={{ opacity: 0, y: 40 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              whileHover={{ y: -5, scale: 1.01 }}
-                              onClick={() => handleFacilitySelect(facility)}
-                              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
-                            >
-                              <div className="h-2 bg-gradient-to-r from-blue-600 to-teal-600" />
-                              <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
-                                      {facility.title}
-                                    </h4>
-                                    <div className="flex items-center gap-[0.5vw] text-gray-400">
-                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-500" />
-                                      <span className="text-sm capitalize font-medium">
-                                        {facility.address || facility.location}
-                                      </span>
-                                      {facility.is_verified && (
-                                        <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
-                                          <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
-                                          Verified
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-[0.5vw] bg-gradient-to-br from-blue-400 to-teal-500 px-3 py-2 rounded-xl shadow-xl">
-                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-white" />
-                                      <span className="text-sm font-bold text-white">
-                                        {facility.rating?.toFixed(1) || "4.5"}
-                                      </span>
-                                    </div>
-                                    {facility.emergency_services && (
-                                      <Badge className="bg-red-900/30 text-red-300 border-red-500/30 text-xs">
-                                        <AlertCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
-                                        Emergency
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <p className="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">
-                                  {facility.description}
-                                </p>
-
-                                <div className="space-y-[0.75vw] mb-4">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                                      <span className="text-gray-300">
-                                        {facility.reviews?.toLocaleString() ||
-                                          0}{" "}
-                                        reviews
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <Hammer className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-400" />
-                                      <span className="text-gray-300">
-                                        {facility.project_count || 0} Projects
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                                      <span className="text-gray-300 capitalize">
-                                        {facility.location}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <HardHat className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
-                                      <span className="text-gray-300 capitalize">
-                                        {(
-                                          facility.category ?? "unknown"
-                                        ).replace(/_/g, " ")}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {facility.tags &&
-                                    facility.tags.length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {facility.tags
-                                          .slice(0, 3)
-                                          .map((tag, i) => (
-                                            <Badge
-                                              key={i}
-                                              className="bg-blue-900/20 text-blue-300 border-blue-500/30 text-xs"
-                                            >
-                                              {tag}
-                                            </Badge>
-                                          ))}
-                                      </div>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-wrap items-center justify-between pt-[1vw] border-t border-gray-700 gap-[0.75vw]">
-                                  <div>
-                                    {facility.revenue && (
-                                      <>
-                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
-                                          €
-                                          {(facility.revenue / 1000).toFixed(0)}
-                                          K
-                                        </span>
-                                        <span className="text-gray-400 text-sm">
-                                          {" "}
-                                          / month
-                                        </span>
-                                      </>
-                                    )}
-                                    {facility.employees && (
-                                      <div className="text-sm text-gray-300">
-                                        {facility.employees} employees
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-[0.5vw]">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleFacilitySelect(facility);
-                                      }}
-                                    >
-                                      <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
-                                      Contact
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
+                              business={facility}
+                              index={index}
+                              theme="blue"
+                              onSelect={handleFacilitySelect}
+                              sectorIcon={Hammer}
+                              sectorLabel={(b) => `${(b as any).project_count || 0} Projects`}
+                            />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
