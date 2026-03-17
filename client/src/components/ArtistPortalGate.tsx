@@ -3,14 +3,21 @@
  * for the Artist Portal ecosystem.
  *
  * Shows a 13-second countdown with a warning to disconnect from
- * all Verso Air services. SuperAdmin users bypass this gate entirely.
+ * all Verso Air services.
+ *
+ * Bypass rules (no gate shown):
+ *  - SuperAdmin / superuser / admin / moderator
+ *  - User with artist role or artist portal access
+ *  - User who already passed the gate this browser session
+ *
+ * If none of the above: show "Become an Artist" prompt.
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { AlertTriangle, Music, ArrowRight, Shield, X } from "lucide-react";
+import { AlertTriangle, Music, ArrowRight, Shield, X, Loader2 } from "lucide-react";
 
 const COUNTDOWN_SECONDS = 13;
 
@@ -19,43 +26,59 @@ interface ArtistPortalGateProps {
 }
 
 export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
-  const { user } = useAuthContext();
-  const { hasPortal } = useCapabilities();
-  const [hasPassedGate, setHasPassedGate] = useState(false);
-  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
-  const [cancelled, setCancelled] = useState(false);
+  const { user, loading: authLoading } = useAuthContext();
+  const { capabilities, hasPortal, isLoading: capsLoading } = useCapabilities();
 
-  // SuperAdmin / superuser bypasses the gate
+  // ── Fast pre-check from localStorage (synchronous, no flash) ──
+  const cachedRole = (() => {
+    try {
+      const c = localStorage.getItem("auth_user");
+      if (c) return JSON.parse(c)?.role;
+    } catch { /* ignore */ }
+    return null;
+  })();
+
+  // ── Role checks ──
   const isSuperAdmin =
     user?.role === "superuser" ||
     user?.role === "SuperAdmin" ||
-    user?.isAdmin === true;
+    user?.role === "admin" ||
+    user?.role === "moderator" ||
+    user?.isAdmin === true ||
+    cachedRole === "superuser" ||
+    cachedRole === "admin";
 
-  // Real auth check: user must have artist role or artist portal access
   const hasArtistAccess =
     isSuperAdmin ||
     user?.role === "artist" ||
+    user?.hasArtistProfile === true ||
+    user?.portals?.includes("artist") ||
     hasPortal("artist") ||
-    user?.portals?.includes("artist");
+    capabilities?.hasArtistProfile === true;
 
-  // Check sessionStorage so gate only shows once per browser session
-  // Users who already have artist access bypass the gate entirely
+  // Session-persist: once gate is passed, don't show again this session
+  const sessionPassed =
+    typeof sessionStorage !== "undefined" &&
+    sessionStorage.getItem("artist-portal-gate-passed") === "true";
+
+  // ── SuperAdmin or artist access → immediate bypass (no flash) ──
+  const shouldBypass = isSuperAdmin || hasArtistAccess || sessionPassed;
+
+  // Gate transition state (countdown)
+  const [hasPassedGate, setHasPassedGate] = useState(shouldBypass);
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  const [cancelled, setCancelled] = useState(false);
+
+  // Keep hasPassedGate in sync when async data arrives
   useEffect(() => {
-    if (isSuperAdmin || hasArtistAccess) {
-      setHasPassedGate(true);
-      return;
-    }
-    const passed = sessionStorage.getItem("artist-portal-gate-passed");
-    if (passed === "true") {
+    if (shouldBypass && !hasPassedGate) {
       setHasPassedGate(true);
     }
-  }, [isSuperAdmin, hasArtistAccess]);
+  }, [shouldBypass, hasPassedGate]);
 
   // Countdown timer
   useEffect(() => {
-    if (hasPassedGate || cancelled) return;
-
-    if (countdown <= 0) return;
+    if (hasPassedGate || cancelled || countdown <= 0) return;
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -80,12 +103,27 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     window.history.back();
   }, []);
 
-  // SuperAdmin or already passed → render children directly
-  if (hasPassedGate) {
+  // ── 1. SuperAdmin / artist / session-passed → render children immediately ──
+  //    Check BEFORE loading states to prevent any flash of gate for privileged users.
+  if (hasPassedGate || shouldBypass) {
     return <>{children}</>;
   }
 
-  // 🔒 Not authorized for artist portal → show upgrade prompt
+  // ── 2. Still loading auth / capabilities → spinner, not the gate ──
+  if (authLoading || (user && capsLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#06020f]">
+        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+      </div>
+    );
+  }
+
+  // ── 3. Not authenticated at all → let the dashboard handle its own redirect ──
+  if (!user) {
+    return <>{children}</>;
+  }
+
+  // ── 4. Authenticated but no artist access → prompt to register ──
   if (!hasArtistAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#06020f] p-4">

@@ -362,14 +362,8 @@ export default function CommerceBusinessAds() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[COMMERCE] Connection test result:", result);
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [COMMERCE] Database connected"
-          : "❌ [COMMERCE] Database not connected",
-      );
     };
     checkConnection();
   }, []);
@@ -384,7 +378,6 @@ export default function CommerceBusinessAds() {
 
   // Fetch initial commerce businesses
   const fetchBusinesses = useCallback(async () => {
-    console.log("Fetching initial businesses...");
     setIsInitialLoading(true);
 
     try {
@@ -396,7 +389,6 @@ export default function CommerceBusinessAds() {
         sort_by: activeFilters.sort_by,
       });
 
-      console.log("Fetched businesses:", businesses);
       setSearchResults(businesses);
       setTotalResults(businesses.length);
       setHasSearched(true);
@@ -425,7 +417,6 @@ export default function CommerceBusinessAds() {
       Object.values(activeFilters).some((f) => f && f !== "rating_desc")
     ) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }
@@ -462,7 +453,6 @@ export default function CommerceBusinessAds() {
         params.max_price = parseInt(activeFilters.maxPrice);
       if (activeFilters.status) params.status = activeFilters.status;
 
-      console.log("Search params:", params);
       const businesses = await searchCommerceBusinesses(params);
 
       setSearchResults(businesses);

@@ -46,7 +46,10 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
     if (isOpen) {
       openedAt.current = Date.now();
       const t = setTimeout(() => setShowOverlay(true), 500);
-      return () => { clearTimeout(t); setShowOverlay(false); };
+      return () => {
+        clearTimeout(t);
+        setShowOverlay(false);
+      };
     }
     setShowOverlay(false);
   }, [isOpen]);

@@ -230,15 +230,9 @@ export default function Hotellerie() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[HOTELLERIE] Connection test result:", result);
       // Mark as connected if success is true
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [HOTELLERIE] Database connected"
-          : "❌ [HOTELLERIE] Database not connected",
-      );
     };
     checkConnection();
   }, []);
@@ -287,7 +281,6 @@ export default function Hotellerie() {
       Object.values(activeFilters).some((f) => f && f !== "rating_desc")
     ) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[HOTELLERIE SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }

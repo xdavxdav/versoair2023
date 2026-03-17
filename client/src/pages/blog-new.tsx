@@ -285,8 +285,8 @@ export default function BlogPage() {
                     post={post as any}
                     liked={likedPosts.includes(post.id)}
                     onLike={() => handleToggleLike(post.id)}
-                    onComment={() => console.log("Comment on post", post.id)}
-                    onShare={() => console.log("Share post", post.id)}
+                    onComment={() => {}}
+                    onShare={() => {}}
                   />
                 </motion.div>
               ))}

@@ -247,15 +247,9 @@ export default function Automobile() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[AUTOMOBILE] Connection test result:", result);
       // Mark as connected if success is true
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [AUTOMOBILE] Database connected"
-          : "❌ [AUTOMOBILE] Database not connected",
-      );
     };
     checkConnection();
   }, []);
@@ -305,7 +299,6 @@ export default function Automobile() {
       Object.values(activeFilters).some((f) => f && f !== "rating_desc")
     ) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[AUTOMOBILE SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }

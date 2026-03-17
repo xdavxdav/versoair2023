@@ -1088,7 +1088,6 @@ const BusinessManagement = ({
           const cats = Array.isArray(data) ? data : data.data || [];
           if (cats.length > 0) {
             setCategories(cats);
-            console.log("✅ Categories loaded (admin API):", cats.length);
             return;
           }
         }
@@ -1103,7 +1102,6 @@ const BusinessManagement = ({
           const data = await res.json();
           const cats = Array.isArray(data) ? data : data.data || [];
           setCategories(cats);
-          console.log("✅ Categories loaded (public API):", cats.length);
           return;
         }
       } catch (err) {
@@ -2970,7 +2968,6 @@ const CategoryManagement = ({
           `${API_BASE_URL}/api/v1/admin/categories?limit=500`,
         );
         const data = await response.json();
-        console.log("Categories API response:", data);
 
         // Handle different response formats
         if (data.success && data.data) {

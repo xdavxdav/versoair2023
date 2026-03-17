@@ -206,7 +206,6 @@ export default function BlogPage() {
         // Persist display name for UI
         localStorage.setItem("blog_community_user", name);
 
-        console.log(isSignUp ? "Account created!" : "Logged in successfully!");
       } else {
         setAuthError(data.message || "Authentication failed");
       }
@@ -275,15 +274,12 @@ export default function BlogPage() {
 
   const handleConnectUser = (userId: number) => {
     setConnectedUsers((prev) => [...prev, userId]);
-    console.log(`Connected with user ${userId}`);
   };
 
   const handleMessageUser = (userId: number) => {
-    console.log(`Messaging user ${userId}`);
   };
 
   const handleShareUser = (userId: number) => {
-    console.log(`Sharing user ${userId}`);
   };
 
   const handleCreatePost = (postData: {
