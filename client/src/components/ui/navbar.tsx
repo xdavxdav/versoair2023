@@ -149,10 +149,8 @@ export default function Navbar({
                 src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
                 alt="Verso Air Logo"
                 className="
-                  relative h-14 w-auto
+                  relative h-9 md:h-10 xl:h-14 w-auto
                   transition-all duration-500
-                  filter grayscale brightness-0
-                  group-hover:grayscale-0
                   group-hover:brightness-110
                   group-hover:scale-110
                   group-hover:drop-shadow-[0_0_15px_rgba(234,179,8,0.7)]
@@ -160,7 +158,7 @@ export default function Navbar({
               />
             </div>
 
-            <span className="ml-2 text-base md:text-lg font-bold whitespace-nowrap hidden md:inline">
+            <span className="ml-2 text-base xl:text-lg font-bold whitespace-nowrap hidden xl:inline">
               <AnimatedKeyboardText
                 text={isMobile ? "versoair™" : "versoair™"}
                 variant="default"
@@ -409,7 +407,7 @@ export default function Navbar({
               pointerEvents:none on the outer nav prevents the padded area from
               blocking touch/scroll on page content beneath. */}
           <nav
-            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-visible"
+            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide"
             style={{
               paddingBottom: "18rem",
               marginBottom: "-18rem",
@@ -417,13 +415,13 @@ export default function Navbar({
             }}
           >
             <div
-              className="flex items-center w-full justify-between"
+              className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
               style={{ pointerEvents: "auto", touchAction: "pan-x pan-y" }}
             >
               {/* Home — purple (brand) */}
               <Link
                 href="/"
-                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md whitespace-nowrap transition-colors font-medium"
+                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap transition-colors font-medium shrink-0"
               >
                 Home
               </Link>
@@ -435,7 +433,7 @@ export default function Navbar({
                 user?.isAdmin) ? (
                 <Link
                   href="/geo-admin"
-                  className="text-sky-600 hover:text-sky-800 hover:bg-sky-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors font-medium"
+                  className="text-sky-600 hover:text-sky-800 hover:bg-sky-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium shrink-0"
                 >
                   <Globe className="h-3 w-3" />
                   <span className="hidden lg:inline">Geo Admin</span>
@@ -444,7 +442,7 @@ export default function Navbar({
               ) : (
                 <Link
                   href="/geo-admin"
-                  className="text-sky-300 hover:bg-sky-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors relative group"
+                  className="text-sky-300 hover:bg-sky-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors relative group shrink-0"
                 >
                   <Lock className="h-3 w-3" />
                   <span className="hidden lg:inline">Geo Admin</span>
@@ -455,12 +453,12 @@ export default function Navbar({
                 </Link>
               )}
 
-              <div className="w-px h-[1.5vh] bg-gray-200" />
+              <div className="w-px h-4 bg-gray-200 shrink-0" />
 
               {/* Entreprises — amber */}
-              <div className="relative group">
-                <button className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors font-medium">
-                  Entreprises <ChevronDown className="h-[1.2vw] w-[1.2vw] min-h-[8px] min-w-[8px]" />
+              <div className="relative group shrink-0">
+                <button className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
+                  Entreprises <ChevronDown className="h-3 w-3" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-3 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-amber-100">
                   <div className="grid grid-cols-2 gap-0.5 px-1">
@@ -525,9 +523,9 @@ export default function Navbar({
               </div>
 
               {/* Services — emerald */}
-              <div className="relative group">
-                <button className="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors font-medium">
-                  Services <ChevronDown className="h-[1.2vw] w-[1.2vw] min-h-[8px] min-w-[8px]" />
+              <div className="relative group shrink-0">
+                <button className="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
+                  Services <ChevronDown className="h-3 w-3" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-emerald-100">
                   <Link
@@ -565,9 +563,9 @@ export default function Navbar({
               </div>
 
               {/* Marketing — pink */}
-              <div className="relative group">
-                <button className="text-pink-600 hover:text-pink-800 hover:bg-pink-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors font-medium">
-                  Marketing <ChevronDown className="h-[1.2vw] w-[1.2vw] min-h-[8px] min-w-[8px]" />
+              <div className="relative group shrink-0">
+                <button className="text-pink-600 hover:text-pink-800 hover:bg-pink-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
+                  Marketing <ChevronDown className="h-3 w-3" />
                 </button>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-pink-100">
                   <Link
@@ -604,12 +602,12 @@ export default function Navbar({
                 </div>
               </div>
 
-              <div className="w-px h-[1.5vh] bg-gray-200" />
+              <div className="w-px h-4 bg-gray-200 shrink-0" />
 
               {/* Reservations — indigo */}
               <Link
                 href="/reservations"
-                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md whitespace-nowrap transition-colors font-medium"
+                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap transition-colors font-medium shrink-0"
               >
                 Reservations
               </Link>
@@ -617,7 +615,7 @@ export default function Navbar({
               {/* Marketplace — violet */}
               <Link
                 href="/marketplace"
-                className={`relative text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md whitespace-nowrap flex items-center gap-[0.3vw] transition-all duration-300 font-medium ${
+                className={`relative text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md whitespace-nowrap flex items-center gap-1 transition-all duration-300 font-medium shrink-0 ${
                   marketplaceSos
                     ? "text-amber-600 font-bold bg-amber-50 scale-105"
                     : "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
@@ -639,9 +637,9 @@ export default function Navbar({
               </Link>
 
               {/* Support — teal */}
-              <div className="relative group">
-                <button className="text-teal-600 hover:text-teal-800 hover:bg-teal-50 text-[clamp(0.5rem,1.15vw,0.85rem)] px-[0.5vw] lg:px-[0.8vw] py-[0.4vh] rounded-md flex items-center gap-[0.3vw] whitespace-nowrap transition-colors font-medium">
-                  Support <ChevronDown className="h-[1.2vw] w-[1.2vw] min-h-[8px] min-w-[8px]" />
+              <div className="relative group shrink-0">
+                <button className="text-teal-600 hover:text-teal-800 hover:bg-teal-50 text-xs lg:text-[13px] px-1.5 lg:px-2.5 py-1 rounded-md flex items-center gap-1 whitespace-nowrap transition-colors font-medium">
+                  Support <ChevronDown className="h-3 w-3" />
                 </button>
                 <div className="absolute top-full right-0 bg-white shadow-xl rounded-xl mt-2 py-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-teal-100">
                   <Link
