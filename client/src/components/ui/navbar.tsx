@@ -113,7 +113,7 @@ export default function Navbar({
     isMusicPortalOpen || isLocationPanelOpen || mobileMenuOpen;
 
   const navbarClasses = `bg-white shadow-lg sticky top-[60px] z-40 transition-all duration-300 ${
-    isPanelOpen ? "opacity-60 pointer-events-none" : "opacity-100"
+    isPanelOpen ? "opacity-60" : "opacity-100"
   } ${
     isMobile
       ? isVisible
@@ -417,6 +417,8 @@ export default function Navbar({
               WebkitOverflowScrolling: "touch",
               overscrollBehaviorX: "contain",
               touchAction: "pan-x",
+              willChange: "scroll-position",
+              transform: "translateZ(0)",
             }}
           >
             <div
