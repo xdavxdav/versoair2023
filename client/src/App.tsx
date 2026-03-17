@@ -187,16 +187,14 @@ import AdminPrintshop from "@/pages/admin-printshop";
 // ─────────────────────────────────────────────────────
 // 🧩 Layout Components
 // ─────────────────────────────────────────────────────
-import Navbar from "@/components/ui/navbar";
+import InstagramNav from "@/components/InstagramNav";
 import Footer from "@/components/ui/footer";
 import LocationPanel from "@/components/ui/location-panel";
-import BlogNavbar from "@/components/BlogNavbar";
 import LoadingEagle from "@/components/ui/loading-eagle";
 import PullToRefresh from "@/components/PullToRefresh";
 import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
 import { SponsorsSection } from "@/components/ui/sponsors-section";
-import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 
@@ -531,17 +529,6 @@ function AppContent() {
     trackPageView(currentPath);
   }, [currentPath]);
 
-  // Listen for marketplace modal open/close to hide BlogNavbar
-  const [marketplaceModalOpen, setMarketplaceModalOpen] = useState(false);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const open = Boolean((e as CustomEvent).detail?.open);
-      setMarketplaceModalOpen(open);
-    };
-    window.addEventListener("marketplace-modal", handler);
-    return () => window.removeEventListener("marketplace-modal", handler);
-  }, []);
-
   // Listen for VersoAI fullscreen to hide the fixed header
   const [versoaiFullscreen, setVersoaiFullscreen] = useState(false);
   useEffect(() => {
@@ -555,103 +542,46 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
+      {/* ── Slim top utility bar (country selector) ── */}
       {!versoaiFullscreen && (
         <div
           ref={headerRef}
-          className={`fixed top-0 left-0 right-0 z-[60] flex flex-col transition-transform duration-300 ${
+          className={`fixed top-0 left-0 right-0 z-[60] transition-transform duration-300 ${
             headerVisible ? "translate-y-0" : "-translate-y-full"
           }`}
         >
-          {/* Top Banner */}
           <div
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4 md:pl-[80px]"
             style={{ overflow: "visible" }}
           >
             <div
-              className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
+              className="max-w-full mx-auto flex items-center text-[10px] sm:text-xs gap-2"
               style={{ overflow: "visible" }}
             >
-              {/* Left: Portal label */}
-              <span className="font-medium flex-1 min-w-0 truncate">
-                Business Intelligence Portal
+              <span className="font-medium min-w-0 truncate">
+                Verso Air ™️
               </span>
-
-              {/* Center: Country filter dropdown */}
               <div className="flex-shrink-0" style={{ overflow: "visible" }}>
                 <CountryDropdown />
               </div>
-
-              {/* Right: Action buttons */}
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
-                <button
-                  onClick={() => setIsMusicPortalOpen((prev) => !prev)}
-                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-                >
-                  <span>🎵</span>
-                  <span className="hidden sm:inline">Verso Air</span>
-                  <span className="sm:hidden">VA</span>
-                </button>
-                <button
-                  onClick={() => setIsLocationPanelOpen((prev) => !prev)}
-                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-                >
-                  <span>📍</span>
-                  <span className="hidden sm:inline">GPS Services</span>
-                </button>
-              </div>
+              <span className="flex-1" />
+              <span className="hidden sm:inline text-amber-200/80 text-[10px]">
+                Business Intelligence Portal
+              </span>
             </div>
           </div>
-
-          {/* Scrolling ticker — always visible while sticky block is on screen */}
-          {currentPath !== "/blog" && currentPath !== "/marketplace" && (
-            <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
-              <div className="animate-scroll-continuous flex">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex flex-shrink-0">
-                    <span className="flex-shrink-0 px-4 md:px-8">
-                      Welcome to Verso Air ™️ — Business Intelligence Platform
-                    </span>
-                    <span className="flex-shrink-0 px-4 md:px-8">
-                      Analyze • Optimize • Visualize • Grow
-                    </span>
-                    <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                      24 Industry Sectors • Live Analytics • Global Coverage
-                    </span>
-                    <span className="hidden md:inline-flex flex-shrink-0 px-8">
-                      Commerce • Hospitality • Construction • Automotive •
-                      Finance • Entertainment
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Blog Navbar — sits right under the amber banner on /blog and /marketplace */}
-          {(currentPath === "/blog" || currentPath === "/marketplace") &&
-            !marketplaceModalOpen && <BlogNavbar />}
         </div>
       )}
-      {/* Spacer for fixed header */}
+      {/* Spacer for slim top bar */}
       {!versoaiFullscreen && <div style={{ height: headerHeight }} />}
 
       <PullToRefresh />
-      <MobileMenuBubble />
-      <div
-        className={`hidden md:block transition-opacity duration-300 ${
-          isLoading && !isFadingOut
-            ? "opacity-0 pointer-events-none"
-            : "opacity-100"
-        }`}
-      >
-        <Navbar
-          onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
-          onLocationPanelToggle={() => setIsLocationPanelOpen((prev) => !prev)}
-          isMusicPortalOpen={isMusicPortalOpen}
-          isLocationPanelOpen={isLocationPanelOpen}
-        />
-      </div>
+
+      {/* Instagram-style navigation (side-rail on desktop, bottom bar on mobile) */}
+      <InstagramNav
+        onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
+        onLocationPanelToggle={() => setIsLocationPanelOpen((prev) => !prev)}
+      />
 
       {/* Side Panels */}
       <LocationPanel
@@ -666,9 +596,9 @@ function AppContent() {
       {/* Loading */}
       <LoadingOverlay />
 
-      {/* Main Router */}
+      {/* Main Router — offset for side-rail (desktop) & bottom bar (mobile) */}
       <main
-        className={`flex-1 overflow-x-hidden transition-opacity duration-300 ${
+        className={`flex-1 overflow-x-hidden transition-opacity duration-300 md:ml-[72px] pb-16 md:pb-0 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
@@ -681,13 +611,15 @@ function AppContent() {
 
       {/* Bottom Sections — home page only */}
       {isHomePage && (
-        <>
+        <div className="md:ml-[72px]">
           <TestimonialsFloating />
           <TeamSection />
           <SponsorsSection />
-        </>
+        </div>
       )}
-      <Footer />
+      <div className="md:ml-[72px]">
+        <Footer />
+      </div>
     </div>
   );
 }
