@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export interface Business {
   business_type?: any;
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   category: string;
@@ -35,6 +35,7 @@ export interface Business {
   daily_volume?: number;
   is_verified?: boolean;
   verified_at?: string;
+  imageUrl?: string;
 }
 
 export interface BusinessResponse {
@@ -75,6 +76,7 @@ function normalizeRow(row: any): Business {
       row.is_verified === "true" ||
       row.isVerified === true,
     verified_at: row.verified_at || undefined,
+    imageUrl: row.image_url || row.image || row.imageUrl || undefined,
   };
 }
 

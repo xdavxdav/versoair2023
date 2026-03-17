@@ -71,6 +71,7 @@ import {
 import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
+import SectorBusinessCard from "@/components/SectorBusinessCard";
 
 // Database API configuration - SAME AS COMMERCE
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -1193,151 +1194,15 @@ export default function Hotellerie() {
                           </div>
                         ) : searchResults.length > 0 ? (
                           searchResults.map((business, index) => (
-                            <motion.div
+                            <SectorBusinessCard
                               key={business.id}
-                              initial={{ opacity: 0, y: 40 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              whileHover={{ y: -5, scale: 1.01 }}
-                              onClick={() => handleBusinessSelect(business)}
-                              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-purple-500/30 cursor-pointer group"
-                            >
-                              <div className="h-2 bg-gradient-to-r from-purple-600 to-pink-600" />
-                              <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex-1">
-                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-2 line-clamp-1">
-                                      {business.title}
-                                    </h4>
-                                    <div className="flex items-center gap-[0.5vw] text-gray-400">
-                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-500" />
-                                      <span className="text-sm capitalize font-medium">
-                                        {business.address || business.location}
-                                      </span>
-                                      {business.is_verified && (
-                                        <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
-                                          <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
-                                          Verified
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-[0.5vw] bg-gradient-to-br from-purple-400 to-pink-500 px-3 py-2 rounded-xl shadow-xl">
-                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-white" />
-                                      <span className="text-sm font-bold text-white">
-                                        {business.rating}
-                                      </span>
-                                    </div>
-                                    {business.status === "premium" && (
-                                      <Badge className="bg-green-900/30 text-green-300 border-green-500/30 text-xs">
-                                        <Sparkles className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
-                                        Premium
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <p className="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">
-                                  {business.description}
-                                </p>
-
-                                <div className="space-y-[0.75vw] mb-4">
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                                      <span className="text-gray-300">
-                                        {business.reviews?.toLocaleString() ||
-                                          0}{" "}
-                                        reviews
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <Hotel className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
-                                      <span className="text-gray-300">
-                                        {(business as any).star_rating || 5}★
-                                        Hotel
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                                      <span className="text-gray-300 capitalize">
-                                        {business.location}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-[0.5vw]">
-                                      <Tag className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
-                                      <span className="text-gray-300 capitalize">
-                                        {business.category}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {(business as any).amenities &&
-                                    (business as any).amenities.length > 0 && (
-                                      <div className="flex flex-wrap gap-1">
-                                        {(business as any).amenities
-                                          .slice(0, 3)
-                                          .map((amenity: any, i: number) => (
-                                            <Badge
-                                              key={i}
-                                              className="bg-purple-900/20 text-purple-300 border-purple-500/30 text-xs"
-                                            >
-                                              {amenity}
-                                            </Badge>
-                                          ))}
-                                      </div>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-wrap items-center justify-between pt-[1vw] border-t border-gray-700 gap-[0.75vw]">
-                                  <div>
-                                    {business.revenue && (
-                                      <>
-                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
-                                          €
-                                          {(business.revenue / 1000).toFixed(0)}
-                                          K
-                                        </span>
-                                        <span className="text-gray-400 text-sm">
-                                          {" "}
-                                          / month
-                                        </span>
-                                      </>
-                                    )}
-                                    {business.employees && (
-                                      <div className="text-sm text-gray-300">
-                                        {business.employees} employees
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-[0.5vw]">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleBusinessSelect(business);
-                                      }}
-                                    >
-                                      <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
-                                      Contact
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
+                              business={business}
+                              index={index}
+                              theme="purple"
+                              onSelect={handleBusinessSelect}
+                              sectorIcon={Hotel}
+                              sectorLabel={(b) => `${(b as any).star_rating || 5}★ Hotel`}
+                            />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
