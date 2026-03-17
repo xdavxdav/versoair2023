@@ -36,20 +36,25 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
 
-  // Delay overlay close-readiness so the same touch that opened the
-  // portal can't immediately fire onClose on the overlay.
-  const [overlayReady, setOverlayReady] = useState(false);
+  // ── Bulletproof overlay guard ──
+  // Ref-based timestamp: immune to React batching delays.
+  // The overlay DOM is delayed 500ms so ghost clicks can't hit it at all.
+  const openedAt = useRef(0);
+  const [showOverlay, setShowOverlay] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
-      const t = setTimeout(() => setOverlayReady(true), 300);
-      return () => clearTimeout(t);
+      openedAt.current = Date.now();
+      const t = setTimeout(() => setShowOverlay(true), 500);
+      return () => { clearTimeout(t); setShowOverlay(false); };
     }
-    setOverlayReady(false);
+    setShowOverlay(false);
   }, [isOpen]);
 
   const handleOverlayClose = useCallback(() => {
-    if (overlayReady) onClose();
-  }, [overlayReady, onClose]);
+    // Extra safety: ignore clicks within 500ms of open
+    if (Date.now() - openedAt.current > 500) onClose();
+  }, [onClose]);
 
   const { data: artistsResponse } = useQuery<{ data: MusicArtist[] }>({
     queryKey: ["/api/music/artists"],
@@ -137,17 +142,11 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
 
   return (
     <>
-      {/* Overlay */}
-      {isOpen && (
+      {/* Overlay — delayed 500ms so ghost-clicks from the open-tap can't reach it */}
+      {showOverlay && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[10000]"
+          className="fixed inset-0 bg-black/50 z-[10000] animate-in fade-in duration-200"
           onClick={handleOverlayClose}
-          onTouchEnd={(e) => {
-            if (overlayReady) {
-              e.preventDefault();
-              onClose();
-            }
-          }}
         />
       )}
 
