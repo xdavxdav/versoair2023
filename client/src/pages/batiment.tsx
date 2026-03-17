@@ -493,15 +493,9 @@ export default function BatimentDashboard() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[BATIMENT] Connection test result:", result);
       // Mark as connected if success is true
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [BATIMENT] Database connected"
-          : "❌ [BATIMENT] Database not connected",
-      );
     };
     checkConnection();
   }, []);
@@ -563,7 +557,6 @@ export default function BatimentDashboard() {
       Object.values(activeFilters).some((f) => f && f !== "rating_desc")
     ) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[BATIMENT SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }

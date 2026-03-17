@@ -223,14 +223,8 @@ export default function Sante() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[SANTE] Connection test result:", result);
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [SANTE] Database connected"
-          : "❌ [SANTE] Database not connected",
-      );
     };
     checkConnection();
   }, []);
@@ -279,7 +273,6 @@ export default function Sante() {
       Object.values(activeFilters).some((f) => f && f !== "rating_desc")
     ) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[SANTE SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }

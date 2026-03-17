@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -10,9 +10,12 @@ import {
   defaultViewport,
 } from "@/lib/animations";
 import ScrollToTop from "@/components/ScrollToTop";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,13 +29,22 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
 
-      alert("Thank you for your message! We'll get back to you soon.");
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      if (data.success) {
+        setSubmitted(true);
+        toast({ title: "Message sent!", description: data.message });
+        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+      } else {
+        toast({ title: "Error", description: data.message || "Failed to send.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Network error", description: "Please check your connection and try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }

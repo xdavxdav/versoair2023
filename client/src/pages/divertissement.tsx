@@ -254,15 +254,9 @@ export default function Entertainment() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await testDatabaseConnection();
-      console.log("[DIVERTISSEMENT] Connection test result:", result);
       // Mark as connected if success is true
       const connected = result.success === true;
       setDatabaseConnected(connected);
-      console.log(
-        connected
-          ? "✅ [DIVERTISSEMENT] Database connected"
-          : "❌ [DIVERTISSEMENT] Database not connected",
-      );
     };
     checkConnection();
   }, []);

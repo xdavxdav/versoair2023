@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import InactivityGuard from "@/components/InactivityGuard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useRef } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 
@@ -673,7 +674,9 @@ function AppContent() {
             : "opacity-100"
         } ${pageEnter ? "page-enter" : ""}`}
       >
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
       </main>
 
       {/* Bottom Sections — home page only */}

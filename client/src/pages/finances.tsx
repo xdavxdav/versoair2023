@@ -231,13 +231,7 @@ export default function Finance() {
   useEffect(() => {
     const checkConnection = async () => {
       const result = await checkDatabaseConnection();
-      console.log("[FINANCES] Connection test result:", result);
       setDatabaseConnected(result);
-      console.log(
-        result
-          ? "✅ [FINANCES] Database connected"
-          : "⚠️ [FINANCES] Database check completed",
-      );
     };
     checkConnection();
   }, []);
@@ -282,7 +276,6 @@ export default function Finance() {
     // Only trigger if user has typed something or changed filters
     if (searchQuery.trim() || locationQuery.trim()) {
       searchTimerRef.current = setTimeout(() => {
-        console.log(`[FINANCES SEARCH] Auto-searching for: "${searchQuery}"`);
         handleSearch(1);
       }, 300);
     }

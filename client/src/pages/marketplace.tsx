@@ -178,7 +178,6 @@ export default function MarketplacePage() {
       localStorage.setItem("blog_community_auth", "true");
       localStorage.setItem("blog_community_user", name);
 
-      console.log(isSignUp ? "Account created!" : "Logged in to Marketplace!");
     } catch (error) {
       console.error("Auth error:", error);
     } finally {
