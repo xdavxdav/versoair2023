@@ -1,7 +1,7 @@
 import { X, Music } from "lucide-react";
 import { Button } from "./button";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "wouter";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
@@ -35,6 +35,21 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
   useScrollLock(isOpen);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
+
+  // Delay overlay close-readiness so the same touch that opened the
+  // portal can't immediately fire onClose on the overlay.
+  const [overlayReady, setOverlayReady] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      const t = setTimeout(() => setOverlayReady(true), 300);
+      return () => clearTimeout(t);
+    }
+    setOverlayReady(false);
+  }, [isOpen]);
+
+  const handleOverlayClose = useCallback(() => {
+    if (overlayReady) onClose();
+  }, [overlayReady, onClose]);
 
   const { data: artistsResponse } = useQuery<{ data: MusicArtist[] }>({
     queryKey: ["/api/music/artists"],
@@ -126,7 +141,13 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[10000]"
-          onPointerDown={onClose}
+          onClick={handleOverlayClose}
+          onTouchEnd={(e) => {
+            if (overlayReady) {
+              e.preventDefault();
+              onClose();
+            }
+          }}
         />
       )}
 

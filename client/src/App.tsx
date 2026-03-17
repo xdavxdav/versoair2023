@@ -584,7 +584,7 @@ function AppContent() {
               {/* Right: Action buttons */}
               <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
                 <button
-                  onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+                  onClick={() => setIsMusicPortalOpen((prev) => !prev)}
                   className="hover:text-amber-200 transition-colors flex items-center space-x-1"
                 >
                   <span>🎵</span>
@@ -592,7 +592,7 @@ function AppContent() {
                   <span className="sm:hidden">VA</span>
                 </button>
                 <button
-                  onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                  onClick={() => setIsLocationPanelOpen((prev) => !prev)}
                   className="hover:text-amber-200 transition-colors flex items-center space-x-1"
                 >
                   <span>📍</span>
@@ -646,9 +646,7 @@ function AppContent() {
       >
         <Navbar
           onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
-          onLocationPanelToggle={() =>
-            setIsLocationPanelOpen((prev) => !prev)
-          }
+          onLocationPanelToggle={() => setIsLocationPanelOpen((prev) => !prev)}
           isMusicPortalOpen={isMusicPortalOpen}
           isLocationPanelOpen={isLocationPanelOpen}
         />

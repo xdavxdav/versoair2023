@@ -412,18 +412,16 @@ export default function Navbar({
               pointerEvents:none on the outer nav prevents the padded area from
               blocking touch/scroll on page content beneath. */}
           <nav
-            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide touch-pan-x"
+            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide"
             style={{
-              paddingBottom: "18rem",
-              marginBottom: "-18rem",
-              pointerEvents: "none",
               WebkitOverflowScrolling: "touch",
               overscrollBehaviorX: "contain",
+              touchAction: "pan-x",
             }}
           >
             <div
               className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
-              style={{ pointerEvents: "auto", touchAction: "pan-x" }}
+              style={{ touchAction: "pan-x" }}
             >
               {/* Home — purple (brand) */}
               <Link
