@@ -277,6 +277,11 @@
 			"label": "Git commit and push browsing history",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: user browsing history — DB table, API endpoints (GET/POST/DELETE /api/user/history), useRecordVisit hook, batiment.tsx History tab with login gate + clear' && git push && npm run db:push"
+		},
+		{
+			"label": "Git push loading speed",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'perf: reduce loading overlay — initial cold-load 5s→300ms, page nav 900ms→300ms' && git push"
 		}
 	]
 }
