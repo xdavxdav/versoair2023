@@ -1460,7 +1460,7 @@ export default function Home() {
       // Disable normalizeScroll on cleanup
       ScrollTrigger.normalizeScroll(false);
     };
-  }, [];
+  }, []);
 
   // Refresh ScrollTrigger when search results change
   useEffect(() => {
