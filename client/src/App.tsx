@@ -606,7 +606,7 @@ function AppContent() {
           }`}
         >
           <div
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4 md:pl-[80px]"
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
             style={{ overflow: "visible" }}
           >
             <div
@@ -707,7 +707,7 @@ function AppContent() {
 
       {/* Main Router */}
       <main
-        className={`flex-1 overflow-x-hidden transition-opacity duration-300 md:ml-[72px] ${
+        className={`flex-1 overflow-x-hidden transition-opacity duration-300 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
@@ -722,13 +722,13 @@ function AppContent() {
 
       {/* Bottom Sections — home page only */}
       {isHomePage && (
-        <div className="md:ml-[72px]">
+        <div>
           <TestimonialsFloating />
           <TeamSection />
           <SponsorsSection />
         </div>
       )}
-      <div className="md:ml-[72px]">
+      <div>
         <Footer />
       </div>
     </div>

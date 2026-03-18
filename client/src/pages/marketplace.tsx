@@ -1268,12 +1268,15 @@ export default function MarketplacePage() {
                   <h3 className={`text-base font-bold ${t.text} mb-1`}>
                     Listing submitted!
                   </h3>
-                  <p className={`text-sm ${t.textMuted} max-w-[260px] leading-relaxed`}>
+                  <p
+                    className={`text-sm ${t.textMuted} max-w-[260px] leading-relaxed`}
+                  >
                     Your listing is{" "}
                     <span className="text-amber-400 font-semibold">
                       under review
-                    </span>. We'll verify it before it goes live — usually within
-                    24 hours.
+                    </span>
+                    . We'll verify it before it goes live — usually within 24
+                    hours.
                   </p>
                   <div
                     className="mt-4 px-3 py-1.5 rounded-full text-xs font-semibold"
@@ -1297,7 +1300,6 @@ export default function MarketplacePage() {
                 <>
                   {/* Scrollable form */}
                   <div className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
-
                     {/* ── SELLER IDENTITY PILL ── */}
                     <div
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
@@ -1412,13 +1414,11 @@ export default function MarketplacePage() {
                           className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none cursor-pointer`}
                         >
                           <option value="">Select…</option>
-                          {CATEGORIES.filter((c) => c.id !== "all").map(
-                            (c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.label}
-                              </option>
-                            ),
-                          )}
+                          {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.label}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -1540,7 +1540,9 @@ export default function MarketplacePage() {
                       )}
                     </motion.button>
                     {!isAuthenticated && (
-                      <p className={`text-center text-[10px] ${t.textMuted} mt-2`}>
+                      <p
+                        className={`text-center text-[10px] ${t.textMuted} mt-2`}
+                      >
                         Guest listings are reviewed before going live
                       </p>
                     )}
