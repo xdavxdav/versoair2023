@@ -145,8 +145,8 @@ export default function Navbar({
                 absolute -inset-2
                 bg-gradient-to-r from-yellow-500 via-yellow-800 to-yellow-500
                 rounded-xl blur-md opacity-0 
-                group-hover:opacity-70 
-                transition-all duration-500
+                group-hover:opacity-50
+                transition-all duration-900
                 pointer-events-none
               "
               />
@@ -154,7 +154,8 @@ export default function Navbar({
                 src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
                 alt="Verso Air Logo"
                 className="
-                  relative h-9 md:h-10 xl:h-14 w-auto
+                  relative h-14 md:h-16 xl:h-20 w-auto
+                  brightness-0
                   transition-all duration-500
                   group-hover:brightness-110
                   group-hover:scale-110
@@ -407,18 +408,15 @@ export default function Navbar({
           </div>
 
           {/* Tablet Navigation — scrollable colored strip */}
-          {/* padding-bottom extends the clip region so dropdown menus aren't cut off;
-              negative margin-bottom removes the extra space from layout flow.
-              pointerEvents:none on the outer nav prevents the padded area from
-              blocking touch/scroll on page content beneath. */}
-          <nav
-            className="hidden md:flex xl:hidden min-w-0 items-center mx-1 lg:mx-2 flex-1 overflow-x-auto scrollbar-hide"
+          <div
+            className="hidden md:flex xl:hidden min-w-0 mx-1 lg:mx-2 flex-1 items-center overflow-x-auto overflow-y-visible scrollbar-hide pb-[350px] -mb-[350px]"
             style={{
               WebkitOverflowScrolling: "touch",
               overscrollBehaviorX: "contain",
               touchAction: "pan-x",
               willChange: "scroll-position",
               transform: "translateZ(0)",
+              pointerEvents: "auto",
             }}
           >
             <div
@@ -670,7 +668,7 @@ export default function Navbar({
                 </div>
               </div>
             </div>
-          </nav>
+          </div>
 
           {/* Right Side */}
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
