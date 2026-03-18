@@ -27,6 +27,7 @@ import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
 import capabilitiesRouter from "./routes/capabilities";
 import marketingRouter from "./routes/marketing";
+import userHistoryRouter from "./routes/user-history";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -123,15 +124,29 @@ export async function registerRoutes(app: Express) {
     try {
       const { name, email, phone, subject, message } = req.body;
       if (!name || !email || !subject || !message) {
-        return res.status(400).json({ success: false, message: "Name, email, subject, and message are required." });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Name, email, subject, and message are required.",
+          });
       }
       // Store in audit_logs for tracking
       try {
         await db.insert(schema.auditLogs).values({
           action: "contact_form_submission",
-          changes: { name, email, phone, subject, message, submittedAt: new Date().toISOString() },
+          changes: {
+            name,
+            email,
+            phone,
+            subject,
+            message,
+            submittedAt: new Date().toISOString(),
+          },
         });
-      } catch { /* audit log table may not exist — non-blocking */ }
+      } catch {
+        /* audit log table may not exist — non-blocking */
+      }
 
       // Try to send email notification if SMTP is configured
       try {
@@ -146,7 +161,9 @@ export async function registerRoutes(app: Express) {
             auth: { user: smtpUser, pass: smtpPass },
           });
           await transporter.sendMail({
-            from: process.env.SMTP_FROM || `"Verso Air Contact" <noreply@versoair.com>`,
+            from:
+              process.env.SMTP_FROM ||
+              `"Verso Air Contact" <noreply@versoair.com>`,
             to: smtpUser, // send to admin
             replyTo: email,
             subject: `[Contact Form] ${subject}`,
@@ -162,9 +179,17 @@ export async function registerRoutes(app: Express) {
         console.warn("[CONTACT] Email send failed (non-blocking):", emailErr);
       }
 
-      res.json({ success: true, message: "Your message has been sent. We'll get back to you soon!" });
+      res.json({
+        success: true,
+        message: "Your message has been sent. We'll get back to you soon!",
+      });
     } catch (err: any) {
-      res.status(500).json({ success: false, message: "Failed to send message. Please try again later." });
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Failed to send message. Please try again later.",
+        });
     }
   });
 
@@ -193,6 +218,9 @@ export async function registerRoutes(app: Express) {
 
   // Register marketing platform routes (journal, packs, print, cart, orders, newsletters)
   app.use("/api/marketing", marketingRouter);
+
+  // Register user browsing history routes
+  app.use("/api/user/history", userHistoryRouter);
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

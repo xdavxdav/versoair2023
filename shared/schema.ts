@@ -1945,3 +1945,39 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type NewsletterCampaign = typeof newsletterCampaigns.$inferSelect;
 export type InsertNewsletterCampaign = typeof newsletterCampaigns.$inferInsert;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+// ─── User Browsing History ────────────────────────────────────────────────────
+export const userBrowsingHistory = pgTable(
+  "user_browsing_history",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    businessId: integer("business_id"),
+    businessName: text("business_name"),
+    sector: text("sector"), // batiment | commerce | hotellerie | automobile | finance | divertissement
+    pageUrl: text("page_url"),
+    visitedAt: timestamp("visited_at").defaultNow().notNull(),
+    metadata: jsonb("metadata"), // search query, filters, duration, etc.
+  },
+  (t) => ({
+    userIdx: index("ubh_user_idx").on(t.userId),
+    visitedAtIdx: index("ubh_visited_at_idx").on(t.visitedAt),
+  }),
+);
+
+export const userBrowsingHistoryRelations = relations(
+  userBrowsingHistory,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userBrowsingHistory.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const insertUserBrowsingHistorySchema =
+  createInsertSchema(userBrowsingHistory);
+export type UserBrowsingHistory = typeof userBrowsingHistory.$inferSelect;
+export type InsertUserBrowsingHistory = typeof userBrowsingHistory.$inferInsert;

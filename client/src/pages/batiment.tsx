@@ -42,6 +42,8 @@ import {
   SquareActivity,
   Phone,
   Tag,
+  Trash2,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,6 +68,8 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
 import SectorBusinessCard from "@/components/SectorBusinessCard";
+import { useRecordVisit } from "@/hooks/use-record-visit";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 // Database API configuration - EXACT SAME AS HOSPITALITY
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -449,7 +453,8 @@ type TabType =
   | "facilities"
   | "patients"
   | "resources"
-  | "database";
+  | "database"
+  | "history";
 
 export default function BatimentDashboard() {
   // Chart refs - SAME AS HOSPITALITY
@@ -460,6 +465,51 @@ export default function BatimentDashboard() {
 
   // State variables - SAME STRUCTURE
   const [activeTab, setActiveTab] = useState<TabType>("facilities");
+
+  // ── Browsing history (authenticated users only) ───────────────────────────
+  const { user, token } = useAuthContext();
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const fetchHistory = async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    try {
+      const t =
+        token ||
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("authToken");
+      const res = await fetch("/api/user/history", {
+        credentials: "include",
+        headers: t ? { Authorization: `Bearer ${t}` } : {},
+      });
+      const data = await res.json();
+      if (data.success) setHistory(data.history);
+    } catch {
+      /* silent */
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const deleteHistoryEntry = async (id: number | "all") => {
+    const t =
+      token ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("authToken");
+    await fetch(`/api/user/history/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    if (id === "all") setHistory([]);
+    else setHistory((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  useEffect(() => {
+    if (activeTab === "history") fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
   const [showFilters, setShowFilters] = useState(false);
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
@@ -828,9 +878,17 @@ export default function BatimentDashboard() {
   }, [analytics]);
 
   // Handle facility selection - SAME FUNCTION
+  const recordVisit = useRecordVisit();
   const handleFacilitySelect = (facility: BatimentFacility) => {
     setSelectedFacility(facility);
     setShowFacilityDetails(true);
+    recordVisit({
+      businessId: facility.id,
+      businessName: facility.title ?? facility.name,
+      sector: "batiment",
+      pageUrl: window.location.pathname,
+      metadata: { category: facility.category, location: facility.location },
+    });
   };
 
   // Construction features
@@ -1415,6 +1473,7 @@ export default function BatimentDashboard() {
                 "patients",
                 "resources",
                 "database",
+                "history",
               ] as TabType[]
             ).map((tab, index) => (
               <motion.button
@@ -1557,7 +1616,9 @@ export default function BatimentDashboard() {
                               theme="blue"
                               onSelect={handleFacilitySelect}
                               sectorIcon={Hammer}
-                              sectorLabel={(b) => `${(b as any).project_count || 0} Projects`}
+                              sectorLabel={(b) =>
+                                `${(b as any).project_count || 0} Projects`
+                              }
                             />
                           ))
                         ) : (
@@ -2202,6 +2263,112 @@ export default function BatimentDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── Browsing History Tab ───────────────────────────────────────── */}
+        {activeTab === "history" && (
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold text-blue-300 flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Browsing History
+              </h2>
+              {user && history.length > 0 && (
+                <button
+                  onClick={() => deleteHistoryEntry("all")}
+                  className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            {/* Not logged in */}
+            {!user && (
+              <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+                <LogIn className="h-12 w-12 text-blue-400/60" />
+                <p className="text-blue-200 text-sm max-w-xs">
+                  Sign in to track which contractors and projects you've viewed.
+                  Your history syncs across all your devices.
+                </p>
+                <a
+                  href="/auth/signin"
+                  className="mt-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all"
+                >
+                  Sign in
+                </a>
+              </div>
+            )}
+
+            {/* Loading */}
+            {user && historyLoading && (
+              <div className="flex items-center justify-center py-16 gap-3 text-blue-300">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Loading history…</span>
+              </div>
+            )}
+
+            {/* Empty */}
+            {user && !historyLoading && history.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                <Clock className="h-10 w-10 text-blue-400/40" />
+                <p className="text-blue-200/60 text-sm">
+                  No history yet. Click on a contractor card to start tracking.
+                </p>
+              </div>
+            )}
+
+            {/* History list */}
+            {user && !historyLoading && history.length > 0 && (
+              <div className="space-y-2">
+                {history.map((entry: any) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-3 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-blue-600/30 flex items-center justify-center flex-shrink-0">
+                        <HardHat className="h-4 w-4 text-blue-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-sm font-medium truncate">
+                          {entry.businessName ?? "Unknown business"}
+                        </p>
+                        <p className="text-blue-300/70 text-xs flex items-center gap-1.5">
+                          <span className="capitalize px-1.5 py-0.5 bg-blue-500/20 rounded text-[10px] font-medium">
+                            {entry.sector}
+                          </span>
+                          <span>
+                            {new Date(entry.visitedAt).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}{" "}
+                            ·{" "}
+                            {new Date(entry.visitedAt).toLocaleTimeString(
+                              undefined,
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteHistoryEntry(entry.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400/70 hover:text-red-400 p-1.5 rounded"
+                      title="Remove entry"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

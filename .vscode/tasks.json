@@ -272,6 +272,11 @@
 			"label": "Git push panel titles",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: larger Alegreya serif font on all 4 panel card titles' && git push"
+		},
+		{
+			"label": "Git commit and push browsing history",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: user browsing history — DB table, API endpoints (GET/POST/DELETE /api/user/history), useRecordVisit hook, batiment.tsx History tab with login gate + clear' && git push && npm run db:push"
 		}
 	]
 }
