@@ -39,6 +39,7 @@ import {
   Camera,
   SlidersHorizontal,
   BadgeCheck,
+  CheckCircle,
 } from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
@@ -177,7 +178,6 @@ export default function MarketplacePage() {
       // Persist blog community session
       localStorage.setItem("blog_community_auth", "true");
       localStorage.setItem("blog_community_user", name);
-
     } catch (error) {
       console.error("Auth error:", error);
     } finally {
@@ -205,9 +205,52 @@ export default function MarketplacePage() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [saved, setSaved] = useState<number[]>([]);
   const [showCreateListing, setShowCreateListing] = useState(false);
+  const [listingForm, setListingForm] = useState({
+    title: "",
+    price: "",
+    category: "",
+    description: "",
+    guestName: "",
+    guestContact: "",
+  });
+  const [listingSubmitState, setListingSubmitState] = useState<
+    "idle" | "submitting" | "submitted"
+  >("idle");
+
+  const resetListingForm = () => {
+    setListingForm({
+      title: "",
+      price: "",
+      category: "",
+      description: "",
+      guestName: "",
+      guestContact: "",
+    });
+    setListingSubmitState("idle");
+  };
+
+  const handlePublishListing = async () => {
+    if (!listingForm.title.trim()) return;
+    setListingSubmitState("submitting");
+    // Simulate API call — replace with real endpoint when ready
+    await new Promise((r) => setTimeout(r, 1200));
+    setListingSubmitState("submitted");
+  };
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   useScrollLock(showCreateListing || showMobileSidebar);
+
+  // Open create-listing modal when dock Sell button fires marketplace:sell
+  useEffect(() => {
+    const handler = () => setShowCreateListing(true);
+    window.addEventListener("marketplace:sell", handler);
+    return () => window.removeEventListener("marketplace:sell", handler);
+  }, []);
+
+  // Reset form state when modal is closed
+  useEffect(() => {
+    if (!showCreateListing) resetListingForm();
+  }, [showCreateListing]);
 
   // Dispatch event to hide BlogNavbar when create listing modal is open
   useEffect(() => {
@@ -1189,16 +1232,20 @@ export default function MarketplacePage() {
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ type: "spring", damping: 26, stiffness: 320 }}
               style={{ top: "50%", left: "50%" }}
-              className={`fixed z-[70] w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${t.bgCard} rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
+              className={`fixed z-[70] w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${
+                t.bgCard
+              } rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
             >
-              {/* Header — drag handle */}
+              {/* Header */}
               <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing select-none">
                 <div>
                   <h2 className={`text-base font-bold ${t.text}`}>
                     New Listing
                   </h2>
                   <p className={`text-xs ${t.textMuted} mt-0.5`}>
-                    Share with the community · drag to move
+                    {listingSubmitState === "submitted"
+                      ? "Submitted for review"
+                      : "Share with the community · drag to move"}
                   </p>
                 </div>
                 <motion.button
@@ -1212,105 +1259,294 @@ export default function MarketplacePage() {
 
               <div className={`mx-4 sm:mx-5 border-t ${t.border}`} />
 
-              {/* Scrollable form */}
-              <div className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
-                <div>
-                  <label
-                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
-                  >
-                    Title
-                  </label>
-                  <input
-                    className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-shadow`}
-                    placeholder="What are you selling?"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-1 min-w-0">
-                    <label
-                      className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
-                    >
-                      Price
-                    </label>
-                    <div
-                      className={`flex items-center gap-2 ${t.bgInput} rounded-lg px-3.5 py-2`}
-                    >
-                      <DollarSign
-                        className={`w-3.5 h-3.5 shrink-0 ${t.textMuted}`}
-                      />
-                      <input
-                        className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none w-0`}
-                        placeholder="0.00"
-                        type="number"
-                      />
-                    </div>
+              {/* ── SUCCESS STATE ── */}
+              {listingSubmitState === "submitted" ? (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center flex-1">
+                  <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-8 h-8 text-cyan-400" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <label
-                      className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
-                    >
-                      Category
-                    </label>
-                    <select
-                      className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none cursor-pointer`}
-                    >
-                      {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    rows={2}
-                    className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-none transition-shadow`}
-                    placeholder="Describe your item…"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
-                  >
-                    Photos
-                  </label>
+                  <h3 className={`text-base font-bold ${t.text} mb-1`}>
+                    Listing submitted!
+                  </h3>
+                  <p className={`text-sm ${t.textMuted} max-w-[260px] leading-relaxed`}>
+                    Your listing is{" "}
+                    <span className="text-amber-400 font-semibold">
+                      under review
+                    </span>. We'll verify it before it goes live — usually within
+                    24 hours.
+                  </p>
                   <div
-                    className={`border border-dashed ${t.border} rounded-lg p-4 text-center cursor-pointer ${t.bgHover} transition-colors group`}
+                    className="mt-4 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{
+                      background: "rgba(251,191,36,0.1)",
+                      border: "1px solid rgba(251,191,36,0.25)",
+                      color: "#fbbf24",
+                    }}
                   >
-                    <div className="w-9 h-9 mx-auto mb-1.5 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
-                      <Camera className="w-4 h-4 text-cyan-500" />
-                    </div>
-                    <p className={`text-xs font-medium ${t.textSecondary}`}>
-                      Tap to add photos
-                    </p>
-                    <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
-                      Up to 10 · JPG, PNG
-                    </p>
+                    ⏳ Pending verification
                   </div>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowCreateListing(false)}
+                    className={`mt-6 px-5 py-2 rounded-xl text-sm font-semibold ${t.bgInput} ${t.textSecondary} hover:opacity-80 transition-opacity`}
+                  >
+                    Close
+                  </motion.button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Scrollable form */}
+                  <div className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
 
-              {/* Footer — always visible */}
-              <div
-                className={`px-4 sm:px-5 py-3 border-t ${t.border} shrink-0`}
-              >
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold py-2.5 rounded-xl hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/15"
-                >
-                  Publish Listing
-                </motion.button>
-              </div>
+                    {/* ── SELLER IDENTITY PILL ── */}
+                    <div
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+                      style={{
+                        background: isAuthenticated
+                          ? "rgba(34,211,238,0.06)"
+                          : "rgba(251,191,36,0.06)",
+                        border: isAuthenticated
+                          ? "1px solid rgba(34,211,238,0.15)"
+                          : "1px solid rgba(251,191,36,0.2)",
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{
+                          background: isAuthenticated ? "#22d3ee" : "#fbbf24",
+                          boxShadow: isAuthenticated
+                            ? "0 0 6px rgba(34,211,238,0.5)"
+                            : "0 0 6px rgba(251,191,36,0.5)",
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="text-xs font-semibold truncate"
+                          style={{
+                            color: isAuthenticated ? "#22d3ee" : "#fbbf24",
+                          }}
+                        >
+                          {isAuthenticated
+                            ? `Listing as ${userName}`
+                            : "Listing as Guest"}
+                        </p>
+                        <p className={`text-[10px] ${t.textMuted}`}>
+                          {isAuthenticated
+                            ? "Connected · listing will be linked to your account"
+                            : "Not signed in · listing goes under verification"}
+                        </p>
+                      </div>
+                      {!isAuthenticated && (
+                        <button
+                          onClick={() => {
+                            setShowCreateListing(false);
+                            setIsAuthModalOpen(true);
+                          }}
+                          className="text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 whitespace-nowrap flex-shrink-0 transition-colors"
+                        >
+                          Sign in
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Title
+                      </label>
+                      <input
+                        value={listingForm.title}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            title: e.target.value,
+                          }))
+                        }
+                        className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-shadow`}
+                        placeholder="What are you selling?"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-1 min-w-0">
+                        <label
+                          className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                        >
+                          Price
+                        </label>
+                        <div
+                          className={`flex items-center gap-2 ${t.bgInput} rounded-lg px-3.5 py-2`}
+                        >
+                          <DollarSign
+                            className={`w-3.5 h-3.5 shrink-0 ${t.textMuted}`}
+                          />
+                          <input
+                            value={listingForm.price}
+                            onChange={(e) =>
+                              setListingForm((f) => ({
+                                ...f,
+                                price: e.target.value,
+                              }))
+                            }
+                            className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none w-0`}
+                            placeholder="0.00"
+                            type="number"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label
+                          className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                        >
+                          Category
+                        </label>
+                        <select
+                          value={listingForm.category}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              category: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none cursor-pointer`}
+                        >
+                          <option value="">Select…</option>
+                          {CATEGORIES.filter((c) => c.id !== "all").map(
+                            (c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Description
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={listingForm.description}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            description: e.target.value,
+                          }))
+                        }
+                        className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-none transition-shadow`}
+                        placeholder="Describe your item…"
+                      />
+                    </div>
+
+                    {/* Guest-only contact fields */}
+                    {!isAuthenticated && (
+                      <div className="space-y-3">
+                        <div
+                          className="h-px"
+                          style={{
+                            background:
+                              "linear-gradient(90deg,transparent,rgba(251,191,36,0.2),transparent)",
+                          }}
+                        />
+                        <p
+                          className={`text-[10px] font-semibold uppercase tracking-wider`}
+                          style={{ color: "#fbbf24" }}
+                        >
+                          Guest info (so buyers can reach you)
+                        </p>
+                        <input
+                          value={listingForm.guestName}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              guestName: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none`}
+                          placeholder="Your name (optional)"
+                        />
+                        <input
+                          value={listingForm.guestContact}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              guestContact: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none`}
+                          placeholder="Email or phone (optional)"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Photos
+                      </label>
+                      <div
+                        className={`border border-dashed ${t.border} rounded-lg p-4 text-center cursor-pointer ${t.bgHover} transition-colors group`}
+                      >
+                        <div className="w-9 h-9 mx-auto mb-1.5 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                          <Camera className="w-4 h-4 text-cyan-500" />
+                        </div>
+                        <p className={`text-xs font-medium ${t.textSecondary}`}>
+                          Tap to add photos
+                        </p>
+                        <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                          Up to 10 · JPG, PNG
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    className={`px-4 sm:px-5 py-3 border-t ${t.border} shrink-0`}
+                  >
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handlePublishListing}
+                      disabled={
+                        !listingForm.title.trim() ||
+                        listingSubmitState === "submitting"
+                      }
+                      className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold py-2.5 rounded-xl hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/15 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {listingSubmitState === "submitting" ? (
+                        <>
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 0.8,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          />
+                          Submitting…
+                        </>
+                      ) : isAuthenticated ? (
+                        "Publish Listing"
+                      ) : (
+                        "Submit for Review"
+                      )}
+                    </motion.button>
+                    {!isAuthenticated && (
+                      <p className={`text-center text-[10px] ${t.textMuted} mt-2`}>
+                        Guest listings are reviewed before going live
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </motion.div>
           </>
         )}

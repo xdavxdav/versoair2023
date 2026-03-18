@@ -246,7 +246,6 @@ app.use((req, res, next) => {
       console.log("   - http://localhost:" + port + "/api/countries");
       console.log("🔒 [SERVER] CORS enabled for:", allowedOrigins);
       console.log("🌍 [SERVER] NODE_ENV:", process.env.NODE_ENV);
-      console.log("🔑 [SERVER] CORS_ORIGIN env:", process.env.CORS_ORIGIN);
       log(`serving on port ${port}`);
     },
   );

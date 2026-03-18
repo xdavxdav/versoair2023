@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 
@@ -16,8 +17,21 @@ interface LoadingContextType {
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export function LoadingProvider({ children }: { children: ReactNode }) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
+
+  // Dismiss the initial cold-load overlay after 5s
+  useEffect(() => {
+    const t1 = setTimeout(() => setIsFadingOut(true), 5000);
+    const t2 = setTimeout(() => {
+      setIsLoading(false);
+      setIsFadingOut(false);
+    }, 5400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
 
   const showEagleLoader = useCallback((duration = 900) => {
     setIsLoading(true);
