@@ -95,17 +95,25 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // Disable page scrolling when panel is open
+  // Disable page scrolling when panel is open — compensate for scrollbar
+  // width so viewport width stays constant and GSAP pin spacers don't shift.
   useEffect(() => {
     if (isOpen) {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
     }
 
     // Cleanup on unmount
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
     };
   }, [isOpen]);
 
