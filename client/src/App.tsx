@@ -207,7 +207,7 @@ import Footer from "@/components/ui/footer";
 import Navbar from "@/components/ui/navbar";
 import BlogNavbar from "@/components/BlogNavbar";
 import LocationPanel from "@/components/ui/location-panel";
-import LoadingEagle from "@/components/ui/loading-eagle";
+import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
 import PullToRefresh from "@/components/PullToRefresh";
 import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
@@ -218,26 +218,6 @@ import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
 // Main loader — shown while lazy chunks download and on every navigation.
-function PageLoader() {
-  return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
-      style={{
-        background:
-          "radial-gradient(ellipse at 50% 40%, rgba(191,131,28,0.95) 0%, rgba(120,70,10,0.97) 60%, rgba(30,20,5,0.98) 100%)",
-      }}
-    >
-      <div className="loading-shimmer-bar" />
-      <div className="text-center">
-        <LoadingEagle className="w-44 h-44 mb-2 mx-auto" />
-        <p className="text-white/90 text-sm font-medium tracking-wide mt-3 animate-pulse">
-          Verso Air
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function Router() {
   const [location] = useLocation();
   const { showEagleLoader } = useLoading();
@@ -492,23 +472,6 @@ function Router() {
       {/* 404 Fallback */}
       <Route component={NotFound} />
     </Switch>
-  );
-}
-
-function LoadingOverlay() {
-  const { isLoading, isFadingOut } = useLoading();
-  if (!isLoading) return null;
-
-  return (
-    <div className={`page-loading-overlay ${isFadingOut ? "fade-out" : ""}`}>
-      <div className="loading-shimmer-bar" />
-      <div className="text-center">
-        <LoadingEagle className="w-44 h-44 mb-2 mx-auto" />
-        <p className="text-white/90 text-sm font-medium tracking-wide mt-3 animate-pulse">
-          Verso Air
-        </p>
-      </div>
-    </div>
   );
 }
 
