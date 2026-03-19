@@ -6478,6 +6478,8 @@ export default function AdminDashboard() {
           new Date().getTime().toString(),
         );
         localStorage.setItem("adminUsername", "vault-superuser");
+        localStorage.setItem("adminRole", "SuperAdmin");
+        localStorage.setItem("adminCanAccessVault", "true");
         return true;
       }
       const savedAccessTime = localStorage.getItem("adminAccessTime");
@@ -6489,6 +6491,8 @@ export default function AdminDashboard() {
       if (now - accessTime > sessionDuration) {
         localStorage.removeItem("adminAccessTime");
         localStorage.removeItem("adminUsername");
+        localStorage.removeItem("adminRole");
+        localStorage.removeItem("adminCanAccessVault");
         return false;
       }
       return true;
@@ -6517,6 +6521,8 @@ export default function AdminDashboard() {
               setIsAdminGateAuthenticated(false);
               localStorage.removeItem("adminAccessTime");
               localStorage.removeItem("adminUsername");
+              localStorage.removeItem("adminRole");
+              localStorage.removeItem("adminCanAccessVault");
               setLocation("/");
             } else {
               // Refresh session time
@@ -6539,6 +6545,8 @@ export default function AdminDashboard() {
     setAuthenticatedAdminUsername("");
     localStorage.removeItem("adminAccessTime");
     localStorage.removeItem("adminUsername");
+    localStorage.removeItem("adminRole");
+    localStorage.removeItem("adminCanAccessVault");
   }, []);
 
   const {
@@ -6569,6 +6577,7 @@ export default function AdminDashboard() {
     setAuthenticatedAdminUsername(username);
     localStorage.setItem("adminAccessTime", new Date().getTime().toString());
     localStorage.setItem("adminUsername", username);
+    // Role + vault flags are already set by AdminAccessGate component
   };
 
   // On mount: restore JWT into _authToken if session is alive but token is missing (page refresh)

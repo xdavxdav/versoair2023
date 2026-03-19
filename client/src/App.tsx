@@ -560,44 +560,48 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Slim top utility bar (country selector) ── */}
+      {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
       {!versoaiFullscreen && (
         <div
           ref={headerRef}
-          className={`fixed top-0 left-0 right-0 z-[60] transition-transform duration-300 ${
-            headerVisible ? "translate-y-0" : "-translate-y-full"
-          }`}
+          className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
         >
+          {/* Top Banner */}
           <div
             className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
             style={{ overflow: "visible" }}
           >
             <div
-              className="max-w-full mx-auto flex items-center text-[10px] sm:text-xs"
+              className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
               style={{ overflow: "visible" }}
             >
-              {/* Left — label */}
-              <div className="flex-shrink-0 flex items-center">
-                <span className="hidden sm:inline text-amber-200/80 text-[10px]">
-                  Business Intelligence Portal
-                </span>
+              {/* Left: Portal label */}
+              <span className="font-medium flex-1 min-w-0 truncate">
+                Business Intelligence Portal
+              </span>
+
+              {/* Center: Country filter dropdown */}
+              <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+                <CountryDropdown />
               </div>
 
-              {/* Spacer */}
-              <span className="flex-1" />
-
-              {/* Right — Verso Air + location */}
-              <div
-                className="flex items-center gap-2 flex-shrink-0"
-                style={{ overflow: "visible" }}
-              >
-                <a
-                  href="/"
-                  className="font-semibold text-white hover:text-amber-200 transition-colors whitespace-nowrap"
+              {/* Right: Action buttons */}
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+                <button
+                  onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
                 >
-                  Verso Air ™️
-                </a>
-                <CountryDropdown />
+                  <span>🎵</span>
+                  <span className="hidden sm:inline">Verso Air</span>
+                  <span className="sm:hidden">VA</span>
+                </button>
+                <button
+                  onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+                >
+                  <span>📍</span>
+                  <span className="hidden sm:inline">GPS Services</span>
+                </button>
               </div>
             </div>
           </div>
@@ -634,7 +638,7 @@ function AppContent() {
             !marketplaceModalOpen && <BlogNavbar />}
         </div>
       )}
-      {/* Spacer for slim top bar */}
+      {/* Spacer for fixed header */}
       {!versoaiFullscreen && <div style={{ height: headerHeight }} />}
 
       <PullToRefresh />

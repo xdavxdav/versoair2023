@@ -102,6 +102,9 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
       if (res.ok && data.token) {
         setAuthToken(data.token);
         await initializeCsrfToken();
+        // Persist role so dashboard can enforce vault restrictions
+        localStorage.setItem("adminRole", validation.user.role);
+        localStorage.setItem("adminCanAccessVault", String(validation.user.canAccessVault === true));
         onAccessGranted(validation.user.username);
       } else {
         setError(data.message || "Server rejected access.");
