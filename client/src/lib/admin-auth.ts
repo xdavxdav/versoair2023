@@ -4,10 +4,11 @@
  */
 
 // Admin users list - can be expanded or moved to backend
+// canAccessVault: only the site creator (SuperAdmin) can reach the Credentials Vault
 export const ADMIN_USERS = [
-  { username: "joel_007", name: "Joel", role: "SuperAdmin" },
-  { username: "admin_001", name: "Admin User", role: "Admin" },
-  { username: "manager_001", name: "Manager", role: "Manager" },
+  { username: "joel_007", name: "Joel", role: "SuperAdmin", canAccessVault: true },
+  { username: "admin_001", name: "Admin User", role: "Admin", canAccessVault: false },
+  { username: "manager_001", name: "Manager", role: "Manager", canAccessVault: false },
 ];
 
 /**
@@ -87,4 +88,15 @@ export function getAdminUser(username: string): (typeof ADMIN_USERS)[0] | null {
  */
 export function isValidAdminUsername(username: string): boolean {
   return ADMIN_USERS.some((u) => u.username === username);
+}
+
+/**
+ * Check if a given admin username has vault access
+ * Only the site creator (SuperAdmin) can access the Credentials Vault.
+ * @param username - Admin username to check
+ * @returns {boolean}
+ */
+export function canAccessVault(username: string): boolean {
+  const user = ADMIN_USERS.find((u) => u.username === username);
+  return user?.canAccessVault === true;
 }
