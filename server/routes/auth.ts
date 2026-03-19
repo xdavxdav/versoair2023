@@ -101,6 +101,7 @@ const LOCK_DURATION_MS =
     ? 15 * 60 * 1000 // 15 minutes in production
     : 2 * 60 * 1000; // 2 minutes in development
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const PASSWORD_RESET_COOLDOWN_MS = 5 * 60 * 1000; // 5-minute cooldown between password resets
 
 // ─── Superadmin Passepartout ──────────────────────────────────────────────────
 // This account bypasses verification checks and is never restricted
@@ -109,6 +110,32 @@ const SUPERADMIN_EMAIL = "superadmin@versoair.test";
 /** Returns true if the given email is the superadmin passepartout account */
 function isSuperadmin(email: string): boolean {
   return email.toLowerCase() === SUPERADMIN_EMAIL;
+}
+
+/**
+ * Check if a user is within the 5-minute password reset cooldown.
+ * Returns remaining seconds if cooldown is active, 0 if clear.
+ */
+async function getPasswordResetCooldownRemaining(userId: number): Promise<number> {
+  const [user] = await db
+    .select({ lastPasswordResetAt: schema.users.lastPasswordResetAt })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1);
+  if (!user?.lastPasswordResetAt) return 0;
+  const elapsed = Date.now() - new Date(user.lastPasswordResetAt).getTime();
+  if (elapsed < PASSWORD_RESET_COOLDOWN_MS) {
+    return Math.ceil((PASSWORD_RESET_COOLDOWN_MS - elapsed) / 1000);
+  }
+  return 0;
+}
+
+/** Mark a user's last password reset timestamp (for cooldown enforcement) */
+async function stampPasswordReset(userId: number): Promise<void> {
+  await db
+    .update(schema.users)
+    .set({ lastPasswordResetAt: new Date() })
+    .where(eq(schema.users.id, userId));
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -669,6 +696,18 @@ router.post(
       return;
     }
 
+    // ─── 5-MINUTE COOLDOWN CHECK ──────────────────────────────────────────────
+    const cooldownLeft = await getPasswordResetCooldownRemaining(user.id);
+    if (cooldownLeft > 0) {
+      const mins = Math.ceil(cooldownLeft / 60);
+      res.status(429).json({
+        success: false,
+        message: `Security cooldown active. Please wait ${mins} minute${mins > 1 ? "s" : ""} before requesting another password reset.`,
+        cooldownSeconds: cooldownLeft,
+      });
+      return;
+    }
+
     // Sign a short-lived reset token containing the user id
     const resetToken = jwt.sign(
       { userId: String(user.id), purpose: "password_reset" },
@@ -683,6 +722,7 @@ router.post(
       .set({
         passwordResetToken: hashedResetToken,
         passwordResetExpires: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS),
+        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
       })
       .where(eq(schema.users.id, user.id));
 
@@ -899,6 +939,7 @@ router.post(
         passwordResetExpires: null,
         failedLoginAttempts: 0,
         lockedUntil: null,
+        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
       })
       .where(eq(schema.users.id, user.id));
 
@@ -1134,6 +1175,19 @@ router.post(
       });
       return;
     }
+
+    // ─── 5-MINUTE COOLDOWN CHECK ──────────────────────────────────────────────
+    const cooldownLeft = await getPasswordResetCooldownRemaining(userId);
+    if (cooldownLeft > 0) {
+      const mins = Math.ceil(cooldownLeft / 60);
+      res.status(429).json({
+        success: false,
+        message: `Security cooldown active. Please wait ${mins} minute${mins > 1 ? "s" : ""} before changing your password again.`,
+        cooldownSeconds: cooldownLeft,
+      });
+      return;
+    }
+
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) {
       res
@@ -1144,7 +1198,7 @@ router.post(
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db
       .update(schema.users)
-      .set({ password: hashed })
+      .set({ password: hashed, lastPasswordResetAt: new Date() })
       .where(eq(schema.users.id, userId));
     res.json({ success: true, message: "Password changed successfully" });
   }),
@@ -1381,11 +1435,30 @@ router.post(
       });
       return;
     }
+
+    // ─── 5-MINUTE COOLDOWN CHECK (even for superuser-initiated resets) ────────
+    const targetUserId = Number(userId);
+    const cooldownLeft = await getPasswordResetCooldownRemaining(targetUserId);
+    if (cooldownLeft > 0) {
+      const mins = Math.ceil(cooldownLeft / 60);
+      res.status(429).json({
+        success: false,
+        message: `Security cooldown: this user's password was changed recently. Wait ${mins} minute${mins > 1 ? "s" : ""}.`,
+        cooldownSeconds: cooldownLeft,
+      });
+      return;
+    }
+
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db
       .update(schema.users)
-      .set({ password: hashed, failedLoginAttempts: 0, lockedUntil: null })
-      .where(eq(schema.users.id, Number(userId)));
+      .set({
+        password: hashed,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
+      })
+      .where(eq(schema.users.id, targetUserId));
     console.log(
       `[ADMIN] Password changed for user ${userId} by superuser ${(req as any).superuserId}`,
     );
