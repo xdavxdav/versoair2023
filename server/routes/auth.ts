@@ -700,23 +700,24 @@ router.post(
 
 /**
  * POST /auth/admin-gate
- * Authenticates personnel for GeoAdmin portal access using their unique code.
- * Each allowed user has a gate_username (e.g. joel_007) — no password needed.
+ * Authenticates personnel for Admin Dashboard access using username + password.
+ * Each allowed user has a gate_username (e.g. admin_001) and a bcrypt-hashed password.
  *
  * Access Rules:
  *   - gate_username must exist in the users table
+ *   - password must match the bcrypt hash in the DB
  *   - role must be in ['admin', 'moderator', 'superuser']
  *   - subscriptionTier must be in ['max', 'enterprise'] OR role='superuser' (bypass)
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.body;
+    const { username, password } = req.body;
 
-    if (!username) {
+    if (!username || !password) {
       return res.status(403).json({
         success: false,
-        message: "Access code is required.",
+        message: "Username and password are required.",
       });
     }
 
@@ -725,6 +726,7 @@ router.post(
       .select({
         id: schema.users.id,
         email: schema.users.email,
+        password: schema.users.password,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
       })
@@ -735,7 +737,16 @@ router.post(
     if (!user) {
       return res.status(403).json({
         success: false,
-        message: "Invalid access code.",
+        message: "Invalid credentials.",
+      });
+    }
+
+    // ─── PASSWORD CHECK ─────────────────────────────────────────────────────────
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid credentials.",
       });
     }
 
