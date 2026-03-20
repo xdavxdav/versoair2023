@@ -1693,7 +1693,7 @@ function UsersControlPanel() {
         );
       } else if (action === "role-change") {
         const newRole = prompt(
-          `Set role for ${user?.username}\n\nOptions: superuser, admin, moderator, business_owner, user`,
+          `Set role for ${user?.username}\n\nOptions: superuser, admin, moderator, artist, business_owner, user`,
           user?.role,
         );
         if (!newRole) return;

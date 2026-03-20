@@ -7,6 +7,7 @@
 export const ADMIN_USERS = [
   { username: "joel_007", name: "Joel", role: "SuperAdmin" },
   { username: "admin_025", name: "CEO", role: "Admin" },
+  { username: "mod_010", name: "Moderator", role: "Moderator" },
 ];
 
 /**

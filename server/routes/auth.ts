@@ -1617,6 +1617,7 @@ router.post(
 
     // Create artist profile
     try {
+      const artistCode = generateArtistCode(stageName, "discovery");
       await db.insert(schema.artistProfiles).values({
         userId: newUser.id,
         stageName,
@@ -1628,6 +1629,10 @@ router.post(
         instagramHandle: instagramHandle || null,
         leagueId: leagueId || null,
         payoutEmail: email.toLowerCase(),
+        artistCode,
+        division: "discovery",
+        evaluationStatus: "pending",
+        contractAccess: "none",
       });
     } catch (e) {
       // If artist_profiles table doesn't exist yet, continue — will be created on db:push
@@ -1646,6 +1651,7 @@ router.post(
         stageName,
         genre: genre || [],
         country: country || null,
+        artistCode: undefined as string | undefined,
       },
     });
   }),

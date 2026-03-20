@@ -87,6 +87,9 @@ export const users = pgTable("users", {
   // Possible values: "general", "artist", "geo-admin", "contractor", "community"
   portalAccess: jsonb("portal_access").$type<string[]>().default(["general"]),
 
+  // Role switching — stores original staff role when user switches to artist mode
+  previousRole: varchar("previous_role", { length: 20 }),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1043,6 +1046,23 @@ export const artistProfiles = pgTable(
     spotifyUrl: text("spotify_url"),
     instagramHandle: text("instagram_handle"),
     profileImageUrl: text("profile_image_url"),
+
+    // ── Artist Division & Code ──
+    // Permanent unique code: VA_[prefix]_[division]_[YYYYMMDD]_[6-hex]
+    // Staff override: VA_JOE_SYS_MASTER
+    artistCode: varchar("artist_code", { length: 50 }).unique(),
+    // Division: discovery | indie | pro | elite | signed | legend
+    division: varchar("division", { length: 20 }).default("discovery"),
+    // A&R evaluation
+    evaluationScore: decimal("evaluation_score", { precision: 4, scale: 1 }), // avg 0.0–10.0
+    evaluationStatus: varchar("evaluation_status", { length: 20 }).default(
+      "pending",
+    ), // pending | approved | rejected | resubmit
+    // Contract access level tied to division
+    contractAccess: varchar("contract_access", { length: 20 }).default("none"), // none | view | standard | priority | full
+    // Next quarterly promotion review date
+    promotionEligibleAt: timestamp("promotion_eligible_at"),
+
     // League & competition
     leagueId: integer("league_id"),
     lifetimeStreams: integer("lifetime_streams").default(0),
@@ -1070,8 +1090,74 @@ export const artistProfiles = pgTable(
     leagueIdx: index("artist_profiles_league_idx").on(t.leagueId),
     badgeIdx: index("artist_profiles_badge_idx").on(t.currentBadgeTier),
     streamsIdx: index("artist_profiles_streams_idx").on(t.lifetimeStreams),
+    codeIdx: index("artist_profiles_code_idx").on(t.artistCode),
+    divisionIdx: index("artist_profiles_division_idx").on(t.division),
   }),
 );
+
+// --- A&R EVALUATION SUBMISSIONS ---
+// Artists submit demo projects for review before getting streaming access
+export const evaluationSubmissions = pgTable(
+  "evaluation_submissions",
+  {
+    id: serial("id").primaryKey(),
+    artistId: integer("artist_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    // Submission content
+    tracks:
+      jsonb("tracks").$type<
+        Array<{ title: string; url: string; durationSec?: number }>
+      >(),
+    coverArtUrl: text("cover_art_url"),
+    projectTitle: text("project_title"),
+    projectNotes: text("project_notes"),
+    // Review status
+    status: varchar("status", { length: 20 }).default("pending"), // pending | under_review | approved | rejected | resubmit
+    // Scoring — 4 axes, each 1–10
+    scores: jsonb("scores").$type<{
+      production?: number;
+      originality?: number;
+      craft?: number;
+      marketReadiness?: number;
+    }>(),
+    aiScore: decimal("ai_score", { precision: 4, scale: 1 }), // AI pre-score
+    finalScore: decimal("final_score", { precision: 4, scale: 1 }), // human-confirmed
+    reviewerId: integer("reviewer_id").references(() => users.id),
+    reviewerNotes: text("reviewer_notes"),
+    reviewedAt: timestamp("reviewed_at"),
+    // Resubmission tracking
+    resubmitAfter: timestamp("resubmit_after"), // earliest resubmit date (30 days after rejection)
+    submissionNumber: integer("submission_number").default(1), // 1st, 2nd, 3rd attempt
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("eval_submissions_artist_idx").on(t.artistId),
+    statusIdx: index("eval_submissions_status_idx").on(t.status),
+  }),
+);
+
+// --- PROMOTION THRESHOLDS (adaptive, ML-updated) ---
+// Stores current division promotion thresholds per league, updated by Python ML service
+export const promotionThresholds = pgTable("promotion_thresholds", {
+  id: serial("id").primaryKey(),
+  fromDivision: varchar("from_division", { length: 20 }).notNull(), // discovery → indie, indie → pro, etc.
+  toDivision: varchar("to_division", { length: 20 }).notNull(),
+  leagueId: integer("league_id").references(() => regionalLeagues.id),
+  // Thresholds (adaptive — seed values, ML adjusts)
+  minStreams: integer("min_streams").default(10000),
+  minReleases: integer("min_releases").default(2),
+  minActiveDays: integer("min_active_days").default(90),
+  minEngagementRate: decimal("min_engagement_rate", { precision: 5, scale: 2 }), // saves+shares / streams
+  minListenerRetention: decimal("min_listener_retention", {
+    precision: 5,
+    scale: 2,
+  }), // % full-track listens
+  // ML metadata
+  computedAt: timestamp("computed_at").defaultNow(),
+  sampleSize: integer("sample_size"), // how many artists in this division were analyzed
+  confidenceScore: decimal("confidence_score", { precision: 4, scale: 2 }), // 0–1, how confident ML is
+});
 
 // --- REGIONAL LEAGUES ---
 export const regionalLeagues = pgTable("regional_leagues", {

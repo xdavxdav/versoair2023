@@ -2269,10 +2269,10 @@ export default function ArtistPortalWelcome() {
                         Verso Artist
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30">
-                      <Crown className="w-3 h-3 text-amber-400" />
-                      <span className="text-amber-400 text-[10px] font-semibold">
-                        GOLD
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30">
+                      <Crown className="w-3 h-3 text-purple-400" />
+                      <span className="text-purple-400 text-[10px] font-semibold">
+                        ELITE
                       </span>
                     </div>
                   </div>
@@ -2283,10 +2283,10 @@ export default function ArtistPortalWelcome() {
                       🎤
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-lg">
-                        Luna Eclipse
-                      </h3>
-                      <p className="text-white/40 text-sm">Afrobeats • R&B</p>
+                      <h3 className="text-white font-bold text-lg">Nooka</h3>
+                      <p className="text-white/40 text-sm">
+                        Coupé-Décalé • Afrobeats
+                      </p>
                     </div>
                   </div>
 
@@ -2296,22 +2296,22 @@ export default function ArtistPortalWelcome() {
                       Verso Artist Code
                     </span>
                     <p className="text-purple-300 font-mono text-lg font-bold mt-0.5">
-                      VA-2026-4A7F
+                      VA_NOO_E_20260215_8F3A1B
                     </p>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
-                      <p className="text-white font-bold text-sm">847K</p>
+                      <p className="text-white font-bold text-sm">1.2M</p>
                       <p className="text-white/20 text-[10px]">Streams</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-white font-bold text-sm">24</p>
+                      <p className="text-white font-bold text-sm">38</p>
                       <p className="text-white/20 text-[10px]">Tracks</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-white font-bold text-sm">12.4K</p>
+                      <p className="text-white font-bold text-sm">28.7K</p>
                       <p className="text-white/20 text-[10px]">Listeners</p>
                     </div>
                   </div>
@@ -2330,7 +2330,7 @@ export default function ArtistPortalWelcome() {
                     </div>
                     <div className="text-right">
                       <p className="text-white/20 text-[10px]">Member since</p>
-                      <p className="text-white/50 text-xs">Feb 2026</p>
+                      <p className="text-white/50 text-xs">Jan 2026</p>
                     </div>
                   </div>
                 </div>

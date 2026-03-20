@@ -31,7 +31,6 @@ import {
   GripVertical,
   Shield,
   User,
-  KeyRound,
   CreditCard,
   Wallet,
   Receipt,
@@ -535,28 +534,6 @@ export function MobileMenuBubble() {
                     />
                   </div>
 
-                  {/* Vault link — superuser only */}
-                  {isSuperuser && (
-                    <Link href="/sys/0x7f3a9c">
-                      <button
-                        onClick={close}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors duration-150 touch-manipulation ${
-                          location === "/sys/0x7f3a9c"
-                            ? "bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white"
-                            : "text-gray-700 active:bg-gray-100"
-                        }`}
-                      >
-                        <KeyRound
-                          className={`h-4 w-4 shrink-0 ${location === "/sys/0x7f3a9c" ? "text-white" : "text-amber-600"}`}
-                        />
-                        <span className="text-[13px] font-medium">
-                          Credentials Vault
-                        </span>
-                        <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
-                      </button>
-                    </Link>
-                  )}
-
                   {/* Billing & Card Vault */}
                   <Link href="/account/billing">
                     <button
@@ -597,15 +574,7 @@ export function MobileMenuBubble() {
                   )}
 
                   {/* Dashboard link */}
-                  <Link
-                    href={
-                      isSuperuser
-                        ? "/sys/0x7f3a9c"
-                        : isAdmin
-                          ? "/geo-admin/dashboard"
-                          : "/dashboard"
-                    }
-                  >
+                  <Link href="/dashboard">
                     <button
                       onClick={close}
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
