@@ -2296,7 +2296,7 @@ export default function ArtistPortalWelcome() {
                       Verso Artist Code
                     </span>
                     <p className="text-purple-300 font-mono text-lg font-bold mt-0.5">
-                      VA_NOO_E_20260215_8F3A1B
+                      VA_NK_E_20260115_8F3A1B
                     </p>
                   </div>
 
