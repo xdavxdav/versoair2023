@@ -904,9 +904,11 @@ TableRowItem.displayName = "TableRowItem";
 export default function DatabaseExpert({
   username,
   tier = "free",
+  role,
 }: {
   username: string | null;
   tier?: string;
+  role?: string | null;
 }) {
   const canManage = tier !== "free";
   const queryClient = useQueryClient();
@@ -1544,7 +1546,7 @@ export default function DatabaseExpert({
                       <div className="text-sm font-medium text-slate-200">
                         {username || "User"}
                       </div>
-                      <div className="text-xs text-slate-400">Admin Access</div>
+                      <div className="text-xs text-emerald-400/80">{role || "Admin Access"}</div>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -1553,7 +1555,7 @@ export default function DatabaseExpert({
                   className="w-56 bg-slate-900/95 backdrop-blur-xl border-white/10"
                 >
                   <DropdownMenuLabel className="text-slate-200">
-                    {username || "User"} Account
+                    {username || "User"} · {role || "Admin"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem asChild>

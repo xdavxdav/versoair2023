@@ -11,10 +11,7 @@ export interface DashboardLayoutProps {
   subtitle?: string;
   onRefresh?: () => void;
   onLogout?: () => void;
-  navbarRef?: React.RefObject<HTMLElement>;
 }
-
-type ScrollState = "top" | "down" | "up";
 
 export function DashboardLayout({
   children,
@@ -25,169 +22,84 @@ export function DashboardLayout({
   subtitle,
   onRefresh,
   onLogout,
-  navbarRef,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [scrollState, setScrollState] = useState<ScrollState>("top");
-
-  const headerRef = useRef<HTMLDivElement>(null);
-
+  // Elevator (ascenseur) scroll reveal:
+  // - Normal: header in document flow under navbar
+  // - Scroll down: slides up and disappears
+  // - Scroll back up: slides back down from under the navbar
+  const [scrollDir, setScrollDir] = useState<"up" | "down" | "top">("top");
+  // Use ref for navbarBottom so DOM updates don't trigger React re-renders on every scroll
+  const navbarBottomRef = useRef(124);
   const lastScrollY = useRef(0);
-  const scrollAccumulator = useRef(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const headerNaturalOffset = useRef(0);
+  const tickerRef = useRef<Element | null>(null);
   const rafId = useRef<number | null>(null);
 
-  const headerHeightRef = useRef(0);
-  const headerOffsetRef = useRef(0);
-  const navbarBottomRef = useRef(0);
-
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  const SCROLL_THRESHOLD = 10;
-
-  /*
-  ------------------------------------------------
-  MEASURE HEADER + NAVBAR
-  ------------------------------------------------
-  */
-
-  const measure = () => {
-    if (headerRef.current) {
-      headerHeightRef.current = headerRef.current.offsetHeight;
-      headerOffsetRef.current = headerRef.current.offsetTop;
-      setHeaderHeight(headerHeightRef.current);
-    }
-
-    if (navbarRef?.current) {
-      const rect = navbarRef.current.getBoundingClientRect();
-      navbarBottomRef.current = rect.bottom;
-    }
-  };
-
-  /*
-  ------------------------------------------------
-  SCROLL HANDLER
-  ------------------------------------------------
-  */
-
-  const updateScroll = () => {
-    rafId.current = null;
-
-    const currentY = window.scrollY;
-    const delta = currentY - lastScrollY.current;
-
-    if (navbarRef?.current) {
-      const rect = navbarRef.current.getBoundingClientRect();
-      navbarBottomRef.current = rect.bottom;
-    }
-
-    const pastHeader =
-      currentY > headerOffsetRef.current + headerHeightRef.current;
-
-    if (currentY < 5 || !pastHeader) {
-      scrollAccumulator.current = 0;
-      setScrollState("top");
-    } else {
-      scrollAccumulator.current += delta;
-
-      if (scrollAccumulator.current > SCROLL_THRESHOLD) {
-        scrollAccumulator.current = 0;
-        setScrollState("down");
-      }
-
-      if (scrollAccumulator.current < -SCROLL_THRESHOLD) {
-        scrollAccumulator.current = 0;
-        setScrollState("up");
-      }
-    }
-
-    if (headerRef.current && scrollState !== "top") {
-      headerRef.current.style.top = `${navbarBottomRef.current}px`;
-    }
-
-    lastScrollY.current = currentY;
-  };
-
-  const handleScroll = () => {
-    if (rafId.current !== null) return;
-    rafId.current = requestAnimationFrame(updateScroll);
-  };
-
-  /*
-  ------------------------------------------------
-  EFFECTS
-  ------------------------------------------------
-  */
-
   useEffect(() => {
+    // Cache ticker element once — avoid querySelector on every scroll
+    tickerRef.current = document.querySelector(".bg-primary.text-white.overflow-hidden");
+
+    const measure = () => {
+      if (headerRef.current) {
+        headerNaturalOffset.current = headerRef.current.offsetTop;
+      }
+      if (tickerRef.current) {
+        const rect = tickerRef.current.getBoundingClientRect();
+        navbarBottomRef.current = Math.max(0, rect.bottom);
+      }
+    };
     measure();
 
-    const resizeObserver = new ResizeObserver(measure);
+    const handleScroll = () => {
+      // Cancel any pending frame to avoid stacking
+      if (rafId.current !== null) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        const currentY = window.scrollY;
 
-    if (headerRef.current) {
-      resizeObserver.observe(headerRef.current);
-    }
+        // Only re-measure ticker when near top (header visible region)
+        if (tickerRef.current && currentY < 200) {
+          const rect = tickerRef.current.getBoundingClientRect();
+          navbarBottomRef.current = Math.max(0, rect.bottom);
+        }
 
-    if (navbarRef?.current) {
-      resizeObserver.observe(navbarRef.current);
-    }
+        const pastHeader = currentY > headerNaturalOffset.current + 60;
+
+        if (!pastHeader) {
+          setScrollDir("top");
+        } else if (currentY < lastScrollY.current) {
+          setScrollDir("up");
+        } else {
+          setScrollDir("down");
+        }
+        lastScrollY.current = currentY;
+      });
+    };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", measure);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", measure);
-
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
-
-      resizeObserver.disconnect();
     };
   }, []);
 
-  /*
-  ------------------------------------------------
-  REFRESH HANDLER
-  ------------------------------------------------
-  */
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
-
     if (onRefresh) {
       await onRefresh();
     }
-
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  /*
-  ------------------------------------------------
-  HEADER STYLE LOGIC
-  ------------------------------------------------
-  */
-
-  const headerFixed = scrollState !== "top";
-
-  const headerStyle: React.CSSProperties | undefined = headerFixed
-    ? {
-        top: `${navbarBottomRef.current}px`,
-        transform: scrollState === "up" ? "translateY(0)" : "translateY(-100%)",
-        opacity: scrollState === "up" ? 1 : 0,
-        pointerEvents: scrollState === "up" ? "auto" : "none",
-        willChange: "transform, opacity",
-      }
-    : undefined;
-
-  /*
-  ------------------------------------------------
-  RENDER
-  ------------------------------------------------
-  */
-
   return (
     <div className="flex flex-1 bg-slate-950 text-white min-h-screen overflow-x-hidden">
+      {/* Sidebar — fixed overlay on mobile/tablet, sticky on desktop */}
       <DashboardSidebar
         sections={sections}
         activeSection={activeSection}
@@ -196,38 +108,41 @@ export function DashboardLayout({
         onToggle={setSidebarOpen}
       />
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* HEADER */}
-
+        {/* Top Bar — ascenseur: slides down from under navbar on scroll up */}
         <header
           ref={headerRef}
-          className={`px-3 sm:px-6 py-4 z-30 transition-[transform,opacity] duration-250
-          ${
-            headerFixed
-              ? "fixed left-0 right-0 lg:left-64 bg-slate-900/90 backdrop-blur-md border-b border-slate-700/60 shadow-lg"
-              : "bg-slate-900 border-b border-slate-700"
+          className={`bg-slate-900 border-b border-slate-700 px-3 sm:px-6 py-4 z-30 transition-[transform,opacity] duration-300 ease-out ${
+            scrollDir === "top"
+              ? ""
+              : "fixed left-0 right-0 lg:left-64 shadow-lg"
           }`}
-          style={{
-            ...headerStyle,
-            transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)",
-          }}
+          style={
+            scrollDir === "top"
+              ? undefined
+              : {
+                  top: `${navbarBottomRef.current}px`,
+                  transform: scrollDir === "up" ? "translateY(0)" : "translateY(-100%)",
+                  opacity: scrollDir === "up" ? 1 : 0,
+                  pointerEvents: scrollDir === "up" ? "auto" : "none",
+                  willChange: "transform, opacity",
+                }
+          }
         >
           <div className="flex items-center justify-between gap-4">
-            {/* LEFT */}
-
+            {/* Left Section */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
               >
                 <Menu className="w-5 h-5" />
               </button>
-
               <div className="min-w-0">
-                <h2 className="text-lg sm:text-2xl font-bold truncate">
+                <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
                   {title}
                 </h2>
-
                 {subtitle && (
                   <p className="text-xs sm:text-sm text-slate-400 mt-1 truncate">
                     {subtitle}
@@ -236,14 +151,15 @@ export function DashboardLayout({
               </div>
             </div>
 
-            {/* RIGHT */}
-
-            <div className="flex items-center gap-2 sm:gap-4">
+            {/* Right Section */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              {/* Refresh Button */}
               {onRefresh && (
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
                   className="p-2 hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
+                  title="Refresh data"
                 >
                   <RefreshCw
                     className={`w-5 h-5 text-slate-400 ${
@@ -253,10 +169,12 @@ export function DashboardLayout({
                 </button>
               )}
 
+              {/* Logout Button */}
               {onLogout && (
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                  title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline text-sm">Logout</span>
@@ -266,18 +184,7 @@ export function DashboardLayout({
           </div>
         </header>
 
-        {/* SPACER */}
-
-        <div
-          aria-hidden="true"
-          style={{
-            height: headerFixed ? headerHeight : 0,
-            flexShrink: 0,
-          }}
-        />
-
-        {/* CONTENT */}
-
+        {/* Content Area */}
         <main className="flex-1 overflow-x-hidden">
           <div className="p-4 md:p-6 space-y-6 max-w-full">{children}</div>
         </main>

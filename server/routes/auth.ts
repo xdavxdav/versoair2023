@@ -101,7 +101,6 @@ const LOCK_DURATION_MS =
     ? 15 * 60 * 1000 // 15 minutes in production
     : 2 * 60 * 1000; // 2 minutes in development
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
-const PASSWORD_RESET_COOLDOWN_MS = 5 * 60 * 1000; // 5-minute cooldown between password resets
 
 // ─── Superadmin Passepartout ──────────────────────────────────────────────────
 // This account bypasses verification checks and is never restricted
@@ -110,32 +109,6 @@ const SUPERADMIN_EMAIL = "superadmin@versoair.test";
 /** Returns true if the given email is the superadmin passepartout account */
 function isSuperadmin(email: string): boolean {
   return email.toLowerCase() === SUPERADMIN_EMAIL;
-}
-
-/**
- * Check if a user is within the 5-minute password reset cooldown.
- * Returns remaining seconds if cooldown is active, 0 if clear.
- */
-async function getPasswordResetCooldownRemaining(userId: number): Promise<number> {
-  const [user] = await db
-    .select({ lastPasswordResetAt: schema.users.lastPasswordResetAt })
-    .from(schema.users)
-    .where(eq(schema.users.id, userId))
-    .limit(1);
-  if (!user?.lastPasswordResetAt) return 0;
-  const elapsed = Date.now() - new Date(user.lastPasswordResetAt).getTime();
-  if (elapsed < PASSWORD_RESET_COOLDOWN_MS) {
-    return Math.ceil((PASSWORD_RESET_COOLDOWN_MS - elapsed) / 1000);
-  }
-  return 0;
-}
-
-/** Mark a user's last password reset timestamp (for cooldown enforcement) */
-async function stampPasswordReset(userId: number): Promise<void> {
-  await db
-    .update(schema.users)
-    .set({ lastPasswordResetAt: new Date() })
-    .where(eq(schema.users.id, userId));
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -696,18 +669,6 @@ router.post(
       return;
     }
 
-    // ─── 5-MINUTE COOLDOWN CHECK ──────────────────────────────────────────────
-    const cooldownLeft = await getPasswordResetCooldownRemaining(user.id);
-    if (cooldownLeft > 0) {
-      const mins = Math.ceil(cooldownLeft / 60);
-      res.status(429).json({
-        success: false,
-        message: `Security cooldown active. Please wait ${mins} minute${mins > 1 ? "s" : ""} before requesting another password reset.`,
-        cooldownSeconds: cooldownLeft,
-      });
-      return;
-    }
-
     // Sign a short-lived reset token containing the user id
     const resetToken = jwt.sign(
       { userId: String(user.id), purpose: "password_reset" },
@@ -722,7 +683,6 @@ router.post(
       .set({
         passwordResetToken: hashedResetToken,
         passwordResetExpires: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS),
-        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
       })
       .where(eq(schema.users.id, user.id));
 
@@ -740,28 +700,22 @@ router.post(
 
 /**
  * POST /auth/admin-gate
- * Authenticates personnel for Admin Dashboard access using username + password.
- * Each allowed user has a gate_username (e.g. admin_001) and a bcrypt-hashed password.
- *
- * Access Rules:
- *   - gate_username must exist in the users table
- *   - password must match the bcrypt hash in the DB
- *   - role must be in ['admin', 'moderator', 'superuser']
- *   - subscriptionTier must be in ['max', 'enterprise'] OR role='superuser' (bypass)
+ * Issues a JWT for users who have a gate_username set in the DB.
+ * The admin dashboard Users CRUD controls who gets gate access.
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { username } = req.body;
 
-    if (!username || !password) {
+    if (!username) {
       return res.status(403).json({
         success: false,
-        message: "Username and password are required.",
+        message: "Username is required.",
       });
     }
 
-    // Look up user by gate_username column
+    // Look up user by gate_username — the username itself is the access key
     const [user] = await db
       .select({
         id: schema.users.id,
@@ -778,38 +732,6 @@ router.post(
       return res.status(403).json({
         success: false,
         message: "Invalid credentials.",
-      });
-    }
-
-    // ─── PASSWORD CHECK ─────────────────────────────────────────────────────────
-    const passwordValid = await bcrypt.compare(password, user.password);
-    if (!passwordValid) {
-      return res.status(403).json({
-        success: false,
-        message: "Invalid credentials.",
-      });
-    }
-
-    // ─── ROLE CHECK: Only admins, moderators, superusers can access gate ─────────
-    const userRole = (user.role || "user").toLowerCase();
-    const allowedRoles = ["admin", "moderator", "superuser"];
-
-    if (!allowedRoles.includes(userRole)) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Your account does not have permission to access the admin gate.",
-      });
-    }
-
-    // ─── TIER CHECK: Moderators/admins need max/enterprise, superuser exempt ─────
-    const userTier = (user.subscriptionTier || "free").toLowerCase();
-    const allowedTiers = ["max", "enterprise"];
-
-    if (userRole !== "superuser" && !allowedTiers.includes(userTier)) {
-      return res.status(403).json({
-        success: false,
-        message: `GeoAdmin requires a ${allowedTiers.join("/")} subscription. Your tier is "${userTier}". Please upgrade to access.`,
       });
     }
 
@@ -939,7 +861,6 @@ router.post(
         passwordResetExpires: null,
         failedLoginAttempts: 0,
         lockedUntil: null,
-        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
       })
       .where(eq(schema.users.id, user.id));
 
@@ -1175,19 +1096,6 @@ router.post(
       });
       return;
     }
-
-    // ─── 5-MINUTE COOLDOWN CHECK ──────────────────────────────────────────────
-    const cooldownLeft = await getPasswordResetCooldownRemaining(userId);
-    if (cooldownLeft > 0) {
-      const mins = Math.ceil(cooldownLeft / 60);
-      res.status(429).json({
-        success: false,
-        message: `Security cooldown active. Please wait ${mins} minute${mins > 1 ? "s" : ""} before changing your password again.`,
-        cooldownSeconds: cooldownLeft,
-      });
-      return;
-    }
-
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) {
       res
@@ -1198,7 +1106,7 @@ router.post(
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db
       .update(schema.users)
-      .set({ password: hashed, lastPasswordResetAt: new Date() })
+      .set({ password: hashed })
       .where(eq(schema.users.id, userId));
     res.json({ success: true, message: "Password changed successfully" });
   }),
@@ -1435,30 +1343,11 @@ router.post(
       });
       return;
     }
-
-    // ─── 5-MINUTE COOLDOWN CHECK (even for superuser-initiated resets) ────────
-    const targetUserId = Number(userId);
-    const cooldownLeft = await getPasswordResetCooldownRemaining(targetUserId);
-    if (cooldownLeft > 0) {
-      const mins = Math.ceil(cooldownLeft / 60);
-      res.status(429).json({
-        success: false,
-        message: `Security cooldown: this user's password was changed recently. Wait ${mins} minute${mins > 1 ? "s" : ""}.`,
-        cooldownSeconds: cooldownLeft,
-      });
-      return;
-    }
-
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db
       .update(schema.users)
-      .set({
-        password: hashed,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        lastPasswordResetAt: new Date(), // stamp for 5-min cooldown
-      })
-      .where(eq(schema.users.id, targetUserId));
+      .set({ password: hashed, failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, Number(userId)));
     console.log(
       `[ADMIN] Password changed for user ${userId} by superuser ${(req as any).superuserId}`,
     );

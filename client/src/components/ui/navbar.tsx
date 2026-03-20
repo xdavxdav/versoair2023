@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { isContentNavPath } from "@/components/ContentNav";
 import {
   ChevronDown,
   Music,
@@ -104,8 +105,16 @@ export default function Navbar({
     return () => window.removeEventListener("scroll", controlNavbar);
   }, [lastScrollY, isMobile]);
 
-  // Don't render navbar on /blog or /marketplace pages (AFTER all hooks)
+  // Don't render navbar on /blog, /marketplace, auth pages, or when ContentNav is active
+  const navAuthed =
+    !!user || localStorage.getItem("blog_community_auth") === "true";
   if (location === "/blog" || location === "/marketplace") {
+    return null;
+  }
+  if (location.startsWith("/auth")) {
+    return null;
+  }
+  if (isContentNavPath(location) && navAuthed) {
     return null;
   }
 
@@ -416,12 +425,12 @@ export default function Navbar({
               touchAction: "pan-x",
               willChange: "scroll-position",
               transform: "translateZ(0)",
-              pointerEvents: "auto",
+              pointerEvents: "none",
             }}
           >
             <div
               className="inline-flex items-center gap-0.5 lg:gap-1 shrink-0"
-              style={{ touchAction: "pan-x" }}
+              style={{ touchAction: "pan-x", pointerEvents: "auto" }}
             >
               {/* Home — purple (brand) */}
               <Link

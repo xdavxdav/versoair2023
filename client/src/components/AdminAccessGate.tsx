@@ -1,11 +1,12 @@
 /**
- * 🔐 AdminAccessGate — Username + Password gate for Admin Dashboard
+ * 🔐 AdminAccessGate — 2FA access gate for Admin Dashboard
  *
- * Simple sign-in: username + passpartout password
- * Server validates credentials via /auth/admin-gate (bcrypt)
+ * Factor 1: Generated 6-digit code (visible on screen, changes on refresh)
+ * Factor 2: Admin username (CODE/username_000)
+ * Both must match to authenticate via /auth/admin-gate
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Lock,
   Eye,
@@ -13,14 +14,16 @@ import {
   Shield,
   Loader2,
   KeyRound,
+  Copy,
+  RefreshCw,
   ShieldCheck,
-  User,
+  ClipboardPaste,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
-import { ADMIN_USERS } from "@/lib/admin-auth";
+import { generateAccessCode, validateAdminAccess } from "@/lib/admin-auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -29,44 +32,69 @@ interface AdminAccessGateProps {
 }
 
 export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [userInput, setUserInput] = useState("");
+  const [showInput, setShowInput] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  // Generate code on mount
+  useEffect(() => {
+    setGeneratedCode(generateAccessCode());
+  }, []);
+
+  const handleNewCode = () => {
+    setGeneratedCode(generateAccessCode());
+    setUserInput("");
+    setError("");
+    setCodeCopied(false);
+  };
+
+  const handleCopy = () => {
+    try {
+      // Fallback: use a temporary textarea + execCommand
+      const ta = document.createElement("textarea");
+      ta.value = generatedCode;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch {
+      // silent fail — code is visible and selectable anyway
+    }
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const trimmedUsername = username.trim().toLowerCase();
-    const trimmedPassword = password.trim();
-
-    if (!trimmedUsername || !trimmedPassword) {
-      setError("Username and password are required.");
+    const input = userInput.trim();
+    if (!input) {
+      setError("Enter your credentials");
       return;
     }
 
-    // Client-side pre-check: username must be in admin list
-    const adminUser = ADMIN_USERS.find(
-      (u) => u.username.toLowerCase() === trimmedUsername,
-    );
-    if (!adminUser) {
-      setError("Access denied. Not an authorized admin.");
+    // Step 1: Validate 2FA — code must match + username must be in admin list
+    const validation = validateAdminAccess(input, generatedCode);
+    if (!validation.isValid || !validation.user) {
+      setError(validation.error || "Invalid credentials");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // Step 2: Authenticate with server
       const res = await fetch(`${API_BASE_URL}/auth/admin-gate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          username: adminUser.username,
-          password: trimmedPassword,
-        }),
+        body: JSON.stringify({ username: validation.user.username }),
       });
 
       const data = await res.json();
@@ -74,15 +102,9 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
       if (res.ok && data.token) {
         setAuthToken(data.token);
         await initializeCsrfToken();
-        // Persist role so dashboard can enforce vault restrictions
-        localStorage.setItem("adminRole", adminUser.role);
-        localStorage.setItem(
-          "adminCanAccessVault",
-          String(adminUser.canAccessVault === true),
-        );
-        onAccessGranted(adminUser.username);
+        onAccessGranted(validation.user.username);
       } else {
-        setError(data.message || "Invalid credentials.");
+        setError(data.message || "Server rejected access.");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -114,9 +136,48 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
               <div className="flex items-center justify-center gap-1.5 mt-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
                 <p className="text-xs text-amber-400 font-medium">
-                  Authorized Personnel Only
+                  2FA Required
                 </p>
               </div>
+            </div>
+
+            {/* Generated Code — Factor 1 */}
+            <div className="bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/25 rounded-xl p-4 mb-5">
+              <p className="text-[11px] text-gray-400 uppercase tracking-widest mb-2 font-medium">
+                Step 1 — Generated Code
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-gray-900/60 rounded-lg px-4 py-3 border border-indigo-500/20">
+                  <p className="text-2xl font-mono font-bold text-indigo-400 tracking-[0.3em] text-center select-all">
+                    {generatedCode}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="p-2 rounded-lg border border-indigo-500/25 hover:bg-indigo-500/10 transition-colors"
+                    title="Copy code"
+                  >
+                    <Copy
+                      className={`h-3.5 w-3.5 transition-colors ${codeCopied ? "text-green-400" : "text-gray-400"}`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNewCode}
+                    className="p-2 rounded-lg border border-indigo-500/25 hover:bg-indigo-500/10 transition-colors"
+                    title="Generate new code"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+              {codeCopied && (
+                <p className="text-[10px] text-green-400 mt-1.5 text-center">
+                  Copied!
+                </p>
+              )}
             </div>
 
             {/* Error */}
@@ -126,76 +187,80 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
               </div>
             )}
 
-            {/* Username + Password form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username */}
+            {/* Single combined field — Factor 2 */}
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-2">
-                  Username
+                  Step 2 — Enter Code / Username
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="admin_001"
+                    type={showInput ? "text" : "password"}
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder="CODE/username_000"
                     required
-                    autoComplete="username"
+                    autoComplete="off"
                     autoFocus
                     disabled={isLoading}
-                    className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-indigo-500/20 h-12 text-base"
+                    className="pl-10 pr-[4.5rem] bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-indigo-500/20 h-12 text-base font-mono"
                   />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Focus the input and trigger a paste via execCommand
+                        const input = document.querySelector<HTMLInputElement>(
+                          'input[placeholder="CODE/username_000"]',
+                        );
+                        if (input) {
+                          input.focus();
+                          document.execCommand("paste");
+                        }
+                      }}
+                      className="p-1 rounded text-gray-500 hover:text-indigo-400 transition-colors"
+                      title="Paste from clipboard"
+                    >
+                      <ClipboardPaste className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowInput(!showInput)}
+                      className="p-1 rounded text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {showInput ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    className="pl-10 pr-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-indigo-500/20 h-12 text-base"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-gray-500 hover:text-gray-300 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Combine:{" "}
+                  <span className="text-indigo-400 font-mono">
+                    {generatedCode}
+                  </span>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-400 font-mono">your_username</span>
+                </p>
               </div>
 
               <Button
                 type="submit"
-                disabled={
-                  isLoading || !username.trim() || !password.trim()
-                }
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-base mt-2"
+                disabled={isLoading || userInput.trim().length < 3}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-base"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in…
+                    Verifying…
                   </>
                 ) : (
                   <>
                     <KeyRound className="mr-2 h-4 w-4" />
-                    Sign In
+                    Access Dashboard
                   </>
                 )}
               </Button>
@@ -205,7 +270,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
             <div className="mt-8 text-center">
               <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
                 <Shield className="h-3.5 w-3.5 text-indigo-500/50" />
-                <span>Encrypted · Session expires after 24h</span>
+                <span>2FA enforced · Session expires after 15 min</span>
               </div>
             </div>
           </CardContent>

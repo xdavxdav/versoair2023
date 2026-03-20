@@ -1,16 +1,10 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   LogOut,
-  Home,
   Store,
-  Globe,
-  Info,
   Headphones,
   ShoppingBag,
   ChevronDown,
-  Calendar,
-  Lock,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -23,13 +17,22 @@ interface BlogNavbarProps {
 }
 
 const navLinks = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/", label: "Home", icon: ShoppingBag },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/businesses-directory", label: "Annuaire", icon: Store },
-  { href: "/geo-admin", label: "Geo Admin", icon: Globe },
-  { href: "/about", label: "About", icon: Info },
   { href: "/sav", label: "SAV 24/7", icon: Headphones },
 ];
+
+/* ── shared dropdown style tokens ───────────────────────────── */
+const BTN =
+  "flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium";
+const PANEL =
+  "absolute top-full bg-slate-950 overflow-hidden shadow-2xl shadow-black/60 rounded-xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
+const PANEL_OPEN = "opacity-100 !visible";
+const ITEM =
+  "block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors whitespace-nowrap";
+const ITEM_HEAD =
+  "block px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg mx-1 font-semibold transition-colors whitespace-nowrap";
 
 export default function BlogNavbar({
   isAuthenticated: isAuthProp,
@@ -38,8 +41,8 @@ export default function BlogNavbar({
   onLogin,
 }: BlogNavbarProps) {
   const { user, logout } = useAuthContext();
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  // Check both global auth and marketplace community auth (localStorage)
   const marketplaceAuth =
     localStorage.getItem("blog_community_auth") === "true";
   const marketplaceUser = localStorage.getItem("blog_community_user") || "User";
@@ -55,26 +58,31 @@ export default function BlogNavbar({
     } else if (user) {
       logout();
     }
-    // Also clear marketplace community session
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
     window.location.reload();
   };
   const [currentPath] = useLocation();
 
+  const open = (key: string) => setOpenMenu(key);
+  const close = () => setOpenMenu(null);
+
   return (
     <>
-      <nav className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-full mx-auto px-2 sm:px-4 lg:px-6 py-1.5">
-          <div className="flex items-center justify-between gap-[0.5vw]">
-            {/* Logo — Cyan glow on hover, routes to Home */}
+      <nav
+        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
+        style={{ overflow: "visible" }}
+      >
+        <div className="max-w-full mx-auto px-3 md:px-5">
+          <div className="flex items-center justify-between h-16 gap-3">
+            {/* Logo */}
             <Link href="/">
               <a className="flex-shrink-0 group relative">
-                <div className="absolute -inset-3 bg-cyan-400/0 group-hover:bg-cyan-400/50 rounded-xl blur-xl transition-all duration-500 pointer-events-none" />
+                <div className="absolute -inset-4 bg-cyan-400/0 group-hover:bg-cyan-400/40 rounded-xl blur-xl transition-all duration-500 pointer-events-none" />
                 <img
                   src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
                   alt="Verso"
-                  className="relative h-[clamp(1.8rem,4vw,3rem)] w-auto transition-all duration-300 group-hover:scale-105"
+                  className="relative h-[clamp(2.4rem,5vw,3.6rem)] w-auto transition-all duration-300 group-hover:scale-105"
                   style={{
                     filter:
                       "brightness(1.1) sepia(1) saturate(5) hue-rotate(155deg)",
@@ -83,207 +91,186 @@ export default function BlogNavbar({
               </a>
             </Link>
 
-            {/* Nav Links — always visible, viewport-proportional */}
-            <div className="flex items-center gap-[0.3vw] flex-1 justify-center min-w-0">
-              {/* Home */}
-              <Link href="/">
-                <a className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Home className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  Home
-                </a>
-              </Link>
-
-              {/* About */}
-              <Link href="/about">
-                <a className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Info className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  About
-                </a>
-              </Link>
-
-              {/* Geo Admin */}
-              <Link href="/geo-admin">
-                <a className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Globe className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  Geo Admin
-                </a>
-              </Link>
-
-              {/* Entreprises Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Store className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  Entreprises <ChevronDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
+            {/* ── Centered nav ── */}
+            <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
+              {/* Entreprises */}
+              <div
+                className="relative"
+                onMouseEnter={() => open("ent")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  <Store className="w-4 h-4" />
+                  Entreprises
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "ent" ? "rotate-180" : ""}`}
+                  />
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-cyan-900/20 rounded-xl mt-2 py-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-cyan-500/15">
-                  <div className="grid grid-cols-2 gap-0.5 px-1">
+                {/* invisible hover bridge */}
+                <div className="absolute top-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-64 ${openMenu === "ent" ? PANEL_OPEN : ""}`}
+                  style={{ marginTop: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
+                  <div className="grid grid-cols-2 gap-0.5 px-0.5">
                     <Link href="/sante">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Santé
-                      </a>
+                      <a className={ITEM}>Santé</a>
                     </Link>
                     <Link href="/finances">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Finance
-                      </a>
+                      <a className={ITEM}>Finance</a>
                     </Link>
                     <Link href="/batiment">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Bâtiment
-                      </a>
+                      <a className={ITEM}>Bâtiment</a>
                     </Link>
                     <Link href="/hotellerie">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Hôtellerie
-                      </a>
+                      <a className={ITEM}>Hôtellerie</a>
                     </Link>
                     <Link href="/automobile">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Automobile
-                      </a>
+                      <a className={ITEM}>Automobile</a>
                     </Link>
                     <Link href="/commerce">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Commerce
-                      </a>
+                      <a className={ITEM}>Commerce</a>
                     </Link>
                     <Link href="/logement">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Logement
-                      </a>
+                      <a className={ITEM}>Logement</a>
                     </Link>
                     <Link href="/divertissement">
-                      <a className="block px-3 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg transition-colors">
-                        Divertissement
-                      </a>
+                      <a className={ITEM}>Divertissement</a>
                     </Link>
                   </div>
-                  <div className="border-t border-cyan-500/10 mt-1.5 pt-1.5 px-1">
+                  <div className="border-t border-cyan-500/10 mt-1.5 pt-1 px-0.5">
                     <Link href="/businesses-directory">
-                      <a className="block px-3 py-2 text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg text-center font-medium transition-colors">
-                        Annuaire
-                      </a>
+                      <a className={ITEM_HEAD + " text-center"}>Annuaire</a>
                     </Link>
                   </div>
                 </div>
               </div>
 
-              {/* Services Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  Services <ChevronDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
+              {/* Services */}
+              <div
+                className="relative"
+                onMouseEnter={() => open("svc")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  Services
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "svc" ? "rotate-180" : ""}`}
+                  />
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-cyan-900/20 rounded-xl mt-2 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-cyan-500/15">
+                <div className="absolute top-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-52 ${openMenu === "svc" ? PANEL_OPEN : ""}`}
+                  style={{ marginTop: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/services">
-                    <a className="block px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg mx-1 font-medium transition-colors">
-                      All Services
-                    </a>
+                    <a className={ITEM_HEAD}>All Services</a>
                   </Link>
                   <Link href="/services/news">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      News & Updates
-                    </a>
+                    <a className={ITEM}>News & Updates</a>
                   </Link>
                   <Link href="/services/careers">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Careers
-                    </a>
+                    <a className={ITEM}>Careers</a>
                   </Link>
                   <Link href="/services/contractors">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Contractors
-                    </a>
+                    <a className={ITEM}>Contractors</a>
                   </Link>
                 </div>
               </div>
 
-              {/* Marketing Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  Marketing <ChevronDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
+              {/* Marketing */}
+              <div
+                className="relative"
+                onMouseEnter={() => open("mkt")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  Marketing
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "mkt" ? "rotate-180" : ""}`}
+                  />
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-cyan-900/20 rounded-xl mt-2 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-cyan-500/15">
+                <div className="absolute top-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-56 ${openMenu === "mkt" ? PANEL_OPEN : ""}`}
+                  style={{ marginTop: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/marketing">
-                    <a className="block px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg mx-1 font-medium transition-colors">
-                      Marketing Hub
-                    </a>
+                    <a className={ITEM_HEAD}>Marketing Hub</a>
                   </Link>
-                  <div className="border-t border-cyan-500/10 my-1 mx-2" />
+                  <div className="border-t border-cyan-500/10 my-1 mx-3" />
                   <Link href="/marketing/journal">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Free Ad Journal
-                    </a>
+                    <a className={ITEM}>Free Ad Journal</a>
                   </Link>
                   <Link href="/marketing/packs">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Marketing Packs
-                    </a>
+                    <a className={ITEM}>Marketing Packs</a>
                   </Link>
                   <Link href="/marketing/print">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Print Services
-                    </a>
+                    <a className={ITEM}>Print Services</a>
                   </Link>
                   <Link href="/marketing/newsletters">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      Newsletter
-                    </a>
+                    <a className={ITEM}>Newsletter</a>
                   </Link>
                 </div>
               </div>
 
-              {/* Reservations */}
-              <Link href="/reservations">
-                <a className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Calendar className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  Reservations
-                </a>
-              </Link>
-
-              {/* Marketplace */}
+              {/* Marketplace (direct link) */}
               {currentPath !== "/marketplace" && (
                 <Link href="/marketplace">
-                  <a className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                    <ShoppingBag className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
+                  <a className={BTN}>
+                    <ShoppingBag className="w-4 h-4" />
                     Marketplace
                   </a>
                 </Link>
               )}
 
-              {/* Support Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center gap-[0.3vw] px-[0.5vw] py-[0.4vh] text-[clamp(0.5rem,1.15vw,0.85rem)] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap">
-                  <Headphones className="w-[clamp(0.7rem,1.3vw,0.9rem)] h-[clamp(0.7rem,1.3vw,0.9rem)]" />
-                  Support <ChevronDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
+              {/* Support */}
+              <div
+                className="relative"
+                onMouseEnter={() => open("help")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  <Headphones className="w-4 h-4" />
+                  Support
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "help" ? "rotate-180" : ""}`}
+                  />
                 </button>
-                <div className="absolute top-full right-0 bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-cyan-900/20 rounded-xl mt-2 py-2 w-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-cyan-500/15">
+                <div className="absolute top-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} right-0 w-48 ${openMenu === "help" ? PANEL_OPEN : ""}`}
+                  style={{ marginTop: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/sav">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      SAV 24/7
-                    </a>
+                    <a className={ITEM}>SAV 24/7</a>
                   </Link>
                   <Link href="/versoai">
-                    <a className="block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors">
-                      VersoAI
-                    </a>
+                    <a className={ITEM}>VersoAI</a>
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* Auth */}
-            <div className="flex items-center gap-[0.5vw] flex-shrink-0">
+            {/* Auth section */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               {isAuthenticated && (
                 <>
-                  <div className="flex items-center gap-[0.4vw] px-[0.6vw] py-[0.4vh] bg-white/5 rounded-lg text-[clamp(0.5rem,1.1vw,0.8rem)]">
-                    <div className="w-[0.5vw] h-[0.5vw] min-w-[5px] min-h-[5px] bg-green-500 rounded-full" />
-                    <span className="text-slate-300 truncate max-w-[8vw]">{userName}</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-[13px]">
+                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                    <span className="text-slate-300 truncate max-w-[80px]">
+                      {userName}
+                    </span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-[0.3vw] px-[0.6vw] py-[0.4vh] bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[clamp(0.5rem,1.1vw,0.8rem)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[13px]"
                   >
-                    <LogOut className="w-[clamp(0.7rem,1.2vw,1rem)] h-[clamp(0.7rem,1.2vw,1rem)]" />
+                    <LogOut className="w-4 h-4" />
                     Sign Out
                   </button>
                 </>

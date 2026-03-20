@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -482,6 +482,11 @@ function AppContent() {
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
   const isContentNavPage = isContentNavPath(currentPath);
+  const { user } = useAuthContext();
+  const isAuthed =
+    !!user || localStorage.getItem("blog_community_auth") === "true";
+  const showContentNav = isContentNavPage && isAuthed;
+  const isAuthPage = currentPath.startsWith("/auth");
   // Track when loading just finished so we can apply page-enter animation
   const [pageEnter, setPageEnter] = useState(false);
   const wasLoading = useRef(false);
@@ -565,6 +570,7 @@ function AppContent() {
         <div
           ref={headerRef}
           className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
+          style={{ overflow: "visible" }}
         >
           {/* Top Banner */}
           <div
@@ -633,9 +639,10 @@ function AppContent() {
               </div>
             )}
 
-          {/* Blog Navbar — sits right under the amber banner on /blog and /marketplace */}
+          {/* Blog Navbar — only when ContentNav (insta dock) is NOT active */}
           {(currentPath === "/blog" || currentPath === "/marketplace") &&
-            !marketplaceModalOpen && <BlogNavbar />}
+            !marketplaceModalOpen &&
+            !showContentNav && <BlogNavbar />}
         </div>
       )}
       {/* Spacer for fixed header */}
@@ -643,21 +650,25 @@ function AppContent() {
 
       <PullToRefresh />
       <MobileMenuBubble />
-      {isContentNavPage && <ContentNav />}
-      <div
-        className={`hidden md:block transition-opacity duration-300 ${
-          isLoading && !isFadingOut
-            ? "opacity-0 pointer-events-none"
-            : "opacity-100"
-        }`}
-      >
-        <Navbar
-          onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
-          onLocationPanelToggle={() => setIsLocationPanelOpen((prev) => !prev)}
-          isMusicPortalOpen={isMusicPortalOpen}
-          isLocationPanelOpen={isLocationPanelOpen}
-        />
-      </div>
+      {showContentNav && <ContentNav />}
+      {!isAuthPage && !showContentNav && (
+        <div
+          className={`hidden md:block transition-opacity duration-300 ${
+            isLoading && !isFadingOut
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100"
+          }`}
+        >
+          <Navbar
+            onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
+            onLocationPanelToggle={() =>
+              setIsLocationPanelOpen((prev) => !prev)
+            }
+            isMusicPortalOpen={isMusicPortalOpen}
+            isLocationPanelOpen={isLocationPanelOpen}
+          />
+        </div>
+      )}
 
       {/* Side Panels */}
       <LocationPanel
@@ -678,7 +689,7 @@ function AppContent() {
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${isContentNavPage ? "pb-[80px]" : ""}`}
+        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""}`}
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>

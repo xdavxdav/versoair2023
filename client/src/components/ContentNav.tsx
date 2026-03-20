@@ -521,70 +521,61 @@ export default function ContentNav() {
               "0 24px 64px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(255,255,255,0.04) inset, 0 0 30px rgba(34,211,238,0.04)",
           }}
         >
-          <Link href="/">
-            <a className="flex-shrink-0 group relative mr-1 p-1">
-              <div className="absolute -inset-2 rounded-full bg-cyan-400/0 group-hover:bg-cyan-400/10 blur-lg transition-all duration-500 pointer-events-none" />
-              <img
-                src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
-                alt="Verso Air"
-                className="relative h-6 w-auto transition-all duration-300 group-hover:scale-110"
+          {/* ── Home pill with tap/hold (replaces logo) ── */}
+          <div className="relative flex-shrink-0">
+            {isHolding && (
+              <svg
+                className="absolute pointer-events-none z-10"
                 style={{
-                  filter:
-                    "brightness(1.2) sepia(1) saturate(6) hue-rotate(155deg)",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%,-50%)",
+                  width: "40px",
+                  height: "40px",
                 }}
-              />
-            </a>
-          </Link>
+                viewBox="0 0 40 40"
+              >
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="17"
+                  fill="none"
+                  stroke="rgba(239,68,68,0.15)"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="17"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 17}`}
+                  strokeDashoffset={`${2 * Math.PI * 17 * (1 - holdProgress / 100)}`}
+                  transform="rotate(-90 20 20)"
+                />
+              </svg>
+            )}
+            <motion.button
+              onClick={handleHomeTap}
+              onPointerDown={handlePressStart}
+              onPointerUp={handlePressEnd}
+              onPointerLeave={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onContextMenu={(e) => e.preventDefault()}
+              className={location === "/" ? ACTIVE : BASE}
+            >
+              <Home className="h-3.5 w-3.5" />
+              Home
+            </motion.button>
+          </div>
 
           <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
 
-          {PILLS.map(({ href, label, Icon, match }) =>
-            href === "/" ? (
-              <div key="/" className="relative flex-shrink-0">
-                {isHolding && (
-                  <svg
-                    className="absolute pointer-events-none z-10"
-                    style={{
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%,-50%)",
-                      width: "40px",
-                      height: "40px",
-                    }}
-                    viewBox="0 0 40 40"
-                  >
-                    <circle
-                      cx="20" cy="20" r="17"
-                      fill="none"
-                      stroke="rgba(239,68,68,0.15)"
-                      strokeWidth="1.5"
-                    />
-                    <circle
-                      cx="20" cy="20" r="17"
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 17}`}
-                      strokeDashoffset={`${2 * Math.PI * 17 * (1 - holdProgress / 100)}`}
-                      transform="rotate(-90 20 20)"
-                    />
-                  </svg>
-                )}
-                <motion.button
-                  onClick={handleHomeTap}
-                  onPointerDown={handlePressStart}
-                  onPointerUp={handlePressEnd}
-                  onPointerLeave={handlePressEnd}
-                  onPointerCancel={handlePressEnd}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className={match(location) ? ACTIVE : BASE}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </motion.button>
-              </div>
-            ) : (
+          {/* ── Direct pills (Blog, Shop, Sell) ── */}
+          {PILLS.filter((p) => p.href !== "/").map(
+            ({ href, label, Icon, match }) => (
               <Link key={href} href={href}>
                 <a className={match(location) ? ACTIVE : BASE}>
                   <Icon className="h-3.5 w-3.5" />
@@ -596,7 +587,8 @@ export default function ContentNav() {
 
           <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
 
-          {GROUPS.map((group) => {
+          {/* ── Dropdown groups (Discover, Create, Services) ── */}
+          {GROUPS.filter((g) => g.key !== "help").map((group) => {
             const active = group.match(location);
             const isOpen = openGroup === group.key;
             return (
@@ -654,6 +646,60 @@ export default function ContentNav() {
             <Search className="h-3.5 w-3.5" />
             Search
           </button>
+
+          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+
+          {/* ── Help dropdown (always visible at corner) ── */}
+          {(() => {
+            const helpGroup = GROUPS.find((g) => g.key === "help")!;
+            const helpActive = helpGroup.match(location);
+            const helpOpen = openGroup === "help";
+            return (
+              <div
+                className="relative flex-shrink-0"
+                onMouseEnter={() => setOpenGroup("help")}
+                onMouseLeave={() => setOpenGroup(null)}
+              >
+                <button className={helpActive || helpOpen ? ACTIVE : BASE}>
+                  <LifeBuoy className="h-3.5 w-3.5" />
+                  Help
+                  <ChevronDown
+                    className={`h-3 w-3 opacity-50 transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <AnimatePresence>
+                  {helpOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                      transition={{ duration: 0.12, ease: "easeOut" }}
+                      className="absolute bottom-full right-0 mb-2.5 w-44"
+                      style={{
+                        background: "rgba(8,5,18,0.98)",
+                        backdropFilter: "blur(28px)",
+                        border: "1px solid rgba(34,211,238,0.1)",
+                        borderRadius: "16px",
+                        boxShadow:
+                          "0 -8px 40px rgba(0,0,0,0.7), 0 0 20px rgba(34,211,238,0.05)",
+                        padding: "6px",
+                        zIndex: 60,
+                      }}
+                    >
+                      <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent mb-1" />
+                      {helpGroup.items.map(({ href, label }) => (
+                        <Link key={href} href={href}>
+                          <a className="flex items-center px-3 py-2 text-[11px] text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/[0.07] rounded-xl transition-all duration-150">
+                            {label}
+                          </a>
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })()}
 
           <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
 
@@ -799,13 +845,17 @@ export default function ContentNav() {
                         viewBox="0 0 54 54"
                       >
                         <circle
-                          cx="27" cy="27" r="23"
+                          cx="27"
+                          cy="27"
+                          r="23"
                           fill="none"
                           stroke="rgba(239,68,68,0.13)"
                           strokeWidth="1.5"
                         />
                         <circle
-                          cx="27" cy="27" r="23"
+                          cx="27"
+                          cy="27"
+                          r="23"
                           fill="none"
                           stroke="#ef4444"
                           strokeWidth="1.5"

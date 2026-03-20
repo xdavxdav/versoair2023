@@ -122,7 +122,7 @@ export default function GeoAdminAuthGate({
         setIsSuccess(true);
         onSignInSuccess(username.toLowerCase());
       } else {
-        setError(data.message || "Invalid username. Use format: username_xxx");
+        setError(data.message || "Invalid credentials.");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -199,14 +199,14 @@ export default function GeoAdminAuthGate({
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center relative overflow-hidden">
         {/* Background orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
         <div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"
           style={{ animationDelay: "1s" }}
         />
 
-        <div className="relative z-10 w-full max-w-md mx-4">
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl">
+        <div className="relative z-[9999] w-full max-w-md mx-4">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl relative z-[9999]">
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
@@ -439,7 +439,7 @@ export default function GeoAdminAuthGate({
       {/* Background orbs */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
       <div
-        className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"
+        className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"
         style={{ animationDelay: "1s" }}
       />
 
@@ -658,16 +658,9 @@ export default function GeoAdminAuthGate({
             {/* GEO ADMIN SIGN-IN FORM */}
             {mode === "geoadmin" && (
               <form onSubmit={handleGeoAdminSignIn} className="space-y-4">
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
-                  <span className="font-medium">Geo Admin Access</span>
-                  <p className="text-emerald-300/80 mt-1">
-                    Enter your assigned admin username
-                  </p>
-                </div>
-
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Username
+                    Admin Username
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -675,7 +668,7 @@ export default function GeoAdminAuthGate({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="username_xxx"
+                      placeholder="Enter admin username"
                       required
                       className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />

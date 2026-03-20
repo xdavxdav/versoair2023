@@ -6,7 +6,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
-import { Loader2, TrendingUp, Lock, Zap, CheckCircle } from "lucide-react";
+import { Loader2, TrendingUp, Lock, Zap, CheckCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -78,13 +78,16 @@ export default function GeoAdminPage() {
     return localStorage.getItem("geoadmin_username") || null;
   });
 
-  // Best available display name: subscription user > localStorage username > fallback
+  // Best available display name: gate admin name > subscription user > localStorage username > fallback
   const displayName =
+    gateAdminUser?.name ||
     user?.name ||
     user?.username ||
     user?.email?.split("@")[0] ||
-    username ||
     null;
+
+  // Role label for UI display
+  const displayRole = gateAdminUser?.role || (user?.role === "superuser" ? "SuperAdmin" : user?.role === "admin" ? "Admin" : null);
 
   // Maintain session across route changes - only restore if geoadmin_session is active
   useEffect(() => {
@@ -340,7 +343,7 @@ export default function GeoAdminPage() {
         </div>
 
         {/* Limited Geo Admin view */}
-        <GeoAdmin username={displayName || username} tier={tier} />
+        <GeoAdmin username={displayName || username} tier={tier} role={displayRole} />
       </div>
     );
   }
@@ -379,7 +382,7 @@ export default function GeoAdminPage() {
               {sessionTimeLeft > 0 ? (
                 <>
                   <CheckCircle className="inline-block h-3.5 w-3.5 mr-1.5" />
-                  Connected as Geo Admin{displayName ? ` (${displayName})` : ""}
+                  Connected as {isSuperuser ? "SuperAdmin" : "Geo Admin"}{displayName ? ` — ${displayName}` : ""}{gateAdminUser?.name ? ` (${gateAdminUser.name})` : ""}
                 </>
               ) : (
                 <>
@@ -407,12 +410,22 @@ export default function GeoAdminPage() {
 
       {/* Role / tier indicator */}
       {isGeoAdmin ? (
-        <div className="bg-indigo-500/10 border-b border-indigo-500/20">
+        <div className={`${isSuperuser ? "bg-amber-500/10 border-b border-amber-500/20" : "bg-indigo-500/10 border-b border-indigo-500/20"}`}>
           <div className="max-w-[95vw] mx-auto px-4 py-2">
-            <p className="text-indigo-300 text-xs sm:text-sm">
-              <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
-              Geo Admin — full access granted
-              {displayName ? ` (${displayName})` : ""}
+            <p className={`${isSuperuser ? "text-amber-300" : "text-indigo-300"} text-xs sm:text-sm`}>
+              {isSuperuser ? (
+                <>
+                  <Shield className="inline-block h-4 w-4 mr-1.5" />
+                  SuperAdmin — unrestricted access
+                  {gateAdminUser?.name ? ` (${gateAdminUser.name})` : displayName ? ` (${displayName})` : ""}
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
+                  Geo Admin — full access granted
+                  {displayName ? ` (${displayName})` : ""}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -427,7 +440,7 @@ export default function GeoAdminPage() {
           </div>
         </div>
       ) : null}
-      <GeoAdmin username={displayName || username} tier={tier} />
+      <GeoAdmin username={displayName || username} tier={tier} role={displayRole} />
     </div>
   );
 }
