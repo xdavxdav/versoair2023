@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Zap, Search, Filter } from "lucide-react";
 import { Link } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
 import UserProfileCard from "@/components/UserProfileCard";
@@ -118,7 +119,8 @@ const generateMockUsers = (count: number) => {
 };
 
 export default function BlogPage() {
-  // Authentication state — check real auth on mount, persist display name in localStorage
+  // ═══ Unified auth: AuthContext (main/artist/geo-admin) OR community session ═══
+  const { user: globalUser } = useAuthContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem("blog_community_user") || "User";
@@ -127,8 +129,21 @@ export default function BlogPage() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  // Check real auth status on mount
+  // Check auth on mount — global AuthContext first, then community session
   useEffect(() => {
+    // If already authed via main auth / artist / geo-admin → skip gate
+    if (globalUser) {
+      setIsAuthenticated(true);
+      setUserName(globalUser.name || globalUser.email?.split("@")[0] || "User");
+      // Also persist so marketplace picks it up
+      localStorage.setItem("blog_community_auth", "true");
+      localStorage.setItem(
+        "blog_community_user",
+        globalUser.name || globalUser.email?.split("@")[0] || "User",
+      );
+      return;
+    }
+    // Fallback: check community session via server
     const checkAuth = async () => {
       try {
         const { checkAuth: authCheck } = await import("@/lib/auth");
@@ -140,13 +155,14 @@ export default function BlogPage() {
             user.email?.split("@")[0] ||
             "User";
           setUserName(displayName);
+          localStorage.setItem("blog_community_auth", "true");
         }
       } catch {
         // Not authenticated
       }
     };
     checkAuth();
-  }, []);
+  }, [globalUser]);
 
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -205,7 +221,6 @@ export default function BlogPage() {
 
         // Persist display name for UI
         localStorage.setItem("blog_community_user", name);
-
       } else {
         setAuthError(data.message || "Authentication failed");
       }
@@ -276,11 +291,9 @@ export default function BlogPage() {
     setConnectedUsers((prev) => [...prev, userId]);
   };
 
-  const handleMessageUser = (userId: number) => {
-  };
+  const handleMessageUser = (userId: number) => {};
 
-  const handleShareUser = (userId: number) => {
-  };
+  const handleShareUser = (userId: number) => {};
 
   const handleCreatePost = (postData: {
     content: string;

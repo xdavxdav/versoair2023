@@ -65,7 +65,6 @@ export const users = pgTable("users", {
   // Security — password reset
   passwordResetToken: text("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
-  lastPasswordResetAt: timestamp("last_password_reset_at"),  // 5-min cooldown enforcement
 
   // Email verification
   verifiedAt: timestamp("verified_at"),

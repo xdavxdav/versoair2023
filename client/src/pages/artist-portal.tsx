@@ -3461,7 +3461,7 @@ export default function ArtistPortal() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/*"
+                accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/aiff,audio/x-aiff,audio/ogg,audio/mp4,audio/x-m4a"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];

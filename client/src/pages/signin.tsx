@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { toast } from "@/hooks/use-toast";
 import {
   User,
   Lock,
@@ -231,6 +232,10 @@ export default function SignIn() {
           role: data.user.role,
         });
         localStorage.setItem("signin_timestamp", new Date().toISOString());
+        toast({
+          title: "✅ Signed in",
+          description: `Welcome back, ${data.user.name || data.user.email}!`,
+        });
 
         const redirectTarget = getQueryParam("redirect");
         if (redirectTarget && redirectTarget.startsWith("/")) {
@@ -301,6 +306,10 @@ export default function SignIn() {
           role: data.user.role,
         });
         localStorage.setItem("signin_timestamp", new Date().toISOString());
+        toast({
+          title: "✅ Account created",
+          description: `Welcome, ${data.user.name || data.user.email}!`,
+        });
         const redirectTarget = getQueryParam("redirect");
         if (redirectTarget && redirectTarget.startsWith("/")) {
           navigate(redirectTarget);

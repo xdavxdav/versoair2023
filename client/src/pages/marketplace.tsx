@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Search,
   Heart,
@@ -148,8 +149,8 @@ const conditionStyle = (c: string) => {
 // MARKETPLACE PAGE
 // ═══════════════════════════════════════════════════
 export default function MarketplacePage() {
-  // ═══ AUTH STATE (Blog Community gate) ═══
-  // Reads localStorage so already-connected users skip the gate
+  // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
+  const { user: globalUser } = useAuthContext();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("blog_community_auth") === "true";
   });
@@ -159,7 +160,18 @@ export default function MarketplacePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  // Auth handlers — same flow as Blog community
+  // Auto-auth if user is already signed in via any portal
+  useEffect(() => {
+    if (globalUser && !isAuthenticated) {
+      const name = globalUser.name || globalUser.email?.split("@")[0] || "User";
+      setIsAuthenticated(true);
+      setUserName(name);
+      localStorage.setItem("blog_community_auth", "true");
+      localStorage.setItem("blog_community_user", name);
+    }
+  }, [globalUser]);
+
+  // Auth handlers — real community auth endpoints (same as Blog)
   const handleAuthenticate = async (
     email: string,
     password: string,
@@ -167,17 +179,42 @@ export default function MarketplacePage() {
   ) => {
     setIsAuthLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const name =
-        email.split("@")[0].charAt(0).toUpperCase() +
-        email.split("@")[0].slice(1);
-      setUserName(name);
-      setIsAuthenticated(true);
-      setIsAuthModalOpen(false);
+      const endpoint = isSignUp
+        ? "/auth/community/register"
+        : "/auth/community/login";
+      const body: Record<string, any> = { email, password };
+      if (isSignUp) {
+        body.displayName =
+          email.split("@")[0].charAt(0).toUpperCase() +
+          email.split("@")[0].slice(1);
+      }
 
-      // Persist blog community session
-      localStorage.setItem("blog_community_auth", "true");
-      localStorage.setItem("blog_community_user", name);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.token) {
+          const { setAuthToken } = await import("@/lib/auth");
+          setAuthToken(data.token);
+        }
+        const name =
+          data.user?.displayName ||
+          email.split("@")[0].charAt(0).toUpperCase() +
+            email.split("@")[0].slice(1);
+        setUserName(name);
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+      } else {
+        console.error("Auth failed:", data.message);
+      }
     } catch (error) {
       console.error("Auth error:", error);
     } finally {
@@ -185,10 +222,15 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import("@/lib/auth");
+      await logout();
+    } catch {
+      /* logout anyway */
+    }
     setIsAuthenticated(false);
     setUserName("User");
-    // Clear persisted blog community session
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
   };
