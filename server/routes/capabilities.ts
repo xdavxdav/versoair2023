@@ -14,6 +14,7 @@ import { db } from "../db";
 import * as schema from "@shared/schema";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { generateArtistCode } from "../utils/artist-code";
 
 const router = Router();
 
@@ -251,12 +252,32 @@ router.post(
       }
     }
 
-    // Get user email for payout
+    // Get user email + current role for payout and role switching
     const [userRow] = await db
-      .select({ email: schema.users.email })
+      .select({ email: schema.users.email, role: schema.users.role })
       .from(schema.users)
       .where(eq(schema.users.id, userId))
       .limit(1);
+
+    // Determine if this is a staff user (for special artist code)
+    const staffRoles = ["superuser", "admin", "moderator"];
+    const isStaff = staffRoles.includes((userRow?.role || "").toLowerCase());
+    const gateUser = isStaff
+      ? await db
+          .select({ gateUsername: schema.users.gateUsername })
+          .from(schema.users)
+          .where(eq(schema.users.id, userId))
+          .limit(1)
+          .then((r) => r[0]?.gateUsername || undefined)
+      : undefined;
+
+    // Generate artist code
+    const artistCode = generateArtistCode(
+      stageName,
+      "discovery",
+      new Date(),
+      gateUser || undefined,
+    );
 
     // Create artist profile
     await db.insert(schema.artistProfiles).values({
@@ -270,6 +291,10 @@ router.post(
       instagramHandle: instagramHandle || null,
       leagueId: leagueId || null,
       payoutEmail: userRow?.email || null,
+      artistCode,
+      division: "discovery",
+      evaluationStatus: "pending",
+      contractAccess: "none",
     });
 
     // Update user role to artist and add portal access
@@ -278,9 +303,14 @@ router.post(
       ? [...new Set([...capabilities.portals, "artist"])]
       : ["general", "artist"];
 
+    // Save previous role for switching back, then update to artist
     await db
       .update(schema.users)
-      .set({ role: "artist", portalAccess: newPortals.sort() })
+      .set({
+        previousRole: userRow?.role || "user",
+        role: "artist",
+        portalAccess: newPortals.sort(),
+      })
       .where(eq(schema.users.id, userId));
 
     console.log(
@@ -292,6 +322,76 @@ router.post(
       message:
         "Artist profile created! You now have access to the Artist Portal.",
       portals: newPortals.sort(),
+    });
+  }),
+);
+
+// ─── POST /api/user/restore-staff-role ───────────────────────────────────────
+// Restores a staff member's original role after they switched to artist mode.
+// Only works if previousRole was saved during become-artist.
+
+router.post(
+  "/restore-staff-role",
+  requireAuth(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = Number(req.user!.userId);
+
+    // Get current user data
+    const [userRow] = await db
+      .select({
+        role: schema.users.role,
+        previousRole: schema.users.previousRole,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (!userRow) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (!userRow.previousRole) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "No previous staff role to restore. You were not a staff member before.",
+      });
+    }
+
+    const validStaffRoles = ["superuser", "admin", "moderator"];
+    if (!validStaffRoles.includes(userRow.previousRole)) {
+      return res.status(400).json({
+        success: false,
+        message: "Previous role is not a staff role. Cannot restore.",
+      });
+    }
+
+    // Restore role and clear previousRole
+    const capabilities = await computeUserCapabilities(userId);
+    const portals = capabilities
+      ? [...new Set([...capabilities.portals, "artist", "geo-admin"])]
+      : ["general", "artist", "geo-admin"];
+
+    await db
+      .update(schema.users)
+      .set({
+        role: userRow.previousRole,
+        previousRole: null,
+        portalAccess: portals.sort(),
+      })
+      .where(eq(schema.users.id, userId));
+
+    console.log(
+      `[CAPABILITIES] User ${userId} restored staff role: ${userRow.previousRole}`,
+    );
+
+    res.json({
+      success: true,
+      message: `Role restored to ${userRow.previousRole}. Welcome back to staff mode.`,
+      role: userRow.previousRole,
+      portals: portals.sort(),
     });
   }),
 );

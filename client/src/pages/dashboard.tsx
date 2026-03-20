@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -742,22 +742,11 @@ export default function UserDashboard() {
     retry: 2,
   });
 
-  // ── Role-based redirect: superusers & admins get their own dashboards ──
-  // Skip redirect if user intentionally navigated here (e.g. from vault or geo-admin)
-  const [, navigateTo] = useLocation();
+  // ── Navigation context (used for "Back to Geo Admin" button etc.) ──
   const fromParam = new URLSearchParams(window.location.search).get("from");
   const cameFromGeoAdmin =
     fromParam === "geoadmin" || fromParam === "geo-admin";
-  useEffect(() => {
-    if (!userSession?.user) return;
-    if (fromParam === "sv" || fromParam === "vault" || cameFromGeoAdmin) return; // intentional nav — stay
-    const role = (userSession.user.role || "user").toLowerCase();
-    if (role === "superuser") {
-      navigateTo("/sys/0x7f3a9c");
-    } else if (role === "admin" || role === "moderator") {
-      navigateTo("/geo-admin/dashboard");
-    }
-  }, [userSession, navigateTo]);
+  // Everyone (including superadmin) stays on /dashboard — no redirect
 
   // ── Derived state ──
   const isLoggedIn = !!userSession?.user;
@@ -2269,8 +2258,18 @@ export default function UserDashboard() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-slate-500">Role</span>
-                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                          SUPERUSER
+                        <span
+                          className={`text-xs font-mono px-2 py-0.5 rounded-full border ${
+                            userRole === "superuser"
+                              ? "bg-red-500/20 text-red-400 border-red-500/30"
+                              : userRole === "admin"
+                                ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                                : userRole === "moderator"
+                                  ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                                  : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                          }`}
+                        >
+                          {userRole.toUpperCase()}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">

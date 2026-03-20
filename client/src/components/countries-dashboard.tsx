@@ -1546,7 +1546,9 @@ export default function DatabaseExpert({
                       <div className="text-sm font-medium text-slate-200">
                         {username || "User"}
                       </div>
-                      <div className="text-xs text-emerald-400/80">{role || "Admin Access"}</div>
+                      <div className="text-xs text-emerald-400/80">
+                        {role || "Admin Access"}
+                      </div>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -1574,16 +1576,6 @@ export default function DatabaseExpert({
                     >
                       <Globe className="h-4 w-4 mr-2" />
                       <span>📺 Annuaire TV</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/"
-                      className="cursor-pointer text-slate-300 flex items-center"
-                    >
-                      <Home className="h-4 w-4 mr-2" />
-                      <span>Accueil</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />

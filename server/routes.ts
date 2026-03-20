@@ -26,6 +26,7 @@ import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
 import capabilitiesRouter from "./routes/capabilities";
+import evaluationsRouter from "./routes/evaluations";
 import marketingRouter from "./routes/marketing";
 import userHistoryRouter from "./routes/user-history";
 import { requireAuth } from "./middleware/auth";
@@ -124,12 +125,10 @@ export async function registerRoutes(app: Express) {
     try {
       const { name, email, phone, subject, message } = req.body;
       if (!name || !email || !subject || !message) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Name, email, subject, and message are required.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Name, email, subject, and message are required.",
+        });
       }
       // Store in audit_logs for tracking
       try {
@@ -184,12 +183,10 @@ export async function registerRoutes(app: Express) {
         message: "Your message has been sent. We'll get back to you soon!",
       });
     } catch (err: any) {
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Failed to send message. Please try again later.",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Failed to send message. Please try again later.",
+      });
     }
   });
 
@@ -215,6 +212,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/home", homeStatsRouter);
   app.use("/api/request", submissionRequestsRouter);
   app.use("/api/user", capabilitiesRouter);
+  app.use("/api", evaluationsRouter);
 
   // Register marketing platform routes (journal, packs, print, cart, orders, newsletters)
   app.use("/api/marketing", marketingRouter);

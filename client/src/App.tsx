@@ -354,7 +354,7 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdminDashboard}
-            roles={["admin", "superuser"]}
+            roles={["admin", "superuser", "moderator"]}
           />
         )}
       </Route>
@@ -363,7 +363,12 @@ function Router() {
           🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
           ═══════════════════════════════════════════════ */}
       <Route path="/dashboard">
-        {() => <ProtectedRoute component={Dashboard} roles={["admin"]} />}
+        {() => (
+          <ProtectedRoute
+            component={Dashboard}
+            roles={["admin", "superuser", "moderator"]}
+          />
+        )}
       </Route>
       <Route path="/admin/database">
         {() => (

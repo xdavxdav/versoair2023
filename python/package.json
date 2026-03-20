@@ -1,0 +1,12 @@
+{
+  "name": "verso-artist-ml",
+  "version": "1.0.0",
+  "description": "Adaptive artist promotion threshold engine for Verso Air",
+  "scripts": {
+    "install": "pip install -r requirements.txt",
+    "thresholds": "python threshold_engine.py",
+    "promote": "python promotion_runner.py",
+    "anomalies": "python anomaly_detector.py",
+    "api": "uvicorn api:app --host 0.0.0.0 --port 8001 --reload"
+  }
+}
