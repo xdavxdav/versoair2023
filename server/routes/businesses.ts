@@ -505,6 +505,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
       longitude,
       countryCode,
       cityName,
+      regionName,
+      businessType,
       tags = [],
       isActive = true,
     } = req.body;
@@ -519,8 +521,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
     const result = await pool.query(
       `
       INSERT INTO businesses 
-      (name, category_id, description, location, address, phone, email, latitude, longitude, country_code, city_name, tags, is_active, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+      (name, category_id, description, location, address, phone, email, latitude, longitude, country_code, city_name, business_type, tags, is_active, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
       RETURNING *
     `,
       [
@@ -535,6 +537,7 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
         longitude || null,
         countryCode || null,
         cityName || null,
+        businessType || null,
         JSON.stringify(tags),
         isActive,
       ],
@@ -907,6 +910,7 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
       longitude,
       countryCode,
       cityName,
+      businessType,
       tags = [],
       username, // the geo-admin user who submitted
       userId, // the geo-admin user id
@@ -923,10 +927,10 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
     const insertResult = await pool.query(
       `INSERT INTO businesses
          (name, category_id, description, location, address, phone, email,
-          latitude, longitude, country_code, city_name, tags, is_active,
+          latitude, longitude, country_code, city_name, business_type, tags, is_active,
           approval_status, submitted_by, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,false,
-                 'pending',$13,NOW(),NOW())
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,false,
+                 'pending',$14,NOW(),NOW())
          RETURNING *`,
       [
         name,
@@ -940,6 +944,7 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
         longitude || null,
         countryCode || null,
         cityName || null,
+        businessType || null,
         JSON.stringify(tags),
         userId || null,
       ],

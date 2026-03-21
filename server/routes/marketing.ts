@@ -1247,12 +1247,16 @@ router.post("/newsletters/subscribe", async (req: Request, res: Response) => {
         .json({ success: false, error: "Email is required" });
     }
 
+    // Generate a unique unsubscribe token
+    const crypto = await import("crypto");
+    const unsubscribeToken = crypto.randomUUID();
+
     const result = await pool.query(
-      `INSERT INTO newsletter_subscribers (email, name, is_active)
-       VALUES ($1, $2, true)
+      `INSERT INTO newsletter_subscribers (email, name, is_active, unsubscribe_token)
+       VALUES ($1, $2, true, $3)
        ON CONFLICT (email) DO UPDATE SET is_active = true, name = COALESCE($2, newsletter_subscribers.name)
        RETURNING *`,
-      [email, name || null],
+      [email, name || null, unsubscribeToken],
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });

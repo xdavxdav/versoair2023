@@ -2,9 +2,10 @@ import { Router } from "express";
 import { db } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
-import { users, auditLogs } from "../../../../shared/schema";
+import { users, auditLogs, artistProfiles } from "../../../../shared/schema";
 import { eq, ilike, and, count, desc, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { generateArtistCode } from "../../../utils/artist-code";
 
 const router = Router();
 
@@ -115,6 +116,12 @@ router.post(
       isVerified,
       subscriptionTier,
       portalAccess,
+      // Artist-specific fields (when role === "artist")
+      stageName,
+      division = "discovery",
+      genre,
+      country,
+      bio,
     } = req.body;
 
     // Validate required fields
@@ -125,6 +132,18 @@ router.post(
         error: {
           code: "VALIDATION_ERROR",
           message: "Username, email, and password are required",
+        },
+      });
+    }
+
+    // Artist requires a stage name
+    if (role === "artist" && !stageName) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Stage name is required when creating an artist",
         },
       });
     }
@@ -222,14 +241,65 @@ router.post(
       })
       .catch(() => null);
 
+    // ── If artist, auto-generate code and create artist profile ──
+    let artistCode: string | undefined;
+    if (role === "artist" && stageName) {
+      try {
+        artistCode = generateArtistCode(stageName, division || "discovery");
+
+        await db.insert(artistProfiles).values({
+          userId: user.id,
+          stageName,
+          division: division || "discovery",
+          artistCode,
+          genre: genre && Array.isArray(genre) ? genre : [],
+          country: country || null,
+          bio: bio || null,
+          payoutEmail: email.toLowerCase(),
+          evaluationStatus: "pending",
+          contractAccess: "none",
+        } as any);
+      } catch (e) {
+        console.warn("[ADMIN] Could not create artist profile:", e);
+        // User was still created — profile can be added later
+      }
+    }
+
     res.status(201).json({
       success: true,
       status: 201,
-      data: user,
+      data: {
+        ...user,
+        ...(artistCode
+          ? { artistCode, stageName, division: division || "discovery" }
+          : {}),
+      },
       metadata: {
         timestamp: new Date().toISOString(),
       },
     });
+  }),
+);
+
+/**
+ * GET /api/v1/admin/users/artist-code-preview
+ * Preview what artist code would be generated for a stage name + division
+ * (No DB write — purely deterministic preview)
+ * NOTE: This MUST be defined before /:id to prevent Express matching "artist-code-preview" as an :id param
+ */
+router.get(
+  "/artist-code-preview",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req, res) => {
+    const { stageName, division = "discovery" } = req.query;
+    if (!stageName || typeof stageName !== "string") {
+      return res.status(400).json({
+        success: false,
+        error: { message: "stageName query param is required" },
+      });
+    }
+    const code = generateArtistCode(stageName, division as string);
+    res.json({ success: true, artistCode: code, stageName, division });
   }),
 );
 

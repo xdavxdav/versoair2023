@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { db } from "../db";
 import {
   businessCategories,
@@ -10,13 +10,65 @@ import {
   paymentCardTypes,
   businesses,
   users,
+  auditLogs,
 } from "../../shared/schema";
 import { eq, like, count, desc, sql } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
+import { requireAuth } from "../middleware/auth";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 const router = Router();
+
+// ═══════════════════════════════════════════════
+// 🔒 All routes require at least admin role
+// ═══════════════════════════════════════════════
+router.use(requireAuth(["admin", "superuser"]));
+
+// Helper: log every mutation to audit_logs
+async function auditLog(req: Request, action: string, entityType: string, entityId: string | number, changes?: any) {
+  try {
+    await db.insert(auditLogs).values({
+      userId: req.user?.userId ? parseInt(req.user.userId) : undefined,
+      action,
+      entityType,
+      entityId: String(entityId),
+      changes: changes || {},
+    });
+  } catch (e) {
+    console.warn("[AUDIT] Could not log:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Zod schemas for input validation
+// ═══════════════════════════════════════════════
+const categorySchema = z.object({
+  name: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+});
+const countrySchema = z.object({
+  name: z.string().min(1).max(200),
+  code: z.string().min(2).max(10),
+});
+const regionSchema = z.object({
+  name: z.string().min(1).max(200),
+  countryId: z.number().int().positive(),
+});
+const citySchema = z.object({
+  name: z.string().min(1).max(200),
+  regionId: z.number().int().positive(),
+});
+const contractorSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  company: z.string().max(200).optional(),
+  specialty: z.string().max(200).optional(),
+  phone: z.string().max(50).optional(),
+  email: z.string().email().optional(),
+}).passthrough();
 
 // =======================
 // CATEGORIES
@@ -33,11 +85,14 @@ router.get("/categories", async (req, res) => {
 
 router.post("/categories", async (req, res) => {
   try {
-    const { name, slug, description } = req.body;
+    const parsed = categorySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    const { name, slug, description } = parsed.data;
     const result = await db
       .insert(businessCategories)
       .values({ name, slug, description })
       .returning();
+    await auditLog(req, "CREATE", "categories", result[0].id, { name });
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -47,11 +102,14 @@ router.post("/categories", async (req, res) => {
 router.put("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const parsed = categorySchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(businessCategories)
-      .set(req.body)
+      .set(parsed.data)
       .where(eq(businessCategories.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "categories", id, parsed.data);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -64,6 +122,7 @@ router.delete("/categories/:id", async (req, res) => {
     await db
       .delete(businessCategories)
       .where(eq(businessCategories.id, parseInt(id)));
+    await auditLog(req, "DELETE", "categories", id);
     res.status(204).send();
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -85,11 +144,14 @@ router.get("/countries", async (req, res) => {
 
 router.post("/countries", async (req, res) => {
   try {
-    const { name, code } = req.body;
+    const parsed = countrySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    const { name, code } = parsed.data;
     const result = await db
       .insert(countries)
       .values({ name, code })
       .returning();
+    await auditLog(req, "CREATE", "countries", result[0].id, { name, code });
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -99,11 +161,14 @@ router.post("/countries", async (req, res) => {
 router.put("/countries/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const parsed = countrySchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(countries)
-      .set(req.body)
+      .set(parsed.data)
       .where(eq(countries.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "countries", id, parsed.data);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -146,11 +211,14 @@ router.get("/regions", async (req, res) => {
 
 router.post("/regions", async (req, res) => {
   try {
-    const { name, countryId } = req.body;
+    const parsed = regionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    const { name, countryId } = parsed.data;
     const result = await db
       .insert(regions)
       .values({ name, countryId })
       .returning();
+    await auditLog(req, "CREATE", "regions", result[0].id, { name, countryId });
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -160,11 +228,14 @@ router.post("/regions", async (req, res) => {
 router.put("/regions/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const parsed = regionSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(regions)
-      .set(req.body)
+      .set(parsed.data)
       .where(eq(regions.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "regions", id, parsed.data);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -226,11 +297,14 @@ router.get("/cities", async (req, res) => {
 
 router.post("/cities", async (req, res) => {
   try {
-    const { name, regionId } = req.body;
+    const parsed = citySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    const { name, regionId } = parsed.data;
     const result = await db
       .insert(cities)
       .values({ name, regionId })
       .returning();
+    await auditLog(req, "CREATE", "cities", result[0].id, { name, regionId });
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -240,11 +314,14 @@ router.post("/cities", async (req, res) => {
 router.put("/cities/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const parsed = citySchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(cities)
-      .set(req.body)
+      .set(parsed.data)
       .where(eq(cities.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "cities", id, parsed.data);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -276,7 +353,9 @@ router.get("/artists", async (req, res) => {
 
 router.post("/artists", async (req, res) => {
   try {
-    const result = await db.insert(artists).values(req.body).returning();
+    const { stageName, genre, labelStatus, country, bio } = req.body;
+    if (!stageName) return res.status(400).json({ error: "stageName is required" });
+    const result = await db.insert(artists).values({ stageName, genre, labelStatus, country, bio } as any).returning();
     // 📬 Send SMTP notification
     sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
       action: "created",
@@ -348,7 +427,10 @@ router.get("/contractors", async (req, res) => {
 
 router.post("/contractors", async (req, res) => {
   try {
-    const result = await db.insert(contractors).values(req.body).returning();
+    const parsed = contractorSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    const result = await db.insert(contractors).values(parsed.data as any).returning();
+    await auditLog(req, "CREATE", "contractors", result[0].id, parsed.data);
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -358,11 +440,14 @@ router.post("/contractors", async (req, res) => {
 router.put("/contractors/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const parsed = contractorSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(contractors)
-      .set(req.body)
+      .set(parsed.data as any)
       .where(eq(contractors.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "contractors", id, parsed.data);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -394,10 +479,13 @@ router.get("/payment-card-types", async (req, res) => {
 
 router.post("/payment-card-types", async (req, res) => {
   try {
+    const { name, network, type } = req.body;
+    if (!name) return res.status(400).json({ error: "name is required" });
     const result = await db
       .insert(paymentCardTypes)
-      .values(req.body)
+      .values({ name, network, type } as any)
       .returning();
+    await auditLog(req, "CREATE", "payment_card_types", result[0].id, { name });
     res.status(201).json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -407,11 +495,17 @@ router.post("/payment-card-types", async (req, res) => {
 router.put("/payment-card-types/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const { name, network, type } = req.body;
+    const safeUpdate: any = {};
+    if (name !== undefined) safeUpdate.name = name;
+    if (network !== undefined) safeUpdate.network = network;
+    if (type !== undefined) safeUpdate.type = type;
     const result = await db
       .update(paymentCardTypes)
-      .set(req.body)
+      .set(safeUpdate)
       .where(eq(paymentCardTypes.id, parseInt(id)))
       .returning();
+    await auditLog(req, "UPDATE", "payment_card_types", id, safeUpdate);
     res.json(result[0]);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -702,11 +796,15 @@ router.get("/database/tables", async (req, res) => {
 });
 
 // =======================
-// DATABASE TABLE DATA EXPORT
+// DATABASE TABLE DATA EXPORT (superuser + password)
 // =======================
 
 router.get("/database/export", async (req, res) => {
   try {
+    // 🔒 Superuser only
+    if (req.user?.role !== "superuser") {
+      return res.status(403).json({ success: false, error: "Superuser access required for data export" });
+    }
     const { table, format } = req.query;
 
     if (!table || typeof table !== "string") {

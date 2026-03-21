@@ -6,7 +6,7 @@
  *   - PREFIX   = First 2 syllables of stage name, uppercase (max 4 chars)
  *   - DIV      = Division letter: D=Discovery, I=Indie, P=Pro, E=Elite, S=Signed, L=Legend
  *   - YYYYMMDD = Join date
- *   - 6-HEX    = Random 6-char hex for uniqueness (collision-proof)
+ *   - 6-HEX    = Random 6-char hex for uniqueness (high entropy, ~16M possibilities per prefix+div+date)
  *
  * Staff override: VA_[NAME]_SYS_MASTER (e.g. VA_JOE_SYS_MASTER)
  *
@@ -17,6 +17,53 @@
  */
 
 import crypto from "crypto";
+
+// ═══════════════════════════════════════════════════════════
+// Unicode → ASCII transliteration map
+// Covers accented Latin, Cyrillic, Arabic, CJK phonetic approximations
+// ═══════════════════════════════════════════════════════════
+const TRANSLITERATION_MAP: Record<string, string> = {
+  // Accented Latin
+  "à": "a", "á": "a", "â": "a", "ã": "a", "ä": "a", "å": "a", "æ": "ae",
+  "ç": "c", "è": "e", "é": "e", "ê": "e", "ë": "e", "ì": "i", "í": "i",
+  "î": "i", "ï": "i", "ð": "d", "ñ": "n", "ò": "o", "ó": "o", "ô": "o",
+  "õ": "o", "ö": "o", "ø": "o", "ù": "u", "ú": "u", "û": "u", "ü": "u",
+  "ý": "y", "þ": "th", "ÿ": "y", "ß": "ss",
+  // Turkish special
+  "ğ": "g", "ı": "i", "ş": "s",
+  // Polish/Czech/Slovak
+  "ą": "a", "ć": "c", "ę": "e", "ł": "l", "ń": "n", "ś": "s", "ź": "z", "ż": "z",
+  "č": "c", "ď": "d", "ě": "e", "ň": "n", "ř": "r", "š": "s", "ť": "t", "ů": "u", "ž": "z",
+  // Cyrillic (Russian phonetic)
+  "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
+  "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+  "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+  "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+  "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+  // Arabic (common names)
+  "ا": "a", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h", "خ": "kh",
+  "د": "d", "ذ": "dh", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s",
+  "ض": "d", "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f", "ق": "q",
+  "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "و": "w", "ي": "y",
+  // Japanese Katakana (common phonemes)
+  "ア": "a", "イ": "i", "ウ": "u", "エ": "e", "オ": "o",
+  "カ": "ka", "キ": "ki", "ク": "ku", "ケ": "ke", "コ": "ko",
+  "サ": "sa", "シ": "shi", "ス": "su", "セ": "se", "ソ": "so",
+  "タ": "ta", "チ": "chi", "ツ": "tsu", "テ": "te", "ト": "to",
+  "ナ": "na", "ニ": "ni", "ヌ": "nu", "ネ": "ne", "ノ": "no",
+  "ハ": "ha", "ヒ": "hi", "フ": "fu", "ヘ": "he", "ホ": "ho",
+  "マ": "ma", "ミ": "mi", "ム": "mu", "メ": "me", "モ": "mo",
+  "ラ": "ra", "リ": "ri", "ル": "ru", "レ": "re", "ロ": "ro",
+  "ヤ": "ya", "ユ": "yu", "ヨ": "yo", "ワ": "wa", "ン": "n",
+};
+
+function transliterateToAscii(input: string): string {
+  let result = "";
+  for (const char of input.toLowerCase()) {
+    result += TRANSLITERATION_MAP[char] || char;
+  }
+  return result;
+}
 
 // Division code mapping
 const DIVISION_CODES: Record<string, string> = {
@@ -31,17 +78,29 @@ const DIVISION_CODES: Record<string, string> = {
 /**
  * Extract a 2-4 character prefix from a stage name.
  * Takes the first ~2 syllables, removes spaces/special chars, uppercases.
+ * Supports Unicode: transliterates accented Latin chars and maps common
+ * non-Latin scripts (Arabic, CJK, Cyrillic, etc.) to phonetic approximations.
  *
  * Logic:
+ *   - Transliterate Unicode → ASCII approximation
  *   - Split by vowel-consonant boundaries to approximate syllables
  *   - Take first 3 chars as a safe default (covers 2 syllables for most short names)
  *   - Min 2, max 4 chars
  */
 export function extractStagePrefix(stageName: string): string {
-  // Clean: remove special chars, take alphanumeric only
-  const clean = stageName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  // Step 1: Transliterate common Unicode characters to ASCII
+  const transliterated = transliterateToAscii(stageName);
 
-  if (clean.length <= 2) return clean || "XX";
+  // Step 2: Clean — keep alphanumeric only, uppercase
+  const clean = transliterated.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+  if (clean.length === 0) {
+    // Last resort: use first 2-3 Unicode codepoints as hex prefix
+    const codepoints = [...stageName].slice(0, 2).map(c => c.codePointAt(0)!.toString(16).toUpperCase()).join("");
+    return codepoints.slice(0, 4) || "XX";
+  }
+
+  if (clean.length <= 2) return clean;
   if (clean.length <= 4) return clean.slice(0, 3);
 
   // Try to find a natural break after 2nd syllable

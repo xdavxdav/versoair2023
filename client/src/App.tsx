@@ -214,6 +214,7 @@ import { TeamSection } from "@/components/ui/team-section";
 import { SponsorsSection } from "@/components/ui/sponsors-section";
 import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
 import { CountryDropdown } from "@/components/CountryDropdown";
+import { LanguageProvider } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
@@ -728,18 +729,20 @@ function App() {
       `}</style>
       <QueryClientProvider client={queryClient}>
         <CountryProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <LoadingProvider>
-                <AudioProvider>
-                  <AppContent />
-                  <AudioPlayer />
-                </AudioProvider>
-                <InactivityGuard />
-                <Toaster />
-              </LoadingProvider>
-            </TooltipProvider>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <LoadingProvider>
+                  <AudioProvider>
+                    <AppContent />
+                    <AudioPlayer />
+                  </AudioProvider>
+                  <InactivityGuard />
+                  <Toaster />
+                </LoadingProvider>
+              </TooltipProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </CountryProvider>
       </QueryClientProvider>
     </>

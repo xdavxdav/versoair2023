@@ -34,7 +34,9 @@ interface AdminAccessGateProps {
 export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
   const [generatedCode, setGeneratedCode] = useState("");
   const [userInput, setUserInput] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [showInput, setShowInput] = useState(false);
+  const [showAdminPwd, setShowAdminPwd] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -47,6 +49,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
   const handleNewCode = () => {
     setGeneratedCode(generateAccessCode());
     setUserInput("");
+    setAdminPassword("");
     setError("");
     setCodeCopied(false);
   };
@@ -78,6 +81,10 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
       setError("Enter your credentials");
       return;
     }
+    if (!adminPassword) {
+      setError("Password is required.");
+      return;
+    }
 
     // Step 1: Validate 2FA — code must match + username must be in admin list
     const validation = validateAdminAccess(input, generatedCode);
@@ -89,12 +96,12 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
     setIsLoading(true);
 
     try {
-      // Step 2: Authenticate with server
+      // Step 2: Authenticate with server (username + password)
       const res = await fetch(`${API_BASE_URL}/auth/admin-gate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: validation.user.username }),
+        body: JSON.stringify({ username: validation.user.username, password: adminPassword }),
       });
 
       const data = await res.json();
@@ -247,9 +254,39 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
                 </p>
               </div>
 
+              {/* Password — Factor 3 */}
+              <div>
+                <label className="block text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-2">
+                  Step 3 — Account Password
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    type={showAdminPwd ? "text" : "password"}
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    disabled={isLoading}
+                    className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-indigo-500/50 focus:ring-indigo-500/20 h-12 text-base"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPwd(!showAdminPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    {showAdminPwd ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <Button
                 type="submit"
-                disabled={isLoading || userInput.trim().length < 3}
+                disabled={isLoading || userInput.trim().length < 3 || !adminPassword}
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-base"
               >
                 {isLoading ? (

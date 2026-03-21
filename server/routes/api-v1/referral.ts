@@ -25,7 +25,7 @@ function getUserId(req: any): number | null {
     if (!token) return null;
     const decoded = jwt.verify(
       token,
-      process.env.SESSION_SECRET || "dev-secret",
+      process.env.JWT_SECRET || process.env.SESSION_SECRET!,
     ) as any;
     return decoded.userId || decoded.id || null;
   } catch {

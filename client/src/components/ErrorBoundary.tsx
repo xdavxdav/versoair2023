@@ -26,6 +26,21 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // Google Translate mutates the DOM and breaks React's reconciliation.
+    // Auto-recover instead of showing a crash screen.
+    const msg = error.message || "";
+    if (
+      msg.includes("insertBefore") ||
+      msg.includes("removeChild") ||
+      msg.includes("not a child") ||
+      msg.includes("pas un enfant")
+    ) {
+      console.warn(
+        "[ErrorBoundary] Google Translate DOM conflict — auto-recovering",
+      );
+      this.setState({ hasError: false, error: null });
+      return;
+    }
     console.error("[ErrorBoundary] Caught:", error, info.componentStack);
   }
 

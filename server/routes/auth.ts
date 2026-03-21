@@ -690,7 +690,7 @@ router.post(
     const sent = await sendPasswordResetEmail(user.email, resetToken);
     if (!sent) {
       console.warn(
-        `[AUTH] SMTP not configured — reset token for ${user.email}: ${resetToken}`,
+        `[AUTH] SMTP not configured — password reset requested for ${user.email} but email could not be sent.`,
       );
     }
 
@@ -701,12 +701,13 @@ router.post(
 /**
  * POST /auth/admin-gate
  * Issues a JWT for users who have a gate_username set in the DB.
- * The admin dashboard Users CRUD controls who gets gate access.
+ * Requires the user's account password for verification.
+ * The frontend auto-fills the gate_username; user only types their password.
  */
 router.post(
   "/admin-gate",
   asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.body;
+    const { username, password } = req.body;
 
     if (!username) {
       return res.status(403).json({
@@ -715,7 +716,14 @@ router.post(
       });
     }
 
-    // Look up user by gate_username — the username itself is the access key
+    if (!password) {
+      return res.status(403).json({
+        success: false,
+        message: "Password is required.",
+      });
+    }
+
+    // Look up user by gate_username
     const [user] = await db
       .select({
         id: schema.users.id,
@@ -732,6 +740,24 @@ router.post(
       return res.status(403).json({
         success: false,
         message: "Invalid credentials.",
+      });
+    }
+
+    // 🔒 Verify password — no more username-only access
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid credentials.",
+      });
+    }
+
+    // 🛡️ Role gate — only admin & superuser may enter
+    const allowedRoles = ["admin", "superuser"];
+    if (!user.role || !allowedRoles.includes(user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin or CEO clearance required.",
       });
     }
 
