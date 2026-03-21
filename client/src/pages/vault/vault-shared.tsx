@@ -225,7 +225,7 @@ export function LiveHealthPanel() {
           fetch("/api/health")
             .then((r) => r.json())
             .catch(() => null),
-          fetch("/api/database/stats")
+          fetch("/api/manage/database/stats")
             .then((r) => r.json())
             .catch(() => null),
         ]);

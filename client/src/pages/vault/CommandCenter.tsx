@@ -5,14 +5,49 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Gauge, Users, DollarSign, Route, Plug, Database, Shield, Blocks,
-  Settings, Package, Server, Key, Hash, Globe, Wrench, Activity,
-  Cpu, HardDrive, MemoryStick, Network, Code2, FileCode, Layers,
-  Mail, CreditCard, Bot, Bell, FileText, GitBranch, MonitorSmartphone,
-  Palette, MapPin, BookOpen, LayoutDashboard, Radio,
+  Gauge,
+  Users,
+  DollarSign,
+  Route,
+  Plug,
+  Database,
+  Shield,
+  Blocks,
+  Settings,
+  Package,
+  Server,
+  Key,
+  Hash,
+  Globe,
+  Wrench,
+  Activity,
+  Cpu,
+  HardDrive,
+  MemoryStick,
+  Network,
+  Code2,
+  FileCode,
+  Layers,
+  Mail,
+  CreditCard,
+  Bot,
+  Bell,
+  FileText,
+  GitBranch,
+  MonitorSmartphone,
+  Palette,
+  MapPin,
+  BookOpen,
+  LayoutDashboard,
+  Radio,
 } from "lucide-react";
 import {
-  SectionBlock, InfoRow, RouteLink, ApiEndpoint, DbTable, LiveHealthPanel,
+  SectionBlock,
+  InfoRow,
+  RouteLink,
+  ApiEndpoint,
+  DbTable,
+  LiveHealthPanel,
 } from "./vault-shared";
 import UsersControlPanel from "./UsersControlPanel";
 import FinanceControlPanel from "./FinanceControlPanel";
@@ -992,53 +1027,53 @@ export default function CommandCenter() {
               </SectionBlock>
 
               <SectionBlock
-                title="DATABASE MANAGEMENT (/api/database)"
+                title="DATABASE MANAGEMENT (/api/manage)"
                 icon={<Database className="w-3.5 h-3.5 text-white" />}
                 color="cyan"
               >
                 <ApiEndpoint
                   method="GET"
-                  path="/api/categories"
+                  path="/api/manage/categories"
                   desc="List all categories"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/countries"
+                  path="/api/manage/countries"
                   desc="List countries"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/regions"
+                  path="/api/manage/regions"
                   desc="List regions"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/cities"
+                  path="/api/manage/cities"
                   desc="List cities"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/artists"
+                  path="/api/manage/artists"
                   desc="List artists (CRUD)"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/contractors"
+                  path="/api/manage/contractors"
                   desc="List contractors (CRUD)"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/database/stats"
+                  path="/api/manage/database/stats"
                   desc="DB stats + health"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/database/tables"
+                  path="/api/manage/database/tables"
                   desc="All PG table metadata"
                 />
                 <ApiEndpoint
                   method="GET"
-                  path="/api/database/export"
+                  path="/api/manage/database/export"
                   desc="Export (JSON/CSV)"
                 />
               </SectionBlock>

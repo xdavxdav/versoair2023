@@ -119,8 +119,7 @@ interface PaymentCardType {
   createdAt: string;
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = "/api/manage";
 
 export default function DatabaseManagementCenter() {
   const [activeTab, setActiveTab] = useState("categories");

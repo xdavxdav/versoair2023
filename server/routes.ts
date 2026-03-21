@@ -190,8 +190,9 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Register database management routes
-  app.use("/api", databaseManagementRouter);
+  // Register database management routes (admin CRUD for categories, countries, etc.)
+  // Mounted at /api/manage to avoid blocking public /api/* endpoints
+  app.use("/api/manage", databaseManagementRouter);
 
   // Register businesses routes
   app.use("/", businessesRouter);

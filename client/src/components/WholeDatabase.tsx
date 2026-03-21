@@ -110,7 +110,7 @@ export function WholeDatabase() {
   const { data: tablesData } = useQuery<TableStats[]>({
     queryKey: ["database-tables"],
     queryFn: async () => {
-      const response = await fetch("/api/database/tables");
+      const response = await fetch("/api/manage/database/tables");
       if (!response.ok) return [];
       const data = await response.json();
       return data.tables || [];

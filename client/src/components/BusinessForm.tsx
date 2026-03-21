@@ -295,7 +295,10 @@ export function BusinessForm({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10 notranslate" translate="no">
+      <DialogContent
+        className="max-w-md max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10 notranslate"
+        translate="no"
+      >
         <DialogHeader>
           <DialogTitle className="text-slate-100">Add New Business</DialogTitle>
           <DialogDescription className="text-slate-400">

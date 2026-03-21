@@ -109,7 +109,10 @@ export default function GeoAdminAuthGate({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: username.toLowerCase().trim(), password }),
+        body: JSON.stringify({
+          username: username.toLowerCase().trim(),
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -729,7 +732,8 @@ export default function GeoAdminAuthGate({
                 </Button>
 
                 <p className="text-[11px] text-slate-600 text-center">
-                  Admin &amp; CEO accounts only. Regular users sign in via the Subscriber tab.
+                  Admin &amp; CEO accounts only. Regular users sign in via the
+                  Subscriber tab.
                 </p>
               </form>
             )}

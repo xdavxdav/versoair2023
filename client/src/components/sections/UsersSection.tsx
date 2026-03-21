@@ -390,7 +390,7 @@ export function UsersSection() {
       // If creating an artist, also create artist profile
       if (!editingUser && formData.role === "artist" && createdUserId) {
         try {
-          await authenticatedFetch(`${API_BASE_URL}/api/artists`, {
+          await authenticatedFetch(`${API_BASE_URL}/api/manage/artists`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -410,7 +410,7 @@ export function UsersSection() {
       // If creating a contractor, also create contractor profile
       if (!editingUser && formData.role === "contractor" && createdUserId) {
         try {
-          await authenticatedFetch(`${API_BASE_URL}/api/contractors`, {
+          await authenticatedFetch(`${API_BASE_URL}/api/manage/contractors`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

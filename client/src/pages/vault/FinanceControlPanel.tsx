@@ -79,7 +79,7 @@ export default function FinanceControlPanel() {
           fetch("/api/v1/payments/billing-history?limit=50", {
             credentials: "include",
           }).catch(() => null),
-          fetch("/api/database/stats", { credentials: "include" }).catch(
+          fetch("/api/manage/database/stats", { credentials: "include" }).catch(
             () => null,
           ),
         ]);

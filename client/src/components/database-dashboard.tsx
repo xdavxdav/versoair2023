@@ -81,7 +81,7 @@ export function DatabaseDashboard() {
   } = useQuery({
     queryKey: ["dbStats"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/database/stats`);
+      const response = await fetch(`${API_BASE_URL}/api/manage/database/stats`);
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json() as Promise<DatabaseStats>;
     },
@@ -93,7 +93,7 @@ export function DatabaseDashboard() {
     queryKey: ["businessTypes"],
     queryFn: async () => {
       const response = await fetch(
-        `${API_BASE_URL}/api/database/business-types`,
+        `${API_BASE_URL}/api/manage/database/business-types`,
       );
       if (!response.ok) throw new Error("Failed to fetch business types");
       return response.json() as Promise<BusinessType[]>;
@@ -105,7 +105,7 @@ export function DatabaseDashboard() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/database/categories`);
+      const response = await fetch(`${API_BASE_URL}/api/manage/database/categories`);
       if (!response.ok) throw new Error("Failed to fetch categories");
       return response.json() as Promise<CategoryStats[]>;
     },
@@ -117,7 +117,7 @@ export function DatabaseDashboard() {
     queryKey: ["activityLog"],
     queryFn: async () => {
       const response = await fetch(
-        `${API_BASE_URL}/api/database/activity?limit=10`,
+        `${API_BASE_URL}/api/manage/database/activity?limit=10`,
       );
       if (!response.ok) throw new Error("Failed to fetch activity");
       return response.json() as Promise<ActivityEntry[]>;

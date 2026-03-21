@@ -28,7 +28,7 @@ export function TableBrowserContainer({
       setError(null);
 
       // Call API to get all tables from PostgreSQL
-      const response = await fetch("/api/database/tables");
+      const response = await fetch("/api/manage/database/tables");
 
       if (!response.ok) {
         throw new Error(`Failed to fetch tables: ${response.statusText}`);
@@ -81,7 +81,7 @@ export function TableBrowserContainer({
   ) => {
     try {
       const response = await fetch(
-        `/api/database/export?table=${tableName}&format=${format}`,
+        `/api/manage/database/export?table=${tableName}&format=${format}`,
       );
 
       if (!response.ok) {
