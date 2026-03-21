@@ -13,7 +13,10 @@ import "./index.css";
 if (typeof Node !== "undefined" && Node.prototype) {
   const origInsertBefore = Node.prototype.insertBefore;
   // @ts-expect-error — intentional monkey-patch
-  Node.prototype.insertBefore = function <T extends Node>(newNode: T, refNode: Node | null): T {
+  Node.prototype.insertBefore = function <T extends Node>(
+    newNode: T,
+    refNode: Node | null,
+  ): T {
     if (refNode && refNode.parentNode !== this) {
       // Google Translate moved refNode into a <font> wrapper — skip gracefully
       return newNode;

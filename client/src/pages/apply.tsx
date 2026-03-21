@@ -362,7 +362,7 @@ export default function ApplyPage() {
         // If contractor portal, also create the contractor profile
         if (selectedPortal.id === "contractor" && data.token) {
           try {
-            await fetch("/api/contractors", {
+            await fetch("/api/manage/contractors", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

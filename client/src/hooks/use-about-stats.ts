@@ -59,7 +59,7 @@ export function useAboutStats(): AboutStats {
         // Fetch all endpoints in parallel
         const [categoryRes, statsRes, musicRes, dbRes, businessesRes] =
           await Promise.allSettled([
-            fetch("/api/database/business-types"),
+            fetch("/api/manage/database/business-types"),
             fetch("/api/businesses/stats/summary"),
             fetch("/api/music/analytics"),
             fetch("/api/admin/database-stats"),

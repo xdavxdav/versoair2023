@@ -28,7 +28,13 @@ const router = Router();
 router.use(requireAuth(["admin", "superuser"]));
 
 // Helper: log every mutation to audit_logs
-async function auditLog(req: Request, action: string, entityType: string, entityId: string | number, changes?: any) {
+async function auditLog(
+  req: Request,
+  action: string,
+  entityType: string,
+  entityId: string | number,
+  changes?: any,
+) {
   try {
     await db.insert(auditLogs).values({
       userId: req.user?.userId ? parseInt(req.user.userId) : undefined,
@@ -62,13 +68,15 @@ const citySchema = z.object({
   name: z.string().min(1).max(200),
   regionId: z.number().int().positive(),
 });
-const contractorSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  company: z.string().max(200).optional(),
-  specialty: z.string().max(200).optional(),
-  phone: z.string().max(50).optional(),
-  email: z.string().email().optional(),
-}).passthrough();
+const contractorSchema = z
+  .object({
+    name: z.string().min(1).max(200).optional(),
+    company: z.string().max(200).optional(),
+    specialty: z.string().max(200).optional(),
+    phone: z.string().max(50).optional(),
+    email: z.string().email().optional(),
+  })
+  .passthrough();
 
 // =======================
 // CATEGORIES
@@ -86,7 +94,8 @@ router.get("/categories", async (req, res) => {
 router.post("/categories", async (req, res) => {
   try {
     const parsed = categorySchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, slug, description } = parsed.data;
     const result = await db
       .insert(businessCategories)
@@ -103,7 +112,8 @@ router.put("/categories/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const parsed = categorySchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(businessCategories)
       .set(parsed.data)
@@ -145,7 +155,8 @@ router.get("/countries", async (req, res) => {
 router.post("/countries", async (req, res) => {
   try {
     const parsed = countrySchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, code } = parsed.data;
     const result = await db
       .insert(countries)
@@ -162,7 +173,8 @@ router.put("/countries/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const parsed = countrySchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(countries)
       .set(parsed.data)
@@ -212,7 +224,8 @@ router.get("/regions", async (req, res) => {
 router.post("/regions", async (req, res) => {
   try {
     const parsed = regionSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, countryId } = parsed.data;
     const result = await db
       .insert(regions)
@@ -229,7 +242,8 @@ router.put("/regions/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const parsed = regionSchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(regions)
       .set(parsed.data)
@@ -298,7 +312,8 @@ router.get("/cities", async (req, res) => {
 router.post("/cities", async (req, res) => {
   try {
     const parsed = citySchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, regionId } = parsed.data;
     const result = await db
       .insert(cities)
@@ -315,7 +330,8 @@ router.put("/cities/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const parsed = citySchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(cities)
       .set(parsed.data)
@@ -354,8 +370,12 @@ router.get("/artists", async (req, res) => {
 router.post("/artists", async (req, res) => {
   try {
     const { stageName, genre, labelStatus, country, bio } = req.body;
-    if (!stageName) return res.status(400).json({ error: "stageName is required" });
-    const result = await db.insert(artists).values({ stageName, genre, labelStatus, country, bio } as any).returning();
+    if (!stageName)
+      return res.status(400).json({ error: "stageName is required" });
+    const result = await db
+      .insert(artists)
+      .values({ stageName, genre, labelStatus, country, bio } as any)
+      .returning();
     // 📬 Send SMTP notification
     sendGeoAdminCrudNotificationEmail(ADMIN_NOTIFICATION_EMAIL, {
       action: "created",
@@ -428,8 +448,12 @@ router.get("/contractors", async (req, res) => {
 router.post("/contractors", async (req, res) => {
   try {
     const parsed = contractorSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
-    const result = await db.insert(contractors).values(parsed.data as any).returning();
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
+    const result = await db
+      .insert(contractors)
+      .values(parsed.data as any)
+      .returning();
     await auditLog(req, "CREATE", "contractors", result[0].id, parsed.data);
     res.status(201).json(result[0]);
   } catch (error: any) {
@@ -441,7 +465,8 @@ router.put("/contractors/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const parsed = contractorSchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.errors[0].message });
     const result = await db
       .update(contractors)
       .set(parsed.data as any)
@@ -803,7 +828,12 @@ router.get("/database/export", async (req, res) => {
   try {
     // 🔒 Superuser only
     if (req.user?.role !== "superuser") {
-      return res.status(403).json({ success: false, error: "Superuser access required for data export" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "Superuser access required for data export",
+        });
     }
     const { table, format } = req.query;
 

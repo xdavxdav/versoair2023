@@ -101,7 +101,10 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: validation.user.username, password: adminPassword }),
+        body: JSON.stringify({
+          username: validation.user.username,
+          password: adminPassword,
+        }),
       });
 
       const data = await res.json();
@@ -286,7 +289,9 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
 
               <Button
                 type="submit"
-                disabled={isLoading || userInput.trim().length < 3 || !adminPassword}
+                disabled={
+                  isLoading || userInput.trim().length < 3 || !adminPassword
+                }
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-base"
               >
                 {isLoading ? (

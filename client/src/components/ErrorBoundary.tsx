@@ -70,7 +70,8 @@ export default class ErrorBoundary extends Component<Props, State> {
                 Something went wrong
               </h2>
               <p className="text-white/50 text-sm">
-                An unexpected error occurred. This has been logged automatically.
+                An unexpected error occurred. This has been logged
+                automatically.
               </p>
             </div>
 
