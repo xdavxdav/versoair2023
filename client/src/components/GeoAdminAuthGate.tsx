@@ -99,11 +99,17 @@ export default function GeoAdminAuthGate({
     setLoading(true);
 
     try {
+      if (!username.trim()) {
+        setError("Please enter your admin username.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/auth/admin-gate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username: username.toLowerCase() }),
+        body: JSON.stringify({ username: username.toLowerCase().trim(), password }),
       });
 
       const data = await res.json();
@@ -676,10 +682,38 @@ export default function GeoAdminAuthGate({
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
+                  disabled={loading || !username.trim() || !password}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -693,6 +727,10 @@ export default function GeoAdminAuthGate({
                     </>
                   )}
                 </Button>
+
+                <p className="text-[11px] text-slate-600 text-center">
+                  Admin &amp; CEO accounts only. Regular users sign in via the Subscriber tab.
+                </p>
               </form>
             )}
 

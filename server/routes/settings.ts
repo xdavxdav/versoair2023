@@ -78,7 +78,7 @@ router.get("/:sector", async (req, res) => {
     try {
       const decoded: any = jwt.verify(
         token,
-        process.env.JWT_SECRET || "your-secret-key",
+        process.env.JWT_SECRET || process.env.SESSION_SECRET!,
       );
       userId = decoded.userId || decoded.sub;
     } catch {
@@ -141,7 +141,7 @@ router.post("/:sector", async (req, res) => {
     try {
       const decoded: any = jwt.verify(
         token,
-        process.env.JWT_SECRET || "your-secret-key",
+        process.env.JWT_SECRET || process.env.SESSION_SECRET!,
       );
       userId = decoded.userId || decoded.sub;
     } catch {

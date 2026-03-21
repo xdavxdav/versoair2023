@@ -381,7 +381,8 @@ router.post("/:id/apply", async (req, res) => {
     if (authHeader?.startsWith("Bearer ")) {
       try {
         const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET || "development_secret";
+        const secret = process.env.JWT_SECRET;
+        if (!secret) throw new Error("JWT_SECRET not set");
         const decoded = jwt.verify(token, secret) as any;
         applicantId = decoded.userId || decoded.email || "authenticated-user";
       } catch {
