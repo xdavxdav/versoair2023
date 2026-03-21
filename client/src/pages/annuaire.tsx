@@ -15,7 +15,67 @@ import {
   Phone,
   Check,
   Globe,
+  RefreshCw,
 } from "lucide-react";
+
+// Country code → flag emoji
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: "🇺🇸", CA: "🇨🇦", MX: "🇲🇽", BR: "🇧🇷", HT: "🇭🇹", FR: "🇫🇷", DE: "🇩🇪",
+  GB: "🇬🇧", BE: "🇧🇪", CH: "🇨🇭", ES: "🇪🇸", IT: "🇮🇹", PT: "🇵🇹", CI: "🇨🇮",
+  SN: "🇸🇳", CM: "🇨🇲", ML: "🇲🇱", BF: "🇧🇫", GN: "🇬🇳", TG: "🇹🇬", BJ: "🇧🇯",
+  NE: "🇳🇪", MG: "🇲🇬", CD: "🇨🇩", CG: "🇨🇬", GA: "🇬🇦", MA: "🇲🇦", DZ: "🇩🇿",
+  TN: "🇹🇳", ZA: "🇿🇦", NG: "🇳🇬", JP: "🇯🇵", CN: "🇨🇳", IN: "🇮🇳", AE: "🇦🇪",
+  GH: "🇬🇭", KE: "🇰🇪", TZ: "🇹🇿", UG: "🇺🇬", ET: "🇪🇹", RW: "🇷🇼", EG: "🇪🇬",
+  LY: "🇱🇾", SD: "🇸🇩", AO: "🇦🇴", MZ: "🇲🇿", ZM: "🇿🇲", ZW: "🇿🇼", MW: "🇲🇼",
+  NA: "🇳🇦", BW: "🇧🇼", SZ: "🇸🇿", LS: "🇱🇸", MU: "🇲🇺", SC: "🇸🇨", DJ: "🇩🇯",
+  SO: "🇸🇴", ER: "🇪🇷", LR: "🇱🇷", SL: "🇸🇱", GW: "🇬🇼", CV: "🇨🇻", GM: "🇬🇲",
+  MR: "🇲🇷", TD: "🇹🇩", CF: "🇨🇫", GQ: "🇬🇶", ST: "🇸🇹", BI: "🇧🇮", KM: "🇰🇲",
+  AU: "🇦🇺", NZ: "🇳🇿", AR: "🇦🇷", CO: "🇨🇴", CL: "🇨🇱", PE: "🇵🇪", VE: "🇻🇪",
+  EC: "🇪🇨", BO: "🇧🇴", PY: "🇵🇾", UY: "🇺🇾", CR: "🇨🇷", PA: "🇵🇦", CU: "🇨🇺",
+  DO: "🇩🇴", JM: "🇯🇲", TT: "🇹🇹", KR: "🇰🇷", PH: "🇵🇭", TH: "🇹🇭", VN: "🇻🇳",
+  MY: "🇲🇾", SG: "🇸🇬", ID: "🇮🇩", PK: "🇵🇰", BD: "🇧🇩", LK: "🇱🇰", SA: "🇸🇦",
+  QA: "🇶🇦", KW: "🇰🇼", BH: "🇧🇭", OM: "🇴🇲", JO: "🇯🇴", LB: "🇱🇧", IL: "🇮🇱",
+  TR: "🇹🇷", RU: "🇷🇺", UA: "🇺🇦", PL: "🇵🇱", CZ: "🇨🇿", RO: "🇷🇴", HU: "🇭🇺",
+  NL: "🇳🇱", AT: "🇦🇹", SE: "🇸🇪", NO: "🇳🇴", DK: "🇩🇰", FI: "🇫🇮", IE: "🇮🇪",
+  GR: "🇬🇷", HR: "🇭🇷", RS: "🇷🇸", BG: "🇧🇬", SK: "🇸🇰", SI: "🇸🇮", LT: "🇱🇹",
+  LV: "🇱🇻", EE: "🇪🇪",
+};
+
+// Country code → display name
+const COUNTRY_NAMES: Record<string, string> = {
+  US: "United States", CA: "Canada", MX: "Mexico", BR: "Brazil", HT: "Haïti",
+  FR: "France", DE: "Germany", GB: "United Kingdom", BE: "Belgium",
+  CH: "Switzerland", ES: "Spain", IT: "Italy", PT: "Portugal",
+  CI: "Côte d'Ivoire", SN: "Sénégal", CM: "Cameroun", ML: "Mali",
+  BF: "Burkina Faso", GN: "Guinée", TG: "Togo", BJ: "Bénin", NE: "Niger",
+  MG: "Madagascar", CD: "Congo (RDC)", CG: "Congo (Brazzaville)",
+  GA: "Gabon", MA: "Maroc", DZ: "Algérie", TN: "Tunisie",
+  ZA: "South Africa", NG: "Nigeria", JP: "Japan", CN: "China", IN: "India",
+  AE: "United Arab Emirates", GH: "Ghana", KE: "Kenya", TZ: "Tanzania",
+  UG: "Uganda", ET: "Ethiopia", RW: "Rwanda", EG: "Egypt",
+  LY: "Libya", SD: "Sudan", AO: "Angola", MZ: "Mozambique",
+  ZM: "Zambia", ZW: "Zimbabwe", MW: "Malawi", NA: "Namibia", BW: "Botswana",
+  SZ: "Eswatini", LS: "Lesotho", MU: "Mauritius", SC: "Seychelles",
+  DJ: "Djibouti", SO: "Somalia", ER: "Eritrea", LR: "Liberia",
+  SL: "Sierra Leone", GW: "Guinea-Bissau", CV: "Cabo Verde", GM: "Gambia",
+  MR: "Mauritania", TD: "Chad", CF: "Central African Republic",
+  GQ: "Equatorial Guinea", ST: "São Tomé and Príncipe", BI: "Burundi",
+  KM: "Comoros", AU: "Australia", NZ: "New Zealand", AR: "Argentina",
+  CO: "Colombia", CL: "Chile", PE: "Peru", VE: "Venezuela",
+  EC: "Ecuador", BO: "Bolivia", PY: "Paraguay", UY: "Uruguay",
+  CR: "Costa Rica", PA: "Panama", CU: "Cuba", DO: "Dominican Republic",
+  JM: "Jamaica", TT: "Trinidad & Tobago", KR: "South Korea",
+  PH: "Philippines", TH: "Thailand", VN: "Vietnam", MY: "Malaysia",
+  SG: "Singapore", ID: "Indonesia", PK: "Pakistan", BD: "Bangladesh",
+  LK: "Sri Lanka", SA: "Saudi Arabia", QA: "Qatar", KW: "Kuwait",
+  BH: "Bahrain", OM: "Oman", JO: "Jordan", LB: "Lebanon", IL: "Israel",
+  TR: "Turkey", RU: "Russia", UA: "Ukraine", PL: "Poland",
+  CZ: "Czech Republic", RO: "Romania", HU: "Hungary", NL: "Netherlands",
+  AT: "Austria", SE: "Sweden", NO: "Norway", DK: "Denmark",
+  FI: "Finland", IE: "Ireland", GR: "Greece", HR: "Croatia", RS: "Serbia",
+  BG: "Bulgaria", SK: "Slovakia", SI: "Slovenia", LT: "Lithuania",
+  LV: "Latvia", EE: "Estonia",
+};
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -363,11 +423,12 @@ export default function Annuaire() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
-  const { selectedCountry } = useCountry();
+  const { selectedCountry, detecting, reloadDetection } = useCountry();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [activeFilters, setActiveFilters] = useState({
@@ -397,12 +458,22 @@ export default function Annuaire() {
     checkConnection();
   }, []);
 
-  // Debounced search - auto-fetch after user stops typing
+  // Auto-load businesses when country is detected (initial load)
+  useEffect(() => {
+    if (!detecting && selectedCountry && !initialLoadDone) {
+      setInitialLoadDone(true);
+      handleSearch(1);
+    }
+  }, [detecting, selectedCountry, initialLoadDone]);
+
+  // Debounced search - auto-fetch after user stops typing or country changes
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
+    // Always search when country is available (businesses are country-scoped)
     if (
+      selectedCountry ||
       searchQuery.trim() ||
       locationQuery.trim() ||
       selectedCategory ||
@@ -497,14 +568,47 @@ export default function Annuaire() {
             Répertoire Complet des Entreprises
           </motion.h1>
 
+          {/* Detected country indicator */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mb-4"
+          >
+            {detecting ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm border border-white/20">
+                <Globe className="h-4 w-4 animate-spin" />
+                Détection du pays…
+              </span>
+            ) : selectedCountry ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-full text-base font-semibold border border-white/30">
+                <span className="text-xl">{COUNTRY_FLAGS[selectedCountry] || "🌍"}</span>
+                <span>{COUNTRY_NAMES[selectedCountry] || selectedCountry}</span>
+                <button
+                  onClick={() => reloadDetection()}
+                  className="ml-1 text-white/60 hover:text-white transition-colors"
+                  title="Recharger la détection"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-full text-sm border border-red-400/30">
+                <Globe className="h-4 w-4" />
+                Pays non détecté — utilisez le sélecteur dans la barre de navigation
+              </span>
+            )}
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
             className="text-xl mb-4 text-white/90"
           >
-            Explorez {totalResults.toLocaleString()}+ entreprises dans 195
-            catégories différentes
+            {selectedCountry
+              ? `${totalResults.toLocaleString()} entreprises en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
+              : `Explorez ${totalResults.toLocaleString()}+ entreprises dans 195 catégories`}
           </motion.p>
         </div>
       </div>
@@ -513,6 +617,23 @@ export default function Annuaire() {
       <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 backdrop-blur-md border-blue-700 shadow-2xl">
           <CardContent className="p-6">
+            {/* Active country filter badge */}
+            {selectedCountry && (
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <MapPin className="h-4 w-4 text-blue-400" />
+                <span className="text-sm text-blue-300">
+                  Filtré par pays :
+                </span>
+                <span className="text-sm font-semibold text-white flex items-center gap-1">
+                  {COUNTRY_FLAGS[selectedCountry] || "🌍"}{" "}
+                  {COUNTRY_NAMES[selectedCountry] || selectedCountry}
+                </span>
+                <span className="text-xs text-blue-400/60 ml-auto">
+                  Auto-détecté
+                </span>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
@@ -795,13 +916,31 @@ export default function Annuaire() {
               </>
             ) : (
               <div className="text-center py-12">
-                <Globe className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">
-                  Explorez l'annuaire
-                </h3>
-                <p className="text-gray-400">
-                  Sélectionnez une catégorie et lancez votre recherche
-                </p>
+                {detecting ? (
+                  <>
+                    <Loader2 className="h-16 w-16 mx-auto text-blue-400 mb-4 animate-spin" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      Détection de votre pays…
+                    </h3>
+                    <p className="text-gray-400">
+                      Les entreprises de votre région apparaîtront automatiquement
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      {selectedCountry
+                        ? `Aucune entreprise trouvée en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
+                        : "Explorez l'annuaire"}
+                    </h3>
+                    <p className="text-gray-400">
+                      {selectedCountry
+                        ? "Essayez une catégorie ou élargissez votre recherche"
+                        : "Sélectionnez une catégorie et lancez votre recherche"}
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>
