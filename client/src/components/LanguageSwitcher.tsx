@@ -41,6 +41,7 @@ interface LanguageContextType {
   bannerMessage: string;
   previousLang: string;
   dismissBanner: () => void;
+  reloadCountdown: number | null;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -51,6 +52,7 @@ const LanguageContext = createContext<LanguageContextType>({
   bannerMessage: "",
   previousLang: "fr",
   dismissBanner: () => {},
+  reloadCountdown: null,
 });
 
 export function useLanguage() {
@@ -167,14 +169,42 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const firstCountryDone = useRef(false);
   const gtLoaded = useRef(false);
+  const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
+  const isInitialLoad = useRef(true);
 
-  const flashBanner = useCallback((msg: string) => {
+  /** Show banner, then start a 3-2-1 countdown and reload.
+   *  Pass reload=false to skip the reload (e.g. initial page load where cookie is already set). */
+  const flashBanner = useCallback((msg: string, reload = true) => {
+    // Clear any previous timers
     if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setReloadCountdown(null);
     setBannerMessage(msg);
     setShowBanner(true);
-    bannerTimerRef.current = setTimeout(() => setShowBanner(false), 5000);
+
+    if (!reload) {
+      // No reload needed — just dismiss after 5s
+      bannerTimerRef.current = setTimeout(() => setShowBanner(false), 5000);
+      return;
+    }
+
+    // Show the message for 1s, then start 3-2-1 countdown
+    bannerTimerRef.current = setTimeout(() => {
+      let count = 3;
+      setReloadCountdown(count);
+      countdownRef.current = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          window.location.reload();
+        } else {
+          setReloadCountdown(count);
+        }
+      }, 1000);
+    }, 1000);
   }, []);
 
   // ── STEP 1: Pre-set cookie from cache, then load GT ──
@@ -188,6 +218,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // Define the callback GT will invoke once loaded
     window.googleTranslateElementInit = () => {
       gtLoaded.current = true;
+      isInitialLoad.current = false;
       initGT();
     };
 
@@ -229,6 +260,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (!isBaseLang(lang)) {
       flashBanner(
         `Auto-translated to ${lang.toUpperCase()} based on your location`,
+        false, // no reload on auto-detect — cookie is already set before GT loads
       );
     }
   }, [selectedCountry, detecting, flashBanner]);
@@ -241,7 +273,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
 
-      switchLanguage(lang);
+      // Set cookie now — the reload will pick it up
+      if (lang === "fr") {
+        clearGoogTransCookies();
+      } else {
+        setGoogTransCookie(lang);
+      }
 
       if (source === "country") {
         flashBanner(
@@ -262,7 +299,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const dismissBanner = useCallback(() => {
     setShowBanner(false);
+    setReloadCountdown(null);
     if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
   }, []);
 
   // ── Clean up GT visual junk periodically ──
@@ -301,6 +340,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         bannerMessage,
         previousLang,
         dismissBanner,
+        reloadCountdown,
       }}
     >
       {/* GT mounts its widget here. Offscreen but NOT display:none. */}

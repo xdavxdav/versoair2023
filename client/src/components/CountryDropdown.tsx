@@ -171,6 +171,7 @@ export function CountryDropdown() {
     bannerMessage,
     previousLang,
     dismissBanner,
+    reloadCountdown,
   } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -288,18 +289,22 @@ export function CountryDropdown() {
               </span>
             </span>
             <span className="text-[9px] text-gray-500 font-mono">
-              {bannerMessage}
+              {reloadCountdown !== null
+                ? `Reloading in ${reloadCountdown}…`
+                : bannerMessage}
             </span>
           </div>
-          <button
-            onClick={() => {
-              selectLanguage(previousLang || "fr");
-              dismissBanner();
-            }}
-            className="text-[10px] text-purple-400 hover:text-white ml-1 font-mono underline whitespace-nowrap"
-          >
-            Undo
-          </button>
+          {reloadCountdown === null && (
+            <button
+              onClick={() => {
+                selectLanguage(previousLang || "fr");
+                dismissBanner();
+              }}
+              className="text-[10px] text-purple-400 hover:text-white ml-1 font-mono underline whitespace-nowrap"
+            >
+              Undo
+            </button>
+          )}
           <button
             onClick={dismissBanner}
             className="text-gray-600 hover:text-white ml-0.5"
