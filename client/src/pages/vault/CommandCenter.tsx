@@ -40,6 +40,15 @@ import {
   BookOpen,
   LayoutDashboard,
   Radio,
+  Search,
+  Crown,
+  Table2,
+  Lock,
+  Zap,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Terminal,
 } from "lucide-react";
 import {
   SectionBlock,

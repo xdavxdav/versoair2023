@@ -177,8 +177,13 @@ router.post("/webhook", async (req: Request, res: Response) => {
         sig,
         STRIPE_WEBHOOK_SECRET,
       );
+    } else if (process.env.NODE_ENV === "production") {
+      // SECURITY: Require webhook secret in production to prevent forged events
+      console.error("⚠️ STRIPE_WEBHOOK_SECRET not set in production - rejecting webhook");
+      return res.status(500).json({ error: "Webhook secret not configured" });
     } else {
-      // Development: trust the event payload directly
+      // Development only: trust the event payload directly
+      console.warn("⚠️ [DEV] Processing unverified webhook - set STRIPE_WEBHOOK_SECRET for production");
       event = req.body as Stripe.Event;
     }
   } catch (err: any) {

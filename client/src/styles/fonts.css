@@ -2,9 +2,7 @@
   font-family: "GoldenBeachPersonalUse-BdIt";
   src:
     url("/fonts/GoldenBeachPersonalUse-BdIt.woff2") format("woff2"),
-    url("/fonts/GoldenBeachPersonalUse-BdIt.woff") format("woff"),
-    url("/fonts/GoldenBeachPersonalUse-BdIt.ttf") format("truetype"),
-    url("/fonts/GoldenBeachPersonalUse-BdIt.otf") format("opentype");
+    url("/fonts/GoldenBeachPersonalUse-BdIt.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

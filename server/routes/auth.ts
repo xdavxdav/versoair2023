@@ -17,6 +17,7 @@ import {
   sendVerificationEmail,
 } from "../services/email-service";
 import { computeUserCapabilities } from "./capabilities";
+import { generateArtistCode } from "../utils/artist-code";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -104,11 +105,14 @@ const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 // ─── Superadmin Passepartout ──────────────────────────────────────────────────
 // This account bypasses verification checks and is never restricted
-const SUPERADMIN_EMAIL = "superadmin@versoair.test";
+// SECURITY: Must be set via SUPERADMIN_EMAIL env var in production
+const SUPERADMIN_EMAIL = process.env.SUPERADMIN_EMAIL || "";
 
 /** Returns true if the given email is the superadmin passepartout account */
 function isSuperadmin(email: string): boolean {
-  return email.toLowerCase() === SUPERADMIN_EMAIL;
+  // If no superadmin email is configured, no one can be superadmin via this check
+  if (!SUPERADMIN_EMAIL) return false;
+  return email.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
