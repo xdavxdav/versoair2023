@@ -151,25 +151,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     bannerTimerRef.current = setTimeout(() => setShowBanner(false), 5000);
   }, []);
 
-  // Poll combo with retry. Falls back to page reload as last resort.
+  // Poll combo with retry. Cookie is already set so GT will pick it up.
   const applyViaCombo = useCallback((lang: string) => {
     let attempts = 0;
     if (lang === "fr") {
       clearGoogTransCookies();
       const poll = () => {
-        if (attempts++ > 25) return;
+        if (attempts++ > 30) return; // give up silently — cookie handles it
         if (!restoreCombo()) setTimeout(poll, 300);
       };
       poll();
     } else {
       setGoogTransCookie(lang);
       const poll = () => {
-        if (attempts++ > 25) {
-          // Last resort — reload so GT picks up the cookie
-          console.warn("[LanguageEngine] Combo unavailable, reloading page");
-          window.location.reload();
-          return;
-        }
+        if (attempts++ > 30) return; // give up silently — cookie already set
         if (!triggerCombo(lang)) setTimeout(poll, 300);
       };
       poll();
@@ -336,24 +331,40 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         Only target the specific UI elements we want hidden.
       */}
       <style>{`
+        /* Hide ALL Google Translate visual chrome */
         .goog-te-banner-frame,
         .goog-te-balloon-frame,
         #goog-gt-tt,
         .goog-te-ftab-frame,
         .goog-tooltip,
         .goog-tooltip:hover,
-        .goog-text-highlight {
+        .goog-text-highlight,
+        #gt-nvframe,
+        .goog-te-spinner-pos,
+        .goog-te-menu-frame {
           display: none !important;
           visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+          overflow: hidden !important;
         }
+        /* Kill the top banner bar GT injects (pushes body down) */
         body {
           top: 0 !important;
           position: static !important;
         }
+        /* Hide the iframe that shows "Translated to English" bar */
+        iframe.goog-te-banner-frame,
+        iframe[id="gt-nvframe"] {
+          display: none !important;
+          height: 0 !important;
+        }
         .goog-te-gadget {
           font-size: 0 !important;
+          line-height: 0 !important;
         }
-        .goog-te-gadget > span {
+        .goog-te-gadget > span,
+        .goog-te-gadget > div {
           display: none !important;
         }
       `}</style>
