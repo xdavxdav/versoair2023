@@ -29,7 +29,7 @@ export default function NavigationProgress() {
     const startTime = Date.now();
     const animateProgress = () => {
       const elapsed = Date.now() - startTime;
-      
+
       if (elapsed < 100) {
         // Fast ramp to 30%
         setProgress(Math.min(30, (elapsed / 100) * 30));
@@ -42,7 +42,7 @@ export default function NavigationProgress() {
       } else {
         // Complete
         setProgress(100);
-        
+
         // Hide after completion
         timeoutRef.current = setTimeout(() => {
           setVisible(false);
@@ -77,11 +77,12 @@ export default function NavigationProgress() {
         className="h-full transition-[width] duration-100 ease-out"
         style={{
           width: `${progress}%`,
-          background: "linear-gradient(90deg, #d4af37 0%, #ffd700 50%, #f0e68c 100%)",
+          background:
+            "linear-gradient(90deg, #d4af37 0%, #ffd700 50%, #f0e68c 100%)",
           boxShadow: "0 0 8px #ffd700, 0 0 16px rgba(255, 215, 0, 0.5)",
         }}
       />
-      
+
       {/* Shimmer overlay */}
       <div
         className="absolute top-0 left-0 h-full overflow-hidden"
@@ -90,8 +91,10 @@ export default function NavigationProgress() {
         <div
           className="h-full w-[60%] absolute"
           style={{
-            background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)",
-            animation: progress < 100 ? "nav-shimmer 0.8s ease-in-out infinite" : "none",
+            background:
+              "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)",
+            animation:
+              progress < 100 ? "nav-shimmer 0.8s ease-in-out infinite" : "none",
           }}
         />
       </div>

@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { SectionBlock } from "./vault-shared";
 
-
 // ═══════════════════════════════════════════════════════════
 // 💳 VERSO AIR CARD — STRIPE ISSUING + POINTS REWARDS
 // ═══════════════════════════════════════════════════════════

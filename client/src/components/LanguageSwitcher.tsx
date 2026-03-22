@@ -81,17 +81,41 @@ function triggerTranslation(langCode: string): boolean {
       document.cookie = `googtrans=${cookieVal}; path=/; domain=.${window.location.hostname};`;
     }
 
+    // Try the visible combo first
     const combo = document.querySelector(
       ".goog-te-combo",
     ) as HTMLSelectElement | null;
     if (combo) {
+      // Check if the language is available in the combo
+      const options = Array.from(combo.options);
+      const hasLang = options.some(opt => opt.value === langCode);
+      if (!hasLang) {
+        console.warn("[LanguageEngine] Language", langCode, "not found in GT combo options");
+      }
       combo.value = langCode;
       // bubbles:true is critical — GT listens on a parent element
       combo.dispatchEvent(new Event("change", { bubbles: true }));
       return true;
     }
-  } catch {
-    /* ignore */
+    
+    // Fallback: try iframe approach for some GT versions
+    const frame = document.querySelector(".goog-te-menu-frame") as HTMLIFrameElement | null;
+    if (frame) {
+      try {
+        const innerDoc = frame.contentDocument || frame.contentWindow?.document;
+        const items = innerDoc?.querySelectorAll(".goog-te-menu2-item");
+        if (items) {
+          for (const item of Array.from(items)) {
+            if ((item as HTMLElement).innerText?.toLowerCase().includes(langCode.toLowerCase())) {
+              (item as HTMLElement).click();
+              return true;
+            }
+          }
+        }
+      } catch { /* cross-origin */ }
+    }
+  } catch (e) {
+    console.warn("[LanguageEngine] triggerTranslation error:", e);
   }
   return false;
 }
@@ -165,25 +189,41 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Core: apply a language to Google Translate with polling retry
   const applyTranslation = useCallback((lang: string) => {
     let attempts = 0;
+    const maxAttempts = 40; // More attempts (40 * 300ms = 12s max)
+    
     if (lang === "fr") {
       const doRestore = () => {
-        if (attempts++ > 25) return;
+        if (attempts++ > maxAttempts) {
+          console.warn("[LanguageEngine] Failed to restore French after", maxAttempts, "attempts");
+          return;
+        }
         const ok = restoreOriginal();
         if (!ok) setTimeout(doRestore, 300);
       };
       doRestore();
     } else {
       const doTranslate = () => {
-        if (attempts++ > 25) return;
+        if (attempts++ > maxAttempts) {
+          console.warn("[LanguageEngine] Failed to translate to", lang, "after", maxAttempts, "attempts");
+          return;
+        }
         const ok = triggerTranslation(lang);
         if (!ok) {
           // If combo still not found after 10 attempts, try re-initializing GT
           if (attempts === 10 && window.googleTranslateElementInit) {
+            console.log("[LanguageEngine] Re-initializing GT after 10 failed attempts");
             const el = document.getElementById("google_translate_element");
             if (el) el.innerHTML = "";
             window.googleTranslateElementInit();
           }
+          // Also try at 20 attempts with a page-level reinit
+          if (attempts === 20) {
+            console.log("[LanguageEngine] Forcing GT script reload after 20 failed attempts");
+            loadGoogleTranslateScript();
+          }
           setTimeout(doTranslate, 300);
+        } else {
+          console.log("[LanguageEngine] Translation to", lang, "succeeded after", attempts, "attempts");
         }
       };
       doTranslate();
@@ -229,25 +269,38 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const userChoice = localStorage.getItem(LANG_CACHE_KEY);
       if (userChoice && userChoice !== "auto" && userChoice !== "fr") {
         // Re-apply their cached language (GT resets on reload)
-        setTimeout(() => applyTranslation(userChoice), 1500);
+        // Wait longer for GT to initialize on cold load
+        setTimeout(() => applyTranslation(userChoice), 2500);
         return;
       }
     }
 
-    // Apply the language for this country immediately (no reload needed)
-    if (isBaseLang(detectedLang)) {
-      // Switching to a French-speaking country → restore original
-      applyTranslation("fr");
-      setCurrentLang("fr");
-      localStorage.setItem(LANG_CACHE_KEY, "fr");
+    // Apply the language for this country (with delay for GT to initialize)
+    // GT needs time to load the script and create the combo box
+    const applyWithDelay = () => {
+      if (isBaseLang(detectedLang)) {
+        // Switching to a French-speaking country → restore original
+        applyTranslation("fr");
+        setCurrentLang("fr");
+        localStorage.setItem(LANG_CACHE_KEY, "fr");
+      } else {
+        // Non-French country → translate
+        applyTranslation(detectedLang);
+        setCurrentLang(detectedLang);
+        localStorage.setItem(LANG_CACHE_KEY, detectedLang);
+        flashBanner(
+          `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
+        );
+      }
+    };
+
+    // First load needs longer delay for GT script to fully initialize
+    if (!document.querySelector(".goog-te-combo")) {
+      // GT not ready yet - wait for it
+      setTimeout(applyWithDelay, 3000);
     } else {
-      // Non-French country → translate instantly
-      applyTranslation(detectedLang);
-      setCurrentLang(detectedLang);
-      localStorage.setItem(LANG_CACHE_KEY, detectedLang);
-      flashBanner(
-        `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
-      );
+      // GT already initialized - apply immediately
+      applyWithDelay();
     }
   }, [selectedCountry, detecting, applyTranslation, flashBanner]);
 
