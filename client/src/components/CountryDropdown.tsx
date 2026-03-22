@@ -164,8 +164,14 @@ type Tab = "country" | "language";
 export function CountryDropdown() {
   const { selectedCountry, setSelectedCountry, detecting, reloadDetection } =
     useCountry();
-  const { currentLang, selectLanguage, showBanner, dismissBanner } =
-    useLanguage();
+  const {
+    currentLang,
+    selectLanguage,
+    showBanner,
+    bannerMessage,
+    previousLang,
+    dismissBanner,
+  } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("country");
@@ -218,7 +224,7 @@ export function CountryDropdown() {
       setSelectedCountry(code);
       // Auto-translate to that country's language
       const lang = getLanguageForCountry(code);
-      selectLanguage(lang);
+      selectLanguage(lang, "country");
       setOpen(false);
     },
     [setSelectedCountry, selectLanguage],
@@ -267,31 +273,36 @@ export function CountryDropdown() {
 
   return (
     <>
-      {/* ── Auto-translate notification banner ── */}
+      {/* ── Language change confirmation banner ── */}
       {showBanner && (
         <div
-          className="notranslate fixed top-2 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2 flex items-center gap-2 shadow-xl"
-          style={{ maxWidth: "90vw" }}
+          className="notranslate fixed top-2 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-2.5 flex items-center gap-2.5 shadow-xl"
+          style={{ maxWidth: "92vw" }}
         >
-          <Globe className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
-          <span className="text-[11px] text-gray-300 font-mono">
-            {LANG_FLAGS[currentLang] || "🌐"}{" "}
-            <span className="text-white font-bold">
-              {LANG_NAMES[currentLang] || currentLang}
+          <Globe className="h-4 w-4 text-purple-400 flex-shrink-0" />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] text-gray-300 font-mono flex items-center gap-1.5">
+              {LANG_FLAGS[currentLang] || "🌐"}
+              <span className="text-white font-bold">
+                {LANG_NAMES[currentLang] || currentLang}
+              </span>
             </span>
-          </span>
+            <span className="text-[9px] text-gray-500 font-mono">
+              {bannerMessage}
+            </span>
+          </div>
           <button
             onClick={() => {
-              selectLanguage("fr");
+              selectLanguage(previousLang || "fr");
               dismissBanner();
             }}
-            className="text-[10px] text-gray-500 hover:text-white ml-1 font-mono underline"
+            className="text-[10px] text-purple-400 hover:text-white ml-1 font-mono underline whitespace-nowrap"
           >
             Undo
           </button>
           <button
             onClick={dismissBanner}
-            className="text-gray-600 hover:text-white ml-1"
+            className="text-gray-600 hover:text-white ml-0.5"
           >
             <X className="h-3 w-3" />
           </button>

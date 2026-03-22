@@ -189,21 +189,21 @@ async function testDatabaseConnection(): Promise<{
 
 // Filter options - SIMILAR TO HOSPITALITY
 const categoryOptions = [
-  { value: "dealership", label: "Car Dealership" },
-  { value: "motorcycle", label: "Motorcycle Dealer" },
-  { value: "repair", label: "Auto Repair" },
-  { value: "rental", label: "Car Rental" },
-  { value: "parts", label: "Auto Parts" },
-  { value: "carwash", label: "Car Wash" },
-  { value: "inspection", label: "Vehicle Inspection" },
-  { value: "insurance", label: "Auto Insurance" },
+  { value: "dealership", label: "Concessionnaire auto" },
+  { value: "motorcycle", label: "Concessionnaire moto" },
+  { value: "repair", label: "Réparation auto" },
+  { value: "rental", label: "Location de voitures" },
+  { value: "parts", label: "Pièces détachées" },
+  { value: "carwash", label: "Lavage auto" },
+  { value: "inspection", label: "Contrôle technique" },
+  { value: "insurance", label: "Assurance auto" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "available", label: "Available" },
+  { value: "active", label: "Actif" },
+  { value: "available", label: "Disponible" },
   { value: "premium", label: "Premium" },
-  { value: "inactive", label: "Inactive" },
+  { value: "inactive", label: "Inactif" },
 ];
 
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
@@ -559,33 +559,33 @@ export default function Automobile() {
   const automobileFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live automobile records from Verso Air database",
+      title: "Base de données PostgreSQL",
+      description: "Données automobiles en direct depuis la base Verso Air",
     },
     {
       icon: <Car className="h-8 w-8" />,
-      title: "Vehicle Network",
-      description: "Global network of car dealerships and auto services",
+      title: "Réseau véhicules",
+      description: "Réseau mondial de concessionnaires et services auto",
     },
     {
       icon: <Wrench className="h-8 w-8" />,
-      title: "Auto Services",
-      description: "Comprehensive repair and maintenance services",
+      title: "Services auto",
+      description: "Services complets de réparation et d'entretien",
     },
     {
       icon: <Fuel className="h-8 w-8" />,
-      title: "Fuel Solutions",
-      description: "Fuel stations and alternative energy options",
+      title: "Solutions carburant",
+      description: "Stations-service et options d'énergie alternative",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Reach",
-      description: "Auto businesses in 50+ countries worldwide",
+      title: "Portée mondiale",
+      description: "Entreprises auto dans plus de 50 pays",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time performance monitoring",
+      title: "Analytique en direct",
+      description: "Surveillance des performances en temps réel",
     },
   ];
 
@@ -622,7 +622,7 @@ export default function Automobile() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              🚗 Automobile Intelligence
+              🚗 Intelligence Automobile
             </span>
           </motion.div>
 
@@ -632,7 +632,7 @@ export default function Automobile() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Automobile Business Database
+            Base de données Automobile
           </motion.h1>
 
           <motion.p
@@ -641,8 +641,9 @@ export default function Automobile() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            car dealerships, auto services, and vehicle businesses
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ concessionnaires, services auto et
+            entreprises véhicules
           </motion.p>
 
           {/* Database Stats */}
@@ -656,10 +657,12 @@ export default function Automobile() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                  <span className="text-sm text-purple-200">Live Database</span>
+                  <span className="text-sm text-purple-200">
+                    Base en direct
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Entrées
                 </div>
               </CardContent>
             </Card>
@@ -667,10 +670,12 @@ export default function Automobile() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Car className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
-                  <span className="text-sm text-pink-200">Auto Businesses</span>
+                  <span className="text-sm text-pink-200">
+                    Entreprises auto
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargées
                 </div>
               </CardContent>
             </Card>
@@ -711,7 +716,7 @@ export default function Automobile() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -734,7 +739,7 @@ export default function Automobile() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search car dealerships, auto services, vehicle brands..."
+                  placeholder="Rechercher concessionnaires, services auto, marques..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -744,7 +749,7 @@ export default function Automobile() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, region, or service location..."
+                  placeholder="Ville, région ou zone de service..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -761,7 +766,7 @@ export default function Automobile() {
                   className="border-purple-600 hover:bg-purple-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -771,7 +776,7 @@ export default function Automobile() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -785,24 +790,24 @@ export default function Automobile() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc"
-                          ? "Highest Rating"
+                          ? "Meilleure note"
                           : activeFilters.sort_by === "revenue_desc"
-                            ? "Highest Revenue"
+                            ? "Chiffre d'affaires"
                             : activeFilters.sort_by === "employees_desc"
-                              ? "Most Employees"
+                              ? "Plus d'employés"
                               : activeFilters.sort_by === "name_asc"
-                                ? "Name A-Z"
-                                : "Sort by"}
+                                ? "Nom A-Z"
+                                : "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[200px]">
                     {[
-                      { value: "rating_desc", label: "Highest Rating" },
-                      { value: "revenue_desc", label: "Highest Revenue" },
-                      { value: "employees_desc", label: "Most Employees" },
-                      { value: "name_asc", label: "Name A-Z" },
+                      { value: "rating_desc", label: "Meilleure note" },
+                      { value: "revenue_desc", label: "Chiffre d'affaires" },
+                      { value: "employees_desc", label: "Plus d'employés" },
+                      { value: "name_asc", label: "Nom A-Z" },
                     ].map((option) => (
                       <DropdownMenuItem
                         key={option.value}
@@ -832,7 +837,7 @@ export default function Automobile() {
                 </DropdownMenu>
 
                 <div className="text-sm text-purple-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -848,7 +853,7 @@ export default function Automobile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Category
+                      Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -859,7 +864,7 @@ export default function Automobile() {
                           <span className="text-sm">
                             {categoryOptions.find(
                               (c) => c.value === activeFilters.category,
-                            )?.label || "All Categories"}
+                            )?.label || "Toutes les catégories"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -901,7 +906,7 @@ export default function Automobile() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -922,7 +927,7 @@ export default function Automobile() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Revenue
+                      CA minimum
                     </Label>
                     <Input
                       type="number"
@@ -940,7 +945,7 @@ export default function Automobile() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -951,7 +956,7 @@ export default function Automobile() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tous les statuts"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -997,13 +1002,13 @@ export default function Automobile() {
                       onClick={clearAllFilters}
                       className="border-purple-600 hover:bg-purple-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1065,14 +1070,14 @@ export default function Automobile() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-purple-400" />
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
                     {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
+                      ? "✅ Données PostgreSQL en direct"
+                      : "✅ Données réelles"}
                   </div>
                 </div>
 
@@ -1091,10 +1096,10 @@ export default function Automobile() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Loading auto businesses...
+                              Chargement des entreprises auto...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-purple-400" />
@@ -1113,9 +1118,11 @@ export default function Automobile() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-purple-400 animate-spin" />
                         </div>
@@ -1135,10 +1142,10 @@ export default function Automobile() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching auto businesses...
+                              Récupération des entreprises auto...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1150,23 +1157,23 @@ export default function Automobile() {
                               theme="purple"
                               onSelect={handleBusinessSelect}
                               sectorIcon={Car}
-                              sectorLabel="Auto Service"
+                              sectorLabel="Service auto"
                             />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Businesses Found
+                              Aucune entreprise trouvée
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1188,10 +1195,10 @@ export default function Automobile() {
                           className="border-purple-600 hover:bg-purple-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-purple-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1204,7 +1211,7 @@ export default function Automobile() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-purple-600 hover:bg-purple-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1220,7 +1227,7 @@ export default function Automobile() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
-              Automobile Analytics
+              Analytique automobile
             </h2>
 
             {/* Summary Cards */}
@@ -1232,18 +1239,18 @@ export default function Automobile() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Service Center Rate"
+                title="Taux centres de service"
                 value={analytics ? `${analytics.occupancy_rate}%` : "85%"}
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+15% from last month"
+                    : "+15% par rapport au mois dernier"
                 }
                 trend="up"
                 color="purple"
               />
               <AnalyticsCard
-                title="Avg Vehicle Price"
+                title="Prix moyen véhicule"
                 value={
                   analytics ? `€${analytics.average_daily_rate}` : "€28,500"
                 }
@@ -1252,26 +1259,26 @@ export default function Automobile() {
                     ? `+${Math.round(
                         (analytics.average_daily_rate || 0) / 1000,
                       )}%`
-                    : "+8% from last month"
+                    : "+8% par rapport au mois dernier"
                 }
                 trend="up"
                 color="pink"
               />
               <AnalyticsCard
-                title="Customer Satisfaction"
+                title="Satisfaction client"
                 value={
                   analytics ? `${analytics.guest_satisfaction}/10` : "4.7/5"
                 }
                 change={
                   analytics
                     ? `+${analytics.guest_satisfaction * 0.1 || 5}%`
-                    : "+5% from last month"
+                    : "+5% par rapport au mois dernier"
                 }
                 trend="up"
                 color="blue"
               />
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1280,7 +1287,7 @@ export default function Automobile() {
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+22% from last month"
+                    : "+22% par rapport au mois dernier"
                 }
                 trend="up"
                 color="orange"
@@ -1293,7 +1300,7 @@ export default function Automobile() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Sales Trends
+                      Tendances revenus & ventes
                     </h3>
                     <Calendar className="h-5 w-5 text-purple-400" />
                   </div>
@@ -1306,7 +1313,7 @@ export default function Automobile() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Category
+                    Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1320,7 +1327,7 @@ export default function Automobile() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Categories
+                    Meilleures catégories
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1344,27 +1351,27 @@ export default function Automobile() {
                       <>
                         {[
                           {
-                            category: "Car Dealership",
+                            category: "Concessionnaire",
                             revenue: 125400,
                             occupancy: 85,
                           },
                           {
-                            category: "Auto Repair",
+                            category: "Réparation auto",
                             revenue: 89200,
                             occupancy: 78,
                           },
                           {
-                            category: "Car Rental",
+                            category: "Location auto",
                             revenue: 56800,
                             occupancy: 72,
                           },
                           {
-                            category: "Auto Parts",
+                            category: "Pièces détachées",
                             revenue: 42300,
                             occupancy: 68,
                           },
                           {
-                            category: "Car Wash",
+                            category: "Lavage auto",
                             revenue: 28700,
                             occupancy: 65,
                           },
@@ -1395,7 +1402,7 @@ export default function Automobile() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Sales by Region
+                    Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
@@ -1420,17 +1427,17 @@ export default function Automobile() {
                       <>
                         {[
                           {
-                            region: "North America",
+                            region: "Amérique du Nord",
                             revenue: 985200,
                             percentage: 41,
                           },
                           { region: "Europe", revenue: 763400, percentage: 32 },
                           {
-                            region: "Asia Pacific",
+                            region: "Asie-Pacifique",
                             revenue: 432100,
                             percentage: 18,
                           },
-                          { region: "Africa", revenue: 219300, percentage: 9 },
+                          { region: "Afrique", revenue: 219300, percentage: 9 },
                         ].map((region, index) => (
                           <div key={index}>
                             <div className="flex justify-between items-center mb-1">
@@ -1459,31 +1466,31 @@ export default function Automobile() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Performance Metrics
+                    Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
                     {[
                       {
-                        metric: "Service Fill Rate",
+                        metric: "Taux de remplissage",
                         value: analytics
                           ? `${analytics.occupancy_rate}%`
                           : "85%",
                         change: "+15%",
                       },
                       {
-                        metric: "Avg Vehicle Price",
+                        metric: "Prix moyen véhicule",
                         value: analytics
                           ? `€${analytics.average_daily_rate}`
                           : "€28,500",
                         change: "+8%",
                       },
                       {
-                        metric: "Vehicle Sales",
+                        metric: "Ventes véhicules",
                         value: "8,950+",
                         change: "+22%",
                       },
                       {
-                        metric: "Customer Score",
+                        metric: "Note client",
                         value: analytics
                           ? `${analytics.guest_satisfaction}/10`
                           : "4.7/5",
@@ -1522,22 +1529,27 @@ export default function Automobile() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de bord financier
             </h2>
             <p className="text-gray-300 mb-6">
-              Financial analytics and performance metrics for automobile sector.
+              Analytique financière et indicateurs de performance du secteur
+              automobile.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
-                  title: "Vehicle Sales Revenue",
+                  title: "Revenus ventes véhicules",
                   value: "€145M",
                   change: "+22%",
                 },
-                { title: "Service Revenue", value: "€28M", change: "+18%" },
-                { title: "Parts Revenue", value: "€15M", change: "+25%" },
-                { title: "Operating Costs", value: "€85M", change: "+12%" },
-                { title: "Profit Margin", value: "35%", change: "+4%" },
+                { title: "Revenus services", value: "€28M", change: "+18%" },
+                { title: "Revenus pièces", value: "€15M", change: "+25%" },
+                {
+                  title: "Coûts d'exploitation",
+                  value: "€85M",
+                  change: "+12%",
+                },
+                { title: "Marge bénéficiaire", value: "35%", change: "+4%" },
                 { title: "ROI", value: "28%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1549,7 +1561,7 @@ export default function Automobile() {
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
-                      {metric.change} from last month
+                      {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
                 </Card>
@@ -1562,23 +1574,23 @@ export default function Automobile() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
-              Advertising & Promotions
+              Publicité & Promotions
             </h2>
             <p className="text-gray-300 mb-6">
-              Manage campaigns and promotional activities for automobile
-              businesses.
+              Gérez les campagnes et activités promotionnelles pour les
+              entreprises automobiles.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Active Campaigns", value: "15", status: "Running" },
-                { title: "Total Budget", value: "€150K", status: "Allocated" },
-                { title: "Engagement Rate", value: "5.2%", status: "High" },
+                { title: "Campagnes actives", value: "15", status: "En cours" },
+                { title: "Budget total", value: "€150K", status: "Alloué" },
+                { title: "Taux d'engagement", value: "5.2%", status: "Élevé" },
                 {
-                  title: "Click-through Rate",
+                  title: "Taux de clic",
                   value: "2.8%",
-                  status: "Average",
+                  status: "Moyen",
                 },
-                { title: "Conversion Rate", value: "2.2%", status: "Good" },
+                { title: "Taux de conversion", value: "2.2%", status: "Bon" },
                 { title: "ROAS", value: "3.8x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1593,9 +1605,9 @@ export default function Automobile() {
                       className={`text-sm ${
                         ad.status === "Excellent"
                           ? "text-green-400"
-                          : ad.status === "Good"
+                          : ad.status === "Bon"
                             ? "text-blue-400"
-                            : ad.status === "Average"
+                            : ad.status === "Moyen"
                               ? "text-yellow-400"
                               : "text-purple-400"
                       }`}
@@ -1613,17 +1625,17 @@ export default function Automobile() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Total Automobile Records
+                      Total enregistrements automobile
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -1631,24 +1643,24 @@ export default function Automobile() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Active Auto Businesses
+                      Entreprises auto actives
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Database Status</span>
+                    <span className="text-purple-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">API Endpoint</span>
+                    <span className="text-purple-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-purple-400">
                       {API_BASE_URL}
                     </span>
@@ -1657,7 +1669,7 @@ export default function Automobile() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1666,7 +1678,7 @@ export default function Automobile() {
                     }
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1675,7 +1687,7 @@ export default function Automobile() {
                     variant="outline"
                     className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                 </div>
               </div>
@@ -1688,7 +1700,7 @@ export default function Automobile() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-            Verso Air Automobile Network
+            Réseau Automobile Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -1785,7 +1797,9 @@ export default function Automobile() {
                   {selectedBusiness.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Revenue</div>
+                        <div className="text-sm text-gray-400">
+                          Chiffre d'affaires
+                        </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
@@ -1795,7 +1809,7 @@ export default function Automobile() {
                   {selectedBusiness.employees && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employees</div>
+                        <div className="text-sm text-gray-400">Employés</div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
@@ -1806,15 +1820,15 @@ export default function Automobile() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedBusiness.phone || "Not specified"}
+                        {selectedBusiness.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
+                      <div className="text-sm text-gray-400">E-mail</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedBusiness.email || "Not specified"}
+                        {selectedBusiness.email || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
@@ -1824,7 +1838,7 @@ export default function Automobile() {
                   (selectedBusiness as any).brands.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Featured Brands
+                        Marques vedettes
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {(selectedBusiness as any).brands.map(
@@ -1846,7 +1860,7 @@ export default function Automobile() {
                   selectedBusiness.services.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Services Offered
+                        Services proposés
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedBusiness.services.map((service, index) => (
@@ -1864,14 +1878,14 @@ export default function Automobile() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    Contact Business
+                    Contacter l'entreprise
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowBusinessDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

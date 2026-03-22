@@ -204,13 +204,15 @@ export default function TermsOfService() {
                 business profiles)
               </li>
               <li>
-                By posting content, you grant Verso Air a worldwide,
+                By posting content, you grant{" "}
+                <span className="notranslate">Verso Air</span> a worldwide,
                 non-exclusive, royalty-free license to display, distribute, and
                 promote your content within the Platform
               </li>
               <li>
-                The Verso Air brand, "STRΔΦGHT TΩ THΞ PΩΦΠT" tagline, design
-                elements, and source code are proprietary
+                The <span className="notranslate">Verso Air</span> brand,{" "}
+                <span className="notranslate">"STRΔΦGHT TΩ THΞ PΩΦΠT"</span>{" "}
+                tagline, design elements, and source code are proprietary
               </li>
               <li>
                 You may not scrape, reverse-engineer, or replicate Platform

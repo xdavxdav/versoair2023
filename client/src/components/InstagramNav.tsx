@@ -57,7 +57,11 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type NavGroup = {
   label: string;
-  items: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[];
+  items: {
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[];
 };
 
 const sectorGroup: NavGroup = {
@@ -193,7 +197,7 @@ function NavDrawer({
           >
             {/* Header */}
             <div className="sticky top-0 z-10 bg-gray-950/90 backdrop-blur-lg px-5 py-4 flex items-center justify-between border-b border-gray-800/60">
-              <span className="text-lg font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-lg font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent notranslate">
                 Verso Air
               </span>
               <button
@@ -222,7 +226,9 @@ function NavDrawer({
                     <p className="text-sm font-medium text-white truncate">
                       {user.name || user.email}
                     </p>
-                    <p className="text-xs text-gray-400 capitalize">{user.role || "member"}</p>
+                    <p className="text-xs text-gray-400 capitalize">
+                      {user.role || "member"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -547,7 +553,9 @@ export default function InstagramNav({
             />
             <span
               className={`text-[10px] ${
-                drawerOpen || sectorsActive ? "text-amber-400 font-semibold" : "text-gray-500"
+                drawerOpen || sectorsActive
+                  ? "text-amber-400 font-semibold"
+                  : "text-gray-500"
               }`}
             >
               Menu
@@ -559,7 +567,9 @@ export default function InstagramNav({
             <div className="flex flex-col items-center gap-0.5 px-3 py-1">
               <ShoppingBag
                 className={`h-6 w-6 transition-colors ${
-                  isActive(currentPath, "/marketplace") ? "text-amber-400" : "text-gray-400"
+                  isActive(currentPath, "/marketplace")
+                    ? "text-amber-400"
+                    : "text-gray-400"
                 }`}
               />
               <span
@@ -596,7 +606,9 @@ export default function InstagramNav({
               )}
               <span
                 className={`text-[10px] ${
-                  profileActive ? "text-amber-400 font-semibold" : "text-gray-500"
+                  profileActive
+                    ? "text-amber-400 font-semibold"
+                    : "text-gray-500"
                 }`}
               >
                 {user ? "Profile" : "Sign In"}
@@ -619,7 +631,10 @@ export default function InstagramNav({
       </div>
 
       {/* Search modal */}
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </>
   );
 }

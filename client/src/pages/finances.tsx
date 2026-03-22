@@ -173,21 +173,21 @@ async function fetchFinanceAnalytics(): Promise<FinanceAnalytics> {
 
 // Filter options - SIMILAR TO HOSPITALITY
 const categoryOptions = [
-  { value: "banking", label: "Commercial Banking" },
-  { value: "investment", label: "Investment Banking" },
-  { value: "forex", label: "Forex Trading" },
+  { value: "banking", label: "Banque commerciale" },
+  { value: "investment", label: "Banque d'investissement" },
+  { value: "forex", label: "Trading Forex" },
   { value: "microfinance", label: "Microfinance" },
-  { value: "insurance", label: "Insurance" },
-  { value: "asset", label: "Asset Management" },
+  { value: "insurance", label: "Assurance" },
+  { value: "asset", label: "Gestion d'actifs" },
   { value: "fintech", label: "Fintech" },
-  { value: "brokerage", label: "Stock Brokerage" },
+  { value: "brokerage", label: "Courtage boursier" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "licensed", label: "Licensed" },
+  { value: "active", label: "Actif" },
+  { value: "licensed", label: "Licencié" },
   { value: "premium", label: "Premium" },
-  { value: "inactive", label: "Inactive" },
+  { value: "inactive", label: "Inactif" },
 ];
 
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
@@ -335,8 +335,8 @@ export default function Finance() {
     }>
   >([
     {
-      name: "Loading financial institutions...",
-      desc: "Connecting to database",
+      name: "Chargement des institutions financières...",
+      desc: "Connexion à la base de données",
       image:
         "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800",
     },
@@ -349,7 +349,7 @@ export default function Finance() {
     if (searchResults.length > 0) {
       const featuredEnterprises = searchResults.slice(0, 8).map((business) => ({
         name: business.title,
-        desc: business.description || "Premium financial institution",
+        desc: business.description || "Institution financière premium",
         image: `https://images.unsplash.com/photo-${Math.floor(
           Math.random() * 1000,
         )}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80`,
@@ -590,7 +590,7 @@ export default function Finance() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              💰 Financial Intelligence
+              💰 Intelligence Financière
             </span>
           </motion.div>
 
@@ -600,7 +600,7 @@ export default function Finance() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Financial Business Database
+            Base de données Finances
           </motion.h1>
 
           <motion.p
@@ -609,8 +609,9 @@ export default function Finance() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            banks, forex brokers, and financial institutions
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ banques, courtiers forex et
+            institutions financières
           </motion.p>
 
           {/* Database Stats */}
@@ -681,7 +682,7 @@ export default function Finance() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -704,7 +705,7 @@ export default function Finance() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search banks, forex brokers, financial services..."
+                  placeholder="Rechercher banques, courtiers forex, services financiers..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
@@ -715,7 +716,7 @@ export default function Finance() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, financial district, or region..."
+                  placeholder="Ville, quartier financier ou région..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
@@ -728,12 +729,12 @@ export default function Finance() {
                 {isSearching ? (
                   <>
                     <Loader2 className="mr-2 h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] animate-spin" />
-                    Searching...
+                    Recherche en cours...
                   </>
                 ) : (
                   <>
                     <Search size={18} className="mr-2" />
-                    Search
+                    Rechercher
                   </>
                 )}
               </Button>
@@ -747,7 +748,7 @@ export default function Finance() {
                   className="border-purple-600 hover:bg-purple-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -757,7 +758,7 @@ export default function Finance() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -771,13 +772,13 @@ export default function Finance() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
-                          "Highest Rating"}
+                          "Meilleure note"}
                         {activeFilters.sort_by === "revenue_desc" &&
-                          "Highest Revenue"}
+                          "Chiffre d'affaires"}
                         {activeFilters.sort_by === "assets_desc" &&
-                          "Largest Assets"}
-                        {activeFilters.sort_by === "name_asc" && "Name A-Z"}
-                        {!activeFilters.sort_by && "Sort by"}
+                          "Plus grands actifs"}
+                        {activeFilters.sort_by === "name_asc" && "Nom A-Z"}
+                        {!activeFilters.sort_by && "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
@@ -801,7 +802,7 @@ export default function Finance() {
                             : "text-purple-200"
                         }
                       >
-                        Highest Rating
+                        Meilleure note
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -822,7 +823,7 @@ export default function Finance() {
                             : "text-purple-200"
                         }
                       >
-                        Highest Revenue
+                        Chiffre d'affaires
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -843,7 +844,7 @@ export default function Finance() {
                             : "text-purple-200"
                         }
                       >
-                        Largest Assets
+                        Plus grands actifs
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -864,14 +865,14 @@ export default function Finance() {
                             : "text-purple-200"
                         }
                       >
-                        Name A-Z
+                        Nom A-Z
                       </span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
                 <div className="text-sm text-purple-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -887,7 +888,7 @@ export default function Finance() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Category
+                      Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -898,7 +899,7 @@ export default function Finance() {
                           <span className="text-sm">
                             {categoryOptions.find(
                               (c) => c.value === activeFilters.category,
-                            )?.label || "All Categories"}
+                            )?.label || "Toutes les catégories"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -916,7 +917,7 @@ export default function Finance() {
                                 : "text-purple-200"
                             }
                           >
-                            All Categories
+                            Toutes les catégories
                           </span>
                         </DropdownMenuItem>
                         {categoryOptions.map((cat) => (
@@ -949,7 +950,7 @@ export default function Finance() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -963,14 +964,14 @@ export default function Finance() {
                           minRating: e.target.value,
                         })
                       }
-                      placeholder="Any"
+                      placeholder="Tous"
                       className="bg-slate-700 border-purple-600"
                     />
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Revenue
+                      CA minimum
                     </Label>
                     <Input
                       type="number"
@@ -981,14 +982,14 @@ export default function Finance() {
                           minRevenue: e.target.value,
                         })
                       }
-                      placeholder="Any"
+                      placeholder="Tous"
                       className="bg-slate-700 border-purple-600"
                     />
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -999,7 +1000,7 @@ export default function Finance() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tout statut"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1017,7 +1018,7 @@ export default function Finance() {
                                 : "text-purple-200"
                             }
                           >
-                            Any Status
+                            Tout statut
                           </span>
                         </DropdownMenuItem>
                         {statusOptions.map((status) => (
@@ -1054,13 +1055,13 @@ export default function Finance() {
                       onClick={clearAllFilters}
                       className="border-purple-600 hover:bg-purple-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1122,12 +1123,12 @@ export default function Finance() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-purple-400" />
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
-                    ✅ Real Database Data ({searchResults.length} businesses)
+                    ✅ Données réelles ({searchResults.length} entreprises)
                   </div>
                 </div>
 
@@ -1168,9 +1169,11 @@ export default function Finance() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-purple-400 animate-spin" />
                         </div>
@@ -1190,10 +1193,10 @@ export default function Finance() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching financial institutions...
+                              Chargement des institutions financières...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1205,23 +1208,23 @@ export default function Finance() {
                               theme="emerald"
                               onSelect={handleBusinessSelect}
                               sectorIcon={CreditCard}
-                              sectorLabel="Financial"
+                              sectorLabel="Financier"
                             />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Institutions Found
+                              Aucune institution trouvée
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1243,10 +1246,10 @@ export default function Finance() {
                           className="border-purple-600 hover:bg-purple-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-purple-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1259,7 +1262,7 @@ export default function Finance() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-purple-600 hover:bg-purple-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1275,7 +1278,7 @@ export default function Finance() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
-              Financial Analytics
+              Analytique financière
             </h2>
 
             {/* Summary Cards */}
@@ -1287,44 +1290,44 @@ export default function Finance() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Transaction Rate"
+                title="Taux de transaction"
                 value={analytics ? `${analytics.occupancy_rate}%` : "92%"}
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+15% from last month"
+                    : "+15% par rapport au mois dernier"
                 }
                 trend="up"
                 color="purple"
               />
               <AnalyticsCard
-                title="Avg Asset Value"
+                title="Valeur moyenne des actifs"
                 value={analytics ? `€${analytics.average_daily_rate}` : "€285K"}
                 change={
                   analytics
                     ? `+${Math.round(
                         (analytics.average_daily_rate || 0) / 1000,
                       )}%`
-                    : "+12% from last month"
+                    : "+12% par rapport au mois dernier"
                 }
                 trend="up"
                 color="pink"
               />
               <AnalyticsCard
-                title="Client Satisfaction"
+                title="Satisfaction client"
                 value={
                   analytics ? `${analytics.guest_satisfaction}/10` : "4.8/5"
                 }
                 change={
                   analytics
                     ? `+${analytics.guest_satisfaction * 0.1 || 6}%`
-                    : "+6% from last month"
+                    : "+6% par rapport au mois dernier"
                 }
                 trend="up"
                 color="blue"
               />
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1333,7 +1336,7 @@ export default function Finance() {
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+18% from last month"
+                    : "+18% par rapport au mois dernier"
                 }
                 trend="up"
                 color="orange"
@@ -1346,7 +1349,7 @@ export default function Finance() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Transactions Trends
+                      Tendances revenus & transactions
                     </h3>
                     <Calendar className="h-5 w-5 text-purple-400" />
                   </div>
@@ -1579,18 +1582,27 @@ export default function Finance() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de bord financier
             </h2>
             <p className="text-gray-300 mb-6">
-              Financial analytics and performance metrics for finance sector.
+              Analytique financière et indicateurs de performance du secteur
+              finance.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Banking Revenue", value: "€245M", change: "+18%" },
-                { title: "Forex Revenue", value: "€128M", change: "+35%" },
-                { title: "Investment Revenue", value: "€92M", change: "+22%" },
-                { title: "Operating Costs", value: "€185M", change: "+12%" },
-                { title: "Profit Margin", value: "32%", change: "+4%" },
+                { title: "Revenus bancaires", value: "€245M", change: "+18%" },
+                { title: "Revenus Forex", value: "€128M", change: "+35%" },
+                {
+                  title: "Revenus investissement",
+                  value: "€92M",
+                  change: "+22%",
+                },
+                {
+                  title: "Coûts d'exploitation",
+                  value: "€185M",
+                  change: "+12%",
+                },
+                { title: "Marge bénéficiaire", value: "32%", change: "+4%" },
                 { title: "ROI", value: "28%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1602,7 +1614,7 @@ export default function Finance() {
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
-                      {metric.change} from last month
+                      {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
                 </Card>
@@ -1615,23 +1627,23 @@ export default function Finance() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
-              Advertising & Promotions
+              Publicité & Promotions
             </h2>
             <p className="text-gray-300 mb-6">
-              Manage campaigns and promotional activities for financial
-              businesses.
+              Gérez les campagnes et activités promotionnelles pour les
+              entreprises financières.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Active Campaigns", value: "18", status: "Running" },
-                { title: "Total Budget", value: "€220K", status: "Allocated" },
-                { title: "Engagement Rate", value: "5.8%", status: "High" },
+                { title: "Campagnes actives", value: "18", status: "En cours" },
+                { title: "Budget total", value: "€220K", status: "Alloué" },
+                { title: "Taux d'engagement", value: "5.8%", status: "Élevé" },
                 {
-                  title: "Click-through Rate",
+                  title: "Taux de clic",
                   value: "3.2%",
-                  status: "Average",
+                  status: "Moyen",
                 },
-                { title: "Conversion Rate", value: "2.8%", status: "Good" },
+                { title: "Taux de conversion", value: "2.8%", status: "Bon" },
                 { title: "ROAS", value: "4.2x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1646,9 +1658,9 @@ export default function Finance() {
                       className={`text-sm ${
                         ad.status === "Excellent"
                           ? "text-green-400"
-                          : ad.status === "Good"
+                          : ad.status === "Bon"
                             ? "text-blue-400"
-                            : ad.status === "Average"
+                            : ad.status === "Moyen"
                               ? "text-yellow-400"
                               : "text-purple-400"
                       }`}
@@ -1666,17 +1678,17 @@ export default function Finance() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Total Financial Records
+                      Total enregistrements financiers
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -1684,24 +1696,24 @@ export default function Finance() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Active Financial Institutions
+                      Institutions financières actives
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Database Status</span>
+                    <span className="text-purple-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">API Endpoint</span>
+                    <span className="text-purple-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-purple-400">
                       {API_BASE_URL}
                     </span>
@@ -1710,7 +1722,7 @@ export default function Finance() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1719,7 +1731,7 @@ export default function Finance() {
                     }
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1728,7 +1740,7 @@ export default function Finance() {
                     variant="outline"
                     className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                 </div>
               </div>
@@ -1741,7 +1753,7 @@ export default function Finance() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-            Verso Air Financial Network
+            Réseau Financier Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -1818,7 +1830,7 @@ export default function Finance() {
                           {selectedBusiness.rating}
                         </span>
                         <span className="text-gray-400 text-xs ml-1">
-                          ({selectedBusiness.reviews} reviews)
+                          ({selectedBusiness.reviews} avis)
                         </span>
                       </div>
                     </div>
@@ -1838,7 +1850,9 @@ export default function Finance() {
                   {selectedBusiness.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Revenue</div>
+                        <div className="text-sm text-gray-400">
+                          Chiffre d'affaires
+                        </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
@@ -1848,7 +1862,7 @@ export default function Finance() {
                   {selectedBusiness.employees && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employees</div>
+                        <div className="text-sm text-gray-400">Employés</div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
@@ -1859,15 +1873,15 @@ export default function Finance() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedBusiness.phone || "Not specified"}
+                        {selectedBusiness.phone || "Non spécifié"}
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
+                      <div className="text-sm text-gray-400">E-mail</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedBusiness.email || "Not specified"}
+                        {selectedBusiness.email || "Non spécifié"}
                       </div>
                     </CardContent>
                   </Card>
@@ -1877,7 +1891,7 @@ export default function Finance() {
                   selectedBusiness.services.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Financial Services
+                        Services financiers
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedBusiness.services.map((service, index) => (
@@ -1915,14 +1929,14 @@ export default function Finance() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    Contact Institution
+                    Contacter l'institution
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowBusinessDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

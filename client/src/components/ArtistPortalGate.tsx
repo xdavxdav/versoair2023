@@ -17,7 +17,14 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
-import { AlertTriangle, Music, ArrowRight, Shield, X, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Music,
+  ArrowRight,
+  Shield,
+  X,
+  Loader2,
+} from "lucide-react";
 
 const COUNTDOWN_SECONDS = 13;
 
@@ -34,7 +41,9 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     try {
       const c = localStorage.getItem("auth_user");
       if (c) return JSON.parse(c)?.role;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return null;
   })();
 
@@ -244,11 +253,12 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
                 </motion.div>
 
                 <h1 className="text-white text-xl font-bold tracking-wide leading-relaxed">
-                  LEAVING <span className="text-amber-400">VERSO AIR</span>
+                  LEAVING{" "}
+                  <span className="text-amber-400 notranslate">VERSO AIR</span>
                   <br />
                   FOR THE ARTIST PORTAL:
                   <br />
-                  <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent notranslate">
                     VERSO AIR ™️
                   </span>
                 </h1>
@@ -263,10 +273,13 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
                       Security Warning
                     </p>
                     <p className="text-red-200/70 text-xs leading-relaxed">
-                      You are about to leave the Verso Air main platform and
-                      enter the Artist Portal environment. Please ensure you
-                      disconnect from all Verso Air business services before
-                      proceeding. Artist Portal sessions operate independently.
+                      You are about to leave the{" "}
+                      <span className="notranslate">Verso Air</span> main
+                      platform and enter the Artist Portal environment. Please
+                      ensure you disconnect from all{" "}
+                      <span className="notranslate">Verso Air</span> business
+                      services before proceeding. Artist Portal sessions operate
+                      independently.
                     </p>
                   </div>
                 </div>
@@ -363,7 +376,8 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
             {/* Footer */}
             <div className="border-t border-white/5 px-6 py-3 bg-white/[0.02]">
               <p className="text-white/20 text-[10px] text-center">
-                Verso Air ™️ • Artist Portal Transition Gate • Session boundary
+                <span className="notranslate">Verso Air ™️</span> • Artist
+                Portal Transition Gate • Session boundary
               </p>
             </div>
           </div>

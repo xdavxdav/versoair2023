@@ -2,6 +2,10 @@ import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCountry } from "@/contexts/CountryContext";
 import {
+  getContinentAdjective,
+  getContinentForCountry,
+} from "@/utils/country-language";
+import {
   staggerContainer,
   staggerItem,
   defaultViewport,
@@ -562,6 +566,8 @@ export default function BusinessesDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const { selectedCountry } = useCountry();
+  const continentAdj = getContinentAdjective(selectedCountry || "");
+  const continentName = getContinentForCountry(selectedCountry || "");
   const [selectedCategory, setSelectedCategory] = useState<
     (typeof categories)[0] | null
   >(null);
@@ -752,19 +758,19 @@ export default function BusinessesDirectory() {
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
               <Globe className="w-4 h-4 text-sky-400" />
               <span className="text-sm text-gray-300">
-                Your gateway to African businesses
+                Your gateway to {continentAdj} businesses
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              African Business
+              {continentAdj} Business
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 mt-2">
                 Directory
               </span>
             </h1>
 
             <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
-              Discover professionals and businesses across the African continent
+              Discover professionals and businesses across {continentName}
               by category
             </p>
           </motion.div>
@@ -1252,7 +1258,8 @@ export default function BusinessesDirectory() {
             </div>
 
             <p className="text-gray-400 text-sm text-center">
-              © 2024 Verso Air Business Directory. Your gateway to African
+              © 2024 Verso Air Business Directory. Your gateway to{" "}
+              {continentAdj}
               businesses.
             </p>
 

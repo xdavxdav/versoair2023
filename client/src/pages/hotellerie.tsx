@@ -172,21 +172,21 @@ async function testDatabaseConnection(): Promise<{
 
 // Filter options
 const categoryOptions = [
-  { value: "hotel", label: "Hotels" },
-  { value: "resort", label: "Resorts" },
+  { value: "hotel", label: "Hôtels" },
+  { value: "resort", label: "Complexes hôteliers" },
   { value: "restaurant", label: "Restaurants" },
-  { value: "spa", label: "Spa & Wellness" },
-  { value: "boutique", label: "Boutique Hotels" },
+  { value: "spa", label: "Spa & Bien-être" },
+  { value: "boutique", label: "Hôtels boutique" },
   { value: "villa", label: "Villas" },
-  { value: "hostel", label: "Hostels" },
+  { value: "hostel", label: "Auberges" },
   { value: "motel", label: "Motels" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "verified", label: "Verified" },
+  { value: "active", label: "Actif" },
+  { value: "verified", label: "Vérifié" },
   { value: "premium", label: "Premium" },
-  { value: "inactive", label: "Inactive" },
+  { value: "inactive", label: "Inactif" },
 ];
 
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
@@ -348,8 +348,8 @@ export default function Hotellerie() {
     }>
   >([
     {
-      name: "Loading hotels & resorts...",
-      desc: "Connecting to database",
+      name: "Chargement des hôtels & complexes...",
+      desc: "Connexion à la base de données",
       image:
         "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
     },
@@ -362,7 +362,7 @@ export default function Hotellerie() {
     if (searchResults.length > 0) {
       const featuredEnterprises = searchResults.slice(0, 8).map((business) => ({
         name: business.title,
-        desc: business.description || "Premium hospitality establishment",
+        desc: business.description || "Établissement hôtelier premium",
         image: `https://images.unsplash.com/photo-${Math.floor(
           Math.random() * 1000,
         )}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80`,
@@ -541,33 +541,33 @@ export default function Hotellerie() {
   const hospitalityFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live hospitality records from Verso Air database",
+      title: "Base de données PostgreSQL",
+      description: "Données hôtelières en direct depuis la base Verso Air",
     },
     {
       icon: <Hotel className="h-8 w-8" />,
-      title: "Hotel Network",
-      description: "Global network of luxury hotels and resorts",
+      title: "Réseau hôtelier",
+      description: "Réseau mondial d'hôtels de luxe et complexes hôteliers",
     },
     {
       icon: <Briefcase className="h-8 w-8" />,
-      title: "Business Travel",
-      description: "Premium services for corporate clients",
+      title: "Voyages d'affaires",
+      description: "Services premium pour les clients entreprise",
     },
     {
       icon: <Sparkles className="h-8 w-8" />,
-      title: "Luxury Experience",
-      description: "Exclusive amenities and personalized service",
+      title: "Expérience de luxe",
+      description: "Équipements exclusifs et service personnalisé",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Reach",
-      description: "Hotels in 50+ countries worldwide",
+      title: "Portée mondiale",
+      description: "Hôtels dans plus de 50 pays",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time performance monitoring",
+      title: "Analytique en direct",
+      description: "Surveillance des performances en temps réel",
     },
   ];
 
@@ -602,7 +602,7 @@ export default function Hotellerie() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              🏨 Hospitality Intelligence
+              🏨 Intelligence Hôtelière
             </span>
           </motion.div>
 
@@ -612,7 +612,7 @@ export default function Hotellerie() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Hotel & Resort Database
+            Base de données Hôtels & Complexes
           </motion.h1>
 
           <motion.p
@@ -621,8 +621,9 @@ export default function Hotellerie() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            hotels, resorts & restaurants
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ hôtels, complexes hôteliers &
+            restaurants
           </motion.p>
 
           {/* Database Stats */}
@@ -636,10 +637,12 @@ export default function Hotellerie() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                  <span className="text-sm text-purple-200">Live Database</span>
+                  <span className="text-sm text-purple-200">
+                    Base en direct
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Enregistrements
                 </div>
               </CardContent>
             </Card>
@@ -648,11 +651,11 @@ export default function Hotellerie() {
                 <div className="flex items-center gap-[0.5vw]">
                   <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
                   <span className="text-sm text-pink-200">
-                    Hotels & Resorts
+                    Hôtels & Complexes
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargés
                 </div>
               </CardContent>
             </Card>
@@ -693,7 +696,7 @@ export default function Hotellerie() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -716,7 +719,7 @@ export default function Hotellerie() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search hotels, resorts, restaurants, amenities..."
+                  placeholder="Rechercher hôtels, complexes, restaurants, équipements..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -726,7 +729,7 @@ export default function Hotellerie() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, region, or destination..."
+                  placeholder="Ville, région ou destination..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -743,7 +746,7 @@ export default function Hotellerie() {
                   className="border-purple-600 hover:bg-purple-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -753,7 +756,7 @@ export default function Hotellerie() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -767,13 +770,13 @@ export default function Hotellerie() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
-                          "Highest Rating"}
+                          "Meilleure note"}
                         {activeFilters.sort_by === "star_desc" &&
-                          "Highest Star Rating"}
+                          "Meilleure étoile"}
                         {activeFilters.sort_by === "revenue_desc" &&
-                          "Highest Revenue"}
-                        {activeFilters.sort_by === "name_asc" && "Name A-Z"}
-                        {!activeFilters.sort_by && "Sort by"}
+                          "Chiffre d'affaires"}
+                        {activeFilters.sort_by === "name_asc" && "Nom A-Z"}
+                        {!activeFilters.sort_by && "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
@@ -797,7 +800,7 @@ export default function Hotellerie() {
                             : "text-purple-200"
                         }
                       >
-                        Highest Rating
+                        Meilleure note
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -818,7 +821,7 @@ export default function Hotellerie() {
                             : "text-purple-200"
                         }
                       >
-                        Highest Star Rating
+                        Meilleure étoile
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -839,7 +842,7 @@ export default function Hotellerie() {
                             : "text-purple-200"
                         }
                       >
-                        Highest Revenue
+                        Chiffre d'affaires
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -860,14 +863,14 @@ export default function Hotellerie() {
                             : "text-purple-200"
                         }
                       >
-                        Name A-Z
+                        Nom A-Z
                       </span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
                 <div className="text-sm text-purple-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -883,7 +886,7 @@ export default function Hotellerie() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Category
+                      Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -894,7 +897,7 @@ export default function Hotellerie() {
                           <span className="text-sm">
                             {categoryOptions.find(
                               (c) => c.value === activeFilters.category,
-                            )?.label || "All Categories"}
+                            )?.label || "Toutes les catégories"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -912,7 +915,7 @@ export default function Hotellerie() {
                                 : "text-purple-200"
                             }
                           >
-                            All Categories
+                            Toutes les catégories
                           </span>
                         </DropdownMenuItem>
                         {categoryOptions.map((cat) => (
@@ -945,7 +948,7 @@ export default function Hotellerie() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -959,14 +962,14 @@ export default function Hotellerie() {
                           minRating: e.target.value,
                         })
                       }
-                      placeholder="Any"
+                      placeholder="Tous"
                       className="bg-slate-700 border-purple-600"
                     />
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Revenue
+                      CA minimum
                     </Label>
                     <Input
                       type="number"
@@ -977,14 +980,14 @@ export default function Hotellerie() {
                           minRevenue: e.target.value,
                         })
                       }
-                      placeholder="Any"
+                      placeholder="Tous"
                       className="bg-slate-700 border-purple-600"
                     />
                   </div>
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -995,7 +998,7 @@ export default function Hotellerie() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tout statut"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1013,7 +1016,7 @@ export default function Hotellerie() {
                                 : "text-purple-200"
                             }
                           >
-                            Any Status
+                            Tout statut
                           </span>
                         </DropdownMenuItem>
                         {statusOptions.map((status) => (
@@ -1050,13 +1053,13 @@ export default function Hotellerie() {
                       onClick={clearAllFilters}
                       className="border-purple-600 hover:bg-purple-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1118,14 +1121,14 @@ export default function Hotellerie() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-purple-400" />
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
                     {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
+                      ? "✅ Données PostgreSQL en direct"
+                      : "✅ Données réelles"}
                   </div>
                 </div>
 
@@ -1144,10 +1147,10 @@ export default function Hotellerie() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Loading hotels & resorts...
+                              Chargement des hôtels & complexes...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-purple-400" />
@@ -1166,9 +1169,11 @@ export default function Hotellerie() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-purple-400 animate-spin" />
                         </div>
@@ -1188,9 +1193,11 @@ export default function Hotellerie() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
-                            <p className="text-gray-300">Fetching hotels...</p>
+                            <p className="text-gray-300">
+                              Chargement des hôtels...
+                            </p>
                           </div>
                         ) : searchResults.length > 0 ? (
                           searchResults.map((business, index) => (
@@ -1201,23 +1208,25 @@ export default function Hotellerie() {
                               theme="purple"
                               onSelect={handleBusinessSelect}
                               sectorIcon={Hotel}
-                              sectorLabel={(b) => `${(b as any).star_rating || 5}★ Hotel`}
+                              sectorLabel={(b) =>
+                                `${(b as any).star_rating || 5}★ Hotel`
+                              }
                             />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Businesses Found
+                              Aucun établissement trouvé
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1239,10 +1248,10 @@ export default function Hotellerie() {
                           className="border-purple-600 hover:bg-purple-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-purple-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1255,7 +1264,7 @@ export default function Hotellerie() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-purple-600 hover:bg-purple-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1270,7 +1279,7 @@ export default function Hotellerie() {
         {activeTab === "analytics" && (
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <AnimatedHeading
-              text="Hospitality Analytics"
+              text="Analytique Hôtelière"
               level={2}
               variant="slow"
               className="text-[clamp(1.125rem,1.6vw,1.5rem)] mb-[1vw] flex items-center gap-[0.5vw]"
@@ -1285,44 +1294,44 @@ export default function Hotellerie() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Occupancy Rate"
+                title="Taux d'occupation"
                 value={analytics ? `${analytics.occupancy_rate}%` : "78%"}
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+12% from last month"
+                    : "+12% par rapport au mois dernier"
                 }
                 trend="up"
                 color="purple"
               />
               <AnalyticsCard
-                title="Avg Daily Rate"
+                title="Tarif journalier moyen"
                 value={analytics ? `€${analytics.average_daily_rate}` : "€245"}
                 change={
                   analytics
                     ? `+${Math.round(
                         (analytics.average_daily_rate || 0) / 10,
                       )}%`
-                    : "+8% from last month"
+                    : "+8% par rapport au mois dernier"
                 }
                 trend="up"
                 color="pink"
               />
               <AnalyticsCard
-                title="Guest Satisfaction"
+                title="Satisfaction client"
                 value={
                   analytics ? `${analytics.guest_satisfaction}/10` : "4.7/5"
                 }
                 change={
                   analytics
                     ? `+${analytics.guest_satisfaction * 0.1 || 5}%`
-                    : "+5% from last month"
+                    : "+5% par rapport au mois dernier"
                 }
                 trend="up"
                 color="blue"
               />
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1331,7 +1340,7 @@ export default function Hotellerie() {
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+15% from last month"
+                    : "+15% par rapport au mois dernier"
                 }
                 trend="up"
                 color="orange"
@@ -1344,7 +1353,7 @@ export default function Hotellerie() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Bookings Trends
+                      Tendances revenus & réservations
                     </h3>
                     <Calendar className="h-5 w-5 text-purple-400" />
                   </div>
@@ -1357,7 +1366,7 @@ export default function Hotellerie() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Category
+                    Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1371,7 +1380,7 @@ export default function Hotellerie() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Categories
+                    Meilleures catégories
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1384,7 +1393,7 @@ export default function Hotellerie() {
                             {category.category}
                           </span>
                           <span className="text-sm text-green-400">
-                            {category.occupancy || 0}% occupancy
+                            {category.occupancy || 0}% occupation
                           </span>
                         </div>
                         <span className="font-semibold text-purple-300">
@@ -1395,12 +1404,12 @@ export default function Hotellerie() {
                       <>
                         {[
                           {
-                            category: "Luxury Hotels",
+                            category: "Hôtels de luxe",
                             revenue: 125400,
                             occupancy: 85,
                           },
                           {
-                            category: "Resorts",
+                            category: "Complexes hôteliers",
                             revenue: 89200,
                             occupancy: 78,
                           },
@@ -1410,12 +1419,12 @@ export default function Hotellerie() {
                             occupancy: 72,
                           },
                           {
-                            category: "Boutique Hotels",
+                            category: "Hôtels boutique",
                             revenue: 42300,
                             occupancy: 68,
                           },
                           {
-                            category: "Spa & Wellness",
+                            category: "Spa & Bien-être",
                             revenue: 28700,
                             occupancy: 65,
                           },
@@ -1446,7 +1455,7 @@ export default function Hotellerie() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Sales by Region
+                    Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
@@ -1474,17 +1483,17 @@ export default function Hotellerie() {
                         {[
                           { region: "Europe", revenue: 985200, percentage: 41 },
                           {
-                            region: "North America",
+                            region: "Amérique du Nord",
                             revenue: 763400,
                             percentage: 32,
                           },
                           {
-                            region: "Asia Pacific",
+                            region: "Asie-Pacifique",
                             revenue: 432100,
                             percentage: 18,
                           },
                           {
-                            region: "Middle East",
+                            region: "Moyen-Orient",
                             revenue: 219300,
                             percentage: 9,
                           },
@@ -1516,7 +1525,7 @@ export default function Hotellerie() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Performance Metrics
+                    Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
                     {[
@@ -1585,19 +1594,23 @@ export default function Hotellerie() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de bord financier
             </h2>
             <p className="text-gray-300 mb-6">
-              Financial analytics and performance metrics for hospitality
-              sector.
+              Analytique financière et indicateurs de performance du secteur
+              hôtelier.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Room Revenue", value: "€1.2M", change: "+12%" },
-                { title: "Food & Beverage", value: "€450K", change: "+8%" },
-                { title: "Ancillary Revenue", value: "€180K", change: "+15%" },
-                { title: "Operating Costs", value: "€850K", change: "+5%" },
-                { title: "Profit Margin", value: "28%", change: "+3%" },
+                { title: "Revenus chambres", value: "€1.2M", change: "+12%" },
+                { title: "Restauration", value: "€450K", change: "+8%" },
+                { title: "Revenus annexes", value: "€180K", change: "+15%" },
+                {
+                  title: "Coûts d'exploitation",
+                  value: "€850K",
+                  change: "+5%",
+                },
+                { title: "Marge bénéficiaire", value: "28%", change: "+3%" },
                 { title: "ROI", value: "22%", change: "+4%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1609,7 +1622,7 @@ export default function Hotellerie() {
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
-                      {metric.change} from last month
+                      {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
                 </Card>
@@ -1622,23 +1635,23 @@ export default function Hotellerie() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
-              Advertising & Promotions
+              Publicité & Promotions
             </h2>
             <p className="text-gray-300 mb-6">
-              Manage campaigns and promotional activities for hospitality
-              businesses.
+              Gérez les campagnes et activités promotionnelles pour les
+              établissements hôteliers.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Active Campaigns", value: "12", status: "Running" },
-                { title: "Total Budget", value: "€85K", status: "Allocated" },
-                { title: "Engagement Rate", value: "4.8%", status: "High" },
+                { title: "Campagnes actives", value: "12", status: "En cours" },
+                { title: "Budget total", value: "€85K", status: "Alloué" },
+                { title: "Taux d'engagement", value: "4.8%", status: "Élevé" },
                 {
-                  title: "Click-through Rate",
+                  title: "Taux de clic",
                   value: "2.3%",
-                  status: "Average",
+                  status: "Moyen",
                 },
-                { title: "Conversion Rate", value: "1.8%", status: "Good" },
+                { title: "Taux de conversion", value: "1.8%", status: "Bon" },
                 { title: "ROAS", value: "3.2x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1653,9 +1666,9 @@ export default function Hotellerie() {
                       className={`text-sm ${
                         ad.status === "Excellent"
                           ? "text-green-400"
-                          : ad.status === "Good"
+                          : ad.status === "Bon"
                             ? "text-blue-400"
-                            : ad.status === "Average"
+                            : ad.status === "Moyen"
                               ? "text-yellow-400"
                               : "text-purple-400"
                       }`}
@@ -1673,17 +1686,17 @@ export default function Hotellerie() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Total Hospitality Records
+                      Total enregistrements hôteliers
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -1691,24 +1704,24 @@ export default function Hotellerie() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Active Hotels & Resorts
+                      Hôtels & complexes actifs
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Database Status</span>
+                    <span className="text-purple-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">API Endpoint</span>
+                    <span className="text-purple-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-purple-400">
                       {API_BASE_URL}
                     </span>
@@ -1717,7 +1730,7 @@ export default function Hotellerie() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1726,7 +1739,7 @@ export default function Hotellerie() {
                     }
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1735,7 +1748,7 @@ export default function Hotellerie() {
                     variant="outline"
                     className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                 </div>
               </div>
@@ -1748,7 +1761,7 @@ export default function Hotellerie() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-            Verso Air Hospitality Network
+            Réseau Hôtelier Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -1825,7 +1838,7 @@ export default function Hotellerie() {
                           {selectedBusiness.rating}
                         </span>
                         <span className="text-gray-400 text-xs ml-1">
-                          ({selectedBusiness.reviews} reviews)
+                          ({selectedBusiness.reviews} avis)
                         </span>
                       </div>
                     </div>
@@ -1845,7 +1858,9 @@ export default function Hotellerie() {
                   {selectedBusiness.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Revenue</div>
+                        <div className="text-sm text-gray-400">
+                          Chiffre d'affaires
+                        </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
@@ -1855,7 +1870,7 @@ export default function Hotellerie() {
                   {selectedBusiness.employees && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employees</div>
+                        <div className="text-sm text-gray-400">Employés</div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
@@ -1866,15 +1881,15 @@ export default function Hotellerie() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedBusiness.phone || "Not specified"}
+                        {selectedBusiness.phone || "Non spécifié"}
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
+                      <div className="text-sm text-gray-400">E-mail</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedBusiness.email || "Not specified"}
+                        {selectedBusiness.email || "Non spécifié"}
                       </div>
                     </CardContent>
                   </Card>
@@ -1884,7 +1899,7 @@ export default function Hotellerie() {
                   (selectedBusiness as any).amenities.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Amenities
+                        Équipements
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {(selectedBusiness as any).amenities.map(
@@ -1904,14 +1919,14 @@ export default function Hotellerie() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    Contact Business
+                    Contacter l'établissement
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowBusinessDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

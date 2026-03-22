@@ -537,7 +537,7 @@ export default function ArtistContractsAdmin() {
                     </th>
                     <th className="text-left text-[10px] text-white/30 uppercase tracking-wider font-medium px-4 py-3">
                       <div className="flex items-center gap-1">
-                        Listeners <ArrowUpDown className="w-3 h-3" />
+                        Auditeurs <ArrowUpDown className="w-3 h-3" />
                       </div>
                     </th>
                     <th className="text-left text-[10px] text-white/30 uppercase tracking-wider font-medium px-4 py-3">
@@ -835,7 +835,7 @@ export default function ArtistContractsAdmin() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs hover:bg-cyan-500/20 transition-colors"
                     >
-                      <ExternalLink className="w-3 h-3" /> Website
+                      <ExternalLink className="w-3 h-3" /> Site web
                     </a>
                   )}
                   {selectedApp.sample_track_url && (
@@ -845,7 +845,7 @@ export default function ArtistContractsAdmin() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs hover:bg-purple-500/20 transition-colors"
                     >
-                      <ExternalLink className="w-3 h-3" /> Sample Track
+                      <ExternalLink className="w-3 h-3" /> Piste d'écoute
                     </a>
                   )}
                 </div>

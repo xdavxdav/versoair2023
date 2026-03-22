@@ -333,10 +333,10 @@ export default function Sponsorship() {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
-            Companies sponsoring ArtiHuman gain more than brand visibility —
-            they access a network of 800+ artisans, support measurable cultural
-            impact, and build authentic ESG credentials. Let's create lasting
-            value together.
+            Companies sponsoring <span className="notranslate">ArtiHuman</span>{" "}
+            gain more than brand visibility — they access a network of 800+
+            artisans, support measurable cultural impact, and build authentic
+            ESG credentials. Let's create lasting value together.
           </motion.p>
 
           <motion.div
@@ -382,8 +382,9 @@ export default function Sponsorship() {
               Why Companies Choose to Sponsor
             </h2>
             <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-              Sponsorship with ArtiHuman aligns CSR, business growth, and
-              authentic cultural impact in one powerful partnership.
+              Sponsorship with <span className="notranslate">ArtiHuman</span>{" "}
+              aligns CSR, business growth, and authentic cultural impact in one
+              powerful partnership.
             </p>
           </motion.div>
 

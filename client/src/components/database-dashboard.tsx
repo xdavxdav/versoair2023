@@ -105,7 +105,9 @@ export function DatabaseDashboard() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/manage/database/categories`);
+      const response = await fetch(
+        `${API_BASE_URL}/api/manage/database/categories`,
+      );
       if (!response.ok) throw new Error("Failed to fetch categories");
       return response.json() as Promise<CategoryStats[]>;
     },

@@ -766,7 +766,7 @@ export default function ArtistDirectory() {
                                   ? "🏷️ Signé"
                                   : artist.label_status === "independent"
                                     ? "🎯 Indépendant"
-                                    : "🆓 Unsigned"}
+                                    : "🆓 Non signé"}
                               </Badge>
 
                               <Link
@@ -956,7 +956,7 @@ export default function ArtistDirectory() {
                               ? "Signé"
                               : selectedArtist.label_status === "independent"
                                 ? "Indépendant"
-                                : "Unsigned"}
+                                : "Non signé"}
                           </div>
                           <div className="text-xs text-fuchsia-300">
                             Statut label

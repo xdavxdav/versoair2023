@@ -9,7 +9,7 @@ export default function ArtiHumanFoundation() {
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
         <div className="max-w-[95vw] mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center notranslate">
             ArtiHuman Foundation
           </h1>
           <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
@@ -26,11 +26,11 @@ export default function ArtiHumanFoundation() {
             Our Mission
           </h2>
           <p className="text-slate-300 leading-relaxed">
-            The ArtiHuman Foundation is dedicated to preserving cultural
-            heritage, supporting artisan communities, and creating sustainable
-            pathways for creative professionals. Through education, funding, and
-            technology, we empower artists and craftspeople to thrive in the
-            modern economy.
+            The <span className="notranslate">ArtiHuman Foundation</span> is
+            dedicated to preserving cultural heritage, supporting artisan
+            communities, and creating sustainable pathways for creative
+            professionals. Through education, funding, and technology, we
+            empower artists and craftspeople to thrive in the modern economy.
           </p>
         </div>
 

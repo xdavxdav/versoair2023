@@ -53,7 +53,7 @@ export default function AnimatedKeyboardText({
   const characters = text.split("");
 
   return (
-    <Component className={`inline-block ${className}`}>
+    <Component className={`inline-block notranslate ${className}`}>
       {characters.map((char, index) => {
         const animationName = getAnimationName(variant, index);
         const duration = getAnimationDuration(variant);

@@ -173,7 +173,7 @@ export default function Navbar({
               />
             </div>
 
-            <span className="ml-2 text-base xl:text-lg font-bold whitespace-nowrap hidden xl:inline">
+            <span className="ml-2 text-base xl:text-lg font-bold whitespace-nowrap hidden xl:inline notranslate">
               <AnimatedKeyboardText
                 text={isMobile ? "versoair™" : "versoair™"}
                 variant="default"
@@ -189,14 +189,14 @@ export default function Navbar({
               href="/"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
             >
-              Home
+              Accueil
             </Link>
 
             <Link
               href="/about"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
             >
-              About Us
+              À propos
             </Link>
 
             {/* 🌍 Geo Admin Portal Link */}
@@ -207,7 +207,7 @@ export default function Navbar({
                 className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap flex items-center"
               >
                 <Globe className="mr-1 h-3 w-3" />
-                Geo Admin
+                Géo Admin
               </Link>
             ) : (
               <Link
@@ -215,11 +215,11 @@ export default function Navbar({
                 className="text-gray-400 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
               >
                 <Lock className="h-3 w-3 text-gray-400" />
-                <span className="text-gray-400">Geo Admin</span>
+                <span className="text-gray-400">Géo Admin</span>
                 <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                   {isAuthenticated
-                    ? "Premium subscription required"
-                    : "Sign in to access"}
+                    ? "Abonnement premium requis"
+                    : "Connectez-vous pour accéder"}
                 </span>
               </Link>
             )}
@@ -299,26 +299,26 @@ export default function Navbar({
                   href="/services"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap font-medium"
                 >
-                  All Services
+                  Tous les services
                 </Link>
                 <div className="border-t border-gray-200 my-1"></div>
                 <Link
                   href="/services/news"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  News & Updates
+                  Actualités
                 </Link>
                 <Link
                   href="/services/careers"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Careers
+                  Carrières
                 </Link>
                 <Link
                   href="/services/contractors"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Contractors
+                  Prestataires
                 </Link>
               </div>
             </div>
@@ -333,32 +333,32 @@ export default function Navbar({
                   href="/marketing"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap font-medium"
                 >
-                  Marketing Hub
+                  Hub Marketing
                 </Link>
                 <div className="border-t border-gray-200 my-1"></div>
                 <Link
                   href="/marketing/journal"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Free Ad Journal
+                  Journal publicitaire
                 </Link>
                 <Link
                   href="/marketing/packs"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Marketing Packs
+                  Packs Marketing
                 </Link>
                 <Link
                   href="/marketing/print"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Print Services
+                  Services d'impression
                 </Link>
                 <Link
                   href="/marketing/newsletters"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Newsletter
+                  Infolettre
                 </Link>
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function Navbar({
               href="/reservations"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
             >
-              Reservations
+              Réservations
             </Link>
 
             {/* Marketplace with SOS signal animation */}
@@ -391,13 +391,13 @@ export default function Navbar({
               <ShoppingBag
                 className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
               />
-              <span className="relative">Marketplace</span>
+              <span className="relative">Marché</span>
             </Link>
 
             {/* Assistance Dropdown */}
             <div className="relative group">
               <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
-                Assistance <ChevronDown className="ml-1 h-3 w-3" />
+                Aide <ChevronDown className="ml-1 h-3 w-3" />
               </button>
               <div className="absolute top-full right-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
                 <Link
@@ -437,7 +437,7 @@ export default function Navbar({
                 href="/"
                 className={`text-purple-600 hover:text-purple-800 hover:bg-purple-50 ${tabletNavItemClass}`}
               >
-                Home
+                Accueil
               </Link>
 
               {/* Geo Admin — sky */}
@@ -460,7 +460,9 @@ export default function Navbar({
                   <Lock className="h-4 w-4" />
                   Geo
                   <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    {isAuthenticated ? "Premium required" : "Sign in to access"}
+                    {isAuthenticated
+                      ? "Abonnement premium requis"
+                      : "Connectez-vous"}
                   </span>
                 </Link>
               )}
@@ -548,32 +550,32 @@ export default function Navbar({
                     href="/services"
                     className="block px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg mx-1 font-medium transition-colors"
                   >
-                    All Services
+                    Tous les services
                   </Link>
                   <Link
                     href="/services/news"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
                   >
-                    News & Updates
+                    Actualités
                   </Link>
                   <Link
                     href="/services/careers"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
                   >
-                    Careers
+                    Carrières
                   </Link>
                   <Link
                     href="/services/contractors"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
                   >
-                    Contractors
+                    Prestataires
                   </Link>
                   <div className="border-t border-emerald-100 my-1 mx-2" />
                   <Link
                     href="/about"
                     className="block px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg mx-1 font-medium transition-colors"
                   >
-                    About Us
+                    À propos
                   </Link>
                 </div>
               </div>
@@ -590,32 +592,32 @@ export default function Navbar({
                     href="/marketing"
                     className="block px-4 py-2 text-sm text-pink-700 hover:bg-pink-50 hover:text-pink-800 rounded-lg mx-1 font-medium transition-colors"
                   >
-                    Marketing Hub
+                    Hub Marketing
                   </Link>
                   <div className="border-t border-pink-100 my-1 mx-2" />
                   <Link
                     href="/marketing/journal"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Free Ad Journal
+                    Journal publicitaire
                   </Link>
                   <Link
                     href="/marketing/packs"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Marketing Packs
+                    Packs Marketing
                   </Link>
                   <Link
                     href="/marketing/print"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Print Services
+                    Services d'impression
                   </Link>
                   <Link
                     href="/marketing/newsletters"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Newsletter
+                    Infolettre
                   </Link>
                 </div>
               </div>
@@ -627,7 +629,7 @@ export default function Navbar({
                 href="/reservations"
                 className={`text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 ${tabletNavItemClass}`}
               >
-                Reservations
+                Réservations
               </Link>
 
               {/* Marketplace — violet */}
@@ -650,8 +652,8 @@ export default function Navbar({
                 <ShoppingBag
                   className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
                 />
-                <span className="hidden lg:inline">Marketplace</span>
-                <span className="lg:hidden">Shop</span>
+                <span className="hidden lg:inline">Marché</span>
+                <span className="lg:hidden">Marché</span>
               </Link>
 
               {/* Support — teal */}
@@ -659,7 +661,7 @@ export default function Navbar({
                 <button
                   className={`text-teal-600 hover:text-teal-800 hover:bg-teal-50 gap-1 ${tabletNavIconItemClass}`}
                 >
-                  Support <ChevronDown className="h-4 w-4" />
+                  Aide <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full right-0 bg-white shadow-xl rounded-xl mt-2 py-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-teal-100">
                   <Link
@@ -687,7 +689,7 @@ export default function Navbar({
               className="portal-toggle bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 lg:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <Music className="h-3 w-3 lg:mr-1" />
-              <span className="hidden lg:inline">Verso Air</span>
+              <span className="hidden lg:inline notranslate">Verso Air</span>
             </Button>
 
             {/* Location Panel Toggle */}
@@ -731,14 +733,14 @@ export default function Navbar({
                   className="flex-shrink-0 flex items-center gap-1 bg-red-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
                 >
                   <LogOut className="h-3 w-3" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">Déconnexion</span>
                 </button>
               </div>
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">
                 <Button className="bg-slate-800 text-slate-200 px-2 md:px-4 py-2 rounded-md hover:bg-slate-700 transition-colors text-xs font-medium whitespace-nowrap border border-slate-600">
-                  <span className="hidden sm:inline">Sign In</span>
-                  <span className="sm:hidden">Sign</span>
+                  <span className="hidden sm:inline">Connexion</span>
+                  <span className="sm:hidden">Connexion</span>
                 </Button>
               </Link>
             )}
