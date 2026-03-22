@@ -331,8 +331,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         Only target the specific UI elements we want hidden.
       */}
       <style>{`
-        /* Hide ALL Google Translate visual chrome */
+        /* ═══════════════════════════════════════════════════════
+           Hide ALL Google Translate visual UI.
+           Translation iframes continue to work — we only target
+           the chrome / bars / tooltips that GT renders on screen.
+           ═══════════════════════════════════════════════════════ */
+
+        /* GT top banner iframe ("Translated to English — Show original") */
         .goog-te-banner-frame,
+        iframe.goog-te-banner-frame {
+          display: none !important;
+          height: 0 !important;
+          width: 0 !important;
+          visibility: hidden !important;
+        }
+
+        /* GT navigation frame, balloon, tooltip, spinner */
         .goog-te-balloon-frame,
         #goog-gt-tt,
         .goog-te-ftab-frame,
@@ -340,6 +354,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .goog-tooltip:hover,
         .goog-text-highlight,
         #gt-nvframe,
+        iframe[id="gt-nvframe"],
         .goog-te-spinner-pos,
         .goog-te-menu-frame {
           display: none !important;
@@ -348,24 +363,49 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           width: 0 !important;
           overflow: hidden !important;
         }
-        /* Kill the top banner bar GT injects (pushes body down) */
+
+        /* GT injects a <div class="skiptranslate goog-te-gadget"> at body top
+           that contains the "Show original / Translated by" bar.
+           Target it precisely: the TOP-LEVEL body > .skiptranslate only. */
+        body > .skiptranslate {
+          display: none !important;
+          height: 0 !important;
+          width: 0 !important;
+          overflow: hidden !important;
+        }
+
+        /* GT pushes body down with top:40px — reset it */
         body {
           top: 0 !important;
           position: static !important;
         }
-        /* Hide the iframe that shows "Translated to English" bar */
-        iframe.goog-te-banner-frame,
-        iframe[id="gt-nvframe"] {
-          display: none !important;
-          height: 0 !important;
-        }
+
+        /* Hide the gadget text/branding inside our container */
         .goog-te-gadget {
           font-size: 0 !important;
           line-height: 0 !important;
+          color: transparent !important;
         }
         .goog-te-gadget > span,
-        .goog-te-gadget > div {
+        .goog-te-gadget > div,
+        .goog-te-gadget img {
           display: none !important;
+        }
+
+        /* VIpgJd is GT's cookie consent / preferences class */
+        .VIpgJd-ZVi9od-ORHb-OEVmcd,
+        .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+        .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
+        #goog-gt-vt,
+        .VIpgJd-yAWNEb-L7lbkb,
+        [class*="VIpgJd"] {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          overflow: hidden !important;
         }
       `}</style>
     </LanguageContext.Provider>
