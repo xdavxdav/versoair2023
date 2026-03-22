@@ -24,7 +24,7 @@ const LANG_CACHE_KEY = "fsa_selected_language";
 declare global {
   interface Window {
     google: any;
-    googleTranslateElementInit?: () => void;
+    googleTranslateElementInit: () => void;
   }
 }
 
@@ -88,31 +88,43 @@ function triggerTranslation(langCode: string): boolean {
     if (combo) {
       // Check if the language is available in the combo
       const options = Array.from(combo.options);
-      const hasLang = options.some(opt => opt.value === langCode);
+      const hasLang = options.some((opt) => opt.value === langCode);
       if (!hasLang) {
-        console.warn("[LanguageEngine] Language", langCode, "not found in GT combo options");
+        console.warn(
+          "[LanguageEngine] Language",
+          langCode,
+          "not found in GT combo options",
+        );
       }
       combo.value = langCode;
       // bubbles:true is critical — GT listens on a parent element
       combo.dispatchEvent(new Event("change", { bubbles: true }));
       return true;
     }
-    
+
     // Fallback: try iframe approach for some GT versions
-    const frame = document.querySelector(".goog-te-menu-frame") as HTMLIFrameElement | null;
+    const frame = document.querySelector(
+      ".goog-te-menu-frame",
+    ) as HTMLIFrameElement | null;
     if (frame) {
       try {
         const innerDoc = frame.contentDocument || frame.contentWindow?.document;
         const items = innerDoc?.querySelectorAll(".goog-te-menu2-item");
         if (items) {
           for (const item of Array.from(items)) {
-            if ((item as HTMLElement).innerText?.toLowerCase().includes(langCode.toLowerCase())) {
+            if (
+              (item as HTMLElement).innerText
+                ?.toLowerCase()
+                .includes(langCode.toLowerCase())
+            ) {
               (item as HTMLElement).click();
               return true;
             }
           }
         }
-      } catch { /* cross-origin */ }
+      } catch {
+        /* cross-origin */
+      }
     }
   } catch (e) {
     console.warn("[LanguageEngine] triggerTranslation error:", e);
@@ -190,11 +202,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const applyTranslation = useCallback((lang: string) => {
     let attempts = 0;
     const maxAttempts = 40; // More attempts (40 * 300ms = 12s max)
-    
+
     if (lang === "fr") {
       const doRestore = () => {
         if (attempts++ > maxAttempts) {
-          console.warn("[LanguageEngine] Failed to restore French after", maxAttempts, "attempts");
+          console.warn(
+            "[LanguageEngine] Failed to restore French after",
+            maxAttempts,
+            "attempts",
+          );
           return;
         }
         const ok = restoreOriginal();
@@ -204,26 +220,42 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     } else {
       const doTranslate = () => {
         if (attempts++ > maxAttempts) {
-          console.warn("[LanguageEngine] Failed to translate to", lang, "after", maxAttempts, "attempts");
+          console.warn(
+            "[LanguageEngine] Failed to translate to",
+            lang,
+            "after",
+            maxAttempts,
+            "attempts",
+          );
           return;
         }
         const ok = triggerTranslation(lang);
         if (!ok) {
           // If combo still not found after 10 attempts, try re-initializing GT
           if (attempts === 10 && window.googleTranslateElementInit) {
-            console.log("[LanguageEngine] Re-initializing GT after 10 failed attempts");
+            console.log(
+              "[LanguageEngine] Re-initializing GT after 10 failed attempts",
+            );
             const el = document.getElementById("google_translate_element");
             if (el) el.innerHTML = "";
             window.googleTranslateElementInit();
           }
           // Also try at 20 attempts with a page-level reinit
           if (attempts === 20) {
-            console.log("[LanguageEngine] Forcing GT script reload after 20 failed attempts");
+            console.log(
+              "[LanguageEngine] Forcing GT script reload after 20 failed attempts",
+            );
             loadGoogleTranslateScript();
           }
           setTimeout(doTranslate, 300);
         } else {
-          console.log("[LanguageEngine] Translation to", lang, "succeeded after", attempts, "attempts");
+          console.log(
+            "[LanguageEngine] Translation to",
+            lang,
+            "succeeded after",
+            attempts,
+            "attempts",
+          );
         }
       };
       doTranslate();
