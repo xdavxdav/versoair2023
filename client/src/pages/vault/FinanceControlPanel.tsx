@@ -480,14 +480,14 @@ export default function FinanceControlPanel() {
                     {d.count} txns
                   </span>
                   <span className="text-[11px] text-green-400 font-mono font-bold">
-                  $
-                  {d.total.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
+                    $
+                    {d.total.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
+            );
           })
         )}
       </SectionBlock>
@@ -1488,4 +1488,5 @@ export default function FinanceControlPanel() {
       {/* ═══ VERSO AIR CARD — STRIPE ISSUING + POINTS ═══ */}
       <VersoAirCardPanel />
     </>
-  );}
+  );
+}
