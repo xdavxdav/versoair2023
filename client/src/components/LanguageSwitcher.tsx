@@ -189,6 +189,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [bannerMessage, setBannerMessage] = useState("");
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstLoadDone = useRef(false);
+  const pendingLangRef = useRef<string | null>(null);
 
   // Show banner with auto-dismiss
   const flashBanner = useCallback((msg: string) => {
@@ -277,14 +278,34 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           },
           "google_translate_element",
         );
+        console.log("[LanguageEngine] Google Translate element created");
       } catch (e) {
         console.warn("[LanguageEngine] Google Translate init failed:", e);
       }
     };
     loadGoogleTranslateScript();
 
+    // Watch for the GT combo box to appear in the DOM
+    // This fires the INSTANT GT is ready, so we can translate immediately
+    const el = document.getElementById("google_translate_element");
+    let observer: MutationObserver | null = null;
+    if (el) {
+      observer = new MutationObserver(() => {
+        const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+        if (combo && pendingLangRef.current) {
+          console.log("[LanguageEngine] Combo appeared, applying pending lang:", pendingLangRef.current);
+          const lang = pendingLangRef.current;
+          pendingLangRef.current = null;
+          // Small delay to let GT fully wire up its event listeners
+          setTimeout(() => triggerTranslation(lang), 200);
+        }
+      });
+      observer.observe(el, { childList: true, subtree: true });
+    }
+
     return () => {
-      delete window.googleTranslateElementInit;
+      observer?.disconnect();
+      delete (window as any).googleTranslateElementInit;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -300,39 +321,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       firstLoadDone.current = true;
       const userChoice = localStorage.getItem(LANG_CACHE_KEY);
       if (userChoice && userChoice !== "auto" && userChoice !== "fr") {
-        // Re-apply their cached language (GT resets on reload)
-        // Wait longer for GT to initialize on cold load
+        // Store as pending so MutationObserver can apply when GT is ready
+        pendingLangRef.current = userChoice;
+        // Also try polling in case observer misses it
         setTimeout(() => applyTranslation(userChoice), 2500);
         return;
       }
     }
 
-    // Apply the language for this country (with delay for GT to initialize)
-    // GT needs time to load the script and create the combo box
-    const applyWithDelay = () => {
-      if (isBaseLang(detectedLang)) {
-        // Switching to a French-speaking country → restore original
-        applyTranslation("fr");
-        setCurrentLang("fr");
-        localStorage.setItem(LANG_CACHE_KEY, "fr");
-      } else {
-        // Non-French country → translate
-        applyTranslation(detectedLang);
-        setCurrentLang(detectedLang);
-        localStorage.setItem(LANG_CACHE_KEY, detectedLang);
-        flashBanner(
-          `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
-        );
-      }
-    };
-
-    // First load needs longer delay for GT script to fully initialize
-    if (!document.querySelector(".goog-te-combo")) {
-      // GT not ready yet - wait for it
-      setTimeout(applyWithDelay, 3000);
+    if (isBaseLang(detectedLang)) {
+      // Switching to a French-speaking country → restore original
+      pendingLangRef.current = null;
+      applyTranslation("fr");
+      setCurrentLang("fr");
+      localStorage.setItem(LANG_CACHE_KEY, "fr");
     } else {
-      // GT already initialized - apply immediately
-      applyWithDelay();
+      // Non-French country → translate
+      // Store as pending for MutationObserver (fires instantly when combo appears)
+      pendingLangRef.current = detectedLang;
+      setCurrentLang(detectedLang);
+      localStorage.setItem(LANG_CACHE_KEY, detectedLang);
+      // Also use polling fallback
+      applyTranslation(detectedLang);
+      flashBanner(
+        `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
+      );
     }
   }, [selectedCountry, detecting, applyTranslation, flashBanner]);
 
@@ -385,14 +398,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         dismissBanner,
       }}
     >
-      {/* Hidden Google Translate element */}
+      {/* Hidden Google Translate element — must NOT be display:none or GT breaks */}
       <div
         id="google_translate_element"
         className="notranslate"
         style={{
           position: "fixed",
-          top: "-9999px",
-          left: "-9999px",
+          top: 0,
+          left: 0,
+          width: 1,
+          height: 1,
+          overflow: "hidden",
           opacity: 0,
           pointerEvents: "none",
           zIndex: -1,
@@ -401,7 +417,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       {children}
 
-      {/* Hide Google Translate branding */}
+      {/* Hide Google Translate branding WITHOUT display:none (which breaks GT) */}
       <style>{`
         .goog-te-banner-frame,
         .goog-te-balloon-frame,
@@ -414,11 +430,29 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           visibility: hidden !important;
         }
         body { top: 0 !important; }
-        .skiptranslate { display: none !important; }
-        #google_translate_element .skiptranslate {
-          display: block !important;
+        /* CRITICAL: do NOT use display:none on .skiptranslate — it kills GT's
+           translation iframe. Use clip/overflow to hide visually instead. */
+        .skiptranslate {
+          position: absolute !important;
+          top: -9999px !important;
+          left: -9999px !important;
           height: 0 !important;
+          width: 0 !important;
           overflow: hidden !important;
+          clip: rect(0,0,0,0) !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+        /* Keep the widget's inner skiptranslate alive so the <select> exists */
+        #google_translate_element .skiptranslate {
+          position: relative !important;
+          top: auto !important;
+          left: auto !important;
+          display: block !important;
+          height: auto !important;
+          width: auto !important;
+          clip: auto !important;
+          overflow: visible !important;
         }
         body { top: 0px !important; }
         .goog-te-gadget { font-size: 0 !important; }
