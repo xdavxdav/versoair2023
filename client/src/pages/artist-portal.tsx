@@ -259,6 +259,7 @@ import {
   useContractStatus,
 } from "@/hooks/use-streamroyale";
 import StreamRoyaleInfoWindow from "@/components/StreamRoyaleInfoWindow";
+import { useStreamTracker } from "@/hooks/use-stream-tracker";
 import {
   Card,
   CardContent,
@@ -443,12 +444,21 @@ export default function ArtistPortal() {
     }[]
   >([]);
 
+  // ── Audio player refs & state ──
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioProgress, setAudioProgress] = useState(0); // 0–100
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0); // seconds
+  const [audioDuration, setAudioDuration] = useState(0); // seconds
+
   const { data: artists, isLoading: loadingArtists } = useMusicArtists();
   const { data: tracks, isLoading: loadingTracks } = useMusicTracks();
   const { data: analytics, isLoading: loadingAnalytics } = useMusicAnalytics();
   const { data: earnings } = useMusicEarnings();
   const invalidateTracks = useInvalidateTracks();
   const { data: myArtist } = useMyArtist();
+
+  // ── Stream royalty tracker ──
+  const { startStream, completeStream, pauseStream, resumeStream } = useStreamTracker();
 
   // ── Resolve connected user display info ──
   const resolveConnectedUser = useCallback(
@@ -855,10 +865,108 @@ export default function ArtistPortal() {
     }).format(amount);
   };
 
-  const handlePlayTrack = (track: any) => {
-    setCurrentTrack(track as Track);
+  const handlePlayTrack = useCallback((track: any) => {
+    const t = track as Track;
+    const hasAudio = !!(track as any).hasAudio || !!(track as any).file_path;
+
+    setCurrentTrack(t);
     setIsPlaying(true);
-  };
+    setAudioProgress(0);
+    setAudioCurrentTime(0);
+
+    if (hasAudio && audioRef.current) {
+      const trackId = typeof t.id === "string" ? parseInt(t.id, 10) : Number(t.id);
+      audioRef.current.src = `/api/music/tracks/${trackId}/stream`;
+      audioRef.current.load();
+      audioRef.current.play().catch(() => {
+        // Autoplay may be blocked — user can click play in the bar
+        setIsPlaying(false);
+      });
+      // Start royalty tracking
+      startStream(trackId);
+    }
+  }, [startStream]);
+
+  const handleTogglePlayPause = useCallback(() => {
+    if (!audioRef.current || !currentTrack) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      pauseStream();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      resumeStream();
+      setIsPlaying(true);
+    }
+  }, [isPlaying, currentTrack, pauseStream, resumeStream]);
+
+  const handleSkipTrack = useCallback((direction: "next" | "prev") => {
+    if (!currentTrack || !displayTracks.length) return;
+    const idx = displayTracks.findIndex((t) => String(t.id) === String(currentTrack.id));
+    let nextIdx: number;
+    if (direction === "next") {
+      nextIdx = idx < displayTracks.length - 1 ? idx + 1 : 0;
+    } else {
+      nextIdx = idx > 0 ? idx - 1 : displayTracks.length - 1;
+    }
+    handlePlayTrack(displayTracks[nextIdx]);
+  }, [currentTrack, displayTracks, handlePlayTrack]);
+
+  const handleSeek = useCallback((values: number[]) => {
+    if (!audioRef.current || !audioDuration) return;
+    const pct = values[0];
+    const time = (pct / 100) * audioDuration;
+    audioRef.current.currentTime = time;
+    setAudioProgress(pct);
+    setAudioCurrentTime(time);
+  }, [audioDuration]);
+
+  // Wire up <audio> events
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onTimeUpdate = () => {
+      setAudioCurrentTime(audio.currentTime);
+      if (audio.duration && isFinite(audio.duration)) {
+        setAudioProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+    const onLoadedMetadata = () => {
+      if (audio.duration && isFinite(audio.duration)) {
+        setAudioDuration(audio.duration);
+      }
+    };
+    const onEnded = () => {
+      setIsPlaying(false);
+      setAudioProgress(100);
+      completeStream();
+      // Auto-play next track
+      if (currentTrack && displayTracks.length > 1) {
+        const idx = displayTracks.findIndex((t) => String(t.id) === String(currentTrack.id));
+        if (idx < displayTracks.length - 1) {
+          handlePlayTrack(displayTracks[idx + 1]);
+        }
+      }
+    };
+
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("ended", onEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, [currentTrack, displayTracks, completeStream, handlePlayTrack]);
+
+  // Sync volume slider → <audio> element
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = (volume[0] ?? 50) / 100;
+    }
+  }, [volume]);
 
   const handleUploadTrack = () => {
     setShowUploadModal(true);
@@ -2713,29 +2821,32 @@ export default function ArtistPortal() {
       }
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* Hidden audio element — drives all playback */}
+      <audio ref={audioRef} preload="auto" crossOrigin="use-credentials" />
+
       {/* Now Playing Bar */}
       {currentTrack && (
         <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/20 z-50">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <div className="flex items-center space-x-4 min-w-0">
+                <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                   <Music2 className="h-6 w-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-white font-medium">{currentTrack.title}</p>
-                  <p className="text-purple-200 text-sm">
+                <div className="min-w-0">
+                  <p className="text-white font-medium truncate">{currentTrack.title}</p>
+                  <p className="text-purple-200 text-sm truncate">
                     {
                       displayArtists.find((a) => a.id === currentTrack.artistId)
-                        ?.name
+                        ?.name || "Unknown Artist"
                     }
                   </p>
                 </div>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="text-purple-200 hover:text-white hover:bg-white/10"
-                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="text-purple-200 hover:text-white hover:bg-white/10 flex-shrink-0"
+                  onClick={handleTogglePlayPause}
                 >
                   {isPlaying ? (
                     <Pause className="h-4 w-4" />
@@ -2748,14 +2859,18 @@ export default function ArtistPortal() {
               <div className="flex items-center space-x-4">
                 <div className="hidden md:block">
                   <div className="flex items-center space-x-2">
-                    <span className="text-purple-200 text-sm">0:00</span>
-                    <ProgressBar percent={30} className="w-64 h-1" />
-                    <span className="text-purple-200 text-sm">
-                      {Math.floor((currentTrack.duration || 0) / 60)}:
-                      {String((currentTrack.duration || 0) % 60).padStart(
-                        2,
-                        "0",
-                      )}
+                    <span className="text-purple-200 text-sm tabular-nums">
+                      {Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, "0")}
+                    </span>
+                    <Slider
+                      value={[audioProgress]}
+                      onValueChange={handleSeek}
+                      max={100}
+                      step={0.1}
+                      className="w-64"
+                    />
+                    <span className="text-purple-200 text-sm tabular-nums">
+                      {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, "0")}
                     </span>
                   </div>
                 </div>
@@ -2765,30 +2880,33 @@ export default function ArtistPortal() {
                     size="icon"
                     variant="ghost"
                     className="text-purple-200 hover:text-white hover:bg-white/10"
+                    onClick={() => handleSkipTrack("prev")}
                   >
                     <SkipBack className="h-4 w-4" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-purple-200 hover:text-white hover:bg-white/10"
+                    className="bg-white/10 text-white hover:bg-white/20"
+                    onClick={handleTogglePlayPause}
                   >
                     {isPlaying ? (
-                      <Pause className="h-4 w-4" />
+                      <Pause className="h-5 w-5" />
                     ) : (
-                      <Play className="h-4 w-4" />
+                      <Play className="h-5 w-5" />
                     )}
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
                     className="text-purple-200 hover:text-white hover:bg-white/10"
+                    onClick={() => handleSkipTrack("next")}
                   >
                     <SkipForward className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2">
                   <Volume1 className="h-4 w-4 text-purple-200" />
                   <Slider
                     value={volume}
