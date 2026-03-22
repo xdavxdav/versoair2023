@@ -269,6 +269,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const selectLanguage = useCallback(
     (lang: string, source: "country" | "manual" = "manual") => {
       const prev = currentLang;
+
+      // ── Same language? No reload needed ──
+      // e.g. Belgium (fr) → Congo (fr) — just update state, skip reload
+      if (lang === prev) {
+        // Still flash a quick confirmation (no reload)
+        if (source === "country") {
+          flashBanner(
+            `Country updated — already in ${lang.toUpperCase()}`,
+            false,
+          );
+        }
+        return;
+      }
+
       setPreviousLang(prev);
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
@@ -280,21 +294,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setGoogTransCookie(lang);
       }
 
-      // Always reload — cookie+reinit is unreliable in production.
-      // The reload lets GT re-read the cookie from scratch.
+      // Different language → reload so GT re-reads the cookie from scratch
       if (source === "country") {
         flashBanner(
           lang === "fr"
             ? "Switched to Français (site base language)"
             : `Language switched to ${lang.toUpperCase()} for this country`,
-          true, // always reload
+          true,
         );
       } else {
         flashBanner(
           lang === "fr"
             ? "Language restored to Français"
             : `Language overridden to ${lang.toUpperCase()}`,
-          true, // always reload
+          true,
         );
       }
     },
