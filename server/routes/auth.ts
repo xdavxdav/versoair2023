@@ -729,10 +729,25 @@ router.post(
 
     // ─── Hardcoded test credentials (bypass DB lookup) ──────────────────────────
     // Remove this block once real credential management is in place.
-    const TEST_CREDENTIALS: Record<string, { password: string; role: string; email: string }> = {
-      joel_007:    { password: "JoeyD000", role: "superuser",  email: "superadmin@versoair.test" },
-      admin_025:   { password: "CEO2026!", role: "admin",      email: "ceo@versoair.test" },
-      manager_001: { password: "Mod2026!", role: "moderator",  email: "manager@versoair.test" },
+    const TEST_CREDENTIALS: Record<
+      string,
+      { password: string; role: string; email: string }
+    > = {
+      joel_007: {
+        password: "JoeyD000",
+        role: "superuser",
+        email: "superadmin@versoair.test",
+      },
+      admin_025: {
+        password: "CEO2026!",
+        role: "admin",
+        email: "ceo@versoair.test",
+      },
+      manager_001: {
+        password: "Mod2026!",
+        role: "moderator",
+        email: "manager@versoair.test",
+      },
     };
 
     const testMatch = TEST_CREDENTIALS[username.toLowerCase()];

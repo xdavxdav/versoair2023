@@ -458,7 +458,8 @@ export default function ArtistPortal() {
   const { data: myArtist } = useMyArtist();
 
   // ── Stream royalty tracker ──
-  const { startStream, completeStream, pauseStream, resumeStream } = useStreamTracker();
+  const { startStream, completeStream, pauseStream, resumeStream } =
+    useStreamTracker();
 
   // ── Resolve connected user display info ──
   const resolveConnectedUser = useCallback(
@@ -865,27 +866,31 @@ export default function ArtistPortal() {
     }).format(amount);
   };
 
-  const handlePlayTrack = useCallback((track: any) => {
-    const t = track as Track;
-    const hasAudio = !!(track as any).hasAudio || !!(track as any).file_path;
+  const handlePlayTrack = useCallback(
+    (track: any) => {
+      const t = track as Track;
+      const hasAudio = !!(track as any).hasAudio || !!(track as any).file_path;
 
-    setCurrentTrack(t);
-    setIsPlaying(true);
-    setAudioProgress(0);
-    setAudioCurrentTime(0);
+      setCurrentTrack(t);
+      setIsPlaying(true);
+      setAudioProgress(0);
+      setAudioCurrentTime(0);
 
-    if (hasAudio && audioRef.current) {
-      const trackId = typeof t.id === "string" ? parseInt(t.id, 10) : Number(t.id);
-      audioRef.current.src = `/api/music/tracks/${trackId}/stream`;
-      audioRef.current.load();
-      audioRef.current.play().catch(() => {
-        // Autoplay may be blocked — user can click play in the bar
-        setIsPlaying(false);
-      });
-      // Start royalty tracking
-      startStream(trackId);
-    }
-  }, [startStream]);
+      if (hasAudio && audioRef.current) {
+        const trackId =
+          typeof t.id === "string" ? parseInt(t.id, 10) : Number(t.id);
+        audioRef.current.src = `/api/music/tracks/${trackId}/stream`;
+        audioRef.current.load();
+        audioRef.current.play().catch(() => {
+          // Autoplay may be blocked — user can click play in the bar
+          setIsPlaying(false);
+        });
+        // Start royalty tracking
+        startStream(trackId);
+      }
+    },
+    [startStream],
+  );
 
   const handleTogglePlayPause = useCallback(() => {
     if (!audioRef.current || !currentTrack) return;
@@ -900,26 +905,34 @@ export default function ArtistPortal() {
     }
   }, [isPlaying, currentTrack, pauseStream, resumeStream]);
 
-  const handleSkipTrack = useCallback((direction: "next" | "prev") => {
-    if (!currentTrack || !displayTracks.length) return;
-    const idx = displayTracks.findIndex((t) => String(t.id) === String(currentTrack.id));
-    let nextIdx: number;
-    if (direction === "next") {
-      nextIdx = idx < displayTracks.length - 1 ? idx + 1 : 0;
-    } else {
-      nextIdx = idx > 0 ? idx - 1 : displayTracks.length - 1;
-    }
-    handlePlayTrack(displayTracks[nextIdx]);
-  }, [currentTrack, displayTracks, handlePlayTrack]);
+  const handleSkipTrack = useCallback(
+    (direction: "next" | "prev") => {
+      if (!currentTrack || !displayTracks.length) return;
+      const idx = displayTracks.findIndex(
+        (t) => String(t.id) === String(currentTrack.id),
+      );
+      let nextIdx: number;
+      if (direction === "next") {
+        nextIdx = idx < displayTracks.length - 1 ? idx + 1 : 0;
+      } else {
+        nextIdx = idx > 0 ? idx - 1 : displayTracks.length - 1;
+      }
+      handlePlayTrack(displayTracks[nextIdx]);
+    },
+    [currentTrack, displayTracks, handlePlayTrack],
+  );
 
-  const handleSeek = useCallback((values: number[]) => {
-    if (!audioRef.current || !audioDuration) return;
-    const pct = values[0];
-    const time = (pct / 100) * audioDuration;
-    audioRef.current.currentTime = time;
-    setAudioProgress(pct);
-    setAudioCurrentTime(time);
-  }, [audioDuration]);
+  const handleSeek = useCallback(
+    (values: number[]) => {
+      if (!audioRef.current || !audioDuration) return;
+      const pct = values[0];
+      const time = (pct / 100) * audioDuration;
+      audioRef.current.currentTime = time;
+      setAudioProgress(pct);
+      setAudioCurrentTime(time);
+    },
+    [audioDuration],
+  );
 
   // Wire up <audio> events
   useEffect(() => {
@@ -943,7 +956,9 @@ export default function ArtistPortal() {
       completeStream();
       // Auto-play next track
       if (currentTrack && displayTracks.length > 1) {
-        const idx = displayTracks.findIndex((t) => String(t.id) === String(currentTrack.id));
+        const idx = displayTracks.findIndex(
+          (t) => String(t.id) === String(currentTrack.id),
+        );
         if (idx < displayTracks.length - 1) {
           handlePlayTrack(displayTracks[idx + 1]);
         }
@@ -2834,12 +2849,12 @@ export default function ArtistPortal() {
                   <Music2 className="h-6 w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white font-medium truncate">{currentTrack.title}</p>
+                  <p className="text-white font-medium truncate">
+                    {currentTrack.title}
+                  </p>
                   <p className="text-purple-200 text-sm truncate">
-                    {
-                      displayArtists.find((a) => a.id === currentTrack.artistId)
-                        ?.name || "Unknown Artist"
-                    }
+                    {displayArtists.find((a) => a.id === currentTrack.artistId)
+                      ?.name || "Unknown Artist"}
                   </p>
                 </div>
                 <Button
@@ -2860,7 +2875,11 @@ export default function ArtistPortal() {
                 <div className="hidden md:block">
                   <div className="flex items-center space-x-2">
                     <span className="text-purple-200 text-sm tabular-nums">
-                      {Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, "0")}
+                      {Math.floor(audioCurrentTime / 60)}:
+                      {String(Math.floor(audioCurrentTime % 60)).padStart(
+                        2,
+                        "0",
+                      )}
                     </span>
                     <Slider
                       value={[audioProgress]}
@@ -2870,7 +2889,8 @@ export default function ArtistPortal() {
                       className="w-64"
                     />
                     <span className="text-purple-200 text-sm tabular-nums">
-                      {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, "0")}
+                      {Math.floor(audioDuration / 60)}:
+                      {String(Math.floor(audioDuration % 60)).padStart(2, "0")}
                     </span>
                   </div>
                 </div>
