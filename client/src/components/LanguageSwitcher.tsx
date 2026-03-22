@@ -280,17 +280,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setGoogTransCookie(lang);
       }
 
+      // Always reload — cookie+reinit is unreliable in production.
+      // The reload lets GT re-read the cookie from scratch.
       if (source === "country") {
         flashBanner(
           lang === "fr"
             ? "Switched to Français (site base language)"
             : `Language switched to ${lang.toUpperCase()} for this country`,
+          true, // always reload
         );
       } else {
         flashBanner(
           lang === "fr"
             ? "Language restored to Français"
             : `Language overridden to ${lang.toUpperCase()}`,
+          true, // always reload
         );
       }
     },
@@ -378,8 +382,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
         .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
         #goog-gt-vt,
-        .VIpgJd-yAWNEb-L7lbkb,
-        [class*="VIpgJd"] {
+        .VIpgJd-yAWNEb-L7lbkb {
           display: none !important;
           visibility: hidden !important;
           height: 0 !important;
@@ -393,7 +396,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         }
         body {
           top: 0 !important;
-          position: static !important;
         }
         .goog-te-gadget {
           font-size: 0 !important;

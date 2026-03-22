@@ -646,10 +646,15 @@ function AppContent() {
               </div>
             )}
 
-          {/* Blog Navbar — only when ContentNav (insta dock) is NOT active */}
+          {/* Blog Navbar — only when ContentNav (insta dock) is NOT active.
+              Hidden on phones (<768px) — the Instagram-like bottom dock handles mobile nav. */}
           {(currentPath === "/blog" || currentPath === "/marketplace") &&
             !marketplaceModalOpen &&
-            !showContentNav && <BlogNavbar />}
+            !showContentNav && (
+              <div className="hidden md:block">
+                <BlogNavbar />
+              </div>
+            )}
         </div>
       )}
       {/* Spacer for fixed header */}

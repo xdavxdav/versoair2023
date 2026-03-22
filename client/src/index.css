@@ -1157,7 +1157,8 @@
 /* Individual panel styling */
 .panel {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;      /* match inline Tailwind h-[100dvh] — accounts for mobile browser chrome */
+  min-height: 100dvh;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -1239,6 +1240,7 @@
 /* Ensure panel content is above overlay — only target the content wrapper,
    NOT the absolute-positioned background/blur layers */
 .panel > .relative.z-10 {
+  position: relative;
   z-index: 2;
 }
 
