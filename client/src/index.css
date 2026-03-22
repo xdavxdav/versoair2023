@@ -1159,9 +1159,6 @@
   width: 100vw;
   height: 100vh;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
   overflow: hidden;
 }
@@ -1239,9 +1236,9 @@
   z-index: 1;
 }
 
-/* Ensure panel content is above overlay */
-.panel > * {
-  position: relative;
+/* Ensure panel content is above overlay — only target the content wrapper,
+   NOT the absolute-positioned background/blur layers */
+.panel > .relative.z-10 {
   z-index: 2;
 }
 
