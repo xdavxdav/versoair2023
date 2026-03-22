@@ -304,17 +304,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         GT widget container.
         Positioned at bottom-right, 1×1, near-invisible but NOT display:none.
         GT creates its <select> and iframes inside this div.
+        The <select> must remain in the DOM and not display:none.
       */}
       <div
         id="google_translate_element"
         className="notranslate"
         style={{
           position: "fixed",
-          bottom: 0,
-          right: 0,
-          width: 1,
-          height: 1,
-          overflow: "hidden",
+          bottom: -100,
+          right: -100,
+          width: 200,
+          height: 50,
           opacity: 0.01,
           pointerEvents: "none",
           zIndex: -1,
@@ -366,12 +366,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
         /* GT injects a <div class="skiptranslate goog-te-gadget"> at body top
            that contains the "Show original / Translated by" bar.
-           Target it precisely: the TOP-LEVEL body > .skiptranslate only. */
+           CANNOT use display:none — it kills the <select> combo we need.
+           Instead, make it zero-size and invisible. */
         body > .skiptranslate {
-          display: none !important;
           height: 0 !important;
           width: 0 !important;
           overflow: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          position: absolute !important;
+          top: -9999px !important;
+          left: -9999px !important;
         }
 
         /* GT pushes body down with top:40px — reset it */
