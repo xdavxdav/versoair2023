@@ -1,14 +1,16 @@
 /**
  * LanguageEngine — headless Google Translate controller.
  *
- * STRATEGY: Cookie-first.
- *   1. On mount, read cached language from localStorage
- *   2. Set `googtrans=/fr/{lang}` cookie BEFORE loading GT script
- *   3. GT reads the cookie on init → auto-translates (no combo hack needed)
- *   4. For runtime language changes, set cookie + use combo as backup
+ * STRATEGY: Cookie + reinit.
+ *   - GT always reads the `googtrans` cookie on initialization.
+ *   - To change language: set cookie → destroy GT → re-create GT.
+ *   - GT re-reads the cookie → translates to the new language.
+ *   - No combo hacking, no polling, no race conditions.
  *
- * No visible UI. Provides a React context so other components (CountryDropdown)
- * can read the current language and trigger translation changes.
+ * The combo approach is unreliable in production because GT's
+ * <select> element may not be accessible depending on container
+ * visibility, iframe state, or GT version. Cookie + reinit is
+ * the only 100% reliable method.
  */
 
 import React, {
@@ -22,7 +24,6 @@ import React, {
 import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry, isBaseLang } from "@/utils/country-language";
 
-// ── Cache key ──
 const LANG_CACHE_KEY = "fsa_selected_language";
 
 declare global {
@@ -56,42 +57,73 @@ export function useLanguage() {
   return useContext(LanguageContext);
 }
 
-// ─────────────────────────────────────────────────────────
-// Cookie helpers — the PRIMARY mechanism that makes GT work
-// ─────────────────────────────────────────────────────────
+// ── Cookie helpers ──
 
-function setGoogTransCookie(targetLang: string) {
-  if (!targetLang || targetLang === "fr") {
+function setGoogTransCookie(lang: string) {
+  if (!lang || lang === "fr") {
     clearGoogTransCookies();
     return;
   }
-  const val = `/fr/${targetLang}`;
+  const val = `/fr/${lang}`;
+  const host = window.location.hostname;
   document.cookie = `googtrans=${val}; path=/;`;
-  document.cookie = `googtrans=${val}; path=/; domain=${window.location.hostname};`;
-  if (window.location.hostname !== "localhost") {
-    document.cookie = `googtrans=${val}; path=/; domain=.${window.location.hostname};`;
+  document.cookie = `googtrans=${val}; path=/; domain=${host};`;
+  if (host !== "localhost") {
+    document.cookie = `googtrans=${val}; path=/; domain=.${host};`;
   }
 }
 
 function clearGoogTransCookies() {
-  const expire = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
-  document.cookie = `googtrans=; ${expire}; path=/;`;
-  document.cookie = `googtrans=; ${expire}; path=/; domain=${window.location.hostname};`;
-  document.cookie = `googtrans=; ${expire}; path=/; domain=.${window.location.hostname};`;
+  const exp = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
+  const host = window.location.hostname;
+  document.cookie = `googtrans=; ${exp}; path=/;`;
+  document.cookie = `googtrans=; ${exp}; path=/; domain=${host};`;
+  document.cookie = `googtrans=; ${exp}; path=/; domain=.${host};`;
 }
 
-// ─────────────────────────
-// Google Translate helpers
-// ─────────────────────────
+// ── GT lifecycle ──
 
-function loadGoogleTranslateScript(): Promise<void> {
+const GT_LANGUAGES =
+  "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am,hr,sr,bg,sk,sl,et,lv,lt,my,km,lo,ka,hy,az,uz,tk,mn,ne,si";
+
+/** Create (or re-create) the GT TranslateElement. GT reads the cookie on init. */
+function initGT() {
+  try {
+    if (!window.google?.translate?.TranslateElement) return;
+    // Clear old widget content
+    const el = document.getElementById("google_translate_element");
+    if (el) el.innerHTML = "";
+    // Also remove any leftover GT DOM (banner bars, etc.)
+    document
+      .querySelectorAll(
+        ".goog-te-banner-frame, body > .skiptranslate, #goog-gt-tt",
+      )
+      .forEach((node) => node.remove());
+    // Reset body position (GT pushes it down)
+    document.body.style.top = "0px";
+
+    new window.google.translate.TranslateElement(
+      {
+        pageLanguage: "fr",
+        includedLanguages: GT_LANGUAGES,
+        layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false,
+      },
+      "google_translate_element",
+    );
+  } catch (e) {
+    console.warn("[LanguageEngine] GT init error:", e);
+  }
+}
+
+function loadGTScript(): Promise<void> {
   return new Promise((resolve) => {
-    if (document.getElementById("google-translate-script")) {
+    if (document.getElementById("gt-script")) {
       resolve();
       return;
     }
     const s = document.createElement("script");
-    s.id = "google-translate-script";
+    s.id = "gt-script";
     s.src =
       "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     s.async = true;
@@ -101,30 +133,24 @@ function loadGoogleTranslateScript(): Promise<void> {
   });
 }
 
-/** Use the hidden combo dropdown to switch language at runtime */
-function triggerCombo(langCode: string): boolean {
-  const combo = document.querySelector(
-    ".goog-te-combo",
-  ) as HTMLSelectElement | null;
-  if (!combo) return false;
-  combo.value = langCode;
-  combo.dispatchEvent(new Event("change", { bubbles: true }));
-  return true;
+/**
+ * Switch language by setting cookie + reinitializing GT.
+ * This is the ONLY reliable method across all environments.
+ */
+function switchLanguage(lang: string) {
+  if (lang === "fr") {
+    clearGoogTransCookies();
+    // To restore French, remove all GT-translated <font> tags
+    // by re-initializing GT with no cookie (it restores original text)
+    initGT();
+  } else {
+    setGoogTransCookie(lang);
+    // Reinit GT so it reads the new cookie
+    initGT();
+  }
 }
 
-function restoreCombo(): boolean {
-  const combo = document.querySelector(
-    ".goog-te-combo",
-  ) as HTMLSelectElement | null;
-  if (!combo) return false;
-  combo.value = "";
-  combo.dispatchEvent(new Event("change", { bubbles: true }));
-  return true;
-}
-
-// ───────────
-// Provider
-// ───────────
+// ── Provider ──
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const { selectedCountry, detecting } = useCountry();
@@ -141,8 +167,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gtReadyRef = useRef(false);
   const firstCountryDone = useRef(false);
+  const gtLoaded = useRef(false);
 
   const flashBanner = useCallback((msg: string) => {
     if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
@@ -151,111 +177,63 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     bannerTimerRef.current = setTimeout(() => setShowBanner(false), 5000);
   }, []);
 
-  // Poll combo with retry. Cookie is already set so GT will pick it up.
-  const applyViaCombo = useCallback((lang: string) => {
-    let attempts = 0;
-    if (lang === "fr") {
-      clearGoogTransCookies();
-      const poll = () => {
-        if (attempts++ > 30) return; // give up silently — cookie handles it
-        if (!restoreCombo()) setTimeout(poll, 300);
-      };
-      poll();
-    } else {
-      setGoogTransCookie(lang);
-      const poll = () => {
-        if (attempts++ > 30) return; // give up silently — cookie already set
-        if (!triggerCombo(lang)) setTimeout(poll, 300);
-      };
-      poll();
-    }
-  }, []);
-
-  // ══════════════════════════════════════════════════════
-  // STEP 1 — Pre-set cookie from cache BEFORE GT loads.
-  //          This is the key fix: GT reads the cookie on
-  //          init and translates immediately.
-  // ══════════════════════════════════════════════════════
+  // ── STEP 1: Pre-set cookie from cache, then load GT ──
   useEffect(() => {
+    // Set cookie BEFORE GT loads so it auto-translates on init
     const cached = localStorage.getItem(LANG_CACHE_KEY);
     if (cached && cached !== "fr" && cached !== "auto") {
       setGoogTransCookie(cached);
     }
-  }, []);
 
-  // ══════════════════════════════════════════════════════
-  // STEP 2 — Load GT script. GT will read the cookie set
-  //          in Step 1 and auto-translate on init.
-  // ══════════════════════════════════════════════════════
-  useEffect(() => {
+    // Define the callback GT will invoke once loaded
     window.googleTranslateElementInit = () => {
-      try {
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "fr",
-            includedLanguages:
-              "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am,hr,sr,bg,sk,sl,et,lv,lt,my,km,lo,ka,hy,az,uz,tk,mn,ne,si",
-            layout:
-              window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-            autoDisplay: false,
-          },
-          "google_translate_element",
-        );
-        gtReadyRef.current = true;
-      } catch (e) {
-        console.warn("[LanguageEngine] GT init failed:", e);
-      }
+      gtLoaded.current = true;
+      initGT();
     };
-    loadGoogleTranslateScript();
+
+    loadGTScript();
 
     return () => {
       delete (window as any).googleTranslateElementInit;
     };
   }, []);
 
-  // ══════════════════════════════════════════════════════
-  // STEP 3 — React to country detection / country switch.
-  // ══════════════════════════════════════════════════════
+  // ── STEP 2: React to country detection ──
   useEffect(() => {
     if (detecting || !selectedCountry) return;
 
-    const detectedLang = getLanguageForCountry(selectedCountry);
-    setAutoDetectedLang(detectedLang);
+    const lang = getLanguageForCountry(selectedCountry);
+    setAutoDetectedLang(lang);
 
-    // First detection — honour cached choice
+    // First detection: honour cached language
     if (!firstCountryDone.current) {
       firstCountryDone.current = true;
       const cached = localStorage.getItem(LANG_CACHE_KEY);
       if (cached && cached !== "auto" && cached !== "fr") {
-        // Cookie was pre-set in Step 1. If GT already inited but hasn't
-        // translated (e.g., the cookie was set too late), nudge it via combo.
-        if (gtReadyRef.current) applyViaCombo(cached);
+        // Cookie already set in Step 1, GT already inited — nothing to do
         return;
       }
     }
 
-    if (isBaseLang(detectedLang)) {
-      clearGoogTransCookies();
-      if (gtReadyRef.current) restoreCombo();
-      setCurrentLang("fr");
-      localStorage.setItem(LANG_CACHE_KEY, "fr");
+    // Apply language
+    setCurrentLang(lang);
+    localStorage.setItem(LANG_CACHE_KEY, lang);
+
+    if (gtLoaded.current) {
+      switchLanguage(lang);
     } else {
-      setGoogTransCookie(detectedLang);
-      setCurrentLang(detectedLang);
-      localStorage.setItem(LANG_CACHE_KEY, detectedLang);
+      // GT not loaded yet — just set cookie, GT will use it on init
+      setGoogTransCookie(lang);
+    }
 
-      if (gtReadyRef.current) {
-        applyViaCombo(detectedLang);
-      }
-      // If GT hasn't loaded yet, the cookie will make it auto-translate
-
+    if (!isBaseLang(lang)) {
       flashBanner(
-        `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
+        `Auto-translated to ${lang.toUpperCase()} based on your location`,
       );
     }
-  }, [selectedCountry, detecting, applyViaCombo, flashBanner]);
+  }, [selectedCountry, detecting, flashBanner]);
 
-  // ── Manual language switch ──
+  // ── Manual language switch (from dropdown) ──
   const selectLanguage = useCallback(
     (lang: string, source: "country" | "manual" = "manual") => {
       const prev = currentLang;
@@ -263,8 +241,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
 
-      setGoogTransCookie(lang);
-      applyViaCombo(lang);
+      switchLanguage(lang);
 
       if (source === "country") {
         flashBanner(
@@ -280,12 +257,38 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         );
       }
     },
-    [currentLang, applyViaCombo, flashBanner],
+    [currentLang, flashBanner],
   );
 
   const dismissBanner = useCallback(() => {
     setShowBanner(false);
     if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+  }, []);
+
+  // ── Clean up GT visual junk periodically ──
+  useEffect(() => {
+    const cleanup = () => {
+      document.body.style.top = "0px";
+      // Remove any GT banner bars that sneak in
+      document
+        .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
+        .forEach((el) => {
+          (el as HTMLElement).style.display = "none";
+        });
+    };
+    // Run cleanup after GT has time to inject its UI
+    const t1 = setTimeout(cleanup, 2000);
+    const t2 = setTimeout(cleanup, 5000);
+    const t3 = setTimeout(cleanup, 10000);
+    // Also run on every DOM change in case GT re-injects
+    const observer = new MutationObserver(cleanup);
+    observer.observe(document.body, { childList: true });
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -300,22 +303,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         dismissBanner,
       }}
     >
-      {/*
-        GT widget container.
-        Positioned at bottom-right, 1×1, near-invisible but NOT display:none.
-        GT creates its <select> and iframes inside this div.
-        The <select> must remain in the DOM and not display:none.
-      */}
+      {/* GT mounts its widget here. Offscreen but NOT display:none. */}
       <div
         id="google_translate_element"
         className="notranslate"
         style={{
           position: "fixed",
-          bottom: -100,
-          right: -100,
-          width: 200,
-          height: 50,
-          opacity: 0.01,
+          bottom: -200,
+          right: -200,
+          width: 300,
+          height: 100,
+          opacity: 0,
           pointerEvents: "none",
           zIndex: -1,
         }}
@@ -323,81 +321,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       {children}
 
-      {/*
-        Hide ONLY GT's banner bar and tooltip chrome.
-
-        ⚠️  DO NOT add `.skiptranslate { display: none }` — that class is
-        on GT's translation iframes and hiding them kills ALL translation.
-        Only target the specific UI elements we want hidden.
-      */}
       <style>{`
-        /* ═══════════════════════════════════════════════════════
-           Hide ALL Google Translate visual UI.
-           Translation iframes continue to work — we only target
-           the chrome / bars / tooltips that GT renders on screen.
-           ═══════════════════════════════════════════════════════ */
-
-        /* GT top banner iframe ("Translated to English — Show original") */
+        /* Hide all GT visual chrome. Translation still works. */
         .goog-te-banner-frame,
-        iframe.goog-te-banner-frame {
-          display: none !important;
-          height: 0 !important;
-          width: 0 !important;
-          visibility: hidden !important;
-        }
-
-        /* GT navigation frame, balloon, tooltip, spinner */
+        iframe.goog-te-banner-frame,
         .goog-te-balloon-frame,
         #goog-gt-tt,
         .goog-te-ftab-frame,
         .goog-tooltip,
-        .goog-tooltip:hover,
         .goog-text-highlight,
         #gt-nvframe,
         iframe[id="gt-nvframe"],
         .goog-te-spinner-pos,
-        .goog-te-menu-frame {
-          display: none !important;
-          visibility: hidden !important;
-          height: 0 !important;
-          width: 0 !important;
-          overflow: hidden !important;
-        }
-
-        /* GT injects a <div class="skiptranslate goog-te-gadget"> at body top
-           that contains the "Show original / Translated by" bar.
-           CANNOT use display:none — it kills the <select> combo we need.
-           Instead, make it zero-size and invisible. */
-        body > .skiptranslate {
-          height: 0 !important;
-          width: 0 !important;
-          overflow: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-          position: absolute !important;
-          top: -9999px !important;
-          left: -9999px !important;
-        }
-
-        /* GT pushes body down with top:40px — reset it */
-        body {
-          top: 0 !important;
-          position: static !important;
-        }
-
-        /* Hide the gadget text/branding inside our container */
-        .goog-te-gadget {
-          font-size: 0 !important;
-          line-height: 0 !important;
-          color: transparent !important;
-        }
-        .goog-te-gadget > span,
-        .goog-te-gadget > div,
-        .goog-te-gadget img {
-          display: none !important;
-        }
-
-        /* VIpgJd is GT's cookie consent / preferences class */
+        .goog-te-menu-frame,
         .VIpgJd-ZVi9od-ORHb-OEVmcd,
         .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
         .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
@@ -408,9 +344,25 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           visibility: hidden !important;
           height: 0 !important;
           width: 0 !important;
+        }
+        body > .skiptranslate {
+          height: 0 !important;
+          overflow: hidden !important;
           opacity: 0 !important;
           pointer-events: none !important;
-          overflow: hidden !important;
+        }
+        body {
+          top: 0 !important;
+          position: static !important;
+        }
+        .goog-te-gadget {
+          font-size: 0 !important;
+          color: transparent !important;
+        }
+        .goog-te-gadget > span,
+        .goog-te-gadget > div,
+        .goog-te-gadget img {
+          display: none !important;
         }
       `}</style>
     </LanguageContext.Provider>
