@@ -215,19 +215,19 @@ async function testDatabaseConnection(): Promise<{
 // The `categoryOptions` array is computed inside the component so it can include counts and parent/child relationships.
 
 const businessTypeOptions = [
-  { value: "retail", label: "Retail" },
+  { value: "retail", label: "Commerce de détail" },
   { value: "service", label: "Service" },
-  { value: "manufacturing", label: "Manufacturing" },
+  { value: "manufacturing", label: "Fabrication" },
   { value: "restaurant", label: "Restaurant" },
   { value: "ecommerce", label: "E-commerce" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "verified", label: "Verified" },
+  { value: "active", label: "Actif" },
+  { value: "verified", label: "Vérifié" },
   { value: "premium", label: "Premium" },
-  { value: "pending", label: "Pending" },
-  { value: "paused", label: "Paused" },
+  { value: "pending", label: "En attente" },
+  { value: "paused", label: "En pause" },
 ];
 
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
@@ -690,33 +690,33 @@ export default function CommerceBusinessAds() {
   const commerceFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live commerce records from Verso Air database",
+      title: "Base de données PostgreSQL",
+      description: "Données commerciales en direct depuis la base Verso Air",
     },
     {
       icon: <Store className="h-8 w-8" />,
-      title: "Business Network",
-      description: "Global network of retail and service businesses",
+      title: "Réseau d'entreprises",
+      description: "Réseau mondial de commerces et services",
     },
     {
       icon: <ShoppingBag className="h-8 w-8" />,
       title: "E-commerce",
-      description: "Complete e-commerce solutions and integrations",
+      description: "Solutions e-commerce complètes et intégrations",
     },
     {
       icon: <Megaphone className="h-8 w-8" />,
-      title: "Advertising",
-      description: "Targeted advertising and marketing campaigns",
+      title: "Publicité",
+      description: "Campagnes publicitaires et marketing ciblées",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Reach",
-      description: "Businesses in 50+ countries worldwide",
+      title: "Portée mondiale",
+      description: "Entreprises dans plus de 50 pays",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time performance monitoring",
+      title: "Analytique en direct",
+      description: "Surveillance des performances en temps réel",
     },
   ];
 
@@ -752,7 +752,7 @@ export default function CommerceBusinessAds() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              🛍️ Commerce Intelligence
+              🛍️ Intelligence Commerciale
             </span>
           </motion.div>
 
@@ -762,7 +762,7 @@ export default function CommerceBusinessAds() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Business & Commerce Database
+            Base de données Commerce & Affaires
           </motion.h1>
 
           <motion.p
@@ -771,8 +771,8 @@ export default function CommerceBusinessAds() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            businesses, retailers & services
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ commerces, détaillants & services
           </motion.p>
 
           {/* Database Stats */}
@@ -844,7 +844,7 @@ export default function CommerceBusinessAds() {
                         <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                         <span>
                           {enterprises[currentIndex]?.location ||
-                            "Location not specified"}
+                            "Emplacement non précisé"}
                         </span>
                       </div>
                       {enterprises[currentIndex]?.type && (
@@ -876,7 +876,7 @@ export default function CommerceBusinessAds() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search businesses, retailers, services, products..."
+                  placeholder="Rechercher commerces, détaillants, services, produits..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
                 />
               </div>
@@ -886,7 +886,7 @@ export default function CommerceBusinessAds() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, region, or location..."
+                  placeholder="Ville, région ou emplacement..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
                 />
               </div>
@@ -903,7 +903,7 @@ export default function CommerceBusinessAds() {
                   className="border-blue-600 hover:bg-blue-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <Button
@@ -912,7 +912,7 @@ export default function CommerceBusinessAds() {
                   className="border-emerald-600 hover:bg-emerald-900"
                 >
                   <Sparkles size={16} className="mr-2" />
-                  Settings
+                  Paramètres
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -922,7 +922,7 @@ export default function CommerceBusinessAds() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -936,13 +936,13 @@ export default function CommerceBusinessAds() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
-                          "Highest Rating"}
+                          "Meilleure note"}
                         {activeFilters.sort_by === "revenue_desc" &&
-                          "Highest Revenue"}
+                          "Chiffre d'affaires"}
                         {activeFilters.sort_by === "impressions_desc" &&
-                          "Most Impressions"}
-                        {activeFilters.sort_by === "name_asc" && "Name A-Z"}
-                        {!activeFilters.sort_by && "Sort by"}
+                          "Plus d'impressions"}
+                        {activeFilters.sort_by === "name_asc" && "Nom A-Z"}
+                        {!activeFilters.sort_by && "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
@@ -966,7 +966,7 @@ export default function CommerceBusinessAds() {
                             : "text-blue-200"
                         }
                       >
-                        Highest Rating
+                        Meilleure note
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -987,7 +987,7 @@ export default function CommerceBusinessAds() {
                             : "text-blue-200"
                         }
                       >
-                        Highest Revenue
+                        Chiffre d'affaires
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -1008,7 +1008,7 @@ export default function CommerceBusinessAds() {
                             : "text-blue-200"
                         }
                       >
-                        Most Impressions
+                        Plus d'impressions
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -1029,14 +1029,14 @@ export default function CommerceBusinessAds() {
                             : "text-blue-200"
                         }
                       >
-                        Name A-Z
+                        Nom A-Z
                       </span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
                 <div className="text-sm text-blue-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -1052,7 +1052,7 @@ export default function CommerceBusinessAds() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Business Type
+                      Type d'entreprise
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1063,7 +1063,7 @@ export default function CommerceBusinessAds() {
                           <span className="text-sm">
                             {businessTypeOptions.find(
                               (t) => t.value === activeFilters.business_type,
-                            )?.label || "All Types"}
+                            )?.label || "Tous les types"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1084,7 +1084,7 @@ export default function CommerceBusinessAds() {
                                 : "text-blue-200"
                             }
                           >
-                            All Types
+                            Tous les types
                           </span>
                         </DropdownMenuItem>
                         {businessTypeOptions.map((type) => (
@@ -1117,7 +1117,7 @@ export default function CommerceBusinessAds() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -1138,7 +1138,7 @@ export default function CommerceBusinessAds() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1149,7 +1149,7 @@ export default function CommerceBusinessAds() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tous les statuts"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1167,7 +1167,7 @@ export default function CommerceBusinessAds() {
                                 : "text-blue-200"
                             }
                           >
-                            Any Status
+                            Tous les statuts
                           </span>
                         </DropdownMenuItem>
                         {statusOptions.map((status) => (
@@ -1204,13 +1204,13 @@ export default function CommerceBusinessAds() {
                       onClick={clearAllFilters}
                       className="border-blue-600 hover:bg-blue-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1272,14 +1272,14 @@ export default function CommerceBusinessAds() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-blue-400" />
                     <span className="bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-blue-300">
                     {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
+                      ? "✅ Données PostgreSQL en direct"
+                      : "✅ Données réelles"}
                   </div>
                 </div>
 
@@ -1298,10 +1298,10 @@ export default function CommerceBusinessAds() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
-                              Loading businesses...
+                              Chargement des commerces...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-blue-400" />
@@ -1320,9 +1320,11 @@ export default function CommerceBusinessAds() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
                         </div>
@@ -1342,10 +1344,10 @@ export default function CommerceBusinessAds() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-blue-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching businesses...
+                              Récupération des commerces...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1363,16 +1365,17 @@ export default function CommerceBusinessAds() {
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Businesses Found
+                              Aucun commerce trouvé
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou réinitialisez les
+                              filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1394,10 +1397,10 @@ export default function CommerceBusinessAds() {
                           className="border-blue-600 hover:bg-blue-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-blue-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1410,7 +1413,7 @@ export default function CommerceBusinessAds() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-blue-600 hover:bg-blue-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1425,7 +1428,7 @@ export default function CommerceBusinessAds() {
         {activeTab === "analytics" && (
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <AnimatedHeading
-              text="Commerce Analytics"
+              text="Analytique Commerce"
               level={2}
               variant="slow"
               className="text-[clamp(1.125rem,1.6vw,1.5rem)] mb-[1vw] flex items-center gap-[0.5vw]"
@@ -1440,7 +1443,7 @@ export default function CommerceBusinessAds() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1449,44 +1452,44 @@ export default function CommerceBusinessAds() {
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+18% from last month"
+                    : "+18% par rapport au mois dernier"
                 }
                 trend="up"
                 color="blue"
               />
               <AnalyticsCard
-                title="Total Ads"
+                title="Total annonces"
                 value={analytics ? `${analytics.total_ads}` : "2,850+"}
                 change={
                   analytics
                     ? `+${Math.round((analytics.total_ads || 0) / 100)}%`
-                    : "+12% from last month"
+                    : "+12% par rapport au mois dernier"
                 }
                 trend="up"
                 color="teal"
               />
               <AnalyticsCard
-                title="Avg CTR"
+                title="CTR moyen"
                 value={
                   analytics ? `${analytics.average_ctr.toFixed(1)}%` : "5.2%"
                 }
                 change={
                   analytics
                     ? `+${analytics.average_ctr * 0.1 || 5}%`
-                    : "+5% from last month"
+                    : "+5% par rapport au mois dernier"
                 }
                 trend="up"
                 color="orange"
               />
               <AnalyticsCard
-                title="Avg ROI"
+                title="ROI moyen"
                 value={
                   analytics ? `${analytics.average_roi.toFixed(1)}x` : "4.2x"
                 }
                 change={
                   analytics
                     ? `+${analytics.average_roi * 0.1 || 8}%`
-                    : "+8% from last month"
+                    : "+8% par rapport au mois dernier"
                 }
                 trend="up"
                 color="purple"
@@ -1499,7 +1502,7 @@ export default function CommerceBusinessAds() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Ads Trends
+                      Tendances revenus & annonces
                     </h3>
                     <Calendar className="h-5 w-5 text-blue-400" />
                   </div>
@@ -1512,7 +1515,7 @@ export default function CommerceBusinessAds() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Category
+                    Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1526,7 +1529,7 @@ export default function CommerceBusinessAds() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Categories
+                    Catégories principales
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1539,7 +1542,7 @@ export default function CommerceBusinessAds() {
                             {category.category}
                           </span>
                           <span className="text-sm text-green-400">
-                            {category.ads_count || 0} ads
+                            {category.ads_count || 0} annonces
                           </span>
                         </div>
                         <span className="font-semibold text-blue-300">
@@ -1601,7 +1604,7 @@ export default function CommerceBusinessAds() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Sales by Region
+                    Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
@@ -1631,17 +1634,17 @@ export default function CommerceBusinessAds() {
                             percentage: 41,
                           },
                           {
-                            region: "North America",
+                            region: "Amérique du Nord",
                             revenue: 1763400,
                             percentage: 32,
                           },
                           {
-                            region: "Asia Pacific",
+                            region: "Asie-Pacifique",
                             revenue: 1432100,
                             percentage: 18,
                           },
                           {
-                            region: "Africa",
+                            region: "Afrique",
                             revenue: 6219300,
                             percentage: 9,
                           },
@@ -1673,19 +1676,19 @@ export default function CommerceBusinessAds() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Performance Metrics
+                    Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
                     {[
                       {
-                        metric: "Total Businesses",
+                        metric: "Total entreprises",
                         value: analytics
                           ? analytics.total_businesses.toLocaleString()
                           : "1,240",
                         change: "+12%",
                       },
                       {
-                        metric: "Avg Rating",
+                        metric: "Note moyenne",
                         value: analytics
                           ? analytics.average_rating.toFixed(1)
                           : "4.6",
@@ -1738,18 +1741,23 @@ export default function CommerceBusinessAds() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de bord financier
             </h2>
             <p className="text-gray-300 mb-6">
-              Financial analytics and performance metrics for commerce sector.
+              Analytique financière et indicateurs de performance du secteur
+              commerce.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Ad Spend", value: "€850K", change: "+22%" },
-                { title: "Ad Revenue", value: "€3.2M", change: "+18%" },
-                { title: "Net Profit", value: "€1.4M", change: "+15%" },
-                { title: "Operating Costs", value: "€450K", change: "+8%" },
-                { title: "Profit Margin", value: "32%", change: "+5%" },
+                { title: "Dépenses pub", value: "€850K", change: "+22%" },
+                { title: "Revenus pub", value: "€3.2M", change: "+18%" },
+                { title: "Bénéfice net", value: "€1.4M", change: "+15%" },
+                {
+                  title: "Coûts d'exploitation",
+                  value: "€450K",
+                  change: "+8%",
+                },
+                { title: "Marge bénéficiaire", value: "32%", change: "+5%" },
                 { title: "ROI", value: "4.2x", change: "+12%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1761,7 +1769,7 @@ export default function CommerceBusinessAds() {
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
-                      {metric.change} from last month
+                      {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
                 </Card>
@@ -1774,23 +1782,23 @@ export default function CommerceBusinessAds() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Megaphone className="h-6 w-6" />
-              Advertising & Marketing
+              Publicité & Marketing
             </h2>
             <p className="text-gray-300 mb-6">
-              Manage campaigns and promotional activities for commerce
-              businesses.
+              Gérez les campagnes et activités promotionnelles pour les
+              commerces.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Active Campaigns", value: "42", status: "Running" },
-                { title: "Total Budget", value: "€285K", status: "Allocated" },
-                { title: "Engagement Rate", value: "6.8%", status: "High" },
+                { title: "Campagnes actives", value: "42", status: "En cours" },
+                { title: "Budget total", value: "€285K", status: "Alloué" },
+                { title: "Taux d'engagement", value: "6.8%", status: "Élevé" },
                 {
-                  title: "Click-through Rate",
+                  title: "Taux de clic",
                   value: "5.2%",
                   status: "Excellent",
                 },
-                { title: "Conversion Rate", value: "3.8%", status: "Good" },
+                { title: "Taux de conversion", value: "3.8%", status: "Bon" },
                 { title: "ROAS", value: "4.2x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1805,9 +1813,9 @@ export default function CommerceBusinessAds() {
                       className={`text-sm ${
                         ad.status === "Excellent"
                           ? "text-green-400"
-                          : ad.status === "Good"
+                          : ad.status === "Bon"
                             ? "text-blue-400"
-                            : ad.status === "High"
+                            : ad.status === "Élevé"
                               ? "text-yellow-400"
                               : "text-purple-400"
                       }`}
@@ -1825,40 +1833,40 @@ export default function CommerceBusinessAds() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-blue-300">
-                      Total Commerce Records
+                      Total enregistrements commerce
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Active Businesses</span>
+                    <span className="text-blue-300">Entreprises actives</span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Database Status</span>
+                    <span className="text-blue-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">API Endpoint</span>
+                    <span className="text-blue-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-blue-400">
                       {API_BASE_URL}
                     </span>
@@ -1867,7 +1875,7 @@ export default function CommerceBusinessAds() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1876,7 +1884,7 @@ export default function CommerceBusinessAds() {
                     }
                     className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1885,7 +1893,7 @@ export default function CommerceBusinessAds() {
                     variant="outline"
                     className="w-full border-blue-500 text-blue-400 hover:bg-blue-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                 </div>
               </div>
@@ -1898,7 +1906,7 @@ export default function CommerceBusinessAds() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500 bg-clip-text text-transparent">
-            Verso Air Commerce Network
+            Réseau Commerce Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -2057,14 +2065,14 @@ export default function CommerceBusinessAds() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                    Contact Business
+                    Contacter le commerce
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowBusinessDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

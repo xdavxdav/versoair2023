@@ -290,9 +290,10 @@ export default function Partners() {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
-            ArtiHuman Foundation unites world-class organisations, NGOs, and
-            businesses around a single mission — empowering artisan communities
-            across Côte d'Ivoire and beyond.
+            <span className="notranslate">ArtiHuman Foundation</span> unites
+            world-class organisations, NGOs, and businesses around a single
+            mission — empowering artisan communities across Côte d'Ivoire and
+            beyond.
           </motion.p>
 
           <motion.div

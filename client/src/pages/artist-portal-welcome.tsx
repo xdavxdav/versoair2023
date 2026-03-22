@@ -984,12 +984,12 @@ function MiniStudio({
               }`}
               title={
                 micDenied
-                  ? "Mic unavailable"
+                  ? "Micro indisponible"
                   : !micReady
-                    ? "Click to enable mic"
+                    ? "Cliquez pour activer le micro"
                     : micMuted
-                      ? "Turn mic on"
-                      : "Turn mic off"
+                      ? "Activer le micro"
+                      : "Désactiver le micro"
               }
             >
               {micReady && !micMuted ? (
@@ -1013,10 +1013,10 @@ function MiniStudio({
               }`}
               title={
                 !micReady
-                  ? "Monitor unavailable"
+                  ? "Retour audio indisponible"
                   : monitoring
-                    ? "Turn off voice monitor"
-                    : "Monitor your voice"
+                    ? "Désactiver le retour voix"
+                    : "Écouter votre voix"
               }
             >
               <Headphones
@@ -1037,7 +1037,7 @@ function MiniStudio({
                   ? "border-purple-500/25 bg-purple-500/15 hover:bg-purple-500/25"
                   : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
               }`}
-              title="Mixer & Effects"
+              title="Mixeur & Effets"
             >
               <SlidersHorizontal
                 className={`w-3.5 h-3.5 ${
@@ -1097,7 +1097,7 @@ function MiniStudio({
                                 : () => playInstrumental(0)
                             }
                             className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                            title={instrumentalPaused ? "Resume" : "Play"}
+                            title={instrumentalPaused ? "Reprendre" : "Lire"}
                           >
                             <Play
                               className="w-2.5 h-2.5 text-white/50"
@@ -1110,7 +1110,7 @@ function MiniStudio({
                           <button
                             onClick={stopInstrumental}
                             className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                            title="Stop"
+                            title="Arrêter"
                           >
                             <Square className="w-2.5 h-2.5 text-white/50" />
                           </button>
@@ -1128,7 +1128,7 @@ function MiniStudio({
                     <label className="flex items-center gap-2 cursor-pointer bg-white/[0.03] hover:bg-white/[0.05] rounded-lg p-2 border border-dashed border-white/[0.08] transition-colors">
                       <Upload className="w-3.5 h-3.5 text-white/20" />
                       <span className="text-white/25 text-[10px]">
-                        Drop instrumental (.mp3, .wav)
+                        Déposer un instrumental (.mp3, .wav)
                       </span>
                       <input
                         type="file"
@@ -1154,7 +1154,7 @@ function MiniStudio({
                         {/* Volume Sliders */}
                         <div className="space-y-2">
                           <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
-                            Mixer
+                            Mixeur
                           </span>
 
                           {/* Mic Volume */}
@@ -1239,7 +1239,7 @@ function MiniStudio({
                               />
                               <div className="text-center">
                                 <span className="text-[8px] text-white/20 block">
-                                  Low
+                                  Bas
                                 </span>
                                 <span className="text-[9px] text-white/30 font-mono">
                                   {eqLow > 0 ? "+" : ""}
@@ -1262,7 +1262,7 @@ function MiniStudio({
                               />
                               <div className="text-center">
                                 <span className="text-[8px] text-white/20 block">
-                                  Mid
+                                  Médium
                                 </span>
                                 <span className="text-[9px] text-white/30 font-mono">
                                   {eqMidVal > 0 ? "+" : ""}
@@ -1285,7 +1285,7 @@ function MiniStudio({
                               />
                               <div className="text-center">
                                 <span className="text-[8px] text-white/20 block">
-                                  High
+                                  Haut
                                 </span>
                                 <span className="text-[9px] text-white/30 font-mono">
                                   {eqHigh > 0 ? "+" : ""}
@@ -1302,7 +1302,7 @@ function MiniStudio({
                         {/* Vocal Effects */}
                         <div className="space-y-2">
                           <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
-                            Vocal FX
+                            Effets Vocaux
                           </span>
                           <div className="grid grid-cols-2 gap-1.5">
                             {/* Compressor */}
@@ -1317,7 +1317,7 @@ function MiniStudio({
                               <div
                                 className={`w-1.5 h-1.5 rounded-full ${compressorOn ? "bg-emerald-400" : "bg-white/15"}`}
                               />
-                              Compressor
+                              Compresseur
                             </button>
 
                             {/* De-esser */}
@@ -1332,7 +1332,7 @@ function MiniStudio({
                               <div
                                 className={`w-1.5 h-1.5 rounded-full ${deEsserOn ? "bg-amber-400" : "bg-white/15"}`}
                               />
-                              De-esser
+                              Dé-esseur
                             </button>
 
                             {/* Noise Gate */}
@@ -1362,7 +1362,7 @@ function MiniStudio({
                               <div
                                 className={`w-1.5 h-1.5 rounded-full ${reverbOn ? "bg-purple-400" : "bg-white/15"}`}
                               />
-                              Reverb
+                              Réverb
                             </button>
                           </div>
 
@@ -1403,7 +1403,7 @@ function MiniStudio({
                         </span>
                       </div>
                       <span className="text-amber-300 text-[11px] font-medium">
-                        Get ready...
+                        Préparez-vous...
                       </span>
                     </div>
                   ) : recState === "idle" ? (
@@ -1413,9 +1413,9 @@ function MiniStudio({
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/20 text-red-400 text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <div className="w-2 h-2 rounded-full bg-red-500" />
-                      Record{" "}
+                      Enregistrer{" "}
                       <span className="text-red-300/50 text-[9px]">
-                        (Space)
+                        (Espace)
                       </span>
                     </button>
                   ) : (
@@ -1429,7 +1429,7 @@ function MiniStudio({
                           <Pause className="w-3 h-3" />
                           Pause{" "}
                           <span className="text-amber-300/40 text-[9px]">
-                            (Space)
+                            (Espace)
                           </span>
                         </button>
                       ) : (
@@ -1438,9 +1438,9 @@ function MiniStudio({
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/15 text-emerald-400 text-[11px] font-medium transition-colors"
                         >
                           <Play className="w-3 h-3" fill="currentColor" />
-                          Resume{" "}
+                          Reprendre{" "}
                           <span className="text-emerald-300/40 text-[9px]">
-                            (Space)
+                            (Espace)
                           </span>
                         </button>
                       )}
@@ -1450,8 +1450,10 @@ function MiniStudio({
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] text-white/50 text-[11px] font-medium transition-colors"
                       >
                         <Square className="w-3 h-3" />
-                        Stop{" "}
-                        <span className="text-white/30 text-[9px]">(Esc)</span>
+                        Arrêter{" "}
+                        <span className="text-white/30 text-[9px]">
+                          (Échap)
+                        </span>
                       </button>
                     </>
                   )}
@@ -1468,7 +1470,7 @@ function MiniStudio({
                     </span>
                     {isPaused && (
                       <span className="text-amber-400/50 text-[9px] uppercase">
-                        Paused
+                        En pause
                       </span>
                     )}
                   </div>
@@ -1489,7 +1491,7 @@ function MiniStudio({
                         <div className="flex items-center gap-1.5 px-0.5">
                           <Volume2 className="w-3 h-3 text-purple-400/60" />
                           <span className="text-[9px] text-purple-300/50 uppercase tracking-wider font-medium">
-                            Recording — {formatTime(recTime)}
+                            Enregistrement — {formatTime(recTime)}
                           </span>
                         </div>
 
@@ -1510,7 +1512,7 @@ function MiniStudio({
                             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/40 text-purple-300 text-[11px] font-medium transition-colors"
                           >
                             <Download className="w-3 h-3" />
-                            Save
+                            Sauvegarder
                           </a>
                           <button
                             onClick={() => {
@@ -1521,7 +1523,7 @@ function MiniStudio({
                             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] text-white/40 text-[11px] font-medium transition-colors"
                           >
                             <RotateCcw className="w-3 h-3" />
-                            New
+                            Nouveau
                           </button>
                           <button
                             onClick={() => {
@@ -1530,7 +1532,7 @@ function MiniStudio({
                               setRecTime(0);
                             }}
                             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-colors"
-                            title="Discard recording"
+                            title="Supprimer l'enregistrement"
                           >
                             <Trash2 className="w-3 h-3 text-white/20 hover:text-red-400" />
                           </button>
@@ -1591,7 +1593,7 @@ function PortalGateway({
             fill="currentColor"
           />
           <span className="text-white/40 text-xs font-light tracking-widest uppercase">
-            Enter
+            Entrer
           </span>
         </motion.div>
       </div>
@@ -1746,7 +1748,7 @@ export default function ArtistPortalWelcome() {
       const data = await res.json();
       if (!res.ok || !data.success) {
         setAuthError(
-          data.message || "Login failed. Please check your credentials.",
+          data.message || "Échec de connexion. Vérifiez vos identifiants.",
         );
         setIsAuthLoading(false);
         return;
@@ -1769,7 +1771,7 @@ export default function ArtistPortalWelcome() {
       setTransitioning(true);
       setTimeout(() => navigate("/artist-portal/dashboard"), 2400);
     } catch (err: any) {
-      setAuthError(err.message || "Network error. Please try again.");
+      setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsAuthLoading(false);
     }
   };
@@ -1782,11 +1784,11 @@ export default function ArtistPortalWelcome() {
     }
     // Validate passwords match
     if (applyForm.password !== applyForm.confirmPassword) {
-      setApplyError("Passwords do not match.");
+      setApplyError("Les mots de passe ne correspondent pas.");
       return;
     }
     if (!applyForm.agreeTerms) {
-      setApplyError("You must agree to the terms.");
+      setApplyError("Vous devez accepter les conditions.");
       return;
     }
     // Full validation (email format, password strength)
@@ -1823,7 +1825,7 @@ export default function ArtistPortalWelcome() {
       const regData = await regRes.json();
       if (!regRes.ok || !regData.success) {
         setApplyError(
-          regData.message || "Registration failed. Please try again.",
+          regData.message || "Échec de l'inscription. Veuillez réessayer.",
         );
         setIsAuthLoading(false);
         return;
@@ -1882,7 +1884,7 @@ export default function ArtistPortalWelcome() {
         setTimeout(() => navigate("/artist-portal/dashboard"), 2400);
       }, 800);
     } catch (err: any) {
-      setApplyError(err.message || "Network error. Please try again.");
+      setApplyError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsAuthLoading(false);
     }
   };
@@ -1899,38 +1901,38 @@ export default function ArtistPortalWelcome() {
   const features = [
     {
       icon: Music,
-      title: "Distribute Your Music",
-      desc: "Upload, manage, and distribute your tracks across all major platforms from one dashboard.",
+      title: "Distribuez votre musique",
+      desc: "Téléversez, gérez et distribuez vos titres sur toutes les grandes plateformes depuis un seul tableau de bord.",
       gradient: "from-purple-500 to-fuchsia-500",
     },
     {
       icon: TrendingUp,
-      title: "Real-Time Analytics",
-      desc: "Track streams, revenue, audience demographics, and geographic reach in real time.",
+      title: "Analytique en temps réel",
+      desc: "Suivez les écoutes, revenus, démographies d'audience et portée géographique en temps réel.",
       gradient: "from-cyan-500 to-blue-500",
     },
     {
       icon: Users,
       title: "Collaborations",
-      desc: "Connect with producers, engineers, and fellow artists. Build your creative network.",
+      desc: "Connectez-vous avec des producteurs, ingénieurs et artistes. Construisez votre réseau créatif.",
       gradient: "from-pink-500 to-rose-500",
     },
     {
       icon: Shield,
-      title: "Royalty Protection",
-      desc: "Transparent royalty tracking with blockchain-verified payment trails.",
+      title: "Protection des droits d'auteur",
+      desc: "Suivi transparent des royalties avec des pistes de paiement vérifiées par blockchain.",
       gradient: "from-emerald-500 to-teal-500",
     },
     {
       icon: Crown,
-      title: "Verification Tiers",
-      desc: "Earn Bronze, Silver, Gold, and Platinum badges as your presence grows.",
+      title: "Niveaux de vérification",
+      desc: "Obtenez les badges Bronze, Argent, Or et Platine à mesure que votre présence grandit.",
       gradient: "from-amber-500 to-orange-500",
     },
     {
       icon: Globe,
-      title: "Global Reach",
-      desc: "Your music, everywhere. Automatic localization and regional analytics.",
+      title: "Portée mondiale",
+      desc: "Votre musique, partout. Localisation automatique et analytique régionale.",
       gradient: "from-violet-500 to-indigo-500",
     },
   ];
@@ -1943,16 +1945,16 @@ export default function ArtistPortalWelcome() {
       streams: "0 – 10K",
     },
     {
-      name: "Silver",
+      name: "Argent",
       color: "from-gray-300 to-gray-500",
       streams: "10K – 100K",
     },
     {
-      name: "Gold",
+      name: "Or",
       color: "from-yellow-400 to-amber-500",
       streams: "100K – 1M",
     },
-    { name: "Platinum", color: "from-slate-200 to-slate-400", streams: "1M+" },
+    { name: "Platine", color: "from-slate-200 to-slate-400", streams: "1M+" },
   ];
 
   return (
@@ -2021,7 +2023,7 @@ export default function ArtistPortalWelcome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
               >
-                Initializing
+                Initialisation
               </motion.p>
             </motion.div>
           )}
@@ -2044,7 +2046,7 @@ export default function ArtistPortalWelcome() {
                 className="mb-2"
               >
                 <span className="text-xs md:text-sm tracking-[0.5em] uppercase text-purple-400/60 font-light">
-                  Welcome to the
+                  Bienvenue dans le
                 </span>
               </motion.div>
 
@@ -2063,7 +2065,7 @@ export default function ArtistPortalWelcome() {
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-white via-purple-100 to-white/80 bg-clip-text text-transparent">
-                  Artist Universe
+                  Univers Artiste
                 </span>
               </motion.h1>
 
@@ -2073,10 +2075,10 @@ export default function ArtistPortalWelcome() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8, duration: 1 }}
               >
-                A world built for creators. Your music. Your identity. Your
-                stage.
+                Un monde créé pour les artistes. Votre musique. Votre identité.
+                Votre scène.
                 <br className="hidden md:block" />
-                Step through the portal and claim your place in the universe.
+                Franchissez le portail et prenez votre place dans l'univers.
               </motion.p>
 
               {/* Audio Visualizer */}
@@ -2143,7 +2145,7 @@ export default function ArtistPortalWelcome() {
               visible: { opacity: 1, y: 0 },
             }}
           >
-            What Awaits
+            Ce qui vous attend
           </motion.span>
           <motion.h2
             className="mt-4 text-3xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-white/70 bg-clip-text text-transparent"
@@ -2152,14 +2154,14 @@ export default function ArtistPortalWelcome() {
               visible: { opacity: 1, y: 0 },
             }}
           >
-            Your Creative Command Center
+            Votre Centre de Commande Créatif
           </motion.h2>
           <motion.p
             className="mt-4 text-white/30 max-w-2xl mx-auto text-base md:text-lg font-light"
             variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
           >
-            Everything you need to create, distribute, analyze, and grow —
-            unified in one universe.
+            Tout ce dont vous avez besoin pour créer, distribuer, analyser et
+            grandir — unifié dans un seul univers.
           </motion.p>
 
           {/* Feature Grid */}
@@ -2224,7 +2226,7 @@ export default function ArtistPortalWelcome() {
                 visible: { opacity: 1, y: 0 },
               }}
             >
-              Your Identity
+              Votre identité
             </motion.span>
             <motion.h2
               className="mt-4 text-3xl md:text-5xl font-bold bg-gradient-to-r from-white via-fuchsia-200 to-white/70 bg-clip-text text-transparent"
@@ -2233,14 +2235,15 @@ export default function ArtistPortalWelcome() {
                 visible: { opacity: 1, y: 0 },
               }}
             >
-              The Verso Artist Card
+              La Carte Artiste Verso
             </motion.h2>
             <motion.p
               className="mt-4 text-white/30 max-w-xl mx-auto font-light"
               variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
             >
-              A unique digital identity that grows with you. Your Verso Artist
-              Code (VAC) is your passport across the entire ecosystem.
+              Une identité numérique unique qui grandit avec vous. Votre Code
+              Artiste Verso (VAC) est votre passeport à travers tout
+              l'écosystème.
             </motion.p>
           </div>
 
@@ -2266,13 +2269,13 @@ export default function ArtistPortalWelcome() {
                         <Music className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-white/60 text-xs tracking-wider uppercase font-medium">
-                        Verso Artist
+                        Artiste Verso
                       </span>
                     </div>
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30">
                       <Crown className="w-3 h-3 text-purple-400" />
                       <span className="text-purple-400 text-[10px] font-semibold">
-                        ELITE
+                        ÉLITE
                       </span>
                     </div>
                   </div>
@@ -2293,7 +2296,7 @@ export default function ArtistPortalWelcome() {
                   {/* VAC Code */}
                   <div className="bg-white/[0.04] rounded-xl p-3 mb-4 border border-white/[0.06]">
                     <span className="text-white/30 text-[10px] tracking-widest uppercase">
-                      Verso Artist Code
+                      Code Artiste Verso
                     </span>
                     <p className="text-purple-300 font-mono text-lg font-bold mt-0.5">
                       VA_NK_E_20260115_8F3A1B
@@ -2304,15 +2307,15 @@ export default function ArtistPortalWelcome() {
                   <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
                       <p className="text-white font-bold text-sm">1.2M</p>
-                      <p className="text-white/20 text-[10px]">Streams</p>
+                      <p className="text-white/20 text-[10px]">Écoutes</p>
                     </div>
                     <div className="text-center">
                       <p className="text-white font-bold text-sm">38</p>
-                      <p className="text-white/20 text-[10px]">Tracks</p>
+                      <p className="text-white/20 text-[10px]">Titres</p>
                     </div>
                     <div className="text-center">
                       <p className="text-white font-bold text-sm">28.7K</p>
-                      <p className="text-white/20 text-[10px]">Listeners</p>
+                      <p className="text-white/20 text-[10px]">Auditeurs</p>
                     </div>
                   </div>
 
@@ -2329,8 +2332,8 @@ export default function ArtistPortalWelcome() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-white/20 text-[10px]">Member since</p>
-                      <p className="text-white/50 text-xs">Jan 2026</p>
+                      <p className="text-white/20 text-[10px]">Membre depuis</p>
+                      <p className="text-white/50 text-xs">Janv. 2026</p>
                     </div>
                   </div>
                 </div>
@@ -2346,7 +2349,7 @@ export default function ArtistPortalWelcome() {
               }}
             >
               <h3 className="text-xl font-semibold text-white/80 mb-6">
-                Verification Tiers
+                Niveaux de vérification
               </h3>
               {tiers.map((tier, i) => (
                 <motion.div
@@ -2367,7 +2370,7 @@ export default function ArtistPortalWelcome() {
                       {tier.name}
                     </span>
                     <p className="text-white/30 text-sm">
-                      {tier.streams} monthly streams
+                      {tier.streams} écoutes mensuelles
                     </p>
                   </div>
                   <Sparkles
@@ -2377,8 +2380,9 @@ export default function ArtistPortalWelcome() {
               ))}
 
               <p className="text-white/20 text-sm mt-6 pl-1">
-                Your tier is automatically calculated based on your streaming
-                activity, collaborations, and platform engagement.
+                Votre niveau est automatiquement calculé en fonction de votre
+                activité de streaming, collaborations et engagement sur la
+                plateforme.
               </p>
             </motion.div>
           </div>
@@ -2425,12 +2429,12 @@ export default function ArtistPortalWelcome() {
               <Music className="w-7 h-7 text-white" />
             </motion.div>
             <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-300 via-purple-300 to-fuchsia-300 bg-clip-text text-transparent">
-              Ready to Begin?
+              Prêt à commencer ?
             </h2>
             <p className="text-white/30 text-sm mt-2">
               {activeTab === "signin"
-                ? "Welcome back, creator"
-                : "Join the universe"}
+                ? "Bon retour, créateur"
+                : "Rejoignez l'univers"}
             </p>
           </motion.div>
 
@@ -2453,7 +2457,7 @@ export default function ArtistPortalWelcome() {
                   : "text-white/40 hover:text-white/60"
               }`}
             >
-              Sign In
+              Connexion
             </button>
             <button
               onClick={() => setActiveTab("apply")}
@@ -2463,7 +2467,7 @@ export default function ArtistPortalWelcome() {
                   : "text-white/40 hover:text-white/60"
               }`}
             >
-              Apply
+              Candidater
             </button>
           </motion.div>
 
@@ -2502,7 +2506,7 @@ export default function ArtistPortalWelcome() {
                 {/* Email */}
                 <div>
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    Email or Artist Code
+                    Email ou Code Artiste
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2521,7 +2525,7 @@ export default function ArtistPortalWelcome() {
                 {/* Password */}
                 <div>
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    Password
+                    Mot de passe
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2534,7 +2538,7 @@ export default function ArtistPortalWelcome() {
                           password: e.target.value,
                         })
                       }
-                      placeholder="Enter your password"
+                      placeholder="Entrez votre mot de passe"
                       className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                     <button
@@ -2565,13 +2569,15 @@ export default function ArtistPortalWelcome() {
                       }
                       className="w-3.5 h-3.5 rounded border-white/20 bg-white/[0.04] text-purple-500 focus:ring-purple-500/20"
                     />
-                    <span className="text-white/30 text-xs">Remember me</span>
+                    <span className="text-white/30 text-xs">
+                      Se souvenir de moi
+                    </span>
                   </label>
                   <button
                     type="button"
                     className="text-purple-400/60 hover:text-purple-400 text-xs transition-colors"
                   >
-                    Forgot password?
+                    Mot de passe oublié ?
                   </button>
                 </div>
 
@@ -2599,7 +2605,8 @@ export default function ArtistPortalWelcome() {
                       />
                     ) : (
                       <>
-                        <Fingerprint className="w-4 h-4" /> Enter the Universe
+                        <Fingerprint className="w-4 h-4" /> Entrer dans
+                        l'Univers
                       </>
                     )}
                   </span>
@@ -2618,7 +2625,7 @@ export default function ArtistPortalWelcome() {
                 <div className="flex items-center gap-4 my-2">
                   <div className="flex-1 h-px bg-white/[0.06]" />
                   <span className="text-white/15 text-xs">
-                    or continue with
+                    ou continuer avec
                   </span>
                   <div className="flex-1 h-px bg-white/[0.06]" />
                 </div>
@@ -2669,7 +2676,7 @@ export default function ArtistPortalWelcome() {
                 {/* Contracts & Apply links */}
                 <div className="mt-2 pt-4 border-t border-white/[0.06]">
                   <p className="text-white/20 text-xs text-center mb-3">
-                    Not a certified artist yet?
+                    Pas encore artiste certifié ?
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <motion.button
@@ -2679,7 +2686,7 @@ export default function ArtistPortalWelcome() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => window.open("/contracts", "_blank")}
                     >
-                      📄 View Contracts
+                      📄 Voir les contrats
                     </motion.button>
                     <motion.button
                       type="button"
@@ -2690,7 +2697,7 @@ export default function ArtistPortalWelcome() {
                         setActiveTab("apply");
                       }}
                     >
-                      ✨ Apply Now
+                      ✨ Candidater maintenant
                     </motion.button>
                   </div>
                 </div>
@@ -2743,8 +2750,8 @@ export default function ArtistPortalWelcome() {
                       className="space-y-4"
                     >
                       <h3 className="text-white/60 text-sm font-medium flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-purple-400" /> Account
-                        Details
+                        <Shield className="w-4 h-4 text-purple-400" /> Détails
+                        du compte
                       </h3>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
@@ -2769,7 +2776,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Password
+                          Mot de passe
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2782,7 +2789,7 @@ export default function ArtistPortalWelcome() {
                                 password: e.target.value,
                               })
                             }
-                            placeholder="Create a strong password"
+                            placeholder="Créez un mot de passe sécurisé"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -2790,7 +2797,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Confirm Password
+                          Confirmer le mot de passe
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2803,7 +2810,7 @@ export default function ArtistPortalWelcome() {
                                 confirmPassword: e.target.value,
                               })
                             }
-                            placeholder="Confirm your password"
+                            placeholder="Confirmez votre mot de passe"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -2822,12 +2829,12 @@ export default function ArtistPortalWelcome() {
                       className="space-y-4"
                     >
                       <h3 className="text-white/60 text-sm font-medium flex items-center gap-2">
-                        <Mic2 className="w-4 h-4 text-fuchsia-400" /> Artist
-                        Identity
+                        <Mic2 className="w-4 h-4 text-fuchsia-400" /> Identité
+                        Artiste
                       </h3>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Stage Name
+                          Nom de scène
                         </label>
                         <div className="relative">
                           <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2840,7 +2847,7 @@ export default function ArtistPortalWelcome() {
                                 stageName: e.target.value,
                               })
                             }
-                            placeholder="Your artist / stage name"
+                            placeholder="Votre nom d'artiste / de scène"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -2848,7 +2855,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Legal Name
+                          Nom légal
                         </label>
                         <div className="relative">
                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2861,7 +2868,7 @@ export default function ArtistPortalWelcome() {
                                 legalName: e.target.value,
                               })
                             }
-                            placeholder="Your legal full name"
+                            placeholder="Votre nom complet légal"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -2869,7 +2876,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Primary Genre
+                          Genre principal
                         </label>
                         <div className="relative">
                           <Music className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 z-10" />
@@ -2885,7 +2892,7 @@ export default function ArtistPortalWelcome() {
                             required
                           >
                             <option value="" className="bg-[#1a0a2e]">
-                              Select your genre
+                              Sélectionnez votre genre
                             </option>
                             {genres.map((g) => (
                               <option
@@ -2902,7 +2909,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Country
+                          Pays
                         </label>
                         <div className="relative">
                           <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -2915,7 +2922,7 @@ export default function ArtistPortalWelcome() {
                                 country: e.target.value,
                               })
                             }
-                            placeholder="Where are you based?"
+                            placeholder="Où êtes-vous basé ?"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -2934,8 +2941,8 @@ export default function ArtistPortalWelcome() {
                       className="space-y-4"
                     >
                       <h3 className="text-white/60 text-sm font-medium flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-cyan-400" /> Profile &
-                        Links
+                        <Globe className="w-4 h-4 text-cyan-400" /> Profil &
+                        Liens
                       </h3>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
@@ -2946,14 +2953,14 @@ export default function ArtistPortalWelcome() {
                           onChange={(e) =>
                             setApplyForm({ ...applyForm, bio: e.target.value })
                           }
-                          placeholder="Tell us about your music journey..."
+                          placeholder="Parlez-nous de votre parcours musical..."
                           rows={3}
                           className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm resize-none"
                         />
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Why do you want to join Verso Air?
+                          Pourquoi souhaitez-vous rejoindre Verso Air ?
                         </label>
                         <textarea
                           value={applyForm.motivation}
@@ -2963,7 +2970,7 @@ export default function ArtistPortalWelcome() {
                               motivation: e.target.value,
                             })
                           }
-                          placeholder="What motivates you to join our platform..."
+                          placeholder="Qu'est-ce qui vous motive à rejoindre notre plateforme..."
                           rows={2}
                           className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm resize-none"
                         />
@@ -2971,7 +2978,7 @@ export default function ArtistPortalWelcome() {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                            Monthly Listeners
+                            Auditeurs mensuels
                           </label>
                           <input
                             type="number"
@@ -2988,7 +2995,7 @@ export default function ArtistPortalWelcome() {
                         </div>
                         <div>
                           <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                            Years Active
+                            Années d'activité
                           </label>
                           <input
                             type="number"
@@ -3006,8 +3013,8 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Spotify Profile URL{" "}
-                          <span className="text-white/15">(optional)</span>
+                          URL Profil Spotify{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="url"
@@ -3024,8 +3031,8 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Instagram Handle{" "}
-                          <span className="text-white/15">(optional)</span>
+                          Identifiant Instagram{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="text"
@@ -3042,8 +3049,8 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Sample Track URL{" "}
-                          <span className="text-white/15">(optional)</span>
+                          Lien vers un titre{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="url"
@@ -3054,14 +3061,14 @@ export default function ArtistPortalWelcome() {
                               sampleTrackUrl: e.target.value,
                             })
                           }
-                          placeholder="Link to your best track (SoundCloud, YouTube, etc.)"
+                          placeholder="Lien vers votre meilleur titre (SoundCloud, YouTube, etc.)"
                           className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                         />
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Website{" "}
-                          <span className="text-white/15">(optional)</span>
+                          Site web{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="url"
@@ -3090,17 +3097,18 @@ export default function ArtistPortalWelcome() {
                           required
                         />
                         <span className="text-white/30 text-xs leading-relaxed">
-                          I agree to the Verso Artist Universe{" "}
+                          J'accepte les{" "}
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
-                            Terms of Service
+                            Conditions d'utilisation
                           </span>{" "}
-                          and{" "}
+                          et le{" "}
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
-                            Artist Agreement
-                          </span>
-                          . I understand that approved artists receive revenue
-                          share based on their assigned grade tier (S/A/B/C). I
-                          confirm all information provided is accurate.
+                            Contrat Artiste
+                          </span>{" "}
+                          du Verso Univers Artiste. Je comprends que les
+                          artistes approuvés reçoivent une part de revenus basée
+                          sur leur grade attribué (S/A/B/C). Je confirme que
+                          toutes les informations fournies sont exactes.
                         </span>
                       </label>
                     </motion.div>
@@ -3116,7 +3124,7 @@ export default function ArtistPortalWelcome() {
                       className="px-5 py-3.5 rounded-xl border border-white/[0.08] text-white/50 text-sm hover:bg-white/[0.04] transition-all"
                       whileTap={{ scale: 0.98 }}
                     >
-                      Back
+                      Retour
                     </motion.button>
                   )}
                   {!applySuccess && (
@@ -3143,11 +3151,12 @@ export default function ArtistPortalWelcome() {
                           />
                         ) : applyStep < 3 ? (
                           <>
-                            Continue <ArrowRight className="w-4 h-4" />
+                            Continuer <ArrowRight className="w-4 h-4" />
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-4 h-4" /> Submit Application
+                            <Sparkles className="w-4 h-4" /> Soumettre la
+                            candidature
                           </>
                         )}
                       </span>
@@ -3221,17 +3230,17 @@ export default function ArtistPortalWelcome() {
             <p className="text-white/15 text-xs">
               {activeTab === "signin" ? (
                 <>
-                  Don't have an artist account?{" "}
+                  Vous n'avez pas de compte artiste ?{" "}
                   <button
                     onClick={() => setActiveTab("apply")}
                     className="text-purple-400/50 hover:text-purple-400 transition-colors"
                   >
-                    Apply now
+                    Candidater
                   </button>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
+                  Vous avez déjà un compte ?{" "}
                   <button
                     onClick={() => {
                       setActiveTab("signin");
@@ -3239,7 +3248,7 @@ export default function ArtistPortalWelcome() {
                     }}
                     className="text-purple-400/50 hover:text-purple-400 transition-colors"
                   >
-                    Sign in
+                    Connexion
                   </button>
                 </>
               )}
@@ -3253,15 +3262,15 @@ export default function ArtistPortalWelcome() {
           >
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
-              <span>Secure Authentication</span>
+              <span>Authentification sécurisée</span>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4" />
-              <span>Instant Setup</span>
+              <span>Configuration instantanée</span>
             </div>
             <div className="flex items-center gap-2">
               <Heart className="w-4 h-4" />
-              <span>Free to Join</span>
+              <span>Inscription gratuite</span>
             </div>
           </motion.div>
         </motion.div>
@@ -3276,27 +3285,27 @@ export default function ArtistPortalWelcome() {
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center">
               <Music className="w-3 h-3 text-white" />
             </div>
-            <span className="text-white/30 text-sm">Verso Artist Universe</span>
+            <span className="text-white/30 text-sm">Verso Univers Artiste</span>
           </div>
           <div className="flex items-center gap-6 text-white/20 text-xs">
             <Link href="/divertissement">
               <span className="hover:text-white/40 transition-colors cursor-pointer">
-                ← Back to Divertissement
+                ← Retour au Divertissement
               </span>
             </Link>
             <Link href="/">
               <span className="hover:text-white/40 transition-colors cursor-pointer">
-                Main Platform
+                Plateforme principale
               </span>
             </Link>
             <Link href="/help">
               <span className="hover:text-white/40 transition-colors cursor-pointer">
-                Help
+                Aide
               </span>
             </Link>
           </div>
           <p className="text-white/10 text-xs">
-            © 2026 Verso Air. All rights reserved.
+            © 2026 Verso Air. Tous droits réservés.
           </p>
         </div>
       </footer>
@@ -3387,7 +3396,7 @@ export default function ArtistPortalWelcome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
               >
-                Welcome to the Studio
+                Bienvenue au Studio
               </motion.p>
 
               {/* Artist name */}
@@ -3426,7 +3435,7 @@ export default function ArtistPortalWelcome() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 1.5 }}
               >
-                Preparing your dashboard…
+                Préparation de votre tableau de bord…
               </motion.p>
             </div>
 

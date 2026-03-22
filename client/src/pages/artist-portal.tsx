@@ -418,7 +418,7 @@ export default function ArtistPortal() {
     role: string;
     initials: string;
     tier: string;
-  }>({ name: "", email: "", role: "", initials: "", tier: "Artist" });
+  }>({ name: "", email: "", role: "", initials: "", tier: "Artiste" });
   const [loginError, setLoginError] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -477,7 +477,7 @@ export default function ArtistPortal() {
         myArtist?.stageName ||
         authUser?.email?.split("@")[0] ||
         cachedUser?.email?.split("@")[0] ||
-        "Artist";
+        "Artiste";
 
       const email =
         authUser?.email || artistProfile?.email || cachedUser?.email || "";
@@ -496,10 +496,10 @@ export default function ArtistPortal() {
       // Determine tier from role
       const tier =
         role === "superuser" || role === "admin"
-          ? "Pro Tier"
+          ? "Niveau Pro"
           : role === "premium"
             ? "Premium"
-            : "Artist";
+            : "Artiste";
 
       setConnectedUser({ name: displayName, email, role, initials, tier });
     },
@@ -563,7 +563,7 @@ export default function ArtistPortal() {
   // ── Login handler ──
   const handleLogin = useCallback(async () => {
     if (!loginEmail || !loginPassword) {
-      setLoginError("Please enter both email and password");
+      setLoginError("Veuillez entrer votre email et mot de passe");
       return;
     }
     setLoginLoading(true);
@@ -589,10 +589,10 @@ export default function ArtistPortal() {
         resolveConnectedUser({ email: loginEmail });
         setTimeout(() => setPortalRevealed(true), 200);
       } else {
-        setLoginError(data.message || "Login failed");
+        setLoginError(data.message || "Échec de connexion");
       }
     } catch (err: any) {
-      setLoginError(err.message || "Network error");
+      setLoginError(err.message || "Erreur réseau");
     } finally {
       setLoginLoading(false);
     }
@@ -691,7 +691,7 @@ export default function ArtistPortal() {
       clearInterval(progressInterval);
       setIsUploading(false);
       setUploadProgress(0);
-      alert("Upload failed: " + (err.message || "Unknown error"));
+      alert("Échec du téléversement : " + (err.message || "Erreur inconnue"));
     }
   }, [uploadFile, uploadForm, invalidateTracks, myArtist]);
 
@@ -703,7 +703,7 @@ export default function ArtistPortal() {
         await deleteTrack(trackId);
         invalidateTracks();
       } catch {
-        alert("Failed to delete track");
+        alert("Échec de la suppression du titre");
       }
     },
     [invalidateTracks],
@@ -717,7 +717,7 @@ export default function ArtistPortal() {
         invalidateTracks();
         setEditingMonetization(null);
       } catch {
-        alert("Failed to update price");
+        alert("Échec de la mise à jour du prix");
       }
     },
     [invalidateTracks],
@@ -894,7 +894,9 @@ export default function ArtistPortal() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
         <Loader2 className="h-12 w-12 animate-spin text-white mb-4" />
-        <p className="text-purple-200 text-lg">Checking authentication...</p>
+        <p className="text-purple-200 text-lg">
+          Vérification de l'authentification...
+        </p>
       </div>
     );
   }
@@ -920,7 +922,9 @@ export default function ArtistPortal() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-200 mb-1">Total Streams</p>
+                  <p className="text-sm text-purple-200 mb-1">
+                    Écoutes totales
+                  </p>
                   <p className="text-3xl font-bold text-white">
                     {formatNumber(totalStreams)}
                   </p>
@@ -928,8 +932,8 @@ export default function ArtistPortal() {
                     <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
                     <span className="text-green-400 text-sm">
                       {weeklyStreams > 0
-                        ? `+${formatNumber(weeklyStreams)} this week`
-                        : "No streams yet"}
+                        ? `+${formatNumber(weeklyStreams)} cette semaine`
+                        : "Aucune écoute pour le moment"}
                     </span>
                   </div>
                 </div>
@@ -946,7 +950,7 @@ export default function ArtistPortal() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-200 mb-1">Total Revenue</p>
+                  <p className="text-sm text-purple-200 mb-1">Revenu total</p>
                   <p className="text-3xl font-bold text-white">
                     {formatCurrency(totalRevenue)}
                   </p>
@@ -954,8 +958,8 @@ export default function ArtistPortal() {
                     <DollarSign className="h-4 w-4 text-green-400 mr-1" />
                     <span className="text-green-400 text-sm">
                       {walletBal > 0
-                        ? `${formatCurrency(walletBal)} in wallet`
-                        : "No earnings yet"}
+                        ? `${formatCurrency(walletBal)} en portefeuille`
+                        : "Aucun revenu pour le moment"}
                     </span>
                   </div>
                 </div>
@@ -973,7 +977,7 @@ export default function ArtistPortal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-200 mb-1">
-                    Monthly Listeners
+                    Auditeurs mensuels
                   </p>
                   <p className="text-3xl font-bold text-white">
                     {formatNumber(lifetimeStreams)}
@@ -981,7 +985,7 @@ export default function ArtistPortal() {
                   <div className="flex items-center mt-2">
                     <Users className="h-4 w-4 text-blue-400 mr-1" />
                     <span className="text-blue-400 text-sm">
-                      {totalArtists} artist{totalArtists !== 1 ? "s" : ""} on
+                      {totalArtists} artiste{totalArtists !== 1 ? "s" : ""} au
                       label
                     </span>
                   </div>
@@ -1000,7 +1004,7 @@ export default function ArtistPortal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-purple-200 mb-1">
-                    Active Collaborations
+                    Collaborations actives
                   </p>
                   <p className="text-3xl font-bold text-white">
                     {
@@ -1017,7 +1021,7 @@ export default function ArtistPortal() {
                           (c: any) => c.status === "pending",
                         ).length
                       }{" "}
-                      pending requests
+                      demandes en attente
                     </span>
                   </div>
                 </div>
@@ -1043,9 +1047,9 @@ export default function ArtistPortal() {
       >
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Streams Overview</CardTitle>
+            <CardTitle className="text-white">Aperçu des écoutes</CardTitle>
             <CardDescription className="text-purple-200">
-              Last 30 days performance
+              Performance des 30 derniers jours
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1053,7 +1057,10 @@ export default function ArtistPortal() {
               <div className="h-64 flex items-center justify-center text-white/30">
                 <div className="text-center">
                   <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p>Stream data will appear here as your music gets played</p>
+                  <p>
+                    Les données d'écoute apparaîtront ici à mesure que votre
+                    musique est écoutée
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1073,7 +1080,7 @@ export default function ArtistPortal() {
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{formatNumber(day.streams)} streams</p>
+                          <p>{formatNumber(day.streams)} écoutes</p>
                           <p className="text-xs">{day.date}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -1083,7 +1090,7 @@ export default function ArtistPortal() {
             )}
             {((displayAnalytics as any)?.dailyStreams || []).length > 0 && (
               <div className="mt-4 grid grid-cols-7 text-xs text-purple-200">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map(
                   (day) => (
                     <div key={day} className="text-center">
                       {day}
@@ -1097,9 +1104,9 @@ export default function ArtistPortal() {
 
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Genre Distribution</CardTitle>
+            <CardTitle className="text-white">Répartition par genre</CardTitle>
             <CardDescription className="text-purple-200">
-              Stream breakdown by genre
+              Répartition des écoutes par genre
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1108,7 +1115,9 @@ export default function ArtistPortal() {
               <div className="flex items-center justify-center py-8 text-white/30">
                 <div className="text-center">
                   <Music2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p>Upload tracks to see genre breakdown</p>
+                  <p>
+                    Téléversez des titres pour voir la répartition par genre
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1143,9 +1152,9 @@ export default function ArtistPortal() {
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-white">Recent Tracks</CardTitle>
+              <CardTitle className="text-white">Titres récents</CardTitle>
               <CardDescription className="text-purple-200">
-                Your latest releases
+                Vos dernières sorties
               </CardDescription>
             </div>
             <Button
@@ -1153,7 +1162,7 @@ export default function ArtistPortal() {
               variant="ghost"
               className="text-purple-200 hover:text-white hover:bg-white/10"
             >
-              View All
+              Voir tout
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardHeader>
@@ -1183,7 +1192,7 @@ export default function ArtistPortal() {
                       <div>
                         <p className="text-white font-medium">{track.title}</p>
                         <p className="text-purple-200 text-sm">
-                          {artist?.name} • {(track as any).genre || "Unknown"}
+                          {artist?.name} • {(track as any).genre || "Inconnu"}
                         </p>
                       </div>
                     </div>
@@ -1201,7 +1210,7 @@ export default function ArtistPortal() {
                             (track as any).streams || track.playCount || 0,
                           )}
                         </p>
-                        <p className="text-purple-200 text-sm">streams</p>
+                        <p className="text-purple-200 text-sm">écoutes</p>
                       </div>
                     </div>
                   </div>
@@ -1214,9 +1223,9 @@ export default function ArtistPortal() {
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-white">Top Artists</CardTitle>
+              <CardTitle className="text-white">Top Artistes</CardTitle>
               <CardDescription className="text-purple-200">
-                Label performance ranking
+                Classement de performance du label
               </CardDescription>
             </div>
             <Button
@@ -1224,7 +1233,7 @@ export default function ArtistPortal() {
               variant="ghost"
               className="text-purple-200 hover:text-white hover:bg-white/10"
             >
-              View All
+              Voir tout
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardHeader>
@@ -1253,8 +1262,8 @@ export default function ArtistPortal() {
                         </Badge>
                       </div>
                       <p className="text-purple-200 text-sm">
-                        {formatNumber((artist as any).totalStreams || 0)} total
-                        streams
+                        {formatNumber((artist as any).totalStreams || 0)}{" "}
+                        écoutes totales
                       </p>
                     </div>
                   </div>
@@ -1276,7 +1285,7 @@ export default function ArtistPortal() {
                         {(artist as any).growth || 0}%
                       </span>
                     </div>
-                    <p className="text-purple-200 text-sm">growth</p>
+                    <p className="text-purple-200 text-sm">croissance</p>
                   </div>
                 </div>
               ))}
@@ -1292,10 +1301,10 @@ export default function ArtistPortal() {
       {/* Music Library Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Music Library</h2>
-          <p className="text-purple-200">
-            Manage your tracks, albums, and releases
-          </p>
+          <h2 className="text-2xl font-bold text-white">
+            Bibliothèque musicale
+          </h2>
+          <p className="text-purple-200">Gérez vos titres, albums et sorties</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
@@ -1303,14 +1312,14 @@ export default function ArtistPortal() {
             className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
           >
             <Upload className="mr-2 h-4 w-4" />
-            Upload New Track
+            Téléverser un nouveau titre
           </Button>
           <Button
             variant="outline"
             className="border-white/30 text-white hover:bg-white/10"
           >
             <FolderPlus className="mr-2 h-4 w-4" />
-            Create Album
+            Créer un album
           </Button>
         </div>
       </div>
@@ -1320,7 +1329,7 @@ export default function ArtistPortal() {
         <div className="flex items-center space-x-2">
           <Search className="h-4 w-4 text-purple-200" />
           <Input
-            placeholder="Search tracks, albums..."
+            placeholder="Rechercher titres, albums..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-transparent border-none text-white placeholder-purple-200 w-full sm:w-64"
@@ -1329,11 +1338,11 @@ export default function ArtistPortal() {
         <div className="flex items-center space-x-4">
           <Select value={selectedGenre} onValueChange={setSelectedGenre}>
             <SelectTrigger className="w-40 bg-white/10 border-white/30 text-white">
-              <SelectValue placeholder="Filter by genre" />
+              <SelectValue placeholder="Filtrer par genre" />
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-white/20">
-              <SelectItem value="all">All Genres</SelectItem>
-              <SelectItem value="Electronic">Electronic</SelectItem>
+              <SelectItem value="all">Tous les genres</SelectItem>
+              <SelectItem value="Electronic">Électronique</SelectItem>
               <SelectItem value="Hip Hop">Hip Hop</SelectItem>
               <SelectItem value="Rock">Rock</SelectItem>
               <SelectItem value="Pop">Pop</SelectItem>
@@ -1391,7 +1400,7 @@ export default function ArtistPortal() {
                         <div className="text-center">
                           <Music2 className="h-14 w-14 text-purple-400/60 mx-auto" />
                           <span className="text-[10px] text-green-400/70 mt-1 block">
-                            ♦ UPLOADED
+                            ♦ TÉLÉVERSÉ
                           </span>
                         </div>
                       ) : (
@@ -1412,7 +1421,7 @@ export default function ArtistPortal() {
                           disabled={!hasAudio}
                         >
                           <Play className="mr-1 h-4 w-4" />
-                          Play
+                          Lire
                         </Button>
                         {hasAudio && (
                           <Button
@@ -1438,7 +1447,7 @@ export default function ArtistPortal() {
                           {track.title}
                         </h3>
                         <p className="text-purple-200 text-sm truncate">
-                          {artist?.name || "Unknown"}
+                          {artist?.name || "Inconnu"}
                         </p>
                       </div>
                       <DropdownMenu>
@@ -1461,7 +1470,7 @@ export default function ArtistPortal() {
                               onClick={() => handlePlayTrack(track)}
                             >
                               <Play className="mr-2 h-4 w-4" />
-                              Play
+                              Lire
                             </DropdownMenuItem>
                           )}
                           {hasAudio && (
@@ -1475,12 +1484,12 @@ export default function ArtistPortal() {
                               }
                             >
                               <Download className="mr-2 h-4 w-4" />
-                              Download
+                              Télécharger
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="text-white">
                             <Share2 className="mr-2 h-4 w-4" />
-                            Share
+                            Partager
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/20" />
                           <DropdownMenuItem
@@ -1488,7 +1497,7 @@ export default function ArtistPortal() {
                             onClick={() => handleDeleteTrack(Number(track.id))}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1501,7 +1510,7 @@ export default function ArtistPortal() {
                             {formatCurrency(trackRevenue)}
                           </p>
                           <p className="text-green-300/60 text-[10px]">
-                            Revenue
+                            Revenu
                           </p>
                         </div>
                         <div className="bg-blue-500/10 rounded-lg px-2 py-1.5 text-center border border-blue-500/20">
@@ -1509,7 +1518,7 @@ export default function ArtistPortal() {
                             {trackDownloads}
                           </p>
                           <p className="text-blue-300/60 text-[10px]">
-                            Downloads
+                            Téléchargements
                           </p>
                         </div>
                       </div>
@@ -1528,7 +1537,7 @@ export default function ArtistPortal() {
                             (track as any).streams || track.playCount || 0,
                           )}
                         </p>
-                        <p className="text-purple-200 text-xs">streams</p>
+                        <p className="text-purple-200 text-xs">écoutes</p>
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-purple-200">
@@ -1544,7 +1553,7 @@ export default function ArtistPortal() {
                             (track as any).key ||
                             "—"}
                         </p>
-                        <p>Key</p>
+                        <p>Tonalité</p>
                       </div>
                       <div className="text-center">
                         <p className="font-medium text-white">
@@ -1599,8 +1608,8 @@ export default function ArtistPortal() {
                       )}
                     </p>
                     <p className="text-purple-200 text-sm">
-                      {artist?.name || "Unknown"} •{" "}
-                      {(track as any).genre || "Unknown"} •{" "}
+                      {artist?.name || "Inconnu"} •{" "}
+                      {(track as any).genre || "Inconnu"} •{" "}
                       {(track as any).bpm || "—"} BPM •{" "}
                       {(track as any).musicalKey || (track as any).key || "—"}
                     </p>
@@ -1612,7 +1621,7 @@ export default function ArtistPortal() {
                       <p className="text-green-400 font-medium">
                         ${trackPrice}
                       </p>
-                      <p className="text-green-300/50 text-xs">price</p>
+                      <p className="text-green-300/50 text-xs">prix</p>
                     </div>
                   )}
                   {hasAudio && (
@@ -1620,14 +1629,16 @@ export default function ArtistPortal() {
                       <p className="text-blue-400 font-medium">
                         {trackDownloads}
                       </p>
-                      <p className="text-blue-300/50 text-xs">downloads</p>
+                      <p className="text-blue-300/50 text-xs">
+                        téléchargements
+                      </p>
                     </div>
                   )}
                   <div className="text-right hidden md:block">
                     <p className="text-green-400">
                       {formatCurrency(trackRevenue)}
                     </p>
-                    <p className="text-purple-200 text-sm">revenue</p>
+                    <p className="text-purple-200 text-sm">revenu</p>
                   </div>
                   <div className="text-right">
                     <p className="text-white">
@@ -1635,7 +1646,7 @@ export default function ArtistPortal() {
                         (track as any).streams || track.playCount || 0,
                       )}
                     </p>
-                    <p className="text-purple-200 text-sm">streams</p>
+                    <p className="text-purple-200 text-sm">écoutes</p>
                   </div>
                   <Badge
                     className={getStatusColor(
@@ -1679,7 +1690,7 @@ export default function ArtistPortal() {
                           onClick={() => handlePlayTrack(track)}
                         >
                           <Play className="mr-2 h-4 w-4" />
-                          Play
+                          Lire
                         </DropdownMenuItem>
                       )}
                       {hasAudio && (
@@ -1693,12 +1704,12 @@ export default function ArtistPortal() {
                           }
                         >
                           <Download className="mr-2 h-4 w-4" />
-                          Download
+                          Télécharger
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem className="text-white">
                         <Share2 className="mr-2 h-4 w-4" />
-                        Share
+                        Partager
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-white/20" />
                       <DropdownMenuItem
@@ -1706,7 +1717,7 @@ export default function ArtistPortal() {
                         onClick={() => handleDeleteTrack(Number(track.id))}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        Supprimer
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1724,10 +1735,10 @@ export default function ArtistPortal() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-bold flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-green-400" />
-                Music Earnings Summary
+                Résumé des revenus musicaux
               </h3>
               <Badge className="bg-green-500/20 text-green-400">
-                {earnings.summary.total_tracks} uploaded tracks
+                {earnings.summary.total_tracks} titres téléversés
               </Badge>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1736,19 +1747,23 @@ export default function ArtistPortal() {
                   $
                   {parseFloat(earnings.summary.total_revenue || "0").toFixed(2)}
                 </p>
-                <p className="text-green-300/60 text-xs mt-1">Total Revenue</p>
+                <p className="text-green-300/60 text-xs mt-1">Revenu total</p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
                 <p className="text-2xl font-bold text-blue-400">
                   {earnings.summary.total_downloads}
                 </p>
-                <p className="text-blue-300/60 text-xs mt-1">Total Downloads</p>
+                <p className="text-blue-300/60 text-xs mt-1">
+                  Téléchargements totaux
+                </p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
                 <p className="text-2xl font-bold text-purple-400">
                   {formatNumber(earnings.summary.total_streams)}
                 </p>
-                <p className="text-purple-300/60 text-xs mt-1">Total Streams</p>
+                <p className="text-purple-300/60 text-xs mt-1">
+                  Écoutes totales
+                </p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
                 <p className="text-2xl font-bold text-amber-400">
@@ -1757,12 +1772,12 @@ export default function ArtistPortal() {
                     earnings.summary.revenue_this_month || "0",
                   ).toFixed(2)}
                 </p>
-                <p className="text-amber-300/60 text-xs mt-1">This Month</p>
+                <p className="text-amber-300/60 text-xs mt-1">Ce mois-ci</p>
               </div>
             </div>
             <p className="text-white/30 text-[10px] mt-3 text-center">
-              💳 Earnings are reflected in your Card Vault • Revenue updates on
-              each download
+              💳 Les revenus sont reflétés dans votre Coffre-fort • Les revenus
+              se mettent à jour à chaque téléchargement
             </p>
           </CardContent>
         </Card>
@@ -1774,9 +1789,9 @@ export default function ArtistPortal() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Advanced Analytics</h2>
+          <h2 className="text-2xl font-bold text-white">Analyses avancées</h2>
           <p className="text-purple-200">
-            Detailed insights into your music performance
+            Aperçus détaillés de la performance de votre musique
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -1785,14 +1800,14 @@ export default function ArtistPortal() {
             className="border-white/30 text-white hover:bg-white/10"
           >
             <Calendar className="mr-2 h-4 w-4" />
-            Last 30 Days
+            30 derniers jours
           </Button>
           <Button
             variant="outline"
             className="border-white/30 text-white hover:bg-white/10"
           >
             <Download className="mr-2 h-4 w-4" />
-            Export Data
+            Exporter les données
           </Button>
         </div>
       </div>
@@ -1802,10 +1817,10 @@ export default function ArtistPortal() {
         <Card className="lg:col-span-2 bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
             <CardTitle className="text-white">
-              Geographic Distribution
+              Répartition géographique
             </CardTitle>
             <CardDescription className="text-purple-200">
-              Top countries by streams
+              Principaux pays par écoutes
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1814,16 +1829,16 @@ export default function ArtistPortal() {
                 <TableHeader>
                   <TableRow className="border-white/20">
                     <TableHead className="text-purple-200 text-xs sm:text-sm">
-                      Country
+                      Pays
                     </TableHead>
                     <TableHead className="text-purple-200 text-xs sm:text-sm">
-                      Streams
+                      Écoutes
                     </TableHead>
                     <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
-                      Percentage
+                      Pourcentage
                     </TableHead>
                     <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
-                      Growth
+                      Croissance
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1879,15 +1894,15 @@ export default function ArtistPortal() {
         {/* Audience Insights */}
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Catalog Insights</CardTitle>
+            <CardTitle className="text-white">Aperçu du catalogue</CardTitle>
             <CardDescription className="text-purple-200">
-              Your music catalog breakdown
+              Détail de votre catalogue musical
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Total Tracks</span>
+                <span className="text-white text-sm">Total des titres</span>
                 <span className="text-purple-200 text-sm">{totalTracks}</span>
               </div>
               <Progress
@@ -1897,7 +1912,7 @@ export default function ArtistPortal() {
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Total Artists</span>
+                <span className="text-white text-sm">Total des artistes</span>
                 <span className="text-purple-200 text-sm">{totalArtists}</span>
               </div>
               <Progress
@@ -1907,7 +1922,7 @@ export default function ArtistPortal() {
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Lifetime Streams</span>
+                <span className="text-white text-sm">Écoutes totales</span>
                 <span className="text-purple-200 text-sm">
                   {formatNumber(lifetimeStreams)}
                 </span>
@@ -1919,7 +1934,7 @@ export default function ArtistPortal() {
             </div>
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-white text-sm">Total Revenue</span>
+                <span className="text-white text-sm">Revenu total</span>
                 <span className="text-purple-200 text-sm">
                   {formatCurrency(totalRevenue)}
                 </span>
@@ -1931,11 +1946,13 @@ export default function ArtistPortal() {
             </div>
             <Separator className="bg-white/20" />
             <div className="pt-2">
-              <p className="text-purple-200 text-sm mb-2">Top Genres</p>
+              <p className="text-purple-200 text-sm mb-2">Genres populaires</p>
               <div className="space-y-2">
                 {((displayAnalytics as any)?.platformDistribution || [])
                   .length === 0 ? (
-                  <p className="text-white/30 text-sm">No genre data yet</p>
+                  <p className="text-white/30 text-sm">
+                    Aucune donnée de genre pour le moment
+                  </p>
                 ) : (
                   ((displayAnalytics as any)?.platformDistribution || []).map(
                     (g: any, i: number) => (
@@ -1957,9 +1974,9 @@ export default function ArtistPortal() {
       {/* Platform Performance */}
       <Card className="bg-white/5 backdrop-blur-md border-white/20">
         <CardHeader>
-          <CardTitle className="text-white">Genre Performance</CardTitle>
+          <CardTitle className="text-white">Performance par genre</CardTitle>
           <CardDescription className="text-purple-200">
-            Revenue breakdown by genre
+            Répartition des revenus par genre
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -1968,7 +1985,7 @@ export default function ArtistPortal() {
             <div className="flex items-center justify-center py-12 text-white/30">
               <div className="text-center">
                 <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                <p>Upload tracks to see genre performance</p>
+                <p>Téléversez des titres pour voir la performance par genre</p>
               </div>
             </div>
           ) : (
@@ -1995,7 +2012,7 @@ export default function ArtistPortal() {
                             <p className="text-2xl font-bold text-white">
                               {platform.percentage}%
                             </p>
-                            <p className="text-sm text-purple-200">share</p>
+                            <p className="text-sm text-purple-200">part</p>
                           </div>
                         </div>
                       </div>
@@ -2073,7 +2090,7 @@ export default function ArtistPortal() {
             </div>
             <div className="flex-1 space-y-2">
               <h3 className="text-white font-bold text-lg">
-                How You Earn Royalties
+                Comment vous gagnez des redevances
               </h3>
               <div className="grid sm:grid-cols-3 gap-3 text-sm">
                 <div className="flex items-start gap-2">
@@ -2082,9 +2099,9 @@ export default function ArtistPortal() {
                   </div>
                   <p className="text-white/50">
                     <span className="text-white font-medium">
-                      Listeners stream your music
+                      Les auditeurs écoutent votre musique
                     </span>{" "}
-                    — every play ≥30 seconds counts as a valid stream
+                    — chaque lecture ≥30 secondes compte comme une écoute valide
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
@@ -2093,9 +2110,10 @@ export default function ArtistPortal() {
                   </div>
                   <p className="text-white/50">
                     <span className="text-white font-medium">
-                      Weekly pool fills up
+                      Le fonds hebdomadaire se remplit
                     </span>{" "}
-                    — listener subscriptions fund the royalty pool every week
+                    — les abonnements des auditeurs alimentent le fonds de
+                    redevances chaque semaine
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
@@ -2103,9 +2121,11 @@ export default function ArtistPortal() {
                     <span className="text-green-400 text-xs font-bold">3</span>
                   </div>
                   <p className="text-white/50">
-                    <span className="text-white font-medium">You get paid</span>{" "}
-                    — every Monday, 90% of the pool is distributed to artists
-                    based on performance
+                    <span className="text-white font-medium">
+                      Vous êtes payé
+                    </span>{" "}
+                    — chaque lundi, 90 % du fonds est distribué aux artistes
+                    selon leur performance
                   </p>
                 </div>
               </div>
@@ -2121,22 +2141,23 @@ export default function ArtistPortal() {
                     Grade {currentGrade.label}
                   </Badge>
                   <span className="text-white/40 text-xs">
-                    {currentGrade.share}% artist share •{" "}
-                    {currentGrade.perStream}/stream
+                    {currentGrade.share}% part artiste •{" "}
+                    {currentGrade.perStream}/écoute
                   </span>
                 </div>
               )}
               {!contract && (
                 <p className="text-amber-400/70 text-xs flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
-                  No active contract —{" "}
+                  Aucun contrat actif —{" "}
                   <a
                     href="/artist-portal-welcome"
                     className="underline hover:text-amber-300"
                   >
-                    apply now
+                    postulez maintenant
                   </a>{" "}
-                  for higher per-stream rates & featuring privileges
+                  pour des tarifs par écoute plus élevés et des privilèges de
+                  mise en avant
                 </p>
               )}
             </div>
@@ -2147,7 +2168,7 @@ export default function ArtistPortal() {
               onClick={() => setShowInfoWindow(true)}
             >
               <HelpCircle className="mr-1 h-4 w-4" />
-              Full Guide
+              Guide complet
             </Button>
           </div>
         </motion.div>
@@ -2172,10 +2193,10 @@ export default function ArtistPortal() {
               </div>
               <div>
                 <p className="text-white font-semibold text-sm">
-                  Verso Air Contract
+                  Contrat Verso Air
                 </p>
                 <p className="text-white/30 text-xs">
-                  Grade {contract.grade} • Active
+                  Grade {contract.grade} • Actif
                 </p>
               </div>
             </div>
@@ -2185,22 +2206,22 @@ export default function ArtistPortal() {
             />
             <div className="text-center px-3">
               <p className="text-white font-bold">{currentGrade.share}%</p>
-              <p className="text-white/30 text-[10px]">Your Share</p>
+              <p className="text-white/30 text-[10px]">Votre part</p>
             </div>
             <div className="text-center px-3">
               <p className="text-white font-bold">{currentGrade.perStream}</p>
-              <p className="text-white/30 text-[10px]">Per Stream</p>
+              <p className="text-white/30 text-[10px]">Par écoute</p>
             </div>
             {contract.canBeFeatured && (
               <Badge className="bg-amber-500/20 text-amber-300 text-xs">
                 <Star className="w-3 h-3 mr-1" />
-                Featured Eligible
+                Éligible à la mise en avant
               </Badge>
             )}
             {contract.hdAudioAccess && (
               <Badge className="bg-blue-500/20 text-blue-300 text-xs">
                 <Volume2 className="w-3 h-3 mr-1" />
-                HD Audio
+                Audio HD
               </Badge>
             )}
           </motion.div>
@@ -2209,10 +2230,11 @@ export default function ArtistPortal() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              StreamRoyale — Royalties & Earnings
+              StreamRoyale — Redevances & Revenus
             </h2>
             <p className="text-purple-200">
-              Live competition data • Weekly distribution every Monday 06:00 UTC
+              Données de compétition en direct • Distribution hebdomadaire
+              chaque lundi à 06:00 UTC
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -2222,7 +2244,7 @@ export default function ArtistPortal() {
               onClick={() => setShowInfoWindow(true)}
             >
               <HelpCircle className="mr-2 h-4 w-4" />
-              How It Works
+              Comment ça marche
             </Button>
             <Button
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -2236,7 +2258,9 @@ export default function ArtistPortal() {
               disabled={walletBalance < 10 || payoutMutation.isPending}
             >
               <Wallet className="mr-2 h-4 w-4" />
-              {payoutMutation.isPending ? "Requesting..." : "Request Payout"}
+              {payoutMutation.isPending
+                ? "Traitement..."
+                : "Demander un versement"}
             </Button>
           </div>
         </div>
@@ -2256,19 +2280,19 @@ export default function ArtistPortal() {
             </div>
             {badge.revenueBoost > 0 && (
               <div className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full">
-                +{badge.revenueBoost}% Revenue Boost
+                +{badge.revenueBoost}% Boost de revenu
               </div>
             )}
             {badge.nextTier && (
               <div className="flex-1 min-w-[200px]">
                 <div className="flex justify-between text-xs text-white/40 mb-1">
-                  <span>Progress to {badge.nextTier.name}</span>
+                  <span>Progression vers {badge.nextTier.name}</span>
                   <span>{badge.nextTier.progress.toFixed(1)}%</span>
                 </div>
                 <Progress value={badge.nextTier.progress} className="h-2" />
                 <p className="text-white/20 text-[10px] mt-1">
                   {(profile?.lifetimeStreams || 0).toLocaleString()} /{" "}
-                  {badge.nextTier.threshold.toLocaleString()} streams
+                  {badge.nextTier.threshold.toLocaleString()} écoutes
                 </p>
               </div>
             )}
@@ -2276,7 +2300,7 @@ export default function ArtistPortal() {
               <div className="text-right">
                 <p className="text-white font-bold text-lg">#{thisWeek.rank}</p>
                 <p className="text-white/40 text-xs">
-                  of {thisWeek.totalArtists} this week
+                  of {thisWeek.totalArtists} cette semaine
                 </p>
               </div>
             )}
@@ -2287,45 +2311,47 @@ export default function ArtistPortal() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-white/5 backdrop-blur-md border-white/20">
             <CardContent className="p-5 text-center">
-              <p className="text-purple-200 text-sm mb-1">Wallet Balance</p>
+              <p className="text-purple-200 text-sm mb-1">
+                Solde du portefeuille
+              </p>
               <p className="text-3xl font-bold text-white">
                 {formatCurrency(walletBalance)}
               </p>
               {walletBalance < 10 && (
                 <p className="text-yellow-400 text-xs mt-1">
-                  Min $10 to withdraw
+                  Min. 10 $ pour retirer
                 </p>
               )}
             </CardContent>
           </Card>
           <Card className="bg-white/5 backdrop-blur-md border-white/20">
             <CardContent className="p-5 text-center">
-              <p className="text-purple-200 text-sm mb-1">This Week</p>
+              <p className="text-purple-200 text-sm mb-1">Cette semaine</p>
               <p className="text-3xl font-bold text-white">
                 {(thisWeek?.streams || 0).toLocaleString()}
               </p>
-              <p className="text-white/40 text-xs mt-1">valid streams</p>
+              <p className="text-white/40 text-xs mt-1">écoutes valides</p>
             </CardContent>
           </Card>
           <Card className="bg-white/5 backdrop-blur-md border-white/20">
             <CardContent className="p-5 text-center">
-              <p className="text-purple-200 text-sm mb-1">Lifetime Streams</p>
+              <p className="text-purple-200 text-sm mb-1">Écoutes totales</p>
               <p className="text-3xl font-bold text-white">
                 {(profile?.lifetimeStreams || 0).toLocaleString()}
               </p>
               <p className="text-white/40 text-xs mt-1">
-                {profile?.leagueName || "—"} league
+                {profile?.leagueName || "—"} ligue
               </p>
             </CardContent>
           </Card>
           <Card className="bg-white/5 backdrop-blur-md border-white/20">
             <CardContent className="p-5 text-center">
-              <p className="text-purple-200 text-sm mb-1">Weekly Pool</p>
+              <p className="text-purple-200 text-sm mb-1">Fonds hebdomadaire</p>
               <p className="text-3xl font-bold text-green-400">
                 {formatCurrency(pool?.totalPool || 0)}
               </p>
               <p className="text-white/40 text-xs mt-1">
-                {(pool?.totalStreams || 0).toLocaleString()} streams
+                {(pool?.totalStreams || 0).toLocaleString()} écoutes
               </p>
             </CardContent>
           </Card>
@@ -2334,9 +2360,9 @@ export default function ArtistPortal() {
         {/* Earnings History Table */}
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Earnings History</CardTitle>
+            <CardTitle className="text-white">Historique des revenus</CardTitle>
             <CardDescription className="text-purple-200">
-              Weekly royalty distributions from StreamRoyale
+              Distributions hebdomadaires de redevances de StreamRoyale
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2344,12 +2370,12 @@ export default function ArtistPortal() {
               <div className="text-center py-10 text-white/30">
                 <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-white/50 font-medium mb-1">
-                  No royalty distributions yet
+                  Aucune distribution de redevances pour le moment
                 </p>
                 <p className="text-white/30 text-sm max-w-md mx-auto">
-                  When listeners stream your tracks, you earn from the weekly
-                  royalty pool. Distributions happen every Monday at 06:00 UTC —
-                  your earnings will appear here.
+                  Lorsque les auditeurs écoutent vos titres, vous gagnez du
+                  fonds de redevances hebdomadaire. Les distributions ont lieu
+                  chaque lundi à 06:00 UTC — vos revenus apparaîtront ici.
                 </p>
                 <div className="flex items-center justify-center gap-4 mt-4">
                   <Button
@@ -2359,7 +2385,7 @@ export default function ArtistPortal() {
                     onClick={() => setShowInfoWindow(true)}
                   >
                     <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
-                    How It Works
+                    Comment ça marche
                   </Button>
                   <Button
                     variant="outline"
@@ -2368,7 +2394,7 @@ export default function ArtistPortal() {
                     onClick={() => setActiveTab("music")}
                   >
                     <Upload className="mr-1.5 h-3.5 w-3.5" />
-                    Upload Music
+                    Téléverser de la musique
                   </Button>
                 </div>
               </div>
@@ -2378,13 +2404,13 @@ export default function ArtistPortal() {
                   <TableHeader>
                     <TableRow className="border-white/20">
                       <TableHead className="text-purple-200 text-xs sm:text-sm">
-                        Week
+                        Semaine
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
-                        Streams
+                        Écoutes
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
-                        Guaranteed
+                        Garanti
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
                         Performance
@@ -2393,10 +2419,10 @@ export default function ArtistPortal() {
                         Total
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
-                        Rank
+                        Rang
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden lg:table-cell">
-                        Pool Share
+                        Part du fonds
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2437,7 +2463,9 @@ export default function ArtistPortal() {
         {payouts.length > 0 && (
           <Card className="bg-white/5 backdrop-blur-md border-white/20">
             <CardHeader>
-              <CardTitle className="text-white">Payout Requests</CardTitle>
+              <CardTitle className="text-white">
+                Demandes de versement
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto -mx-6 px-6">
@@ -2448,13 +2476,13 @@ export default function ArtistPortal() {
                         Date
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm">
-                        Amount
+                        Montant
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
-                        Method
+                        Méthode
                       </TableHead>
                       <TableHead className="text-purple-200 text-xs sm:text-sm">
-                        Status
+                        Statut
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2506,7 +2534,7 @@ export default function ArtistPortal() {
         <div>
           <h2 className="text-2xl font-bold text-white">Collaborations</h2>
           <p className="text-purple-200">
-            Connect and create with other artists
+            Connectez-vous et créez avec d'autres artistes
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -2515,11 +2543,11 @@ export default function ArtistPortal() {
             className="border-white/30 text-white hover:bg-white/10"
           >
             <Users2 className="mr-2 h-4 w-4" />
-            Find Artists
+            Trouver des artistes
           </Button>
           <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
             <Plus className="mr-2 h-4 w-4" />
-            New Collaboration
+            Nouvelle collaboration
           </Button>
         </div>
       </div>
@@ -2528,9 +2556,9 @@ export default function ArtistPortal() {
         {/* Active Collaborations */}
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Active Collaborations</CardTitle>
+            <CardTitle className="text-white">Collaborations actives</CardTitle>
             <CardDescription className="text-purple-200">
-              Projects you're currently working on
+              Projets en cours
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2539,9 +2567,12 @@ export default function ArtistPortal() {
                 .length === 0 ? (
                 <div className="text-center py-8 text-white/30">
                   <Users2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">No active collaborations yet</p>
+                  <p className="text-sm">
+                    Aucune collaboration active pour le moment
+                  </p>
                   <p className="text-xs mt-1 text-white/20">
-                    Use "Find Artists" to connect with other creators
+                    Utilisez « Trouver des artistes » pour vous connecter avec
+                    d'autres créateurs
                   </p>
                 </div>
               ) : (
@@ -2564,21 +2595,21 @@ export default function ArtistPortal() {
                               {collab.artist}
                             </p>
                             <Badge className="bg-green-500/20 text-green-400">
-                              Active
+                              Actif
                             </Badge>
                           </div>
                           <p className="text-purple-200 text-sm mb-2">
-                            Track: {collab.track}
+                            Titre : {collab.track}
                           </p>
                           <div className="flex items-center space-x-4 text-sm">
                             <span className="text-white">
-                              Revenue Share:{" "}
+                              Partage de revenus :{" "}
                               <span className="font-medium">
                                 {collab.revenueShare}%
                               </span>
                             </span>
                             <span className="text-purple-200">
-                              Started: {collab.date}
+                              Commencée le : {collab.date}
                             </span>
                           </div>
                         </div>
@@ -2600,9 +2631,9 @@ export default function ArtistPortal() {
         {/* Collaboration Requests */}
         <Card className="bg-white/5 backdrop-blur-md border-white/20">
           <CardHeader>
-            <CardTitle className="text-white">Pending Requests</CardTitle>
+            <CardTitle className="text-white">Demandes en attente</CardTitle>
             <CardDescription className="text-purple-200">
-              Collaboration invitations
+              Invitations de collaboration
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -2611,9 +2642,9 @@ export default function ArtistPortal() {
                 .length === 0 ? (
                 <div className="text-center py-8 text-white/30">
                   <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">No pending requests</p>
+                  <p className="text-sm">Aucune demande en attente</p>
                   <p className="text-xs mt-1 text-white/20">
-                    Invitations from other artists will appear here
+                    Les invitations d'autres artistes apparaîtront ici
                   </p>
                 </div>
               ) : (
@@ -2637,11 +2668,11 @@ export default function ArtistPortal() {
                             </p>
                           </div>
                           <p className="text-purple-200 text-sm">
-                            Wants to collaborate on: {collab.track}
+                            Souhaite collaborer sur : {collab.track}
                           </p>
                         </div>
                         <Badge className="bg-yellow-500/20 text-yellow-400">
-                          Pending
+                          En attente
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -2650,7 +2681,7 @@ export default function ArtistPortal() {
                           className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
                         >
                           <Check className="mr-2 h-3 w-3" />
-                          Accept
+                          Accepter
                         </Button>
                         <Button
                           size="sm"
@@ -2658,7 +2689,7 @@ export default function ArtistPortal() {
                           className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
                         >
                           <X className="mr-2 h-3 w-3" />
-                          Decline
+                          Refuser
                         </Button>
                       </div>
                     </div>
@@ -2781,7 +2812,7 @@ export default function ArtistPortal() {
               <Music className="h-8 w-8 text-white" />
               <div>
                 <span className="text-xl font-bold text-white">
-                  Verso Air ™️ Artist Portal
+                  Verso Air ™️ Portail Artiste
                 </span>
                 <div className="flex items-center space-x-2">
                   <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
@@ -2789,7 +2820,7 @@ export default function ArtistPortal() {
                     {connectedUser.tier}
                   </Badge>
                   <span className="text-purple-200 text-sm">
-                    Welcome back, {connectedUser.name}
+                    Bon retour, {connectedUser.name}
                   </span>
                 </div>
               </div>
@@ -2865,32 +2896,32 @@ export default function ArtistPortal() {
                   className="bg-gray-900 border-white/20"
                 >
                   <DropdownMenuLabel className="text-white">
-                    My Account
+                    Mon compte
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/20" />
                   <DropdownMenuItem className="text-white">
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    Profil
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-white">
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    Paramètres
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-white">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Billing
+                    Facturation
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/20" />
                   <DropdownMenuItem className="text-white">
                     <HelpCircle className="mr-2 h-4 w-4" />
-                    Support
+                    Assistance
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-400"
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    Déconnexion
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -2910,35 +2941,35 @@ export default function ArtistPortal() {
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <LayoutDashboard className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Dashboard
+                  Tableau de bord
                 </TabsTrigger>
                 <TabsTrigger
                   value="music"
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Music2 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Music
+                  Musique
                 </TabsTrigger>
                 <TabsTrigger
                   value="analytics"
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <BarChart3 className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Analytics
+                  Analyses
                 </TabsTrigger>
                 <TabsTrigger
                   value="royalties"
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <DollarSign className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Royalties
+                  Redevances
                 </TabsTrigger>
                 <TabsTrigger
                   value="leaderboard"
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Trophy className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Leaderboard
+                  Classement
                 </TabsTrigger>
                 <TabsTrigger
                   value="collaborations"
@@ -2952,7 +2983,7 @@ export default function ArtistPortal() {
                   className="text-purple-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Calendar className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Releases
+                  Sorties
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -2965,7 +2996,9 @@ export default function ArtistPortal() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <Loader2 className="h-12 w-12 text-white animate-spin mx-auto mb-4" />
-              <p className="text-white text-lg">Loading artist data...</p>
+              <p className="text-white text-lg">
+                Chargement des données artiste...
+              </p>
             </div>
           </div>
         ) : (
@@ -2995,11 +3028,11 @@ export default function ArtistPortal() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white">
-                      🏆 StreamRoyale Leaderboard
+                      🏆 Classement StreamRoyale
                     </h2>
                     <p className="text-purple-200">
-                      Week {leaderboardData?.weekNumber || "—"} • Global
-                      competition rankings
+                      Week {leaderboardData?.weekNumber || "—"} • Classements de
+                      la compétition mondiale
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -3014,10 +3047,10 @@ export default function ArtistPortal() {
                       }
                     >
                       <SelectTrigger className="w-[160px] bg-white/5 border-white/20 text-white">
-                        <SelectValue placeholder="All Leagues" />
+                        <SelectValue placeholder="Toutes les ligues" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Leagues</SelectItem>
+                        <SelectItem value="all">Toutes les ligues</SelectItem>
                         {(leaderboardData?.leagues || []).map((l: any) => (
                           <SelectItem key={l.id} value={String(l.id)}>
                             {l.name}
@@ -3032,20 +3065,22 @@ export default function ArtistPortal() {
                 {poolData?.pool && (
                   <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-4 flex flex-wrap items-center gap-6">
                     <div>
-                      <p className="text-white/40 text-xs">Weekly Pool</p>
+                      <p className="text-white/40 text-xs">
+                        Fonds hebdomadaire
+                      </p>
                       <p className="text-green-400 text-xl font-bold">
                         {formatCurrency(poolData.pool.totalPool)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-white/40 text-xs">Total Streams</p>
+                      <p className="text-white/40 text-xs">Écoutes totales</p>
                       <p className="text-white text-xl font-bold">
                         {(poolData.pool.totalStreams || 0).toLocaleString()}
                       </p>
                     </div>
                     <div>
                       <p className="text-white/40 text-xs">
-                        Qualifying Artists
+                        Artistes qualifiés
                       </p>
                       <p className="text-white text-xl font-bold">
                         {poolData.pool.qualifyingArtists}
@@ -3065,7 +3100,9 @@ export default function ArtistPortal() {
                     {!leaderboardData?.leaderboard?.length ? (
                       <div className="text-center py-12 text-white/30">
                         <Trophy className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                        <p>No rankings yet for this week. Start streaming!</p>
+                        <p>
+                          Aucun classement cette semaine. Commencez à écouter !
+                        </p>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
@@ -3076,19 +3113,19 @@ export default function ArtistPortal() {
                                 #
                               </TableHead>
                               <TableHead className="text-purple-200 text-xs sm:text-sm">
-                                Artist
+                                Artiste
                               </TableHead>
                               <TableHead className="text-purple-200 text-xs sm:text-sm hidden sm:table-cell">
                                 Badge
                               </TableHead>
                               <TableHead className="text-purple-200 text-xs sm:text-sm hidden md:table-cell">
-                                League
+                                Ligue
                               </TableHead>
                               <TableHead className="text-purple-200 text-right text-xs sm:text-sm">
-                                Weekly
+                                Hebdo
                               </TableHead>
                               <TableHead className="text-purple-200 text-right text-xs sm:text-sm hidden sm:table-cell">
-                                Lifetime
+                                Total
                               </TableHead>
                             </TableRow>
                           </TableHeader>
@@ -3182,10 +3219,10 @@ export default function ArtistPortal() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white">
-                      Release Schedule
+                      Calendrier des sorties
                     </h2>
                     <p className="text-purple-200">
-                      Plan and manage your upcoming releases
+                      Planifiez et gérez vos prochaines sorties
                     </p>
                   </div>
                   <Button
@@ -3193,7 +3230,7 @@ export default function ArtistPortal() {
                     className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   >
                     <Calendar className="mr-2 h-4 w-4" />
-                    Schedule Release
+                    Planifier une sortie
                   </Button>
                 </div>
 
@@ -3202,10 +3239,10 @@ export default function ArtistPortal() {
                   <Card className="lg:col-span-2 bg-white/5 backdrop-blur-md border-white/20">
                     <CardHeader>
                       <CardTitle className="text-white">
-                        Upcoming Releases
+                        Prochaines sorties
                       </CardTitle>
                       <CardDescription className="text-purple-200">
-                        Scheduled and draft releases
+                        Sorties planifiées et brouillons
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -3252,7 +3289,7 @@ export default function ArtistPortal() {
                                   </Badge>
                                 </div>
                                 <p className="text-purple-200 text-sm">
-                                  Release: {release.releaseDate} • Status:{" "}
+                                  Sortie : {release.releaseDate} • Statut :{" "}
                                   {release.status}
                                 </p>
                               </div>
@@ -3261,7 +3298,7 @@ export default function ArtistPortal() {
                               <p className="text-white font-medium">
                                 {formatNumber(release.streams)}
                               </p>
-                              <p className="text-purple-200 text-sm">streams</p>
+                              <p className="text-purple-200 text-sm">écoutes</p>
                             </div>
                           </div>
                         ))}
@@ -3273,10 +3310,10 @@ export default function ArtistPortal() {
                   <Card className="bg-white/5 backdrop-blur-md border-white/20">
                     <CardHeader>
                       <CardTitle className="text-white">
-                        Release Calendar
+                        Calendrier des sorties
                       </CardTitle>
                       <CardDescription className="text-purple-200">
-                        Upcoming release dates
+                        Dates des prochaines sorties
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -3291,7 +3328,7 @@ export default function ArtistPortal() {
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 rounded-full bg-purple-500" />
                             <span className="text-white text-sm">
-                              Album Releases
+                              Sorties d'albums
                             </span>
                           </div>
                           <span className="text-purple-200 text-sm">
@@ -3305,7 +3342,7 @@ export default function ArtistPortal() {
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 rounded-full bg-pink-500" />
                             <span className="text-white text-sm">
-                              EP Releases
+                              Sorties d'EP
                             </span>
                           </div>
                           <span className="text-purple-200 text-sm">
@@ -3319,7 +3356,7 @@ export default function ArtistPortal() {
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 rounded-full bg-blue-500" />
                             <span className="text-white text-sm">
-                              Single Releases
+                              Sorties de singles
                             </span>
                           </div>
                           <span className="text-purple-200 text-sm">
@@ -3348,18 +3385,19 @@ export default function ArtistPortal() {
       >
         <DialogContent className="sm:max-w-[540px] bg-gray-900 border-white/20 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Upload New Track</DialogTitle>
+            <DialogTitle>Téléverser un nouveau titre</DialogTitle>
             <DialogDescription className="text-purple-200">
-              Upload your music — set a price and start earning per download
+              Téléversez votre musique — fixez un prix et commencez à gagner par
+              téléchargement
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Track Title */}
             <div className="space-y-2">
-              <Label htmlFor="track-title">Track Title *</Label>
+              <Label htmlFor="track-title">Titre du morceau *</Label>
               <Input
                 id="track-title"
-                placeholder="Enter track title"
+                placeholder="Entrez le titre du morceau"
                 className="bg-white/10 border-white/30"
                 value={uploadForm.title}
                 onChange={(e) =>
@@ -3379,7 +3417,7 @@ export default function ArtistPortal() {
                   }
                 >
                   <SelectTrigger className="bg-white/10 border-white/30">
-                    <SelectValue placeholder="Select genre" />
+                    <SelectValue placeholder="Sélectionner le genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20">
                     <SelectItem value="Afrobeats">Afrobeats</SelectItem>
@@ -3389,18 +3427,18 @@ export default function ArtistPortal() {
                     <SelectItem value="Jazz">Jazz</SelectItem>
                     <SelectItem value="Soul">Soul</SelectItem>
                     <SelectItem value="Reggae">Reggae</SelectItem>
-                    <SelectItem value="Electronic">Electronic</SelectItem>
+                    <SelectItem value="Electronic">Électronique</SelectItem>
                     <SelectItem value="Rock">Rock</SelectItem>
-                    <SelectItem value="Classical">Classical</SelectItem>
+                    <SelectItem value="Classical">Classique</SelectItem>
                     <SelectItem value="Gospel">Gospel</SelectItem>
                     <SelectItem value="Latin">Latin</SelectItem>
                     <SelectItem value="Dancehall">Dancehall</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Other">Autre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Price per Download ($)</Label>
+                <Label>Prix par téléchargement ($)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -3433,7 +3471,7 @@ export default function ArtistPortal() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Key</Label>
+                <Label>Tonalité</Label>
                 <Input
                   placeholder="C minor"
                   className="bg-white/10 border-white/30"
@@ -3447,7 +3485,7 @@ export default function ArtistPortal() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Mood</Label>
+                <Label>Ambiance</Label>
                 <Input
                   placeholder="Chill"
                   className="bg-white/10 border-white/30"
@@ -3461,7 +3499,7 @@ export default function ArtistPortal() {
 
             {/* File upload zone */}
             <div className="space-y-2">
-              <Label>Audio File *</Label>
+              <Label>Fichier audio *</Label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -3509,17 +3547,17 @@ export default function ArtistPortal() {
                         setUploadFile(null);
                       }}
                     >
-                      Remove
+                      Supprimer
                     </Button>
                   </div>
                 ) : (
                   <>
                     <UploadCloud className="h-10 w-10 text-purple-400 mx-auto mb-3" />
                     <p className="text-white mb-1">
-                      Drop your audio file here or click to browse
+                      Déposez votre fichier audio ici ou cliquez pour parcourir
                     </p>
                     <p className="text-purple-200 text-sm">
-                      Supports: MP3, WAV, FLAC, AIFF, OGG • Max 100 MB
+                      Formats : MP3, WAV, FLAC, AIFF, OGG • Max 100 Mo
                     </p>
                   </>
                 )}
@@ -3531,7 +3569,7 @@ export default function ArtistPortal() {
               <Label htmlFor="upload-desc">Description</Label>
               <Textarea
                 id="upload-desc"
-                placeholder="Tell us about this track..."
+                placeholder="Parlez-nous de ce titre..."
                 className="bg-white/10 border-white/30 min-h-[80px]"
                 value={uploadForm.description}
                 onChange={(e) =>
@@ -3547,7 +3585,7 @@ export default function ArtistPortal() {
             {isUploading && (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-purple-200">Uploading...</span>
+                  <span className="text-purple-200">Téléversement...</span>
                   <span className="text-white font-medium">
                     {uploadProgress}%
                   </span>
@@ -3572,7 +3610,7 @@ export default function ArtistPortal() {
               className="border-white/30 text-white hover:bg-white/10"
               disabled={isUploading}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
@@ -3580,7 +3618,7 @@ export default function ArtistPortal() {
               disabled={isUploading || !uploadFile || !uploadForm.title}
             >
               <Upload className="mr-2 h-4 w-4" />
-              {isUploading ? "Uploading..." : "Upload Track"}
+              {isUploading ? "Téléversement..." : "Téléverser le titre"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3590,18 +3628,18 @@ export default function ArtistPortal() {
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
         <DialogContent className="sm:max-w-[500px] bg-gray-900 border-white/20 text-white">
           <DialogHeader>
-            <DialogTitle>Schedule Release</DialogTitle>
+            <DialogTitle>Planifier une sortie</DialogTitle>
             <DialogDescription className="text-purple-200">
-              Plan your next release across all platforms
+              Planifiez votre prochaine sortie sur toutes les plateformes
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="release-type">Release Type</Label>
+                <Label htmlFor="release-type">Type de sortie</Label>
                 <Select>
                   <SelectTrigger className="bg-white/10 border-white/30">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Sélectionner le type" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20">
                     <SelectItem value="single">Single</SelectItem>
@@ -3611,7 +3649,7 @@ export default function ArtistPortal() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="release-date">Release Date</Label>
+                <Label htmlFor="release-date">Date de sortie</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -3622,7 +3660,11 @@ export default function ArtistPortal() {
                       )}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      {date ? (
+                        format(date, "PPP")
+                      ) : (
+                        <span>Choisir une date</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-gray-900 border-white/20">
@@ -3638,7 +3680,7 @@ export default function ArtistPortal() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="platforms">Platforms</Label>
+              <Label htmlFor="platforms">Plateformes</Label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   "Spotify",
@@ -3659,7 +3701,7 @@ export default function ArtistPortal() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="marketing-budget">
-                Marketing Budget (Optional)
+                Budget marketing (optionnel)
               </Label>
               <div className="flex items-center space-x-2">
                 <DollarSign className="h-4 w-4 text-purple-200" />
@@ -3678,11 +3720,11 @@ export default function ArtistPortal() {
               onClick={() => setShowScheduleModal(false)}
               className="border-white/30 text-white hover:bg-white/10"
             >
-              Cancel
+              Annuler
             </Button>
             <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
               <Calendar className="mr-2 h-4 w-4" />
-              Schedule Release
+              Planifier la sortie
             </Button>
           </DialogFooter>
         </DialogContent>

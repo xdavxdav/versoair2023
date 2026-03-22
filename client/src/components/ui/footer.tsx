@@ -83,7 +83,9 @@ export default function Footer() {
                 <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
                   Verso Air
                 </span>
-                <span className="text-amber-400 text-3xl lg:text-4xl align-super ml-1">™</span>
+                <span className="text-amber-400 text-3xl lg:text-4xl align-super ml-1">
+                  ™
+                </span>
               </h2>
               <p className="text-gray-500 text-base sm:text-lg mt-4 max-w-md leading-relaxed">
                 Business intelligence, reimagined.
@@ -180,7 +182,7 @@ export default function Footer() {
           </div>
 
           <p
-            className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none"
+            className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"
             style={{
               fontFamily: "'Caveat', cursive",
               fontSize: "clamp(0.85rem, 2vw, 1.1rem)",
@@ -191,7 +193,9 @@ export default function Footer() {
           </p>
 
           <p className="text-gray-600 text-xs">
-            © {new Date().getFullYear()} Verso Air™. All rights reserved.
+            © {new Date().getFullYear()}{" "}
+            <span className="notranslate">Verso Air™</span>. All rights
+            reserved.
           </p>
         </div>
       </div>

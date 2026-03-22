@@ -132,7 +132,8 @@ export default function ArtistPortalSignIn() {
       const data = await res.json();
       if (!res.ok || !data.success) {
         setAuthError(
-          data.message || "Login failed. Please check your credentials.",
+          data.message ||
+            "Échec de connexion. Veuillez vérifier vos identifiants.",
         );
         setIsLoading(false);
         return;
@@ -143,7 +144,7 @@ export default function ArtistPortalSignIn() {
       setIsLoading(false);
       navigate("/artist-portal/dashboard");
     } catch (err: any) {
-      setAuthError(err.message || "Network error. Please try again.");
+      setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsLoading(false);
     }
   };
@@ -158,11 +159,11 @@ export default function ArtistPortalSignIn() {
     }
     // Validate passwords match
     if (applyForm.password !== applyForm.confirmPassword) {
-      setAuthError("Passwords do not match.");
+      setAuthError("Les mots de passe ne correspondent pas.");
       return;
     }
     if (!applyForm.agreeTerms) {
-      setAuthError("You must agree to the terms.");
+      setAuthError("Vous devez accepter les conditions.");
       return;
     }
     // Full validation
@@ -195,18 +196,20 @@ export default function ArtistPortalSignIn() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setAuthError(data.message || "Registration failed. Please try again.");
+        setAuthError(
+          data.message || "Échec de l'inscription. Veuillez réessayer.",
+        );
         setIsLoading(false);
         return;
       }
       // Store artist data
       localStorage.setItem("artist_token", data.token);
       localStorage.setItem("artist_profile", JSON.stringify(data.user));
-      setAuthSuccess("Account created successfully! Redirecting...");
+      setAuthSuccess("Compte créé avec succès ! Redirection...");
       setIsLoading(false);
       setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
     } catch (err: any) {
-      setAuthError(err.message || "Network error. Please try again.");
+      setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsLoading(false);
     }
   };
@@ -235,7 +238,7 @@ export default function ArtistPortalSignIn() {
             whileHover={{ x: -3 }}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Universe</span>
+            <span>Retour à l'Univers</span>
           </motion.button>
         </Link>
       </div>
@@ -264,12 +267,12 @@ export default function ArtistPortalSignIn() {
               <Music className="w-7 h-7 text-white" />
             </motion.div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-300 to-fuchsia-300 bg-clip-text text-transparent">
-              Verso Artist Universe
+              Verso Univers Artiste
             </h1>
             <p className="text-white/30 text-sm mt-1">
               {activeTab === "signin"
-                ? "Welcome back, creator"
-                : "Join the universe"}
+                ? "Bon retour, créateur"
+                : "Rejoindre l'univers"}
             </p>
           </div>
 
@@ -286,7 +289,7 @@ export default function ArtistPortalSignIn() {
                   : "text-white/40 hover:text-white/60"
               }`}
             >
-              Sign In
+              Connexion
             </button>
             <button
               onClick={() => setActiveTab("apply")}
@@ -296,7 +299,7 @@ export default function ArtistPortalSignIn() {
                   : "text-white/40 hover:text-white/60"
               }`}
             >
-              Apply
+              Candidater
             </button>
           </div>
 
@@ -339,7 +342,7 @@ export default function ArtistPortalSignIn() {
                 {/* Email */}
                 <div>
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    Email or Artist Code
+                    Email ou Code Artiste
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -358,7 +361,7 @@ export default function ArtistPortalSignIn() {
                 {/* Password */}
                 <div>
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    Password
+                    Mot de passe
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -371,7 +374,7 @@ export default function ArtistPortalSignIn() {
                           password: e.target.value,
                         })
                       }
-                      placeholder="Enter your password"
+                      placeholder="Entrez votre mot de passe"
                       className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                     <button
@@ -402,13 +405,15 @@ export default function ArtistPortalSignIn() {
                       }
                       className="w-3.5 h-3.5 rounded border-white/20 bg-white/[0.04] text-purple-500 focus:ring-purple-500/20"
                     />
-                    <span className="text-white/30 text-xs">Remember me</span>
+                    <span className="text-white/30 text-xs">
+                      Se souvenir de moi
+                    </span>
                   </label>
                   <button
                     type="button"
                     className="text-purple-400/60 hover:text-purple-400 text-xs transition-colors"
                   >
-                    Forgot password?
+                    Mot de passe oublié ?
                   </button>
                 </div>
 
@@ -437,7 +442,7 @@ export default function ArtistPortalSignIn() {
                     ) : (
                       <>
                         <Fingerprint className="w-4 h-4" />
-                        Enter the Universe
+                        Entrer dans l'Univers
                       </>
                     )}
                   </span>
@@ -456,7 +461,7 @@ export default function ArtistPortalSignIn() {
                 <div className="flex items-center gap-4 my-2">
                   <div className="flex-1 h-px bg-white/[0.06]" />
                   <span className="text-white/15 text-xs">
-                    or continue with
+                    ou continuer avec
                   </span>
                   <div className="flex-1 h-px bg-white/[0.06]" />
                 </div>
@@ -539,7 +544,7 @@ export default function ArtistPortalSignIn() {
                     >
                       <h3 className="text-white/60 text-sm font-medium flex items-center gap-2">
                         <Shield className="w-4 h-4 text-purple-400" />
-                        Account Details
+                        Détails du compte
                       </h3>
 
                       <div>
@@ -566,7 +571,7 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Password
+                          Mot de passe
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -579,7 +584,7 @@ export default function ArtistPortalSignIn() {
                                 password: e.target.value,
                               })
                             }
-                            placeholder="Create a strong password"
+                            placeholder="Créez un mot de passe fort"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -618,7 +623,7 @@ export default function ArtistPortalSignIn() {
                               ) : (
                                 <XCircle className="h-3 w-3" />
                               )}
-                              At least 8 characters
+                              Au moins 8 caractères
                             </p>
                             <p
                               className={`text-xs flex items-center gap-1 ${checkPasswordUpper(applyForm.password) ? "text-green-400" : "text-white/30"}`}
@@ -628,7 +633,7 @@ export default function ArtistPortalSignIn() {
                               ) : (
                                 <XCircle className="h-3 w-3" />
                               )}
-                              One uppercase letter (A–Z)
+                              Une lettre majuscule (A–Z)
                             </p>
                             <p
                               className={`text-xs flex items-center gap-1 ${checkPasswordNumber(applyForm.password) ? "text-green-400" : "text-white/30"}`}
@@ -638,14 +643,14 @@ export default function ArtistPortalSignIn() {
                               ) : (
                                 <XCircle className="h-3 w-3" />
                               )}
-                              One number (0–9)
+                              Un chiffre (0–9)
                             </p>
                           </div>
                         </div>
                       )}
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Confirm Password
+                          Confirmer le mot de passe
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -658,7 +663,7 @@ export default function ArtistPortalSignIn() {
                                 confirmPassword: e.target.value,
                               })
                             }
-                            placeholder="Confirm your password"
+                            placeholder="Confirmez votre mot de passe"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -683,7 +688,7 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Stage Name
+                          Nom de scène
                         </label>
                         <div className="relative">
                           <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -696,7 +701,7 @@ export default function ArtistPortalSignIn() {
                                 stageName: e.target.value,
                               })
                             }
-                            placeholder="Your artist / stage name"
+                            placeholder="Votre nom d'artiste / de scène"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -705,7 +710,7 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Legal Name
+                          Nom légal
                         </label>
                         <div className="relative">
                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -718,7 +723,7 @@ export default function ArtistPortalSignIn() {
                                 legalName: e.target.value,
                               })
                             }
-                            placeholder="Your legal full name"
+                            placeholder="Votre nom complet légal"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -727,7 +732,7 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Primary Genre
+                          Genre principal
                         </label>
                         <div className="relative">
                           <Music className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 z-10" />
@@ -743,7 +748,7 @@ export default function ArtistPortalSignIn() {
                             required
                           >
                             <option value="" className="bg-[#1a0a2e]">
-                              Select your genre
+                              Sélectionnez votre genre
                             </option>
                             {genres.map((g) => (
                               <option
@@ -761,7 +766,7 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Country
+                          Pays
                         </label>
                         <div className="relative">
                           <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
@@ -774,7 +779,7 @@ export default function ArtistPortalSignIn() {
                                 country: e.target.value,
                               })
                             }
-                            placeholder="Where are you based?"
+                            placeholder="Où êtes-vous basé ?"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                             required
                           />
@@ -806,7 +811,7 @@ export default function ArtistPortalSignIn() {
                           onChange={(e) =>
                             setApplyForm({ ...applyForm, bio: e.target.value })
                           }
-                          placeholder="Tell us about your music journey..."
+                          placeholder="Parlez-nous de votre parcours musical..."
                           rows={3}
                           className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all text-sm resize-none"
                         />
@@ -814,8 +819,8 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Spotify Profile URL{" "}
-                          <span className="text-white/15">(optional)</span>
+                          URL Profil Spotify{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="url"
@@ -833,8 +838,8 @@ export default function ArtistPortalSignIn() {
 
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                          Instagram Handle{" "}
-                          <span className="text-white/15">(optional)</span>
+                          Pseudo Instagram{" "}
+                          <span className="text-white/15">(optionnel)</span>
                         </label>
                         <input
                           type="text"
@@ -865,15 +870,16 @@ export default function ArtistPortalSignIn() {
                           required
                         />
                         <span className="text-white/30 text-xs leading-relaxed">
-                          I agree to the Verso Artist Universe{" "}
+                          J'accepte les{" "}
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
-                            Terms of Service
+                            Conditions d'utilisation
                           </span>{" "}
-                          and{" "}
+                          et le{" "}
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
-                            Artist Agreement
+                            Contrat Artiste
                           </span>
-                          . I confirm all information provided is accurate.
+                          . Je confirme que toutes les informations fournies
+                          sont exactes.
                         </span>
                       </label>
                     </motion.div>
@@ -889,7 +895,7 @@ export default function ArtistPortalSignIn() {
                       className="px-5 py-3.5 rounded-xl border border-white/[0.08] text-white/50 text-sm hover:bg-white/[0.04] transition-all"
                       whileTap={{ scale: 0.98 }}
                     >
-                      Back
+                      Retour
                     </motion.button>
                   )}
 
@@ -916,13 +922,13 @@ export default function ArtistPortalSignIn() {
                         />
                       ) : step < 3 ? (
                         <>
-                          Continue
+                          Continuer
                           <ArrowRight className="w-4 h-4" />
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4" />
-                          Submit Application
+                          Soumettre la candidature
                         </>
                       )}
                     </span>
@@ -946,17 +952,17 @@ export default function ArtistPortalSignIn() {
             <p className="text-white/15 text-xs">
               {activeTab === "signin" ? (
                 <>
-                  Don't have an artist account?{" "}
+                  Vous n'avez pas de compte artiste ?{" "}
                   <button
                     onClick={() => setActiveTab("apply")}
                     className="text-purple-400/50 hover:text-purple-400 transition-colors"
                   >
-                    Apply now
+                    Candidatez maintenant
                   </button>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
+                  Vous avez déjà un compte ?{" "}
                   <button
                     onClick={() => {
                       setActiveTab("signin");
@@ -964,7 +970,7 @@ export default function ArtistPortalSignIn() {
                     }}
                     className="text-purple-400/50 hover:text-purple-400 transition-colors"
                   >
-                    Sign in
+                    Se connecter
                   </button>
                 </>
               )}
@@ -976,7 +982,7 @@ export default function ArtistPortalSignIn() {
       {/* Minimal footer */}
       <div className="relative z-10 py-6 text-center">
         <p className="text-white/10 text-xs">
-          © 2026 Verso Artist Universe — Part of the Verso Air ecosystem
+          © 2026 Verso Univers Artiste — Fait partie de l'écosystème Verso Air
         </p>
       </div>
     </div>

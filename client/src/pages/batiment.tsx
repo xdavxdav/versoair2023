@@ -228,18 +228,23 @@ async function fetchBatimentAnalytics(): Promise<BatimentAnalytics> {
       ],
       contractor_stats: [
         {
-          type: "General Contractors",
+          type: "Entrepreneurs généraux",
           count: 95,
           growth: 18.5,
           revenue: 1850000,
         },
         {
-          type: "Specialty Contractors",
+          type: "Entrepreneurs spécialisés",
           count: 162,
           growth: 12.3,
           revenue: 985000,
         },
-        { type: "Equipment Rental", count: 58, growth: 25.7, revenue: 415000 },
+        {
+          type: "Location d'équipement",
+          count: 58,
+          growth: 25.7,
+          revenue: 415000,
+        },
       ],
     };
   }
@@ -293,10 +298,10 @@ async function searchBatimentFacilities(params: {
     return {
       data: results.map((item: any) => ({
         id: item.id,
-        title: item.name || item.title || "Unnamed Contractor",
-        description: item.description || "No description available",
+        title: item.name || item.title || "Entrepreneur sans nom",
+        description: item.description || "Aucune description disponible",
         category: item.category,
-        location: item.location || item.cityName || "Location not specified",
+        location: item.location || item.cityName || "Emplacement non précisé",
         address: item.address,
         phone: item.phone,
         email: item.email,
@@ -332,20 +337,20 @@ async function searchBatimentFacilities(params: {
         id: `batiment-${i}`,
         title: `${
           [
-            "General Contractors Ltd",
-            "Specialty Building Corp",
-            "Infrastructure Solutions",
-            "Renovation Experts Inc",
-            "Industrial Construction Co",
+            "Entrepreneurs Généraux Ltda",
+            "Corp. Bâtiment Spécialisé",
+            "Solutions Infrastructure",
+            "Experts Rénovation Inc",
+            "Construction Industrielle Co",
           ][i % 5]
         } ${i + 1}`,
-        description: `Professional construction company specializing in ${
+        description: `Entreprise de construction professionnelle spécialisée dans ${
           [
-            "residential construction",
-            "commercial projects",
-            "infrastructure development",
-            "renovation and remodeling",
-            "industrial construction",
+            "la construction résidentielle",
+            "les projets commerciaux",
+            "le développement d'infrastructure",
+            "la rénovation et le remodelage",
+            "la construction industrielle",
           ][i % 5]
         }.`,
         category: [
@@ -358,22 +363,22 @@ async function searchBatimentFacilities(params: {
         location: ["Abidjan", "Yamoussoukro", "Bouaké", "Daloa", "San Pedro"][
           i % 5
         ],
-        address: `Construction Zone, District ${i + 1}`,
+        address: `Zone de construction, District ${i + 1}`,
         phone: `+225 01 25 48 69 8${i}`,
         email: `info@batiment${i + 1}.com`,
         rating: 3.8 + Math.random() * 1.2,
         reviews: Math.floor(Math.random() * 420),
-        tags: ["Licensed", "Bonded", "Insured", "Fast-Track", "Green-Build"],
+        tags: ["Agréé", "Cautionné", "Assuré", "Rapide", "Construction verte"],
         latitude: 5.36 + Math.random() * 0.1,
         longitude: -4.008 + Math.random() * 0.1,
         revenue: 150000 + Math.random() * 600000,
         employees: Math.floor(Math.random() * 250) + 10,
         amenities: [
-          "Site Management",
-          "Heavy Equipment",
-          "Safety Certified",
-          "Project Planning",
-          "Quality Control",
+          "Gestion de site",
+          "Équipement lourd",
+          "Certifié sécurité",
+          "Planification de projet",
+          "Contrôle qualité",
         ],
         star_rating: Math.floor(Math.random() * 3) + 4,
         status: ["active", "verified", "premium"][
@@ -382,10 +387,10 @@ async function searchBatimentFacilities(params: {
         project_count: Math.floor(Math.random() * 85) + 15,
         workers_count: Math.floor(Math.random() * 180) + 30,
         specialization: [
-          "Residential",
+          "Résidentiel",
           "Commercial",
           "Infrastructure",
-          "Renovation",
+          "Rénovation",
         ],
         equipment: Math.random() > 0.2,
         project_capacity: Math.floor(Math.random() * 12) + 3,
@@ -411,41 +416,41 @@ async function testDatabaseConnection(): Promise<{
 
 // Filter options for construction
 const categoryOptions = [
-  { value: "residential", label: "Residential Construction" },
-  { value: "commercial", label: "Commercial Construction" },
-  { value: "infrastructure", label: "Infrastructure Projects" },
-  { value: "renovation", label: "Renovation & Remodeling" },
-  { value: "industrial", label: "Industrial Construction" },
-  { value: "civil_works", label: "Civil Works" },
-  { value: "speciality", label: "Specialty Construction" },
-  { value: "landscaping", label: "Landscaping & Exterior" },
+  { value: "residential", label: "Construction résidentielle" },
+  { value: "commercial", label: "Construction commerciale" },
+  { value: "infrastructure", label: "Projets d'infrastructure" },
+  { value: "renovation", label: "Rénovation & Remodelage" },
+  { value: "industrial", label: "Construction industrielle" },
+  { value: "civil_works", label: "Travaux publics" },
+  { value: "speciality", label: "Construction spécialisée" },
+  { value: "landscaping", label: "Aménagement extérieur" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "verified", label: "Verified" },
+  { value: "active", label: "Actif" },
+  { value: "verified", label: "Vérifié" },
   { value: "premium", label: "Premium" },
-  { value: "accredited", label: "Accredited" },
+  { value: "accredited", label: "Accrédité" },
 ];
 
 const specializationOptions = [
-  { value: "structural", label: "Structural Engineering" },
-  { value: "hvac", label: "HVAC Systems" },
-  { value: "electrical", label: "Electrical Work" },
-  { value: "plumbing", label: "Plumbing & Water" },
-  { value: "foundation", label: "Foundation Work" },
-  { value: "concrete", label: "Concrete & Masonry" },
-  { value: "roofing", label: "Roofing" },
-  { value: "finishing", label: "Interior Finishing" },
+  { value: "structural", label: "Ingénierie structurelle" },
+  { value: "hvac", label: "Systèmes CVC" },
+  { value: "electrical", label: "Travaux électriques" },
+  { value: "plumbing", label: "Plomberie & Eau" },
+  { value: "foundation", label: "Travaux de fondation" },
+  { value: "concrete", label: "Béton & Maçonnerie" },
+  { value: "roofing", label: "Toiture" },
+  { value: "finishing", label: "Finition intérieure" },
 ];
 
 const sortOptions = [
-  { value: "rating_desc", label: "Highest Rating" },
-  { value: "revenue_desc", label: "Highest Revenue" },
-  { value: "beds_desc", label: "Most Beds" },
-  { value: "doctors_desc", label: "Most Doctors" },
-  { value: "name_asc", label: "Name A-Z" },
-  { value: "location_asc", label: "Location" },
+  { value: "rating_desc", label: "Meilleure note" },
+  { value: "revenue_desc", label: "Chiffre d'affaires" },
+  { value: "beds_desc", label: "Plus de projets" },
+  { value: "doctors_desc", label: "Plus d'employés" },
+  { value: "name_asc", label: "Nom A-Z" },
+  { value: "location_asc", label: "Localisation" },
 ];
 
 type TabType =
@@ -679,11 +684,11 @@ export default function BatimentDashboard() {
     }>
   >([
     {
-      name: "Loading construction contractors...",
-      desc: "Connecting to database",
+      name: "Chargement des entreprises de construction...",
+      desc: "Connexion à la base de données",
       image:
         "https://images.unsplash.com/photo-1516549655669-df765b18280f?w=800",
-      type: "Hospital",
+      type: "Bâtiment",
     },
   ]);
 
@@ -693,10 +698,10 @@ export default function BatimentDashboard() {
   useEffect(() => {
     if (searchResults.length > 0) {
       const featuredEnterprises = searchResults.slice(0, 8).map((facility) => ({
-        name: facility.title || "Construction Contractor",
+        name: facility.title || "Entrepreneur BTP",
         desc:
           facility.description ||
-          "Professional construction and building services",
+          "Services professionnels de construction et bâtiment",
         image: `https://images.unsplash.com/photo-${Math.floor(
           Math.random() * 1000,
         )}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80`,
@@ -741,7 +746,7 @@ export default function BatimentDashboard() {
             labels,
             datasets: [
               {
-                label: "Revenue (€)",
+                label: "Revenus (€)",
                 data: revenueData,
                 borderColor: "hsl(210, 100%, 60%)",
                 backgroundColor: gradient,
@@ -754,7 +759,7 @@ export default function BatimentDashboard() {
                 pointHoverRadius: 7,
               },
               {
-                label: "Workers Deployed",
+                label: "Ouvriers déployés",
                 data: workersData,
                 borderColor: "hsl(160, 100%, 40%)",
                 backgroundColor: "hsla(160, 100%, 40%, 0.1)",
@@ -777,7 +782,7 @@ export default function BatimentDashboard() {
                   label: function (context: any) {
                     return context.datasetIndex === 0
                       ? `€${context.raw.toLocaleString()}`
-                      : `${context.raw.toLocaleString()} workers`;
+                      : `${context.raw.toLocaleString()} ouvriers`;
                   },
                 },
               },
@@ -827,7 +832,7 @@ export default function BatimentDashboard() {
             labels,
             datasets: [
               {
-                label: "Revenue by Facility Type (€)",
+                label: "Revenus par type (€)",
                 data,
                 backgroundColor: [
                   "hsla(210, 100%, 60%, 0.8)",
@@ -895,34 +900,36 @@ export default function BatimentDashboard() {
   const batimentFeatures = [
     {
       icon: <Building className="h-8 w-8" />,
-      title: "Construction Database",
+      title: "Base de données Bâtiment",
       description:
-        "Comprehensive database of contractors and construction companies",
+        "Base de données complète d'entrepreneurs et d'entreprises de construction",
     },
     {
       icon: <Briefcase className="h-8 w-8" />,
-      title: "Project Directory",
-      description: "Find contractors by specialization and expertise",
+      title: "Répertoire de projets",
+      description: "Trouvez des entrepreneurs par spécialisation et expertise",
     },
     {
       icon: <Award className="h-8 w-8" />,
       title: "Certifications",
-      description: "Licensed, bonded and insured contractors",
+      description: "Entrepreneurs agréés, cautionnés et assurés",
     },
     {
       icon: <TrendingUp className="h-8 w-8" />,
-      title: "Performance Tracking",
-      description: "Project completion rates and client satisfaction",
+      title: "Suivi de performance",
+      description: "Taux d'achèvement des projets et satisfaction client",
     },
     {
       icon: <Users className="h-8 w-8" />,
-      title: "Workforce Analytics",
-      description: "Real-time workforce deployment metrics",
+      title: "Analytique main-d'œuvre",
+      description:
+        "Indicateurs de déploiement de la main-d'œuvre en temps réel",
     },
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live construction records from Verso Air database",
+      title: "Base de données PostgreSQL",
+      description:
+        "Enregistrements de construction en direct depuis la base Verso Air",
     },
   ];
 
@@ -931,7 +938,11 @@ export default function BatimentDashboard() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Database connected" : "Database offline"}
+        title={
+          databaseConnected
+            ? "Base de données connectée"
+            : "Base de données hors ligne"
+        }
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -958,7 +969,7 @@ export default function BatimentDashboard() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              �️ Construction & Building Intelligence
+              �️ Intelligence Bâtiment & Construction
             </span>
           </motion.div>
 
@@ -968,7 +979,7 @@ export default function BatimentDashboard() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Construction & Building Database
+            Base de données Bâtiment & Construction
           </motion.h1>
 
           <motion.p
@@ -977,8 +988,9 @@ export default function BatimentDashboard() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            construction sites, contractors & building projects
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ chantiers, entrepreneurs & projets
+            de construction
           </motion.p>
 
           {/* Database Stats - SAME COMPONENTS */}
@@ -992,10 +1004,10 @@ export default function BatimentDashboard() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                  <span className="text-sm text-blue-200">Live Database</span>
+                  <span className="text-sm text-blue-200">Base en direct</span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Entrées
                 </div>
               </CardContent>
             </Card>
@@ -1004,11 +1016,11 @@ export default function BatimentDashboard() {
                 <div className="flex items-center gap-[0.5vw]">
                   <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-400" />
                   <span className="text-sm text-teal-200">
-                    Construction Sites
+                    Entreprises bâtiment
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargées
                 </div>
               </CardContent>
             </Card>
@@ -1016,7 +1028,7 @@ export default function BatimentDashboard() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Wrench className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                  <span className="text-sm text-blue-200">Active Workers</span>
+                  <span className="text-sm text-blue-200">Ouvriers actifs</span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {searchResults
@@ -1063,7 +1075,7 @@ export default function BatimentDashboard() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -1086,7 +1098,7 @@ export default function BatimentDashboard() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search hospitals, clinics, specializations, doctors..."
+                  placeholder="Rechercher entreprises de construction, architectes..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
                 />
               </div>
@@ -1096,7 +1108,7 @@ export default function BatimentDashboard() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, region, or location..."
+                  placeholder="Ville, région ou zone de construction..."
                   className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
                 />
               </div>
@@ -1113,7 +1125,7 @@ export default function BatimentDashboard() {
                   className="border-blue-600 hover:bg-blue-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -1123,7 +1135,7 @@ export default function BatimentDashboard() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -1138,7 +1150,7 @@ export default function BatimentDashboard() {
                       <span className="text-sm">
                         {sortOptions.find(
                           (o) => o.value === activeFilters.sort_by,
-                        )?.label || "Sort by"}
+                        )?.label || "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
@@ -1173,7 +1185,7 @@ export default function BatimentDashboard() {
                 </DropdownMenu>
 
                 <div className="text-sm text-blue-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -1189,7 +1201,7 @@ export default function BatimentDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Facility Type
+                      Type de bâtiment
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1200,7 +1212,7 @@ export default function BatimentDashboard() {
                           <span className="text-sm">
                             {categoryOptions.find(
                               (c) => c.value === activeFilters.category,
-                            )?.label || "All Types"}
+                            )?.label || "Tous les types"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1242,7 +1254,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Specialization
+                      Spécialisation
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1253,7 +1265,7 @@ export default function BatimentDashboard() {
                           <span className="text-sm">
                             {specializationOptions.find(
                               (s) => s.value === activeFilters.specialization,
-                            )?.label || "Any Specialization"}
+                            )?.label || "Toutes les spécialisations"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1295,7 +1307,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -1316,7 +1328,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Min Doctors
+                      Min. employés
                     </Label>
                     <Input
                       type="number"
@@ -1334,7 +1346,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Min Beds
+                      Min. projets
                     </Label>
                     <Input
                       type="number"
@@ -1352,7 +1364,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Min Revenue
+                      CA minimum
                     </Label>
                     <Input
                       type="number"
@@ -1370,7 +1382,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1381,7 +1393,7 @@ export default function BatimentDashboard() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tous les statuts"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1423,7 +1435,7 @@ export default function BatimentDashboard() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-blue-300">
-                      Amenities
+                      Équipements
                     </Label>
                     <Input
                       type="text"
@@ -1434,7 +1446,7 @@ export default function BatimentDashboard() {
                           amenities: e.target.value,
                         })
                       }
-                      placeholder="Emergency, Pharmacy, ICU..."
+                      placeholder="Gestion de site, Équipement lourd..."
                       className="bg-slate-700 border-blue-600"
                     />
                   </div>
@@ -1445,13 +1457,13 @@ export default function BatimentDashboard() {
                       onClick={clearAllFilters}
                       className="border-blue-600 hover:bg-blue-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1486,7 +1498,7 @@ export default function BatimentDashboard() {
                   ease: "easeOut",
                 }}
                 onClick={() => setActiveTab(tab)}
-                className={`relative capitalize whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 flex items-center ${
+                className={`relative whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 flex items-center ${
                   activeTab === tab
                     ? "text-white"
                     : "text-blue-300 hover:text-white hover:bg-white/5"
@@ -1515,7 +1527,16 @@ export default function BatimentDashboard() {
                   {tab === "database" && (
                     <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />
                   )}
-                  {tab}
+                  {(
+                    {
+                      analytics: "Analytique",
+                      facilities: "Entreprises",
+                      patients: "Projets",
+                      resources: "Ressources",
+                      database: "Base de données",
+                      history: "Historique",
+                    } as Record<string, string>
+                  )[tab] || tab}
                 </span>
               </motion.button>
             ))}
@@ -1531,14 +1552,14 @@ export default function BatimentDashboard() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-blue-400" />
                     <span className="bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-blue-300">
                     {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
+                      ? "✅ Données PostgreSQL en direct"
+                      : "✅ Données réelles"}
                   </div>
                 </div>
 
@@ -1557,10 +1578,10 @@ export default function BatimentDashboard() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
-                              Loading construction contractors...
+                              Chargement des entreprises de construction...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-blue-400" />
@@ -1579,9 +1600,11 @@ export default function BatimentDashboard() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
                         </div>
@@ -1601,10 +1624,10 @@ export default function BatimentDashboard() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-blue-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching construction data...
+                              Récupération des entreprises de construction...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1617,7 +1640,7 @@ export default function BatimentDashboard() {
                               onSelect={handleFacilitySelect}
                               sectorIcon={Hammer}
                               sectorLabel={(b) =>
-                                `${(b as any).project_count || 0} Projects`
+                                `${(b as any).project_count || 0} Projets`
                               }
                             />
                           ))
@@ -1625,16 +1648,16 @@ export default function BatimentDashboard() {
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Construction Contractors Found
+                              Aucune entreprise trouvée
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1656,10 +1679,10 @@ export default function BatimentDashboard() {
                           className="border-blue-600 hover:bg-blue-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-blue-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1672,7 +1695,7 @@ export default function BatimentDashboard() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-blue-600 hover:bg-blue-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1688,7 +1711,7 @@ export default function BatimentDashboard() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
-              Construction Analytics Dashboard
+              Analytique bâtiment
             </h2>
 
             {/* Summary Cards - SAME COMPONENTS */}
@@ -1700,7 +1723,7 @@ export default function BatimentDashboard() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1716,21 +1739,21 @@ export default function BatimentDashboard() {
                 icon={<DollarSign className="h-5 w-5" />}
               />
               <AnalyticsCard
-                title="Project Completion Rate"
+                title="Taux d'achèvement des projets"
                 value={
                   analytics ? `${analytics.project_completion_rate}%` : "85%"
                 }
                 change={
                   analytics
                     ? `+${Math.round((analytics.project_completion_rate || 0) / 10)}%`
-                    : "+8% from last month"
+                    : "+8% par rapport au mois dernier"
                 }
                 trend="up"
                 color="teal"
                 icon={<CheckCircle className="h-5 w-5" />}
               />
               <AnalyticsCard
-                title="Client Satisfaction"
+                title="Satisfaction client"
                 value={
                   analytics ? `${analytics.client_satisfaction}/5` : "4.6/5"
                 }
@@ -1739,14 +1762,14 @@ export default function BatimentDashboard() {
                     ? `+${Math.round(
                         (analytics.client_satisfaction || 0) * 2,
                       )}%`
-                    : "+5% from last month"
+                    : "+5% par rapport au mois dernier"
                 }
                 trend="up"
                 color="green"
                 icon={<Star className="h-5 w-5" />}
               />
               <AnalyticsCard
-                title="Avg Project Value"
+                title="Valeur moyenne projet"
                 value={
                   analytics
                     ? `€${Math.round((analytics.average_project_value || 0) / 1000)}K`
@@ -1757,7 +1780,7 @@ export default function BatimentDashboard() {
                     ? `+${Math.round(
                         (analytics.average_project_value || 0) / 10000,
                       )}%`
-                    : "+12% from last month"
+                    : "+12% par rapport au mois dernier"
                 }
                 trend="up"
                 color="indigo"
@@ -1771,7 +1794,7 @@ export default function BatimentDashboard() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Patient Trends
+                      Tendances revenus & projets
                     </h3>
                     <Calendar className="h-5 w-5 text-blue-400" />
                   </div>
@@ -1784,7 +1807,7 @@ export default function BatimentDashboard() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Facility Type
+                    Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1798,7 +1821,7 @@ export default function BatimentDashboard() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Facility Types
+                    Meilleures catégories
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1812,7 +1835,7 @@ export default function BatimentDashboard() {
                           </span>
                           <span className="text-sm text-green-400">
                             {category.project_count?.toLocaleString() || "0"}{" "}
-                            projects
+                            projets
                           </span>
                         </div>
                         <span className="font-semibold text-blue-300">
@@ -1823,27 +1846,27 @@ export default function BatimentDashboard() {
                       <>
                         {[
                           {
-                            category: "General Hospitals",
+                            category: "Construction générale",
                             revenue: 1254000,
                             patient_count: 12500,
                           },
                           {
-                            category: "Specialty Clinics",
+                            category: "Services électriques",
                             revenue: 892000,
                             patient_count: 8900,
                           },
                           {
-                            category: "Diagnostic Centers",
+                            category: "Plomberie",
                             revenue: 568000,
                             patient_count: 6500,
                           },
                           {
-                            category: "Dental Clinics",
+                            category: "Architecture",
                             revenue: 423000,
                             patient_count: 5200,
                           },
                           {
-                            category: "Rehabilitation",
+                            category: "Toiture",
                             revenue: 287000,
                             patient_count: 3400,
                           },
@@ -1857,7 +1880,7 @@ export default function BatimentDashboard() {
                                 {item.category}
                               </span>
                               <span className="text-sm text-green-400">
-                                {item.patient_count.toLocaleString()} patients
+                                {item.patient_count.toLocaleString()} projets
                               </span>
                             </div>
                             <span className="font-semibold text-blue-300">
@@ -1874,7 +1897,7 @@ export default function BatimentDashboard() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Patients by Region
+                    Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
@@ -1893,7 +1916,7 @@ export default function BatimentDashboard() {
                         />
                         <div className="text-right text-sm text-blue-400 mt-1">
                           {region.percentage || 0}% •{" "}
-                          {region.contractor_count || 0} contractors
+                          {region.contractor_count || 0} entrepreneurs
                         </div>
                       </div>
                     )) || (
@@ -1939,7 +1962,7 @@ export default function BatimentDashboard() {
                             />
                             <div className="text-right text-sm text-blue-400 mt-1">
                               {region.percentage}% • {region.facility_count}{" "}
-                              facilities
+                              entreprises
                             </div>
                           </div>
                         ))}
@@ -1952,12 +1975,12 @@ export default function BatimentDashboard() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Performance Metrics
+                    Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
                     {[
                       {
-                        metric: "Avg Project Value",
+                        metric: "Valeur moyenne projet",
                         value: analytics
                           ? `€${Math.round(
                               (analytics.average_project_value || 0) / 1000,
@@ -1966,7 +1989,7 @@ export default function BatimentDashboard() {
                         change: "+8%",
                       },
                       {
-                        metric: "Client Satisfaction",
+                        metric: "Satisfaction client",
                         value: analytics
                           ? `${Math.round(
                               (analytics.client_satisfaction || 0) * 20,
@@ -1975,13 +1998,13 @@ export default function BatimentDashboard() {
                         change: "+5%",
                       },
                       {
-                        metric: "Worker to Project Ratio",
+                        metric: "Ratio ouvriers/projet",
                         value: "1:8",
                         change: "Stable",
                       },
                       {
-                        metric: "Avg Completion Time",
-                        value: "12 weeks",
+                        metric: "Durée moyenne d'achèvement",
+                        value: "12 semaines",
                         change: "-15%",
                       },
                     ].map((item, index) => (
@@ -2019,45 +2042,46 @@ export default function BatimentDashboard() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Users className="h-6 w-6" />
-              Patient Analytics
+              Analytique projets
             </h2>
             <p className="text-gray-300 mb-6">
-              Project statistics and construction performance metrics.
+              Statistiques de projets et indicateurs de performance du secteur
+              bâtiment.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
-                  title: "Total Patients",
+                  title: "Total projets",
                   value: "28,500",
                   change: "+12%",
                   icon: <Users className="h-5 w-5" />,
                 },
                 {
-                  title: "Active Projects",
+                  title: "Projets actifs",
                   value: "3,850",
                   change: "+8%",
                   icon: <Wrench className="h-5 w-5" />,
                 },
                 {
-                  title: "Avg Wait Time",
+                  title: "Délai moyen",
                   value: "18 min",
                   change: "-15%",
                   icon: <Clock className="h-5 w-5" />,
                 },
                 {
-                  title: "Readmission Rate",
+                  title: "Taux de reprise",
                   value: "7.8%",
                   change: "-3%",
                   icon: <RefreshCw className="h-5 w-5" />,
                 },
                 {
-                  title: "Patient Satisfaction",
+                  title: "Satisfaction client",
                   value: "94%",
                   change: "+5%",
                   icon: <Heart className="h-5 w-5" />,
                 },
                 {
-                  title: "Insurance Coverage",
+                  title: "Couverture assurance",
                   value: "82%",
                   change: "+4%",
                   icon: <Shield className="h-5 w-5" />,
@@ -2101,45 +2125,45 @@ export default function BatimentDashboard() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Activity className="h-6 w-6" />
-              Medical Resources
+              Ressources & Équipements
             </h2>
             <p className="text-gray-300 mb-6">
-              Medical equipment, staff, and resource management.
+              Gestion des équipements, du personnel et des ressources.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
                 {
-                  title: "Active Workers",
+                  title: "Ouvriers actifs",
                   value: "1,450",
-                  status: "Available",
+                  status: "Disponible",
                   icon: <Wrench className="h-5 w-5" />,
                 },
                 {
-                  title: "Available Beds",
+                  title: "Équipements disponibles",
                   value: "4,250",
-                  status: "Sufficient",
+                  status: "Suffisant",
                   icon: <Hammer className="h-5 w-5" />,
                 },
                 {
-                  title: "Medication Stock",
+                  title: "Stock matériaux",
                   value: "95%",
-                  status: "Good",
+                  status: "Bon",
                   icon: <Pill className="h-5 w-5" />,
                 },
                 {
-                  title: "Equipment Status",
+                  title: "État des machines",
                   value: "92%",
-                  status: "Operational",
+                  status: "Opérationnel",
                   icon: <SquareActivity className="h-5 w-5" />,
                 },
                 {
-                  title: "Staff Satisfaction",
+                  title: "Satisfaction du personnel",
                   value: "88%",
-                  status: "Good",
+                  status: "Bon",
                   icon: <UserCheck className="h-5 w-5" />,
                 },
                 {
-                  title: "Emergency Ready",
+                  title: "Prêt d'urgence",
                   value: "98%",
                   status: "Excellent",
                   icon: <AlertCircle className="h-5 w-5" />,
@@ -2158,7 +2182,7 @@ export default function BatimentDashboard() {
                         className={`text-sm ${
                           resource.status === "Excellent"
                             ? "text-green-400"
-                            : resource.status === "Good"
+                            : resource.status === "Bon"
                               ? "text-blue-400"
                               : "text-yellow-400"
                         }`}
@@ -2183,17 +2207,17 @@ export default function BatimentDashboard() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-blue-300">
-                      Total Construction Records
+                      Total enregistrements bâtiment
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -2201,14 +2225,16 @@ export default function BatimentDashboard() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-blue-300">
-                      Active Hospitals & Clinics
+                      Entreprises bâtiment actives
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Total Beds Available</span>
+                    <span className="text-blue-300">
+                      Total projets réalisés
+                    </span>
                     <span className="font-semibold text-white">
                       {searchResults
                         .reduce((acc, f) => acc + (f.project_count || 0), 0)
@@ -2216,17 +2242,17 @@ export default function BatimentDashboard() {
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Database Status</span>
+                    <span className="text-blue-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">API Endpoint</span>
+                    <span className="text-blue-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-blue-400">
                       {API_BASE_URL}
                     </span>
@@ -2235,7 +2261,7 @@ export default function BatimentDashboard() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -2244,21 +2270,21 @@ export default function BatimentDashboard() {
                     }
                     className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => handleSearch(1)}
                     variant="outline"
                     className="w-full border-blue-500 text-blue-400 hover:bg-blue-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                   <Button
                     onClick={() => fetchFacilities()}
                     variant="outline"
                     className="w-full border-teal-500 text-teal-400 hover:bg-teal-500/10"
                   >
-                    Load More Facilities
+                    Charger plus de résultats
                   </Button>
                 </div>
               </div>
@@ -2272,7 +2298,7 @@ export default function BatimentDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold text-blue-300 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Browsing History
+                Historique de navigation
               </h2>
               {user && history.length > 0 && (
                 <button
@@ -2280,7 +2306,7 @@ export default function BatimentDashboard() {
                   className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Clear all
+                  Tout effacer
                 </button>
               )}
             </div>
@@ -2290,14 +2316,15 @@ export default function BatimentDashboard() {
               <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
                 <LogIn className="h-12 w-12 text-blue-400/60" />
                 <p className="text-blue-200 text-sm max-w-xs">
-                  Sign in to track which contractors and projects you've viewed.
-                  Your history syncs across all your devices.
+                  Connectez-vous pour suivre les entrepreneurs et projets
+                  consultés. Votre historique se synchronise sur tous vos
+                  appareils.
                 </p>
                 <a
                   href="/auth/signin"
                   className="mt-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all"
                 >
-                  Sign in
+                  Se connecter
                 </a>
               </div>
             )}
@@ -2306,7 +2333,7 @@ export default function BatimentDashboard() {
             {user && historyLoading && (
               <div className="flex items-center justify-center py-16 gap-3 text-blue-300">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm">Loading history…</span>
+                <span className="text-sm">Chargement de l'historique…</span>
               </div>
             )}
 
@@ -2315,7 +2342,8 @@ export default function BatimentDashboard() {
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
                 <Clock className="h-10 w-10 text-blue-400/40" />
                 <p className="text-blue-200/60 text-sm">
-                  No history yet. Click on a contractor card to start tracking.
+                  Aucun historique. Cliquez sur une fiche entrepreneur pour
+                  commencer.
                 </p>
               </div>
             )}
@@ -2334,7 +2362,7 @@ export default function BatimentDashboard() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-white text-sm font-medium truncate">
-                          {entry.businessName ?? "Unknown business"}
+                          {entry.businessName ?? "Entreprise inconnue"}
                         </p>
                         <p className="text-blue-300/70 text-xs flex items-center gap-1.5">
                           <span className="capitalize px-1.5 py-0.5 bg-blue-500/20 rounded text-[10px] font-medium">
@@ -2361,7 +2389,7 @@ export default function BatimentDashboard() {
                     <button
                       onClick={() => deleteHistoryEntry(entry.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400/70 hover:text-red-400 p-1.5 rounded"
-                      title="Remove entry"
+                      title="Supprimer l'entrée"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -2377,7 +2405,7 @@ export default function BatimentDashboard() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500 bg-clip-text text-transparent">
-            Construction Intelligence Platform
+            Plateforme d'intelligence Bâtiment
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -2457,7 +2485,7 @@ export default function BatimentDashboard() {
                           {selectedFacility.rating?.toFixed(1) || "4.5"}
                         </span>
                         <span className="text-gray-400 text-xs ml-1">
-                          ({selectedFacility.reviews || 0} reviews)
+                          ({selectedFacility.reviews || 0} avis)
                         </span>
                       </div>
                     </div>
@@ -2478,7 +2506,7 @@ export default function BatimentDashboard() {
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">
-                          Annual Revenue
+                          Chiffre d'affaires annuel
                         </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedFacility.revenue.toLocaleString()}
@@ -2490,7 +2518,7 @@ export default function BatimentDashboard() {
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">
-                          Completed Projects
+                          Projets réalisés
                         </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedFacility.project_count}
@@ -2501,9 +2529,7 @@ export default function BatimentDashboard() {
                   {selectedFacility.workers_count && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
-                          Workers Employed
-                        </div>
+                        <div className="text-sm text-gray-400">Employés</div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedFacility.workers_count}+
                         </div>
@@ -2514,10 +2540,10 @@ export default function BatimentDashboard() {
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
                         <div className="text-sm text-gray-400">
-                          Equipment Available
+                          Équipement disponible
                         </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-400">
-                          Yes
+                          Oui
                         </div>
                       </CardContent>
                     </Card>
@@ -2526,15 +2552,15 @@ export default function BatimentDashboard() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedFacility.phone || "Not specified"}
+                        {selectedFacility.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
+                      <div className="text-sm text-gray-400">E-mail</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedFacility.email || "Not specified"}
+                        {selectedFacility.email || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
@@ -2544,7 +2570,7 @@ export default function BatimentDashboard() {
                   selectedFacility.specialization.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Specializations
+                        Spécialisations
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedFacility.specialization.map((spec, index) => (
@@ -2564,7 +2590,7 @@ export default function BatimentDashboard() {
                   selectedFacility.amenities.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Services & Amenities
+                        Services & Équipements
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {selectedFacility.amenities.map((amenity, index) => (
@@ -2582,14 +2608,14 @@ export default function BatimentDashboard() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                    Contact Facility
+                    Contacter l'entreprise
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowFacilityDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

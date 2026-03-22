@@ -196,21 +196,21 @@ async function testDatabaseConnection(): Promise<{
 
 // Filter options - SIMILAR TO HOSPITALITY
 const categoryOptions = [
-  { value: "music", label: "Music Production" },
-  { value: "film", label: "Film & TV Production" },
-  { value: "event", label: "Event Management" },
-  { value: "theater", label: "Theater & Performing Arts" },
-  { value: "gaming", label: "Gaming & eSports" },
+  { value: "music", label: "Production musicale" },
+  { value: "film", label: "Production cinéma & TV" },
+  { value: "event", label: "Gestion d'événements" },
+  { value: "theater", label: "Théâtre & Arts de la scène" },
+  { value: "gaming", label: "Jeux vidéo & eSports" },
   { value: "art", label: "Art & Culture" },
-  { value: "broadcasting", label: "Broadcasting" },
-  { value: "digital", label: "Digital Media" },
+  { value: "broadcasting", label: "Diffusion" },
+  { value: "digital", label: "Médias numériques" },
 ];
 
 const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "popular", label: "Popular" },
+  { value: "active", label: "Actif" },
+  { value: "popular", label: "Populaire" },
   { value: "premium", label: "Premium" },
-  { value: "inactive", label: "Inactive" },
+  { value: "inactive", label: "Inactif" },
 ];
 
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
@@ -566,33 +566,33 @@ export default function Entertainment() {
   const entertainmentFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live entertainment records from Verso Air database",
+      title: "Base de données PostgreSQL",
+      description: "Données divertissement en direct depuis la base Verso Air",
     },
     {
       icon: <Music className="h-8 w-8" />,
-      title: "Music Production",
-      description: "Recording studios, artists, and music labels",
+      title: "Production musicale",
+      description: "Studios d'enregistrement, artistes et labels",
     },
     {
       icon: <Film className="h-8 w-8" />,
-      title: "Film & TV",
-      description: "Production companies and streaming services",
+      title: "Cinéma & TV",
+      description: "Sociétés de production et services de streaming",
     },
     {
       icon: <Ticket className="h-8 w-8" />,
-      title: "Live Events",
-      description: "Concerts, festivals, and cultural events",
+      title: "Événements en direct",
+      description: "Concerts, festivals et événements culturels",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Reach",
-      description: "Entertainment businesses in 50+ countries",
+      title: "Portée mondiale",
+      description: "Entreprises de divertissement dans plus de 50 pays",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time performance monitoring",
+      title: "Analytique en direct",
+      description: "Surveillance des performances en temps réel",
     },
   ];
 
@@ -629,7 +629,7 @@ export default function Entertainment() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              🎬 Entertainment Intelligence
+              🎬 Intelligence Divertissement
             </span>
           </motion.div>
 
@@ -639,7 +639,7 @@ export default function Entertainment() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Entertainment Business Database
+            Base de données Divertissement
           </motion.h1>
 
           <motion.p
@@ -648,8 +648,9 @@ export default function Entertainment() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            music, film, and entertainment businesses
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ entreprises musique, cinéma et
+            divertissement
           </motion.p>
 
           {/* Database Stats */}
@@ -663,10 +664,12 @@ export default function Entertainment() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                  <span className="text-sm text-purple-200">Live Database</span>
+                  <span className="text-sm text-purple-200">
+                    Base en direct
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Entrées
                 </div>
               </CardContent>
             </Card>
@@ -675,11 +678,11 @@ export default function Entertainment() {
                 <div className="flex items-center gap-[0.5vw]">
                   <Music className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
                   <span className="text-sm text-pink-200">
-                    Music & Film Businesses
+                    Entreprises musique & cinéma
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargées
                 </div>
               </CardContent>
             </Card>
@@ -720,7 +723,7 @@ export default function Entertainment() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -743,7 +746,7 @@ export default function Entertainment() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search music labels, film studios, event venues..."
+                  placeholder="Rechercher labels musicaux, studios de cinéma, salles..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -753,7 +756,7 @@ export default function Entertainment() {
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="City, region, or entertainment district..."
+                  placeholder="Ville, région ou quartier de divertissement..."
                   className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
                 />
               </div>
@@ -770,7 +773,7 @@ export default function Entertainment() {
                   className="border-purple-600 hover:bg-purple-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -780,7 +783,7 @@ export default function Entertainment() {
                     id="auto-refresh"
                   />
                   <Label htmlFor="auto-refresh" className="text-sm">
-                    Auto-refresh
+                    Actualisation auto
                   </Label>
                 </div>
               </div>
@@ -794,24 +797,24 @@ export default function Entertainment() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc"
-                          ? "Highest Rating"
+                          ? "Meilleure note"
                           : activeFilters.sort_by === "revenue_desc"
-                            ? "Highest Revenue"
+                            ? "Chiffre d'affaires"
                             : activeFilters.sort_by === "streams_desc"
-                              ? "Most Streams"
+                              ? "Plus d'écoutes"
                               : activeFilters.sort_by === "name_asc"
-                                ? "Name A-Z"
-                                : "Sort by"}
+                                ? "Nom A-Z"
+                                : "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[200px]">
                     {[
-                      { value: "rating_desc", label: "Highest Rating" },
-                      { value: "revenue_desc", label: "Highest Revenue" },
-                      { value: "streams_desc", label: "Most Streams" },
-                      { value: "name_asc", label: "Name A-Z" },
+                      { value: "rating_desc", label: "Meilleure note" },
+                      { value: "revenue_desc", label: "Chiffre d'affaires" },
+                      { value: "streams_desc", label: "Plus d'écoutes" },
+                      { value: "name_asc", label: "Nom A-Z" },
                     ].map((option) => (
                       <DropdownMenuItem
                         key={option.value}
@@ -841,7 +844,7 @@ export default function Entertainment() {
                 </DropdownMenu>
 
                 <div className="text-sm text-purple-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -857,7 +860,7 @@ export default function Entertainment() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Category
+                      Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -868,7 +871,7 @@ export default function Entertainment() {
                           <span className="text-sm">
                             {categoryOptions.find(
                               (c) => c.value === activeFilters.category,
-                            )?.label || "All Categories"}
+                            )?.label || "Toutes les catégories"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -910,7 +913,7 @@ export default function Entertainment() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Rating
+                      Note minimum
                     </Label>
                     <Input
                       type="number"
@@ -931,7 +934,7 @@ export default function Entertainment() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Min Revenue
+                      CA minimum
                     </Label>
                     <Input
                       type="number"
@@ -949,7 +952,7 @@ export default function Entertainment() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -960,7 +963,7 @@ export default function Entertainment() {
                           <span className="text-sm">
                             {statusOptions.find(
                               (s) => s.value === activeFilters.status,
-                            )?.label || "Any Status"}
+                            )?.label || "Tous les statuts"}
                           </span>
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
@@ -1006,13 +1009,13 @@ export default function Entertainment() {
                       onClick={clearAllFilters}
                       className="border-purple-600 hover:bg-purple-800"
                     >
-                      Clear All
+                      Tout effacer
                     </Button>
                     <Button
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
-                      Apply Filters
+                      Appliquer les filtres
                     </Button>
                   </div>
                 </div>
@@ -1074,14 +1077,14 @@ export default function Entertainment() {
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
                     <Database className="h-6 w-6 text-purple-400" />
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Database Results ({searchResults.length} of{" "}
+                      Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
                     {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
+                      ? "✅ Données PostgreSQL en direct"
+                      : "✅ Données réelles"}
                   </div>
                 </div>
 
@@ -1100,10 +1103,10 @@ export default function Entertainment() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Loading entertainment businesses...
+                              Chargement des entreprises de divertissement...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-purple-400" />
@@ -1122,9 +1125,11 @@ export default function Entertainment() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-purple-400 animate-spin" />
                         </div>
@@ -1144,10 +1149,10 @@ export default function Entertainment() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching entertainment businesses...
+                              Récupération des entreprises de divertissement...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1159,23 +1164,23 @@ export default function Entertainment() {
                               theme="pink"
                               onSelect={handleBusinessSelect}
                               sectorIcon={Music}
-                              sectorLabel="Entertainment"
+                              sectorLabel="Divertissement"
                             />
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Businesses Found
+                              Aucune entreprise trouvée
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                             >
-                              Reset Search
+                              Réinitialiser la recherche
                             </Button>
                           </div>
                         )}
@@ -1197,10 +1202,10 @@ export default function Entertainment() {
                           className="border-purple-600 hover:bg-purple-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-purple-400 text-[clamp(0.7rem,1vw,0.875rem)]">
-                          Page {currentPage} of {Math.ceil(totalResults / 9)}
+                          Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
                           variant="outline"
@@ -1213,7 +1218,7 @@ export default function Entertainment() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-purple-600 hover:bg-purple-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1229,7 +1234,7 @@ export default function Entertainment() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
-              Entertainment Analytics
+              Analytique divertissement
             </h2>
 
             {/* Summary Cards */}
@@ -1241,44 +1246,44 @@ export default function Entertainment() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[1vw] mb-[1.5vw]"
             >
               <AnalyticsCard
-                title="Event Attendance Rate"
+                title="Taux de fréquentation"
                 value={analytics ? `${analytics.occupancy_rate}%` : "78%"}
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+22% from last month"
+                    : "+22% par rapport au mois dernier"
                 }
                 trend="up"
                 color="purple"
               />
               <AnalyticsCard
-                title="Avg Ticket Price"
+                title="Prix moyen billet"
                 value={analytics ? `€${analytics.average_daily_rate}` : "€85"}
                 change={
                   analytics
                     ? `+${Math.round(
                         (analytics.average_daily_rate || 0) / 10,
                       )}%`
-                    : "+15% from last month"
+                    : "+15% par rapport au mois dernier"
                 }
                 trend="up"
                 color="pink"
               />
               <AnalyticsCard
-                title="Audience Satisfaction"
+                title="Satisfaction du public"
                 value={
                   analytics ? `${analytics.guest_satisfaction}/10` : "4.7/5"
                 }
                 change={
                   analytics
                     ? `+${analytics.guest_satisfaction * 0.1 || 5}%`
-                    : "+5% from last month"
+                    : "+5% par rapport au mois dernier"
                 }
                 trend="up"
                 color="blue"
               />
               <AnalyticsCard
-                title="Total Revenue"
+                title="Chiffre d'affaires total"
                 value={
                   analytics
                     ? `€${(analytics.total_revenue || 0).toLocaleString()}`
@@ -1287,7 +1292,7 @@ export default function Entertainment() {
                 change={
                   analytics
                     ? `+${analytics.year_over_year_growth || 0}% YoY`
-                    : "+25% from last month"
+                    : "+25% par rapport au mois dernier"
                 }
                 trend="up"
                 color="orange"
@@ -1300,7 +1305,7 @@ export default function Entertainment() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Events Trends
+                      Tendances revenus & événements
                     </h3>
                     <Calendar className="h-5 w-5 text-purple-400" />
                   </div>
@@ -1313,7 +1318,7 @@ export default function Entertainment() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Category
+                    Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1327,7 +1332,7 @@ export default function Entertainment() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Categories
+                    Meilleures catégories
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1351,27 +1356,27 @@ export default function Entertainment() {
                       <>
                         {[
                           {
-                            category: "Music Production",
+                            category: "Production musicale",
                             revenue: 35400,
                             occupancy: 85,
                           },
                           {
-                            category: "Film & TV",
+                            category: "Cinéma & TV",
                             revenue: 28900,
                             occupancy: 78,
                           },
                           {
-                            category: "Live Events",
+                            category: "Événements en direct",
                             revenue: 18600,
                             occupancy: 72,
                           },
                           {
-                            category: "Gaming & eSports",
+                            category: "Jeux vidéo & eSports",
                             revenue: 14300,
                             occupancy: 68,
                           },
                           {
-                            category: "Digital Media",
+                            category: "Médias numériques",
                             revenue: 9700,
                             occupancy: 65,
                           },
@@ -1402,7 +1407,7 @@ export default function Entertainment() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Sales by Region
+                    Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
@@ -1427,17 +1432,17 @@ export default function Entertainment() {
                       <>
                         {[
                           {
-                            region: "North America",
+                            region: "Amérique du Nord",
                             revenue: 485200,
                             percentage: 41,
                           },
                           { region: "Europe", revenue: 363400, percentage: 32 },
                           {
-                            region: "Asia Pacific",
+                            region: "Asie-Pacifique",
                             revenue: 232100,
                             percentage: 18,
                           },
-                          { region: "Africa", revenue: 119300, percentage: 9 },
+                          { region: "Afrique", revenue: 119300, percentage: 9 },
                         ].map((region, index) => (
                           <div key={index}>
                             <div className="flex justify-between items-center mb-1">
@@ -1466,31 +1471,31 @@ export default function Entertainment() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Performance Metrics
+                    Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
                     {[
                       {
-                        metric: "Event Fill Rate",
+                        metric: "Taux de remplissage",
                         value: analytics
                           ? `${analytics.occupancy_rate}%`
                           : "78%",
                         change: "+22%",
                       },
                       {
-                        metric: "Avg Ticket Price",
+                        metric: "Prix moyen billet",
                         value: analytics
                           ? `€${analytics.average_daily_rate}`
                           : "€85",
                         change: "+15%",
                       },
                       {
-                        metric: "Stream Count",
+                        metric: "Nombre d'écoutes",
                         value: "105M",
                         change: "+35%",
                       },
                       {
-                        metric: "Audience Score",
+                        metric: "Score public",
                         value: analytics
                           ? `${analytics.guest_satisfaction}/10`
                           : "4.7/5",
@@ -1529,19 +1534,19 @@ export default function Entertainment() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de bord financier
             </h2>
             <p className="text-gray-300 mb-6">
-              Financial analytics and performance metrics for entertainment
-              sector.
+              Analytique financière et indicateurs de performance du secteur
+              divertissement.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Ticket Revenue", value: "€45M", change: "+22%" },
-                { title: "Streaming Revenue", value: "€28M", change: "+35%" },
-                { title: "Sponsorship", value: "€12M", change: "+18%" },
-                { title: "Production Costs", value: "€32M", change: "+12%" },
-                { title: "Profit Margin", value: "32%", change: "+4%" },
+                { title: "Revenus billetterie", value: "€45M", change: "+22%" },
+                { title: "Revenus streaming", value: "€28M", change: "+35%" },
+                { title: "Parrainage", value: "€12M", change: "+18%" },
+                { title: "Coûts de production", value: "€32M", change: "+12%" },
+                { title: "Marge bénéficiaire", value: "32%", change: "+4%" },
                 { title: "ROI", value: "28%", change: "+6%" },
               ].map((metric, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1553,7 +1558,7 @@ export default function Entertainment() {
                       {metric.value}
                     </div>
                     <div className="text-green-400 text-sm">
-                      {metric.change} from last month
+                      {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
                 </Card>
@@ -1566,23 +1571,23 @@ export default function Entertainment() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
-              Advertising & Promotions
+              Publicité & Promotions
             </h2>
             <p className="text-gray-300 mb-6">
-              Manage campaigns and promotional activities for entertainment
-              businesses.
+              Gérez les campagnes et activités promotionnelles pour les
+              entreprises de divertissement.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
-                { title: "Active Campaigns", value: "18", status: "Running" },
-                { title: "Total Budget", value: "€120K", status: "Allocated" },
-                { title: "Engagement Rate", value: "6.8%", status: "High" },
+                { title: "Campagnes actives", value: "18", status: "En cours" },
+                { title: "Budget total", value: "€120K", status: "Alloué" },
+                { title: "Taux d'engagement", value: "6.8%", status: "Élevé" },
                 {
-                  title: "Click-through Rate",
+                  title: "Taux de clic",
                   value: "3.2%",
-                  status: "Average",
+                  status: "Moyen",
                 },
-                { title: "Conversion Rate", value: "2.8%", status: "Good" },
+                { title: "Taux de conversion", value: "2.8%", status: "Bon" },
                 { title: "ROAS", value: "4.2x", status: "Excellent" },
               ].map((ad, index) => (
                 <Card key={index} className="bg-white/5 border-white/10">
@@ -1597,9 +1602,9 @@ export default function Entertainment() {
                       className={`text-sm ${
                         ad.status === "Excellent"
                           ? "text-green-400"
-                          : ad.status === "Good"
+                          : ad.status === "Bon"
                             ? "text-blue-400"
-                            : ad.status === "Average"
+                            : ad.status === "Moyen"
                               ? "text-yellow-400"
                               : "text-purple-400"
                       }`}
@@ -1617,17 +1622,17 @@ export default function Entertainment() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion base de données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Database Stats
+                  Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Total Entertainment Records
+                      Total enregistrements divertissement
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -1635,24 +1640,24 @@ export default function Entertainment() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-purple-300">
-                      Active Music & Film Businesses
+                      Entreprises musique & cinéma actives
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Database Status</span>
+                    <span className="text-purple-300">Statut de la base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">API Endpoint</span>
+                    <span className="text-purple-300">Point d'accès API</span>
                     <span className="font-mono text-sm text-purple-400">
                       {API_BASE_URL}
                     </span>
@@ -1661,7 +1666,7 @@ export default function Entertainment() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
-                  Quick Actions
+                  Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1670,7 +1675,7 @@ export default function Entertainment() {
                     }
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
-                    Test Database Connection
+                    Tester la connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1679,7 +1684,7 @@ export default function Entertainment() {
                     variant="outline"
                     className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10"
                   >
-                    Refresh Data
+                    Actualiser les données
                   </Button>
                 </div>
               </div>
@@ -1692,7 +1697,7 @@ export default function Entertainment() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-            Verso Air Entertainment Network
+            Réseau Divertissement Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -1789,7 +1794,9 @@ export default function Entertainment() {
                   {selectedBusiness.revenue && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Revenue</div>
+                        <div className="text-sm text-gray-400">
+                          Chiffre d'affaires
+                        </div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
@@ -1799,7 +1806,7 @@ export default function Entertainment() {
                   {selectedBusiness.employees && (
                     <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employees</div>
+                        <div className="text-sm text-gray-400">Employés</div>
                         <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                           {selectedBusiness.employees}+
                         </div>
@@ -1810,15 +1817,15 @@ export default function Entertainment() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Contact</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedBusiness.phone || "Not specified"}
+                        {selectedBusiness.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
+                      <div className="text-sm text-gray-400">E-mail</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedBusiness.email || "Not specified"}
+                        {selectedBusiness.email || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
@@ -1828,7 +1835,7 @@ export default function Entertainment() {
                   (selectedBusiness as any).artists.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Featured Artists
+                        Artistes vedettes
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {(selectedBusiness as any).artists.map(
@@ -1850,7 +1857,7 @@ export default function Entertainment() {
                   (selectedBusiness as any).genres.length > 0 && (
                     <div>
                       <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
-                        Music Genres
+                        Genres musicaux
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
                         {(selectedBusiness as any).genres.map(
@@ -1870,14 +1877,14 @@ export default function Entertainment() {
 
                 <div className="flex gap-[1vw] pt-6 border-t border-slate-700">
                   <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    Contact Business
+                    Contacter l'entreprise
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-600 hover:bg-slate-800"
                     onClick={() => setShowBusinessDetails(false)}
                   >
-                    Close
+                    Fermer
                   </Button>
                 </div>
               </div>

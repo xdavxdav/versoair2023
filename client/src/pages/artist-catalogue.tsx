@@ -212,7 +212,7 @@ export default function ArtistCataloguePage() {
                     {formatStreams(artist.total_streams || 0)}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
-                    Total streams
+                    Écoutes totales
                   </p>
                 </div>
                 <div className="text-center">
@@ -220,7 +220,7 @@ export default function ArtistCataloguePage() {
                     {artist.followers || 0}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
-                    Followers
+                    Abonnés
                   </p>
                 </div>
                 <div className="text-center">
@@ -517,7 +517,7 @@ export default function ArtistCataloguePage() {
               </div>
             )}
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Total Streams</p>
+              <p className="text-gray-500 text-xs mb-1">Écoutes totales</p>
               <p className="text-white text-sm">
                 {formatStreams(artist.total_streams || 0)}
               </p>
@@ -535,7 +535,7 @@ export default function ArtistCataloguePage() {
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Followers</p>
+              <p className="text-gray-500 text-xs mb-1">Abonnés</p>
               <p className="text-white text-sm">
                 {formatStreams(artist.followers || 0)}
               </p>

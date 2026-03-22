@@ -17,6 +17,7 @@ import GoldenAnimatedHeading from "@/components/GoldenAnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
 import { AnimatedButton } from "@/components/AnimatedButton";
 import { useCountry } from "@/contexts/CountryContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { getCountryMeta } from "@/utils/countryMeta";
 /* webhint-disable hint-no-inline-styles */
 import {
@@ -93,6 +94,7 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { CulturalProgramsModal } from "@/components/home/CulturalProgramsModal";
 import { CookieConsentBanner } from "@/components/home/CookieConsentBanner";
 import { ArtistCarouselByCountry } from "@/components/home/ArtistCarouselByCountry";
+import { isBaseLang } from "@/utils/country-language";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -553,7 +555,7 @@ const ResponsiveFooter = ({
               150+
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
-              Communities Reached
+              Communautés touchées
             </p>
           </div>
           <div className="text-center">
@@ -561,7 +563,7 @@ const ResponsiveFooter = ({
               2,400+
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
-              Artisans Supported
+              Artisans soutenus
             </p>
           </div>
           <div className="text-center">
@@ -569,7 +571,7 @@ const ResponsiveFooter = ({
               35
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
-              Countries Active
+              Pays actifs
             </p>
           </div>
           <div className="text-center">
@@ -577,7 +579,7 @@ const ResponsiveFooter = ({
               80+
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
-              Programs Running
+              Programmes en cours
             </p>
           </div>
         </div>
@@ -594,13 +596,13 @@ const ResponsiveFooter = ({
                   AH
                 </span>
               </div>
-              <span className="font-bold text-lg tracking-tight">
+              <span className="font-bold text-lg tracking-tight notranslate">
                 ArtiHuman Foundation
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
-              Empowering artisans and uplifting communities through humanitarian
-              innovation across {countryMeta.name}.
+              Soutenir les artisans et élever les communautés grâce à
+              l'innovation humanitaire à travers {countryMeta.name}.
             </p>
             <div className="flex gap-2">
               <a
@@ -645,7 +647,7 @@ const ResponsiveFooter = ({
           {/* Programs */}
           <div>
             <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
-              Programs
+              Programmes
             </h4>
             <ul className="space-y-3">
               <li>
@@ -653,7 +655,7 @@ const ResponsiveFooter = ({
                   to="/programs"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Cultural Programs
+                  Programmes culturels
                 </Link>
               </li>
               <li>
@@ -661,7 +663,7 @@ const ResponsiveFooter = ({
                   to="/artisan"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Artisan Training
+                  Formation artisanale
                 </Link>
               </li>
               <li>
@@ -669,7 +671,7 @@ const ResponsiveFooter = ({
                   to="/programs"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Humanitarian Aid
+                  Aide humanitaire
                 </Link>
               </li>
               <li>
@@ -677,7 +679,7 @@ const ResponsiveFooter = ({
                   to="/commerce"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Artisan Marketplace
+                  Marché artisanal
                 </Link>
               </li>
               <li>
@@ -685,7 +687,7 @@ const ResponsiveFooter = ({
                   to="/programs"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Community Impact
+                  Impact communautaire
                 </Link>
               </li>
             </ul>
@@ -694,7 +696,7 @@ const ResponsiveFooter = ({
           {/* Get Involved */}
           <div>
             <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
-              Get Involved
+              S'impliquer
             </h4>
             <ul className="space-y-3">
               <li>
@@ -702,7 +704,7 @@ const ResponsiveFooter = ({
                   to="/support"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Donate
+                  Faire un don
                 </Link>
               </li>
               <li>
@@ -710,7 +712,7 @@ const ResponsiveFooter = ({
                   to="/support"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Volunteer
+                  Bénévolat
                 </Link>
               </li>
               <li>
@@ -718,7 +720,7 @@ const ResponsiveFooter = ({
                   to="/support"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Partner With Us
+                  Devenir partenaire
                 </Link>
               </li>
               <li>
@@ -726,7 +728,7 @@ const ResponsiveFooter = ({
                   to="/support"
                   className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
                 >
-                  Sponsor a Program
+                  Parrainer un programme
                 </Link>
               </li>
               {isAuthenticated ? (
@@ -746,7 +748,7 @@ const ResponsiveFooter = ({
                   >
                     <Lock size={12} /> Geo Admin
                     <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
-                      Sign in
+                      Se connecter
                     </span>
                   </Link>
                 </li>
@@ -775,12 +777,12 @@ const ResponsiveFooter = ({
             </ul>
 
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mb-3">
-              Newsletter
+              Infolettre
             </p>
             <div className="flex">
               <input
                 type="email"
-                placeholder="Your email"
+                placeholder="Votre email"
                 className="flex-1 min-w-0 px-3 py-2 rounded-l-lg bg-white/[0.03] border border-slate-800 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/40"
               />
               <button className="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 rounded-r-lg text-sm font-medium hover:from-emerald-400 hover:to-teal-500 transition-all">
@@ -794,8 +796,9 @@ const ResponsiveFooter = ({
 
         <div className="text-center">
           <p className="text-gray-600 text-xs">
-            © {new Date().getFullYear()} ArtiHuman Foundation. All rights
-            reserved.
+            © {new Date().getFullYear()}{" "}
+            <span className="notranslate">ArtiHuman Foundation</span>. Tous
+            droits réservés.
           </p>
         </div>
       </div>
@@ -805,34 +808,34 @@ const ResponsiveFooter = ({
 
 // Filter options
 const categoryOptions: FilterOption[] = [
-  { value: "technology", label: "Technology" },
-  { value: "retail", label: "Retail" },
+  { value: "technology", label: "Technologie" },
+  { value: "retail", label: "Commerce de détail" },
   { value: "service", label: "Service" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "hospitality", label: "Hospitality" },
+  { value: "manufacturing", label: "Fabrication" },
+  { value: "hospitality", label: "Hôtellerie" },
   { value: "agriculture", label: "Agriculture" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "education", label: "Education" },
+  { value: "healthcare", label: "Santé" },
+  { value: "education", label: "Éducation" },
 ];
 
 const locationOptions: FilterOption[] = [
-  { value: "capital", label: "Capital City" },
-  { value: "north", label: "Northern Region" },
-  { value: "south", label: "Southern Region" },
-  { value: "east", label: "Eastern Region" },
-  { value: "west", label: "Western Region" },
-  { value: "central", label: "Central Region" },
-  { value: "coastal", label: "Coastal Area" },
-  { value: "rural", label: "Rural Area" },
+  { value: "capital", label: "Capitale" },
+  { value: "north", label: "Région Nord" },
+  { value: "south", label: "Région Sud" },
+  { value: "east", label: "Région Est" },
+  { value: "west", label: "Région Ouest" },
+  { value: "central", label: "Région Centre" },
+  { value: "coastal", label: "Zone côtière" },
+  { value: "rural", label: "Zone rurale" },
 ];
 
 const rangeOptions: FilterOption[] = [
-  { value: "near-me", label: "Near My Location" },
-  { value: "5", label: "Within 5km" },
-  { value: "10", label: "Within 10km" },
-  { value: "25", label: "Within 25km" },
-  { value: "50", label: "Within 50km" },
-  { value: "any", label: "Any distance" },
+  { value: "near-me", label: "Près de ma position" },
+  { value: "5", label: "Dans un rayon de 5 km" },
+  { value: "10", label: "Dans un rayon de 10 km" },
+  { value: "25", label: "Dans un rayon de 25 km" },
+  { value: "50", label: "Dans un rayon de 50 km" },
+  { value: "any", label: "Toute distance" },
 ];
 
 // All 195 business categories from the database
@@ -1074,7 +1077,7 @@ function ShowcaseToggle({
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-white/70 font-semibold hidden sm:inline px-2 py-0.5 rounded-full bg-white/10 ring-1 ring-white/15">
-            {isOpen ? "Collapse" : "Expand"}
+            {isOpen ? "Réduire" : "Développer"}
           </span>
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
@@ -1095,6 +1098,87 @@ function ShowcaseToggle({
       >
         {children}
       </motion.div>
+    </div>
+  );
+}
+
+// --- Motto translations for the animated watermark ---
+const MOTTO_TRANSLATIONS: Record<string, string> = {
+  fr: "DROIT AU BUT",
+  es: "DIRECTO AL GRANO",
+  de: "DIREKT AUF DEN PUNKT",
+  ar: "مباشرة إلى النقطة",
+  pt: "DIRETO AO PONTO",
+  it: "DRITTO AL PUNTO",
+  nl: "RECHT VOOR Z'N RAAP",
+  ja: "単刀直入",
+  zh: "开门见山",
+  ko: "단도직입",
+  ru: "ПРЯМО В ТОЧКУ",
+  hi: "सीधे मुद्दे पर",
+  tr: "DOĞRUDAN KONUYA",
+  pl: "PROSTO DO CELU",
+  sv: "RAKT PÅ SAK",
+  ro: "DIRECT LA SUBIECT",
+  uk: "ПРЯМО ДО СУТІ",
+  el: "ΚΑΤΕΥΘΕΙΑΝ ΣΤΟ ΨΗΤΟ",
+  cs: "PŘÍMO K VĚCI",
+  da: "LIGE TIL SAGEN",
+  fi: "SUORAAN ASIAAN",
+  hu: "EGYENESEN A LÉNYEGRE",
+  no: "RETT PÅ SAK",
+  th: "ตรงประเด็น",
+  vi: "ĐI THẲNG VÀO VẤN ĐỀ",
+  id: "LANGSUNG KE INTINYA",
+  ms: "TERUS KEPADA INTI",
+  tl: "DIRETSO SA PUNTO",
+  sw: "MOJA KWA MOJA",
+  he: "ישר לעניין",
+  bn: "সরাসরি মূল কথায়",
+};
+
+const ENGLISH_MOTTO = "STRΔΦGHT TΩ THΞ PΩΦΠT";
+
+function MottoFlip() {
+  const { currentLang } = useLanguage();
+  const [showTranslation, setShowTranslation] = useState(false);
+
+  const translated = MOTTO_TRANSLATIONS[currentLang] || null;
+  const isBase = isBaseLang(currentLang);
+
+  useEffect(() => {
+    // Only animate if there's a non-base language selected
+    if (!translated || isBase) {
+      setShowTranslation(false);
+      return;
+    }
+    const interval = setInterval(() => {
+      setShowTranslation((prev) => !prev);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [translated, isBase]);
+
+  const displayed = showTranslation && translated ? translated : ENGLISH_MOTTO;
+
+  return (
+    <div className="mt-10 notranslate" style={{ minHeight: "1.5rem" }}>
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={displayed}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          className="text-white/25 select-none pointer-events-none"
+          style={{
+            fontFamily: "'Caveat', cursive",
+            fontSize: "0.75rem",
+            letterSpacing: "0.5em",
+          }}
+        >
+          {displayed}
+        </motion.p>
+      </AnimatePresence>
     </div>
   );
 }
@@ -1827,7 +1911,7 @@ export default function Home() {
             className="mb-4 md:mb-6"
           >
             <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 backdrop-blur-sm rounded-full text-xs md:text-sm font-medium border border-white/20">
-              🎨 Empowering Artisans in {countryMeta.name}
+              🎨 Soutien aux artisans en {countryMeta.name}
             </span>
           </motion.div>
 
@@ -1835,7 +1919,7 @@ export default function Home() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 drop-shadow-2xl px-4"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 drop-shadow-2xl px-4 notranslate"
           >
             ArtiHuman Foundation
           </motion.h1>
@@ -1846,8 +1930,8 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl lg:text-2xl mb-4 text-white/90 px-4"
           >
-            Empowering artisans and uplifting communities through humanitarian
-            innovation across {countryMeta.name}
+            Soutenir les artisans et élever les communautés grâce à l'innovation
+            humanitaire à travers {countryMeta.name}
           </motion.p>
 
           {/* Database Connection Status */}
@@ -1871,8 +1955,8 @@ export default function Home() {
                 ></div>
                 <span className="text-sm font-medium">
                   {databaseConnected
-                    ? "✅ Connected to PostgreSQL"
-                    : "❌ Database connection failed"}
+                    ? "✅ Connecté à PostgreSQL"
+                    : "❌ Connexion à la base de données échouée"}
                 </span>
               </div>
             </motion.div>
@@ -1886,35 +1970,23 @@ export default function Home() {
           >
             <Link to="/get-involved">
               <Button className="bg-white text-emerald-600 px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-gray-100 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
-                Get Involved
+                S'impliquer
               </Button>
             </Link>
             <Link to="/apply">
               <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
-                ✨ Apply Now
+                ✨ Postuler
               </Button>
             </Link>
             <Link to="/ong-culturelle">
               <Button className="border-2 border-white text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-white/10 transition-all text-base md:text-lg w-full sm:w-auto">
-                Learn More
+                En savoir plus
               </Button>
             </Link>
           </motion.div>
 
-          {/* Signature watermark */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 1.5 }}
-            className="mt-10 text-white/25 select-none pointer-events-none"
-            style={{
-              fontFamily: "'Caveat', cursive",
-              fontSize: "0.75rem",
-              letterSpacing: "0.5em",
-            }}
-          >
-            STRΔΦGHT TΩ THΞ PΩΦΠT
-          </motion.p>
+          {/* Signature watermark — flips between motto & translation */}
+          <MottoFlip />
         </div>
 
         {showScrollIndicator && (
@@ -1945,11 +2017,11 @@ export default function Home() {
             className="text-center mb-8 md:mb-16"
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
-              Discover Artisan Communities
+              Découvrez les communautés artisanales
             </h2>
             <p className="text-lg md:text-2xl text-gray-600 px-4 max-w-3xl mx-auto">
-              Search our directory of artisan communities and cultural programs
-              across {countryMeta.name}
+              Parcourez notre répertoire de communautés artisanales et de
+              programmes culturels à travers {countryMeta.name}
             </p>
           </motion.div>
 
@@ -1963,7 +2035,7 @@ export default function Home() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search artisan communities, programs..."
+                      placeholder="Rechercher des communautés, programmes..."
                       className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                     />
                   </div>
@@ -1975,7 +2047,7 @@ export default function Home() {
                       type="text"
                       value={locationQuery}
                       onChange={(e) => setLocationQuery(e.target.value)}
-                      placeholder="Enter location..."
+                      placeholder="Entrer un lieu..."
                       className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                     />
                   </div>
@@ -1994,7 +2066,7 @@ export default function Home() {
                 className="flex items-center gap-3 md:gap-4 px-8 md:px-12 py-4 md:py-6 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-2xl text-white font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all border border-white/20 text-base md:text-lg"
               >
                 <SlidersHorizontal className="w-5 h-5 md:w-6 md:h-6" />
-                <span>Advanced Filter</span>
+                <span>Filtre avancé</span>
                 <motion.div
                   animate={{ rotate: filtersVisible ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
@@ -2034,7 +2106,7 @@ export default function Home() {
                   onClick={clearAllFilters}
                   className="text-gray-500 hover:text-gray-700 underline text-sm md:text-base"
                 >
-                  Clear all
+                  Tout effacer
                 </button>
               </motion.div>
             )}
@@ -2053,17 +2125,17 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {[
                       {
-                        label: "Artisan Category",
+                        label: "Catégorie artisanale",
                         options: categoryOptions,
                         type: "category",
                       },
                       {
-                        label: "Program Type",
+                        label: "Type de programme",
                         options: categoryOptions,
                         type: "program-type",
                       },
                       {
-                        label: "Location",
+                        label: "Lieu",
                         options: locationOptions,
                         type: "location",
                       },
@@ -2093,7 +2165,7 @@ export default function Home() {
                             )?.value || ""
                           }
                         >
-                          <option value="">Select {section.label}</option>
+                          <option value="">Sélectionner {section.label}</option>
                           {section.options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
@@ -2114,7 +2186,7 @@ export default function Home() {
                       ) : (
                         <Navigation className="w-4 h-4 md:w-5 md:h-5" />
                       )}
-                      {isGettingLocation ? "Getting..." : "My Location"}
+                      {isGettingLocation ? "Localisation..." : "Ma position"}
                     </button>
                   </div>
                 </div>
@@ -2129,7 +2201,7 @@ export default function Home() {
           )}
           {userLocation && (
             <div className="max-w-[95vw] mx-auto mb-4 p-3 md:p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm md:text-base text-center">
-              ✅ Location detected - Showing results near you
+              ✅ Position détectée — Résultats proches de vous
             </div>
           )}
 
@@ -2159,11 +2231,11 @@ export default function Home() {
                     </div>
                   </motion.div>
                   <h3 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent mb-3 md:mb-4">
-                    Searching PostgreSQL Database...
+                    Recherche dans la base PostgreSQL...
                   </h3>
                   <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg">
-                    Querying artisan communities from
-                    versoair_business_intelligence database
+                    Interrogation des communautés artisanales depuis la base
+                    versoair_business_intelligence
                   </p>
                 </div>
               </motion.div>
@@ -2178,31 +2250,28 @@ export default function Home() {
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 md:mb-4">
                     <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 bg-clip-text text-transparent">
-                      🎨 Artisan Community Results
+                      🎨 Résultats des communautés artisanales
                     </h3>
                     {databaseConnected === false && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full mt-2 md:mt-0">
                         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                         <span className="text-sm font-medium">
-                          Database Error
+                          Erreur base de données
                         </span>
                       </div>
                     )}
                   </div>
                   <p className="text-gray-600 text-base md:text-xl">
-                    Found{" "}
-                    <span className="font-bold text-emerald-600">
-                      {searchResults.length}
-                    </span>{" "}
-                    communities (max 5 shown)
+                    {searchResults.length} communautés trouvées (max 5
+                    affichées)
                     {userLocation && (
                       <span className="text-green-600 font-semibold ml-2 md:ml-3">
-                        • Sorted by distance
+                        • Triés par distance
                       </span>
                     )}
                     {databaseConnected && (
                       <span className="text-blue-600 font-semibold ml-2 md:ml-3">
-                        • From PostgreSQL Database
+                        • Depuis la base PostgreSQL
                       </span>
                     )}
                   </p>
@@ -2258,7 +2327,7 @@ export default function Home() {
                               {business.distance && (
                                 <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full text-sm font-bold mb-4 md:mb-6 shadow-lg">
                                   <Navigation className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
-                                  {business.distance.toFixed(1)}km away
+                                  {business.distance.toFixed(1)} km
                                 </div>
                               )}
 
@@ -2290,7 +2359,7 @@ export default function Home() {
                                   to={`/business/${business.id}`}
                                   className="text-emerald-600 hover:text-emerald-700 text-sm md:text-base font-bold flex items-center gap-2"
                                 >
-                                  <span>Details</span>
+                                  <span>Détails</span>
                                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                                 </Link>
                               </div>
@@ -2325,7 +2394,7 @@ export default function Home() {
                         <div className="relative z-10 flex items-center gap-3 md:gap-4">
                           <Database className="w-6 h-6 md:w-7 md:h-7 animate-pulse" />
                           <span className="text-lg md:text-xl font-bold">
-                            View All Artisan Communities
+                            Voir toutes les communautés artisanales
                           </span>
                           <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform duration-300" />
                         </div>
@@ -2334,8 +2403,8 @@ export default function Home() {
                     </Link>
 
                     <p className="text-gray-600 mt-4 text-sm md:text-base">
-                      Explore our complete database of {totalDatabaseCount}+
-                      artisan communities
+                      Explorez notre base de données complète de{" "}
+                      {totalDatabaseCount}+ communautés artisanales
                     </p>
                   </motion.div>
                 </div>
@@ -2351,16 +2420,16 @@ export default function Home() {
                 <div className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl md:rounded-[2rem] p-10 md:p-16 max-w-lg md:max-w-2xl mx-auto border-2 border-dashed border-emerald-200">
                   <Search className="h-20 w-20 md:h-28 md:w-28 mx-auto mb-6 md:mb-8 text-emerald-300" />
                   <h3 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 md:mb-6">
-                    No Results Found
+                    Aucun résultat
                   </h3>
                   <p className="text-gray-600 mb-8 md:mb-10 text-base md:text-lg">
-                    No businesses match your search criteria in the database
+                    Aucune entreprise ne correspond à vos critères de recherche
                   </p>
                   <button
                     onClick={clearAllFilters}
                     className="px-8 md:px-10 py-4 md:py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-base md:text-lg shadow-xl"
                   >
-                    Clear All & Start Over
+                    Tout effacer et recommencer
                   </button>
                 </div>
               </motion.div>
@@ -2371,38 +2440,38 @@ export default function Home() {
             {[
               {
                 icon: User,
-                text: "Artisan Profiles",
-                desc: "Skilled tradespeople",
+                text: "Profils artisans",
+                desc: "Artisans qualifiés",
                 href: "/artisans",
               },
               {
                 icon: Palette,
-                text: "Art & Crafts",
-                desc: "Handmade creations",
+                text: "Art & Artisanat",
+                desc: "Créations artisanales",
                 href: "/marketplace",
               },
               {
                 icon: ShoppingBag,
-                text: "Marketplace",
-                desc: "Browse & shop",
+                text: "Marché",
+                desc: "Parcourir & acheter",
                 href: "/marketplace",
               },
               {
                 icon: Users,
-                text: "Communities",
-                desc: "Local groups",
+                text: "Communautés",
+                desc: "Groupes locaux",
                 href: "/communities",
               },
               {
                 icon: Heart,
-                text: "Support Us",
-                desc: "Fund the mission",
+                text: "Nous soutenir",
+                desc: "Financer la mission",
                 href: "/sponsorship",
               },
               {
                 icon: Calendar,
-                text: "Events",
-                desc: "Workshops & shows",
+                text: "Événements",
+                desc: "Ateliers & spectacles",
                 href: "/divertissement",
               },
             ].map((item, i) => (
@@ -2472,7 +2541,7 @@ export default function Home() {
                       <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
                     </motion.div>
                     <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3 notranslate"
                       data-text="ArtiHuman Foundation"
                     >
                       <span
@@ -2483,8 +2552,8 @@ export default function Home() {
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Empowering artisans and uplifting communities through
-                      humanitarian innovation across {countryMeta.name}.
+                      Soutenir les artisans et élever les communautés grâce à
+                      l'innovation humanitaire à travers {countryMeta.name}.
                     </p>
                   </div>
 
@@ -2495,7 +2564,7 @@ export default function Home() {
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
-                        Our Impact in {countryMeta.name}:
+                        Notre impact en {countryMeta.name} :
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
@@ -2504,7 +2573,7 @@ export default function Home() {
                               homeStats.artisanCount > 0
                                 ? `${homeStats.artisanCount}+`
                                 : "—",
-                            label: "artisans supported",
+                            label: "artisans soutenus",
                             icon: "👥",
                           },
                           {
@@ -2512,7 +2581,7 @@ export default function Home() {
                               homeStats.businessCount > 0
                                 ? `${homeStats.businessCount}+`
                                 : "—",
-                            label: "businesses registered",
+                            label: "entreprises enregistrées",
                             icon: "❤️",
                           },
                           {
@@ -2520,22 +2589,22 @@ export default function Home() {
                               homeStats.categoryCount > 0
                                 ? `${homeStats.categoryCount}`
                                 : "—",
-                            label: "industry categories",
+                            label: "catégories d'industrie",
                             icon: "🏢",
                           },
                           {
-                            stat: "Cultural",
-                            label: "heritage programs",
+                            stat: "Culturels",
+                            label: "programmes du patrimoine",
                             icon: "🎨",
                           },
                           {
-                            stat: "Skill",
-                            label: "development programs",
+                            stat: "Programmes",
+                            label: "de développement",
                             icon: "📚",
                           },
                           {
-                            stat: "Ethical",
-                            label: "local partnerships",
+                            stat: "Partenariats",
+                            label: "locaux éthiques",
                             icon: "🤝",
                           },
                         ].map((item, idx) => (
@@ -2568,15 +2637,15 @@ export default function Home() {
                           size={14}
                         />
                         <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
-                          Cultural Programs
+                          Programmes culturels
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
-                          { icon: Trees, label: "Agricultural Arts" },
-                          { icon: Music, label: "Music" },
-                          { icon: Palette, label: "Urban Art" },
-                          { icon: Users, label: "Community" },
+                          { icon: Trees, label: "Arts agricoles" },
+                          { icon: Music, label: "Musique" },
+                          { icon: Palette, label: "Art urbain" },
+                          { icon: Users, label: "Communauté" },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
@@ -2598,7 +2667,7 @@ export default function Home() {
                         className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         <Sparkles size={14} className="inline mr-1 sm:mr-2" />
-                        Explore Programs
+                        Explorer les programmes
                       </button>
                     </motion.div>
                   </div>
@@ -2611,11 +2680,11 @@ export default function Home() {
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
-                      Join Our Movement
+                      Rejoignez notre mouvement
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
-                      Be part of transforming communities through art, culture,
-                      and humanitarian innovation
+                      Participez à la transformation des communautés par l'art,
+                      la culture et l'innovation humanitaire
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <Link to="/ong-culturelle">
@@ -2624,7 +2693,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
-                          Learn More
+                          En savoir plus
                         </motion.button>
                       </Link>
                       <Link to="/artihuman-foundation">
@@ -2633,7 +2702,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Support Us
+                          Nous soutenir
                         </motion.button>
                       </Link>
                     </div>
@@ -2669,19 +2738,19 @@ export default function Home() {
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
-                      data-text="Artisan Marketplace"
+                      data-text="Marché Artisanal"
                     >
                       <span
                         className="gold-text__shine"
-                        data-text="Artisan Marketplace"
+                        data-text="Marché Artisanal"
                       >
-                        Artisan Marketplace
+                        Marché Artisanal
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Discover unique handcrafted products that support
-                      communities and preserve traditional {countryMeta.demonym}{" "}
-                      crafts.
+                      Découvrez des produits artisanaux uniques qui soutiennent
+                      les communautés et préservent l'artisanat traditionnel{" "}
+                      {countryMeta.demonym}.
                     </p>
                   </div>
 
@@ -2693,26 +2762,26 @@ export default function Home() {
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-amber-300 transition-colors" />
-                        Featured Products
+                        Produits vedettes
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
                           {
-                            name: "Artisan Pottery Set",
+                            name: "Set de poterie artisanale",
                             price: `149.99 ${countryMeta.currencySymbol}`,
                             rating: 4.8,
-                            badge: "Bestseller",
+                            badge: "Meilleure vente",
                             emoji: "🏺",
                           },
                           {
-                            name: "Handwoven Textiles",
+                            name: "Textiles tissés main",
                             price: `89.99 ${countryMeta.currencySymbol}`,
                             rating: 4.9,
-                            badge: "New Arrival",
+                            badge: "Nouveauté",
                             emoji: "🧵",
                           },
                           {
-                            name: "Wooden Sculptures",
+                            name: "Sculptures en bois",
                             price: `199.99 ${countryMeta.currencySymbol}`,
                             rating: 5.0,
                             badge: "Premium",
@@ -2749,15 +2818,15 @@ export default function Home() {
                           size={14}
                         />
                         <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
-                          Shop Categories
+                          Catégories boutique
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
-                          { icon: Palette, label: "Ceramics" },
+                          { icon: Palette, label: "Céramiques" },
                           { icon: Music, label: "Textiles" },
-                          { icon: Trees, label: "Woodwork" },
-                          { icon: Star, label: "Jewelry" },
+                          { icon: Trees, label: "Boiserie" },
+                          { icon: Star, label: "Bijoux" },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
@@ -2780,7 +2849,7 @@ export default function Home() {
                             size={14}
                             className="inline mr-1 sm:mr-2"
                           />
-                          Browse Marketplace
+                          Parcourir le marché
                         </button>
                       </Link>
                     </motion.div>
@@ -2794,11 +2863,11 @@ export default function Home() {
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
-                      Support Communities
+                      Soutenir les communautés
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
-                      Browse our collection and make a difference with every
-                      purchase
+                      Parcourez notre collection et faites la différence à
+                      chaque achat
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <Link to="/marketplace">
@@ -2807,7 +2876,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="bg-white text-amber-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
-                          Shop Now
+                          Acheter maintenant
                         </motion.button>
                       </Link>
                       <motion.button
@@ -2823,7 +2892,7 @@ export default function Home() {
                         }}
                         className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                       >
-                        Quick Shop ↑
+                        Achat rapide ↑
                       </motion.button>
                     </div>
                   </motion.div>
@@ -2861,18 +2930,18 @@ export default function Home() {
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
-                      data-text="Impact Dashboard"
+                      data-text="Tableau d'impact"
                     >
                       <span
                         className="gold-text__shine"
-                        data-text="Impact Dashboard"
+                        data-text="Tableau d'impact"
                       >
-                        Impact Dashboard
+                        Tableau d'impact
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Track our collective impact on artisan communities across{" "}
-                      {countryMeta.name}.
+                      Suivez notre impact collectif sur les communautés
+                      artisanales à travers {countryMeta.name}.
                     </p>
                   </div>
 
@@ -2884,7 +2953,7 @@ export default function Home() {
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
-                        Community Growth
+                        Croissance communautaire
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
@@ -2893,25 +2962,25 @@ export default function Home() {
                               homeStats.artisanCount > 0
                                 ? `${homeStats.artisanCount}+`
                                 : "—",
-                            label: "artisans supported",
+                            label: "artisans soutenus",
                           },
                           {
                             stat:
                               homeStats.businessCount > 0
                                 ? `${homeStats.businessCount}+`
                                 : "—",
-                            label: "businesses registered",
+                            label: "entreprises enregistrées",
                           },
                           {
                             stat:
                               homeStats.categoryCount > 0
                                 ? `${homeStats.categoryCount}`
                                 : "—",
-                            label: "industry categories",
+                            label: "catégories d'industrie",
                           },
-                          { stat: "98%", label: "active programs" },
-                          { stat: "95%", label: "skill training" },
-                          { stat: "87%", label: "cultural events" },
+                          { stat: "98%", label: "programmes actifs" },
+                          { stat: "95%", label: "formation professionnelle" },
+                          { stat: "87%", label: "événements culturels" },
                         ].map((item, idx) => (
                           <motion.div
                             key={idx}
@@ -2943,14 +3012,14 @@ export default function Home() {
                           size={14}
                         />
                         <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
-                          {countryMeta.name} Overview
+                          Aperçu de {countryMeta.name}
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
                           {
                             icon: Building2,
-                            label: "Businesses",
+                            label: "Entreprises",
                             value: homeStats.businessCount,
                           },
                           {
@@ -2960,7 +3029,7 @@ export default function Home() {
                           },
                           {
                             icon: Target,
-                            label: "Categories",
+                            label: "Catégories",
                             value: homeStats.categoryCount,
                           },
                           {
@@ -2995,7 +3064,7 @@ export default function Home() {
                             size={14}
                             className="inline mr-1 sm:mr-2"
                           />
-                          View Full Report
+                          Voir le rapport complet
                         </button>
                       </Link>
                     </motion.div>
@@ -3009,10 +3078,11 @@ export default function Home() {
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
-                      See Our Impact in Action
+                      Voir notre impact en action
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
-                      Track real-time progress and community transformation
+                      Suivez les progrès en temps réel et la transformation
+                      communautaire
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <Link to="/impact">
@@ -3021,7 +3091,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
-                          View Impact
+                          Voir l'impact
                         </motion.button>
                       </Link>
                       <Link to="/impact">
@@ -3030,7 +3100,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Full Report
+                          Rapport complet
                         </motion.button>
                       </Link>
                     </div>
@@ -3069,18 +3139,18 @@ export default function Home() {
                     </motion.div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
-                      data-text="Get Involved"
+                      data-text="S'impliquer"
                     >
                       <span
                         className="gold-text__shine"
-                        data-text="Get Involved"
+                        data-text="S'impliquer"
                       >
-                        Get Involved
+                        S'impliquer
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Join our movement to empower artisans and transform
-                      communities across {countryMeta.name}.
+                      Rejoignez notre mouvement pour soutenir les artisans et
+                      transformer les communautés à travers {countryMeta.name}.
                     </p>
                   </div>
 
@@ -3092,16 +3162,22 @@ export default function Home() {
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-teal-300 transition-colors" />
-                        Ways to Help
+                        Comment aider
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
-                          { stat: "245+", label: "volunteers active" },
-                          { stat: "$125K+", label: "raised for communities" },
-                          { stat: "50+", label: "partner organizations" },
-                          { stat: "Cultural", label: "heritage programs" },
-                          { stat: "Skill", label: "training initiatives" },
-                          { stat: "Global", label: "impact network" },
+                          { stat: "245+", label: "bénévoles actifs" },
+                          {
+                            stat: "$125K+",
+                            label: "récoltés pour les communautés",
+                          },
+                          { stat: "50+", label: "organisations partenaires" },
+                          {
+                            stat: "Cultural",
+                            label: "programmes du patrimoine",
+                          },
+                          { stat: "Skill", label: "initiatives de formation" },
+                          { stat: "Global", label: "réseau d'impact" },
                         ].map((item, idx) => (
                           <motion.div
                             key={idx}
@@ -3133,15 +3209,15 @@ export default function Home() {
                           size={14}
                         />
                         <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
-                          Take Action
+                          Agir
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
                         {[
-                          { icon: Users, label: "Volunteer" },
-                          { icon: Heart, label: "Donate" },
-                          { icon: Handshake, label: "Partner" },
-                          { icon: Globe, label: "Spread Word" },
+                          { icon: Users, label: "Bénévolat" },
+                          { icon: Heart, label: "Faire un don" },
+                          { icon: Handshake, label: "Partenaire" },
+                          { icon: Globe, label: "Faire connaître" },
                         ].map((item, i) => (
                           <motion.div
                             key={i}
@@ -3164,7 +3240,7 @@ export default function Home() {
                             size={14}
                             className="inline mr-1 sm:mr-2"
                           />
-                          Get Started
+                          Commencer
                         </button>
                       </Link>
                     </motion.div>
@@ -3178,10 +3254,11 @@ export default function Home() {
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
-                      Transform Lives Through Art
+                      Transformer des vies par l'art
                     </h3>
                     <p className="text-white/90 mb-2 sm:mb-3 text-xs sm:text-sm md:text-base">
-                      Your support creates lasting change in artisan communities
+                      Votre soutien crée un changement durable dans les
+                      communautés artisanales
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <Link to="/get-involved">
@@ -3190,7 +3267,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="bg-white text-teal-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-teal-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
-                          Start Making a Difference
+                          Commencez à faire la différence
                         </motion.button>
                       </Link>
                       <Link to="/artihuman-foundation">
@@ -3199,7 +3276,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Support Us
+                          Nous soutenir
                         </motion.button>
                       </Link>
                     </div>
@@ -3216,14 +3293,14 @@ export default function Home() {
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
             <span className="text-emerald-400 font-semibold text-sm md:text-lg mb-2 block">
-              Meet Our Artisans
+              Rencontrez nos artisans
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
-              Featured Artisans
+              Artisans en vedette
             </h2>
             <p className="text-base md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
-              Meet some of the talented artisans we support across{" "}
-              {countryMeta.name}
+              Rencontrez quelques-uns des artisans talentueux que nous soutenons
+              à travers {countryMeta.name}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
@@ -3236,9 +3313,9 @@ export default function Home() {
                     .slice(0, 2)
                     .toUpperCase();
                   return {
-                    name: a.name || "Unknown Artist",
+                    name: a.name || "Artiste inconnu",
                     role: a.genre || "Artisan",
-                    specialty: a.genre || "Crafts",
+                    specialty: a.genre || "Artisanat",
                     image: initials,
                     location: countryMeta.name,
                     rating: 4.9,
@@ -3251,27 +3328,27 @@ export default function Home() {
                 })
               : [
                   {
-                    name: "Featured Artisan",
-                    role: "Textile Weaver",
-                    specialty: "Traditional Textiles",
+                    name: "Artisan en vedette",
+                    role: "Tisserand",
+                    specialty: "Textiles traditionnels",
                     image: "FA",
                     location: countryMeta.name,
                     rating: 4.9,
                     color: "from-indigo-500 to-purple-600",
                   },
                   {
-                    name: "Featured Artisan",
-                    role: "Wood Carver",
-                    specialty: "Traditional Sculptures",
+                    name: "Artisan en vedette",
+                    role: "Sculpteur sur bois",
+                    specialty: "Sculptures traditionnelles",
                     image: "FA",
                     location: countryMeta.name,
                     rating: 4.8,
                     color: "from-amber-500 to-orange-600",
                   },
                   {
-                    name: "Featured Artisan",
-                    role: "Pottery Artist",
-                    specialty: "Traditional Pottery",
+                    name: "Artisan en vedette",
+                    role: "Artiste potier",
+                    specialty: "Poterie traditionnelle",
                     image: "FA",
                     location: countryMeta.name,
                     rating: 4.9,
@@ -3330,7 +3407,7 @@ export default function Home() {
                   <Link to="/artisans">
                     <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-1 md:gap-2 text-sm md:text-base group-hover:shadow-lg group-hover:shadow-emerald-500/30">
                       <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
-                      View Profile
+                      Voir le profil
                     </button>
                   </Link>
                 </div>
@@ -3574,7 +3651,7 @@ export default function Home() {
                                         ? "🏷️ Signé"
                                         : artist.label_status === "independent"
                                           ? "🎯 Indépendant"
-                                          : "🆓 Unsigned"}
+                                          : "🆓 Non signé"}
                                     </Badge>
                                     <Link
                                       href={`/artist-catalogue/${artist.id}`}
@@ -3582,7 +3659,7 @@ export default function Home() {
                                       className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors text-xs"
                                     >
                                       <Music className="h-3.5 w-3.5" />
-                                      Stream
+                                      Écouter
                                     </Link>
                                   </div>
                                 </div>
@@ -3662,7 +3739,7 @@ export default function Home() {
                 className="text-purple-400 font-semibold text-sm md:text-lg mb-2 inline-flex items-center justify-center gap-2"
               >
                 <Music className="w-5 h-5" />
-                Verso Air ™️ Music Label
+                <span className="notranslate">Verso Air ™️ Music Label</span>
               </motion.span>
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
@@ -3670,10 +3747,12 @@ export default function Home() {
                 viewport={{ once: true }}
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
               >
-                Registered Artists by Country
+                Artistes inscrits par pays
               </motion.h2>
               <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
-                Discover talented artists signed with Verso Air across the globe
+                Découvrez des artistes talentueux signés chez{" "}
+                <span className="notranslate">Verso Air</span> à travers le
+                monde
               </p>
             </div>
 
@@ -3687,7 +3766,7 @@ export default function Home() {
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold hover:from-purple-600 hover:to-pink-600 transition-all inline-flex items-center gap-2 shadow-xl"
                 >
                   <Music className="w-5 h-5" />
-                  Visit Artist Portal
+                  Visiter le portail artiste
                   <ArrowRight className="w-5 h-5" />
                 </motion.button>
               </Link>
@@ -3706,7 +3785,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-emerald-600 font-semibold text-sm md:text-lg mb-2 block"
             >
-              Our Supporters
+              Nos soutiens
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -3714,10 +3793,10 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
             >
-              Partners & Sponsors
+              Partenaires & Sponsors
             </motion.h2>
             <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Organizations supporting artisan communities across{" "}
+              Organisations soutenant les communautés artisanales à travers{" "}
               {countryMeta.name}
             </p>
           </div>
@@ -3757,7 +3836,7 @@ export default function Home() {
           >
             <Link to="/partners">
               <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl px-6 py-3">
-                View All Partners
+                Voir tous les partenaires
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -3766,7 +3845,7 @@ export default function Home() {
                 variant="outline"
                 className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-bold rounded-xl px-6 py-3"
               >
-                Become a Sponsor
+                Devenir sponsor
                 <Handshake className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -3782,7 +3861,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-emerald-600 font-semibold text-sm md:text-lg mb-2 block"
             >
-              Volunteer With Us
+              Devenez bénévole
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -3790,40 +3869,41 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
             >
-              Make a Difference
+              Faites la différence
             </motion.h2>
             <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Join our volunteer programs and help transform artisan communities
+              Rejoignez nos programmes de bénévolat et aidez à transformer les
+              communautés artisanales
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
             {[
               {
-                title: "Art Mentorship",
-                desc: "Guide aspiring artisans in developing their craft",
+                title: "Mentorat artistique",
+                desc: "Guidez les artisans en herbe dans le développement de leur art",
                 icon: Palette,
                 volunteers: 85,
                 capacity: 100,
                 color: "from-violet-600 to-indigo-700",
-                tag: "Creative",
+                tag: "Créatif",
               },
               {
-                title: "Community Outreach",
-                desc: "Work directly with local communities on cultural programs",
+                title: "Action communautaire",
+                desc: "Travaillez directement avec les communautés locales sur des programmes culturels",
                 icon: Users,
                 volunteers: 120,
                 capacity: 150,
                 color: "from-emerald-600 to-teal-700",
-                tag: "Field Work",
+                tag: "Terrain",
               },
               {
-                title: "Skill Development",
-                desc: "Teach business and technical skills to artisans",
+                title: "Développement des compétences",
+                desc: "Enseignez les compétences commerciales et techniques aux artisans",
                 icon: Briefcase,
                 volunteers: 95,
                 capacity: 120,
                 color: "from-amber-500 to-orange-600",
-                tag: "Training",
+                tag: "Formation",
               },
             ].map((opportunity, i) => (
               <motion.div
@@ -3852,7 +3932,7 @@ export default function Home() {
                 <div className="p-4 md:p-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-600 font-medium text-sm md:text-base">
-                      Active Volunteers
+                      Bénévoles actifs
                     </span>
                     <span className="text-xl md:text-2xl font-bold text-emerald-600">
                       {opportunity.volunteers}
@@ -3867,11 +3947,12 @@ export default function Home() {
                     />
                   </div>
                   <p className="text-xs text-gray-400 mb-4">
-                    {opportunity.volunteers}/{opportunity.capacity} spots filled
+                    {opportunity.volunteers}/{opportunity.capacity} places
+                    pourvues
                   </p>
                   <Link to="/get-involved">
                     <button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md md:shadow-lg text-sm md:text-base group-hover:shadow-emerald-500/30">
-                      Apply Now
+                      Postuler
                     </button>
                   </Link>
                 </div>

@@ -30,9 +30,11 @@ declare global {
 
 interface LanguageContextType {
   currentLang: string;
-  selectLanguage: (lang: string) => void;
+  selectLanguage: (lang: string, source?: "country" | "manual") => void;
   autoDetectedLang: string;
   showBanner: boolean;
+  bannerMessage: string;
+  previousLang: string;
   dismissBanner: () => void;
 }
 
@@ -41,6 +43,8 @@ const LanguageContext = createContext<LanguageContextType>({
   selectLanguage: () => {},
   autoDetectedLang: "fr",
   showBanner: false,
+  bannerMessage: "",
+  previousLang: "fr",
   dismissBanner: () => {},
 });
 
@@ -69,12 +73,21 @@ function loadGoogleTranslateScript(): Promise<void> {
 
 function triggerTranslation(langCode: string): boolean {
   try {
+    // Set googtrans cookie so GT picks it up (primary mechanism)
+    const cookieVal = `/fr/${langCode}`;
+    document.cookie = `googtrans=${cookieVal}; path=/;`;
+    document.cookie = `googtrans=${cookieVal}; path=/; domain=${window.location.hostname};`;
+    if (window.location.hostname !== "localhost") {
+      document.cookie = `googtrans=${cookieVal}; path=/; domain=.${window.location.hostname};`;
+    }
+
     const combo = document.querySelector(
       ".goog-te-combo",
     ) as HTMLSelectElement | null;
     if (combo) {
       combo.value = langCode;
-      combo.dispatchEvent(new Event("change"));
+      // bubbles:true is critical — GT listens on a parent element
+      combo.dispatchEvent(new Event("change", { bubbles: true }));
       return true;
     }
   } catch {
@@ -83,32 +96,44 @@ function triggerTranslation(langCode: string): boolean {
   return false;
 }
 
-function restoreOriginal() {
+function clearGoogTransCookies() {
+  const expire = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
+  document.cookie = `googtrans=; ${expire}; path=/;`;
+  document.cookie = `googtrans=; ${expire}; path=/; domain=${window.location.hostname};`;
+  document.cookie = `googtrans=; ${expire}; path=/; domain=.${window.location.hostname};`;
+}
+
+function restoreOriginal(): boolean {
   try {
+    clearGoogTransCookies();
     const combo = document.querySelector(
       ".goog-te-combo",
     ) as HTMLSelectElement | null;
     if (combo) {
       combo.value = "";
-      combo.dispatchEvent(new Event("change"));
+      combo.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
     }
-    const banner = document.querySelector(
-      ".goog-te-banner-frame",
+    // Fallback: if combo not found, try resetting via iframe
+    const frame = document.querySelector(
+      ".goog-te-menu-frame",
     ) as HTMLIFrameElement | null;
-    if (banner?.contentDocument) {
-      const btn = banner.contentDocument.querySelector(
-        ".goog-te-button button",
-      ) as HTMLButtonElement | null;
-      btn?.click();
+    if (frame) {
+      try {
+        const innerDoc = frame.contentDocument || frame.contentWindow?.document;
+        const items = innerDoc?.querySelectorAll(".goog-te-menu2-item");
+        if (items && items.length > 0) {
+          (items[0] as HTMLElement).click();
+          return true;
+        }
+      } catch {
+        /* cross-origin */
+      }
     }
-    document.cookie =
-      "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." +
-      window.location.hostname;
   } catch {
     /* ignore */
   }
+  return false;
 }
 
 // ── Provider ──
@@ -122,10 +147,48 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return "fr";
     }
   });
+  const [previousLang, setPreviousLang] = useState("fr");
   const [autoDetectedLang, setAutoDetectedLang] = useState("fr");
   const [showBanner, setShowBanner] = useState(false);
-  const initAttempts = useRef(0);
-  const autoApplied = useRef(false);
+  const [bannerMessage, setBannerMessage] = useState("");
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstLoadDone = useRef(false);
+
+  // Show banner with auto-dismiss
+  const flashBanner = useCallback((msg: string) => {
+    if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+    setBannerMessage(msg);
+    setShowBanner(true);
+    bannerTimerRef.current = setTimeout(() => setShowBanner(false), 5000);
+  }, []);
+
+  // Core: apply a language to Google Translate with polling retry
+  const applyTranslation = useCallback((lang: string) => {
+    let attempts = 0;
+    if (lang === "fr") {
+      const doRestore = () => {
+        if (attempts++ > 25) return;
+        const ok = restoreOriginal();
+        if (!ok) setTimeout(doRestore, 300);
+      };
+      doRestore();
+    } else {
+      const doTranslate = () => {
+        if (attempts++ > 25) return;
+        const ok = triggerTranslation(lang);
+        if (!ok) {
+          // If combo still not found after 10 attempts, try re-initializing GT
+          if (attempts === 10 && window.googleTranslateElementInit) {
+            const el = document.getElementById("google_translate_element");
+            if (el) el.innerHTML = "";
+            window.googleTranslateElementInit();
+          }
+          setTimeout(doTranslate, 300);
+        }
+      };
+      doTranslate();
+    }
+  }, []);
 
   // Initialize Google Translate element (hidden)
   useEffect(() => {
@@ -135,7 +198,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           {
             pageLanguage: "fr",
             includedLanguages:
-              "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am",
+              "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am,hr,sr,bg,sk,sl,et,lv,lt,my,km,lo,ka,hy,az,uz,tk,mn,ne,si",
             layout:
               window.google.translate.TranslateElement.InlineLayout.SIMPLE,
             autoDisplay: false,
@@ -147,75 +210,83 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     };
     loadGoogleTranslateScript();
+
     return () => {
       delete window.googleTranslateElementInit;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-translate when country is detected
+  // Auto-translate when country changes (first load OR manual pick)
   useEffect(() => {
-    if (detecting || !selectedCountry || autoApplied.current) return;
+    if (detecting || !selectedCountry) return;
 
-    const userChoice = localStorage.getItem(LANG_CACHE_KEY);
     const detectedLang = getLanguageForCountry(selectedCountry);
     setAutoDetectedLang(detectedLang);
 
-    // If user explicitly chose a language before, respect it
-    if (userChoice && userChoice !== "auto" && userChoice !== "fr") {
-      autoApplied.current = true;
-      return;
-    }
-
-    if (isBaseLang(detectedLang)) {
-      autoApplied.current = true;
-      return;
-    }
-
-    autoApplied.current = true;
-    const doTranslate = () => {
-      if (initAttempts.current > 20) return;
-      initAttempts.current++;
-      const success = triggerTranslation(detectedLang);
-      if (success) {
-        setCurrentLang(detectedLang);
-        localStorage.setItem(LANG_CACHE_KEY, detectedLang);
-        setShowBanner(true);
-        setTimeout(() => setShowBanner(false), 5000);
-      } else {
-        setTimeout(doTranslate, 500);
+    // On first load only: respect cached user choice
+    if (!firstLoadDone.current) {
+      firstLoadDone.current = true;
+      const userChoice = localStorage.getItem(LANG_CACHE_KEY);
+      if (userChoice && userChoice !== "auto" && userChoice !== "fr") {
+        // Re-apply their cached language (GT resets on reload)
+        setTimeout(() => applyTranslation(userChoice), 1500);
+        return;
       }
-    };
-    const timer = setTimeout(doTranslate, 1500);
-    return () => clearTimeout(timer);
-  }, [selectedCountry, detecting]);
+    }
 
-  // Update autoDetectedLang when country changes manually
-  useEffect(() => {
-    if (detecting || !selectedCountry) return;
-    setAutoDetectedLang(getLanguageForCountry(selectedCountry));
-  }, [selectedCountry, detecting]);
-
-  const selectLanguage = useCallback((lang: string) => {
-    if (lang === "fr") {
-      restoreOriginal();
+    // Apply the language for this country immediately (no reload needed)
+    if (isBaseLang(detectedLang)) {
+      // Switching to a French-speaking country → restore original
+      applyTranslation("fr");
       setCurrentLang("fr");
       localStorage.setItem(LANG_CACHE_KEY, "fr");
     } else {
-      const success = triggerTranslation(lang);
-      if (success) {
-        setCurrentLang(lang);
-        localStorage.setItem(LANG_CACHE_KEY, lang);
-      } else {
-        setTimeout(() => {
-          triggerTranslation(lang);
-          setCurrentLang(lang);
-          localStorage.setItem(LANG_CACHE_KEY, lang);
-        }, 1000);
-      }
+      // Non-French country → translate instantly
+      applyTranslation(detectedLang);
+      setCurrentLang(detectedLang);
+      localStorage.setItem(LANG_CACHE_KEY, detectedLang);
+      flashBanner(
+        `Auto-translated to ${detectedLang.toUpperCase()} based on your location`,
+      );
     }
-  }, []);
+  }, [selectedCountry, detecting, applyTranslation, flashBanner]);
 
-  const dismissBanner = useCallback(() => setShowBanner(false), []);
+  const selectLanguage = useCallback(
+    (lang: string, source: "country" | "manual" = "manual") => {
+      const prev = currentLang;
+      setPreviousLang(prev);
+
+      // Update state + cache immediately so the UI badge reflects the choice
+      setCurrentLang(lang);
+      localStorage.setItem(LANG_CACHE_KEY, lang);
+
+      // Apply Google Translate
+      applyTranslation(lang);
+
+      // Show confirmation banner
+      if (source === "country") {
+        if (lang === "fr") {
+          flashBanner("Switched to Français (site base language)");
+        } else {
+          flashBanner(
+            `Language switched to ${lang.toUpperCase()} for this country`,
+          );
+        }
+      } else {
+        if (lang === "fr") {
+          flashBanner("Language restored to Français");
+        } else {
+          flashBanner(`Language overridden to ${lang.toUpperCase()}`);
+        }
+      }
+    },
+    [currentLang, applyTranslation, flashBanner],
+  );
+
+  const dismissBanner = useCallback(() => {
+    setShowBanner(false);
+    if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+  }, []);
 
   return (
     <LanguageContext.Provider
@@ -224,6 +295,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         selectLanguage,
         autoDetectedLang,
         showBanner,
+        bannerMessage,
+        previousLang,
         dismissBanner,
       }}
     >
