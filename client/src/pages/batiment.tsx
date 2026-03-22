@@ -888,7 +888,7 @@ export default function BatimentDashboard() {
     setSelectedFacility(facility);
     setShowFacilityDetails(true);
     recordVisit({
-      businessId: facility.id,
+      businessId: typeof facility.id === 'string' ? parseInt(facility.id, 10) || 0 : facility.id,
       businessName: facility.title ?? facility.name,
       sector: "batiment",
       pageUrl: window.location.pathname,

@@ -2,7 +2,7 @@
  * Verso Air Card Panel — Stripe Issuing + Points Rewards
  * Extracted from credentials-vault.tsx
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   CreditCard,
   Eye,
@@ -15,6 +15,12 @@ import {
   Banknote,
   Crown,
   Gift,
+  Zap,
+  Wallet,
+  Unlock,
+  Ban,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/contexts/AuthContext";

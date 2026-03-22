@@ -12,8 +12,7 @@ import "./index.css";
  */
 if (typeof Node !== "undefined" && Node.prototype) {
   const origInsertBefore = Node.prototype.insertBefore;
-  // @ts-expect-error — intentional monkey-patch
-  Node.prototype.insertBefore = function <T extends Node>(
+  (Node.prototype as any).insertBefore = function <T extends Node>(
     newNode: T,
     refNode: Node | null,
   ): T {
@@ -25,8 +24,7 @@ if (typeof Node !== "undefined" && Node.prototype) {
   };
 
   const origRemoveChild = Node.prototype.removeChild;
-  // @ts-expect-error — intentional monkey-patch
-  Node.prototype.removeChild = function <T extends Node>(child: T): T {
+  (Node.prototype as any).removeChild = function <T extends Node>(child: T): T {
     if (child.parentNode !== this) {
       // Same issue — node was reparented by Google Translate
       return child;

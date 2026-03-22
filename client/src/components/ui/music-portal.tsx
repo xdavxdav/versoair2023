@@ -155,10 +155,10 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
 
       {/* Panel */}
       <div
-        className={`fixed top-4 left-2 right-2 md:left-4 md:right-auto md:w-96 max-h-[90vh] overflow-y-auto music-portal-scroll bg-gradient-to-b from-purple-900 to-pink-900 shadow-2xl z-[10001] p-4 md:p-6 rounded-lg text-white transition-all duration-300 touch-pan-y overscroll-contain ${
+        className={`fixed top-4 left-2 right-2 md:top-1/2 md:-translate-y-1/2 md:left-4 md:right-auto md:w-96 max-h-[90vh] overflow-y-auto music-portal-scroll bg-gradient-to-b from-purple-900 to-pink-900 shadow-2xl z-[10001] p-4 md:p-6 rounded-lg text-white transition-all duration-300 touch-pan-y overscroll-contain ${
           isOpen
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-4 pointer-events-none"
+            ? "opacity-100 scale-100"
+            : "opacity-0 scale-95 pointer-events-none"
         }`}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}

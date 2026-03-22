@@ -2,7 +2,7 @@
  * Users Control Panel — Full user/subscriber management
  * Extracted from credentials-vault.tsx
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -28,6 +28,17 @@ import {
   ShieldAlert,
   Copy,
   X,
+  Ban,
+  BadgeCheck,
+  ChevronRight,
+  Key,
+  RotateCcw,
+  UserCog,
+  Send,
+  Timer,
+  PieChart,
+  Hash,
+  Terminal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SectionBlock, InfoRow, ApiEndpoint } from "./vault-shared";
@@ -784,12 +795,12 @@ export default function UsersControlPanel() {
                     <div
                       className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
                       style={{
-                        width: `${stats.total ? (count / stats.total) * 100 : 0}%`,
+                        width: `${stats.total ? ((count as number) / stats.total) * 100 : 0}%`,
                       }}
                     />
                   </div>
                   <span className="text-[11px] text-green-400 font-mono font-bold w-6 text-right">
-                    {count}
+                    {count as number}
                   </span>
                 </div>
               </div>
@@ -821,12 +832,12 @@ export default function UsersControlPanel() {
                       <div
                         className={`h-full bg-gradient-to-r ${c} rounded-full`}
                         style={{
-                          width: `${stats.total ? (count / stats.total) * 100 : 0}%`,
+                          width: `${stats.total ? ((count as number) / stats.total) * 100 : 0}%`,
                         }}
                       />
                     </div>
                     <span className="text-[11px] text-green-400 font-mono font-bold w-6 text-right">
-                      {count}
+                      {count as number}
                     </span>
                   </div>
                 </div>
@@ -1116,7 +1127,7 @@ export default function UsersControlPanel() {
             No users found
           </div>
         ) : (
-          filteredUsers.map((u) => (
+          filteredUsers.map((u: ManagedUser) => (
             <UserRow key={u.id} u={u} onAction={handleAction} />
           ))
         )}

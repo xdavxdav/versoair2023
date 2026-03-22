@@ -208,6 +208,7 @@ import Navbar from "@/components/ui/navbar";
 import BlogNavbar from "@/components/BlogNavbar";
 import LocationPanel from "@/components/ui/location-panel";
 import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
+import NavigationProgress from "@/components/ui/NavigationProgress";
 import PullToRefresh from "@/components/PullToRefresh";
 import TestimonialsFloating from "@/components/ui/testimonials-floating";
 import { TeamSection } from "@/components/ui/team-section";
@@ -734,6 +735,7 @@ function App() {
               <TooltipProvider>
                 <LoadingProvider>
                   <AudioProvider>
+                    <NavigationProgress />
                     <AppContent />
                     <AudioPlayer />
                   </AudioProvider>

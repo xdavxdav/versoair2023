@@ -2,7 +2,7 @@
  * Finance Control Panel — Payments, revenue, billing
  * Extracted from credentials-vault.tsx
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -21,6 +21,16 @@ import {
   Send,
   Ban,
   RotateCcw,
+  CircleDollarSign,
+  Clock,
+  BarChart3,
+  Wallet,
+  X,
+  Plug,
+  ArrowRightLeft,
+  Table2,
+  Shield,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SectionBlock, InfoRow, ApiEndpoint, DbTable } from "./vault-shared";
@@ -452,30 +462,33 @@ export default function FinanceControlPanel() {
             No transactions recorded yet
           </div>
         ) : (
-          Object.entries(typeBreakdown).map(([type, data]) => (
-            <div
-              key={type}
-              className="flex items-center justify-between py-2 border-b border-gray-800/20 last:border-0"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                <span className="text-[11px] text-gray-400 font-mono">
-                  {type}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] text-gray-600 font-mono">
-                  {data.count} txns
-                </span>
-                <span className="text-[11px] text-green-400 font-mono font-bold">
+          Object.entries(typeBreakdown).map(([type, data]) => {
+            const d = data as { count: number; total: number };
+            return (
+              <div
+                key={type}
+                className="flex items-center justify-between py-2 border-b border-gray-800/20 last:border-0"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                  <span className="text-[11px] text-gray-400 font-mono">
+                    {type}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] text-gray-600 font-mono">
+                    {d.count} txns
+                  </span>
+                  <span className="text-[11px] text-green-400 font-mono font-bold">
                   $
-                  {data.total.toLocaleString(undefined, {
+                  {d.total.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                   })}
                 </span>
               </div>
             </div>
-          ))
+          );
+          })
         )}
       </SectionBlock>
 
@@ -1475,4 +1488,4 @@ export default function FinanceControlPanel() {
       {/* ═══ VERSO AIR CARD — STRIPE ISSUING + POINTS ═══ */}
       <VersoAirCardPanel />
     </>
-  );
+  );}
