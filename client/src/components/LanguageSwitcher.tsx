@@ -146,13 +146,18 @@ function switchLanguageViaCombo(lang: string): boolean {
     document.querySelector<HTMLSelectElement>(".goog-te-combo") ||
     document.querySelector<HTMLSelectElement>(".skiptranslate select");
   if (!combo) return false;
+  // Make sure the combo has options loaded
+  if (combo.options.length <= 1) return false;
   if (lang === "fr") {
     // First option is "Select Language" — restores original text
     combo.selectedIndex = 0;
   } else {
     combo.value = lang;
+    // Verify the value actually took (option exists)
+    if (combo.value !== lang) return false;
   }
-  combo.dispatchEvent(new Event("change"));
+  // bubbles:true is CRITICAL — GT listens on a parent element
+  combo.dispatchEvent(new Event("change", { bubbles: true }));
   return true;
 }
 
@@ -267,25 +272,36 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setCurrentLang(lang);
     localStorage.setItem(LANG_CACHE_KEY, lang);
 
-    if (gtLoaded.current) {
-      const switched = switchLanguage(lang);
-      if (!switched) {
-        // GT loaded but combo not ready yet — cookie is set, retry shortly
-        setTimeout(() => switchLanguageViaCombo(lang), 1000);
-      }
+    // Always set cookie first (survives reloads)
+    if (lang === "fr") {
+      clearGoogTransCookies();
     } else {
-      // GT not loaded yet — just set cookie, GT will use it on init
-      if (lang === "fr") {
-        clearGoogTransCookies();
-      } else {
-        setGoogTransCookie(lang);
-      }
+      setGoogTransCookie(lang);
     }
+
+    if (gtLoaded.current) {
+      // GT already initialised without our cookie — combo-switch with retries
+      let attempts = 0;
+      const maxAttempts = 6; // 6 × 500ms = 3s window
+      const tryCombo = () => {
+        attempts++;
+        const ok = switchLanguageViaCombo(lang);
+        if (ok) return; // success — GT is translating
+        if (attempts < maxAttempts) {
+          setTimeout(tryCombo, 500);
+        } else {
+          // All retries failed — cookie is set, reload so GT reads it
+          window.location.reload();
+        }
+      };
+      tryCombo();
+    }
+    // else: GT not loaded yet — cookie is already set, GT will read it on init
 
     if (!isBaseLang(lang)) {
       flashBanner(
         `Auto-translated to ${lang.toUpperCase()} based on your location`,
-        false, // no reload on auto-detect — cookie is already set before GT loads
+        false,
       );
     }
   }, [selectedCountry, detecting, flashBanner]);
@@ -409,10 +425,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       <style>{`
-        /* Hide all GT visual chrome OFF-SCREEN (not display:none).
-           display:none kills iframes; height:0 + overflow:hidden clips
-           the translation iframe. position:fixed + top:-9999px keeps
-           elements functional but invisible. */
+        /* ── GT visual chrome: safe to nuke ── */
         .goog-te-banner-frame,
         iframe.goog-te-banner-frame,
         .goog-te-balloon-frame,
@@ -420,27 +433,38 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .goog-te-ftab-frame,
         .goog-tooltip,
         .goog-text-highlight,
-        #gt-nvframe,
-        iframe[id="gt-nvframe"],
         .goog-te-spinner-pos,
         .goog-te-menu-frame,
-        .VIpgJd-ZVi9od-ORHb-OEVmcd,
-        .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
-        .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
         #goog-gt-vt,
         .VIpgJd-yAWNEb-L7lbkb {
-          position: fixed !important;
-          top: -9999px !important;
-          left: -9999px !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
+          display: none !important;
         }
+        /* ── GT functional infrastructure: hide near-viewport so
+           browsers don't throttle the translation iframe.
+           NEVER use display:none or top:-9999px on these. ── */
         body > .skiptranslate {
           position: fixed !important;
-          top: -9999px !important;
-          left: -9999px !important;
+          bottom: -200px !important;
+          right: -200px !important;
+          width: 300px !important;
+          height: 100px !important;
           opacity: 0 !important;
           pointer-events: none !important;
+          z-index: -1 !important;
+          overflow: visible !important;
+        }
+        /* GT's internal iframes — keep functional */
+        #gt-nvframe,
+        iframe[id="gt-nvframe"],
+        .VIpgJd-ZVi9od-ORHb-OEVmcd,
+        .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+        .VIpgJd-ZVi9od-aZ2wEe-OiiCO {
+          position: fixed !important;
+          bottom: -200px !important;
+          right: -200px !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          z-index: -1 !important;
         }
         body {
           top: 0 !important;
