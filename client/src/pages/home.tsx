@@ -2263,13 +2263,14 @@ export default function Home() {
                   </p>
                 </motion.div>
 
-                <div className="database-viewport relative overflow-hidden">
+                <div className="database-viewport relative overflow-x-hidden overflow-y-auto">
                   <div
                     className={`transition-all duration-300 ${
                       showAllResults
                         ? "max-h-[4000px]"
                         : "max-h-[650px] sm:max-h-[700px] lg:max-h-[600px]"
-                    } overflow-hidden`}
+                    } overflow-y-auto overscroll-contain`}
+                    style={{ WebkitOverflowScrolling: 'touch' }}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                       {searchResults
@@ -2479,12 +2480,12 @@ export default function Home() {
 
       {/* FIXED PANELS SECTION - Smooth zoom-out → slide → zoom-in */}
       <div
-        className="panels-wrapper relative h-[100dvh] overflow-hidden"
+        className="panels-wrapper relative h-[100dvh] overflow-clip"
         ref={panelsWrapperRef}
         style={{ touchAction: "pan-y" }}
       >
         <div
-          className="h-[100dvh] w-full overflow-hidden"
+          className="h-[100dvh] w-full overflow-clip"
           style={{ touchAction: "pan-y" }}
         >
           <div
@@ -2689,7 +2690,7 @@ export default function Home() {
 
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
@@ -2877,7 +2878,7 @@ export default function Home() {
 
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
@@ -3083,7 +3084,7 @@ export default function Home() {
 
             {/* PANEL 4: Get Involved - Teal Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
+              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
