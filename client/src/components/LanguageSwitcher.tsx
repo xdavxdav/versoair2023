@@ -1,16 +1,15 @@
 /**
  * LanguageEngine — headless Google Translate controller.
  *
- * STRATEGY: Cookie + reinit.
- *   - GT always reads the `googtrans` cookie on initialization.
- *   - To change language: set cookie → destroy GT → re-create GT.
- *   - GT re-reads the cookie → translates to the new language.
- *   - No combo hacking, no polling, no race conditions.
+ * STRATEGY: Cookie + combo.
+ *   1. First load: set `googtrans` cookie BEFORE GT script loads.
+ *      GT reads the cookie on init → auto-translates.
+ *   2. Runtime switch: set cookie + manipulate GT's hidden <select>
+ *      combo (.goog-te-combo) → instant translation, no reload.
+ *   3. Fallback: if combo not found, cookie + page reload.
  *
- * The combo approach is unreliable in production because GT's
- * <select> element may not be accessible depending on container
- * visibility, iframe state, or GT version. Cookie + reinit is
- * the only 100% reliable method.
+ * CRITICAL CSS: GT elements are positioned off-screen (not display:none)
+ * so iframes/selects remain functional while invisible.
  */
 
 import React, {
@@ -88,30 +87,13 @@ function clearGoogTransCookies() {
 const GT_LANGUAGES =
   "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am,hr,sr,bg,sk,sl,et,lv,lt,my,km,lo,ka,hy,az,uz,tk,mn,ne,si";
 
-/** Create (or re-create) the GT TranslateElement. GT reads the cookie on init. */
+/** Create the GT TranslateElement ONCE. GT reads the cookie on init.
+ *  NEVER call this more than once — GT's constructor corrupts on re-entry. */
 function initGT() {
   try {
     if (!window.google?.translate?.TranslateElement) return;
-    // Clear old widget content
     const el = document.getElementById("google_translate_element");
     if (el) el.innerHTML = "";
-    // Remove GT visual chrome (banners, tooltips) but NEVER remove
-    // `body > .skiptranslate` — that div contains GT's hidden <select>
-    // combo and translation iframe. Removing it kills the engine and
-    // GT won't recreate it on subsequent TranslateElement() calls.
-    document
-      .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
-      .forEach((node) => node.remove());
-    // Hide (don't remove) the skiptranslate bar GT pushes onto body
-    document
-      .querySelectorAll("body > .skiptranslate")
-      .forEach((node) => {
-        (node as HTMLElement).style.height = "0";
-        (node as HTMLElement).style.overflow = "hidden";
-        (node as HTMLElement).style.opacity = "0";
-        (node as HTMLElement).style.pointerEvents = "none";
-      });
-    // Reset body position (GT pushes it down)
     document.body.style.top = "0px";
 
     new window.google.translate.TranslateElement(
@@ -123,6 +105,16 @@ function initGT() {
       },
       "google_translate_element",
     );
+
+    // Give GT a moment to fully create its infrastructure, then hide chrome
+    setTimeout(() => {
+      document
+        .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
+        .forEach((n) => {
+          (n as HTMLElement).style.display = "none";
+        });
+      document.body.style.top = "0px";
+    }, 500);
   } catch (e) {
     console.warn("[LanguageEngine] GT init error:", e);
   }
@@ -146,20 +138,35 @@ function loadGTScript(): Promise<void> {
 }
 
 /**
- * Switch language by setting cookie + reinitializing GT.
- * This is the ONLY reliable method across all environments.
+ * Switch GT language at runtime using the hidden <select> combo.
+ * Returns true if the combo switch succeeded.
  */
-function switchLanguage(lang: string) {
+function switchLanguageViaCombo(lang: string): boolean {
+  const combo =
+    document.querySelector<HTMLSelectElement>(".goog-te-combo") ||
+    document.querySelector<HTMLSelectElement>(".skiptranslate select");
+  if (!combo) return false;
+  if (lang === "fr") {
+    // First option is "Select Language" — restores original text
+    combo.selectedIndex = 0;
+  } else {
+    combo.value = lang;
+  }
+  combo.dispatchEvent(new Event("change"));
+  return true;
+}
+
+/**
+ * Switch language: set cookie (survives reloads) + try combo (instant).
+ * Returns true if combo worked, false if caller should reload.
+ */
+function switchLanguage(lang: string): boolean {
   if (lang === "fr") {
     clearGoogTransCookies();
-    // To restore French, remove all GT-translated <font> tags
-    // by re-initializing GT with no cookie (it restores original text)
-    initGT();
   } else {
     setGoogTransCookie(lang);
-    // Reinit GT so it reads the new cookie
-    initGT();
   }
+  return switchLanguageViaCombo(lang);
 }
 
 // ── Provider ──
@@ -261,10 +268,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(LANG_CACHE_KEY, lang);
 
     if (gtLoaded.current) {
-      switchLanguage(lang);
+      const switched = switchLanguage(lang);
+      if (!switched) {
+        // GT loaded but combo not ready yet — cookie is set, retry shortly
+        setTimeout(() => switchLanguageViaCombo(lang), 1000);
+      }
     } else {
       // GT not loaded yet — just set cookie, GT will use it on init
-      setGoogTransCookie(lang);
+      if (lang === "fr") {
+        clearGoogTransCookies();
+      } else {
+        setGoogTransCookie(lang);
+      }
     }
 
     if (!isBaseLang(lang)) {
@@ -297,29 +312,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
 
-      // Set cookie now — the reload will pick it up
-      if (lang === "fr") {
-        clearGoogTransCookies();
-      } else {
-        setGoogTransCookie(lang);
-      }
+      // Set cookie + try combo for instant switch
+      const switched = switchLanguage(lang);
 
-      // Different language → reload so GT re-reads the cookie from scratch
-      if (source === "country") {
-        flashBanner(
-          lang === "fr"
+      const msg =
+        source === "country"
+          ? lang === "fr"
             ? "Switched to Français (site base language)"
-            : `Language switched to ${lang.toUpperCase()} for this country`,
-          true,
-        );
-      } else {
-        flashBanner(
-          lang === "fr"
+            : `Language switched to ${lang.toUpperCase()} for this country`
+          : lang === "fr"
             ? "Language restored to Français"
-            : `Language overridden to ${lang.toUpperCase()}`,
-          true,
-        );
-      }
+            : `Language overridden to ${lang.toUpperCase()}`;
+
+      // If combo worked → no reload needed. If not → reload as fallback.
+      flashBanner(msg, !switched);
     },
     [currentLang, flashBanner],
   );
@@ -403,7 +409,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       <style>{`
-        /* Hide all GT visual chrome. Translation still works. */
+        /* Hide all GT visual chrome OFF-SCREEN (not display:none).
+           display:none kills iframes; height:0 + overflow:hidden clips
+           the translation iframe. position:fixed + top:-9999px keeps
+           elements functional but invisible. */
         .goog-te-banner-frame,
         iframe.goog-te-banner-frame,
         .goog-te-balloon-frame,
@@ -420,14 +429,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .VIpgJd-ZVi9od-aZ2wEe-OiiCO,
         #goog-gt-vt,
         .VIpgJd-yAWNEb-L7lbkb {
-          display: none !important;
-          visibility: hidden !important;
-          height: 0 !important;
-          width: 0 !important;
+          position: fixed !important;
+          top: -9999px !important;
+          left: -9999px !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
         }
         body > .skiptranslate {
-          height: 0 !important;
-          overflow: hidden !important;
+          position: fixed !important;
+          top: -9999px !important;
+          left: -9999px !important;
           opacity: 0 !important;
           pointer-events: none !important;
         }

@@ -630,13 +630,15 @@ function AppContent() {
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="flex flex-shrink-0">
                       <span className="flex-shrink-0 px-4 md:px-8">
-                        Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence d'Affaires
+                        Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence
+                        d'Affaires
                       </span>
                       <span className="flex-shrink-0 px-4 md:px-8">
                         Analyser • Optimiser • Visualiser • Croître
                       </span>
                       <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                        24 Secteurs d'Industrie • Analytique en Direct • Couverture Mondiale
+                        24 Secteurs d'Industrie • Analytique en Direct •
+                        Couverture Mondiale
                       </span>
                       <span className="hidden md:inline-flex flex-shrink-0 px-8">
                         Commerce • Hôtellerie • Construction • Automobile •

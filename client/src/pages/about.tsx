@@ -58,7 +58,8 @@ const PLATFORM_SECTORS = [
     icon: Hotel,
     color: "from-blue-500 to-cyan-500",
     gradient: "bg-gradient-to-r from-blue-500 to-cyan-500",
-    description: "Annonces d'hébergement, locations de vacances & données hôtelières",
+    description:
+      "Annonces d'hébergement, locations de vacances & données hôtelières",
     route: "/hotellerie",
   },
   {
@@ -67,7 +68,8 @@ const PLATFORM_SECTORS = [
     icon: Car,
     color: "from-orange-500 to-red-500",
     gradient: "bg-gradient-to-r from-orange-500 to-red-500",
-    description: "Marché automobile, annuaire de concessionnaires & analytique auto",
+    description:
+      "Marché automobile, annuaire de concessionnaires & analytique auto",
     route: "/automobile",
   },
   {
@@ -86,7 +88,8 @@ const PLATFORM_SECTORS = [
     icon: Banknote,
     color: "from-emerald-500 to-teal-500",
     gradient: "bg-gradient-to-r from-emerald-500 to-teal-500",
-    description: "Annuaire des services financiers & intelligence du secteur bancaire",
+    description:
+      "Annuaire des services financiers & intelligence du secteur bancaire",
     route: "/finances",
   },
   {
@@ -95,7 +98,8 @@ const PLATFORM_SECTORS = [
     icon: Stethoscope,
     color: "from-rose-500 to-pink-500",
     gradient: "bg-gradient-to-r from-rose-500 to-pink-500",
-    description: "Hôpitaux, cliniques, médecins & annuaire des prestataires de santé",
+    description:
+      "Hôpitaux, cliniques, médecins & annuaire des prestataires de santé",
     route: "/sante",
   },
   {
@@ -114,7 +118,8 @@ const PLATFORM_SECTORS = [
     icon: Building,
     color: "from-slate-600 to-slate-800",
     gradient: "bg-gradient-to-r from-slate-600 to-slate-800",
-    description: "Annuaire complet d'entreprises & moteur de recherche multi-secteur",
+    description:
+      "Annuaire complet d'entreprises & moteur de recherche multi-secteur",
     route: "/businesses-directory",
   },
 ];
@@ -498,13 +503,17 @@ export default function About() {
                     <div className="text-lg font-bold text-pink-400">
                       {musicStats.totalArtists}
                     </div>
-                    <div className="text-xs text-slate-400">Artistes Musicaux</div>
+                    <div className="text-xs text-slate-400">
+                      Artistes Musicaux
+                    </div>
                   </div>
                   <div>
                     <div className="text-lg font-bold text-violet-400">
                       {formatNumber(musicStats.totalStreams)}
                     </div>
-                    <div className="text-xs text-slate-400">Écoutes Totales</div>
+                    <div className="text-xs text-slate-400">
+                      Écoutes Totales
+                    </div>
                   </div>
                 </>
               )}
@@ -541,7 +550,8 @@ export default function About() {
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
                 Chaque secteur mène à un tableau de bord analytique dédié avec
-                des données en temps réel, recherche et fonctionnalités d'annuaire.
+                des données en temps réel, recherche et fonctionnalités
+                d'annuaire.
               </p>
             </div>
           </FloatingElement>
@@ -826,8 +836,9 @@ export default function About() {
                 </span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Des fonctionnalités intégrées dans chaque tableau de bord sectoriel —
-                recherche, analytique, données en temps réel, et plus encore.
+                Des fonctionnalités intégrées dans chaque tableau de bord
+                sectoriel — recherche, analytique, données en temps réel, et
+                plus encore.
               </p>
             </div>
           </FloatingElement>
@@ -943,7 +954,8 @@ export default function About() {
             <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
               Parcourez {totalBusinesses.toLocaleString()} entreprises dans{" "}
               {totalCategories.toLocaleString()} catégories, ou contactez-nous
-              pour découvrir comment votre entreprise peut rejoindre la plateforme.
+              pour découvrir comment votre entreprise peut rejoindre la
+              plateforme.
             </p>
           </FloatingElement>
 

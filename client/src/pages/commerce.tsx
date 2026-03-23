@@ -725,7 +725,11 @@ export default function CommerceBusinessAds() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
+        title={
+          databaseConnected
+            ? "Base de données connectée"
+            : "Base de données hors ligne"
+        }
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -786,7 +790,9 @@ export default function CommerceBusinessAds() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                  <span className="text-sm text-blue-200">Base de Données en Direct</span>
+                  <span className="text-sm text-blue-200">
+                    Base de Données en Direct
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {totalResults.toLocaleString()}+ Enregistrements
