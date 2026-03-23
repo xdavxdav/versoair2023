@@ -164,6 +164,7 @@ const PrivacyPolicy = lazy(() => import("@/pages/privacy"));
 const TermsOfService = lazy(() => import("@/pages/terms"));
 const CookiePolicy = lazy(() => import("@/pages/cookies"));
 const GDPRCompliance = lazy(() => import("@/pages/gdpr"));
+const InformationHub = lazy(() => import("@/pages/information"));
 
 // ─────────────────────────────────────────────────────
 // 👥 Team & Sponsors (lazy-loaded)
@@ -434,6 +435,7 @@ function Router() {
       <Route path="/terms" component={TermsOfService} />
       <Route path="/cookies" component={CookiePolicy} />
       <Route path="/gdpr" component={GDPRCompliance} />
+      <Route path="/information" component={InformationHub} />
 
       {/* ═══════════════════════════════════════════════
           👥 TEAM & SPONSORS
