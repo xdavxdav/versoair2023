@@ -229,24 +229,36 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
   }, []);
 
-  // ── STEP 1: Pre-set cookie from cache, then load GT ──
+  // ── STEP 1: Pre-set cookie from cache, load GT only when cookie is ready ──
   useEffect(() => {
-    // Set cookie BEFORE GT loads so it auto-translates on init
-    const cached = localStorage.getItem(LANG_CACHE_KEY);
-    if (cached && cached !== "fr" && cached !== "auto") {
-      setGoogTransCookie(cached);
-    }
-
     // Define the callback GT will invoke once loaded
     window.googleTranslateElementInit = () => {
       gtLoaded.current = true;
-      isInitialLoad.current = false;
       initGT();
     };
 
-    loadGTScript();
+    const cached = localStorage.getItem(LANG_CACHE_KEY);
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    if (cached && cached !== "fr" && cached !== "auto") {
+      // Returning visitor — set cookie THEN load GT.
+      // GT reads the cookie on init → auto-translates immediately.
+      setGoogTransCookie(cached);
+      loadGTScript();
+    } else {
+      // First visit (no cache). Do NOT load GT yet — country detection
+      // hasn't fired, so there's no cookie. Loading GT now would make it
+      // initialise in French with no way to switch.
+      // STEP 2 will set the cookie then load GT.
+      // Safety: if detection takes >5s (network issues), load GT anyway
+      // so the page isn't stuck without GT forever.
+      safetyTimer = setTimeout(() => {
+        if (!gtLoaded.current) loadGTScript();
+      }, 5000);
+    }
 
     return () => {
+      if (safetyTimer) clearTimeout(safetyTimer);
       delete (window as any).googleTranslateElementInit;
     };
   }, []);
@@ -258,52 +270,57 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const lang = getLanguageForCountry(selectedCountry);
     setAutoDetectedLang(lang);
 
-    // First detection: honour cached language
+    // First detection: honour cached language (returning visitor)
     if (!firstCountryDone.current) {
       firstCountryDone.current = true;
       const cached = localStorage.getItem(LANG_CACHE_KEY);
       if (cached && cached !== "auto" && cached !== "fr") {
-        // Cookie already set in Step 1, GT already inited — nothing to do
+        // Returning visitor — STEP 1 already set cookie + loaded GT.
+        // GT auto-translates from cookie. Nothing more to do.
         return;
       }
     }
 
-    // Apply language
+    // Apply language to React state + localStorage
     setCurrentLang(lang);
     localStorage.setItem(LANG_CACHE_KEY, lang);
 
-    // Always set cookie first (survives reloads)
-    if (lang === "fr") {
+    // Base language (French) — no GT translation needed
+    if (isBaseLang(lang)) {
       clearGoogTransCookies();
+      if (gtLoaded.current) {
+        // Undo any active translation
+        switchLanguageViaCombo(lang);
+      } else {
+        // Load GT anyway (needed for future manual switches)
+        loadGTScript();
+      }
+      return;
+    }
+
+    // Non-base language — set cookie, then get GT to translate
+    setGoogTransCookie(lang);
+
+    if (!gtLoaded.current) {
+      // First visit: GT was deferred in STEP 1 (no cache).
+      // Cookie is now set → load GT → GT reads cookie → translates.
+      // This is the guaranteed path — no race condition.
+      loadGTScript();
     } else {
-      setGoogTransCookie(lang);
+      // GT already loaded (user changed country after initial load).
+      // Try combo for instant switch; reload as last resort.
+      const ok = switchLanguageViaCombo(lang);
+      if (!ok) {
+        // Cookie is set — reload lets GT re-read it.
+        window.location.reload();
+        return;
+      }
     }
 
-    if (gtLoaded.current) {
-      // GT already initialised without our cookie — combo-switch with retries
-      let attempts = 0;
-      const maxAttempts = 6; // 6 × 500ms = 3s window
-      const tryCombo = () => {
-        attempts++;
-        const ok = switchLanguageViaCombo(lang);
-        if (ok) return; // success — GT is translating
-        if (attempts < maxAttempts) {
-          setTimeout(tryCombo, 500);
-        } else {
-          // All retries failed — cookie is set, reload so GT reads it
-          window.location.reload();
-        }
-      };
-      tryCombo();
-    }
-    // else: GT not loaded yet — cookie is already set, GT will read it on init
-
-    if (!isBaseLang(lang)) {
-      flashBanner(
-        `Auto-translated to ${lang.toUpperCase()} based on your location`,
-        false,
-      );
-    }
+    flashBanner(
+      `Auto-translated to ${lang.toUpperCase()} based on your location`,
+      false,
+    );
   }, [selectedCountry, detecting, flashBanner]);
 
   // ── Manual language switch (from dropdown) ──
