@@ -106,13 +106,8 @@ function initGT() {
       "google_translate_element",
     );
 
-    // Give GT a moment to fully create its infrastructure, then hide chrome
+    // Reset body.top that GT pushes down for its banner
     setTimeout(() => {
-      document
-        .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
-        .forEach((n) => {
-          (n as HTMLElement).style.display = "none";
-        });
       document.body.style.top = "0px";
     }, 500);
   } catch (e) {
@@ -374,11 +369,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const cleanup = () => {
       document.body.style.top = "0px";
-      // Remove any GT banner bars that sneak in
+      // Hide GT banner bars that sneak in (clip, never display:none)
       document
         .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
         .forEach((el) => {
-          (el as HTMLElement).style.display = "none";
+          const e = el as HTMLElement;
+          e.style.clipPath = "inset(100%)";
+          e.style.overflow = "hidden";
+          e.style.position = "fixed";
+          e.style.width = "1px";
+          e.style.height = "1px";
         });
     };
     // Run cleanup after GT has time to inject its UI
@@ -423,17 +423,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         reloadCountdown,
       }}
     >
-      {/* GT mounts its widget here. Offscreen but NOT display:none. */}
+      {/* GT mounts its widget here. Near-viewport, not clipped.
+          GT creates its <select> combo inside this div.
+          NEVER use display:none, clip-path, or overflow:hidden. */}
       <div
         id="google_translate_element"
         className="notranslate"
         style={{
           position: "fixed",
-          bottom: -200,
-          right: -200,
-          width: 300,
-          height: 100,
+          top: -100,
+          left: 0,
+          height: 0,
           opacity: 0,
+          overflow: "visible",
           pointerEvents: "none",
           zIndex: -1,
         }}
@@ -442,50 +444,94 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       <style>{`
-        /* ── GT visual chrome: safe to nuke ── */
+        /* ══════════════════════════════════════════════════════
+           GT CSS: NEVER use display:none on ANY GT element.
+           GT checks element visibility internally — display:none
+           kills iframes, communication channels, and the entire
+           translation engine silently.
+
+           SAFE hiding strategy:
+             clip-path: inset(100%)  → painted but invisible
+             overflow: hidden        → clips children
+             position: fixed         → out of flow
+             pointer-events: none    → non-interactive
+           ══════════════════════════════════════════════════════ */
+
+        /* GT top banner ("Translated from French") */
         .goog-te-banner-frame,
-        iframe.goog-te-banner-frame,
-        .goog-te-balloon-frame,
-        #goog-gt-tt,
-        .goog-te-ftab-frame,
-        .goog-tooltip,
-        .goog-text-highlight,
-        .goog-te-spinner-pos,
-        .goog-te-menu-frame,
-        #goog-gt-vt,
-        .VIpgJd-yAWNEb-L7lbkb {
-          display: none !important;
-        }
-        /* ── GT functional infrastructure: hide near-viewport so
-           browsers don't throttle the translation iframe.
-           NEVER use display:none or top:-9999px on these. ── */
-        body > .skiptranslate {
+        iframe.goog-te-banner-frame {
           position: fixed !important;
-          bottom: -200px !important;
-          right: -200px !important;
-          width: 300px !important;
-          height: 100px !important;
-          opacity: 0 !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 1px !important;
+          height: 1px !important;
+          clip-path: inset(100%) !important;
+          overflow: hidden !important;
           pointer-events: none !important;
           z-index: -1 !important;
-          overflow: visible !important;
         }
-        /* GT's internal iframes — keep functional */
+
+        /* GT hover tooltips / popups */
+        .goog-te-balloon-frame,
+        #goog-gt-tt,
+        .goog-tooltip,
+        .goog-text-highlight,
+        #goog-gt-vt {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 1px !important;
+          height: 1px !important;
+          clip-path: inset(100%) !important;
+          overflow: hidden !important;
+          pointer-events: none !important;
+          z-index: -1 !important;
+        }
+
+        /* GT functional elements — MUST stay rendered and able
+           to load iframe content. Use near-viewport positioning
+           with overflow:visible so GT's inter-frame communication
+           works. These are NOT visual — they're the engine. */
+        .goog-te-ftab-frame,
+        .goog-te-spinner-pos,
+        .goog-te-menu-frame,
+        .VIpgJd-yAWNEb-L7lbkb,
         #gt-nvframe,
         iframe[id="gt-nvframe"],
         .VIpgJd-ZVi9od-ORHb-OEVmcd,
         .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
         .VIpgJd-ZVi9od-aZ2wEe-OiiCO {
           position: fixed !important;
-          bottom: -200px !important;
-          right: -200px !important;
+          top: -100px !important;
+          left: 0 !important;
           opacity: 0 !important;
           pointer-events: none !important;
           z-index: -1 !important;
+          overflow: visible !important;
         }
+
+        /* GT toolbar container (direct child of body).
+           Contains the <select> combo and internal iframes.
+           Do NOT use clip-path or overflow:hidden here —
+           GT's iframes inside need to load and communicate.
+           Keep it near-viewport so browsers don't throttle. */
+        body > .skiptranslate {
+          position: fixed !important;
+          top: -100px !important;
+          left: 0 !important;
+          height: 0 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          z-index: -1 !important;
+          overflow: visible !important;
+        }
+
+        /* Prevent GT from pushing body down */
         body {
           top: 0 !important;
         }
+
+        /* GT gadget text inside widget container */
         .goog-te-gadget {
           font-size: 0 !important;
           color: transparent !important;
@@ -493,7 +539,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .goog-te-gadget > span,
         .goog-te-gadget > div,
         .goog-te-gadget img {
-          display: none !important;
+          position: absolute !important;
+          width: 1px !important;
+          height: 1px !important;
+          clip-path: inset(100%) !important;
+          overflow: hidden !important;
         }
       `}</style>
     </LanguageContext.Provider>
