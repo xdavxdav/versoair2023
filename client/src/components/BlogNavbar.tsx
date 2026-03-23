@@ -70,7 +70,7 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
+        className="hidden md:block bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
         style={{ overflow: "visible" }}
       >
         <div className="max-w-full mx-auto px-3 md:px-5">

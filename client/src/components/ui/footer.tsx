@@ -51,6 +51,7 @@ export default function Footer() {
     {
       title: "Legal",
       links: [
+        { href: "/information", label: "Information Center" },
         { href: "/privacy", label: "Privacy Policy" },
         { href: "/terms", label: "Terms of Service" },
         { href: "/cookies", label: "Cookie Policy" },
