@@ -586,7 +586,7 @@ export default function Finance() {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90"></div>
         </div>
 
-        <div className="relative z-10 w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto w-full">
+        <div className="relative z-10 w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}

@@ -1,4 +1,4 @@
-#!/usr/bin/env expect -f
+#!/usr/bin/expect -f
 # Auto-accept all "create table" prompts in drizzle-kit push
 set timeout 120
 spawn npx drizzle-kit push
