@@ -630,17 +630,17 @@ function AppContent() {
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="flex flex-shrink-0">
                       <span className="flex-shrink-0 px-4 md:px-8">
-                        Welcome to Verso Air ™️ — Business Intelligence Platform
+                        Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence d'Affaires
                       </span>
                       <span className="flex-shrink-0 px-4 md:px-8">
-                        Analyze • Optimize • Visualize • Grow
+                        Analyser • Optimiser • Visualiser • Croître
                       </span>
                       <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                        24 Industry Sectors • Live Analytics • Global Coverage
+                        24 Secteurs d'Industrie • Analytique en Direct • Couverture Mondiale
                       </span>
                       <span className="hidden md:inline-flex flex-shrink-0 px-8">
-                        Commerce • Hospitality • Construction • Automotive •
-                        Finance • Entertainment
+                        Commerce • Hôtellerie • Construction • Automobile •
+                        Finance • Divertissement
                       </span>
                     </div>
                   ))}

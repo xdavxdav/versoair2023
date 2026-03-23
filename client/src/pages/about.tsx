@@ -44,30 +44,30 @@ import { useAboutStats } from "@/hooks/use-about-stats";
 const PLATFORM_SECTORS = [
   {
     id: "commerce",
-    title: "Commerce & Retail",
+    title: "Commerce & Détail",
     icon: ShoppingBag,
     color: "from-purple-500 to-pink-500",
     gradient: "bg-gradient-to-r from-purple-500 to-pink-500",
     description:
-      "Business advertising, marketplace intelligence & retail analytics",
+      "Publicité commerciale, intelligence de marché & analytique du détail",
     route: "/commerce",
   },
   {
     id: "hotellerie",
-    title: "Hospitality & Tourism",
+    title: "Hôtellerie & Tourisme",
     icon: Hotel,
     color: "from-blue-500 to-cyan-500",
     gradient: "bg-gradient-to-r from-blue-500 to-cyan-500",
-    description: "Accommodation listings, vacation rentals & hospitality data",
+    description: "Annonces d'hébergement, locations de vacances & données hôtelières",
     route: "/hotellerie",
   },
   {
     id: "automobile",
-    title: "Automotive",
+    title: "Automobile",
     icon: Car,
     color: "from-orange-500 to-red-500",
     gradient: "bg-gradient-to-r from-orange-500 to-red-500",
-    description: "Vehicle marketplace, dealership directory & auto analytics",
+    description: "Marché automobile, annuaire de concessionnaires & analytique auto",
     route: "/automobile",
   },
   {
@@ -77,44 +77,44 @@ const PLATFORM_SECTORS = [
     color: "from-amber-500 to-yellow-500",
     gradient: "bg-gradient-to-r from-amber-500 to-yellow-500",
     description:
-      "Building contractors, materials suppliers & construction projects",
+      "Entrepreneurs du bâtiment, fournisseurs de matériaux & projets de construction",
     route: "/batiment",
   },
   {
     id: "finances",
-    title: "Finance & Banking",
+    title: "Finance & Banques",
     icon: Banknote,
     color: "from-emerald-500 to-teal-500",
     gradient: "bg-gradient-to-r from-emerald-500 to-teal-500",
-    description: "Financial services directory & banking sector intelligence",
+    description: "Annuaire des services financiers & intelligence du secteur bancaire",
     route: "/finances",
   },
   {
     id: "sante",
-    title: "Health & Wellness",
+    title: "Santé & Bien-être",
     icon: Stethoscope,
     color: "from-rose-500 to-pink-500",
     gradient: "bg-gradient-to-r from-rose-500 to-pink-500",
-    description: "Hospitals, clinics, doctors & healthcare providers directory",
+    description: "Hôpitaux, cliniques, médecins & annuaire des prestataires de santé",
     route: "/sante",
   },
   {
     id: "divertissement",
-    title: "Entertainment",
+    title: "Divertissement",
     icon: Gamepad2,
     color: "from-violet-500 to-purple-500",
     gradient: "bg-gradient-to-r from-violet-500 to-purple-500",
     description:
-      "Nightlife, cinemas, events & leisure activities across the city",
+      "Vie nocturne, cinémas, événements & activités de loisirs dans la ville",
     route: "/divertissement",
   },
   {
     id: "businesses-directory",
-    title: "Business Directory",
+    title: "Annuaire d'Entreprises",
     icon: Building,
     color: "from-slate-600 to-slate-800",
     gradient: "bg-gradient-to-r from-slate-600 to-slate-800",
-    description: "Comprehensive business listings & cross-sector search engine",
+    description: "Annuaire complet d'entreprises & moteur de recherche multi-secteur",
     route: "/businesses-directory",
   },
 ];
@@ -212,7 +212,7 @@ const SectorCard = ({
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-400 group-hover:text-white/80 transition-colors">
-                Explore sector →
+                Explorer le secteur →
               </span>
             </div>
           </CardContent>
@@ -355,7 +355,7 @@ export default function About() {
             >
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all">
                 <Sparkles className="h-3 w-3 mr-2" />
-                Multi-Sector Intelligence Platform
+                Plateforme d'Intelligence Multi-Sectorielle
               </Badge>
 
               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
@@ -364,7 +364,7 @@ export default function About() {
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  Business Intelligence Ecosystem
+                  Écosystème d'Intelligence d'Affaires
                 </span>
               </h1>
             </motion.div>
@@ -376,10 +376,11 @@ export default function About() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed"
             >
-              Powering business directories and analytics across Abidjan & Côte
-              d'Ivoire — connecting commerce, hospitality, automotive,
-              construction, finance, health, and entertainment sectors through
-              real-time data intelligence.
+              Au service des annuaires d'entreprises et de l'analytique à
+              Abidjan & en Côte d'Ivoire — connectant les secteurs du commerce,
+              de l'hôtellerie, de l'automobile, de la construction, de la
+              finance, de la santé et du divertissement grâce à l'intelligence
+              de données en temps réel.
             </motion.p>
 
             {/* Quick Stats — ALL from live database */}
@@ -392,24 +393,24 @@ export default function About() {
               {[
                 {
                   value: totalBusinesses,
-                  label: "Registered Businesses",
+                  label: "Entreprises Enregistrées",
                   icon: Building,
                 },
                 {
                   value: totalCategories,
-                  label: "Business Categories",
+                  label: "Catégories d'Entreprises",
                   icon: Database,
                 },
                 {
                   value: avgRating,
-                  label: "Avg. Rating",
+                  label: "Note Moyenne",
                   icon: Star,
                   suffix: "★",
                   isDecimal: true,
                 },
                 {
                   value: totalReviews,
-                  label: "Total Reviews",
+                  label: "Total d'Avis",
                   icon: Users,
                 },
               ].map((stat, i) => {
@@ -443,7 +444,7 @@ export default function About() {
               <Link href="/businesses-directory">
                 <Button className="px-8 py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl shadow-2xl hover:shadow-purple-500/25 transition-all">
                   <Rocket className="mr-2 h-5 w-5" />
-                  Browse All Businesses
+                  Parcourir les Entreprises
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -452,7 +453,7 @@ export default function About() {
                   variant="outline"
                   className="px-8 py-6 text-lg border-slate-700 hover:bg-white/5 rounded-xl"
                 >
-                  Contact Us
+                  Nous Contacter
                 </Button>
               </Link>
             </motion.div>
@@ -475,20 +476,20 @@ export default function About() {
                 <div className="text-lg font-bold text-emerald-400">
                   {totalRecords.toLocaleString()}
                 </div>
-                <div className="text-xs text-slate-400">Database Records</div>
+                <div className="text-xs text-slate-400">Enregistrements BD</div>
               </div>
               <div>
                 <div className="text-lg font-bold text-blue-400">
                   {activeTables}
                 </div>
-                <div className="text-xs text-slate-400">Active Tables</div>
+                <div className="text-xs text-slate-400">Tables Actives</div>
               </div>
               <div>
                 <div className="text-lg font-bold text-purple-400">
                   {categoryStats.length}
                 </div>
                 <div className="text-xs text-slate-400">
-                  Categories with Listings
+                  Catégories avec Annonces
                 </div>
               </div>
               {musicStats && (
@@ -497,13 +498,13 @@ export default function About() {
                     <div className="text-lg font-bold text-pink-400">
                       {musicStats.totalArtists}
                     </div>
-                    <div className="text-xs text-slate-400">Music Artists</div>
+                    <div className="text-xs text-slate-400">Artistes Musicaux</div>
                   </div>
                   <div>
                     <div className="text-lg font-bold text-violet-400">
                       {formatNumber(musicStats.totalStreams)}
                     </div>
-                    <div className="text-xs text-slate-400">Total Streams</div>
+                    <div className="text-xs text-slate-400">Écoutes Totales</div>
                   </div>
                 </>
               )}
@@ -513,7 +514,7 @@ export default function About() {
                     {topLocations.length}+
                   </div>
                   <div className="text-xs text-slate-400">
-                    City Zones Covered
+                    Zones Urbaines Couvertes
                   </div>
                 </div>
               )}
@@ -531,16 +532,16 @@ export default function About() {
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                 <Globe className="h-3 w-3 mr-2" />
-                Platform Sectors
+                Secteurs de la Plateforme
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  {PLATFORM_SECTORS.length} Integrated Sectors
+                  {PLATFORM_SECTORS.length} Secteurs Intégrés
                 </span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Each sector links to a dedicated analytics dashboard with
-                real-time data, search, and business directory capabilities.
+                Chaque secteur mène à un tableau de bord analytique dédié avec
+                des données en temps réel, recherche et fonctionnalités d'annuaire.
               </p>
             </div>
           </FloatingElement>
@@ -615,10 +616,10 @@ export default function About() {
                                     </p>
                                     <div className="flex flex-wrap gap-2 mb-6">
                                       {[
-                                        "Live Directory",
-                                        "Search & Filter",
-                                        "Analytics Dashboard",
-                                        "Category Browse",
+                                        "Annuaire en Direct",
+                                        "Recherche & Filtres",
+                                        "Tableau de Bord Analytique",
+                                        "Parcourir par Catégorie",
                                       ].map((tag, i) => (
                                         <Badge
                                           key={i}
@@ -634,8 +635,8 @@ export default function About() {
                                         variant="outline"
                                         className="border-slate-700 hover:bg-white/5"
                                       >
-                                        Open {sector.title.split(" ")[0]}{" "}
-                                        Dashboard
+                                        Ouvrir {sector.title.split(" ")[0]}{" "}
+                                        Tableau de Bord
                                         <ChevronRight className="ml-2 h-4 w-4" />
                                       </Button>
                                     </Link>
@@ -648,7 +649,7 @@ export default function About() {
                                           : totalBusinesses.toLocaleString()}
                                       </div>
                                       <div className="text-sm text-slate-400">
-                                        Total Registered Businesses
+                                        Total d'Entreprises Enregistrées
                                       </div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
@@ -658,7 +659,7 @@ export default function About() {
                                           : `${avgRating.toFixed(1)}★`}
                                       </div>
                                       <div className="text-sm text-slate-400">
-                                        Average Business Rating
+                                        Note Moyenne des Entreprises
                                       </div>
                                     </div>
                                   </div>
@@ -686,17 +687,17 @@ export default function About() {
               <div className="text-center mb-12">
                 <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                   <BarChart3 className="h-3 w-3 mr-2" />
-                  Live from Database
+                  Données en Direct
                 </Badge>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
                   <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Top Business Categories
+                    Top des Catégories d'Entreprises
                   </span>
                 </h2>
                 <p className="text-slate-400 max-w-2xl mx-auto">
-                  Real-time category breakdown from{" "}
-                  {totalBusinesses.toLocaleString()} businesses across{" "}
-                  {totalCategories.toLocaleString()} categories.
+                  Répartition en temps réel des catégories parmi{" "}
+                  {totalBusinesses.toLocaleString()} entreprises dans{" "}
+                  {totalCategories.toLocaleString()} catégories.
                 </p>
               </div>
             </FloatingElement>
@@ -733,7 +734,7 @@ export default function About() {
                         variant="secondary"
                         className="bg-white/10 text-white/80"
                       >
-                        {cat.count} {cat.count === 1 ? "listing" : "listings"}
+                        {cat.count} {cat.count === 1 ? "annonce" : "annonces"}
                       </Badge>
                       <span className="text-xs text-emerald-400">
                         {cat.growth}
@@ -751,7 +752,7 @@ export default function About() {
                     variant="outline"
                     className="border-slate-700 hover:bg-white/5"
                   >
-                    View All {totalCategories} Categories
+                    Voir les {totalCategories} Catégories
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -769,11 +770,11 @@ export default function About() {
               <div className="text-center mb-10">
                 <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                   <MapPin className="h-3 w-3 mr-2" />
-                  Geographic Coverage
+                  Couverture Géographique
                 </Badge>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
                   <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Where Our Businesses Are
+                    Où Sont Nos Entreprises
                   </span>
                 </h2>
               </div>
@@ -797,7 +798,7 @@ export default function About() {
                       </div>
                       <div className="text-xs text-slate-400">
                         {loc.count}{" "}
-                        {loc.count === 1 ? "business" : "businesses"}
+                        {loc.count === 1 ? "entreprise" : "entreprises"}
                       </div>
                     </div>
                   </motion.div>
@@ -817,16 +818,16 @@ export default function About() {
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                 <Zap className="h-3 w-3 mr-2" />
-                Platform Features
+                Fonctionnalités de la Plateforme
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  What Powers the Platform
+                  Ce Qui Fait Tourner la Plateforme
                 </span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Built-in capabilities across every sector dashboard — search,
-                analytics, real-time data, and more.
+                Des fonctionnalités intégrées dans chaque tableau de bord sectoriel —
+                recherche, analytique, données en temps réel, et plus encore.
               </p>
             </div>
           </FloatingElement>
@@ -834,42 +835,42 @@ export default function About() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             <FeatureHighlight
               icon={BarChart3}
-              title="Real-time Analytics"
-              description="Live business statistics, revenue tracking, and performance dashboards updated from PostgreSQL in real-time"
+              title="Analytique en Temps Réel"
+              description="Statistiques commerciales en direct, suivi des revenus et tableaux de bord de performance mis à jour depuis PostgreSQL en temps réel"
               color="text-blue-400"
             />
             <FeatureHighlight
               icon={Globe}
-              title="Multi-Sector Search"
-              description="Search across all business categories with filters for location, rating, and specialization"
+              title="Recherche Multi-Sectorielle"
+              description="Recherche dans toutes les catégories d'entreprises avec filtres par localisation, note et spécialisation"
               color="text-cyan-400"
               delay={0.1}
             />
             <FeatureHighlight
               icon={Shield}
-              title="Session-based Auth"
-              description="Secure authentication with Express sessions and role-based access for admin dashboards"
+              title="Authentification par Session"
+              description="Authentification sécurisée avec sessions Express et accès basé sur les rôles pour les tableaux de bord admin"
               color="text-green-400"
               delay={0.2}
             />
             <FeatureHighlight
               icon={Activity}
-              title="WebSocket Notifications"
-              description="Real-time updates via Socket.io for live notifications and data refresh across all connected clients"
+              title="Notifications WebSocket"
+              description="Mises à jour en temps réel via Socket.io pour les notifications et le rafraîchissement des données"
               color="text-purple-400"
               delay={0.3}
             />
             <FeatureHighlight
               icon={Users}
-              title="Business Directory"
-              description="Comprehensive listing management with categories, reviews, ratings, hours, and contact information"
+              title="Annuaire d'Entreprises"
+              description="Gestion complète des annonces avec catégories, avis, notes, horaires et coordonnées"
               color="text-pink-400"
               delay={0.4}
             />
             <FeatureHighlight
               icon={Lightbulb}
-              title="Data-Driven Dashboards"
-              description="Chart.js visualizations with revenue trends, category breakdowns, and performance metrics per sector"
+              title="Tableaux de Bord Data-Driven"
+              description="Visualisations Chart.js avec tendances de revenus, répartitions par catégorie et indicateurs de performance par secteur"
               color="text-yellow-400"
               delay={0.5}
             />
@@ -886,11 +887,11 @@ export default function About() {
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                 <Zap className="h-3 w-3 mr-2" />
-                Technology Stack
+                Pile Technologique
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  Built With
+                  Construit Avec
                 </span>
               </h2>
             </div>
@@ -927,22 +928,22 @@ export default function About() {
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/10 mb-8">
               <Star className="h-4 w-4 text-purple-300" />
               <span className="text-white/90">
-                The Business Intelligence Platform for Côte d'Ivoire
+                La Plateforme d'Intelligence d'Affaires pour la Côte d'Ivoire
               </span>
             </div>
           </FloatingElement>
 
           <FloatingElement delay={0.2}>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to Explore?
+              Prêt à Explorer ?
             </h2>
           </FloatingElement>
 
           <FloatingElement delay={0.4}>
             <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Browse {totalBusinesses.toLocaleString()} businesses across{" "}
-              {totalCategories.toLocaleString()} categories, or reach out to
-              learn how your business can join the platform.
+              Parcourez {totalBusinesses.toLocaleString()} entreprises dans{" "}
+              {totalCategories.toLocaleString()} catégories, ou contactez-nous
+              pour découvrir comment votre entreprise peut rejoindre la plateforme.
             </p>
           </FloatingElement>
 
@@ -956,7 +957,7 @@ export default function About() {
             <Link href="/businesses-directory">
               <Button className="px-8 py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl shadow-2xl hover:shadow-purple-500/25 transition-all group">
                 <Briefcase className="mr-2 h-5 w-5" />
-                Browse Directory
+                Parcourir l'Annuaire
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -965,7 +966,7 @@ export default function About() {
                 variant="outline"
                 className="px-8 py-6 text-lg border-slate-700 hover:bg-white/5 rounded-xl"
               >
-                Contact Us
+                Nous Contacter
               </Button>
             </Link>
           </motion.div>
@@ -976,11 +977,11 @@ export default function About() {
               <div className="flex flex-wrap justify-center items-center gap-8 text-slate-400 text-sm">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-400" />
-                  <span>{totalBusinesses} Verified Businesses</span>
+                  <span>{totalBusinesses} Entreprises Vérifiées</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-amber-400" />
-                  <span>{avgRating.toFixed(1)}★ Average Rating</span>
+                  <span>{avgRating.toFixed(1)}★ Note Moyenne</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-cyan-400" />

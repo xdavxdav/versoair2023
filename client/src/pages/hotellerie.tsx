@@ -405,7 +405,7 @@ export default function Hotellerie() {
             labels,
             datasets: [
               {
-                label: "Revenue (€)",
+                label: "Revenus (€)",
                 data: revenueData,
                 borderColor: "hsl(270, 100%, 60%)",
                 backgroundColor: gradient,
@@ -487,7 +487,7 @@ export default function Hotellerie() {
             labels,
             datasets: [
               {
-                label: "Revenue by Category (€)",
+                label: "Revenus par Catégorie (€)",
                 data,
                 backgroundColor: [
                   "hsla(270, 100%, 60%, 0.8)",
@@ -576,7 +576,7 @@ export default function Hotellerie() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Database connected" : "Database offline"}
+        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -1438,7 +1438,7 @@ export default function Hotellerie() {
                                 {item.category}
                               </span>
                               <span className="text-sm text-green-400">
-                                {item.occupancy}% occupancy
+                                {item.occupancy}% occupation
                               </span>
                             </div>
                             <span className="font-semibold text-purple-300">

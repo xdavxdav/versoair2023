@@ -1104,8 +1104,11 @@ function ShowcaseToggle({
 }
 
 // --- Motto translations for the animated watermark ---
+// Keys MUST match the language codes from country-language.ts exactly
+// (e.g. "zh-CN" not "zh", "en" not omitted).
 const MOTTO_TRANSLATIONS: Record<string, string> = {
   fr: "DROIT AU BUT",
+  en: "STRAIGHT TO THE POINT",
   es: "DIRECTO AL GRANO",
   de: "DIREKT AUF DEN PUNKT",
   ar: "مباشرة إلى النقطة",
@@ -1113,7 +1116,8 @@ const MOTTO_TRANSLATIONS: Record<string, string> = {
   it: "DRITTO AL PUNTO",
   nl: "RECHT VOOR Z'N RAAP",
   ja: "単刀直入",
-  zh: "开门见山",
+  "zh-CN": "开门见山",
+  "zh-TW": "開門見山",
   ko: "단도직입",
   ru: "ПРЯМО В ТОЧКУ",
   hi: "सीधे मुद्दे पर",
@@ -1136,6 +1140,27 @@ const MOTTO_TRANSLATIONS: Record<string, string> = {
   sw: "MOJA KWA MOJA",
   he: "ישר לעניין",
   bn: "সরাসরি মূল কথায়",
+  hr: "RAVNO U SRIDU",
+  sr: "ПРАВО У ЦЕНТАР",
+  bg: "НАПРАВО В ЦЕЛТА",
+  sk: "PRIAMO K VECI",
+  sl: "NARAVNOST K BISTVU",
+  et: "OTSE ASJA JUURDE",
+  lv: "TIEŠI PIE LIETAS",
+  lt: "TIESIAI Į ESMĘ",
+  my: "တိုက်ရိုက်အချက်ကို",
+  km: "ត្រង់ចំណុច",
+  lo: "ກົງໄປທີ່ຈຸດ",
+  am: "ቀጥታ ወደ ነጥቡ",
+  fa: "مستقیم به هدف",
+  ka: "პირდაპირ საქმეზე",
+  hy: "ՈՒՂԻՂ ՆՊԱՏdelays",
+  az: "BİRBAŞA MƏQSƏDƏ",
+  uz: "TO'G'RIDAN-TO'G'RI MAQSADGA",
+  tk: "GÖNI MAKSADA",
+  mn: "ШУУД ЗОРИЛГОДОО",
+  ne: "सिधै मुद्दामा",
+  si: "කෙලින්ම කාරණයට",
 };
 
 const ENGLISH_MOTTO = "STRΔΦGHT TΩ THΞ PΩΦΠT";
@@ -2270,7 +2295,7 @@ export default function Home() {
                         ? "max-h-[4000px]"
                         : "max-h-[650px] sm:max-h-[700px] lg:max-h-[600px]"
                     } overflow-y-auto overscroll-contain`}
-                    style={{ WebkitOverflowScrolling: 'touch' }}
+                    style={{ WebkitOverflowScrolling: "touch" }}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                       {searchResults

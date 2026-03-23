@@ -373,8 +373,8 @@ export default function Entertainment() {
     }>
   >([
     {
-      name: "Loading entertainment businesses...",
-      desc: "Connecting to database",
+      name: "Chargement des entreprises de divertissement...",
+      desc: "Connexion à la base de données",
       image:
         "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
     },
@@ -430,7 +430,7 @@ export default function Entertainment() {
             labels,
             datasets: [
               {
-                label: "Revenue (€)",
+                label: "Revenus (€)",
                 data: revenueData,
                 borderColor: "hsl(270, 100%, 60%)",
                 backgroundColor: gradient,
@@ -512,7 +512,7 @@ export default function Entertainment() {
             labels,
             datasets: [
               {
-                label: "Revenue by Category (€)",
+                label: "Revenus par Catégorie (€)",
                 data,
                 backgroundColor: [
                   "hsla(270, 100%, 60%, 0.8)",
@@ -601,7 +601,7 @@ export default function Entertainment() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Database connected" : "Database offline"}
+        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -1345,7 +1345,7 @@ export default function Entertainment() {
                             {category.category}
                           </span>
                           <span className="text-sm text-green-400">
-                            {category.occupancy || 0}% occupancy
+                            {category.occupancy || 0}% occupation
                           </span>
                         </div>
                         <span className="font-semibold text-purple-300">
@@ -1390,7 +1390,7 @@ export default function Entertainment() {
                                 {item.category}
                               </span>
                               <span className="text-sm text-green-400">
-                                {item.occupancy}% occupancy
+                                {item.occupancy}% occupation
                               </span>
                             </div>
                             <span className="font-semibold text-purple-300">

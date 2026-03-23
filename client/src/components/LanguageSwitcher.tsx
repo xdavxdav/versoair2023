@@ -95,12 +95,22 @@ function initGT() {
     // Clear old widget content
     const el = document.getElementById("google_translate_element");
     if (el) el.innerHTML = "";
-    // Also remove any leftover GT DOM (banner bars, etc.)
+    // Remove GT visual chrome (banners, tooltips) but NEVER remove
+    // `body > .skiptranslate` — that div contains GT's hidden <select>
+    // combo and translation iframe. Removing it kills the engine and
+    // GT won't recreate it on subsequent TranslateElement() calls.
     document
-      .querySelectorAll(
-        ".goog-te-banner-frame, body > .skiptranslate, #goog-gt-tt",
-      )
+      .querySelectorAll(".goog-te-banner-frame, #goog-gt-tt")
       .forEach((node) => node.remove());
+    // Hide (don't remove) the skiptranslate bar GT pushes onto body
+    document
+      .querySelectorAll("body > .skiptranslate")
+      .forEach((node) => {
+        (node as HTMLElement).style.height = "0";
+        (node as HTMLElement).style.overflow = "hidden";
+        (node as HTMLElement).style.opacity = "0";
+        (node as HTMLElement).style.pointerEvents = "none";
+      });
     // Reset body position (GT pushes it down)
     document.body.style.top = "0px";
 
