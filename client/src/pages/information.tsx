@@ -243,15 +243,23 @@ function OverviewTab() {
         </div>
       </div>
 
-      <InfoCard icon={Clock} title="Trademark Status — Pending Re-Filing" variant="info">
+      <InfoCard
+        icon={Clock}
+        title="Trademark Status — Pending Re-Filing"
+        variant="info"
+      >
         <p>
           <strong>VERSO AIR</strong> — Canadian Intellectual Property Office
           (CIPO) Application #2264074. Originally filed June 14, 2023. Category:
           Trademark (Design). Nice Class 41 — Entertainment services, multimedia
           content production and distribution. The initial application required
           re-filing due to an administrative processing matter.{" "}
-          <strong>A new application is currently being prepared and will be submitted shortly.</strong>{" "}
-          The Verso Air name and eagle logo remain protected under common law trademark rights.
+          <strong>
+            A new application is currently being prepared and will be submitted
+            shortly.
+          </strong>{" "}
+          The Verso Air name and eagle logo remain protected under common law
+          trademark rights.
         </p>
       </InfoCard>
     </div>
@@ -903,7 +911,8 @@ function TrademarkTab() {
       >
         <p>
           Canadian Intellectual Property Office (CIPO) Application{" "}
-          <strong>#2264074</strong> — currently being re-filed with updated classification.
+          <strong>#2264074</strong> — currently being re-filed with updated
+          classification.
         </p>
       </InfoCard>
 
@@ -998,9 +1007,9 @@ function TrademarkTab() {
       <SectionHeading number="5" title="Re-Filing Plan" />
       <InfoCard icon={Info} title="New Application In Progress" variant="info">
         <p>
-          The original application is being re-filed with updated
-          classification coverage following an administrative processing
-          matter during the examination stage. CIPO trademark application fees:{" "}
+          The original application is being re-filed with updated classification
+          coverage following an administrative processing matter during the
+          examination stage. CIPO trademark application fees:{" "}
           <strong>CAD $347.27</strong> base filing fee (online) for the first
           Nice class, <strong>CAD $105.26</strong> for each additional class.
           Registration fee upon approval: <strong>CAD $231.51</strong> for the
