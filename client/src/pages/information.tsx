@@ -117,13 +117,7 @@ function Accordion({
    SECTION HEADING
    ═══════════════════════════════════════════════════════════ */
 
-function SectionHeading({
-  number,
-  title,
-}: {
-  number: string;
-  title: string;
-}) {
+function SectionHeading({ number, title }: { number: string; title: string }) {
   return (
     <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2 mt-8 mb-4">
       {number}. {title}
@@ -133,9 +127,7 @@ function SectionHeading({
 
 function SubHeading({ title }: { title: string }) {
   return (
-    <h3 className="text-lg font-medium text-amber-300/80 mt-5 mb-2">
-      {title}
-    </h3>
+    <h3 className="text-lg font-medium text-amber-300/80 mt-5 mb-2">{title}</h3>
   );
 }
 
@@ -165,7 +157,9 @@ function InfoCard({
   return (
     <div className={`border rounded-xl p-5 ${colors[variant]}`}>
       <div className="flex items-start gap-3">
-        <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${iconColors[variant]}`} />
+        <Icon
+          className={`w-5 h-5 mt-0.5 flex-shrink-0 ${iconColors[variant]}`}
+        />
         <div>
           <p className="font-medium text-white mb-2">{title}</p>
           <div className="text-gray-300 text-sm leading-relaxed space-y-2">
@@ -185,9 +179,11 @@ function OverviewTab() {
   return (
     <div className="space-y-6">
       <p className="text-gray-300 leading-relaxed text-lg">
-        Welcome to the <strong className="text-white">Verso Air™ Information Center</strong> — your
-        single reference for all legal documents, platform policies, competition
-        rules, artist contract terms, and regulatory compliance information.
+        Welcome to the{" "}
+        <strong className="text-white">Verso Air™ Information Center</strong> —
+        your single reference for all legal documents, platform policies,
+        competition rules, artist contract terms, and regulatory compliance
+        information.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -201,10 +197,10 @@ function OverviewTab() {
         </InfoCard>
         <InfoCard icon={Music} title="StreamRoyale™ Artist Platform">
           <p>
-            Our integrated artist portal and streaming competition system. Artists
-            upload original music, earn royalties per stream, compete in weekly
-            pools, and grow through our badge tier system (Initiate → Legendary
-            Titan).
+            Our integrated artist portal and streaming competition system.
+            Artists upload original music, earn royalties per stream, compete in
+            weekly pools, and grow through our badge tier system (Initiate →
+            Legendary Titan).
           </p>
         </InfoCard>
         <InfoCard icon={Globe} title="Global Operations">
@@ -217,9 +213,12 @@ function OverviewTab() {
         </InfoCard>
         <InfoCard icon={Shield} title="Your Rights Matter">
           <p>
-            You have the right to access, rectify, delete, and port your data
-            at any time. Contact{" "}
-            <a href="mailto:privacy@versoair.com" className="text-amber-400 hover:underline">
+            You have the right to access, rectify, delete, and port your data at
+            any time. Contact{" "}
+            <a
+              href="mailto:privacy@versoair.com"
+              className="text-amber-400 hover:underline"
+            >
               privacy@versoair.com
             </a>{" "}
             for any data-related requests.
@@ -228,7 +227,9 @@ function OverviewTab() {
       </div>
 
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-amber-400 mb-3">Quick Navigation</h3>
+        <h3 className="text-lg font-semibold text-amber-400 mb-3">
+          Quick Navigation
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {TABS.filter((t) => t.id !== "overview").map((tab) => (
             <span
@@ -242,15 +243,15 @@ function OverviewTab() {
         </div>
       </div>
 
-      <InfoCard icon={AlertTriangle} title="Trademark Status" variant="warning">
+      <InfoCard icon={Clock} title="Trademark Status — Pending Re-Filing" variant="info">
         <p>
           <strong>VERSO AIR</strong> — Canadian Intellectual Property Office
-          (CIPO) Application #2264074. Originally filed June 14, 2023.
-          Category: Trademark (Design). Nice Class 41 — Entertainment services,
-          multimedia content production and distribution. The application was
-          marked "Abandoned Section 36" on July 31, 2025 due to an
-          administrative processing dispute. <strong>A new application is
-          being prepared for re-filing.</strong>
+          (CIPO) Application #2264074. Originally filed June 14, 2023. Category:
+          Trademark (Design). Nice Class 41 — Entertainment services, multimedia
+          content production and distribution. The initial application required
+          re-filing due to an administrative processing matter.{" "}
+          <strong>A new application is currently being prepared and will be submitted shortly.</strong>{" "}
+          The Verso Air name and eagle logo remain protected under common law trademark rights.
         </p>
       </InfoCard>
     </div>
@@ -299,14 +300,36 @@ function TermsTab() {
           sector-specific terms:
         </p>
         <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-          <li><strong>Business Intelligence</strong> — Analytics dashboards across 8+ sectors</li>
-          <li><strong>Business Directory</strong> — Verified listings with ratings and search</li>
-          <li><strong>Geo Admin Portal</strong> — Geographic data management and administration</li>
-          <li><strong>StreamRoyale™</strong> — Artist streaming platform with royalty distribution</li>
-          <li><strong>Marketplace</strong> — E-commerce platform for goods and services</li>
-          <li><strong>VersoAI</strong> — AI-powered business analytics assistant</li>
-          <li><strong>Marketing Hub</strong> — Print services, newsletters, and ad campaigns</li>
-          <li><strong>SAV 24/7</strong> — Customer support and ticket management</li>
+          <li>
+            <strong>Business Intelligence</strong> — Analytics dashboards across
+            8+ sectors
+          </li>
+          <li>
+            <strong>Business Directory</strong> — Verified listings with ratings
+            and search
+          </li>
+          <li>
+            <strong>Geo Admin Portal</strong> — Geographic data management and
+            administration
+          </li>
+          <li>
+            <strong>StreamRoyale™</strong> — Artist streaming platform with
+            royalty distribution
+          </li>
+          <li>
+            <strong>Marketplace</strong> — E-commerce platform for goods and
+            services
+          </li>
+          <li>
+            <strong>VersoAI</strong> — AI-powered business analytics assistant
+          </li>
+          <li>
+            <strong>Marketing Hub</strong> — Print services, newsletters, and ad
+            campaigns
+          </li>
+          <li>
+            <strong>SAV 24/7</strong> — Customer support and ticket management
+          </li>
         </ul>
       </div>
 
@@ -319,11 +342,17 @@ function TermsTab() {
           {[
             { name: "Free", desc: "Basic directory access, limited analytics" },
             { name: "Essential", desc: "Enhanced search, bookmarks, export" },
-            { name: "Verified", desc: "Verified badge, priority support, full analytics" },
+            {
+              name: "Verified",
+              desc: "Verified badge, priority support, full analytics",
+            },
             { name: "Max", desc: "All features, API access, custom reports" },
             { name: "Enterprise", desc: "White-label, dedicated support, SLA" },
           ].map((tier) => (
-            <div key={tier.name} className="border border-gray-800 rounded-lg p-3">
+            <div
+              key={tier.name}
+              className="border border-gray-800 rounded-lg p-3"
+            >
               <p className="text-amber-400 font-medium text-sm">{tier.name}</p>
               <p className="text-gray-400 text-xs">{tier.desc}</p>
             </div>
@@ -356,12 +385,16 @@ function TermsTab() {
 
       <SectionHeading number="8" title="Prohibited Conduct" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-        <li>Artificial stream inflation (bots, scripts, loops, VPN manipulation)</li>
+        <li>
+          Artificial stream inflation (bots, scripts, loops, VPN manipulation)
+        </li>
         <li>Harassment, hate speech, or threatening behavior</li>
         <li>Uploading malware, viruses, or malicious code</li>
         <li>Attempting to reverse-engineer, scrape, or exploit the Platform</li>
         <li>Creating misleading listings or fraudulent business profiles</li>
-        <li>Using VersoAI to generate harmful, illegal, or deceptive content</li>
+        <li>
+          Using VersoAI to generate harmful, illegal, or deceptive content
+        </li>
         <li>Circumventing geographic restrictions or access controls</li>
         <li>Impersonating another user, artist, or business</li>
       </ul>
@@ -390,18 +423,18 @@ function TermsTab() {
       <SectionHeading number="11" title="Termination" />
       <p className="text-gray-300 leading-relaxed">
         We may suspend or terminate your account at any time for violation of
-        these Terms, with or without notice. Upon termination, your right to
-        use the Platform ceases immediately. Data retention post-termination
-        follows our Privacy Policy. You may request account deletion at any
-        time by contacting support@versoair.com.
+        these Terms, with or without notice. Upon termination, your right to use
+        the Platform ceases immediately. Data retention post-termination follows
+        our Privacy Policy. You may request account deletion at any time by
+        contacting support@versoair.com.
       </p>
 
       <SectionHeading number="12" title="Modifications" />
       <p className="text-gray-300 leading-relaxed">
-        We reserve the right to modify these Terms at any time. Material
-        changes will be communicated via email or in-platform notification at
-        least 30 days before taking effect. Continued use after changes
-        constitutes acceptance.
+        We reserve the right to modify these Terms at any time. Material changes
+        will be communicated via email or in-platform notification at least 30
+        days before taking effect. Continued use after changes constitutes
+        acceptance.
       </p>
 
       <SectionHeading number="13" title="Governing Law" />
@@ -417,7 +450,10 @@ function TermsTab() {
       <SectionHeading number="14" title="Contact" />
       <p className="text-gray-300 leading-relaxed">
         For questions about these Terms, contact us at{" "}
-        <a href="mailto:legal@versoair.com" className="text-amber-400 hover:underline">
+        <a
+          href="mailto:legal@versoair.com"
+          className="text-amber-400 hover:underline"
+        >
           legal@versoair.com
         </a>{" "}
         or write to: Verso Air Inc., 80 Mornelle Crt, Toronto, Ontario, Canada
@@ -436,8 +472,8 @@ function PrivacyTab() {
 
       <InfoCard icon={Shield} title="Your Privacy at a Glance" variant="info">
         <p>
-          We collect only what's necessary to operate the Platform. We never sell
-          your personal data. You can request deletion at any time. Full
+          We collect only what's necessary to operate the Platform. We never
+          sell your personal data. You can request deletion at any time. Full
           compliance with GDPR, PIPEDA, CCPA, and 7 other data protection
           frameworks.
         </p>
@@ -448,17 +484,25 @@ function PrivacyTab() {
         <SubHeading title="Information You Provide" />
         <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
           <li>Account details — name, email, password (bcrypt-hashed)</li>
-          <li>Business profiles — company name, address, sector, description</li>
-          <li>Artist profiles — stage name, genre, country, bio, social links</li>
+          <li>
+            Business profiles — company name, address, sector, description
+          </li>
+          <li>
+            Artist profiles — stage name, genre, country, bio, social links
+          </li>
           <li>Uploaded content — music files, images, documents</li>
           <li>Messages, support tickets, and forum posts</li>
         </ul>
         <SubHeading title="Information Collected Automatically" />
         <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-          <li>IP address and approximate geolocation (for country detection)</li>
+          <li>
+            IP address and approximate geolocation (for country detection)
+          </li>
           <li>Browser type, device type, operating system</li>
           <li>Pages visited, click patterns, session duration</li>
-          <li>Stream events (play, pause, skip, duration) for royalty calculation</li>
+          <li>
+            Stream events (play, pause, skip, duration) for royalty calculation
+          </li>
           <li>Cookies and local storage preferences</li>
         </ul>
       </div>
@@ -469,18 +513,30 @@ function PrivacyTab() {
         <li>Calculate and distribute artist royalties accurately</li>
         <li>Detect and prevent fraud, bot activity, and stream manipulation</li>
         <li>Improve user experience through analytics</li>
-        <li>Send essential communications (account verification, security alerts)</li>
+        <li>
+          Send essential communications (account verification, security alerts)
+        </li>
         <li>Comply with legal obligations and regulatory requirements</li>
       </ul>
 
       <SectionHeading number="3" title="Data Sharing" />
       <p className="text-gray-300 leading-relaxed">
-        We do <strong className="text-white">NOT</strong> sell personal data. We may share data with:
+        We do <strong className="text-white">NOT</strong> sell personal data. We
+        may share data with:
       </p>
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-        <li><strong>Service providers</strong> — hosting (Render/Neon), email delivery, payment processing</li>
-        <li><strong>Legal authorities</strong> — when required by law, subpoena, or court order</li>
-        <li><strong>Business transfer</strong> — in the event of merger, acquisition, or asset sale</li>
+        <li>
+          <strong>Service providers</strong> — hosting (Render/Neon), email
+          delivery, payment processing
+        </li>
+        <li>
+          <strong>Legal authorities</strong> — when required by law, subpoena,
+          or court order
+        </li>
+        <li>
+          <strong>Business transfer</strong> — in the event of merger,
+          acquisition, or asset sale
+        </li>
       </ul>
 
       <SectionHeading number="4" title="Data Retention" />
@@ -495,14 +551,41 @@ function PrivacyTab() {
       <SectionHeading number="5" title="Your Rights" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
-          { icon: Eye, right: "Access", desc: "Request a copy of all data we hold about you" },
-          { icon: FileText, right: "Rectification", desc: "Correct inaccurate or incomplete data" },
-          { icon: Trash2, right: "Erasure", desc: "Request deletion of your personal data" },
-          { icon: Download, right: "Portability", desc: "Receive your data in machine-readable format" },
-          { icon: Lock, right: "Restriction", desc: "Limit how we process your data" },
-          { icon: Mail, right: "Objection", desc: "Object to processing for marketing or profiling" },
+          {
+            icon: Eye,
+            right: "Access",
+            desc: "Request a copy of all data we hold about you",
+          },
+          {
+            icon: FileText,
+            right: "Rectification",
+            desc: "Correct inaccurate or incomplete data",
+          },
+          {
+            icon: Trash2,
+            right: "Erasure",
+            desc: "Request deletion of your personal data",
+          },
+          {
+            icon: Download,
+            right: "Portability",
+            desc: "Receive your data in machine-readable format",
+          },
+          {
+            icon: Lock,
+            right: "Restriction",
+            desc: "Limit how we process your data",
+          },
+          {
+            icon: Mail,
+            right: "Objection",
+            desc: "Object to processing for marketing or profiling",
+          },
         ].map((item) => (
-          <div key={item.right} className="border border-gray-800 rounded-lg p-3 flex items-start gap-3">
+          <div
+            key={item.right}
+            className="border border-gray-800 rounded-lg p-3 flex items-start gap-3"
+          >
             <item.icon className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-amber-300 font-medium text-sm">{item.right}</p>
@@ -513,7 +596,10 @@ function PrivacyTab() {
       </div>
       <p className="text-gray-300 leading-relaxed">
         Exercise any right by emailing{" "}
-        <a href="mailto:privacy@versoair.com" className="text-amber-400 hover:underline">
+        <a
+          href="mailto:privacy@versoair.com"
+          className="text-amber-400 hover:underline"
+        >
           privacy@versoair.com
         </a>
         . We respond within 30 days (72 hours for breach notifications).
@@ -522,17 +608,17 @@ function PrivacyTab() {
       <SectionHeading number="6" title="Security" />
       <p className="text-gray-300 leading-relaxed">
         We employ industry-standard security measures: bcrypt password hashing
-        (12 salt rounds), JWT authentication with HttpOnly secure cookies,
-        CSRF token protection, rate limiting, SQL injection prevention via
+        (12 salt rounds), JWT authentication with HttpOnly secure cookies, CSRF
+        token protection, rate limiting, SQL injection prevention via
         parameterized queries, HTTPS everywhere, and regular security audits.
       </p>
 
       <SectionHeading number="7" title="Children's Privacy" />
       <p className="text-gray-300 leading-relaxed">
         The Platform is not intended for children under 16. We do not knowingly
-        collect personal information from children. If we discover such data
-        has been collected, it will be deleted immediately. Parents may contact
-        us at privacy@versoair.com.
+        collect personal information from children. If we discover such data has
+        been collected, it will be deleted immediately. Parents may contact us
+        at privacy@versoair.com.
       </p>
     </div>
   );
@@ -545,8 +631,10 @@ function GdprTab() {
       flag: "🇪🇺",
       law: "General Data Protection Regulation (EU) 2016/679",
       authority: "National DPA of your EU member state",
-      basis: "Consent (Art. 6(1)(a)), Contractual Necessity (Art. 6(1)(b)), Legitimate Interest (Art. 6(1)(f))",
-      rights: "Access, rectification, erasure, restriction, portability, objection, automated decision-making",
+      basis:
+        "Consent (Art. 6(1)(a)), Contractual Necessity (Art. 6(1)(b)), Legitimate Interest (Art. 6(1)(f))",
+      rights:
+        "Access, rectification, erasure, restriction, portability, objection, automated decision-making",
       transfer: "Standard Contractual Clauses (SCCs) for transfers outside EEA",
       dpo: "dpo@versoair.com",
     },
@@ -556,7 +644,8 @@ function GdprTab() {
       law: "UK GDPR + Data Protection Act 2018",
       authority: "Information Commissioner's Office (ICO)",
       basis: "Mirrors EU GDPR with UK-specific adequacy decisions",
-      rights: "Same as EU GDPR, with UK-specific supervisory authority complaint rights",
+      rights:
+        "Same as EU GDPR, with UK-specific supervisory authority complaint rights",
       transfer: "UK International Data Transfer Agreement (IDTA)",
       dpo: "dpo@versoair.com",
     },
@@ -576,7 +665,8 @@ function GdprTab() {
       law: "California Consumer Privacy Act + California Privacy Rights Act",
       authority: "California Privacy Protection Agency (CPPA)",
       basis: "Notice at collection, right to opt-out of sale/sharing",
-      rights: "Know, delete, correct, opt-out, non-discrimination, limit sensitive data use",
+      rights:
+        "Know, delete, correct, opt-out, non-discrimination, limit sensitive data use",
       transfer: "No specific transfer restrictions (domestic)",
       dpo: "privacy@versoair.com",
     },
@@ -586,7 +676,8 @@ function GdprTab() {
       law: "Lei Geral de Proteção de Dados (LGPD)",
       authority: "Autoridade Nacional de Proteção de Dados (ANPD)",
       basis: "Consent, contractual necessity, legitimate interest",
-      rights: "Confirmation, access, correction, anonymization, deletion, portability, revoke consent",
+      rights:
+        "Confirmation, access, correction, anonymization, deletion, portability, revoke consent",
       transfer: "Adequate protection or SCCs",
       dpo: "privacy@versoair.com",
     },
@@ -595,7 +686,8 @@ function GdprTab() {
       flag: "🇿🇦",
       law: "Protection of Personal Information Act (POPIA)",
       authority: "Information Regulator",
-      basis: "Consent, contractual necessity, legal obligation, legitimate interest",
+      basis:
+        "Consent, contractual necessity, legal obligation, legitimate interest",
       rights: "Access, correction, deletion, object to processing",
       transfer: "Adequate level of protection or consent",
       dpo: "privacy@versoair.com",
@@ -606,7 +698,8 @@ function GdprTab() {
       law: "Digital Personal Data Protection Act 2023",
       authority: "Data Protection Board of India",
       basis: "Consent, legitimate uses (employment, state functions)",
-      rights: "Access, correction, erasure, grievance redressal, nominate representative",
+      rights:
+        "Access, correction, erasure, grievance redressal, nominate representative",
       transfer: "Permitted except to restricted countries",
       dpo: "privacy@versoair.com",
     },
@@ -634,12 +727,16 @@ function GdprTab() {
 
   return (
     <div className="space-y-4">
-      <InfoCard icon={Globe} title="Multi-Jurisdiction Compliance" variant="success">
+      <InfoCard
+        icon={Globe}
+        title="Multi-Jurisdiction Compliance"
+        variant="success"
+      >
         <p>
           Verso Air is designed for global compliance. We apply the highest
           standard of data protection across all jurisdictions where we operate.
-          If your local law provides stronger protections than our baseline, those
-          protections apply to you.
+          If your local law provides stronger protections than our baseline,
+          those protections apply to you.
         </p>
       </InfoCard>
 
@@ -655,7 +752,10 @@ function GdprTab() {
                 { label: "International Transfers", value: region.transfer },
                 { label: "Contact", value: region.dpo },
               ].map((row) => (
-                <div key={row.label} className="flex flex-col sm:flex-row sm:gap-3">
+                <div
+                  key={row.label}
+                  className="flex flex-col sm:flex-row sm:gap-3"
+                >
                   <span className="text-amber-400/70 text-sm font-medium sm:w-48 flex-shrink-0">
                     {row.label}:
                   </span>
@@ -672,13 +772,48 @@ function GdprTab() {
 
 function CookiesTab() {
   const cookies = [
-    { name: "connect.sid", purpose: "Express session identifier", duration: "Session", type: "Essential" },
-    { name: "auth_token", purpose: "JWT authentication token (HttpOnly, Secure)", duration: "7 days", type: "Essential" },
-    { name: "csrf_token", purpose: "Cross-site request forgery protection", duration: "Session", type: "Essential" },
-    { name: "googtrans", purpose: "Google Translate language preference", duration: "Persistent", type: "Functional" },
-    { name: "verso_portal", purpose: "Selected portal/dashboard preference", duration: "30 days", type: "Functional" },
-    { name: "verso_theme", purpose: "Light/dark mode preference", duration: "1 year", type: "Functional" },
-    { name: "_ga / _gid", purpose: "Google Analytics visitor identification", duration: "2 years / 24h", type: "Analytics" },
+    {
+      name: "connect.sid",
+      purpose: "Express session identifier",
+      duration: "Session",
+      type: "Essential",
+    },
+    {
+      name: "auth_token",
+      purpose: "JWT authentication token (HttpOnly, Secure)",
+      duration: "7 days",
+      type: "Essential",
+    },
+    {
+      name: "csrf_token",
+      purpose: "Cross-site request forgery protection",
+      duration: "Session",
+      type: "Essential",
+    },
+    {
+      name: "googtrans",
+      purpose: "Google Translate language preference",
+      duration: "Persistent",
+      type: "Functional",
+    },
+    {
+      name: "verso_portal",
+      purpose: "Selected portal/dashboard preference",
+      duration: "30 days",
+      type: "Functional",
+    },
+    {
+      name: "verso_theme",
+      purpose: "Light/dark mode preference",
+      duration: "1 year",
+      type: "Functional",
+    },
+    {
+      name: "_ga / _gid",
+      purpose: "Google Analytics visitor identification",
+      duration: "2 years / 24h",
+      type: "Analytics",
+    },
   ];
 
   const localStorage = [
@@ -710,15 +845,21 @@ function CookiesTab() {
           <tbody>
             {cookies.map((c) => (
               <tr key={c.name} className="border-b border-gray-800/50">
-                <td className="py-2 px-3 font-mono text-xs text-amber-300">{c.name}</td>
+                <td className="py-2 px-3 font-mono text-xs text-amber-300">
+                  {c.name}
+                </td>
                 <td className="py-2 px-3 text-gray-300">{c.purpose}</td>
                 <td className="py-2 px-3 text-gray-400">{c.duration}</td>
                 <td className="py-2 px-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    c.type === "Essential" ? "bg-emerald-500/20 text-emerald-400" :
-                    c.type === "Functional" ? "bg-blue-500/20 text-blue-400" :
-                    "bg-purple-500/20 text-purple-400"
-                  }`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      c.type === "Essential"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : c.type === "Functional"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-purple-500/20 text-purple-400"
+                    }`}
+                  >
                     {c.type}
                   </span>
                 </td>
@@ -732,7 +873,9 @@ function CookiesTab() {
       <div className="space-y-2">
         {localStorage.map((item) => (
           <div key={item.name} className="flex items-center gap-3 text-sm">
-            <code className="text-amber-300 bg-gray-800/50 px-2 py-0.5 rounded text-xs">{item.name}</code>
+            <code className="text-amber-300 bg-gray-800/50 px-2 py-0.5 rounded text-xs">
+              {item.name}
+            </code>
             <span className="text-gray-400">—</span>
             <span className="text-gray-300">{item.purpose}</span>
           </div>
@@ -753,9 +896,14 @@ function CookiesTab() {
 function TrademarkTab() {
   return (
     <div className="space-y-4">
-      <InfoCard icon={Award} title="CIPO Trademark Application — VERSO AIR" variant="warning">
+      <InfoCard
+        icon={Award}
+        title="CIPO Trademark — VERSO AIR (Pending Re-Filing)"
+        variant="info"
+      >
         <p>
-          Canadian Intellectual Property Office (CIPO) Application <strong>#2264074</strong>.
+          Canadian Intellectual Property Office (CIPO) Application{" "}
+          <strong>#2264074</strong> — currently being re-filed with updated classification.
         </p>
       </InfoCard>
 
@@ -769,11 +917,19 @@ function TrademarkTab() {
             { label: "Type", value: "Design Mark" },
             { label: "Filing Date", value: "June 14, 2023" },
             { label: "Applicant", value: "Joel Vanga — Toronto, ON, Canada" },
-            { label: "Nice Classification", value: "Class 41 — Entertainment Services" },
-            { label: "Current Status", value: "Abandoned (Section 36) — Re-filing in progress" },
+            {
+              label: "Nice Classification",
+              value: "Class 41 — Entertainment Services",
+            },
+            {
+              label: "Current Status",
+              value: "Pending Re-Filing — New application in preparation",
+            },
           ].map((item) => (
             <div key={item.label} className="p-4">
-              <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">{item.label}</p>
+              <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+                {item.label}
+              </p>
               <p className="text-white font-medium text-sm">{item.value}</p>
             </div>
           ))}
@@ -802,14 +958,33 @@ function TrademarkTab() {
       <div className="space-y-2">
         {[
           { date: "June 14, 2023", event: "Application Filed", status: "✅" },
-          { date: "June 14, 2023", event: "Application Created & Formalized", status: "✅" },
+          {
+            date: "June 14, 2023",
+            event: "Application Created & Formalized",
+            status: "✅",
+          },
           { date: "October 25, 2024", event: "Search Recorded", status: "✅" },
-          { date: "October 25, 2024", event: "Examiner's First Report Issued", status: "📋" },
-          { date: "April 25, 2025", event: "Response Deadline (Examiner's Report)", status: "⚠️" },
+          {
+            date: "October 25, 2024",
+            event: "Examiner's First Report Issued",
+            status: "📋",
+          },
+          {
+            date: "April 25, 2025",
+            event: "Response Deadline (Examiner's Report)",
+            status: "⚠️",
+          },
           { date: "May 13, 2025", event: "Default Notice Sent", status: "⚠️" },
-          { date: "July 31, 2025", event: "Abandoned — Section 36", status: "❌" },
+          {
+            date: "July 31, 2025",
+            event: "Application paused — Re-filing initiated",
+            status: "🔄",
+          },
         ].map((item) => (
-          <div key={item.date + item.event} className="flex items-start gap-3 text-sm">
+          <div
+            key={item.date + item.event}
+            className="flex items-start gap-3 text-sm"
+          >
             <span className="text-lg leading-none">{item.status}</span>
             <div>
               <span className="text-amber-400">{item.date}</span>
@@ -823,14 +998,15 @@ function TrademarkTab() {
       <SectionHeading number="5" title="Re-Filing Plan" />
       <InfoCard icon={Info} title="New Application In Progress" variant="info">
         <p>
-          The original application was marked as abandoned under Section 36 of the
-          Canadian Trademarks Act due to administrative processing issues during
-          the examination stage. A new application is being prepared with updated
-          classification coverage. CIPO trademark application fees: <strong>CAD $347.27</strong> base
-          filing fee (online) for the first Nice class, <strong>CAD $105.26</strong> for each
-          additional class. Registration fee upon approval: <strong>CAD $231.51</strong> for the
-          first class. Total estimated cost for re-filing: <strong>~CAD $580–700</strong> (Class 41 +
-          potential additional classes for software/technology services under Class 42).
+          The original application is being re-filed with updated
+          classification coverage following an administrative processing
+          matter during the examination stage. CIPO trademark application fees:{" "}
+          <strong>CAD $347.27</strong> base filing fee (online) for the first
+          Nice class, <strong>CAD $105.26</strong> for each additional class.
+          Registration fee upon approval: <strong>CAD $231.51</strong> for the
+          first class. Total estimated cost for re-filing:{" "}
+          <strong>~CAD $580–700</strong> (Class 41 + potential additional
+          classes for software/technology services under Class 42).
         </p>
       </InfoCard>
 
@@ -854,23 +1030,36 @@ function TrademarkTab() {
 function CompetitionTab() {
   return (
     <div className="space-y-4">
-      <InfoCard icon={Trophy} title="StreamRoyale™ — Official Competition Rules" variant="success">
+      <InfoCard
+        icon={Trophy}
+        title="StreamRoyale™ — Official Competition Rules"
+        variant="success"
+      >
         <p>
-          StreamRoyale is Verso Air's competitive streaming platform where artists
-          earn royalties, compete in weekly pools, and climb badge tiers based on
-          genuine listener engagement.
+          StreamRoyale is Verso Air's competitive streaming platform where
+          artists earn royalties, compete in weekly pools, and climb badge tiers
+          based on genuine listener engagement.
         </p>
       </InfoCard>
 
       <SectionHeading number="1" title="Eligibility" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-        <li>Open to artists aged 16+ in all countries where Verso Air operates</li>
-        <li>Must have a registered Artist Portal account with verified email</li>
+        <li>
+          Open to artists aged 16+ in all countries where Verso Air operates
+        </li>
+        <li>
+          Must have a registered Artist Portal account with verified email
+        </li>
         <li>Must have at least one uploaded track with valid audio file</li>
         <li>Artists under 18 must have parental/guardian consent documented</li>
-        <li>Employees and immediate family of Verso Air Inc. may participate but are
-            excluded from weekly prize pools</li>
-        <li>One account per artist/group — multi-account abuse results in permanent disqualification</li>
+        <li>
+          Employees and immediate family of Verso Air Inc. may participate but
+          are excluded from weekly prize pools
+        </li>
+        <li>
+          One account per artist/group — multi-account abuse results in
+          permanent disqualification
+        </li>
       </ul>
 
       <SectionHeading number="2" title="How It Works" />
@@ -884,19 +1073,38 @@ function CompetitionTab() {
         </p>
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
-            { pct: "20%", label: "Guaranteed Fund", desc: "Base payout to all eligible artists" },
-            { pct: "70%", label: "Performance Pool", desc: "Distributed by stream count ranking" },
-            { pct: "10%", label: "Platform Fee", desc: "Sustains infrastructure & development" },
+            {
+              pct: "20%",
+              label: "Guaranteed Fund",
+              desc: "Base payout to all eligible artists",
+            },
+            {
+              pct: "70%",
+              label: "Performance Pool",
+              desc: "Distributed by stream count ranking",
+            },
+            {
+              pct: "10%",
+              label: "Platform Fee",
+              desc: "Sustains infrastructure & development",
+            },
           ].map((split) => (
-            <div key={split.label} className="border border-gray-800 rounded-lg p-4">
+            <div
+              key={split.label}
+              className="border border-gray-800 rounded-lg p-4"
+            >
               <p className="text-2xl font-bold text-amber-400">{split.pct}</p>
-              <p className="text-white text-sm font-medium mt-1">{split.label}</p>
+              <p className="text-white text-sm font-medium mt-1">
+                {split.label}
+              </p>
               <p className="text-gray-400 text-xs mt-1">{split.desc}</p>
             </div>
           ))}
         </div>
         <p className="text-gray-300 leading-relaxed text-sm">
-          <strong className="text-white">90% of all listener contributions go directly to artists.</strong>{" "}
+          <strong className="text-white">
+            90% of all listener contributions go directly to artists.
+          </strong>{" "}
           Only 10% is retained by the platform.
         </p>
       </div>
@@ -906,22 +1114,55 @@ function CompetitionTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-800">
-              <th className="text-left text-amber-400 py-2 px-3">Contract Grade</th>
+              <th className="text-left text-amber-400 py-2 px-3">
+                Contract Grade
+              </th>
               <th className="text-left text-amber-400 py-2 px-3">Per Stream</th>
-              <th className="text-left text-amber-400 py-2 px-3">Artist Share</th>
-              <th className="text-left text-amber-400 py-2 px-3">Platform Share</th>
+              <th className="text-left text-amber-400 py-2 px-3">
+                Artist Share
+              </th>
+              <th className="text-left text-amber-400 py-2 px-3">
+                Platform Share
+              </th>
             </tr>
           </thead>
           <tbody>
             {[
-              { grade: "S (Superstar)", rate: "$0.0085", artist: "85%", platform: "15%" },
-              { grade: "A (Advanced)", rate: "$0.0075", artist: "75%", platform: "25%" },
-              { grade: "B (Building)", rate: "$0.0065", artist: "65%", platform: "35%" },
-              { grade: "C (Core)", rate: "$0.0055", artist: "55%", platform: "45%" },
-              { grade: "Ungraded (New)", rate: "$0.004", artist: "50%", platform: "50%" },
+              {
+                grade: "S (Superstar)",
+                rate: "$0.0085",
+                artist: "85%",
+                platform: "15%",
+              },
+              {
+                grade: "A (Advanced)",
+                rate: "$0.0075",
+                artist: "75%",
+                platform: "25%",
+              },
+              {
+                grade: "B (Building)",
+                rate: "$0.0065",
+                artist: "65%",
+                platform: "35%",
+              },
+              {
+                grade: "C (Core)",
+                rate: "$0.0055",
+                artist: "55%",
+                platform: "45%",
+              },
+              {
+                grade: "Ungraded (New)",
+                rate: "$0.004",
+                artist: "50%",
+                platform: "50%",
+              },
             ].map((row) => (
               <tr key={row.grade} className="border-b border-gray-800/50">
-                <td className="py-2 px-3 text-white font-medium">{row.grade}</td>
+                <td className="py-2 px-3 text-white font-medium">
+                  {row.grade}
+                </td>
                 <td className="py-2 px-3 text-emerald-400">{row.rate}</td>
                 <td className="py-2 px-3 text-gray-300">{row.artist}</td>
                 <td className="py-2 px-3 text-gray-400">{row.platform}</td>
@@ -934,21 +1175,70 @@ function CompetitionTab() {
       <SectionHeading number="4" title="Badge Tier System" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {[
-          { tier: 1, name: "Initiate", streams: "0+", boost: "0%", color: "text-gray-400" },
-          { tier: 2, name: "Bronze Warrior", streams: "1,000+", boost: "0%", color: "text-amber-700" },
-          { tier: 3, name: "Silver Gladiator", streams: "10,000+", boost: "0%", color: "text-gray-300" },
-          { tier: 4, name: "Gold Champion", streams: "50,000+", boost: "0%", color: "text-yellow-400" },
-          { tier: 5, name: "Platinum Conqueror", streams: "250,000+", boost: "0%", color: "text-cyan-300" },
-          { tier: 6, name: "Diamond Warlord", streams: "1,000,000+", boost: "+2%", color: "text-blue-400" },
-          { tier: 7, name: "Legendary Titan", streams: "5,000,000+", boost: "+5%", color: "text-purple-400" },
+          {
+            tier: 1,
+            name: "Initiate",
+            streams: "0+",
+            boost: "0%",
+            color: "text-gray-400",
+          },
+          {
+            tier: 2,
+            name: "Bronze Warrior",
+            streams: "1,000+",
+            boost: "0%",
+            color: "text-amber-700",
+          },
+          {
+            tier: 3,
+            name: "Silver Gladiator",
+            streams: "10,000+",
+            boost: "0%",
+            color: "text-gray-300",
+          },
+          {
+            tier: 4,
+            name: "Gold Champion",
+            streams: "50,000+",
+            boost: "0%",
+            color: "text-yellow-400",
+          },
+          {
+            tier: 5,
+            name: "Platinum Conqueror",
+            streams: "250,000+",
+            boost: "0%",
+            color: "text-cyan-300",
+          },
+          {
+            tier: 6,
+            name: "Diamond Warlord",
+            streams: "1,000,000+",
+            boost: "+2%",
+            color: "text-blue-400",
+          },
+          {
+            tier: 7,
+            name: "Legendary Titan",
+            streams: "5,000,000+",
+            boost: "+5%",
+            color: "text-purple-400",
+          },
         ].map((badge) => (
-          <div key={badge.tier} className="border border-gray-800 rounded-lg p-3 flex items-center gap-3">
+          <div
+            key={badge.tier}
+            className="border border-gray-800 rounded-lg p-3 flex items-center gap-3"
+          >
             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-sm font-bold">
               <span className={badge.color}>{badge.tier}</span>
             </div>
             <div>
-              <p className={`font-medium text-sm ${badge.color}`}>{badge.name}</p>
-              <p className="text-gray-500 text-xs">{badge.streams} streams • Revenue boost: {badge.boost}</p>
+              <p className={`font-medium text-sm ${badge.color}`}>
+                {badge.name}
+              </p>
+              <p className="text-gray-500 text-xs">
+                {badge.streams} streams • Revenue boost: {badge.boost}
+              </p>
             </div>
           </div>
         ))}
@@ -957,10 +1247,10 @@ function CompetitionTab() {
       <SectionHeading number="5" title="Stream Validation" />
       <p className="text-gray-300 leading-relaxed">
         Streams are tracked via a heartbeat system — a listener's device sends a
-        ping every 10 seconds during playback. Only validated streams (minimum 30
-        seconds of continuous play from a unique session) count toward royalties
-        and competition rankings. The following are automatically detected and
-        excluded:
+        ping every 10 seconds during playback. Only validated streams (minimum
+        30 seconds of continuous play from a unique session) count toward
+        royalties and competition rankings. The following are automatically
+        detected and excluded:
       </p>
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
         <li>Duplicate sessions from the same IP within a 5-minute window</li>
@@ -971,17 +1261,24 @@ function CompetitionTab() {
 
       <SectionHeading number="6" title="Payouts" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-        <li>Minimum payout threshold: <strong className="text-white">$10.00 USD</strong></li>
+        <li>
+          Minimum payout threshold:{" "}
+          <strong className="text-white">$10.00 USD</strong>
+        </li>
         <li>Payout requests processed within 7–14 business days</li>
-        <li>Supported methods: bank transfer, PayPal, mobile money (region-dependent)</li>
+        <li>
+          Supported methods: bank transfer, PayPal, mobile money
+          (region-dependent)
+        </li>
         <li>Earnings below threshold roll over to the next period</li>
         <li>Pending payouts may be held during fraud investigation</li>
       </ul>
 
       <SectionHeading number="7" title="Disqualification" />
       <p className="text-gray-300 leading-relaxed">
-        The following result in immediate disqualification from competition pools,
-        potential account termination, and forfeiture of pending earnings:
+        The following result in immediate disqualification from competition
+        pools, potential account termination, and forfeiture of pending
+        earnings:
       </p>
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
         <li>Stream manipulation (bots, click farms, automated scripts)</li>
@@ -996,9 +1293,9 @@ function CompetitionTab() {
         StreamRoyale competitions are governed by the laws of Ontario, Canada.
         For artists in the European Union, mandatory local consumer protection
         laws apply in addition. Competitions comply with promotional contest
-        laws in all participating jurisdictions. <strong>No purchase necessary</strong> to
-        participate — artists earn royalties through genuine listener engagement,
-        not entry fees.
+        laws in all participating jurisdictions.{" "}
+        <strong>No purchase necessary</strong> to participate — artists earn
+        royalties through genuine listener engagement, not entry fees.
       </p>
     </div>
   );
@@ -1007,25 +1304,47 @@ function CompetitionTab() {
 function ContractsTab() {
   return (
     <div className="space-y-4">
-      <InfoCard icon={ScrollText} title="Artist Contract Framework" variant="info">
+      <InfoCard
+        icon={ScrollText}
+        title="Artist Contract Framework"
+        variant="info"
+      >
         <p>
-          All artists on StreamRoyale operate under a standard contract framework.
-          Contract grades determine revenue share, feature access, and audio
-          quality tiers.
+          All artists on StreamRoyale operate under a standard contract
+          framework. Contract grades determine revenue share, feature access,
+          and audio quality tiers.
         </p>
       </InfoCard>
 
       <SectionHeading number="1" title="Contract Application Process" />
       <div className="space-y-2">
         {[
-          { step: "1", title: "Apply", desc: "Submit your profile, demo, social links, and motivation through the Artist Portal" },
-          { step: "2", title: "Review", desc: "Our team evaluates your submission — typically within 5–10 business days" },
-          { step: "3", title: "Grade Assignment", desc: "Receive your contract grade (S/A/B/C) based on portfolio quality and market readiness" },
-          { step: "4", title: "Activation", desc: "Accept terms, start uploading, and begin earning royalties immediately" },
+          {
+            step: "1",
+            title: "Apply",
+            desc: "Submit your profile, demo, social links, and motivation through the Artist Portal",
+          },
+          {
+            step: "2",
+            title: "Review",
+            desc: "Our team evaluates your submission — typically within 5–10 business days",
+          },
+          {
+            step: "3",
+            title: "Grade Assignment",
+            desc: "Receive your contract grade (S/A/B/C) based on portfolio quality and market readiness",
+          },
+          {
+            step: "4",
+            title: "Activation",
+            desc: "Accept terms, start uploading, and begin earning royalties immediately",
+          },
         ].map((item) => (
           <div key={item.step} className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-400 text-sm font-bold">{item.step}</span>
+              <span className="text-amber-400 text-sm font-bold">
+                {item.step}
+              </span>
             </div>
             <div>
               <p className="text-white font-medium">{item.title}</p>
@@ -1041,34 +1360,56 @@ function ContractsTab() {
           {
             grade: "S — Superstar",
             share: "85% Artist / 15% Platform",
-            features: "Unlimited uploads, FLAC quality, featured placement, priority support, can be featured in collaborations",
-            criteria: "Established artists with proven catalog and significant streaming history",
+            features:
+              "Unlimited uploads, FLAC quality, featured placement, priority support, can be featured in collaborations",
+            criteria:
+              "Established artists with proven catalog and significant streaming history",
           },
           {
             grade: "A — Advanced",
             share: "75% Artist / 25% Platform",
-            features: "Up to 50 uploads, 320kbps quality, featured eligibility, standard support",
-            criteria: "Experienced artists with quality portfolio and growing audience",
+            features:
+              "Up to 50 uploads, 320kbps quality, featured eligibility, standard support",
+            criteria:
+              "Experienced artists with quality portfolio and growing audience",
           },
           {
             grade: "B — Building",
             share: "65% Artist / 35% Platform",
-            features: "Up to 20 uploads, 256kbps quality, catalog access, standard support",
+            features:
+              "Up to 20 uploads, 256kbps quality, catalog access, standard support",
             criteria: "Promising artists building their catalog and audience",
           },
           {
             grade: "C — Core",
             share: "55% Artist / 45% Platform",
-            features: "Up to 5 uploads, 128kbps quality, basic analytics, community support",
+            features:
+              "Up to 5 uploads, 128kbps quality, basic analytics, community support",
             criteria: "New artists starting their journey on the platform",
           },
         ].map((contract) => (
-          <div key={contract.grade} className="border border-gray-800 rounded-xl p-5">
-            <h4 className="text-amber-400 font-semibold mb-3">{contract.grade}</h4>
+          <div
+            key={contract.grade}
+            className="border border-gray-800 rounded-xl p-5"
+          >
+            <h4 className="text-amber-400 font-semibold mb-3">
+              {contract.grade}
+            </h4>
             <div className="space-y-2 text-sm">
-              <p><span className="text-gray-500">Revenue Split:</span> <span className="text-emerald-400 font-medium">{contract.share}</span></p>
-              <p><span className="text-gray-500">Features:</span> <span className="text-gray-300">{contract.features}</span></p>
-              <p><span className="text-gray-500">Criteria:</span> <span className="text-gray-300">{contract.criteria}</span></p>
+              <p>
+                <span className="text-gray-500">Revenue Split:</span>{" "}
+                <span className="text-emerald-400 font-medium">
+                  {contract.share}
+                </span>
+              </p>
+              <p>
+                <span className="text-gray-500">Features:</span>{" "}
+                <span className="text-gray-300">{contract.features}</span>
+              </p>
+              <p>
+                <span className="text-gray-500">Criteria:</span>{" "}
+                <span className="text-gray-300">{contract.criteria}</span>
+              </p>
             </div>
           </div>
         ))}
@@ -1078,7 +1419,9 @@ function ContractsTab() {
       <SubHeading title="Artist Rights" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
         <li>Retain full ownership of all uploaded content</li>
-        <li>Withdraw content at any time (subject to contractual notice period)</li>
+        <li>
+          Withdraw content at any time (subject to contractual notice period)
+        </li>
         <li>Request contract grade review after 90 days</li>
         <li>Access transparent earnings analytics and stream data</li>
         <li>Dispute resolution through formal appeal process</li>
@@ -1120,70 +1463,91 @@ function JurisdictionTab() {
       flag: "🇨🇦",
       law: "Provincial and federal laws of Ontario, Canada",
       court: "Superior Court of Justice, Toronto, Ontario",
-      notes: "Primary jurisdiction. CIPO trademark registration. PIPEDA compliance for personal data. Competition Act applies to promotional activities.",
-      consumers: "Consumer Protection Act, 2002 (Ontario). 10-day cooling-off for internet agreements over $50.",
+      notes:
+        "Primary jurisdiction. CIPO trademark registration. PIPEDA compliance for personal data. Competition Act applies to promotional activities.",
+      consumers:
+        "Consumer Protection Act, 2002 (Ontario). 10-day cooling-off for internet agreements over $50.",
     },
     {
       region: "European Union",
       flag: "🇪🇺",
       law: "GDPR, Consumer Rights Directive 2011/83/EU, Digital Services Act",
       court: "Court of competent jurisdiction in the consumer's member state",
-      notes: "EU consumers cannot be required to litigate outside their home country for consumer disputes. GDPR applies regardless of data processor location.",
-      consumers: "14-day withdrawal right for digital purchases. Unfair Contract Terms Directive protection.",
+      notes:
+        "EU consumers cannot be required to litigate outside their home country for consumer disputes. GDPR applies regardless of data processor location.",
+      consumers:
+        "14-day withdrawal right for digital purchases. Unfair Contract Terms Directive protection.",
     },
     {
       region: "United Kingdom",
       flag: "🇬🇧",
       law: "UK GDPR, Consumer Rights Act 2015, Competition Act 1998",
-      court: "Courts of England and Wales (or Scotland/Northern Ireland for residents there)",
-      notes: "UK consumers retain EU-style protections post-Brexit. ICO oversight for data protection.",
-      consumers: "14-day cancellation for online services. Unfair terms protections under CRA 2015.",
+      court:
+        "Courts of England and Wales (or Scotland/Northern Ireland for residents there)",
+      notes:
+        "UK consumers retain EU-style protections post-Brexit. ICO oversight for data protection.",
+      consumers:
+        "14-day cancellation for online services. Unfair terms protections under CRA 2015.",
     },
     {
       region: "United States",
       flag: "🇺🇸",
       law: "Federal law + state laws (CCPA/CPRA for California residents)",
       court: "State and federal courts in California or New York",
-      notes: "No single federal privacy law — state laws apply. FTC Act Section 5 for unfair/deceptive practices. DMCA for copyright.",
-      consumers: "CCPA: right to know, delete, opt-out. State-specific contest/sweepstakes laws for StreamRoyale.",
+      notes:
+        "No single federal privacy law — state laws apply. FTC Act Section 5 for unfair/deceptive practices. DMCA for copyright.",
+      consumers:
+        "CCPA: right to know, delete, opt-out. State-specific contest/sweepstakes laws for StreamRoyale.",
     },
     {
       region: "West Africa (ECOWAS)",
       flag: "🌍",
       law: "ECOWAS Supplementary Act A/SA.1/01/10 on Personal Data Protection",
       court: "National courts of the artist's country of residence",
-      notes: "Applies to Senegal, Côte d'Ivoire, Ghana, Nigeria, Cameroon, Togo, Benin, Guinea, Mali, Burkina Faso, Niger, and other member states. Local data protection authorities supervise.",
-      consumers: "Consumer protection varies by country. OHADA Uniform Acts apply in many francophone states.",
+      notes:
+        "Applies to Senegal, Côte d'Ivoire, Ghana, Nigeria, Cameroon, Togo, Benin, Guinea, Mali, Burkina Faso, Niger, and other member states. Local data protection authorities supervise.",
+      consumers:
+        "Consumer protection varies by country. OHADA Uniform Acts apply in many francophone states.",
     },
     {
       region: "Central & East Africa",
       flag: "🌍",
       law: "National DPA laws: Kenya DPA 2019, Rwanda DPL 2021, Tanzania PDPA, Uganda DPP 2019",
       court: "National courts per artist's residence",
-      notes: "Each country has its own data protection framework. Democratic Republic of Congo operates under national privacy provisions.",
-      consumers: "Consumer rights enforced through national competition and consumer authorities.",
+      notes:
+        "Each country has its own data protection framework. Democratic Republic of Congo operates under national privacy provisions.",
+      consumers:
+        "Consumer rights enforced through national competition and consumer authorities.",
     },
     {
       region: "Brazil",
       flag: "🇧🇷",
       law: "LGPD (Lei Geral de Proteção de Dados), Consumer Protection Code (CDC)",
       court: "Courts in the consumer's domicile",
-      notes: "Brazilian consumers have strong protections under CDC. ANPD supervises LGPD compliance.",
-      consumers: "7-day reflection period for remote purchases. Strict liability for service defects.",
+      notes:
+        "Brazilian consumers have strong protections under CDC. ANPD supervises LGPD compliance.",
+      consumers:
+        "7-day reflection period for remote purchases. Strict liability for service defects.",
     },
     {
       region: "Asia-Pacific",
       flag: "🌏",
       law: "APPI (Japan), PDPA (Singapore, Thailand), DPDPA (India), Privacy Act (Australia)",
       court: "National courts per user's country of residence",
-      notes: "Diverse regulatory landscape. Japan has EU-adequacy. India's DPDPA effective from 2024.",
-      consumers: "Australian Consumer Law (ACL) for Australian users. Japan's Specified Commercial Transaction Act.",
+      notes:
+        "Diverse regulatory landscape. Japan has EU-adequacy. India's DPDPA effective from 2024.",
+      consumers:
+        "Australian Consumer Law (ACL) for Australian users. Japan's Specified Commercial Transaction Act.",
     },
   ];
 
   return (
     <div className="space-y-4">
-      <InfoCard icon={Scale} title="Multi-Jurisdictional Operations" variant="info">
+      <InfoCard
+        icon={Scale}
+        title="Multi-Jurisdictional Operations"
+        variant="info"
+      >
         <p>
           Verso Air operates globally and complies with the laws of each country
           where our users and artists reside. This section outlines which laws
@@ -1194,12 +1558,13 @@ function JurisdictionTab() {
       <SectionHeading number="1" title="Primary Jurisdiction" />
       <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5">
         <p className="text-gray-300 leading-relaxed">
-          Verso Air Inc. is incorporated in <strong className="text-white">Ontario, Canada</strong>.
-          Unless overridden by mandatory local consumer protection laws, the
-          laws of Ontario, Canada govern these Terms and the Platform's operation.
+          Verso Air Inc. is incorporated in{" "}
+          <strong className="text-white">Ontario, Canada</strong>. Unless
+          overridden by mandatory local consumer protection laws, the laws of
+          Ontario, Canada govern these Terms and the Platform's operation.
           Disputes are subject to the exclusive jurisdiction of the courts of
-          Toronto, Ontario — <strong className="text-white">except</strong> where
-          local law grants you the right to bring proceedings in your own
+          Toronto, Ontario — <strong className="text-white">except</strong>{" "}
+          where local law grants you the right to bring proceedings in your own
           jurisdiction (e.g., EU Consumer Rights Directive).
         </p>
       </div>
@@ -1210,19 +1575,27 @@ function JurisdictionTab() {
           <Accordion key={j.region} title={`${j.flag} ${j.region}`}>
             <div className="space-y-3">
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">Applicable Law</p>
+                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                  Applicable Law
+                </p>
                 <p className="text-gray-300 text-sm">{j.law}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">Competent Court</p>
+                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                  Competent Court
+                </p>
                 <p className="text-gray-300 text-sm">{j.court}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">Key Notes</p>
+                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                  Key Notes
+                </p>
                 <p className="text-gray-300 text-sm">{j.notes}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">Consumer Protection</p>
+                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                  Consumer Protection
+                </p>
                 <p className="text-gray-300 text-sm">{j.consumers}</p>
               </div>
             </div>
@@ -1236,20 +1609,36 @@ function JurisdictionTab() {
         all participating countries. Key compliance points:
       </p>
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
-        <li><strong>No purchase necessary</strong> — artists earn through genuine streams, not entry fees</li>
-        <li><strong>Canada</strong> — Competition Act compliant; no Régie des alcools, des courses et des jeux (RACJ) registration required (not a game of chance)</li>
-        <li><strong>EU</strong> — Compliant with Unfair Commercial Practices Directive (not a lottery)</li>
-        <li><strong>US</strong> — State-by-state contest registration not required (skill-based, no consideration)</li>
-        <li><strong>Africa</strong> — Compliant with national lotteries and gaming acts (royalties, not prizes)</li>
+        <li>
+          <strong>No purchase necessary</strong> — artists earn through genuine
+          streams, not entry fees
+        </li>
+        <li>
+          <strong>Canada</strong> — Competition Act compliant; no Régie des
+          alcools, des courses et des jeux (RACJ) registration required (not a
+          game of chance)
+        </li>
+        <li>
+          <strong>EU</strong> — Compliant with Unfair Commercial Practices
+          Directive (not a lottery)
+        </li>
+        <li>
+          <strong>US</strong> — State-by-state contest registration not required
+          (skill-based, no consideration)
+        </li>
+        <li>
+          <strong>Africa</strong> — Compliant with national lotteries and gaming
+          acts (royalties, not prizes)
+        </li>
       </ul>
 
       <SectionHeading number="4" title="Dispute Resolution" />
       <p className="text-gray-300 leading-relaxed">
         Before initiating legal proceedings, both parties agree to attempt
         resolution through: (1) direct communication with support@versoair.com,
-        (2) formal complaint to legal@versoair.com with 30-day response
-        window, (3) mediation through a mutually agreed neutral mediator. If
-        unresolved, disputes proceed to the courts specified above.
+        (2) formal complaint to legal@versoair.com with 30-day response window,
+        (3) mediation through a mutually agreed neutral mediator. If unresolved,
+        disputes proceed to the courts specified above.
       </p>
     </div>
   );
@@ -1511,11 +1900,17 @@ export default function InformationHub() {
             <br />
             80 Mornelle Crt, Toronto, Ontario, Canada M1E 4P8
             <br />
-            <a href="mailto:legal@versoair.com" className="text-amber-400/60 hover:text-amber-400 transition-colors">
+            <a
+              href="mailto:legal@versoair.com"
+              className="text-amber-400/60 hover:text-amber-400 transition-colors"
+            >
               legal@versoair.com
             </a>
             {" · "}
-            <a href="mailto:privacy@versoair.com" className="text-amber-400/60 hover:text-amber-400 transition-colors">
+            <a
+              href="mailto:privacy@versoair.com"
+              className="text-amber-400/60 hover:text-amber-400 transition-colors"
+            >
               privacy@versoair.com
             </a>
           </p>

@@ -3642,7 +3642,14 @@ export default function ArtistPortal() {
                 ref={fileInputRef}
                 type="file"
                 accept="audio/*,.mp3,.wav,.flac,.aiff,.ogg,.m4a"
-                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+                style={{
+                  position: "absolute",
+                  width: 1,
+                  height: 1,
+                  opacity: 0,
+                  overflow: "hidden",
+                  pointerEvents: "none",
+                }}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) setUploadFile(f);

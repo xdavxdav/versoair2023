@@ -495,9 +495,10 @@ type MagneticInputProps = {
 const MagneticInput = ({ children, className }: MagneticInputProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0 });
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window);
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!ref.current) return;
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!ref.current || isTouchDevice) return;
     const rect = ref.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -512,20 +513,16 @@ const MagneticInput = ({ children, className }: MagneticInputProps) => {
         y: Math.sin(angle) * distance,
       });
     }
-  };
+  }, [isTouchDevice]);
 
   const handleMouseLeave = () => setTransform({ x: 0, y: 0 });
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
 
   return (
     <motion.div
       ref={ref}
       animate={{ x: transform.x, y: transform.y }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={className}
     >
@@ -1065,7 +1062,7 @@ function ShowcaseToggle({
       <button
         onClick={onToggle}
         aria-expanded={isOpen}
-        className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 ${gradient} text-white transition-all duration-300 hover:brightness-110 hover:-translate-y-[1px] cursor-pointer border border-white/20 rounded-lg shadow-lg shadow-black/20 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60`}
+        className={`w-full group flex items-center justify-between px-4 sm:px-6 md:px-8 py-2 sm:py-2.5 ${gradient} text-white transition-all duration-300 hover:brightness-110 hover:-translate-y-[1px] cursor-pointer border border-white/20 rounded-lg shadow-lg shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60`}
       >
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/15 ring-1 ring-white/20">
@@ -1591,9 +1588,6 @@ export default function Home() {
       const cards = gsap.utils.toArray<HTMLElement>(".business-card");
 
       if (cards.length > 0) {
-        // Set initial state explicitly
-        gsap.set(cards, { y: 0, opacity: 1 });
-
         // Create gentle entrance animation that completes and stays
         gsap.from(cards, {
           y: 60,
@@ -1726,7 +1720,7 @@ export default function Home() {
       setShowScrollIndicator(false);
     }
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -1884,23 +1878,19 @@ export default function Home() {
       <div className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/80 via-emerald-700/80 to-emerald-800/80" />
 
-        <div className="absolute inset-0">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[0,1,2,3,4,5].map((i) => (
+            <div
               key={i}
               className="absolute w-2 h-2 bg-white/20 rounded-full"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{ y: [0, -100, 0], opacity: [0.2, 0.8, 0.2] }}
-              transition={{
-                duration: 4 + Math.random() * 3,
-                repeat: Infinity,
-                delay: Math.random() * 2,
+                left: `${15 + i * 15}%`,
+                top: `${20 + (i % 3) * 25}%`,
+                animation: `floatParticle ${5 + i}s ease-in-out infinite ${i * 0.8}s`,
               }}
             />
           ))}
+          <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
         </div>
 
         <div className="relative z-10 text-center text-white max-w-[95vw] mx-auto px-4">
@@ -1910,7 +1900,7 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="mb-4 md:mb-6"
           >
-            <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 backdrop-blur-sm rounded-full text-xs md:text-sm font-medium border border-white/20">
+            <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 rounded-full text-xs md:text-sm font-medium border border-white/20">
               🎨 Soutien aux artisans en {countryMeta.name}
             </span>
           </motion.div>
@@ -2296,9 +2286,6 @@ export default function Home() {
                         .map((business, index) => (
                           <motion.div
                             key={business.id}
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
                             whileHover={{ y: -10, scale: 1.03 }}
                             className="business-card bg-white rounded-2xl md:rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100"
                           >
@@ -2522,10 +2509,7 @@ export default function Home() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
-              </div>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
@@ -2560,7 +2544,7 @@ export default function Home() {
                   <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-6 w-full max-w-[95vw] mb-2 sm:mb-3 md:mb-6">
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
@@ -2629,7 +2613,7 @@ export default function Home() {
 
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
                       <div className="text-center mb-1 sm:mb-2">
                         <Sparkles
@@ -2674,7 +2658,7 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-emerald-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
@@ -2722,10 +2706,7 @@ export default function Home() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-orange-300 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-amber-300 rounded-full blur-3xl"></div>
-              </div>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center_right,_rgba(253,186,116,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(252,211,77,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
@@ -2758,7 +2739,7 @@ export default function Home() {
                     {/* Left card: Featured Products */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-amber-300 transition-colors" />
@@ -2792,6 +2773,7 @@ export default function Home() {
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
@@ -2810,7 +2792,7 @@ export default function Home() {
                     {/* Right card: Shop Categories */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
                       <div className="text-center mb-1 sm:mb-2">
                         <Sparkles
@@ -2857,7 +2839,7 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-amber-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-amber-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors"
@@ -2911,13 +2893,7 @@ export default function Home() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-1/4 right-1/3 w-96 h-96 bg-green-300 rounded-full blur-3xl animate-pulse"></div>
-                <div
-                  className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-emerald-300 rounded-full blur-3xl animate-pulse"
-                  style={{ animationDelay: "1s" }}
-                ></div>
-              </div>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(134,239,172,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
@@ -2949,7 +2925,7 @@ export default function Home() {
                     {/* Left card: Community Growth */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
@@ -2986,6 +2962,7 @@ export default function Home() {
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
@@ -3004,7 +2981,7 @@ export default function Home() {
                     {/* Right card: Country Overview */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
                       <div className="text-center mb-1 sm:mb-2">
                         <Globe
@@ -3042,6 +3019,7 @@ export default function Home() {
                             key={i}
                             initial={{ opacity: 0, scale: 0.8 }}
                             whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
                             className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
                           >
@@ -3072,7 +3050,7 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-emerald-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-emerald-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
@@ -3120,13 +3098,7 @@ export default function Home() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-cyan-300 rounded-full blur-3xl"></div>
-                <div
-                  className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-teal-300 rounded-full blur-3xl animate-pulse"
-                  style={{ animationDelay: "0.5s" }}
-                ></div>
-              </div>
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(103,232,249,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(94,234,212,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
@@ -3158,7 +3130,7 @@ export default function Home() {
                     {/* Left card: Ways to Help */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-teal-300 transition-colors" />
@@ -3183,6 +3155,7 @@ export default function Home() {
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
@@ -3201,7 +3174,7 @@ export default function Home() {
                     {/* Right card: Take Action */}
                     <motion.div
                       whileHover={{ y: -4, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
+                      className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer"
                     >
                       <div className="text-center mb-1 sm:mb-2">
                         <Handshake
@@ -3248,7 +3221,7 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/15 to-teal-100/15 backdrop-blur-md rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-teal-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
                       className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-teal-200 transition-colors"
@@ -3363,12 +3336,12 @@ export default function Home() {
                 transition={{ delay: i * 0.2 }}
                 viewport={{ once: true, margin: "-50px" }}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-lg rounded-xl md:rounded-3xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/60 transition-all shadow-lg hover:shadow-2xl hover:shadow-emerald-500/10 group"
+                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl md:rounded-3xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/60 transition-all shadow-lg hover:shadow-2xl hover:shadow-emerald-500/10 group"
               >
                 <div
                   className={`bg-gradient-to-r ${artisan.color} p-4 md:p-6 flex items-center gap-3 md:gap-4`}
                 >
-                  <div className="w-14 h-14 md:w-20 md:h-20 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center text-white text-xl md:text-2xl font-bold border border-white/30 shadow-inner">
+                  <div className="w-14 h-14 md:w-20 md:h-20 bg-white/20 rounded-xl md:rounded-2xl flex items-center justify-center text-white text-xl md:text-2xl font-bold border border-white/30 shadow-inner">
                     {artisan.image}
                   </div>
                   <div>
@@ -3453,7 +3426,7 @@ export default function Home() {
             </div>
 
             {/* Search Card */}
-            <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl mb-12">
+            <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 border-purple-700 shadow-2xl mb-12">
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
                   <div className="relative flex-1 w-full">
@@ -3624,7 +3597,7 @@ export default function Home() {
                                 initial={{ opacity: 0, y: 40 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
+                                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-500 border border-gray-700 hover:border-purple-500/40 cursor-pointer group"
                               >
                                 <div className="h-2 bg-gradient-to-r from-purple-600 to-fuchsia-600" />
                                 {/* Avatar */}
@@ -3918,7 +3891,7 @@ export default function Home() {
                 <div
                   className={`bg-gradient-to-r ${opportunity.color} p-4 md:p-6 text-white relative overflow-hidden`}
                 >
-                  <div className="absolute top-3 right-3 text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm border border-white/30">
+                  <div className="absolute top-3 right-3 text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full border border-white/30">
                     {opportunity.tag}
                   </div>
                   <opportunity.icon className="w-8 h-8 md:w-12 md:h-12 mb-3 md:mb-4 opacity-90" />
