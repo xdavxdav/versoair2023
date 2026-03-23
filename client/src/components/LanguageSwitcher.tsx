@@ -336,13 +336,27 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const t1 = setTimeout(cleanup, 2000);
     const t2 = setTimeout(cleanup, 5000);
     const t3 = setTimeout(cleanup, 10000);
-    // Also run on every DOM change in case GT re-injects
+    // Watch only the GT container for re-injected banners (NOT document.body
+    // which fires on every Framer/React DOM change and tanks scroll perf)
     const observer = new MutationObserver(cleanup);
-    observer.observe(document.body, { childList: true });
+    let reScopeTimer: ReturnType<typeof setTimeout> | null = null;
+    const gtRoot = document.getElementById("google_translate_element");
+    if (gtRoot) {
+      observer.observe(gtRoot, { childList: true, subtree: true });
+    } else {
+      // GT container not mounted yet — watch body briefly, then re-scope
+      observer.observe(document.body, { childList: true });
+      reScopeTimer = setTimeout(() => {
+        observer.disconnect();
+        const el = document.getElementById("google_translate_element");
+        if (el) observer.observe(el, { childList: true, subtree: true });
+      }, 3000);
+    }
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      if (reScopeTimer) clearTimeout(reScopeTimer);
       observer.disconnect();
     };
   }, []);

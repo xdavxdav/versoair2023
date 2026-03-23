@@ -1305,7 +1305,6 @@ export default function Home() {
 
   const toggleSection = useCallback((key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
-    setTimeout(() => ScrollTrigger.refresh(), 500);
   }, []);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -1364,16 +1363,11 @@ export default function Home() {
   useLayoutEffect(() => {
     if (!panelsWrapperRef.current || !panelsContainerRef.current) return;
 
-    // Enable normalizeScroll on touch devices — GSAP's built-in fix for
-    // pinned elements on mobile/tablet where touch events inside a
-    // position:fixed + overflow:hidden element don't generate document
-    // scroll events, causing the scrub animation to freeze.
-    const isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    if (isTouchDevice) {
-      ScrollTrigger.normalizeScroll(true);
-      ScrollTrigger.config({ ignoreMobileResize: true });
-    }
+    // Mobile config — ignoreMobileResize prevents recalc on address-bar hide/show
+    ScrollTrigger.config({ ignoreMobileResize: true });
+    // NOTE: normalizeScroll intentionally NOT used — it intercepts all
+    // touch/wheel events through JS causing jank. Each panel has
+    // touch-action: pan-y in its inline styles instead.
 
     // Kill all existing ScrollTriggers for panels
     ScrollTrigger.getAll().forEach((trigger: ScrollTrigger) => {
@@ -1546,8 +1540,6 @@ export default function Home() {
       ctx.revert();
       clearTimeout(refreshTimeout);
       ScrollTrigger.removeEventListener("refresh", onRefresh);
-      // Disable normalizeScroll on cleanup
-      ScrollTrigger.normalizeScroll(false);
     };
   }, []);
 
@@ -2218,7 +2210,7 @@ export default function Home() {
                     className="mb-8 md:mb-10"
                   >
                     <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full blur-xl opacity-50" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full opacity-30" />
                       <div className="relative w-20 h-20 md:w-28 md:h-28 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center shadow-2xl">
                         <Search className="h-10 w-10 md:h-14 md:w-14 text-white" />
                       </div>
@@ -2383,7 +2375,7 @@ export default function Home() {
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <div className="relative z-10 flex items-center gap-3 md:gap-4">
-                          <Database className="w-6 h-6 md:w-7 md:h-7 animate-pulse" />
+                          <Database className="w-6 h-6 md:w-7 md:h-7" />
                           <span className="text-lg md:text-xl font-bold">
                             Voir toutes les communautés artisanales
                           </span>
@@ -2517,17 +2509,12 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
+                    <div
                       className="inline-block"
+                      style={{ animation: "spin 20s linear infinite" }}
                     >
                       <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </motion.div>
+                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3 notranslate"
                       data-text="ArtiHuman Foundation"
@@ -2600,6 +2587,7 @@ export default function Home() {
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
@@ -2714,13 +2702,14 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                    <div
                       className="inline-block"
+                      style={{
+                        animation: "panelIconFloat 2s ease-in-out infinite",
+                      }}
                     >
                       <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </motion.div>
+                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Marché Artisanal"
@@ -2901,13 +2890,14 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <motion.div
-                      animate={{ rotate: [0, 5, -5, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
+                    <div
                       className="inline-block"
+                      style={{
+                        animation: "panelIconWiggle 3s ease-in-out infinite",
+                      }}
                     >
                       <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </motion.div>
+                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Tableau d'impact"
@@ -3106,13 +3096,14 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                    <div
                       className="inline-block"
+                      style={{
+                        animation: "panelIconPulse 2s ease-in-out infinite",
+                      }}
                     >
                       <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </motion.div>
+                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="S'impliquer"
