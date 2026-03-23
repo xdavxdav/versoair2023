@@ -664,7 +664,6 @@
   justify-content: center;
   z-index: 9999;
   animation: overlay-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  backdrop-filter: blur(6px);
 }
 
 .page-loading-overlay.fade-out {
@@ -675,11 +674,9 @@
 @keyframes overlay-enter {
   0% {
     opacity: 0;
-    backdrop-filter: blur(0);
   }
   100% {
     opacity: 1;
-    backdrop-filter: blur(6px);
   }
 }
 
@@ -689,6 +686,38 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+/* ─── Panel icon CSS animations (replace Framer Motion infinite loops) ─── */
+@keyframes panelIconFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes panelIconWiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+@keyframes panelIconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 }
 
@@ -1157,7 +1186,7 @@
 /* Individual panel styling */
 .panel {
   width: 100vw;
-  height: 100dvh;      /* match inline Tailwind h-[100dvh] — accounts for mobile browser chrome */
+  height: 100dvh; /* match inline Tailwind h-[100dvh] — accounts for mobile browser chrome */
   min-height: 100dvh;
   flex-shrink: 0;
   position: relative;
