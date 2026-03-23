@@ -806,7 +806,16 @@ router.post(
       });
     }
 
-    // 🛡️ Role gate — admin, superuser & moderator may enter
+    // � .test email enforcement — GeoAdmin accounts must use .test domain
+    if (user.email && !user.email.endsWith(".test")) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "GeoAdmin access requires a .test email domain. Please register a .test account.",
+      });
+    }
+
+    // �🛡️ Role gate — admin, superuser & moderator may enter
     const allowedRoles = ["admin", "superuser", "moderator"];
     if (!user.role || !allowedRoles.includes(user.role)) {
       return res.status(403).json({
@@ -863,6 +872,132 @@ router.post(
       success: false,
       message:
         "Geo-admin gate is disabled. Use standard login with proper credentials.",
+    });
+  }),
+);
+
+/**
+ * POST /auth/register-geoadmin
+ * Create a new GeoAdmin account — .test email domain REQUIRED.
+ * Sets role to 'admin', assigns gate_username, grants geo-admin portal access.
+ */
+const registerGeoAdminSchema = z.object({
+  email: z
+    .string()
+    .email("Invalid email address")
+    .max(254)
+    .refine((e) => e.endsWith(".test"), {
+      message: "GeoAdmin accounts must use a .test email domain",
+    }),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128)
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+  gateUsername: z
+    .string()
+    .min(2, "Username must be at least 2 characters")
+    .max(50)
+    .regex(
+      /^[a-z0-9_]+$/,
+      "Username must be lowercase alphanumeric with underscores only",
+    ),
+});
+
+router.post(
+  "/register-geoadmin",
+  registerLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = registerGeoAdminSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ success: false, message: parsed.error.errors[0].message });
+    }
+
+    const { email, password, gateUsername } = parsed.data;
+
+    // Block non-.test domains (double-check)
+    if (!email.endsWith(".test")) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only .test email domains are allowed for GeoAdmin registration.",
+      });
+    }
+
+    // Check duplicate email
+    const existingEmail = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existingEmail.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    // Check duplicate gate_username
+    const existingGate = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.gateUsername, gateUsername.toLowerCase()))
+      .limit(1);
+
+    if (existingGate.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This admin username is already taken.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const [newUser] = await db
+      .insert(schema.users)
+      .values({
+        email: email.toLowerCase(),
+        username: gateUsername.toLowerCase(),
+        password: hashedPassword,
+        role: "admin",
+        isVerified: true, // .test accounts are auto-verified
+        gateUsername: gateUsername.toLowerCase(),
+        portalAccess: ["general", "geo-admin"],
+        subscriptionTier: "enterprise",
+      })
+      .returning({
+        id: schema.users.id,
+        email: schema.users.email,
+        role: schema.users.role,
+      });
+
+    // Issue JWT immediately
+    const token = jwt.sign(
+      {
+        userId: String(newUser.id),
+        email: newUser.email,
+        role: newUser.role || "admin",
+        subscriptionTier: "enterprise",
+      },
+      getJwtSecret(),
+      { expiresIn: JWT_EXPIRES_IN },
+    );
+
+    setAuthCookie(res, token);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: String(newUser.id),
+        email: newUser.email,
+        username: gateUsername.toLowerCase(),
+        role: newUser.role,
+      },
     });
   }),
 );

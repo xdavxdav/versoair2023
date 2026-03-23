@@ -495,25 +495,29 @@ type MagneticInputProps = {
 const MagneticInput = ({ children, className }: MagneticInputProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0 });
-  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window);
+  const isTouchDevice =
+    typeof window !== "undefined" && "ontouchstart" in window;
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current || isTouchDevice) return;
-    const rect = ref.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const dist = Math.sqrt(
-      Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2),
-    );
-    if (dist < 200) {
-      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-      const distance = (1 - dist / 200) * 12;
-      setTransform({
-        x: Math.cos(angle) * distance,
-        y: Math.sin(angle) * distance,
-      });
-    }
-  }, [isTouchDevice]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!ref.current || isTouchDevice) return;
+      const rect = ref.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dist = Math.sqrt(
+        Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2),
+      );
+      if (dist < 200) {
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const distance = (1 - dist / 200) * 12;
+        setTransform({
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+        });
+      }
+    },
+    [isTouchDevice],
+  );
 
   const handleMouseLeave = () => setTransform({ x: 0, y: 0 });
 
@@ -1879,7 +1883,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/80 via-emerald-700/80 to-emerald-800/80" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[0,1,2,3,4,5].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
               className="absolute w-2 h-2 bg-white/20 rounded-full"

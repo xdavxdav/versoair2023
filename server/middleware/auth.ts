@@ -53,6 +53,7 @@ const PUBLIC_PATHS: string[] = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
+  "/auth/register-geoadmin",
   // Artist portal auth
   "/auth/artist/login",
   "/auth/artist/register",
