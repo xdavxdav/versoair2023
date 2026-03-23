@@ -568,7 +568,11 @@ export default function Sante() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
+        title={
+          databaseConnected
+            ? "Base de données connectée"
+            : "Base de données hors ligne"
+        }
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -613,8 +617,8 @@ export default function Sante() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Base de données PostgreSQL en temps réel avec {totalResults.toLocaleString()}+
-            établissements de santé
+            Base de données PostgreSQL en temps réel avec{" "}
+            {totalResults.toLocaleString()}+ établissements de santé
           </motion.p>
 
           {/* Database Stats */}
@@ -628,7 +632,9 @@ export default function Sante() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
-                  <span className="text-sm text-red-200">Base de Données en Direct</span>
+                  <span className="text-sm text-red-200">
+                    Base de Données en Direct
+                  </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
                   {totalResults.toLocaleString()}+ Enregistrements
@@ -1160,7 +1166,9 @@ export default function Sante() {
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
                               Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Veuillez patienter</p>
+                            <p className="text-gray-200 mt-2">
+                              Veuillez patienter
+                            </p>
                           </div>
                           <Loader2 className="h-5 w-5 text-red-400 animate-spin" />
                         </div>
@@ -1592,9 +1600,7 @@ export default function Sante() {
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
-                    <span className="text-red-300">
-                      Total Dossiers Santé
-                    </span>
+                    <span className="text-red-300">Total Dossiers Santé</span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
                     </span>

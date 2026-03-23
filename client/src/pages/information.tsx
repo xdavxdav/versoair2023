@@ -54,13 +54,23 @@ import {
 
 const TABS = [
   { id: "overview", label: "Aperçu", icon: BookOpen, priority: 1 },
-  { id: "terms", label: "Conditions d'Utilisation", icon: FileText, priority: 2 },
+  {
+    id: "terms",
+    label: "Conditions d'Utilisation",
+    icon: FileText,
+    priority: 2,
+  },
   { id: "privacy", label: "Confidentialité", icon: Shield, priority: 3 },
   { id: "gdpr", label: "Protection des Données", icon: Lock, priority: 4 },
   { id: "cookies", label: "Cookies", icon: Cookie, priority: 5 },
   { id: "trademark", label: "Marque Déposée", icon: Award, priority: 6 },
   { id: "competition", label: "Concours", icon: Trophy, priority: 7 },
-  { id: "contracts", label: "Contrats Artistes", icon: ScrollText, priority: 8 },
+  {
+    id: "contracts",
+    label: "Contrats Artistes",
+    icon: ScrollText,
+    priority: 8,
+  },
   { id: "jurisdiction", label: "Juridiction", icon: Scale, priority: 9 },
   { id: "faq", label: "FAQ", icon: HelpCircle, priority: 10 },
 ] as const;
@@ -180,8 +190,8 @@ function OverviewTab() {
     <div className="space-y-6">
       <p className="text-gray-300 leading-relaxed text-lg">
         Bienvenue au{" "}
-        <strong className="text-white">Centre d'Information Verso Air™</strong> —
-        votre référence unique pour tous les documents juridiques, politiques
+        <strong className="text-white">Centre d'Information Verso Air™</strong>{" "}
+        — votre référence unique pour tous les documents juridiques, politiques
         de la plateforme, règles de concours, conditions des contrats artistes
         et informations de conformité réglementaire.
       </p>
@@ -192,7 +202,8 @@ function OverviewTab() {
             Verso Air est une plateforme d'intelligence d'affaires full-stack
             pour l'analytique multi-sectorielle — commerce, hôtellerie,
             construction, automobile, finance, santé, immobilier et
-            divertissement. Siège social à Toronto, Canada, opérant mondialement.
+            divertissement. Siège social à Toronto, Canada, opérant
+            mondialement.
           </p>
         </InfoCard>
         <InfoCard icon={Music} title="Plateforme Artiste StreamRoyale™">
@@ -252,15 +263,15 @@ function OverviewTab() {
           <strong>VERSO AIR</strong> — Office de la Propriété Intellectuelle du
           Canada (OPIC) Demande #2264074. Déposée initialement le 14 juin 2023.
           Catégorie : Marque (Design). Classe Nice 41 — Services de
-          divertissement, production et distribution de contenu multimédia.
-          La demande initiale a nécessité un nouveau dépôt en raison d'une
-          question de traitement administratif.{" "}
+          divertissement, production et distribution de contenu multimédia. La
+          demande initiale a nécessité un nouveau dépôt en raison d'une question
+          de traitement administratif.{" "}
           <strong>
             Une nouvelle demande est en cours de préparation et sera soumise
             prochainement.
           </strong>{" "}
-          Le nom Verso Air et le logo de l'aigle restent protégés par les
-          droits de marque de common law.
+          Le nom Verso Air et le logo de l'aigle restent protégés par les droits
+          de marque de common law.
         </p>
       </InfoCard>
     </div>
@@ -449,9 +460,8 @@ function TermsTab() {
       <SectionHeading number="13" title="Droit Applicable" />
       <p className="text-gray-300 leading-relaxed">
         Ces Conditions sont régies par les lois de la Province de l'Ontario,
-        Canada,
-        without regard to conflict of law principles. Any disputes shall be
-        resolved in the courts of Toronto, Ontario, Canada. For users in the
+        Canada, without regard to conflict of law principles. Any disputes shall
+        be resolved in the courts of Toronto, Ontario, Canada. For users in the
         European Union, mandatory consumer protection laws of your country of
         residence apply in addition. See the Jurisdiction tab for
         country-specific provisions.
@@ -1841,7 +1851,8 @@ export default function InformationHub() {
           <div>
             <h1 className="text-3xl font-bold">Centre d'Information</h1>
             <p className="text-gray-400 text-sm">
-              Documents juridiques, politiques, règles de concours & FAQ — Verso Air™
+              Documents juridiques, politiques, règles de concours & FAQ — Verso
+              Air™
             </p>
           </div>
         </div>

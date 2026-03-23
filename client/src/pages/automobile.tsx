@@ -594,7 +594,11 @@ export default function Automobile() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
+        title={
+          databaseConnected
+            ? "Base de données connectée"
+            : "Base de données hors ligne"
+        }
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
