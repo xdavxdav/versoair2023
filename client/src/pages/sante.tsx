@@ -340,8 +340,8 @@ export default function Sante() {
     }>
   >([
     {
-      name: "Loading healthcare providers...",
-      desc: "Connecting to database",
+      name: "Chargement des prestataires de santé...",
+      desc: "Connexion à la base de données",
       image:
         "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800",
     },
@@ -354,7 +354,7 @@ export default function Sante() {
     if (searchResults.length > 0) {
       const featuredEnterprises = searchResults.slice(0, 8).map((business) => ({
         name: business.title,
-        desc: business.description || "Healthcare facility",
+        desc: business.description || "Établissement de santé",
         image: `https://images.unsplash.com/photo-${Math.floor(
           Math.random() * 1000,
         )}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80`,
@@ -397,7 +397,7 @@ export default function Sante() {
             labels,
             datasets: [
               {
-                label: "Revenue (€)",
+                label: "Revenus (€)",
                 data: revenueData,
                 borderColor: "hsl(10, 100%, 60%)",
                 backgroundColor: gradient,
@@ -479,7 +479,7 @@ export default function Sante() {
             labels,
             datasets: [
               {
-                label: "Revenue by Category (€)",
+                label: "Revenus par Catégorie (€)",
                 data,
                 backgroundColor: [
                   "hsla(10, 100%, 60%, 0.8)",
@@ -533,33 +533,33 @@ export default function Sante() {
   const healthcareFeatures = [
     {
       icon: <Stethoscope className="h-8 w-8" />,
-      title: "Medical Facilities",
-      description: "Hospitals, clinics, and diagnostic centers",
+      title: "Établissements Médicaux",
+      description: "Hôpitaux, cliniques et centres de diagnostic",
     },
     {
       icon: <Pill className="h-8 w-8" />,
       title: "Pharmacies",
-      description: "Licensed pharmaceutical service providers",
+      description: "Prestataires de services pharmaceutiques agréés",
     },
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live healthcare records from Verso Air database",
+      title: "Base de Données PostgreSQL",
+      description: "Dossiers de santé en direct depuis la base Verso Air",
     },
     {
       icon: <Heart className="h-8 w-8" />,
-      title: "Patient Care",
-      description: "Quality healthcare service ratings",
+      title: "Soins aux Patients",
+      description: "Évaluations de qualité des services de santé",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Network",
-      description: "Healthcare providers worldwide",
+      title: "Réseau Mondial",
+      description: "Prestataires de santé dans le monde entier",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time performance monitoring",
+      title: "Analytique en Direct",
+      description: "Suivi des performances en temps réel",
     },
   ];
 
@@ -568,7 +568,7 @@ export default function Sante() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Database connected" : "Database offline"}
+        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -594,7 +594,7 @@ export default function Sante() {
             className="mb-4"
           >
             <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
-              🏥 Healthcare Intelligence
+              🏥 Intelligence Santé
             </span>
           </motion.div>
 
@@ -604,7 +604,7 @@ export default function Sante() {
             transition={{ duration: 1, delay: 0.2 }}
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 drop-shadow-2xl"
           >
-            Healthcare Providers Database
+            Base de Données des Prestataires de Santé
           </motion.h1>
 
           <motion.p
@@ -613,8 +613,8 @@ export default function Sante() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Real-time PostgreSQL database with {totalResults.toLocaleString()}+
-            healthcare facilities
+            Base de données PostgreSQL en temps réel avec {totalResults.toLocaleString()}+
+            établissements de santé
           </motion.p>
 
           {/* Database Stats */}
@@ -628,10 +628,10 @@ export default function Sante() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
-                  <span className="text-sm text-red-200">Live Database</span>
+                  <span className="text-sm text-red-200">Base de Données en Direct</span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Enregistrements
                 </div>
               </CardContent>
             </Card>
@@ -640,11 +640,11 @@ export default function Sante() {
                 <div className="flex items-center gap-[0.5vw]">
                   <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                   <span className="text-sm text-orange-200">
-                    Healthcare Facilities
+                    Établissements de Santé
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargés
                 </div>
               </CardContent>
             </Card>
@@ -685,7 +685,7 @@ export default function Sante() {
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
-                          "Location not specified"}
+                          "Emplacement non précisé"}
                       </span>
                     </div>
                   </div>
@@ -735,7 +735,7 @@ export default function Sante() {
                   className="border-red-600 hover:bg-red-800"
                 >
                   <Filter size={16} className="mr-2" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters ? "Masquer les Filtres" : "Afficher les Filtres"}
                 </Button>
 
                 <div className="flex items-center space-x-2">
@@ -759,13 +759,13 @@ export default function Sante() {
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
-                          "Highest Rating"}
+                          "Meilleure Note"}
                         {activeFilters.sort_by === "star_desc" &&
-                          "Highest Star Rating"}
+                          "Plus d'Étoiles"}
                         {activeFilters.sort_by === "revenue_desc" &&
-                          "Highest Revenue"}
-                        {activeFilters.sort_by === "name_asc" && "Name A-Z"}
-                        {!activeFilters.sort_by && "Sort by"}
+                          "Meilleur Revenu"}
+                        {activeFilters.sort_by === "name_asc" && "Nom A-Z"}
+                        {!activeFilters.sort_by && "Trier par"}
                       </span>
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
@@ -789,7 +789,7 @@ export default function Sante() {
                             : "text-red-200"
                         }
                       >
-                        Highest Rating
+                        Meilleure Note
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -810,7 +810,7 @@ export default function Sante() {
                             : "text-red-200"
                         }
                       >
-                        Highest Star Rating
+                        Plus d'Étoiles
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -831,7 +831,7 @@ export default function Sante() {
                             : "text-red-200"
                         }
                       >
-                        Highest Revenue
+                        Meilleur Revenu
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -859,7 +859,7 @@ export default function Sante() {
                 </DropdownMenu>
 
                 <div className="text-sm text-red-300">
-                  {totalResults.toLocaleString()} results
+                  {totalResults.toLocaleString()} résultats
                 </div>
               </div>
             </div>
@@ -875,7 +875,7 @@ export default function Sante() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-red-700">
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
-                      Category
+                      Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -937,7 +937,7 @@ export default function Sante() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
-                      Min Rating
+                      Note Min.
                     </Label>
                     <Input
                       type="number"
@@ -958,7 +958,7 @@ export default function Sante() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
-                      Min Revenue
+                      Revenu Min.
                     </Label>
                     <Input
                       type="number"
@@ -976,7 +976,7 @@ export default function Sante() {
 
                   <div>
                     <Label className="text-sm font-medium mb-2 block text-red-300">
-                      Status
+                      Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1048,7 +1048,7 @@ export default function Sante() {
                       onClick={() => handleSearch()}
                       className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
                     >
-                      Apply Filters
+                      Appliquer les Filtres
                     </Button>
                   </div>
                 </div>
@@ -1136,10 +1136,10 @@ export default function Sante() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
-                              Loading healthcare facilities...
+                              Chargement des établissements de santé...
                             </h3>
                             <p className="text-gray-200 mt-2">
-                              Connecting to database
+                              Connexion à la base de données
                             </p>
                           </div>
                           <ExternalLink className="h-5 w-5 text-red-400" />
@@ -1158,9 +1158,9 @@ export default function Sante() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
-                              Fetching data...
+                              Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">Please wait</p>
+                            <p className="text-gray-200 mt-2">Veuillez patienter</p>
                           </div>
                           <Loader2 className="h-5 w-5 text-red-400 animate-spin" />
                         </div>
@@ -1180,10 +1180,10 @@ export default function Sante() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-red-300 mb-2">
-                              Searching PostgreSQL Database...
+                              Recherche dans la base PostgreSQL...
                             </h3>
                             <p className="text-gray-300">
-                              Fetching healthcare providers...
+                              Récupération des prestataires de santé...
                             </p>
                           </div>
                         ) : searchResults.length > 0 ? (
@@ -1244,13 +1244,13 @@ export default function Sante() {
                                       <span className="text-gray-300">
                                         {business.reviews?.toLocaleString() ||
                                           0}{" "}
-                                        reviews
+                                        avis
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-[0.5vw]">
                                       <Stethoscope className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
                                       <span className="text-gray-300">
-                                        {business.rating || 5}★ Facility
+                                        {business.rating || 5}★ Établissement
                                       </span>
                                     </div>
                                   </div>
@@ -1296,13 +1296,13 @@ export default function Sante() {
                                         </span>
                                         <span className="text-gray-400 text-sm">
                                           {" "}
-                                          / month
+                                          / mois
                                         </span>
                                       </>
                                     )}
                                     {business.employees && (
                                       <div className="text-sm text-gray-300">
-                                        {business.employees} employees
+                                        {business.employees} employés
                                       </div>
                                     )}
                                   </div>
@@ -1337,16 +1337,16 @@ export default function Sante() {
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
                             <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
-                              No Facilities Found
+                              Aucun Établissement Trouvé
                             </h3>
                             <p className="text-gray-400">
-                              Try a different search or clear filters
+                              Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
                               onClick={clearAllFilters}
                               className="mt-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
                             >
-                              Reset Search
+                              Réinitialiser la Recherche
                             </Button>
                           </div>
                         )}
@@ -1368,7 +1368,7 @@ export default function Sante() {
                           className="border-red-600 hover:bg-red-800"
                         >
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
-                          Previous
+                          Précédent
                         </Button>
                         <span className="text-red-400 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} of {Math.ceil(totalResults / 9)}
@@ -1384,7 +1384,7 @@ export default function Sante() {
                           disabled={currentPage >= Math.ceil(totalResults / 9)}
                           className="border-red-600 hover:bg-red-800"
                         >
-                          Next
+                          Suivant
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] ml-1" />
                         </Button>
                       </div>
@@ -1400,7 +1400,7 @@ export default function Sante() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
-              Healthcare Analytics
+              Analytique Santé
             </h2>
 
             <motion.div
@@ -1469,7 +1469,7 @@ export default function Sante() {
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
-                      Revenue & Patient Trends
+                      Tendances Revenus & Patients
                     </h3>
                     <Calendar className="h-5 w-5 text-red-400" />
                   </div>
@@ -1482,7 +1482,7 @@ export default function Sante() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
                 <CardContent>
                   <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
-                    Revenue by Category
+                    Revenus par Catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={barChartRef}></canvas>
@@ -1497,7 +1497,7 @@ export default function Sante() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
-              Financial Dashboard
+              Tableau de Bord Financier
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
@@ -1534,7 +1534,7 @@ export default function Sante() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Pill className="h-6 w-6" />
-              Healthcare Campaigns
+              Campagnes Santé
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
               {[
@@ -1583,17 +1583,17 @@ export default function Sante() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-red-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              PostgreSQL Database Connection
+              Connexion Base de Données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
-                  Database Stats
+                  Statistiques de la Base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-red-300">
-                      Total Healthcare Records
+                      Total Dossiers Santé
                     </span>
                     <span className="font-semibold text-white">
                       {totalResults.toLocaleString()}+
@@ -1601,27 +1601,27 @@ export default function Sante() {
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-red-300">
-                      Active Facilities Loaded
+                      Établissements Actifs Chargés
                     </span>
                     <span className="font-semibold text-white">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-red-300">Database Status</span>
+                    <span className="text-red-300">Statut de la Base</span>
                     <span
                       className={`font-semibold ${
                         databaseConnected ? "text-green-400" : "text-red-400"
                       }`}
                     >
-                      {databaseConnected ? "Connected ✅" : "Disconnected ❌"}
+                      {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                 </ul>
               </div>
               <div>
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
-                  Quick Actions
+                  Actions Rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
                   <Button
@@ -1630,7 +1630,7 @@ export default function Sante() {
                     }
                     className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
                   >
-                    Test Database Connection
+                    Tester la Connexion
                   </Button>
                   <Button
                     onClick={() => {
@@ -1639,7 +1639,7 @@ export default function Sante() {
                     variant="outline"
                     className="w-full border-red-500 text-red-400 hover:bg-red-500/10"
                   >
-                    Refresh Data
+                    Actualiser les Données
                   </Button>
                 </div>
               </div>
@@ -1652,7 +1652,7 @@ export default function Sante() {
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
           <span className="bg-gradient-to-r from-red-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
-            Verso Air Healthcare Network
+            Réseau Santé Verso Air
           </span>
         </h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-[0.75vw] sm:gap-5 md:gap-8">
@@ -1768,9 +1768,9 @@ export default function Sante() {
                   )}
                   <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Phone</div>
+                      <div className="text-sm text-gray-400">Téléphone</div>
                       <div className="text-sm font-semibold text-white">
-                        {selectedBusiness.phone || "Not specified"}
+                        {selectedBusiness.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
@@ -1778,7 +1778,7 @@ export default function Sante() {
                     <CardContent className="p-0">
                       <div className="text-sm text-gray-400">Email</div>
                       <div className="text-sm font-semibold text-white truncate">
-                        {selectedBusiness.email || "Not specified"}
+                        {selectedBusiness.email || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>

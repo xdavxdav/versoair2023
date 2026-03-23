@@ -377,12 +377,14 @@ export default function MarketplacePage() {
         <ViewOnlyGate
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
+          showProfessionalSSO={false}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           onAuthenticate={handleAuthenticate}
           isLoading={isAuthLoading}
+          showProfessionalSSO={false}
         />
       </>
     );

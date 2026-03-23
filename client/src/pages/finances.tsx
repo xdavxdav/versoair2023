@@ -392,7 +392,7 @@ export default function Finance() {
             labels,
             datasets: [
               {
-                label: "Revenue (€)",
+                label: "Revenus (€)",
                 data: revenueData,
                 borderColor: "hsl(270, 100%, 60%)",
                 backgroundColor: gradient,
@@ -474,7 +474,7 @@ export default function Finance() {
             labels,
             datasets: [
               {
-                label: "Revenue by Category (€)",
+                label: "Revenus par Catégorie (€)",
                 data,
                 backgroundColor: [
                   "hsla(270, 100%, 60%, 0.8)",
@@ -528,33 +528,33 @@ export default function Finance() {
   const financeFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "PostgreSQL Database",
-      description: "Live financial records from Verso Air database",
+      title: "Base de Données PostgreSQL",
+      description: "Données financières en direct depuis la base Verso Air",
     },
     {
       icon: <Building className="h-8 w-8" />,
-      title: "Banking Network",
-      description: "Global network of banks and financial institutions",
+      title: "Réseau Bancaire",
+      description: "Réseau mondial de banques et d'institutions financières",
     },
     {
       icon: <CreditCard className="h-8 w-8" />,
-      title: "Financial Services",
-      description: "Comprehensive banking and investment solutions",
+      title: "Services Financiers",
+      description: "Solutions bancaires et d'investissement complètes",
     },
     {
       icon: <ArrowUpDown className="h-8 w-8" />,
-      title: "Forex Trading",
-      description: "Real-time currency exchange and trading",
+      title: "Trading Forex",
+      description: "Échange et trading de devises en temps réel",
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Reach",
-      description: "Financial services in 50+ countries worldwide",
+      title: "Portée Mondiale",
+      description: "Services financiers dans plus de 50 pays",
     },
     {
       icon: <Activity className="h-8 w-8" />,
-      title: "Live Analytics",
-      description: "Real-time financial performance monitoring",
+      title: "Analytique en Direct",
+      description: "Suivi des performances financières en temps réel",
     },
   ];
 
@@ -563,7 +563,7 @@ export default function Finance() {
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
-        title={databaseConnected ? "Database connected" : "Database offline"}
+        title={databaseConnected ? "Base de données connectée" : "Base de données hors ligne"}
       >
         <div
           className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
@@ -625,10 +625,10 @@ export default function Finance() {
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                  <span className="text-sm text-purple-200">Live Database</span>
+                  <span className="text-sm text-purple-200">Base de Données en Direct</span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Records
+                  {totalResults.toLocaleString()}+ Enregistrements
                 </div>
               </CardContent>
             </Card>
@@ -637,11 +637,11 @@ export default function Finance() {
                 <div className="flex items-center gap-[0.5vw]">
                   <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
                   <span className="text-sm text-pink-200">
-                    Financial Institutions
+                    Institutions Financières
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {searchResults.length} Loaded
+                  {searchResults.length} Chargées
                 </div>
               </CardContent>
             </Card>
@@ -1147,7 +1147,7 @@ export default function Finance() {
                               <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
                             </div>
                             <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
-                              Loading financial institutions...
+                              Chargement des institutions financières...
                             </h3>
                             <p className="text-gray-200 mt-2">
                               Connecting to database
@@ -1376,7 +1376,7 @@ export default function Finance() {
               <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
-                    Top Categories
+                    Top Cat\u00e9gories
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_categories?.map((category, index) => (
@@ -1389,7 +1389,7 @@ export default function Finance() {
                             {category.category}
                           </span>
                           <span className="text-sm text-green-400">
-                            {category.occupancy || 0}% occupancy
+                            {category.occupancy || 0}% occupation
                           </span>
                         </div>
                         <span className="font-semibold text-purple-300">

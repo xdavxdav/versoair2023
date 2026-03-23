@@ -5,6 +5,7 @@ import { Lock, Star, Users, Zap, Loader2 } from "lucide-react";
 interface ViewOnlyGateProps {
   onSignIn: () => void;
   onSignUp: () => void;
+  showProfessionalSSO?: boolean;
 }
 
 function SsoProviderButtons() {
@@ -98,6 +99,7 @@ function SsoProviderButtons() {
 export default function ViewOnlyGate({
   onSignIn,
   onSignUp,
+  showProfessionalSSO = true,
 }: ViewOnlyGateProps) {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 sm:px-4 py-8 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
@@ -183,15 +185,17 @@ export default function ViewOnlyGate({
             </motion.button>
           </div>
 
-          {/* ─── SSO Divider ─── */}
-          <div className="flex items-center gap-3 mb-6 max-w-md mx-auto">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-slate-500">or continue with</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* ─── Professional Network SSO Buttons ─── */}
-          <SsoProviderButtons />
+          {/* ─── SSO Divider + Professional Network SSO Buttons ─── */}
+          {showProfessionalSSO && (
+            <>
+              <div className="flex items-center gap-3 mb-6 max-w-md mx-auto">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs text-slate-500">or continue with</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+              <SsoProviderButtons />
+            </>
+          )}
         </motion.div>
 
         {/* Sample Feed Preview */}

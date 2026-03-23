@@ -318,7 +318,7 @@ export function CountryDropdown() {
       {open && (
         <div
           className="fixed inset-0 bg-black/30 z-[999998] transition-opacity"
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: "manipulation" }}
           onClick={() => setOpen(false)}
         />
       )}

@@ -53,15 +53,15 @@ import {
    ═══════════════════════════════════════════════════════════ */
 
 const TABS = [
-  { id: "overview", label: "Overview", icon: BookOpen, priority: 1 },
-  { id: "terms", label: "Terms of Service", icon: FileText, priority: 2 },
-  { id: "privacy", label: "Privacy", icon: Shield, priority: 3 },
-  { id: "gdpr", label: "Data Protection", icon: Lock, priority: 4 },
+  { id: "overview", label: "Aperçu", icon: BookOpen, priority: 1 },
+  { id: "terms", label: "Conditions d'Utilisation", icon: FileText, priority: 2 },
+  { id: "privacy", label: "Confidentialité", icon: Shield, priority: 3 },
+  { id: "gdpr", label: "Protection des Données", icon: Lock, priority: 4 },
   { id: "cookies", label: "Cookies", icon: Cookie, priority: 5 },
-  { id: "trademark", label: "Trademark", icon: Award, priority: 6 },
-  { id: "competition", label: "Competition", icon: Trophy, priority: 7 },
-  { id: "contracts", label: "Artist Contracts", icon: ScrollText, priority: 8 },
-  { id: "jurisdiction", label: "Jurisdiction", icon: Scale, priority: 9 },
+  { id: "trademark", label: "Marque Déposée", icon: Award, priority: 6 },
+  { id: "competition", label: "Concours", icon: Trophy, priority: 7 },
+  { id: "contracts", label: "Contrats Artistes", icon: ScrollText, priority: 8 },
+  { id: "jurisdiction", label: "Juridiction", icon: Scale, priority: 9 },
   { id: "faq", label: "FAQ", icon: HelpCircle, priority: 10 },
 ] as const;
 
@@ -179,56 +179,56 @@ function OverviewTab() {
   return (
     <div className="space-y-6">
       <p className="text-gray-300 leading-relaxed text-lg">
-        Welcome to the{" "}
-        <strong className="text-white">Verso Air™ Information Center</strong> —
-        your single reference for all legal documents, platform policies,
-        competition rules, artist contract terms, and regulatory compliance
-        information.
+        Bienvenue au{" "}
+        <strong className="text-white">Centre d'Information Verso Air™</strong> —
+        votre référence unique pour tous les documents juridiques, politiques
+        de la plateforme, règles de concours, conditions des contrats artistes
+        et informations de conformité réglementaire.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InfoCard icon={Building2} title="About Verso Air™">
+        <InfoCard icon={Building2} title="À Propos de Verso Air™">
           <p>
-            Verso Air is a full-stack business intelligence platform for
-            multi-sector analytics — commerce, hospitality, construction,
-            automotive, finance, healthcare, real estate, and entertainment.
-            Headquartered in Toronto, Canada, operating globally.
+            Verso Air est une plateforme d'intelligence d'affaires full-stack
+            pour l'analytique multi-sectorielle — commerce, hôtellerie,
+            construction, automobile, finance, santé, immobilier et
+            divertissement. Siège social à Toronto, Canada, opérant mondialement.
           </p>
         </InfoCard>
-        <InfoCard icon={Music} title="StreamRoyale™ Artist Platform">
+        <InfoCard icon={Music} title="Plateforme Artiste StreamRoyale™">
           <p>
-            Our integrated artist portal and streaming competition system.
-            Artists upload original music, earn royalties per stream, compete in
-            weekly pools, and grow through our badge tier system (Initiate →
-            Legendary Titan).
+            Notre portail artiste intégré et système de compétition streaming.
+            Les artistes téléchargent leur musique originale, gagnent des
+            redevances par écoute, participent à des pools hebdomadaires et
+            progressent via notre système de badges (Initié → Titan Légendaire).
           </p>
         </InfoCard>
-        <InfoCard icon={Globe} title="Global Operations">
+        <InfoCard icon={Globe} title="Opérations Mondiales">
           <p>
-            Verso Air operates across all countries where users can access the
-            platform. We comply with data protection laws in 10+ jurisdictions
-            including EU GDPR, UK GDPR, US CCPA/CPRA, Canada PIPEDA, Brazil
-            LGPD, and more.
+            Verso Air opère dans tous les pays où les utilisateurs peuvent
+            accéder à la plateforme. Nous respectons les lois de protection des
+            données dans plus de 10 juridictions, dont le RGPD UE, le RGPD UK,
+            le CCPA/CPRA US, le PIPEDA Canada, le LGPD Brésil, et plus.
           </p>
         </InfoCard>
-        <InfoCard icon={Shield} title="Your Rights Matter">
+        <InfoCard icon={Shield} title="Vos Droits Comptent">
           <p>
-            You have the right to access, rectify, delete, and port your data at
-            any time. Contact{" "}
+            Vous avez le droit d'accéder, de rectifier, de supprimer et de
+            porter vos données à tout moment. Contactez{" "}
             <a
               href="mailto:privacy@versoair.com"
               className="text-amber-400 hover:underline"
             >
               privacy@versoair.com
             </a>{" "}
-            for any data-related requests.
+            pour toute demande relative aux données.
           </p>
         </InfoCard>
       </div>
 
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-amber-400 mb-3">
-          Quick Navigation
+          Navigation Rapide
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {TABS.filter((t) => t.id !== "overview").map((tab) => (
@@ -245,21 +245,22 @@ function OverviewTab() {
 
       <InfoCard
         icon={Clock}
-        title="Trademark Status — Pending Re-Filing"
+        title="Statut de la Marque — Nouveau Dépôt en Cours"
         variant="info"
       >
         <p>
-          <strong>VERSO AIR</strong> — Canadian Intellectual Property Office
-          (CIPO) Application #2264074. Originally filed June 14, 2023. Category:
-          Trademark (Design). Nice Class 41 — Entertainment services, multimedia
-          content production and distribution. The initial application required
-          re-filing due to an administrative processing matter.{" "}
+          <strong>VERSO AIR</strong> — Office de la Propriété Intellectuelle du
+          Canada (OPIC) Demande #2264074. Déposée initialement le 14 juin 2023.
+          Catégorie : Marque (Design). Classe Nice 41 — Services de
+          divertissement, production et distribution de contenu multimédia.
+          La demande initiale a nécessité un nouveau dépôt en raison d'une
+          question de traitement administratif.{" "}
           <strong>
-            A new application is currently being prepared and will be submitted
-            shortly.
+            Une nouvelle demande est en cours de préparation et sera soumise
+            prochainement.
           </strong>{" "}
-          The Verso Air name and eagle logo remain protected under common law
-          trademark rights.
+          Le nom Verso Air et le logo de l'aigle restent protégés par les
+          droits de marque de common law.
         </p>
       </InfoCard>
     </div>
@@ -301,7 +302,7 @@ function TermsTab() {
         for permanent ban and forfeiture of pending earnings.
       </p>
 
-      <SectionHeading number="4" title="Platform Services" />
+      <SectionHeading number="4" title="Services de la Plateforme" />
       <div className="space-y-3">
         <p className="text-gray-300 leading-relaxed">
           Verso Air provides the following services, each subject to additional
@@ -341,7 +342,7 @@ function TermsTab() {
         </ul>
       </div>
 
-      <SectionHeading number="5" title="Subscription Tiers" />
+      <SectionHeading number="5" title="Niveaux d'Abonnement" />
       <div className="space-y-3">
         <p className="text-gray-300 leading-relaxed">
           Access levels are tiered as follows:
@@ -368,7 +369,7 @@ function TermsTab() {
         </div>
       </div>
 
-      <SectionHeading number="6" title="Intellectual Property" />
+      <SectionHeading number="6" title="Propriété Intellectuelle" />
       <p className="text-gray-300 leading-relaxed">
         All content, code, designs, trademarks, logos, and branding on the
         Platform are the property of Verso Air Inc. or its licensors. The Verso
@@ -380,7 +381,7 @@ function TermsTab() {
         distribute, and promote said content within the Platform.
       </p>
 
-      <SectionHeading number="7" title="Artist Content & Music" />
+      <SectionHeading number="7" title="Contenu Artiste & Musique" />
       <p className="text-gray-300 leading-relaxed">
         Artists uploading music to StreamRoyale represent and warrant that they
         own or have all necessary rights, licenses, and permissions for the
@@ -391,7 +392,7 @@ function TermsTab() {
         applicable law.
       </p>
 
-      <SectionHeading number="8" title="Prohibited Conduct" />
+      <SectionHeading number="8" title="Conduite Interdite" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
         <li>
           Artificial stream inflation (bots, scripts, loops, VPN manipulation)
@@ -407,7 +408,7 @@ function TermsTab() {
         <li>Impersonating another user, artist, or business</li>
       </ul>
 
-      <SectionHeading number="9" title="Payment & Refunds" />
+      <SectionHeading number="9" title="Paiement & Remboursements" />
       <p className="text-gray-300 leading-relaxed">
         Subscription fees are billed in advance on a monthly or annual basis.
         Refunds are available within 14 days of initial purchase if no
@@ -418,7 +419,7 @@ function TermsTab() {
         individual refund policy, with Verso Air acting as an intermediary.
       </p>
 
-      <SectionHeading number="10" title="Limitation of Liability" />
+      <SectionHeading number="10" title="Limitation de Responsabilité" />
       <p className="text-gray-300 leading-relaxed">
         TO THE MAXIMUM EXTENT PERMITTED BY LAW, VERSO AIR SHALL NOT BE LIABLE
         FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
@@ -428,7 +429,7 @@ function TermsTab() {
         without warranties of any kind, express or implied.
       </p>
 
-      <SectionHeading number="11" title="Termination" />
+      <SectionHeading number="11" title="Résiliation" />
       <p className="text-gray-300 leading-relaxed">
         We may suspend or terminate your account at any time for violation of
         these Terms, with or without notice. Upon termination, your right to use
@@ -445,9 +446,10 @@ function TermsTab() {
         acceptance.
       </p>
 
-      <SectionHeading number="13" title="Governing Law" />
+      <SectionHeading number="13" title="Droit Applicable" />
       <p className="text-gray-300 leading-relaxed">
-        These Terms are governed by the laws of the Province of Ontario, Canada,
+        Ces Conditions sont régies par les lois de la Province de l'Ontario,
+        Canada,
         without regard to conflict of law principles. Any disputes shall be
         resolved in the courts of Toronto, Ontario, Canada. For users in the
         European Union, mandatory consumer protection laws of your country of
@@ -478,7 +480,7 @@ function PrivacyTab() {
         Last updated: March 22, 2026
       </p>
 
-      <InfoCard icon={Shield} title="Your Privacy at a Glance" variant="info">
+      <InfoCard icon={Shield} title="Votre Vie Privée en Bref" variant="info">
         <p>
           We collect only what's necessary to operate the Platform. We never
           sell your personal data. You can request deletion at any time. Full
@@ -487,9 +489,9 @@ function PrivacyTab() {
         </p>
       </InfoCard>
 
-      <SectionHeading number="1" title="Data We Collect" />
+      <SectionHeading number="1" title="Données Collectées" />
       <div className="space-y-3">
-        <SubHeading title="Information You Provide" />
+        <SubHeading title="Informations que Vous Fournissez" />
         <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
           <li>Account details — name, email, password (bcrypt-hashed)</li>
           <li>
@@ -501,7 +503,7 @@ function PrivacyTab() {
           <li>Uploaded content — music files, images, documents</li>
           <li>Messages, support tickets, and forum posts</li>
         </ul>
-        <SubHeading title="Information Collected Automatically" />
+        <SubHeading title="Informations Collectées Automatiquement" />
         <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
           <li>
             IP address and approximate geolocation (for country detection)
@@ -515,7 +517,7 @@ function PrivacyTab() {
         </ul>
       </div>
 
-      <SectionHeading number="2" title="How We Use Your Data" />
+      <SectionHeading number="2" title="Comment Nous Utilisons Vos Données" />
       <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
         <li>Provide and maintain Platform services</li>
         <li>Calculate and distribute artist royalties accurately</li>
@@ -527,7 +529,7 @@ function PrivacyTab() {
         <li>Comply with legal obligations and regulatory requirements</li>
       </ul>
 
-      <SectionHeading number="3" title="Data Sharing" />
+      <SectionHeading number="3" title="Partage des Données" />
       <p className="text-gray-300 leading-relaxed">
         We do <strong className="text-white">NOT</strong> sell personal data. We
         may share data with:
@@ -547,7 +549,7 @@ function PrivacyTab() {
         </li>
       </ul>
 
-      <SectionHeading number="4" title="Data Retention" />
+      <SectionHeading number="4" title="Conservation des Données" />
       <p className="text-gray-300 leading-relaxed">
         Account data is retained while your account is active. After deletion
         request, personal data is removed within 30 days. Anonymized analytics
@@ -1827,7 +1829,7 @@ export default function InformationHub() {
         <Link href="/">
           <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Retour à l'Accueil
           </a>
         </Link>
 
@@ -1837,9 +1839,9 @@ export default function InformationHub() {
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Information Center</h1>
+            <h1 className="text-3xl font-bold">Centre d'Information</h1>
             <p className="text-gray-400 text-sm">
-              Legal documents, policies, competition rules & FAQ — Verso Air™
+              Documents juridiques, politiques, règles de concours & FAQ — Verso Air™
             </p>
           </div>
         </div>
@@ -1905,7 +1907,7 @@ export default function InformationHub() {
         {/* Footer note */}
         <div className="mt-16 pt-8 border-t border-gray-800">
           <p className="text-gray-500 text-sm text-center">
-            © {new Date().getFullYear()} Verso Air Inc. All rights reserved.
+            © {new Date().getFullYear()} Verso Air Inc. Tous droits réservés.
             <br />
             80 Mornelle Crt, Toronto, Ontario, Canada M1E 4P8
             <br />

@@ -118,6 +118,7 @@ interface AuthModalProps {
   onAuthenticate: (email: string, password: string, isSignUp: boolean) => void;
   isLoading?: boolean;
   error?: string; // External error from parent (e.g., server response)
+  showProfessionalSSO?: boolean;
 }
 
 export default function AuthModal({
@@ -126,6 +127,7 @@ export default function AuthModal({
   onAuthenticate,
   isLoading = false,
   error: externalError,
+  showProfessionalSSO = true,
 }: AuthModalProps) {
   useScrollLock(isOpen);
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -417,17 +419,19 @@ export default function AuthModal({
                     )}
                   </motion.button>
 
-                  {/* Divider */}
-                  <div className="flex items-center gap-3 my-4">
-                    <div className="flex-1 h-px bg-white/10" />
-                    <span className="text-xs text-slate-500 font-handstyle">
-                      or continue with
-                    </span>
-                    <div className="flex-1 h-px bg-white/10" />
-                  </div>
-
-                  {/* Social Login — Professional Network SSO */}
-                  <BlogSsoButtons />
+                  {/* Divider + Social Login — Professional Network SSO */}
+                  {showProfessionalSSO && (
+                    <>
+                      <div className="flex items-center gap-3 my-4">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span className="text-xs text-slate-500 font-handstyle">
+                          or continue with
+                        </span>
+                        <div className="flex-1 h-px bg-white/10" />
+                      </div>
+                      <BlogSsoButtons />
+                    </>
+                  )}
 
                   {/* Terms */}
                   <p className="text-xs text-slate-500 text-center font-handstyle">
