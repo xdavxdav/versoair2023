@@ -410,7 +410,7 @@ export default function SAV() {
               </Link>
               <Button
                 variant="outline"
-                className="border-white text-white px-8 py-6 text-lg hover:bg-white/10 backdrop-blur-sm"
+                className="border-white bg-white/10 text-white px-8 py-6 text-lg hover:bg-white/20 backdrop-blur-sm"
               >
                 <Phone className="mr-2 h-5 w-5" />
                 Call Support Now
@@ -968,14 +968,14 @@ export default function SAV() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-white text-white hover:bg-white/10"
+                    className="border-white bg-white/10 text-white hover:bg-white/20"
                   >
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Live Chat
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-white text-white hover:bg-white/10"
+                    className="border-white bg-white/10 text-white hover:bg-white/20"
                     onClick={() => setShowTicketForm(true)}
                   >
                     <FileText className="mr-2 h-5 w-5" />

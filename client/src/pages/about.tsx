@@ -456,7 +456,7 @@ export default function About() {
               <Link href="/contact">
                 <Button
                   variant="outline"
-                  className="px-8 py-6 text-lg border-slate-700 hover:bg-white/5 rounded-xl"
+                  className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-white hover:bg-white/15 rounded-xl"
                 >
                   Nous Contacter
                 </Button>
@@ -643,7 +643,7 @@ export default function About() {
                                     <Link href={sector.route}>
                                       <Button
                                         variant="outline"
-                                        className="border-slate-700 hover:bg-white/5"
+                                        className="border-slate-700 bg-white/10 text-white hover:bg-white/15"
                                       >
                                         Ouvrir {sector.title.split(" ")[0]}{" "}
                                         Tableau de Bord
@@ -760,7 +760,7 @@ export default function About() {
                 <Link href="/businesses-directory">
                   <Button
                     variant="outline"
-                    className="border-slate-700 hover:bg-white/5"
+                    className="border-slate-700 bg-white/10 text-white hover:bg-white/15"
                   >
                     Voir les {totalCategories} Catégories
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -976,7 +976,7 @@ export default function About() {
             <Link href="/contact">
               <Button
                 variant="outline"
-                className="px-8 py-6 text-lg border-slate-700 hover:bg-white/5 rounded-xl"
+                className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-white hover:bg-white/15 rounded-xl"
               >
                 Nous Contacter
               </Button>

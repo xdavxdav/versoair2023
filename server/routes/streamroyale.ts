@@ -849,6 +849,7 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
         stageName: profile.stage_name,
         genre: profile.genre,
         country: profile.country,
+        countryCode: profile.country_code,
         leagueName: profile.league_name,
         leagueId: profile.league_id,
         lifetimeStreams: parseInt(profile.lifetime_streams) || 0,
@@ -857,6 +858,9 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
         payoutMethod: profile.payout_method,
         verifiedForPayout: profile.verified_for_payout,
         profileImageUrl: profile.profile_image_url,
+        artistCode: profile.artist_code,
+        division: profile.division || "discovery",
+        evaluationStatus: profile.evaluation_status || "pending",
       },
       badge: {
         tier: parseInt(profile.current_badge_tier) || 1,

@@ -354,7 +354,7 @@ export default function Sponsorship() {
             <Link to="/contact">
               <Button
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 font-bold px-8 py-6 rounded-2xl text-lg"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 rounded-2xl text-lg"
               >
                 Schedule a Call
               </Button>

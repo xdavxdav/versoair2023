@@ -512,7 +512,7 @@ export default function ApplyPage() {
             <Link href="/auth/signin?mode=login">
               <Button
                 variant="outline"
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 bg-white/10 text-white hover:bg-white/20"
               >
                 Sign In
               </Button>

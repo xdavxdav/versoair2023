@@ -378,7 +378,7 @@ export default function CulturalPrograms() {
               </Link>
               <Button
                 variant="outline"
-                className="border-white text-white hover:bg-white/10 font-bold"
+                className="border-white bg-white/10 text-white hover:bg-white/20 font-bold"
               >
                 Learn More
               </Button>

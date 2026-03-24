@@ -328,7 +328,7 @@ export default function Services() {
             <Link href="/demo">
               <Button
                 variant="outline"
-                className="border-white text-white px-8 py-6 text-lg hover:bg-white/10 backdrop-blur-sm"
+                className="border-2 border-white bg-white/10 text-white px-8 py-6 text-lg hover:bg-white/20 backdrop-blur-sm"
               >
                 Request Demo
                 <ExternalLink className="ml-2 h-5 w-5" />
@@ -804,7 +804,7 @@ export default function Services() {
               <Link href="/sav">
                 <Button
                   variant="outline"
-                  className="border-white text-white px-10 py-6 text-lg hover:bg-white/10"
+                  className="border-2 border-white bg-white/10 text-white px-10 py-6 text-lg hover:bg-white/20"
                 >
                   <MessageSquare className="mr-2 h-5 w-5" />
                   Contact Support
