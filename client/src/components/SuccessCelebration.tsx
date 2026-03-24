@@ -54,7 +54,7 @@ const PORTAL_MESSAGES: Record<
       "Effectuez des réservations en un clic",
       "Sauvegardez vos favoris",
       "Laissez des avis authentiques",
-      "Accédez au marketplace",
+      "Accédez au Marketplace",
     ],
     ctaText: "Explorer maintenant",
     emoji: "🌍",
@@ -127,7 +127,15 @@ const PORTAL_MESSAGES: Record<
 };
 
 // Floating particle component
-const FloatingParticle = ({ delay, size, x }: { delay: number; size: number; x: number }) => (
+const FloatingParticle = ({
+  delay,
+  size,
+  x,
+}: {
+  delay: number;
+  size: number;
+  x: number;
+}) => (
   <motion.div
     initial={{ y: "100vh", opacity: 0, x }}
     animate={{
@@ -144,10 +152,7 @@ const FloatingParticle = ({ delay, size, x }: { delay: number; size: number; x: 
     className="absolute pointer-events-none"
     style={{ left: `${x}%` }}
   >
-    <Sparkles
-      className="text-white/30"
-      style={{ width: size, height: size }}
-    />
+    <Sparkles className="text-white/30" style={{ width: size, height: size }} />
   </motion.div>
 );
 
@@ -258,7 +263,7 @@ export default function SuccessCelebration({
                 className="absolute inset-0 rounded-full bg-white/30"
                 style={{ width: 120, height: 120 }}
               />
-              
+
               {/* Icon container */}
               <motion.div
                 initial={{ opacity: 0 }}
@@ -302,7 +307,7 @@ export default function SuccessCelebration({
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-3xl md:text-4xl font-bold text-white mb-3"
+            className="text-3xl md:text-4xl font-bold text-white mb-3 notranslate"
           >
             {messages.headline}
           </motion.h1>
@@ -314,7 +319,8 @@ export default function SuccessCelebration({
             transition={{ delay: 0.6 }}
             className="text-xl text-white/90 mb-2"
           >
-            Bonjour, <span className="font-semibold">{userName || "ami"}</span>! 👋
+            Bonjour, <span className="font-semibold">{userName || "ami"}</span>!
+            👋
           </motion.p>
 
           {/* Subheadline */}
@@ -336,7 +342,9 @@ export default function SuccessCelebration({
           >
             <div className="flex items-center justify-center gap-2 mb-4">
               <Gift className="w-5 h-5 text-yellow-300" />
-              <span className="text-white font-semibold">Fonctionnalités débloquées</span>
+              <span className="text-white font-semibold">
+                Fonctionnalités débloquées
+              </span>
             </div>
             <ul className="space-y-2 text-left">
               {messages.features.map((feature, index) => (
@@ -348,7 +356,27 @@ export default function SuccessCelebration({
                   className="flex items-center gap-2 text-white/90 text-sm"
                 >
                   <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  {feature}
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: feature
+                        .replace(
+                          /StreamRoyale/g,
+                          '<span class="notranslate">StreamRoyale</span>',
+                        )
+                        .replace(
+                          /Marketplace/g,
+                          '<span class="notranslate">Marketplace</span>',
+                        )
+                        .replace(
+                          /GeoAdmin/g,
+                          '<span class="notranslate">GeoAdmin</span>',
+                        )
+                        .replace(
+                          /Verso Air/g,
+                          '<span class="notranslate">Verso Air</span>',
+                        ),
+                    }}
+                  />
                 </motion.li>
               ))}
             </ul>

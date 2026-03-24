@@ -407,7 +407,9 @@ export default function MarketplacePage() {
           <div className="p-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h1 className={`text-2xl font-bold ${t.text}`}>Marketplace</h1>
+              <h1 className={`text-2xl font-bold ${t.text} notranslate`}>
+                Marketplace
+              </h1>
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 180 }}
                 whileTap={{ scale: 0.9 }}
@@ -1131,7 +1133,9 @@ export default function MarketplacePage() {
             <div className="bg-gradient-to-br from-cyan-500/20 to-teal-500/20 rounded-2xl p-4 border border-cyan-500/20">
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="w-5 h-5 text-cyan-500" />
-                <h3 className={`font-bold ${t.text}`}>Verso Air Marketplace</h3>
+                <h3 className={`font-bold ${t.text} notranslate`}>
+                  Verso Air Marketplace
+                </h3>
               </div>
               <p className={`text-xs ${t.textMuted} mb-3`}>
                 A trusted space for artisans to share their craft, connect with

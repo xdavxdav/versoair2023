@@ -24,10 +24,19 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/artisans-portal", label: "Mon Profil", icon: User },
   { href: "/artisans-portal?tab=portfolio", label: "Portfolio", icon: Image },
-  { href: "/artisans-portal?tab=orders", label: "Commandes", icon: ShoppingBag, badge: "Nouveau" },
+  {
+    href: "/artisans-portal?tab=orders",
+    label: "Commandes",
+    icon: ShoppingBag,
+    badge: "Nouveau",
+  },
   { href: "/communities", label: "Communautés", icon: Users },
   { href: "/artisans-portal?tab=reviews", label: "Avis", icon: Star },
-  { href: "/artisans-portal?tab=settings", label: "Paramètres", icon: Settings },
+  {
+    href: "/artisans-portal?tab=settings",
+    label: "Paramètres",
+    icon: Settings,
+  },
 ];
 
 export default function ArtisanNav() {
@@ -39,7 +48,12 @@ export default function ArtisanNav() {
       const currentTab = new URLSearchParams(window.location.search).get("tab");
       return location.startsWith("/artisans-portal") && currentTab === tab;
     }
-    return location === href || (href === "/artisans-portal" && location === "/artisans-portal" && !window.location.search);
+    return (
+      location === href ||
+      (href === "/artisans-portal" &&
+        location === "/artisans-portal" &&
+        !window.location.search)
+    );
   };
 
   return (
@@ -105,7 +119,7 @@ export default function ArtisanNav() {
                 >
                   <Icon className="w-4 h-4" />
                   {item.label}
-                  
+
                   {/* Badge */}
                   {item.badge && (
                     <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-amber-500 text-amber-950">

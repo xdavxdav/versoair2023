@@ -54,17 +54,18 @@ export default function GeoAdminPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const isNewSignup = urlParams.get("welcome") === "new";
-    
+
     if (isNewSignup) {
       // Clear the URL param to prevent showing again on refresh
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
-      
+
       // Show welcome toast
       setTimeout(() => {
         toast({
           title: "🎉 Bienvenue, membre Premium!",
-          description: "Votre compte est activé. Explorez vos outils exclusifs.",
+          description:
+            "Votre compte est activé. Explorez vos outils exclusifs.",
         });
       }, 500);
     }
