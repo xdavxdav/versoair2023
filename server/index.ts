@@ -90,10 +90,7 @@ if (!isDev) {
           ],
           fontSrc: ["'self'", "https://fonts.gstatic.com", "https:", "data:"],
           // Google Translate needs iframes for inter-frame communication
-          frameSrc: [
-            "https://translate.google.com",
-            "https://www.gstatic.com",
-          ],
+          frameSrc: ["https://translate.google.com", "https://www.gstatic.com"],
         },
       },
       hsts: {

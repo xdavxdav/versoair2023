@@ -310,10 +310,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const ok = switchLanguageViaCombo(lang);
       if (!ok) {
         // Cookie is set — reload lets GT re-read it.
-        flashBanner(
-          `Translating to ${lang.toUpperCase()}…`,
-          true,
-        );
+        flashBanner(`Translating to ${lang.toUpperCase()}…`, true);
         return;
       }
     }
