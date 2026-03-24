@@ -237,19 +237,30 @@ const goldTextStyles = `
 
   @media (max-width: 768px) {
     .gold-text {
-      font-size: 2.5rem;
+      font-size: 2rem;
     }
   }
 
+  /* ── Mobile: kill pseudo-element layers that cause duplication ── */
   @media (max-width: 640px) {
     .gold-text {
-      font-size: 1.5rem;
+      font-size: 1.35rem;
+      /* Make the gold color visible directly instead of pseudo-layer trick */
+      color: #E8A95B;
+      -webkit-text-fill-color: #E8A95B;
+    }
+    .gold-text::before {
+      content: none;
+    }
+    .gold-text__shine::after,
+    .gold-text__shine::before {
+      content: none;
     }
   }
 
   @media (max-width: 380px) {
     .gold-text {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
     }
   }
 `;
@@ -2532,7 +2543,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
@@ -2547,10 +2558,10 @@ export default function Home() {
                       </span>
                     </h2>
                     <div
-                      className="inline-block"
+                      className="hidden sm:inline-block"
                       style={{ animation: "spin 20s linear infinite" }}
                     >
-                      <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <Sparkles className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Soutenir les artisans et élever les communautés grâce à
@@ -2725,7 +2736,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center_right,_rgba(253,186,116,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(252,211,77,0.4)_0%,_transparent_60%)]" />
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
@@ -2740,12 +2751,12 @@ export default function Home() {
                       </span>
                     </h2>
                     <div
-                      className="inline-block"
+                      className="hidden sm:inline-block"
                       style={{
                         animation: "panelIconFloat 2s ease-in-out infinite",
                       }}
                     >
-                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <ShoppingBag className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Découvrez des produits artisanaux uniques qui soutiennent
@@ -2913,7 +2924,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(134,239,172,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
@@ -2928,12 +2939,12 @@ export default function Home() {
                       </span>
                     </h2>
                     <div
-                      className="inline-block"
+                      className="hidden sm:inline-block"
                       style={{
                         animation: "panelIconWiggle 3s ease-in-out infinite",
                       }}
                     >
-                      <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <TrendingUp className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Suivez notre impact collectif sur les communautés
@@ -3119,7 +3130,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(103,232,249,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(94,234,212,0.4)_0%,_transparent_60%)]" />
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
+              <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
@@ -3134,12 +3145,12 @@ export default function Home() {
                       </span>
                     </h2>
                     <div
-                      className="inline-block"
+                      className="hidden sm:inline-block"
                       style={{
                         animation: "panelIconPulse 2s ease-in-out infinite",
                       }}
                     >
-                      <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                      <Handshake className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Rejoignez notre mouvement pour soutenir les artisans et
