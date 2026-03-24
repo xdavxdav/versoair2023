@@ -6,25 +6,25 @@ const sponsors = [
     id: "techcorp",
     name: "TechCorp Solutions",
     logo: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&w=200&h=200&fit=crop",
-    category: "Technology"
+    category: "Technologie"
   },
   {
     id: "global-consulting",
     name: "Global Consulting Group",
     logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&w=200&h=200&fit=crop",
-    category: "Business Consulting"
+    category: "Conseil aux entreprises"
   },
   {
     id: "innovate-labs",
     name: "Innovate Labs",
     logo: "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?ixlib=rb-4.0.3&w=200&h=200&fit=crop",
-    category: "Research & Development"
+    category: "Recherche & Développement"
   },
   {
     id: "financial-dynamics",
     name: "Financial Dynamics Inc.",
     logo: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&w=200&h=200&fit=crop",
-    category: "Financial Services"
+    category: "Services financiers"
   }
 ];
 
@@ -35,10 +35,10 @@ export function SponsorsSection({ showHeader = true }: { showHeader?: boolean })
         {showHeader && (
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-              OUR SPONSORS
+              NOS PARTENAIRES
             </h2>
             <p className="text-sm sm:text-lg text-gray-600 max-w-3xl mx-auto px-4 sm:px-0">
-              Partnering with industry leaders to deliver world-class business intelligence solutions
+              En partenariat avec les leaders du secteur pour offrir des solutions d'intelligence d'affaires de classe mondiale
             </p>
           </div>
         )}
@@ -74,11 +74,11 @@ export function SponsorsSection({ showHeader = true }: { showHeader?: boolean })
         {/* Partnership Call to Action */}
         <div className="text-center mt-12 pt-8 border-t border-gray-100">
           <p className="text-gray-600 mb-4">
-            Interested in partnering with us?
+            Intéressé par un partenariat avec nous ?
           </p>
           <Link href="/signin">
             <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white font-medium rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-105">
-              <span>Become a Sponsor</span>
+              <span>Devenir partenaire</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

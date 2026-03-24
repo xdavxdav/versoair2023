@@ -11,26 +11,26 @@ const teamMembers: (TeamMember & { id: string })[] = [
   {
     id: "sarah-johnson",
     name: "Sarah Johnson",
-    role: "Chief Executive Officer",
-    department: "Executive Leadership"
+    role: "Directrice générale",
+    department: "Direction exécutive"
   },
   {
     id: "michael-chen",
     name: "Michael Chen", 
-    role: "Chief Technology Officer",
-    department: "Engineering"
+    role: "Directeur technique",
+    department: "Ingénierie"
   },
   {
     id: "emma-rodriguez",
     name: "Emma Rodriguez",
-    role: "Head of Marketing",
+    role: "Directrice marketing",
     department: "Marketing"
   },
   {
     id: "david-kim",
     name: "David Kim",
-    role: "VP of Customer Success",
-    department: "Customer Success"
+    role: "VP Succès client",
+    department: "Succès client"
   }
 ];
 
@@ -47,14 +47,14 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
         {showHeader && (
           <div className="text-center mb-8 sm:mb-12 px-4 sm:px-0">
             <span className="inline-block px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-xs sm:text-sm font-medium text-white mb-3 sm:mb-4">
-              Our Team
+              Notre équipe
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
-              Meet Our Experts
+              Rencontrez nos experts
             </h2>
             <p className="text-sm sm:text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
-              Our dedicated team of analytics professionals and industry experts work together to deliver 
-              comprehensive business intelligence solutions that drive growth and innovation across all sectors.
+              Notre équipe dédiée de professionnels en analytique et d'experts sectoriels travaille ensemble pour offrir 
+              des solutions complètes d'intelligence d'affaires qui stimulent la croissance et l'innovation dans tous les secteurs.
             </p>
           </div>
         )}
@@ -96,7 +96,7 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
         <div className="text-center mt-12">
           <Link href="/signin">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors duration-300 cursor-pointer group">
-              <span className="font-medium">Join Our Team</span>
+              <span className="font-medium">Rejoignez notre équipe</span>
               <svg 
                 className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" 
                 fill="none" 
