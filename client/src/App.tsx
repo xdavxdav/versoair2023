@@ -7,7 +7,7 @@ import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import ContentNav, { isContentNavPath } from "@/components/ContentNav";
 
@@ -227,13 +227,29 @@ function Router() {
   const [previousLocation, setPreviousLocation] = useState(location);
   const isInitialRender = useRef(true);
 
+  // Disable browser scroll restoration — we handle it ourselves
   useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  // Scroll to top BEFORE paint (useLayoutEffect) so the user never sees the footer
+  useLayoutEffect(() => {
     if (isInitialRender.current) {
+      // First render: also force top (handles direct-nav / refresh)
+      window.scrollTo(0, 0);
       isInitialRender.current = false;
       return;
     }
     if (location !== previousLocation) {
-      // Skip eagle loader for artist portal routes — they have their own cinematic transitions
+      window.scrollTo(0, 0);
+    }
+  }, [location, previousLocation]);
+
+  // Eagle loader + state update in a regular useEffect (non-blocking)
+  useEffect(() => {
+    if (location !== previousLocation) {
       const isArtistPortalNav =
         location.startsWith("/artist-portal") ||
         previousLocation.startsWith("/artist-portal");
@@ -241,7 +257,6 @@ function Router() {
         showEagleLoader();
       }
       setPreviousLocation(location);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [location, previousLocation, showEagleLoader]);
 
