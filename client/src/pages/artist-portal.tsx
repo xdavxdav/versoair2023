@@ -2500,7 +2500,9 @@ export default function ArtistPortal() {
                 </div>
                 {/* Badge tier icon */}
                 <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/80 border-2 border-purple-400/50 flex items-center justify-center text-lg">
-                  {["🌱", "🥉", "🥈", "🥇", "💎", "👑", "⚡"][(badge?.tier || 1) - 1] || "🌱"}
+                  {["🌱", "🥉", "🥈", "🥇", "💎", "👑", "⚡"][
+                    (badge?.tier || 1) - 1
+                  ] || "🌱"}
                 </div>
               </div>
 
@@ -2511,9 +2513,15 @@ export default function ArtistPortal() {
                     {profile?.stageName || connectedUser.name}
                   </h3>
                   <p className="text-purple-200/60 text-xs">
-                    {badge?.name || "Initiate"} • {(profile as any)?.division ? (
-                      <span className="capitalize">{(profile as any).division}</span>
-                    ) : "Discovery"} Division
+                    {badge?.name || "Initiate"} •{" "}
+                    {(profile as any)?.division ? (
+                      <span className="capitalize">
+                        {(profile as any).division}
+                      </span>
+                    ) : (
+                      "Discovery"
+                    )}{" "}
+                    Division
                   </p>
                 </div>
                 {/* Artist Code */}
@@ -2525,7 +2533,9 @@ export default function ArtistPortal() {
                     </code>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText((profile as any).artistCode);
+                        navigator.clipboard.writeText(
+                          (profile as any).artistCode,
+                        );
                       }}
                       className="ml-1 text-white/30 hover:text-white/60 transition-colors"
                       title="Copier le code"
@@ -2540,14 +2550,26 @@ export default function ArtistPortal() {
                 )}
                 {/* Genre + Country row */}
                 <div className="flex flex-wrap gap-2">
-                  {profile?.genre && (Array.isArray(profile.genre) ? profile.genre : [profile.genre]).slice(0, 3).map((g: string, i: number) => (
-                    <Badge key={i} className="bg-purple-500/20 text-purple-300 text-[10px] px-2 py-0.5">
-                      {g}
-                    </Badge>
-                  ))}
+                  {profile?.genre &&
+                    (Array.isArray(profile.genre)
+                      ? profile.genre
+                      : [profile.genre]
+                    )
+                      .slice(0, 3)
+                      .map((g: string, i: number) => (
+                        <Badge
+                          key={i}
+                          className="bg-purple-500/20 text-purple-300 text-[10px] px-2 py-0.5"
+                        >
+                          {g}
+                        </Badge>
+                      ))}
                   {profile?.country && (
                     <Badge className="bg-white/10 text-white/60 text-[10px] px-2 py-0.5">
-                      {(profile as any)?.countryCode ? `${(profile as any).countryCode.toUpperCase()} — ` : ""}{profile.country}
+                      {(profile as any)?.countryCode
+                        ? `${(profile as any).countryCode.toUpperCase()} — `
+                        : ""}
+                      {profile.country}
                     </Badge>
                   )}
                 </div>
@@ -2563,7 +2585,7 @@ export default function ArtistPortal() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-lg">
-                    #{(badge?.tier || 1)}
+                    #{badge?.tier || 1}
                   </p>
                   <p className="text-white/30 text-[10px]">Tier actuel</p>
                 </div>

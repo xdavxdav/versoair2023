@@ -164,7 +164,11 @@ export default function DatabaseResults() {
 
             {/* Pagination */}
             <div className="mt-8 flex items-center justify-center gap-2">
-              <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white"
+              >
                 Previous
               </Button>
               <div className="flex gap-1">
@@ -174,14 +178,20 @@ export default function DatabaseResults() {
                     variant={page === 1 ? "default" : "outline"}
                     size="sm"
                     className={
-                      page === 1 ? "bg-emerald-600" : "border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white"
+                      page === 1
+                        ? "bg-emerald-600"
+                        : "border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white"
                     }
                   >
                     {page}
                   </Button>
                 ))}
               </div>
-              <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white"
+              >
                 Next
               </Button>
             </div>

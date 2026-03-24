@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SuccessCelebration from "@/components/SuccessCelebration";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -121,7 +122,7 @@ const PORTALS: Portal[] = [
     ],
     registerEndpoint: "/auth/subscriber/register",
     loginEndpoint: "/auth/subscriber/login",
-    redirectPath: "/geo-admin",
+    redirectPath: "/geo-admin?welcome=new",
     tier: "essential",
     badge: "Premium",
   },
@@ -142,7 +143,7 @@ const PORTALS: Portal[] = [
     ],
     registerEndpoint: "/auth/community/register",
     loginEndpoint: "/auth/community/login",
-    redirectPath: "/blog",
+    redirectPath: "/artisans-portal",
     badge: "Community",
   },
   {
@@ -526,6 +527,19 @@ export default function ApplyPage() {
   // ─────────────────────────────────────────────────────
   // 📝 Registration Form View
   // ─────────────────────────────────────────────────────
+
+  // 🎉 Show celebration overlay on success
+  if (success && selectedPortal) {
+    return (
+      <SuccessCelebration
+        portal={selectedPortal}
+        userName={formData.displayName || formData.stageName || formData.email.split("@")[0]}
+        onComplete={() => setLocation(selectedPortal.redirectPath)}
+        countdownSeconds={8}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <motion.div
@@ -563,29 +577,11 @@ export default function ApplyPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {success ? (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-8"
-              >
-                <div className="mx-auto w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-                  <Check className="h-8 w-8 text-green-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  Account Created!
-                </h3>
-                <p className="text-white/60">
-                  Redirecting you to your portal...
-                </p>
-              </motion.div>
-            ) : (
-              <>
-                {error && (
-                  <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm">
-                    {error}
-                  </div>
-                )}
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm">
+                {error}
+              </div>
+            )}
 
                 {/* Display Name (all portals) */}
                 <div className="space-y-2">
@@ -1003,8 +999,6 @@ export default function ApplyPage() {
                     Sign in
                   </Link>
                 </p>
-              </>
-            )}
           </CardContent>
         </Card>
       </motion.div>

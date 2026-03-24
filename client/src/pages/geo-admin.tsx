@@ -50,6 +50,26 @@ export default function GeoAdminPage() {
     });
   }, []);
 
+  // 🎉 Welcome toast for new subscribers (from /apply registration)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isNewSignup = urlParams.get("welcome") === "new";
+    
+    if (isNewSignup) {
+      // Clear the URL param to prevent showing again on refresh
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+      
+      // Show welcome toast
+      setTimeout(() => {
+        toast({
+          title: "🎉 Bienvenue, membre Premium!",
+          description: "Votre compte est activé. Explorez vos outils exclusifs.",
+        });
+      }, 500);
+    }
+  }, []);
+
   // Session timer - use gateBypass as indicator of authentication
   // Also checks geoadmin_session which persists even after JWT expiry
   // (only cleared on explicit Sign Out in the auth gate)

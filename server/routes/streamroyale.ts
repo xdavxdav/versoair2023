@@ -1000,12 +1000,10 @@ router.post("/tip", optionalAuth, async (req: Request, res: Response) => {
   const tipAmount = parseFloat(amount);
 
   if (!artistProfileId || !tipAmount || tipAmount < 0.5) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Artist ID and amount ≥ $0.50 required",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Artist ID and amount ≥ $0.50 required",
+    });
   }
 
   const { week, year } = getWeekNumber();
