@@ -6,6 +6,8 @@
 
 export interface CountryMeta {
   name: string;
+  nameFr: string; // French name with proper article: "le Canada", "la France", "les États-Unis"
+  nameIn: string; // "in country" form for French: "au Canada", "en France", "aux États-Unis"
   demonym: string; // "Canadian", "Ivorian", "French"
   currency: string; // "CAD", "XOF", "EUR"
   currencySymbol: string; // "$", "CFA", "€"
@@ -18,6 +20,8 @@ const META: Record<string, CountryMeta> = {
   // Americas
   US: {
     name: "United States",
+    nameFr: "les États-Unis",
+    nameIn: "aux États-Unis",
     demonym: "American",
     currency: "USD",
     currencySymbol: "$",
@@ -27,6 +31,8 @@ const META: Record<string, CountryMeta> = {
   },
   CA: {
     name: "Canada",
+    nameFr: "le Canada",
+    nameIn: "au Canada",
     demonym: "Canadian",
     currency: "CAD",
     currencySymbol: "C$",
@@ -36,6 +42,8 @@ const META: Record<string, CountryMeta> = {
   },
   MX: {
     name: "Mexico",
+    nameFr: "le Mexique",
+    nameIn: "au Mexique",
     demonym: "Mexican",
     currency: "MXN",
     currencySymbol: "$",
@@ -45,6 +53,8 @@ const META: Record<string, CountryMeta> = {
   },
   BR: {
     name: "Brazil",
+    nameFr: "le Brésil",
+    nameIn: "au Brésil",
     demonym: "Brazilian",
     currency: "BRL",
     currencySymbol: "R$",
@@ -54,6 +64,8 @@ const META: Record<string, CountryMeta> = {
   },
   HT: {
     name: "Haïti",
+    nameFr: "Haïti",
+    nameIn: "en Haïti",
     demonym: "Haitian",
     currency: "HTG",
     currencySymbol: "G",
@@ -64,6 +76,8 @@ const META: Record<string, CountryMeta> = {
   // Europe
   FR: {
     name: "France",
+    nameFr: "la France",
+    nameIn: "en France",
     demonym: "French",
     currency: "EUR",
     currencySymbol: "€",
@@ -73,6 +87,8 @@ const META: Record<string, CountryMeta> = {
   },
   DE: {
     name: "Germany",
+    nameFr: "l'Allemagne",
+    nameIn: "en Allemagne",
     demonym: "German",
     currency: "EUR",
     currencySymbol: "€",
@@ -82,6 +98,8 @@ const META: Record<string, CountryMeta> = {
   },
   GB: {
     name: "United Kingdom",
+    nameFr: "le Royaume-Uni",
+    nameIn: "au Royaume-Uni",
     demonym: "British",
     currency: "GBP",
     currencySymbol: "£",
@@ -91,6 +109,8 @@ const META: Record<string, CountryMeta> = {
   },
   BE: {
     name: "Belgium",
+    nameFr: "la Belgique",
+    nameIn: "en Belgique",
     demonym: "Belgian",
     currency: "EUR",
     currencySymbol: "€",
@@ -100,6 +120,8 @@ const META: Record<string, CountryMeta> = {
   },
   CH: {
     name: "Switzerland",
+    nameFr: "la Suisse",
+    nameIn: "en Suisse",
     demonym: "Swiss",
     currency: "CHF",
     currencySymbol: "CHF",
@@ -109,6 +131,8 @@ const META: Record<string, CountryMeta> = {
   },
   ES: {
     name: "Spain",
+    nameFr: "l'Espagne",
+    nameIn: "en Espagne",
     demonym: "Spanish",
     currency: "EUR",
     currencySymbol: "€",
@@ -118,6 +142,8 @@ const META: Record<string, CountryMeta> = {
   },
   IT: {
     name: "Italy",
+    nameFr: "l'Italie",
+    nameIn: "en Italie",
     demonym: "Italian",
     currency: "EUR",
     currencySymbol: "€",
@@ -127,6 +153,8 @@ const META: Record<string, CountryMeta> = {
   },
   PT: {
     name: "Portugal",
+    nameFr: "le Portugal",
+    nameIn: "au Portugal",
     demonym: "Portuguese",
     currency: "EUR",
     currencySymbol: "€",
@@ -137,6 +165,8 @@ const META: Record<string, CountryMeta> = {
   // Africa
   CI: {
     name: "Côte d'Ivoire",
+    nameFr: "la Côte d'Ivoire",
+    nameIn: "en Côte d'Ivoire",
     demonym: "Ivorian",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -146,6 +176,8 @@ const META: Record<string, CountryMeta> = {
   },
   SN: {
     name: "Sénégal",
+    nameFr: "le Sénégal",
+    nameIn: "au Sénégal",
     demonym: "Senegalese",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -155,6 +187,8 @@ const META: Record<string, CountryMeta> = {
   },
   CM: {
     name: "Cameroun",
+    nameFr: "le Cameroun",
+    nameIn: "au Cameroun",
     demonym: "Cameroonian",
     currency: "XAF",
     currencySymbol: "FCFA",
@@ -164,6 +198,8 @@ const META: Record<string, CountryMeta> = {
   },
   ML: {
     name: "Mali",
+    nameFr: "le Mali",
+    nameIn: "au Mali",
     demonym: "Malian",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -173,6 +209,8 @@ const META: Record<string, CountryMeta> = {
   },
   BF: {
     name: "Burkina Faso",
+    nameFr: "le Burkina Faso",
+    nameIn: "au Burkina Faso",
     demonym: "Burkinabé",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -182,6 +220,8 @@ const META: Record<string, CountryMeta> = {
   },
   GN: {
     name: "Guinée",
+    nameFr: "la Guinée",
+    nameIn: "en Guinée",
     demonym: "Guinean",
     currency: "GNF",
     currencySymbol: "FG",
@@ -191,6 +231,8 @@ const META: Record<string, CountryMeta> = {
   },
   TG: {
     name: "Togo",
+    nameFr: "le Togo",
+    nameIn: "au Togo",
     demonym: "Togolese",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -200,6 +242,8 @@ const META: Record<string, CountryMeta> = {
   },
   BJ: {
     name: "Bénin",
+    nameFr: "le Bénin",
+    nameIn: "au Bénin",
     demonym: "Beninese",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -209,6 +253,8 @@ const META: Record<string, CountryMeta> = {
   },
   NE: {
     name: "Niger",
+    nameFr: "le Niger",
+    nameIn: "au Niger",
     demonym: "Nigerien",
     currency: "XOF",
     currencySymbol: "CFA",
@@ -218,6 +264,8 @@ const META: Record<string, CountryMeta> = {
   },
   MG: {
     name: "Madagascar",
+    nameFr: "Madagascar",
+    nameIn: "à Madagascar",
     demonym: "Malagasy",
     currency: "MGA",
     currencySymbol: "Ar",
@@ -227,6 +275,8 @@ const META: Record<string, CountryMeta> = {
   },
   CD: {
     name: "Congo (RDC)",
+    nameFr: "la RDC",
+    nameIn: "en RDC",
     demonym: "Congolese",
     currency: "CDF",
     currencySymbol: "FC",
@@ -236,6 +286,8 @@ const META: Record<string, CountryMeta> = {
   },
   CG: {
     name: "Congo (Brazzaville)",
+    nameFr: "le Congo",
+    nameIn: "au Congo",
     demonym: "Congolese",
     currency: "XAF",
     currencySymbol: "FCFA",
@@ -245,6 +297,8 @@ const META: Record<string, CountryMeta> = {
   },
   GA: {
     name: "Gabon",
+    nameFr: "le Gabon",
+    nameIn: "au Gabon",
     demonym: "Gabonese",
     currency: "XAF",
     currencySymbol: "FCFA",
@@ -254,6 +308,8 @@ const META: Record<string, CountryMeta> = {
   },
   MA: {
     name: "Maroc",
+    nameFr: "le Maroc",
+    nameIn: "au Maroc",
     demonym: "Moroccan",
     currency: "MAD",
     currencySymbol: "MAD",
@@ -263,6 +319,8 @@ const META: Record<string, CountryMeta> = {
   },
   DZ: {
     name: "Algérie",
+    nameFr: "l'Algérie",
+    nameIn: "en Algérie",
     demonym: "Algerian",
     currency: "DZD",
     currencySymbol: "DA",
@@ -272,6 +330,8 @@ const META: Record<string, CountryMeta> = {
   },
   TN: {
     name: "Tunisie",
+    nameFr: "la Tunisie",
+    nameIn: "en Tunisie",
     demonym: "Tunisian",
     currency: "TND",
     currencySymbol: "DT",
@@ -281,6 +341,8 @@ const META: Record<string, CountryMeta> = {
   },
   ZA: {
     name: "South Africa",
+    nameFr: "l'Afrique du Sud",
+    nameIn: "en Afrique du Sud",
     demonym: "South African",
     currency: "ZAR",
     currencySymbol: "R",
@@ -290,6 +352,8 @@ const META: Record<string, CountryMeta> = {
   },
   NG: {
     name: "Nigeria",
+    nameFr: "le Nigéria",
+    nameIn: "au Nigéria",
     demonym: "Nigerian",
     currency: "NGN",
     currencySymbol: "₦",
@@ -300,6 +364,8 @@ const META: Record<string, CountryMeta> = {
   // Asia / Middle East
   JP: {
     name: "Japan",
+    nameFr: "le Japon",
+    nameIn: "au Japon",
     demonym: "Japanese",
     currency: "JPY",
     currencySymbol: "¥",
@@ -309,6 +375,8 @@ const META: Record<string, CountryMeta> = {
   },
   CN: {
     name: "China",
+    nameFr: "la Chine",
+    nameIn: "en Chine",
     demonym: "Chinese",
     currency: "CNY",
     currencySymbol: "¥",
@@ -318,6 +386,8 @@ const META: Record<string, CountryMeta> = {
   },
   IN: {
     name: "India",
+    nameFr: "l'Inde",
+    nameIn: "en Inde",
     demonym: "Indian",
     currency: "INR",
     currencySymbol: "₹",
@@ -327,6 +397,8 @@ const META: Record<string, CountryMeta> = {
   },
   AE: {
     name: "United Arab Emirates",
+    nameFr: "les Émirats arabes unis",
+    nameIn: "aux Émirats arabes unis",
     demonym: "Emirati",
     currency: "AED",
     currencySymbol: "AED",
@@ -338,6 +410,8 @@ const META: Record<string, CountryMeta> = {
 
 const FALLBACK: CountryMeta = {
   name: "Global",
+  nameFr: "le monde",
+  nameIn: "dans le monde",
   demonym: "Global",
   currency: "USD",
   currencySymbol: "$",
