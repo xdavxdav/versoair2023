@@ -71,6 +71,7 @@ const Tickets = lazy(() => import("@/pages/tickets"));
 // 🎨 Cultural & Artisan Portal (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const ArtisansDirectory = lazy(() => import("@/pages/artisans"));
+const ArtisansPortal = lazy(() => import("@/pages/artisans-portal"));
 const CulturalPrograms = lazy(() => import("@/pages/programs"));
 const Communities = lazy(() => import("@/pages/communities"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
@@ -340,6 +341,7 @@ function Router() {
           🎨 CULTURAL — Artisan & community portal
           ═══════════════════════════════════════════════ */}
       <Route path="/artisans" component={ArtisansDirectory} />
+      <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
       <Route
