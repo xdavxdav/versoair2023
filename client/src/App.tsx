@@ -7,7 +7,14 @@ import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  lazy,
+  Suspense,
+} from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import ContentNav, { isContentNavPath } from "@/components/ContentNav";
 
@@ -218,6 +225,7 @@ import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LanguageProvider } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
+import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
 // Main loader — shown while lazy chunks download and on every navigation.
@@ -259,6 +267,10 @@ function Router() {
       setPreviousLocation(location);
     }
   }, [location, previousLocation, showEagleLoader]);
+
+  // Re-trigger GT translation after every route change so new page content
+  // gets translated (GT only translates on init — misses React-rendered pages)
+  useGTRetranslate([location]);
 
   return (
     <Switch>

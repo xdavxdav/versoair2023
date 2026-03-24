@@ -413,6 +413,77 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // ── Global retranslation for late-rendered content ──
+  // React pages render content AFTER GT's initial pass (loading spinners, auth gates,
+  // tab switches, lazy routes). This observer detects when significant new content
+  // appears in <main> / app root and re-fires GT's combo change event.
+  useEffect(() => {
+    // Only needed when a non-French language is active
+    if (!currentLang || currentLang === "fr") return;
+
+    let lastRetrigger = 0;
+    const DEBOUNCE_MS = 2000; // Don't re-fire more than once per 2s
+    let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const retrigger = () => {
+      const now = Date.now();
+      if (now - lastRetrigger < DEBOUNCE_MS) return;
+      const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+      if (!combo || combo.options.length <= 1 || combo.selectedIndex <= 0)
+        return;
+      lastRetrigger = now;
+      combo.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    const scheduleRetrigger = () => {
+      if (pendingTimer) clearTimeout(pendingTimer);
+      // Wait 500ms for React to finish its render batch
+      pendingTimer = setTimeout(retrigger, 500);
+    };
+
+    // Watch the #root container for childList changes (React mounting/unmounting pages)
+    const root = document.getElementById("root");
+    if (!root) return;
+
+    const mo = new MutationObserver((mutations) => {
+      // Only retrigger if we see actual content additions (not GT's own <font> wrappers)
+      let addedTextLength = 0;
+      for (const m of mutations) {
+        for (const n of Array.from(m.addedNodes)) {
+          if (n.nodeType === 3) {
+            // text node — count length
+            addedTextLength += n.textContent?.length ?? 0;
+          } else if (n.nodeType === 1) {
+            const el = n as HTMLElement;
+            // Skip GT-injected elements
+            if (
+              el.classList?.contains("skiptranslate") ||
+              el.tagName === "FONT" ||
+              el.tagName === "STYLE" ||
+              el.id === "goog-gt-tt" ||
+              el.closest?.(".skiptranslate")
+            )
+              continue;
+            // Real content — count inner text
+            addedTextLength += el.textContent?.length ?? 0;
+          }
+        }
+        if (addedTextLength > 50) break; // Enough — schedule retrigger
+      }
+      // Only retrigger if meaningful text was added (>50 chars = real page content)
+      if (addedTextLength > 50) {
+        scheduleRetrigger();
+      }
+    });
+
+    mo.observe(root, { childList: true, subtree: true });
+
+    return () => {
+      mo.disconnect();
+      if (pendingTimer) clearTimeout(pendingTimer);
+    };
+  }, [currentLang]);
+
   return (
     <LanguageContext.Provider
       value={{

@@ -336,6 +336,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import DivisionProgress from "@/components/DivisionProgress";
+import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 
 // Mock data types
 interface Artist {
@@ -434,6 +435,8 @@ export default function ArtistPortal() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [collabSearch, setCollabSearch] = useState("");
+  const [showCollabSearch, setShowCollabSearch] = useState(false);
   const [notifications, setNotifications] = useState<
     {
       id: number;
@@ -456,6 +459,14 @@ export default function ArtistPortal() {
   const { data: earnings } = useMusicEarnings();
   const invalidateTracks = useInvalidateTracks();
   const { data: myArtist } = useMyArtist();
+
+  // Re-trigger GT when portal data finishes loading (content wasn't in DOM when GT first ran)
+  useGTRetranslate([
+    loadingArtists,
+    loadingTracks,
+    loadingAnalytics,
+    activeTab,
+  ]);
 
   // ── Stream royalty tracker ──
   const { startStream, completeStream, pauseStream, resumeStream } =
@@ -645,6 +656,7 @@ export default function ArtistPortal() {
     bpm: "",
     musicalKey: "",
     mood: "",
+    releaseType: "single",
   });
 
   // ── Monetization edit state ──
@@ -696,6 +708,7 @@ export default function ArtistPortal() {
           bpm: "",
           musicalKey: "",
           mood: "",
+          releaseType: "single",
         });
       }, 500);
     } catch (err: any) {
@@ -1284,6 +1297,7 @@ export default function ArtistPortal() {
               size="sm"
               variant="ghost"
               className="text-purple-200 hover:text-white hover:bg-white/10"
+              onClick={() => setActiveTab("music")}
             >
               Voir tout
               <ChevronRight className="ml-1 h-4 w-4" />
@@ -1355,6 +1369,7 @@ export default function ArtistPortal() {
               size="sm"
               variant="ghost"
               className="text-purple-200 hover:text-white hover:bg-white/10"
+              onClick={() => setActiveTab("music")}
             >
               Voir tout
               <ChevronRight className="ml-1 h-4 w-4" />
@@ -1439,7 +1454,7 @@ export default function ArtistPortal() {
           </Button>
           <Button
             variant="outline"
-            className="border-white/30 text-white hover:bg-white/10"
+            className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
           >
             <FolderPlus className="mr-2 h-4 w-4" />
             Créer un album
@@ -1465,11 +1480,36 @@ export default function ArtistPortal() {
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-white/20">
               <SelectItem value="all">Tous les genres</SelectItem>
-              <SelectItem value="Electronic">Électronique</SelectItem>
-              <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
-              <SelectItem value="Rock">Rock</SelectItem>
-              <SelectItem value="Pop">Pop</SelectItem>
+              <SelectItem value="Afrobeats">Afrobeats</SelectItem>
+              <SelectItem value="Amapiano">Amapiano</SelectItem>
               <SelectItem value="RnB">R&B</SelectItem>
+              <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
+              <SelectItem value="Rap">Rap</SelectItem>
+              <SelectItem value="Trap">Trap</SelectItem>
+              <SelectItem value="Drill">Drill</SelectItem>
+              <SelectItem value="Pop">Pop</SelectItem>
+              <SelectItem value="Rock">Rock</SelectItem>
+              <SelectItem value="Jazz">Jazz</SelectItem>
+              <SelectItem value="Soul">Soul</SelectItem>
+              <SelectItem value="Reggae">Reggae</SelectItem>
+              <SelectItem value="Dancehall">Dancehall</SelectItem>
+              <SelectItem value="Electronic">Électronique</SelectItem>
+              <SelectItem value="Classical">Classique</SelectItem>
+              <SelectItem value="Gospel">Gospel</SelectItem>
+              <SelectItem value="Latin">Latin</SelectItem>
+              <SelectItem value="Zouk">Zouk</SelectItem>
+              <SelectItem value="Coupe-Decale">Coupé-Décalé</SelectItem>
+              <SelectItem value="Zouglou">Zouglou</SelectItem>
+              <SelectItem value="Funk">Funk</SelectItem>
+              <SelectItem value="Blues">Blues</SelectItem>
+              <SelectItem value="Country">Country</SelectItem>
+              <SelectItem value="Metal">Metal</SelectItem>
+              <SelectItem value="Folk">Folk</SelectItem>
+              <SelectItem value="Acoustic">Acoustique</SelectItem>
+              <SelectItem value="Lo-fi">Lo-fi</SelectItem>
+              <SelectItem value="Ambient">Ambient</SelectItem>
+              <SelectItem value="World">World Music</SelectItem>
+              <SelectItem value="Other">Autre</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center space-x-2">
@@ -1920,14 +1960,14 @@ export default function ArtistPortal() {
         <div className="flex items-center space-x-3">
           <Button
             variant="outline"
-            className="border-white/30 text-white hover:bg-white/10"
+            className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
           >
             <Calendar className="mr-2 h-4 w-4" />
             30 derniers jours
           </Button>
           <Button
             variant="outline"
-            className="border-white/30 text-white hover:bg-white/10"
+            className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
           >
             <Download className="mr-2 h-4 w-4" />
             Exporter les données
@@ -2363,7 +2403,7 @@ export default function ArtistPortal() {
           <div className="flex items-center space-x-3">
             <Button
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10"
+              className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
               onClick={() => setShowInfoWindow(true)}
             >
               <HelpCircle className="mr-2 h-4 w-4" />
@@ -2429,6 +2469,114 @@ export default function ArtistPortal() {
             )}
           </div>
         )}
+
+        {/* ── Artist ID Card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="relative overflow-hidden rounded-2xl border border-white/10"
+        >
+          {/* Gradient background + noise texture */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-indigo-900/50 to-fuchsia-900/40" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.15),transparent_50%)]" />
+
+          <div className="relative p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-5 items-start">
+              {/* Left: Avatar + Badge */}
+              <div className="flex-shrink-0 relative">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  {profile?.profileImageUrl ? (
+                    <img
+                      src={profile.profileImageUrl}
+                      alt={profile.stageName}
+                      className="w-20 h-20 rounded-2xl object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-2xl">
+                      {connectedUser.initials}
+                    </span>
+                  )}
+                </div>
+                {/* Badge tier icon */}
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/80 border-2 border-purple-400/50 flex items-center justify-center text-lg">
+                  {["🌱", "🥉", "🥈", "🥇", "💎", "👑", "⚡"][(badge?.tier || 1) - 1] || "🌱"}
+                </div>
+              </div>
+
+              {/* Center: Info */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <div>
+                  <h3 className="text-white font-bold text-lg truncate">
+                    {profile?.stageName || connectedUser.name}
+                  </h3>
+                  <p className="text-purple-200/60 text-xs">
+                    {badge?.name || "Initiate"} • {(profile as any)?.division ? (
+                      <span className="capitalize">{(profile as any).division}</span>
+                    ) : "Discovery"} Division
+                  </p>
+                </div>
+                {/* Artist Code */}
+                {(profile as any)?.artistCode ? (
+                  <div className="inline-flex items-center gap-2 bg-black/40 border border-purple-500/30 rounded-xl px-3 py-1.5">
+                    <Shield className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                    <code className="text-purple-300 text-sm font-mono tracking-wider">
+                      {(profile as any).artistCode}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText((profile as any).artistCode);
+                      }}
+                      className="ml-1 text-white/30 hover:text-white/60 transition-colors"
+                      title="Copier le code"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-white/20 text-xs italic">
+                    Code artiste en cours de génération…
+                  </p>
+                )}
+                {/* Genre + Country row */}
+                <div className="flex flex-wrap gap-2">
+                  {profile?.genre && (Array.isArray(profile.genre) ? profile.genre : [profile.genre]).slice(0, 3).map((g: string, i: number) => (
+                    <Badge key={i} className="bg-purple-500/20 text-purple-300 text-[10px] px-2 py-0.5">
+                      {g}
+                    </Badge>
+                  ))}
+                  {profile?.country && (
+                    <Badge className="bg-white/10 text-white/60 text-[10px] px-2 py-0.5">
+                      {(profile as any)?.countryCode ? `${(profile as any).countryCode.toUpperCase()} — ` : ""}{profile.country}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Stats mini */}
+              <div className="flex sm:flex-col gap-3 sm:gap-2 sm:text-right flex-shrink-0">
+                <div>
+                  <p className="text-white font-bold text-lg">
+                    {(profile?.lifetimeStreams || 0).toLocaleString()}
+                  </p>
+                  <p className="text-white/30 text-[10px]">écoutes totales</p>
+                </div>
+                <div>
+                  <p className="text-white font-bold text-lg">
+                    #{(badge?.tier || 1)}
+                  </p>
+                  <p className="text-white/30 text-[10px]">Tier actuel</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom accent line */}
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-white/20">
+              <span>Verso Air Music • Carte Artiste</span>
+              <span>{new Date().getFullYear()}</span>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Balance & Pool Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -2651,179 +2799,264 @@ export default function ArtistPortal() {
     );
   };
 
-  const renderCollaborations = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Collaborations</h2>
-          <p className="text-purple-200">
-            Connectez-vous et créez avec d'autres artistes
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            className="border-white/30 text-white hover:bg-white/10"
-          >
-            <Users2 className="mr-2 h-4 w-4" />
-            Trouver des artistes
-          </Button>
-          <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle collaboration
-          </Button>
-        </div>
-      </div>
+  const renderCollaborations = () => {
+    const filteredCollabArtists = displayArtists.filter((a) =>
+      collabSearch
+        ? a.name?.toLowerCase().includes(collabSearch.toLowerCase()) ||
+          (a as any).genre?.toLowerCase().includes(collabSearch.toLowerCase())
+        : true,
+    );
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active Collaborations */}
-        <Card className="bg-white/5 backdrop-blur-md border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white">Collaborations actives</CardTitle>
-            <CardDescription className="text-purple-200">
-              Projets en cours
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {displayCollaborations.filter((c) => c.status === "active")
-                .length === 0 ? (
-                <div className="text-center py-8 text-white/30">
-                  <Users2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">
-                    Aucune collaboration active pour le moment
-                  </p>
-                  <p className="text-xs mt-1 text-white/20">
-                    Utilisez « Trouver des artistes » pour vous connecter avec
-                    d'autres créateurs
-                  </p>
-                </div>
-              ) : (
-                displayCollaborations
-                  .filter((c) => c.status === "active")
-                  .map((collab) => (
-                    <div
-                      key={collab.id}
-                      className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                                {collab.artist.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <p className="text-white font-medium">
-                              {collab.artist}
-                            </p>
-                            <Badge className="bg-green-500/20 text-green-400">
-                              Actif
-                            </Badge>
-                          </div>
-                          <p className="text-purple-200 text-sm mb-2">
-                            Titre : {collab.track}
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Collaborations</h2>
+            <p className="text-purple-200">
+              Connectez-vous et créez avec d'autres artistes
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
+              onClick={() => setShowCollabSearch(!showCollabSearch)}
+            >
+              <Users2 className="mr-2 h-4 w-4" />
+              {showCollabSearch
+                ? "Masquer la recherche"
+                : "Trouver des artistes"}
+            </Button>
+            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle collaboration
+            </Button>
+          </div>
+        </div>
+
+        {/* Artist Search Panel */}
+        {showCollabSearch && (
+          <Card className="bg-white/5 backdrop-blur-md border-purple-400/30">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Search className="h-5 w-5 text-purple-400" />
+                Rechercher des artistes
+              </CardTitle>
+              <CardDescription className="text-purple-200">
+                Trouvez des artistes avec qui collaborer — aucune restriction de
+                pays
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Rechercher par nom ou genre..."
+                  value={collabSearch}
+                  onChange={(e) => setCollabSearch(e.target.value)}
+                  className="bg-white/10 border-white/30 text-white placeholder-purple-200/50"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[320px] overflow-y-auto">
+                  {filteredCollabArtists.length === 0 ? (
+                    <p className="text-white/30 text-sm col-span-full text-center py-6">
+                      {collabSearch
+                        ? "Aucun artiste trouvé"
+                        : "Tapez un nom pour chercher"}
+                    </p>
+                  ) : (
+                    filteredCollabArtists.slice(0, 12).map((artist) => (
+                      <div
+                        key={artist.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-400/30 transition-all cursor-pointer group"
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={(artist as any).avatar || ""} />
+                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-sm">
+                            {artist.name?.charAt(0) ?? "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium text-sm truncate">
+                            {artist.name}
                           </p>
-                          <div className="flex items-center space-x-4 text-sm">
-                            <span className="text-white">
-                              Partage de revenus :{" "}
-                              <span className="font-medium">
-                                {collab.revenueShare}%
-                              </span>
-                            </span>
-                            <span className="text-purple-200">
-                              Commencée le : {collab.date}
-                            </span>
-                          </div>
+                          <p className="text-purple-200/60 text-xs">
+                            {artist.genre || "—"} •{" "}
+                            {(artist as any).country || "Mondial"}
+                          </p>
                         </div>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-purple-200 hover:text-white hover:bg-white/10"
+                          className="text-purple-400 hover:text-white hover:bg-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <MessageSquare className="h-4 w-4" />
+                          <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Collaboration Requests */}
-        <Card className="bg-white/5 backdrop-blur-md border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white">Demandes en attente</CardTitle>
-            <CardDescription className="text-purple-200">
-              Invitations de collaboration
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {displayCollaborations.filter((c) => c.status === "pending")
-                .length === 0 ? (
-                <div className="text-center py-8 text-white/30">
-                  <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">Aucune demande en attente</p>
-                  <p className="text-xs mt-1 text-white/20">
-                    Les invitations d'autres artistes apparaîtront ici
-                  </p>
+                    ))
+                  )}
                 </div>
-              ) : (
-                displayCollaborations
-                  .filter((c) => c.status === "pending")
-                  .map((collab) => (
-                    <div
-                      key={collab.id}
-                      className="p-4 rounded-lg bg-white/5 border border-yellow-500/20"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-                                {collab.artist.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <p className="text-white font-medium">
-                              {collab.artist}
+                {filteredCollabArtists.length > 12 && (
+                  <p className="text-purple-200/40 text-xs text-center">
+                    +{filteredCollabArtists.length - 12} autres artistes —
+                    affinez votre recherche
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Active Collaborations */}
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white">
+                Collaborations actives
+              </CardTitle>
+              <CardDescription className="text-purple-200">
+                Projets en cours
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {displayCollaborations.filter((c) => c.status === "active")
+                  .length === 0 ? (
+                  <div className="text-center py-8 text-white/30">
+                    <Users2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">
+                      Aucune collaboration active pour le moment
+                    </p>
+                    <p className="text-xs mt-1 text-white/20">
+                      Utilisez « Trouver des artistes » pour vous connecter avec
+                      d'autres créateurs
+                    </p>
+                  </div>
+                ) : (
+                  displayCollaborations
+                    .filter((c) => c.status === "active")
+                    .map((collab) => (
+                      <div
+                        key={collab.id}
+                        className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                                  {collab.artist.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <p className="text-white font-medium">
+                                {collab.artist}
+                              </p>
+                              <Badge className="bg-green-500/20 text-green-400">
+                                Actif
+                              </Badge>
+                            </div>
+                            <p className="text-purple-200 text-sm mb-2">
+                              Titre : {collab.track}
+                            </p>
+                            <div className="flex items-center space-x-4 text-sm">
+                              <span className="text-white">
+                                Partage de revenus :{" "}
+                                <span className="font-medium">
+                                  {collab.revenueShare}%
+                                </span>
+                              </span>
+                              <span className="text-purple-200">
+                                Commencée le : {collab.date}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-purple-200 hover:text-white hover:bg-white/10"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Collaboration Requests */}
+          <Card className="bg-white/5 backdrop-blur-md border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white">Demandes en attente</CardTitle>
+              <CardDescription className="text-purple-200">
+                Invitations de collaboration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {displayCollaborations.filter((c) => c.status === "pending")
+                  .length === 0 ? (
+                  <div className="text-center py-8 text-white/30">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">Aucune demande en attente</p>
+                    <p className="text-xs mt-1 text-white/20">
+                      Les invitations d'autres artistes apparaîtront ici
+                    </p>
+                  </div>
+                ) : (
+                  displayCollaborations
+                    .filter((c) => c.status === "pending")
+                    .map((collab) => (
+                      <div
+                        key={collab.id}
+                        className="p-4 rounded-lg bg-white/5 border border-yellow-500/20"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+                                  {collab.artist.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <p className="text-white font-medium">
+                                {collab.artist}
+                              </p>
+                            </div>
+                            <p className="text-purple-200 text-sm">
+                              Souhaite collaborer sur : {collab.track}
                             </p>
                           </div>
-                          <p className="text-purple-200 text-sm">
-                            Souhaite collaborer sur : {collab.track}
-                          </p>
+                          <Badge className="bg-yellow-500/20 text-yellow-400">
+                            En attente
+                          </Badge>
                         </div>
-                        <Badge className="bg-yellow-500/20 text-yellow-400">
-                          En attente
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
+                          >
+                            <Check className="mr-2 h-3 w-3" />
+                            Accepter
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
+                          >
+                            <X className="mr-2 h-3 w-3" />
+                            Refuser
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
-                        >
-                          <Check className="mr-2 h-3 w-3" />
-                          Accepter
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
-                        >
-                          <X className="mr-2 h-3 w-3" />
-                          Refuser
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <motion.div
@@ -3544,6 +3777,38 @@ export default function ArtistPortal() {
               />
             </div>
 
+            {/* Release Type */}
+            <div className="space-y-2">
+              <Label>Type de sortie</Label>
+              <Select
+                value={uploadForm.releaseType}
+                onValueChange={(v) =>
+                  setUploadForm((prev) => ({ ...prev, releaseType: v }))
+                }
+              >
+                <SelectTrigger className="bg-white/10 border-white/30">
+                  <SelectValue placeholder="Type de sortie" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-white/20">
+                  <SelectItem value="single">Single (1 titre)</SelectItem>
+                  <SelectItem value="ep">EP (4–6 titres)</SelectItem>
+                  <SelectItem value="mixtape">Mixtape (7–15 titres)</SelectItem>
+                  <SelectItem value="album">Album (8–20+ titres)</SelectItem>
+                </SelectContent>
+              </Select>
+              {uploadForm.releaseType !== "single" && (
+                <p className="text-xs text-purple-200/60">
+                  {uploadForm.releaseType === "ep" &&
+                    "Un EP contient généralement 4 à 6 titres."}
+                  {uploadForm.releaseType === "mixtape" &&
+                    "Une mixtape contient généralement 7 à 15 titres."}
+                  {uploadForm.releaseType === "album" &&
+                    "Un album contient généralement 8 à 20+ titres."}{" "}
+                  Téléversez chaque titre séparément.
+                </p>
+              )}
+            </div>
+
             {/* Genre + Price row */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -3557,20 +3822,36 @@ export default function ArtistPortal() {
                   <SelectTrigger className="bg-white/10 border-white/30">
                     <SelectValue placeholder="Sélectionner le genre" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20">
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[300px]">
                     <SelectItem value="Afrobeats">Afrobeats</SelectItem>
+                    <SelectItem value="Amapiano">Amapiano</SelectItem>
                     <SelectItem value="RnB">R&B</SelectItem>
                     <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
+                    <SelectItem value="Rap">Rap</SelectItem>
+                    <SelectItem value="Trap">Trap</SelectItem>
+                    <SelectItem value="Drill">Drill</SelectItem>
                     <SelectItem value="Pop">Pop</SelectItem>
+                    <SelectItem value="Rock">Rock</SelectItem>
                     <SelectItem value="Jazz">Jazz</SelectItem>
                     <SelectItem value="Soul">Soul</SelectItem>
                     <SelectItem value="Reggae">Reggae</SelectItem>
+                    <SelectItem value="Dancehall">Dancehall</SelectItem>
                     <SelectItem value="Electronic">Électronique</SelectItem>
-                    <SelectItem value="Rock">Rock</SelectItem>
                     <SelectItem value="Classical">Classique</SelectItem>
                     <SelectItem value="Gospel">Gospel</SelectItem>
                     <SelectItem value="Latin">Latin</SelectItem>
-                    <SelectItem value="Dancehall">Dancehall</SelectItem>
+                    <SelectItem value="Zouk">Zouk</SelectItem>
+                    <SelectItem value="Coupe-Decale">Coupé-Décalé</SelectItem>
+                    <SelectItem value="Zouglou">Zouglou</SelectItem>
+                    <SelectItem value="Funk">Funk</SelectItem>
+                    <SelectItem value="Blues">Blues</SelectItem>
+                    <SelectItem value="Country">Country</SelectItem>
+                    <SelectItem value="Metal">Metal</SelectItem>
+                    <SelectItem value="Folk">Folk</SelectItem>
+                    <SelectItem value="Acoustic">Acoustique</SelectItem>
+                    <SelectItem value="Lo-fi">Lo-fi</SelectItem>
+                    <SelectItem value="Ambient">Ambient</SelectItem>
+                    <SelectItem value="World">World Music</SelectItem>
                     <SelectItem value="Other">Autre</SelectItem>
                   </SelectContent>
                 </Select>
@@ -3598,40 +3879,102 @@ export default function ArtistPortal() {
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label>BPM</Label>
-                <Input
-                  type="number"
-                  placeholder="120"
-                  className="bg-white/10 border-white/30"
+                <Select
                   value={uploadForm.bpm}
-                  onChange={(e) =>
-                    setUploadForm((prev) => ({ ...prev, bpm: e.target.value }))
+                  onValueChange={(v) =>
+                    setUploadForm((prev) => ({ ...prev, bpm: v }))
                   }
-                />
+                >
+                  <SelectTrigger className="bg-white/10 border-white/30">
+                    <SelectValue placeholder="Tempo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                    <SelectItem value="60">60 — Lento</SelectItem>
+                    <SelectItem value="70">70 — Adagio</SelectItem>
+                    <SelectItem value="80">80 — Andante</SelectItem>
+                    <SelectItem value="90">90 — Moderato</SelectItem>
+                    <SelectItem value="100">100 — Allegretto</SelectItem>
+                    <SelectItem value="110">110 — Allegro</SelectItem>
+                    <SelectItem value="120">120 — Allegro</SelectItem>
+                    <SelectItem value="128">128 — Dance</SelectItem>
+                    <SelectItem value="130">130 — Allegro</SelectItem>
+                    <SelectItem value="140">140 — Vivace</SelectItem>
+                    <SelectItem value="150">150 — Vivace</SelectItem>
+                    <SelectItem value="160">160 — Presto</SelectItem>
+                    <SelectItem value="170">170 — Presto</SelectItem>
+                    <SelectItem value="180">180 — Prestissimo</SelectItem>
+                    <SelectItem value="200">200 — Prestissimo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Tonalité</Label>
-                <Input
-                  placeholder="C minor"
-                  className="bg-white/10 border-white/30"
+                <Select
                   value={uploadForm.musicalKey}
-                  onChange={(e) =>
-                    setUploadForm((prev) => ({
-                      ...prev,
-                      musicalKey: e.target.value,
-                    }))
+                  onValueChange={(v) =>
+                    setUploadForm((prev) => ({ ...prev, musicalKey: v }))
                   }
-                />
+                >
+                  <SelectTrigger className="bg-white/10 border-white/30">
+                    <SelectValue placeholder="Clé" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                    <SelectItem value="C Major">Do Majeur</SelectItem>
+                    <SelectItem value="C Minor">Do Mineur</SelectItem>
+                    <SelectItem value="C# Major">Do# Majeur</SelectItem>
+                    <SelectItem value="C# Minor">Do# Mineur</SelectItem>
+                    <SelectItem value="D Major">Ré Majeur</SelectItem>
+                    <SelectItem value="D Minor">Ré Mineur</SelectItem>
+                    <SelectItem value="Eb Major">Mib Majeur</SelectItem>
+                    <SelectItem value="Eb Minor">Mib Mineur</SelectItem>
+                    <SelectItem value="E Major">Mi Majeur</SelectItem>
+                    <SelectItem value="E Minor">Mi Mineur</SelectItem>
+                    <SelectItem value="F Major">Fa Majeur</SelectItem>
+                    <SelectItem value="F Minor">Fa Mineur</SelectItem>
+                    <SelectItem value="F# Major">Fa# Majeur</SelectItem>
+                    <SelectItem value="F# Minor">Fa# Mineur</SelectItem>
+                    <SelectItem value="G Major">Sol Majeur</SelectItem>
+                    <SelectItem value="G Minor">Sol Mineur</SelectItem>
+                    <SelectItem value="Ab Major">Lab Majeur</SelectItem>
+                    <SelectItem value="Ab Minor">Lab Mineur</SelectItem>
+                    <SelectItem value="A Major">La Majeur</SelectItem>
+                    <SelectItem value="A Minor">La Mineur</SelectItem>
+                    <SelectItem value="Bb Major">Sib Majeur</SelectItem>
+                    <SelectItem value="Bb Minor">Sib Mineur</SelectItem>
+                    <SelectItem value="B Major">Si Majeur</SelectItem>
+                    <SelectItem value="B Minor">Si Mineur</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Ambiance</Label>
-                <Input
-                  placeholder="Chill"
-                  className="bg-white/10 border-white/30"
+                <Select
                   value={uploadForm.mood}
-                  onChange={(e) =>
-                    setUploadForm((prev) => ({ ...prev, mood: e.target.value }))
+                  onValueChange={(v) =>
+                    setUploadForm((prev) => ({ ...prev, mood: v }))
                   }
-                />
+                >
+                  <SelectTrigger className="bg-white/10 border-white/30">
+                    <SelectValue placeholder="Humeur" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                    <SelectItem value="Chill">Chill / Détendu</SelectItem>
+                    <SelectItem value="Energetic">Énergique</SelectItem>
+                    <SelectItem value="Dark">Sombre</SelectItem>
+                    <SelectItem value="Happy">Joyeux</SelectItem>
+                    <SelectItem value="Romantic">Romantique</SelectItem>
+                    <SelectItem value="Melancholic">Mélancolique</SelectItem>
+                    <SelectItem value="Aggressive">Agressif</SelectItem>
+                    <SelectItem value="Dreamy">Rêveur</SelectItem>
+                    <SelectItem value="Uplifting">Motivant</SelectItem>
+                    <SelectItem value="Groovy">Groovy</SelectItem>
+                    <SelectItem value="Epic">Épique</SelectItem>
+                    <SelectItem value="Peaceful">Paisible</SelectItem>
+                    <SelectItem value="Nostalgic">Nostalgique</SelectItem>
+                    <SelectItem value="Party">Festif</SelectItem>
+                    <SelectItem value="Spiritual">Spirituel</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -3789,6 +4132,7 @@ export default function ArtistPortal() {
                   <SelectContent className="bg-gray-900 border-white/20">
                     <SelectItem value="single">Single</SelectItem>
                     <SelectItem value="ep">EP</SelectItem>
+                    <SelectItem value="mixtape">Mixtape</SelectItem>
                     <SelectItem value="album">Album</SelectItem>
                   </SelectContent>
                 </Select>
