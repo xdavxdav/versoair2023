@@ -18,46 +18,51 @@ const testimonials: Testimonial[] = [
     name: "Sarah Chen",
     title: "PDG",
     company: "TechFlow Solutions",
-    message: "Cette plateforme a transformé notre processus décisionnel. Nous disposons désormais d'analyses en temps réel qui nous aident à anticiper les tendances du marché et à optimiser nos opérations efficacement.",
+    message:
+      "Cette plateforme a transformé notre processus décisionnel. Nous disposons désormais d'analyses en temps réel qui nous aident à anticiper les tendances du marché et à optimiser nos opérations efficacement.",
     rating: 5,
-    industry: "Technologie"
+    industry: "Technologie",
   },
   {
     id: 2,
     name: "Marcus Johnson",
     title: "Directeur des opérations",
     company: "Global Hotels Group",
-    message: "Les analyses d'hôtellerie sont incroyables. Nous avons augmenté nos taux d'occupation de 23 % et nos scores de satisfaction client de 18 % depuis la mise en place de ce système.",
+    message:
+      "Les analyses d'hôtellerie sont incroyables. Nous avons augmenté nos taux d'occupation de 23 % et nos scores de satisfaction client de 18 % depuis la mise en place de ce système.",
     rating: 5,
-    industry: "Hôtellerie"
+    industry: "Hôtellerie",
   },
   {
     id: 3,
     name: "Elena Rodriguez",
     title: "Responsable financier",
     company: "Metro Construction",
-    message: "Le suivi de projets et l'optimisation des ressources nous ont permis d'économiser plus de 2 M$ l'an dernier. Les rapports en temps réel nous aident à prendre des décisions critiques plus rapidement que jamais.",
+    message:
+      "Le suivi de projets et l'optimisation des ressources nous ont permis d'économiser plus de 2 M$ l'an dernier. Les rapports en temps réel nous aident à prendre des décisions critiques plus rapidement que jamais.",
     rating: 5,
-    industry: "Construction"
+    industry: "Construction",
   },
   {
     id: 4,
     name: "David Kim",
     title: "Responsable analytique",
     company: "Retail Plus",
-    message: "Plateforme exceptionnelle pour l'analytique commerce. Nos taux de conversion ont progressé de 35 % et la gestion des stocks est devenue fluide. Hautement recommandé pour toute entreprise de détail.",
+    message:
+      "Plateforme exceptionnelle pour l'analytique commerce. Nos taux de conversion ont progressé de 35 % et la gestion des stocks est devenue fluide. Hautement recommandé pour toute entreprise de détail.",
     rating: 5,
-    industry: "Commerce de détail"
+    industry: "Commerce de détail",
   },
   {
     id: 5,
     name: "Amanda Foster",
     title: "VP des opérations",
     company: "AutoMax Dealerships",
-    message: "Les analyses du secteur automobile sont parfaites. Nous avons optimisé la gestion de notre flotte et nos processus de vente, ce qui a entraîné une hausse de 28 % du chiffre d'affaires trimestriel.",
+    message:
+      "Les analyses du secteur automobile sont parfaites. Nous avons optimisé la gestion de notre flotte et nos processus de vente, ce qui a entraîné une hausse de 28 % du chiffre d'affaires trimestriel.",
     rating: 5,
-    industry: "Automobile"
-  }
+    industry: "Automobile",
+  },
 ];
 
 export default function TestimonialsFloating() {
@@ -68,13 +73,13 @@ export default function TestimonialsFloating() {
 
   useEffect(() => {
     // Check if testimonials have been shown before
-    const hasSeenTestimonials = localStorage.getItem('hasSeenTestimonials');
-    
+    const hasSeenTestimonials = localStorage.getItem("hasSeenTestimonials");
+
     if (!hasSeenTestimonials) {
       // Show the testimonials box after 3 seconds on first visit
       const timer = setTimeout(() => {
         setIsVisible(true);
-        localStorage.setItem('hasSeenTestimonials', 'true');
+        localStorage.setItem("hasSeenTestimonials", "true");
       }, 3000);
 
       return () => clearTimeout(timer);
@@ -97,7 +102,9 @@ export default function TestimonialsFloating() {
   };
 
   const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setCurrentIndex(
+      (prev) => (prev - 1 + testimonials.length) % testimonials.length,
+    );
   };
 
   const currentTestimonial = testimonials[currentIndex];
@@ -120,16 +127,20 @@ export default function TestimonialsFloating() {
 
   return (
     <div className="fixed bottom-2 sm:bottom-6 left-2 sm:left-6 z-50">
-      <div className={`bg-white rounded-xl shadow-2xl border transition-all duration-500 ease-in-out ${
-        isMinimized ? 'w-72 sm:w-80 h-16' : 'w-80 sm:w-96 h-72 sm:h-80'
-      }`}>
+      <div
+        className={`bg-white rounded-xl shadow-2xl border transition-all duration-500 ease-in-out ${
+          isMinimized ? "w-72 sm:w-80 h-16" : "w-80 sm:w-96 h-72 sm:h-80"
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-gradient-to-r from-primary/5 to-secondary/5 rounded-t-xl">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
               <Quote className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">Avis clients</span>
+            <span className="font-semibold text-gray-800 text-sm sm:text-base">
+              Avis clients
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -138,7 +149,11 @@ export default function TestimonialsFloating() {
               onClick={() => setIsMinimized(!isMinimized)}
               className="h-8 w-8 text-gray-500 hover:text-gray-700"
             >
-              {isMinimized ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              {isMinimized ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -161,12 +176,14 @@ export default function TestimonialsFloating() {
                   key={i}
                   className={`h-4 w-4 ${
                     i < currentTestimonial.rating
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
+                      ? "text-yellow-400 fill-current"
+                      : "text-gray-300"
                   }`}
                 />
               ))}
-              <span className="text-sm text-gray-500 ml-2">({currentTestimonial.rating}/5)</span>
+              <span className="text-sm text-gray-500 ml-2">
+                ({currentTestimonial.rating}/5)
+              </span>
             </div>
 
             {/* Testimonial Message */}
@@ -180,9 +197,15 @@ export default function TestimonialsFloating() {
             <div className="border-t pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-semibold text-gray-800 text-sm">{currentTestimonial.name}</h4>
-                  <p className="text-xs text-gray-500">{currentTestimonial.title}, {currentTestimonial.company}</p>
-                  <p className="text-xs text-primary font-medium">{currentTestimonial.industry}</p>
+                  <h4 className="font-semibold text-gray-800 text-sm">
+                    {currentTestimonial.name}
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    {currentTestimonial.title}, {currentTestimonial.company}
+                  </p>
+                  <p className="text-xs text-primary font-medium">
+                    {currentTestimonial.industry}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -220,7 +243,7 @@ export default function TestimonialsFloating() {
                 <div
                   key={index}
                   className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                    index === currentIndex ? 'bg-primary' : 'bg-gray-200'
+                    index === currentIndex ? "bg-primary" : "bg-gray-200"
                   }`}
                 />
               ))}

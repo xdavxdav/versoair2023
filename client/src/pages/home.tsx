@@ -2535,12 +2535,6 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <div
-                      className="inline-block"
-                      style={{ animation: "spin 20s linear infinite" }}
-                    >
-                      <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3 notranslate"
                       data-text="ArtiHuman Foundation"
@@ -2552,6 +2546,12 @@ export default function Home() {
                         ArtiHuman Foundation
                       </span>
                     </h2>
+                    <div
+                      className="inline-block"
+                      style={{ animation: "spin 20s linear infinite" }}
+                    >
+                      <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                    </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Soutenir les artisans et élever les communautés grâce à
                       l'innovation humanitaire à travers {countryMeta.name}.
@@ -2728,14 +2728,6 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <div
-                      className="inline-block"
-                      style={{
-                        animation: "panelIconFloat 2s ease-in-out infinite",
-                      }}
-                    >
-                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Marché Artisanal"
@@ -2747,6 +2739,14 @@ export default function Home() {
                         Marché Artisanal
                       </span>
                     </h2>
+                    <div
+                      className="inline-block"
+                      style={{
+                        animation: "panelIconFloat 2s ease-in-out infinite",
+                      }}
+                    >
+                      <ShoppingBag className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                    </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Découvrez des produits artisanaux uniques qui soutiennent
                       les communautés et préservent l'artisanat traditionnel{" "}
@@ -2916,14 +2916,6 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <div
-                      className="inline-block"
-                      style={{
-                        animation: "panelIconWiggle 3s ease-in-out infinite",
-                      }}
-                    >
-                      <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="Tableau d'impact"
@@ -2935,6 +2927,14 @@ export default function Home() {
                         Tableau d'impact
                       </span>
                     </h2>
+                    <div
+                      className="inline-block"
+                      style={{
+                        animation: "panelIconWiggle 3s ease-in-out infinite",
+                      }}
+                    >
+                      <TrendingUp className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                    </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Suivez notre impact collectif sur les communautés
                       artisanales à travers {countryMeta.name}.
@@ -3122,14 +3122,6 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-center justify-center p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <div
-                      className="inline-block"
-                      style={{
-                        animation: "panelIconPulse 2s ease-in-out infinite",
-                      }}
-                    >
-                      <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
-                    </div>
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                       data-text="S'impliquer"
@@ -3141,6 +3133,14 @@ export default function Home() {
                         S'impliquer
                       </span>
                     </h2>
+                    <div
+                      className="inline-block"
+                      style={{
+                        animation: "panelIconPulse 2s ease-in-out infinite",
+                      }}
+                    >
+                      <Handshake className="w-5 h-5 sm:w-8 sm:h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-1 sm:mb-2 md:mb-4 text-white" />
+                    </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Rejoignez notre mouvement pour soutenir les artisans et
                       transformer les communautés à travers {countryMeta.name}.
