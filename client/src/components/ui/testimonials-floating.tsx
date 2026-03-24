@@ -16,47 +16,47 @@ const testimonials: Testimonial[] = [
   {
     id: 1,
     name: "Sarah Chen",
-    title: "CEO",
+    title: "PDG",
     company: "TechFlow Solutions",
-    message: "This platform transformed our decision-making process. We now have real-time insights that help us stay ahead of market trends and optimize our operations efficiently.",
+    message: "Cette plateforme a transformé notre processus décisionnel. Nous disposons désormais d'analyses en temps réel qui nous aident à anticiper les tendances du marché et à optimiser nos opérations efficacement.",
     rating: 5,
-    industry: "Technology"
+    industry: "Technologie"
   },
   {
     id: 2,
     name: "Marcus Johnson",
-    title: "Operations Director",
+    title: "Directeur des opérations",
     company: "Global Hotels Group",
-    message: "The hospitality analytics are incredible. We've increased our occupancy rates by 23% and guest satisfaction scores by 18% since implementing this system.",
+    message: "Les analyses d'hôtellerie sont incroyables. Nous avons augmenté nos taux d'occupation de 23 % et nos scores de satisfaction client de 18 % depuis la mise en place de ce système.",
     rating: 5,
-    industry: "Hospitality"
+    industry: "Hôtellerie"
   },
   {
     id: 3,
     name: "Elena Rodriguez",
-    title: "Finance Manager",
+    title: "Responsable financier",
     company: "Metro Construction",
-    message: "Project tracking and resource optimization features saved us over $2M last year. The real-time reporting helps us make critical decisions faster than ever.",
+    message: "Le suivi de projets et l'optimisation des ressources nous ont permis d'économiser plus de 2 M$ l'an dernier. Les rapports en temps réel nous aident à prendre des décisions critiques plus rapidement que jamais.",
     rating: 5,
     industry: "Construction"
   },
   {
     id: 4,
     name: "David Kim",
-    title: "Head of Analytics",
+    title: "Responsable analytique",
     company: "Retail Plus",
-    message: "Outstanding platform for commerce analytics. Our conversion rates improved by 35% and inventory management became seamless. Highly recommend for any retail business.",
+    message: "Plateforme exceptionnelle pour l'analytique commerce. Nos taux de conversion ont progressé de 35 % et la gestion des stocks est devenue fluide. Hautement recommandé pour toute entreprise de détail.",
     rating: 5,
-    industry: "Retail"
+    industry: "Commerce de détail"
   },
   {
     id: 5,
     name: "Amanda Foster",
-    title: "VP of Operations",
+    title: "VP des opérations",
     company: "AutoMax Dealerships",
-    message: "The automotive sector analytics are spot-on. We've optimized our fleet management and sales processes, resulting in 28% increase in quarterly revenue.",
+    message: "Les analyses du secteur automobile sont parfaites. Nous avons optimisé la gestion de notre flotte et nos processus de vente, ce qui a entraîné une hausse de 28 % du chiffre d'affaires trimestriel.",
     rating: 5,
-    industry: "Automotive"
+    industry: "Automobile"
   }
 ];
 
@@ -129,7 +129,7 @@ export default function TestimonialsFloating() {
             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
               <Quote className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">Client Reviews</span>
+            <span className="font-semibold text-gray-800 text-sm sm:text-base">Avis clients</span>
           </div>
           <div className="flex items-center gap-2">
             <Button

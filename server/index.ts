@@ -61,19 +61,39 @@ if (!isDev) {
           scriptSrc: [
             "'self'",
             "'unsafe-inline'",
+            "'unsafe-eval'",
             "https://www.googletagmanager.com",
             "https://cdn.jsdelivr.net",
+            // Google Translate engine scripts
+            "https://translate.google.com",
+            "https://translate.googleapis.com",
+            "https://translate-pa.googleapis.com",
+            "https://www.gstatic.com",
           ],
           styleSrc: [
             "'self'",
             "'unsafe-inline'",
             "https://fonts.googleapis.com",
+            // Google Translate injects inline styles + sheets
+            "https://translate.googleapis.com",
+            "https://www.gstatic.com",
           ],
-          imgSrc: ["'self'", "data:", "https:"],
-          // ws: is needed for Vite HMR in development
-          connectSrc: ["'self'", "ws:", "wss:", "https:"],
+          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          connectSrc: [
+            "'self'",
+            "ws:",
+            "wss:",
+            "https:",
+            // Google Translate API calls
+            "https://translate.googleapis.com",
+            "https://translate-pa.googleapis.com",
+          ],
           fontSrc: ["'self'", "https://fonts.gstatic.com", "https:", "data:"],
-          frameSrc: ["'none'"],
+          // Google Translate needs iframes for inter-frame communication
+          frameSrc: [
+            "https://translate.google.com",
+            "https://www.gstatic.com",
+          ],
         },
       },
       hsts: {

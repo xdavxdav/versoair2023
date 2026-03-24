@@ -15,15 +15,15 @@ export default function Footer() {
 
   const navSections = [
     {
-      title: "Platform",
+      title: "Plateforme",
       links: [
-        { href: "/", label: "Home" },
+        { href: "/", label: "Accueil" },
         { href: "/logement", label: "Logement" },
-        { href: "/businesses-directory", label: "Business Directory" },
-        { href: "/reservations", label: "Reservations" },
+        { href: "/businesses-directory", label: "Annuaire d'entreprises" },
+        { href: "/reservations", label: "Réservations" },
         { href: "/geo-admin", label: "Geo Admin" },
-        { href: "/pricing", label: "Pricing" },
-        { href: "/demo", label: "Request a Demo" },
+        { href: "/pricing", label: "Tarifs" },
+        { href: "/demo", label: "Demander une démo" },
       ],
     },
     {
@@ -39,23 +39,23 @@ export default function Footer() {
       ],
     },
     {
-      title: "Resources",
+      title: "Ressources",
       links: [
         { href: "/sav", label: "SAV 24/7" },
         { href: "/versoai", label: "VersoAI" },
         { href: "/docs", label: "Documentation" },
         { href: "/contact", label: "Contact" },
-        { href: "/status", label: "System Status" },
+        { href: "/status", label: "État du système" },
       ],
     },
     {
-      title: "Legal",
+      title: "Juridique",
       links: [
-        { href: "/information", label: "Information Center" },
-        { href: "/privacy", label: "Privacy Policy" },
-        { href: "/terms", label: "Terms of Service" },
-        { href: "/cookies", label: "Cookie Policy" },
-        { href: "/gdpr", label: "Data Protection" },
+        { href: "/information", label: "Centre d'information" },
+        { href: "/privacy", label: "Politique de confidentialité" },
+        { href: "/terms", label: "Conditions d'utilisation" },
+        { href: "/cookies", label: "Politique de cookies" },
+        { href: "/gdpr", label: "Protection des données" },
       ],
     },
   ];
@@ -89,9 +89,9 @@ export default function Footer() {
                 </span>
               </h2>
               <p className="text-gray-500 text-base sm:text-lg mt-4 max-w-md leading-relaxed">
-                Business intelligence, reimagined.
+                L'intelligence d'affaires, réinventée.
                 <br />
-                From insight to action — we power what drives you.
+                De l'analyse à l'action — nous propulsons ce qui vous anime.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -99,14 +99,14 @@ export default function Footer() {
                 href="/pricing"
                 className="group inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-7 py-3.5 rounded-full transition-all duration-200"
               >
-                Get Started
+                Commencer
                 <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
               <Link
                 href="/contact"
                 className="inline-flex items-center justify-center gap-2 border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-medium px-7 py-3.5 rounded-full transition-all duration-200"
               >
-                Contact Us
+                Nous contacter
               </Link>
             </div>
           </div>
@@ -140,10 +140,10 @@ export default function Footer() {
           {/* Newsletter */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
-              Stay Updated
+              Restez informé
             </h4>
             <p className="text-gray-500 text-sm mb-4 leading-relaxed">
-              Product updates, industry insights, and more.
+              Mises à jour produit, analyses sectorielles et plus encore.
             </p>
             <div className="flex gap-2">
               <input
@@ -195,8 +195,8 @@ export default function Footer() {
 
           <p className="text-gray-600 text-xs">
             © {new Date().getFullYear()}{" "}
-            <span className="notranslate">Verso Air™</span>. All rights
-            reserved.
+            <span className="notranslate">Verso Air™</span>. Tous droits
+            réservés.
           </p>
         </div>
       </div>

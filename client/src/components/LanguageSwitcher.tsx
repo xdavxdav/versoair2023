@@ -276,6 +276,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Guard: skip if selectLanguage from CountryDropdown already handled this
+    if (currentLang === lang) return;
+
     // Apply language to React state + localStorage
     setCurrentLang(lang);
     localStorage.setItem(LANG_CACHE_KEY, lang);
@@ -303,11 +306,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       loadGTScript();
     } else {
       // GT already loaded (user changed country after initial load).
-      // Try combo for instant switch; reload as last resort.
+      // Try combo for instant switch; graceful reload as last resort.
       const ok = switchLanguageViaCombo(lang);
       if (!ok) {
         // Cookie is set — reload lets GT re-read it.
-        window.location.reload();
+        flashBanner(
+          `Translating to ${lang.toUpperCase()}…`,
+          true,
+        );
         return;
       }
     }
@@ -431,9 +437,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         className="notranslate"
         style={{
           position: "fixed",
-          top: -100,
+          top: -200,
           left: 0,
-          height: 0,
           opacity: 0,
           overflow: "visible",
           pointerEvents: "none",
