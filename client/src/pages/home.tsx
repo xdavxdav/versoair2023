@@ -614,7 +614,7 @@ const ResponsiveFooter = ({
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
               Soutenir les artisans et élever les communautés grâce à
-              l'innovation humanitaire à travers {countryMeta.name}.
+              l'innovation humanitaire à travers {countryMeta.nameFr}.
             </p>
             <div className="flex gap-2">
               <a
@@ -1933,7 +1933,7 @@ export default function Home() {
             className="mb-4 md:mb-6"
           >
             <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 rounded-full text-xs md:text-sm font-medium border border-white/20">
-              🎨 Soutien aux artisans en {countryMeta.name}
+              🎨 Soutien aux artisans {countryMeta.nameIn}
             </span>
           </motion.div>
 
@@ -1953,7 +1953,7 @@ export default function Home() {
             className="text-base sm:text-lg md:text-xl lg:text-2xl mb-4 text-white/90 px-4"
           >
             Soutenir les artisans et élever les communautés grâce à l'innovation
-            humanitaire à travers {countryMeta.name}
+            humanitaire à travers {countryMeta.nameFr}
           </motion.p>
 
           {/* Database Connection Status */}
@@ -2043,7 +2043,7 @@ export default function Home() {
             </h2>
             <p className="text-lg md:text-2xl text-gray-600 px-4 max-w-3xl mx-auto">
               Parcourez notre répertoire de communautés artisanales et de
-              programmes culturels à travers {countryMeta.name}
+              programmes culturels à travers {countryMeta.nameFr}
             </p>
           </motion.div>
 
@@ -2565,7 +2565,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Soutenir les artisans et élever les communautés grâce à
-                      l'innovation humanitaire à travers {countryMeta.name}.
+                      l'innovation humanitaire à travers {countryMeta.nameFr}.
                     </p>
                   </div>
 
@@ -2576,7 +2576,7 @@ export default function Home() {
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
-                        Notre impact en {countryMeta.name} :
+                        Notre impact {countryMeta.nameIn} :
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
@@ -2948,7 +2948,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Suivez notre impact collectif sur les communautés
-                      artisanales à travers {countryMeta.name}.
+                      artisanales à travers {countryMeta.nameFr}.
                     </p>
                   </div>
 
@@ -3154,7 +3154,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Rejoignez notre mouvement pour soutenir les artisans et
-                      transformer les communautés à travers {countryMeta.name}.
+                      transformer les communautés à travers {countryMeta.nameFr}.
                     </p>
                   </div>
 
@@ -3305,7 +3305,7 @@ export default function Home() {
             </h2>
             <p className="text-base md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
               Rencontrez quelques-uns des artisans talentueux que nous soutenons
-              à travers {countryMeta.name}
+              à travers {countryMeta.nameFr}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
@@ -3453,7 +3453,7 @@ export default function Home() {
               </motion.h2>
               <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
                 Explorez plus de {artistAnnuaireGenres.length} catégories
-                d'artistes à travers {countryMeta.name}
+                d'artistes à travers {countryMeta.nameFr}
               </p>
             </div>
 
