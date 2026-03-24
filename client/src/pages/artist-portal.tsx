@@ -1466,10 +1466,10 @@ export default function ArtistPortal() {
             <SelectContent className="bg-gray-900 border-white/20">
               <SelectItem value="all">Tous les genres</SelectItem>
               <SelectItem value="Electronic">Électronique</SelectItem>
-              <SelectItem value="Hip Hop">Hip Hop</SelectItem>
+              <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
               <SelectItem value="Rock">Rock</SelectItem>
               <SelectItem value="Pop">Pop</SelectItem>
-              <SelectItem value="R&B">R&B</SelectItem>
+              <SelectItem value="RnB">R&B</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center space-x-2">
@@ -3547,7 +3547,7 @@ export default function ArtistPortal() {
             {/* Genre + Price row */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Genre</Label>
+                <Label className="notranslate">Genre</Label>
                 <Select
                   value={uploadForm.genre}
                   onValueChange={(v) =>
@@ -3559,8 +3559,8 @@ export default function ArtistPortal() {
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20">
                     <SelectItem value="Afrobeats">Afrobeats</SelectItem>
-                    <SelectItem value="R&B">R&B</SelectItem>
-                    <SelectItem value="Hip Hop">Hip Hop</SelectItem>
+                    <SelectItem value="RnB">R&B</SelectItem>
+                    <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
                     <SelectItem value="Pop">Pop</SelectItem>
                     <SelectItem value="Jazz">Jazz</SelectItem>
                     <SelectItem value="Soul">Soul</SelectItem>
