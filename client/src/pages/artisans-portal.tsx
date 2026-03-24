@@ -44,12 +44,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -141,7 +136,8 @@ const MOCK_PORTFOLIO: PortfolioItem[] = [
     id: "p1",
     title: "Collier Akan Royal",
     description: "Collier traditionnel inspiré de la royauté Akan",
-    imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400",
+    imageUrl:
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400",
     category: "Bijoux",
     createdAt: "2024-12-01",
     likes: 234,
@@ -151,7 +147,8 @@ const MOCK_PORTFOLIO: PortfolioItem[] = [
     id: "p2",
     title: "Bracelet Perlé Moderne",
     description: "Fusion de techniques traditionnelles et design contemporain",
-    imageUrl: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400",
+    imageUrl:
+      "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400",
     category: "Perles",
     createdAt: "2024-11-15",
     likes: 189,
@@ -161,7 +158,8 @@ const MOCK_PORTFOLIO: PortfolioItem[] = [
     id: "p3",
     title: "Boucles d'Oreilles Soleil",
     description: "Inspirées des motifs solaires africains",
-    imageUrl: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
+    imageUrl:
+      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
     category: "Bijoux",
     createdAt: "2024-10-20",
     likes: 312,
@@ -174,7 +172,8 @@ const MOCK_REVIEWS: Review[] = [
     id: "r1",
     authorName: "Amara Diallo",
     rating: 5,
-    comment: "Travail exceptionnel! Le collier est encore plus beau en vrai. Marie a été très à l'écoute de mes demandes.",
+    comment:
+      "Travail exceptionnel! Le collier est encore plus beau en vrai. Marie a été très à l'écoute de mes demandes.",
     createdAt: "2025-01-15",
     projectTitle: "Collier personnalisé",
   },
@@ -189,7 +188,8 @@ const MOCK_REVIEWS: Review[] = [
     id: "r3",
     authorName: "Fatou Bamba",
     rating: 4,
-    comment: "Très satisfaite de ma commande. Livraison rapide et emballage soigné.",
+    comment:
+      "Très satisfaite de ma commande. Livraison rapide et emballage soigné.",
     createdAt: "2024-12-28",
     projectTitle: "Ensemble bracelet & boucles",
   },
@@ -224,9 +224,21 @@ const MOCK_ORDERS: Order[] = [
 ];
 
 const SPECIALIZATIONS = [
-  "Bijoux", "Perles", "Tissage", "Poterie", "Sculpture",
-  "Cuir", "Métal", "Bois", "Textile", "Vannerie",
-  "Peinture", "Broderie", "Couture", "Céramique", "Autre"
+  "Bijoux",
+  "Perles",
+  "Tissage",
+  "Poterie",
+  "Sculpture",
+  "Cuir",
+  "Métal",
+  "Bois",
+  "Textile",
+  "Vannerie",
+  "Peinture",
+  "Broderie",
+  "Couture",
+  "Céramique",
+  "Autre",
 ];
 
 // ─────────────────────────────────────────────────────
@@ -234,13 +246,23 @@ const SPECIALIZATIONS = [
 // ─────────────────────────────────────────────────────
 
 // Profile Card
-function ProfileCard({ profile, onEdit }: { profile: ArtisanProfile; onEdit: () => void }) {
+function ProfileCard({
+  profile,
+  onEdit,
+}: {
+  profile: ArtisanProfile;
+  onEdit: () => void;
+}) {
   return (
     <Card className="bg-slate-800/50 border-emerald-500/20 overflow-hidden">
       {/* Cover image */}
       <div className="relative h-32 bg-gradient-to-r from-emerald-600 to-green-600">
         {profile.coverImage && (
-          <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+          <img
+            src={profile.coverImage}
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
         )}
         <Button
           size="sm"
@@ -258,7 +280,11 @@ function ProfileCard({ profile, onEdit }: { profile: ArtisanProfile; onEdit: () 
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1">
             <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center overflow-hidden">
               {profile.avatar ? (
-                <img src={profile.avatar} alt={profile.displayName} className="w-full h-full object-cover" />
+                <img
+                  src={profile.avatar}
+                  alt={profile.displayName}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <User className="w-10 h-10 text-emerald-400" />
               )}
@@ -275,7 +301,9 @@ function ProfileCard({ profile, onEdit }: { profile: ArtisanProfile; onEdit: () 
       <CardContent className="pt-4 pb-6">
         {/* Name & badge */}
         <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-xl font-bold text-white">{profile.displayName}</h2>
+          <h2 className="text-xl font-bold text-white">
+            {profile.displayName}
+          </h2>
           {profile.isVerified && (
             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
               Vérifié
@@ -293,18 +321,27 @@ function ProfileCard({ profile, onEdit }: { profile: ArtisanProfile; onEdit: () 
 
         {/* Bio */}
         {profile.bio && (
-          <p className="text-slate-300 text-sm mb-4 line-clamp-3">{profile.bio}</p>
+          <p className="text-slate-300 text-sm mb-4 line-clamp-3">
+            {profile.bio}
+          </p>
         )}
 
         {/* Specializations */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {profile.specializations.slice(0, 4).map((spec) => (
-            <Badge key={spec} variant="secondary" className="bg-emerald-900/50 text-emerald-300 text-xs">
+            <Badge
+              key={spec}
+              variant="secondary"
+              className="bg-emerald-900/50 text-emerald-300 text-xs"
+            >
               {spec}
             </Badge>
           ))}
           {profile.specializations.length > 4 && (
-            <Badge variant="secondary" className="bg-slate-700 text-slate-400 text-xs">
+            <Badge
+              variant="secondary"
+              className="bg-slate-700 text-slate-400 text-xs"
+            >
               +{profile.specializations.length - 4}
             </Badge>
           )}
@@ -320,22 +357,33 @@ function ProfileCard({ profile, onEdit }: { profile: ArtisanProfile; onEdit: () 
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">{profile.portfolioCount}</p>
+            <p className="text-2xl font-bold text-white">
+              {profile.portfolioCount}
+            </p>
             <p className="text-xs text-emerald-300/60">Créations</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">{profile.orderCount}</p>
+            <p className="text-2xl font-bold text-white">
+              {profile.orderCount}
+            </p>
             <p className="text-xs text-emerald-300/60">Commandes</p>
           </div>
         </div>
 
         {/* Contact buttons */}
         <div className="flex gap-2 mt-4">
-          <Button className="flex-1 bg-emerald-600 hover:bg-emerald-500" size="sm">
+          <Button
+            className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+            size="sm"
+          >
             <Mail className="w-4 h-4 mr-2" />
             Contact
           </Button>
-          <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+          >
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
@@ -376,8 +424,13 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
               </div>
             </div>
             <CardContent className="p-3">
-              <h3 className="font-semibold text-white text-sm mb-1 line-clamp-1">{item.title}</h3>
-              <Badge variant="secondary" className="bg-emerald-900/50 text-emerald-300 text-xs">
+              <h3 className="font-semibold text-white text-sm mb-1 line-clamp-1">
+                {item.title}
+              </h3>
+              <Badge
+                variant="secondary"
+                className="bg-emerald-900/50 text-emerald-300 text-xs"
+              >
                 {item.category}
               </Badge>
             </CardContent>
@@ -392,7 +445,9 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
               <Plus className="w-6 h-6 text-emerald-400" />
             </div>
-            <p className="text-emerald-300 font-medium text-sm">Ajouter une création</p>
+            <p className="text-emerald-300 font-medium text-sm">
+              Ajouter une création
+            </p>
           </div>
         </Card>
       </motion.div>
@@ -410,14 +465,20 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                 {review.authorAvatar ? (
-                  <img src={review.authorAvatar} alt={review.authorName} className="w-full h-full rounded-full object-cover" />
+                  <img
+                    src={review.authorAvatar}
+                    alt={review.authorName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 ) : (
                   <User className="w-5 h-5 text-emerald-400" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-white text-sm">{review.authorName}</h4>
+                  <h4 className="font-semibold text-white text-sm">
+                    {review.authorName}
+                  </h4>
                   <span className="text-xs text-emerald-300/60">
                     {new Date(review.createdAt).toLocaleDateString("fr-FR")}
                   </span>
@@ -449,9 +510,18 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
 function OrdersTable({ orders }: { orders: Order[] }) {
   const getStatusBadge = (status: Order["status"]) => {
     const configs = {
-      pending: { label: "En attente", className: "bg-amber-500/20 text-amber-400" },
-      in_progress: { label: "En cours", className: "bg-blue-500/20 text-blue-400" },
-      completed: { label: "Terminée", className: "bg-green-500/20 text-green-400" },
+      pending: {
+        label: "En attente",
+        className: "bg-amber-500/20 text-amber-400",
+      },
+      in_progress: {
+        label: "En cours",
+        className: "bg-blue-500/20 text-blue-400",
+      },
+      completed: {
+        label: "Terminée",
+        className: "bg-green-500/20 text-green-400",
+      },
       cancelled: { label: "Annulée", className: "bg-red-500/20 text-red-400" },
     };
     const config = configs[status];
@@ -465,8 +535,12 @@ function OrdersTable({ orders }: { orders: Order[] }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-white text-sm mb-1">{order.title}</h4>
-                <p className="text-emerald-300/60 text-xs">Client: {order.clientName}</p>
+                <h4 className="font-semibold text-white text-sm mb-1">
+                  {order.title}
+                </h4>
+                <p className="text-emerald-300/60 text-xs">
+                  Client: {order.clientName}
+                </p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-emerald-400">
@@ -513,7 +587,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
     <div className="space-y-6">
       <Card className="bg-slate-800/50 border-emerald-500/20">
         <CardHeader>
-          <CardTitle className="text-white text-lg">Informations personnelles</CardTitle>
+          <CardTitle className="text-white text-lg">
+            Informations personnelles
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -521,7 +597,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               <Label className="text-emerald-100">Nom d'affichage</Label>
               <Input
                 value={formData.displayName}
-                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, displayName: e.target.value })
+                }
                 className="bg-slate-900/50 border-emerald-500/30 text-white"
               />
             </div>
@@ -529,7 +607,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               <Label className="text-emerald-100">Téléphone</Label>
               <Input
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 className="bg-slate-900/50 border-emerald-500/30 text-white"
               />
             </div>
@@ -539,7 +619,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
             <Label className="text-emerald-100">Bio</Label>
             <Textarea
               value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, bio: e.target.value })
+              }
               className="bg-slate-900/50 border-emerald-500/30 text-white min-h-[100px]"
               placeholder="Parlez de vous et de votre artisanat..."
             />
@@ -550,7 +632,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               <Label className="text-emerald-100">Localisation</Label>
               <Input
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
                 className="bg-slate-900/50 border-emerald-500/30 text-white"
               />
             </div>
@@ -558,7 +642,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               <Label className="text-emerald-100">Site web</Label>
               <Input
                 value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website: e.target.value })
+                }
                 className="bg-slate-900/50 border-emerald-500/30 text-white"
               />
             </div>
@@ -569,7 +655,9 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
             <Input
               type="number"
               value={formData.hourlyRate}
-              onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, hourlyRate: e.target.value })
+              }
               className="bg-slate-900/50 border-emerald-500/30 text-white max-w-[200px]"
             />
           </div>
@@ -581,8 +669,12 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 <SelectValue placeholder="Ajouter une spécialisation" />
               </SelectTrigger>
               <SelectContent>
-                {SPECIALIZATIONS.filter(s => !formData.specializations.includes(s)).map((spec) => (
-                  <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                {SPECIALIZATIONS.filter(
+                  (s) => !formData.specializations.includes(s),
+                ).map((spec) => (
+                  <SelectItem key={spec} value={spec}>
+                    {spec}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -591,10 +683,14 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 <Badge
                   key={spec}
                   className="bg-emerald-500/20 text-emerald-300 cursor-pointer hover:bg-red-500/20 hover:text-red-300"
-                  onClick={() => setFormData({
-                    ...formData,
-                    specializations: formData.specializations.filter(s => s !== spec)
-                  })}
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      specializations: formData.specializations.filter(
+                        (s) => s !== spec,
+                      ),
+                    })
+                  }
                 >
                   {spec} <X className="w-3 h-3 ml-1" />
                 </Badge>
@@ -646,7 +742,10 @@ export default function ArtisansPortal() {
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
           {/* Sidebar - Profile Card */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <ProfileCard profile={profile} onEdit={() => setIsEditingProfile(true)} />
+            <ProfileCard
+              profile={profile}
+              onEdit={() => setIsEditingProfile(true)}
+            />
 
             {/* Quick stats */}
             <Card className="bg-slate-800/50 border-emerald-500/20 mt-4">
@@ -656,7 +755,9 @@ export default function ArtisansPortal() {
                     <Briefcase className="w-4 h-4" />
                     Expérience
                   </span>
-                  <span className="text-white font-medium">{profile.yearsExperience} ans</span>
+                  <span className="text-white font-medium">
+                    {profile.yearsExperience} ans
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400 flex items-center gap-2">
@@ -673,7 +774,10 @@ export default function ArtisansPortal() {
                     Membre depuis
                   </span>
                   <span className="text-white font-medium">
-                    {new Date(profile.joinedDate).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                    {new Date(profile.joinedDate).toLocaleDateString("fr-FR", {
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </span>
                 </div>
               </CardContent>
@@ -685,31 +789,46 @@ export default function ArtisansPortal() {
             <Tabs value={activeTab} className="space-y-6">
               <TabsList className="bg-slate-800/50 border border-emerald-500/20 p-1">
                 <Link href="/artisans-portal">
-                  <TabsTrigger value="profile" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                  <TabsTrigger
+                    value="profile"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                  >
                     <User className="w-4 h-4 mr-2" />
                     Profil
                   </TabsTrigger>
                 </Link>
                 <Link href="/artisans-portal?tab=portfolio">
-                  <TabsTrigger value="portfolio" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                  <TabsTrigger
+                    value="portfolio"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                  >
                     <Image className="w-4 h-4 mr-2" />
                     Portfolio
                   </TabsTrigger>
                 </Link>
                 <Link href="/artisans-portal?tab=orders">
-                  <TabsTrigger value="orders" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                  <TabsTrigger
+                    value="orders"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                  >
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     Commandes
                   </TabsTrigger>
                 </Link>
                 <Link href="/artisans-portal?tab=reviews">
-                  <TabsTrigger value="reviews" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                  <TabsTrigger
+                    value="reviews"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                  >
                     <Star className="w-4 h-4 mr-2" />
                     Avis
                   </TabsTrigger>
                 </Link>
                 <Link href="/artisans-portal?tab=settings">
-                  <TabsTrigger value="settings" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300">
+                  <TabsTrigger
+                    value="settings"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                  >
                     <Settings className="w-4 h-4 mr-2" />
                     Paramètres
                   </TabsTrigger>
@@ -719,21 +838,31 @@ export default function ArtisansPortal() {
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Mon Profil</h2>
-                  <p className="text-emerald-300/60">Gérez votre présence sur la plateforme</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Mon Profil
+                  </h2>
+                  <p className="text-emerald-300/60">
+                    Gérez votre présence sur la plateforme
+                  </p>
                 </div>
 
                 {/* Recent portfolio preview */}
                 <Card className="bg-slate-800/50 border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-white">Dernières créations</CardTitle>
+                      <CardTitle className="text-white">
+                        Dernières créations
+                      </CardTitle>
                       <CardDescription className="text-emerald-300/60">
                         Vos œuvres les plus récentes
                       </CardDescription>
                     </div>
                     <Link href="/artisans-portal?tab=portfolio">
-                      <Button variant="ghost" size="sm" className="text-emerald-400 hover:text-emerald-300">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-emerald-400 hover:text-emerald-300"
+                      >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
@@ -741,8 +870,15 @@ export default function ArtisansPortal() {
                   <CardContent>
                     <div className="grid grid-cols-3 gap-3">
                       {portfolio.slice(0, 3).map((item) => (
-                        <div key={item.id} className="aspect-square rounded-lg overflow-hidden">
-                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                        <div
+                          key={item.id}
+                          className="aspect-square rounded-lg overflow-hidden"
+                        >
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       ))}
                     </div>
@@ -753,13 +889,19 @@ export default function ArtisansPortal() {
                 <Card className="bg-slate-800/50 border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-white">Derniers avis</CardTitle>
+                      <CardTitle className="text-white">
+                        Derniers avis
+                      </CardTitle>
                       <CardDescription className="text-emerald-300/60">
                         Ce que disent vos clients
                       </CardDescription>
                     </div>
                     <Link href="/artisans-portal?tab=reviews">
-                      <Button variant="ghost" size="sm" className="text-emerald-400 hover:text-emerald-300">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-emerald-400 hover:text-emerald-300"
+                      >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
@@ -774,8 +916,12 @@ export default function ArtisansPortal() {
               <TabsContent value="portfolio" className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Mon Portfolio</h2>
-                    <p className="text-emerald-300/60">{portfolio.length} créations</p>
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                      Mon Portfolio
+                    </h2>
+                    <p className="text-emerald-300/60">
+                      {portfolio.length} créations
+                    </p>
                   </div>
                   <Button className="bg-emerald-600 hover:bg-emerald-500">
                     <Upload className="w-4 h-4 mr-2" />
@@ -788,8 +934,12 @@ export default function ArtisansPortal() {
               {/* Orders Tab */}
               <TabsContent value="orders" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Mes Commandes</h2>
-                  <p className="text-emerald-300/60">{orders.length} commande(s)</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Mes Commandes
+                  </h2>
+                  <p className="text-emerald-300/60">
+                    {orders.length} commande(s)
+                  </p>
                 </div>
                 <OrdersTable orders={orders} />
               </TabsContent>
@@ -797,7 +947,9 @@ export default function ArtisansPortal() {
               {/* Reviews Tab */}
               <TabsContent value="reviews" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Avis Clients</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Avis Clients
+                  </h2>
                   <p className="text-emerald-300/60">
                     {reviews.length} avis · Note moyenne: {profile.rating}/5
                   </p>
@@ -808,8 +960,12 @@ export default function ArtisansPortal() {
               {/* Settings Tab */}
               <TabsContent value="settings" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Paramètres</h2>
-                  <p className="text-emerald-300/60">Gérez vos informations et préférences</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Paramètres
+                  </h2>
+                  <p className="text-emerald-300/60">
+                    Gérez vos informations et préférences
+                  </p>
                 </div>
                 <SettingsForm profile={profile} />
               </TabsContent>

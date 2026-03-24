@@ -19,39 +19,63 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "portals">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "portals">(
+    "overview",
+  );
   const { user, logout } = useAuthContext();
   const { capabilities } = useCapabilities();
   const [, navigate] = useLocation();
 
   // Build display data from real auth user
-  const displayName = user?.name || user?.username || user?.email?.split("@")[0] || "User";
+  const displayName =
+    user?.name || user?.username || user?.email?.split("@")[0] || "User";
   const displayEmail = user?.email || "";
   const displayRole = user?.role || "user";
-  const displayTier = user?.subscriptionTier || user?.subscription_tier || "free";
-  const isAdmin = user?.isAdmin || displayRole === "superuser" || displayRole === "admin";
-  const hasArtist = user?.hasArtistProfile || capabilities?.hasArtistProfile || false;
+  const displayTier =
+    user?.subscriptionTier || user?.subscription_tier || "free";
+  const isAdmin =
+    user?.isAdmin || displayRole === "superuser" || displayRole === "admin";
+  const hasArtist =
+    user?.hasArtistProfile || capabilities?.hasArtistProfile || false;
 
-  const initials = displayName
-    .split(/\s+/)
-    .map((w: string) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "VA";
+  const initials =
+    displayName
+      .split(/\s+/)
+      .map((w: string) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "VA";
 
-  const tierLabel = displayTier === "free" ? "Free" :
-    displayTier === "starter" ? "Starter" :
-    displayTier === "professional" ? "Professional" :
-    displayTier === "enterprise" ? "Enterprise" :
-    displayTier === "max" ? "Max" : displayTier;
+  const tierLabel =
+    displayTier === "free"
+      ? "Free"
+      : displayTier === "starter"
+        ? "Starter"
+        : displayTier === "professional"
+          ? "Professional"
+          : displayTier === "enterprise"
+            ? "Enterprise"
+            : displayTier === "max"
+              ? "Max"
+              : displayTier;
 
-  const roleColor = isAdmin ? "text-amber-400" :
-    displayRole === "artist" ? "text-purple-400" :
-    displayRole === "premium" ? "text-cyan-400" : "text-slate-400";
+  const roleColor = isAdmin
+    ? "text-amber-400"
+    : displayRole === "artist"
+      ? "text-purple-400"
+      : displayRole === "premium"
+        ? "text-cyan-400"
+        : "text-slate-400";
 
-  const roleBadge = isAdmin ? (displayRole === "superuser" ? "Superuser" : "Admin") :
-    displayRole === "artist" ? "Artist" :
-    displayRole === "premium" ? "Premium" : "Member";
+  const roleBadge = isAdmin
+    ? displayRole === "superuser"
+      ? "Superuser"
+      : "Admin"
+    : displayRole === "artist"
+      ? "Artist"
+      : displayRole === "premium"
+        ? "Premium"
+        : "Member";
 
   // Not authenticated — show sign-in prompt
   if (!user) {
@@ -61,7 +85,9 @@ export default function ProfilePage() {
           <div className="w-16 h-16 mx-auto rounded-full bg-cyan-500/20 flex items-center justify-center">
             <User className="w-8 h-8 text-cyan-400" />
           </div>
-          <h2 className="text-white text-xl font-bold">Sign in to view your profile</h2>
+          <h2 className="text-white text-xl font-bold">
+            Sign in to view your profile
+          </h2>
           <p className="text-white/50 text-sm">
             You need to be logged in to access your profile page.
           </p>
@@ -118,19 +144,27 @@ export default function ProfilePage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <h1 className="text-3xl font-bold text-white mb-1">{displayName}</h1>
+            <h1 className="text-3xl font-bold text-white mb-1">
+              {displayName}
+            </h1>
             <p className="text-slate-400 mb-3">{displayEmail}</p>
 
             <div className="flex flex-wrap gap-3 mb-4">
               {/* Role badge */}
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
-                isAdmin
-                  ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
-                  : displayRole === "artist"
-                    ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
-                    : "bg-cyan-500/20 border-cyan-500/30 text-cyan-400"
-              }`}>
-                {isAdmin ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
+                  isAdmin
+                    ? "bg-amber-500/20 border-amber-500/30 text-amber-400"
+                    : displayRole === "artist"
+                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
+                      : "bg-cyan-500/20 border-cyan-500/30 text-cyan-400"
+                }`}
+              >
+                {isAdmin ? (
+                  <Shield className="w-3 h-3" />
+                ) : (
+                  <User className="w-3 h-3" />
+                )}
                 {roleBadge}
               </span>
 
@@ -177,7 +211,10 @@ export default function ProfilePage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => { logout(); navigate("/"); }}
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
                 className="flex items-center gap-2 px-5 py-2 bg-white/5 text-slate-400 rounded-lg border border-white/10 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all font-medium text-sm"
               >
                 <LogOut className="w-4 h-4" />
@@ -227,7 +264,9 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Username</span>
-                  <span className="text-white">{user.username || displayName}</span>
+                  <span className="text-white">
+                    {user.username || displayName}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Email</span>
@@ -259,25 +298,43 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Artist Profile</span>
-                  <span className={hasArtist ? "text-emerald-400" : "text-slate-500"}>
+                  <span
+                    className={
+                      hasArtist ? "text-emerald-400" : "text-slate-500"
+                    }
+                  >
                     {hasArtist ? "✓ Active" : "Not set up"}
                   </span>
                 </div>
                 {capabilities?.artistStageName && (
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-400">Stage Name</span>
-                    <span className="text-purple-400">{capabilities.artistStageName}</span>
+                    <span className="text-purple-400">
+                      {capabilities.artistStageName}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Blog Access</span>
-                  <span className={capabilities?.canAccessBlog ? "text-emerald-400" : "text-slate-500"}>
+                  <span
+                    className={
+                      capabilities?.canAccessBlog
+                        ? "text-emerald-400"
+                        : "text-slate-500"
+                    }
+                  >
                     {capabilities?.canAccessBlog ? "✓ Enabled" : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Contractor</span>
-                  <span className={capabilities?.isContractor ? "text-emerald-400" : "text-slate-500"}>
+                  <span
+                    className={
+                      capabilities?.isContractor
+                        ? "text-emerald-400"
+                        : "text-slate-500"
+                    }
+                  >
                     {capabilities?.isContractor ? "✓ Active" : "—"}
                   </span>
                 </div>
@@ -306,13 +363,17 @@ export default function ProfilePage() {
                 <Link href="/marketplace">
                   <div className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl p-4 text-center cursor-pointer transition-all group">
                     <ShoppingBag className="w-6 h-6 text-emerald-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-white font-medium">Marketplace</p>
+                    <p className="text-sm text-white font-medium notranslate">
+                      Marketplace
+                    </p>
                   </div>
                 </Link>
                 <Link href="/artist-portal/dashboard">
                   <div className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl p-4 text-center cursor-pointer transition-all group">
                     <Star className="w-6 h-6 text-purple-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-white font-medium">Artist Portal</p>
+                    <p className="text-sm text-white font-medium">
+                      Artist Portal
+                    </p>
                   </div>
                 </Link>
                 <Link href="/contact">
