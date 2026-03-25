@@ -391,7 +391,7 @@ export default function Navbar({
               <ShoppingBag
                 className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
               />
-              <span className="relative">Marché</span>
+              <span className="relative notranslate">Marché</span>
             </Link>
 
             {/* Assistance Dropdown */}
@@ -652,8 +652,8 @@ export default function Navbar({
                 <ShoppingBag
                   className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
                 />
-                <span className="hidden lg:inline">Marché</span>
-                <span className="lg:hidden">Marché</span>
+                <span className="hidden lg:inline notranslate">Marché</span>
+                <span className="lg:hidden notranslate">Marché</span>
               </Link>
 
               {/* Support — teal */}
