@@ -3104,10 +3104,10 @@ export default function ArtistPortalWelcome() {
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
                             Contrat Artiste
                           </span>{" "}
-                          du Verso Artist Studio. Je comprends que les
-                          artistes approuvés reçoivent une part de revenus basée
-                          sur leur grade attribué (S/A/B/C). Je confirme que
-                          toutes les informations fournies sont exactes.
+                          du Verso Artist Studio. Je comprends que les artistes
+                          approuvés reçoivent une part de revenus basée sur leur
+                          grade attribué (S/A/B/C). Je confirme que toutes les
+                          informations fournies sont exactes.
                         </span>
                       </label>
                     </motion.div>
@@ -3284,7 +3284,9 @@ export default function ArtistPortalWelcome() {
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center">
               <Music className="w-3 h-3 text-white" />
             </div>
-            <span className="text-white/30 text-sm notranslate">Verso Artist Studio</span>
+            <span className="text-white/30 text-sm notranslate">
+              Verso Artist Studio
+            </span>
           </div>
           <div className="flex items-center gap-6 text-white/20 text-xs">
             <Link href="/divertissement">
