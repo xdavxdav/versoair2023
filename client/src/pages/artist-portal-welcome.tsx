@@ -2046,7 +2046,7 @@ export default function ArtistPortalWelcome() {
                 className="mb-2"
               >
                 <span className="text-xs md:text-sm tracking-[0.5em] uppercase text-purple-400/60 font-light">
-                  L'univers musical de
+                  L'espace créatif de
                 </span>
               </motion.div>
 
