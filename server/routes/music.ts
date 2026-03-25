@@ -527,6 +527,10 @@ router.get("/tracks/:id/download", async (req, res) => {
   }
 });
 
+// ── Play-count debounce: track → last-increment timestamp ─────────────
+const playCountDebounce = new Map<string, number>();
+const PLAY_DEBOUNCE_MS = 30_000; // 30 seconds between increments per IP+track
+
 // ═════════════════════════════════════════════════════════════════════
 // 🔊 TRACK STREAM (play in browser) — GET /api/music/tracks/:id/stream
 // ═════════════════════════════════════════════════════════════════════
@@ -550,11 +554,19 @@ router.get("/tracks/:id/stream", async (req, res) => {
         .json({ success: false, error: "Audio file not found" });
     }
 
-    // Increment play count
-    await pool.query(
-      "UPDATE music_tracks SET play_count = COALESCE(play_count, 0) + 1, streams = COALESCE(streams, 0) + 1 WHERE id = $1",
-      [parseInt(id)],
-    );
+    // Only increment play count on fresh plays (not seek/range re-requests)
+    // Debounce: same IP + track only increments once per 30s
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const debounceKey = `${clientIp}:${id}`;
+    const lastPlayed = playCountDebounce.get(debounceKey) || 0;
+    const isRange = !!req.headers.range;
+    if (!isRange && Date.now() - lastPlayed > PLAY_DEBOUNCE_MS) {
+      playCountDebounce.set(debounceKey, Date.now());
+      await pool.query(
+        "UPDATE music_tracks SET play_count = COALESCE(play_count, 0) + 1, streams = COALESCE(streams, 0) + 1 WHERE id = $1",
+        [parseInt(id)],
+      );
+    }
 
     const stat = fs.statSync(track.file_path);
     const range = req.headers.range;
