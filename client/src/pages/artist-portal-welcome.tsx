@@ -2046,7 +2046,7 @@ export default function ArtistPortalWelcome() {
                 className="mb-2"
               >
                 <span className="text-xs md:text-sm tracking-[0.5em] uppercase text-purple-400/60 font-light">
-                  Bienvenue dans le
+                  L'univers musical de
                 </span>
               </motion.div>
 
@@ -2060,12 +2060,12 @@ export default function ArtistPortalWelcome() {
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
               >
-                <span className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent notranslate">
                   Verso
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-white via-purple-100 to-white/80 bg-clip-text text-transparent">
-                  Univers Artiste
+                <span className="bg-gradient-to-r from-white via-purple-100 to-white/80 bg-clip-text text-transparent notranslate">
+                  Artist Studio
                 </span>
               </motion.h1>
 
@@ -2075,10 +2075,9 @@ export default function ArtistPortalWelcome() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8, duration: 1 }}
               >
-                Un monde créé pour les artistes. Votre musique. Votre identité.
-                Votre scène.
+                Votre musique. Votre identité. Votre scène.
                 <br className="hidden md:block" />
-                Franchissez le portail et prenez votre place dans l'univers.
+                Publiez, monétisez et rayonnez depuis un seul espace.
               </motion.p>
 
               {/* Audio Visualizer */}
@@ -3105,7 +3104,7 @@ export default function ArtistPortalWelcome() {
                           <span className="text-purple-400/60 hover:text-purple-400 cursor-pointer">
                             Contrat Artiste
                           </span>{" "}
-                          du Verso Univers Artiste. Je comprends que les
+                          du Verso Artist Studio. Je comprends que les
                           artistes approuvés reçoivent une part de revenus basée
                           sur leur grade attribué (S/A/B/C). Je confirme que
                           toutes les informations fournies sont exactes.
@@ -3285,7 +3284,7 @@ export default function ArtistPortalWelcome() {
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center">
               <Music className="w-3 h-3 text-white" />
             </div>
-            <span className="text-white/30 text-sm">Verso Univers Artiste</span>
+            <span className="text-white/30 text-sm notranslate">Verso Artist Studio</span>
           </div>
           <div className="flex items-center gap-6 text-white/20 text-xs">
             <Link href="/divertissement">

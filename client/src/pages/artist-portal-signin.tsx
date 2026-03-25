@@ -266,13 +266,13 @@ export default function ArtistPortalSignIn() {
             >
               <Music className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-300 to-fuchsia-300 bg-clip-text text-transparent">
-              Verso Univers Artiste
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-300 to-fuchsia-300 bg-clip-text text-transparent notranslate">
+              Verso Artist Studio
             </h1>
             <p className="text-white/30 text-sm mt-1">
               {activeTab === "signin"
                 ? "Bon retour, créateur"
-                : "Rejoindre l'univers"}
+                : "Rejoindre le studio"}
             </p>
           </div>
 
@@ -982,7 +982,7 @@ export default function ArtistPortalSignIn() {
       {/* Minimal footer */}
       <div className="relative z-10 py-6 text-center">
         <p className="text-white/10 text-xs">
-          © 2026 Verso Univers Artiste — Fait partie de l'écosystème Verso Air
+          © 2026 Verso Artist Studio — Fait partie de l'écosystème Verso Air
         </p>
       </div>
     </div>

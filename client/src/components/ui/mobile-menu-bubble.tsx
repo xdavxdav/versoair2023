@@ -347,7 +347,7 @@ export function MobileMenuBubble() {
   useEffect(() => {
     const check = () => {
       const overlay = document.querySelector(
-        "[data-state='open'][role='dialog'], [data-state='open'].fixed[data-radix-portal]"
+        "[data-state='open'][role='dialog'], [data-state='open'].fixed[data-radix-portal]",
       );
       setDialogOpen(!!overlay);
     };
