@@ -385,6 +385,24 @@ router.post(
         );
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
+        } else {
+          // Auto-create an artist profile so the FK constraint is satisfied
+          const userRow = await pool.query(
+            `SELECT username, email FROM users WHERE id = $1`,
+            [parseInt(req.user.userId)],
+          );
+          const stageName =
+            userRow.rows[0]?.username ||
+            userRow.rows[0]?.email?.split("@")[0] ||
+            "Artist";
+          const newArtist = await pool.query(
+            `INSERT INTO artists (stage_name, user_id, label_status) VALUES ($1, $2, 'signed') RETURNING id`,
+            [stageName, parseInt(req.user.userId)],
+          );
+          artistId = newArtist.rows[0].id;
+          console.log(
+            `🎤 [MUSIC] Auto-created artist "${stageName}" for user #${req.user.userId} during upload`,
+          );
         }
       }
 

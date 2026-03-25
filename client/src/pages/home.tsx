@@ -2502,7 +2502,9 @@ export default function Home() {
                   className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
                 >
                   <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mb-2 md:mb-3 flex-shrink-0" />
-                  <p className={`font-semibold text-gray-800 text-sm md:text-base leading-tight ${"notranslate" in item && item.notranslate ? "notranslate" : ""}`}>
+                  <p
+                    className={`font-semibold text-gray-800 text-sm md:text-base leading-tight ${"notranslate" in item && item.notranslate ? "notranslate" : ""}`}
+                  >
                     {item.text}
                   </p>
                   <p className="text-gray-500 text-xs md:text-sm mt-1 leading-tight">
