@@ -690,6 +690,15 @@ export default function BusinessesDirectory() {
     ],
   );
 
+  // Auto-search on typing (debounced 500ms)
+  useEffect(() => {
+    if (!searchQuery && !locationQuery) return;
+    const timer = setTimeout(() => {
+      handleSearch(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, locationQuery]);
+
   const clearSearch = () => {
     setSelectedCategory(null);
     setSelectedSubcategory(null);
@@ -809,19 +818,9 @@ export default function BusinessesDirectory() {
                 <Button
                   onClick={() => handleSearch()}
                   disabled={isSearching}
-                  className="h-14 px-8 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/25"
+                  className="hidden"
                 >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Searching
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-5 h-5 mr-2" />
-                      Search
-                    </>
-                  )}
+                  <Search className="w-5 h-5" />
                 </Button>
               </div>
             </div>
