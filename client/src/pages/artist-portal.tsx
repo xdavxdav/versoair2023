@@ -431,6 +431,7 @@ export default function ArtistPortal() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAdvancedUpload, setShowAdvancedUpload] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("all");
@@ -1585,15 +1586,29 @@ export default function ArtistPortal() {
                         ${trackPrice}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Always-visible play/download overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
                       <div className="absolute bottom-4 left-4 right-4 flex gap-2">
                         <Button
-                          onClick={() => handlePlayTrack(track)}
-                          className="flex-1 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+                          onClick={() => {
+                            if (currentTrack && String(currentTrack.id) === String(track.id) && isPlaying) {
+                              handleTogglePlayPause();
+                            } else {
+                              handlePlayTrack(track);
+                            }
+                          }}
+                          className={`flex-1 backdrop-blur-sm text-white transition-all ${
+                            currentTrack && String(currentTrack.id) === String(track.id) && isPlaying
+                              ? "bg-purple-500/60 hover:bg-purple-500/80 ring-2 ring-purple-400/50"
+                              : "bg-white/20 hover:bg-white/30"
+                          }`}
                           disabled={!hasAudio}
                         >
-                          <Play className="mr-1 h-4 w-4" />
-                          Lire
+                          {currentTrack && String(currentTrack.id) === String(track.id) && isPlaying ? (
+                            <><Pause className="mr-1 h-4 w-4 animate-pulse" /> Pause</>
+                          ) : (
+                            <><Play className="mr-1 h-4 w-4" /> Écouter</>
+                          )}
                         </Button>
                         {hasAudio && (
                           <Button
@@ -1605,6 +1620,7 @@ export default function ArtistPortal() {
                             }}
                             className="bg-green-600/80 hover:bg-green-500 text-white"
                             size="icon"
+                            title="Télécharger"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -1763,10 +1779,24 @@ export default function ArtistPortal() {
                     </div>
                     {hasAudio && (
                       <button
-                        onClick={() => handlePlayTrack(track)}
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-opacity"
+                        onClick={() => {
+                          if (currentTrack && String(currentTrack.id) === String(track.id) && isPlaying) {
+                            handleTogglePlayPause();
+                          } else {
+                            handlePlayTrack(track);
+                          }
+                        }}
+                        className={`absolute inset-0 rounded-lg flex items-center justify-center transition-all ${
+                          currentTrack && String(currentTrack.id) === String(track.id) && isPlaying
+                            ? "bg-purple-500/60 opacity-100 ring-2 ring-purple-400/50"
+                            : "bg-black/60 opacity-0 group-hover:opacity-100"
+                        }`}
                       >
-                        <Play className="h-4 w-4 text-white" />
+                        {currentTrack && String(currentTrack.id) === String(track.id) && isPlaying ? (
+                          <Pause className="h-4 w-4 text-white animate-pulse" />
+                        ) : (
+                          <Play className="h-4 w-4 text-white" />
+                        )}
                       </button>
                     )}
                   </div>
@@ -3200,6 +3230,21 @@ export default function ArtistPortal() {
                     className="w-24"
                   />
                 </div>
+
+                {/* Download from Now Playing */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                  title="Télécharger"
+                  onClick={() => {
+                    if (currentTrack) {
+                      window.open(`/api/music/tracks/${currentTrack.id}/download`, "_blank");
+                    }
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -3906,8 +3951,16 @@ export default function ArtistPortal() {
               </div>
             </div>
 
-            {/* BPM / Key / Mood row */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* BPM / Key / Mood — collapsed by default */}
+            <button
+              type="button"
+              onClick={() => setShowAdvancedUpload(p => !p)}
+              className="flex items-center gap-2 text-sm text-purple-300/70 hover:text-purple-200 transition-colors py-1"
+            >
+              {showAdvancedUpload ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              Options avancées (BPM, Tonalité, Ambiance)
+            </button>
+            <div className={`grid grid-cols-3 gap-3 transition-all overflow-hidden ${showAdvancedUpload ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
               <div className="space-y-2">
                 <Label>BPM</Label>
                 <Select
