@@ -32,7 +32,7 @@ const SponsorSlotMachine: React.FC<SponsorSlotMachineProps> = ({
         duration: duration,
         ease: "power2.inOut",
       },
-      0
+      0,
     )
       .to(
         scrollerRef.current,
@@ -41,7 +41,7 @@ const SponsorSlotMachine: React.FC<SponsorSlotMachineProps> = ({
           duration: 0.1,
           ease: "back.out",
         },
-        duration - 0.1
+        duration - 0.1,
       )
       .to({}, { duration: cycleDelay - duration }, duration);
     timelineRef.current = tl;
