@@ -2046,7 +2046,7 @@ export default function ArtistPortalWelcome() {
                 className="mb-2"
               >
                 <span className="text-xs md:text-sm tracking-[0.5em] uppercase text-purple-400/60 font-light">
-                  L'espace créatif de
+                  Bienvenue dans l'univers VERSO des artistes de la musique
                 </span>
               </motion.div>
 
