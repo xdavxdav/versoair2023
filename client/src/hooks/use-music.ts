@@ -170,5 +170,122 @@ export function useInvalidateTracks() {
     queryClient.invalidateQueries({ queryKey: ["music", "earnings"] });
     queryClient.invalidateQueries({ queryKey: ["music", "analytics"] });
     queryClient.invalidateQueries({ queryKey: ["music", "my-artist"] });
+    queryClient.invalidateQueries({ queryKey: ["music", "albums"] });
+    queryClient.invalidateQueries({ queryKey: ["music", "collaborations"] });
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ALBUM hooks
+// ═══════════════════════════════════════════════════════════════════
+
+export function useMusicAlbums(artistId?: number) {
+  return useQuery({
+    queryKey: ["music", "albums", artistId ?? "all"],
+    queryFn: async () => {
+      const params = artistId ? `?artist_id=${artistId}` : "";
+      const response = await fetch(`/api/music/albums${params}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch albums");
+      const data = await response.json();
+      return data.data as any[];
+    },
+  });
+}
+
+export async function createAlbum(payload: {
+  title: string;
+  genre?: string;
+  description?: string;
+  albumType?: string;
+  trackIds?: number[];
+}): Promise<any> {
+  const response = await authenticatedFetch("/api/music/albums", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Failed" }));
+    throw new Error(err.error || "Failed to create album");
+  }
+  return response.json();
+}
+
+export async function deleteAlbum(id: number): Promise<void> {
+  const response = await authenticatedFetch(`/api/music/albums/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete album");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COLLABORATION hooks
+// ═══════════════════════════════════════════════════════════════════
+
+export function useCollaborations() {
+  return useQuery({
+    queryKey: ["music", "collaborations"],
+    queryFn: async () => {
+      const response = await authenticatedFetch("/api/music/collaborations");
+      if (!response.ok) throw new Error("Failed to fetch collabs");
+      const data = await response.json();
+      return data.data as any[];
+    },
+  });
+}
+
+export async function sendCollabRequest(payload: {
+  targetId: number;
+  trackTitle?: string;
+  revenueShare?: number;
+  message?: string;
+  genre?: string;
+}): Promise<any> {
+  const response = await authenticatedFetch("/api/music/collaborations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Failed" }));
+    throw new Error(err.error || "Failed to send request");
+  }
+  return response.json();
+}
+
+export async function updateCollabStatus(
+  id: number,
+  status: "active" | "declined" | "completed",
+): Promise<any> {
+  const response = await authenticatedFetch(
+    `/api/music/collaborations/${id}/status`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    },
+  );
+  if (!response.ok) throw new Error("Failed to update collab status");
+  return response.json();
+}
+
+// Search artists by name/genre
+export function useArtistSearch(q: string, genre?: string) {
+  return useQuery({
+    queryKey: ["music", "artists", "search", q, genre ?? ""],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (genre && genre !== "all") params.set("genre", genre);
+      const response = await fetch(`/api/music/artists/search?${params}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to search artists");
+      const data = await response.json();
+      return data.data as any[];
+    },
+    enabled: q.length >= 1,
+  });
 }
