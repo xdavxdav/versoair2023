@@ -47,6 +47,8 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/subscriber/register",
   "/auth/community/login",
   "/auth/community/register",
+  // Music upload — multipart/form-data with auth token; CSRF header unreliable with FormData
+  "/api/music/tracks/upload",
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────

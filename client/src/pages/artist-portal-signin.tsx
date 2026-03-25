@@ -428,7 +428,7 @@ export default function ArtistPortalSignIn() {
                   }}
                   whileTap={{ scale: 0.99 }}
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
+                  <span className="relative z-10 flex items-center justify-center gap-2 notranslate">
                     {isLoading ? (
                       <motion.div
                         className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"

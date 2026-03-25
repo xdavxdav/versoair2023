@@ -849,7 +849,7 @@ export default function BusinessesDirectory() {
                     Click on a category to explore businesses in that sector
                   </p>
                 </div>
-                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap">
+                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate">
                   List Your Business
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
