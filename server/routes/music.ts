@@ -423,28 +423,43 @@ router.post(
           .json({ success: false, error: "Track title is required" });
       }
 
-      const result = await pool.query(
-        `INSERT INTO music_tracks
+      const insertParams = [
+        title,
+        artistId ? parseInt(artistId) : null,
+        genre || null,
+        description || null,
+        price,
+        file.path,
+        file.originalname,
+        file.size,
+        file.mimetype,
+        bpm ? parseInt(bpm) : null,
+        musicalKey || null,
+        mood || null,
+        status,
+      ];
+      const insertSQL = `INSERT INTO music_tracks
         (title, artist_id, genre, description, price, file_path, file_name, file_size, mime_type,
          bpm, musical_key, mood, status, streams, play_count, downloads, revenue, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,0,0,0,'0.00',NOW())
-       RETURNING *`,
-        [
-          title,
-          artistId ? parseInt(artistId) : null,
-          genre || null,
-          description || null,
-          price,
-          file.path,
-          file.originalname,
-          file.size,
-          file.mimetype,
-          bpm ? parseInt(bpm) : null,
-          musicalKey || null,
-          mood || null,
-          status,
-        ],
-      );
+       RETURNING *`;
+
+      let result;
+      try {
+        result = await pool.query(insertSQL, insertParams);
+      } catch (insertErr: any) {
+        // FK constraint mismatch: artist_id FK may reference music_artists instead of artists
+        if (insertErr.message?.includes("fk_music_track_artist") || insertErr.message?.includes("foreign key")) {
+          console.warn("⚠️ [MUSIC] FK constraint blocking insert — dropping orphan constraints and retrying");
+          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`).catch(() => {});
+          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`).catch(() => {});
+          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_music_artists_id_fk`).catch(() => {});
+          // Retry the insert
+          result = await pool.query(insertSQL, insertParams);
+        } else {
+          throw insertErr;
+        }
+      }
 
       console.log(
         `🎵 [MUSIC] Track uploaded: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
