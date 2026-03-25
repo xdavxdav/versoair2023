@@ -104,6 +104,15 @@ async function ensureTrackColumns(): Promise<void> {
     }
   }
   columnsChecked = true;
+
+  // Drop orphan FK constraints that reference the wrong table
+  // (fk_music_track_artist may point to music_artists instead of artists)
+  try {
+    await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`);
+  } catch { /* constraint may not exist */ }
+  try {
+    await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`);
+  } catch { /* constraint may not exist */ }
 }
 
 // Check if country_code column exists on artists table (cached)
