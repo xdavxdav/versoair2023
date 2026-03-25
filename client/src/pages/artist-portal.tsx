@@ -244,6 +244,12 @@ import {
   uploadTrack,
   deleteTrack,
   updateTrackMonetization,
+  useMusicAlbums,
+  createAlbum,
+  useCollaborations,
+  sendCollabRequest,
+  updateCollabStatus,
+  useArtistSearch,
 } from "@/hooks/use-music";
 import {
   checkAuth,
@@ -438,6 +444,13 @@ export default function ArtistPortal() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [collabSearch, setCollabSearch] = useState("");
   const [showCollabSearch, setShowCollabSearch] = useState(false);
+  const [showAlbumModal, setShowAlbumModal] = useState(false);
+  const [albumForm, setAlbumForm] = useState({ title: "", genre: "", description: "", albumType: "album", trackIds: [] as number[] });
+  const [albumCreating, setAlbumCreating] = useState(false);
+  const [showCollabRequestModal, setShowCollabRequestModal] = useState(false);
+  const [collabTargetArtist, setCollabTargetArtist] = useState<any>(null);
+  const [collabForm, setCollabForm] = useState({ trackTitle: "", revenueShare: 50, message: "", genre: "" });
+  const [incognitoMode, setIncognitoMode] = useState(() => localStorage.getItem("artist_incognito") === "true");
   const [notifications, setNotifications] = useState<
     {
       id: number;
@@ -460,6 +473,9 @@ export default function ArtistPortal() {
   const { data: earnings } = useMusicEarnings();
   const invalidateTracks = useInvalidateTracks();
   const { data: myArtist } = useMyArtist();
+  const { data: albumsData } = useMusicAlbums();
+  const { data: collabsData } = useCollaborations();
+  const { data: searchedArtists } = useArtistSearch(collabSearch);
 
   // Re-trigger GT when portal data finishes loading (content wasn't in DOM when GT first ran)
   useGTRetranslate([
@@ -842,8 +858,15 @@ export default function ArtistPortal() {
     }));
   }, [displayTracks]);
 
-  // Collaborations — no backend, show empty
-  const displayCollaborations: Collaboration[] = [];
+  // Collaborations from API
+  const displayCollaborations: Collaboration[] = (collabsData || []).map((c: any) => ({
+    id: String(c.id),
+    artist: c.requester_name || c.target_name || "Artiste",
+    status: c.status as "active" | "pending" | "completed",
+    track: c.track_title || "—",
+    revenueShare: c.revenue_share || 50,
+    date: c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "—",
+  }));
 
   // Calculate totals from real data
   const totalStreams = computedAnalytics.totalStreams;
@@ -1390,7 +1413,8 @@ export default function ArtistPortal() {
               {displayArtists.slice(0, 5).map((artist, index) => (
                 <div
                   key={artist.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => window.location.href = `/artist-catalogue/${artist.id}`}
                 >
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
@@ -1416,24 +1440,27 @@ export default function ArtistPortal() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center justify-end space-x-1">
-                      {((artist as any).growth || 0) > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-green-400" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-400" />
-                      )}
-                      <span
-                        className={
-                          ((artist as any).growth || 0) > 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }
-                      >
-                        {((artist as any).growth || 0) > 0 ? "+" : ""}
-                        {(artist as any).growth || 0}%
-                      </span>
-                    </div>
-                    <p className="text-purple-200 text-sm">croissance</p>
+                    {(() => {
+                      // Compute growth: position-based ranking metric
+                      const artistStreams = (artist as any).totalStreams || 0;
+                      const avgStreams = totalStreams / Math.max(totalArtists, 1);
+                      const growth = avgStreams > 0 ? Math.round(((artistStreams - avgStreams) / avgStreams) * 100) : 0;
+                      return (
+                        <>
+                          <div className="flex items-center justify-end space-x-1">
+                            {growth >= 0 ? (
+                              <TrendingUp className="h-4 w-4 text-green-400" />
+                            ) : (
+                              <TrendingDown className="h-4 w-4 text-red-400" />
+                            )}
+                            <span className={growth >= 0 ? "text-green-400" : "text-red-400"}>
+                              {growth >= 0 ? "+" : ""}{growth}%
+                            </span>
+                          </div>
+                          <p className="text-purple-200 text-sm">vs moyenne</p>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -1457,14 +1484,15 @@ export default function ArtistPortal() {
         <div className="flex items-center space-x-3">
           <Button
             onClick={handleUploadTrack}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 hover:from-purple-400 hover:via-fuchsia-400 hover:to-pink-400 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 font-medium"
           >
             <Upload className="mr-2 h-4 w-4" />
             Téléverser un nouveau titre
           </Button>
           <Button
             variant="outline"
-            className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
+            className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
+            onClick={() => setShowAlbumModal(true)}
           >
             <FolderPlus className="mr-2 h-4 w-4" />
             Créer un album
@@ -1550,6 +1578,30 @@ export default function ArtistPortal() {
           </div>
         </div>
       </div>
+
+      {/* Albums Section */}
+      {(albumsData || []).length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <FolderPlus className="h-5 w-5 text-purple-400" />
+            Albums & EPs
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {(albumsData || []).map((album: any) => (
+              <Card key={album.id} className="bg-white/5 backdrop-blur-sm border-white/10 hover:border-purple-400/30 hover:bg-white/10 transition-all cursor-pointer group">
+                <CardContent className="p-4">
+                  <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-purple-600/40 to-pink-600/40 flex items-center justify-center mb-3">
+                    <Music2 className="h-10 w-10 text-white/40" />
+                  </div>
+                  <p className="text-white font-medium text-sm truncate">{album.title}</p>
+                  <p className="text-purple-200/60 text-xs">{album.album_type?.toUpperCase() || "ALBUM"} • {album.track_count || album.total_tracks || 0} titres</p>
+                  {album.genre && <Badge variant="outline" className="mt-1 border-purple-400/30 text-purple-300 text-[10px]">{album.genre}</Badge>}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tracks Grid/List */}
       {viewMode === "grid" ? (
@@ -2861,12 +2913,10 @@ export default function ArtistPortal() {
   };
 
   const renderCollaborations = () => {
-    const filteredCollabArtists = displayArtists.filter((a) =>
-      collabSearch
-        ? a.name?.toLowerCase().includes(collabSearch.toLowerCase()) ||
-          (a as any).genre?.toLowerCase().includes(collabSearch.toLowerCase())
-        : true,
-    );
+    // Use server-side search results when query present, otherwise all artists
+    const filteredCollabArtists = collabSearch && searchedArtists
+      ? searchedArtists
+      : displayArtists;
 
     return (
       <div className="space-y-6">
@@ -2880,7 +2930,7 @@ export default function ArtistPortal() {
           <div className="flex items-center space-x-3">
             <Button
               variant="outline"
-              className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400"
+              className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
               onClick={() => setShowCollabSearch(!showCollabSearch)}
             >
               <Users2 className="mr-2 h-4 w-4" />
@@ -2888,7 +2938,13 @@ export default function ArtistPortal() {
                 ? "Masquer la recherche"
                 : "Trouver des artistes"}
             </Button>
-            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+            <Button
+              className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 hover:from-purple-400 hover:via-fuchsia-400 hover:to-pink-400 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 font-medium"
+              onClick={() => {
+                setShowCollabSearch(true);
+                setCollabSearch("");
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Nouvelle collaboration
             </Button>
@@ -2928,6 +2984,8 @@ export default function ArtistPortal() {
                       <div
                         key={artist.id}
                         className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-400/30 transition-all cursor-pointer group"
+                        onClick={() => window.open(`/artist-catalogue/${artist.id}`, "_blank")}
+                        title="Voir le profil de l'artiste"
                       >
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={(artist as any).avatar || ""} />
@@ -2948,6 +3006,12 @@ export default function ArtistPortal() {
                           size="sm"
                           variant="ghost"
                           className="text-purple-400 hover:text-white hover:bg-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCollabTargetArtist(artist);
+                            setShowCollabRequestModal(true);
+                          }}
+                          title="Proposer une collaboration"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -3095,6 +3159,12 @@ export default function ArtistPortal() {
                           <Button
                             size="sm"
                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
+                            onClick={async () => {
+                              try {
+                                await updateCollabStatus(parseInt(collab.id), "active");
+                                invalidateTracks();
+                              } catch {}
+                            }}
                           >
                             <Check className="mr-2 h-3 w-3" />
                             Accepter
@@ -3103,6 +3173,12 @@ export default function ArtistPortal() {
                             size="sm"
                             variant="outline"
                             className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
+                            onClick={async () => {
+                              try {
+                                await updateCollabStatus(parseInt(collab.id), "declined");
+                                invalidateTracks();
+                              } catch {}
+                            }}
                           >
                             <X className="mr-2 h-3 w-3" />
                             Refuser
@@ -3262,10 +3338,17 @@ export default function ArtistPortal() {
                   Verso Air ™️ Portail Artiste
                 </span>
                 <div className="flex items-center space-x-2">
-                  <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                    <Crown className="h-3 w-3 mr-1" />
-                    {connectedUser.tier}
-                  </Badge>
+                  {incognitoMode ? (
+                    <Badge className="bg-gray-600/50 text-gray-300 border border-gray-500/30">
+                      <EyeOff className="h-3 w-3 mr-1" />
+                      Incognito
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                      <Crown className="h-3 w-3 mr-1" />
+                      {connectedUser.tier}
+                    </Badge>
+                  )}
                   <span className="text-purple-200 text-sm">
                     Bon retour, {connectedUser.name}
                   </span>
@@ -3274,6 +3357,29 @@ export default function ArtistPortal() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Incognito Mode Toggle */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`relative transition-all ${incognitoMode ? "text-green-400 bg-green-500/10" : "text-purple-200 hover:text-white"}`}
+                      onClick={() => {
+                        const next = !incognitoMode;
+                        setIncognitoMode(next);
+                        localStorage.setItem("artist_incognito", String(next));
+                      }}
+                    >
+                      {incognitoMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-gray-900 border-white/20 text-white">
+                    {incognitoMode ? "Mode incognito activé — vous apparaissez comme un auditeur" : "Activer le mode incognito — se fondre dans la masse"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -4298,6 +4404,278 @@ export default function ArtistPortal() {
             <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
               <Calendar className="mr-2 h-4 w-4" />
               Planifier la sortie
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════
+          Album Creation Modal
+          ═══════════════════════════════════════════════════════ */}
+      <Dialog open={showAlbumModal} onOpenChange={setShowAlbumModal}>
+        <DialogContent className="sm:max-w-[540px] bg-gray-900 border-white/20 text-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Créer un album</DialogTitle>
+            <DialogDescription className="text-purple-200">
+              Regroupez vos titres dans un album, EP ou single
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Titre de l'album</Label>
+              <Input
+                value={albumForm.title}
+                onChange={(e) => setAlbumForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="Mon premier album..."
+                className="bg-white/10 border-white/30 text-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={albumForm.albumType} onValueChange={(v) => setAlbumForm(f => ({ ...f, albumType: v }))}>
+                  <SelectTrigger className="bg-white/10 border-white/30 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20">
+                    <SelectItem value="album">Album</SelectItem>
+                    <SelectItem value="ep">EP</SelectItem>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="mixtape">Mixtape</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Genre</Label>
+                <Select value={albumForm.genre} onValueChange={(v) => setAlbumForm(f => ({ ...f, genre: v }))}>
+                  <SelectTrigger className="bg-white/10 border-white/30 text-white notranslate">
+                    <SelectValue placeholder="Genre" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-white/20 notranslate">
+                    {["Afrobeats","Amapiano","RnB","Hip-Hop","Rap","Trap","Drill","Pop","Jazz","Reggae","Latin","Electronic","Dancehall","Gospel","Rock","Classical","Kompa","Coupé-décalé","Ndombolo","Zouk","Gqom","Kizomba","Bongo Flava","Highlife","Mbalax","Gnawa","Raï","Afro-Fusion","Afro-Pop","Afro-Soul"].map(g => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description (optionnel)</Label>
+              <Textarea
+                value={albumForm.description}
+                onChange={(e) => setAlbumForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="L'histoire derrière cet album..."
+                className="bg-white/10 border-white/30 text-white min-h-[60px]"
+              />
+            </div>
+            {/* Track Selection */}
+            <div className="space-y-2">
+              <Label>Titres à inclure</Label>
+              <div className="max-h-48 overflow-y-auto space-y-1 rounded-lg border border-white/10 p-2 bg-white/5">
+                {displayTracks.length === 0 ? (
+                  <p className="text-white/30 text-sm text-center py-4">Aucun titre disponible — téléversez d'abord des titres</p>
+                ) : (
+                  displayTracks.map((track) => (
+                    <label
+                      key={track.id}
+                      className="flex items-center gap-3 p-2 rounded hover:bg-white/5 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={albumForm.trackIds.includes(Number(track.id))}
+                        onChange={(e) => {
+                          const tid = Number(track.id);
+                          setAlbumForm(f => ({
+                            ...f,
+                            trackIds: e.target.checked
+                              ? [...f.trackIds, tid]
+                              : f.trackIds.filter(id => id !== tid),
+                          }));
+                        }}
+                        className="rounded border-purple-400"
+                      />
+                      <Music2 className="h-4 w-4 text-purple-300" />
+                      <span className="text-white text-sm flex-1 truncate">{track.title}</span>
+                      <span className="text-purple-200/50 text-xs">{(track as any).genre || ""}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+              {albumForm.trackIds.length > 0 && (
+                <p className="text-purple-200/60 text-xs">{albumForm.trackIds.length} titre{albumForm.trackIds.length > 1 ? "s" : ""} sélectionné{albumForm.trackIds.length > 1 ? "s" : ""}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAlbumModal(false)}
+              className="border-white/30 text-white hover:bg-white/10"
+            >
+              Annuler
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              disabled={albumCreating || !albumForm.title}
+              onClick={async () => {
+                setAlbumCreating(true);
+                try {
+                  await createAlbum(albumForm);
+                  invalidateTracks();
+                  setShowAlbumModal(false);
+                  setAlbumForm({ title: "", genre: "", description: "", albumType: "album", trackIds: [] });
+                } catch (err: any) {
+                  console.error("Album creation failed:", err);
+                } finally {
+                  setAlbumCreating(false);
+                }
+              }}
+            >
+              <FolderPlus className="mr-2 h-4 w-4" />
+              {albumCreating ? "Création..." : "Créer l'album"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══════════════════════════════════════════════════════
+          Collaboration Request Modal — opens when clicking + on artist card
+          ═══════════════════════════════════════════════════════ */}
+      <Dialog open={showCollabRequestModal} onOpenChange={setShowCollabRequestModal}>
+        <DialogContent className="sm:max-w-[480px] bg-gray-900 border-white/20 text-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users2 className="h-5 w-5 text-purple-400" />
+              Proposer une collaboration
+            </DialogTitle>
+            <DialogDescription className="text-purple-200">
+              {collabTargetArtist ? `Envoyer une demande à ${collabTargetArtist.name || collabTargetArtist.stage_name}` : "Collaboration musicale professionnelle"}
+            </DialogDescription>
+          </DialogHeader>
+          {collabTargetArtist && (
+            <div className="space-y-4 py-4">
+              {/* Target artist info */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                    {(collabTargetArtist.name || collabTargetArtist.stage_name || "?").charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-white font-medium">{collabTargetArtist.name || collabTargetArtist.stage_name}</p>
+                  <p className="text-purple-200/60 text-xs">{collabTargetArtist.genre || "—"} • {collabTargetArtist.country || "Mondial"}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto text-purple-300 hover:text-white"
+                  onClick={() => window.open(`/artist-catalogue/${collabTargetArtist.id}`, "_blank")}
+                >
+                  <Eye className="h-4 w-4 mr-1" /> Profil
+                </Button>
+              </div>
+
+              {/* Pro collaboration info */}
+              <div className="rounded-lg bg-white/5 border border-white/10 p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-purple-300 flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" /> Infos collaboration professionnelle
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded bg-white/5">
+                    <p className="text-purple-200/60">Partage de revenus</p>
+                    <p className="text-white font-medium">Standard 50/50</p>
+                  </div>
+                  <div className="p-2 rounded bg-white/5">
+                    <p className="text-purple-200/60">Crédits</p>
+                    <p className="text-white font-medium">feat. sur le titre</p>
+                  </div>
+                  <div className="p-2 rounded bg-white/5">
+                    <p className="text-purple-200/60">Droits d'auteur</p>
+                    <p className="text-white font-medium">Co-écriture partagée</p>
+                  </div>
+                  <div className="p-2 rounded bg-white/5">
+                    <p className="text-purple-200/60">Publication</p>
+                    <p className="text-white font-medium">Distribué par Verso Air</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form fields */}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-sm">Titre du projet (optionnel)</Label>
+                  <Input
+                    value={collabForm.trackTitle}
+                    onChange={(e) => setCollabForm(f => ({ ...f, trackTitle: e.target.value }))}
+                    placeholder="Ex: Summer Vibes feat. ..."
+                    className="bg-white/10 border-white/30 text-white"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-sm">Partage revenus (%)</Label>
+                    <Input
+                      type="number"
+                      min={10} max={90}
+                      value={collabForm.revenueShare}
+                      onChange={(e) => setCollabForm(f => ({ ...f, revenueShare: parseInt(e.target.value) || 50 }))}
+                      className="bg-white/10 border-white/30 text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm">Genre</Label>
+                    <Input
+                      value={collabForm.genre}
+                      onChange={(e) => setCollabForm(f => ({ ...f, genre: e.target.value }))}
+                      placeholder="Afrobeats, Hip-Hop..."
+                      className="bg-white/10 border-white/30 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm">Message d'introduction</Label>
+                  <Textarea
+                    value={collabForm.message}
+                    onChange={(e) => setCollabForm(f => ({ ...f, message: e.target.value }))}
+                    placeholder="Salut ! J'aimerais collaborer avec toi sur un projet..."
+                    className="bg-white/10 border-white/30 text-white min-h-[80px]"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setShowCollabRequestModal(false); setCollabTargetArtist(null); }}
+              className="border-white/30 text-white hover:bg-white/10"
+            >
+              Annuler
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              disabled={!collabTargetArtist}
+              onClick={async () => {
+                if (!collabTargetArtist) return;
+                try {
+                  await sendCollabRequest({
+                    targetId: collabTargetArtist.id,
+                    trackTitle: collabForm.trackTitle || undefined,
+                    revenueShare: collabForm.revenueShare,
+                    message: collabForm.message || undefined,
+                    genre: collabForm.genre || undefined,
+                  });
+                  invalidateTracks();
+                  setShowCollabRequestModal(false);
+                  setCollabTargetArtist(null);
+                  setCollabForm({ trackTitle: "", revenueShare: 50, message: "", genre: "" });
+                } catch (err: any) {
+                  console.error("Collab request failed:", err);
+                }
+              }}
+            >
+              <Users2 className="mr-2 h-4 w-4" />
+              Envoyer la demande
             </Button>
           </DialogFooter>
         </DialogContent>

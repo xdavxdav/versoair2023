@@ -2067,3 +2067,28 @@ export const insertUserBrowsingHistorySchema =
   createInsertSchema(userBrowsingHistory);
 export type UserBrowsingHistory = typeof userBrowsingHistory.$inferSelect;
 export type InsertUserBrowsingHistory = typeof userBrowsingHistory.$inferInsert;
+
+// ─── Artist Collaborations ────────────────────────────────────────────────────
+export const artistCollaborations = pgTable(
+  "artist_collaborations",
+  {
+    id: serial("id").primaryKey(),
+    requesterId: integer("requester_id").notNull(), // artist who sent the request
+    targetId: integer("target_id").notNull(),       // artist who receives the request
+    status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, active, completed, declined
+    trackTitle: text("track_title"),                // proposed track name
+    revenueShare: integer("revenue_share").default(50), // % for target artist
+    message: text("message"),                       // intro message
+    genre: text("genre"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    requesterIdx: index("collab_requester_idx").on(t.requesterId),
+    targetIdx: index("collab_target_idx").on(t.targetId),
+    statusIdx: index("collab_status_idx").on(t.status),
+  }),
+);
+
+export type ArtistCollaboration = typeof artistCollaborations.$inferSelect;
+export type InsertArtistCollaboration = typeof artistCollaborations.$inferInsert;

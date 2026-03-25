@@ -2109,6 +2109,23 @@ export default function ArtistPortalWelcome() {
                   isOpen={phase === "ready"}
                   onEnter={handlePortalEnter}
                 />
+                {/* Listener Passerelle Link */}
+                <motion.div
+                  className="mt-6 text-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2, duration: 0.8 }}
+                >
+                  <p className="text-white/20 text-xs mb-2">Vous n'êtes pas artiste ?</p>
+                  <a
+                    href="/stream"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-white/50 hover:text-white/70 transition-all text-sm"
+                  >
+                    <Headphones className="h-4 w-4" />
+                    <span>Je suis un auditeur — écouter de la musique</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
+                </motion.div>
               </motion.div>
             </motion.div>
           )}

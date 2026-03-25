@@ -750,4 +750,245 @@ router.delete("/tracks/:id", requireAuth(), async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// ALBUM CRUD
+// ═══════════════════════════════════════════════════════════════════
+
+// Ensure albums table exists
+async function ensureAlbumsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS albums (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      artist_id INTEGER,
+      cover_art TEXT,
+      release_date TIMESTAMP,
+      genre TEXT,
+      description TEXT,
+      album_type VARCHAR(20) DEFAULT 'album',
+      total_tracks INTEGER DEFAULT 0,
+      total_duration INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+}
+
+// GET /api/music/albums — list albums (optionally by artist)
+router.get("/albums", async (req, res) => {
+  try {
+    await ensureAlbumsTable();
+    const { artist_id } = req.query;
+    let query = `SELECT a.*, 
+      (SELECT COUNT(*) FROM music_tracks WHERE album_id = a.id) as track_count
+      FROM albums a`;
+    const params: any[] = [];
+    if (artist_id) {
+      query += ` WHERE a.artist_id = $1`;
+      params.push(parseInt(artist_id as string));
+    }
+    query += ` ORDER BY a.created_at DESC`;
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    console.error("❌ List albums error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/music/albums — create album
+router.post("/albums", requireAuth(), async (req, res) => {
+  try {
+    await ensureAlbumsTable();
+    const { title, genre, description, albumType, trackIds } = req.body;
+    if (!title) return res.status(400).json({ success: false, error: "Title required" });
+
+    // Resolve artist_id from the logged-in user
+    const userId = (req as any).user?.id;
+    let artistId: number | null = null;
+    if (userId) {
+      const artist = await pool.query(
+        `SELECT id FROM artists WHERE user_id = $1 LIMIT 1`,
+        [userId],
+      );
+      if (artist.rows.length) artistId = artist.rows[0].id;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO albums (title, artist_id, genre, description, album_type, total_tracks)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title, artistId, genre || null, description || null, albumType || "album", (trackIds || []).length],
+    );
+
+    const album = result.rows[0];
+
+    // Assign tracks to this album
+    if (trackIds && trackIds.length > 0) {
+      for (const trackId of trackIds) {
+        await pool.query(`UPDATE music_tracks SET album_id = $1 WHERE id = $2`, [album.id, trackId]);
+      }
+    }
+
+    console.log(`📀 [MUSIC] Album "${title}" created (id=${album.id})`);
+    res.json({ success: true, data: album });
+  } catch (error: any) {
+    console.error("❌ Create album error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/music/albums/:id
+router.delete("/albums/:id", requireAuth(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Unlink tracks first
+    await pool.query(`UPDATE music_tracks SET album_id = NULL WHERE album_id = $1`, [parseInt(id)]);
+    await pool.query(`DELETE FROM albums WHERE id = $1`, [parseInt(id)]);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// COLLABORATION CRUD
+// ═══════════════════════════════════════════════════════════════════
+
+async function ensureCollabTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS artist_collaborations (
+      id SERIAL PRIMARY KEY,
+      requester_id INTEGER NOT NULL,
+      target_id INTEGER NOT NULL,
+      status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+      track_title TEXT,
+      revenue_share INTEGER DEFAULT 50,
+      message TEXT,
+      genre TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+}
+
+// GET /api/music/collaborations — list my collabs
+router.get("/collaborations", requireAuth(), async (req, res) => {
+  try {
+    await ensureCollabTable();
+    const userId = (req as any).user?.id;
+    // Get artist id for this user
+    const artistRes = await pool.query(
+      `SELECT id FROM artists WHERE user_id = $1 LIMIT 1`,
+      [userId],
+    );
+    if (!artistRes.rows.length) {
+      return res.json({ success: true, data: [] });
+    }
+    const artistId = artistRes.rows[0].id;
+
+    const result = await pool.query(
+      `SELECT c.*,
+        req.stage_name as requester_name, req.genre as requester_genre,
+        tgt.stage_name as target_name, tgt.genre as target_genre
+       FROM artist_collaborations c
+       LEFT JOIN artists req ON req.id = c.requester_id
+       LEFT JOIN artists tgt ON tgt.id = c.target_id
+       WHERE c.requester_id = $1 OR c.target_id = $1
+       ORDER BY c.updated_at DESC`,
+      [artistId],
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    console.error("❌ List collabs error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/music/collaborations — send collab request
+router.post("/collaborations", requireAuth(), async (req, res) => {
+  try {
+    await ensureCollabTable();
+    const userId = (req as any).user?.id;
+    const { targetId, trackTitle, revenueShare, message, genre } = req.body;
+
+    if (!targetId) return res.status(400).json({ success: false, error: "targetId required" });
+
+    const artistRes = await pool.query(
+      `SELECT id FROM artists WHERE user_id = $1 LIMIT 1`,
+      [userId],
+    );
+    if (!artistRes.rows.length) {
+      return res.status(400).json({ success: false, error: "You must be an artist" });
+    }
+    const requesterId = artistRes.rows[0].id;
+
+    // Check for existing pending request
+    const existing = await pool.query(
+      `SELECT id FROM artist_collaborations 
+       WHERE requester_id = $1 AND target_id = $2 AND status = 'pending'`,
+      [requesterId, targetId],
+    );
+    if (existing.rows.length) {
+      return res.status(409).json({ success: false, error: "Request already pending" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO artist_collaborations (requester_id, target_id, track_title, revenue_share, message, genre)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [requesterId, targetId, trackTitle || null, revenueShare || 50, message || null, genre || null],
+    );
+
+    console.log(`🤝 [COLLAB] Request sent from artist #${requesterId} → #${targetId}`);
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    console.error("❌ Create collab error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT /api/music/collaborations/:id/status — accept/decline/complete
+router.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
+  try {
+    await ensureCollabTable();
+    const { id } = req.params;
+    const { status } = req.body; // "active" | "declined" | "completed"
+    if (!["active", "declined", "completed"].includes(status)) {
+      return res.status(400).json({ success: false, error: "Invalid status" });
+    }
+    const result = await pool.query(
+      `UPDATE artist_collaborations SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, parseInt(id)],
+    );
+    if (!result.rows.length) return res.status(404).json({ success: false, error: "Not found" });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/music/artists/search?q=...&genre=... — search artists by name/genre
+router.get("/artists/search", async (req, res) => {
+  try {
+    const { q, genre } = req.query;
+    let query = `SELECT id, stage_name as name, genre, country_code as country 
+                 FROM artists WHERE 1=1`;
+    const params: any[] = [];
+    let idx = 1;
+    if (q) {
+      query += ` AND (stage_name ILIKE $${idx} OR genre ILIKE $${idx})`;
+      params.push(`%${q}%`);
+      idx++;
+    }
+    if (genre && genre !== "all") {
+      query += ` AND genre ILIKE $${idx}`;
+      params.push(`%${genre}%`);
+      idx++;
+    }
+    query += ` ORDER BY stage_name ASC LIMIT 50`;
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
