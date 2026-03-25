@@ -66,10 +66,21 @@ let columnsChecked = false;
 async function ensureTrackColumns(): Promise<void> {
   if (columnsChecked) return;
   const cols = [
+    // Core fields from Drizzle schema
+    { name: "album_id", def: "INTEGER" },
+    { name: "track_number", def: "INTEGER" },
+    { name: "duration", def: "INTEGER" },
+    { name: "streams", def: "INTEGER DEFAULT 0" },
+    { name: "play_count", def: "INTEGER DEFAULT 0" },
+    { name: "likes", def: "INTEGER DEFAULT 0" },
+    { name: "release_date", def: "TIMESTAMP" },
+    { name: "genre", def: "TEXT" },
+    // Upload / monetization fields
     { name: "file_path", def: "TEXT" },
     { name: "file_name", def: "TEXT" },
     { name: "file_size", def: "INTEGER" },
     { name: "mime_type", def: "TEXT" },
+    { name: "audio_url", def: "TEXT" },
     { name: "description", def: "TEXT" },
     { name: "price", def: "TEXT DEFAULT '0.99'" },
     { name: "downloads", def: "INTEGER DEFAULT 0" },
@@ -79,6 +90,9 @@ async function ensureTrackColumns(): Promise<void> {
     { name: "musical_key", def: "TEXT" },
     { name: "mood", def: "TEXT" },
     { name: "cover_art", def: "TEXT" },
+    { name: "wiki_url", def: "TEXT" },
+    { name: "is_explicit", def: "BOOLEAN DEFAULT false" },
+    { name: "lyrics", def: "TEXT" },
   ];
   for (const col of cols) {
     try {
