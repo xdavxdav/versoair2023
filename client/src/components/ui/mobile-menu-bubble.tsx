@@ -199,6 +199,7 @@ function SectionLabel({ text }: { text: string }) {
 
 export function MobileMenuBubble() {
   const [isOpen, setIsOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useSubscription();
   const { user, logout, loading: authLoading } = useAuthContext();
@@ -342,7 +343,28 @@ export function MobileMenuBubble() {
     return () => window.removeEventListener("resize", handleResize);
   }, [snapToEdge]);
 
+  // ── Hide bubble when any Radix Dialog/Sheet overlay is open ──
+  useEffect(() => {
+    const check = () => {
+      const overlay = document.querySelector(
+        "[data-state='open'][role='dialog'], [data-state='open'].fixed[data-radix-portal]"
+      );
+      setDialogOpen(!!overlay);
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+    check();
+    return () => observer.disconnect();
+  }, []);
+
   if (location === "/blog") return null;
+
+  if (dialogOpen) return null;
 
   return (
     <>

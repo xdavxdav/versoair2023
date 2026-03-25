@@ -648,9 +648,18 @@ export default function ArtistPortal() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
+  const [uploadForm, setUploadForm] = useState<{
+    title: string;
+    genre: string | undefined;
+    description: string;
+    price: string;
+    bpm: string;
+    musicalKey: string;
+    mood: string;
+    releaseType: string;
+  }>({
     title: "",
-    genre: "",
+    genre: undefined,
     description: "",
     price: "0.99",
     bpm: "",
@@ -674,7 +683,7 @@ export default function ArtistPortal() {
     const formData = new FormData();
     formData.append("audio", uploadFile);
     formData.append("title", uploadForm.title);
-    formData.append("genre", uploadForm.genre);
+    if (uploadForm.genre) formData.append("genre", uploadForm.genre);
     formData.append("description", uploadForm.description);
     formData.append("price", uploadForm.price);
     if (uploadForm.bpm) formData.append("bpm", uploadForm.bpm);
@@ -702,7 +711,7 @@ export default function ArtistPortal() {
         setIsUploading(false);
         setUploadForm({
           title: "",
-          genre: "",
+          genre: undefined,
           description: "",
           price: "0.99",
           bpm: "",
@@ -1475,10 +1484,10 @@ export default function ArtistPortal() {
         </div>
         <div className="flex items-center space-x-4">
           <Select value={selectedGenre} onValueChange={setSelectedGenre}>
-            <SelectTrigger className="w-40 bg-white/10 border-white/30 text-white">
+            <SelectTrigger className="w-40 bg-white/10 border-white/30 text-white notranslate">
               <SelectValue placeholder="Filtrer par genre" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-white/20">
+            <SelectContent className="bg-gray-900 border-white/20 notranslate">
               <SelectItem value="all">Tous les genres</SelectItem>
               <SelectItem value="Afrobeats">Afrobeats</SelectItem>
               <SelectItem value="Amapiano">Amapiano</SelectItem>
@@ -3439,7 +3448,7 @@ export default function ArtistPortal() {
                         }))
                       }
                     >
-                      <SelectTrigger className="w-[160px] bg-white/5 border-white/20 text-white">
+                      <SelectTrigger className="w-[160px] bg-white/5 border-white/20 text-white notranslate">
                         <SelectValue placeholder="Toutes les ligues" />
                       </SelectTrigger>
                       <SelectContent>
@@ -3808,10 +3817,10 @@ export default function ArtistPortal() {
                   setUploadForm((prev) => ({ ...prev, releaseType: v }))
                 }
               >
-                <SelectTrigger className="bg-white/10 border-white/30">
+                <SelectTrigger className="bg-white/10 border-white/30 notranslate">
                   <SelectValue placeholder="Type de sortie" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-white/20">
+                <SelectContent className="bg-gray-900 border-white/20 notranslate">
                   <SelectItem value="single">Single (1 titre)</SelectItem>
                   <SelectItem value="ep">EP (4–6 titres)</SelectItem>
                   <SelectItem value="mixtape">Mixtape (7–15 titres)</SelectItem>
@@ -3841,10 +3850,10 @@ export default function ArtistPortal() {
                     setUploadForm((prev) => ({ ...prev, genre: v }))
                   }
                 >
-                  <SelectTrigger className="bg-white/10 border-white/30">
+                  <SelectTrigger className="bg-white/10 border-white/30 notranslate">
                     <SelectValue placeholder="Sélectionner le genre" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20 max-h-[300px]">
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[300px] notranslate">
                     <SelectItem value="Afrobeats">Afrobeats</SelectItem>
                     <SelectItem value="Amapiano">Amapiano</SelectItem>
                     <SelectItem value="RnB">R&B</SelectItem>
@@ -3907,10 +3916,10 @@ export default function ArtistPortal() {
                     setUploadForm((prev) => ({ ...prev, bpm: v }))
                   }
                 >
-                  <SelectTrigger className="bg-white/10 border-white/30">
+                  <SelectTrigger className="bg-white/10 border-white/30 notranslate">
                     <SelectValue placeholder="Tempo" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px] notranslate">
                     <SelectItem value="60">60 — Lento</SelectItem>
                     <SelectItem value="70">70 — Adagio</SelectItem>
                     <SelectItem value="80">80 — Andante</SelectItem>
@@ -3937,10 +3946,10 @@ export default function ArtistPortal() {
                     setUploadForm((prev) => ({ ...prev, musicalKey: v }))
                   }
                 >
-                  <SelectTrigger className="bg-white/10 border-white/30">
+                  <SelectTrigger className="bg-white/10 border-white/30 notranslate">
                     <SelectValue placeholder="Clé" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px] notranslate">
                     <SelectItem value="C Major">Do Majeur</SelectItem>
                     <SelectItem value="C Minor">Do Mineur</SelectItem>
                     <SelectItem value="C# Major">Do# Majeur</SelectItem>
@@ -3976,10 +3985,10 @@ export default function ArtistPortal() {
                     setUploadForm((prev) => ({ ...prev, mood: v }))
                   }
                 >
-                  <SelectTrigger className="bg-white/10 border-white/30">
+                  <SelectTrigger className="bg-white/10 border-white/30 notranslate">
                     <SelectValue placeholder="Humeur" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px]">
+                  <SelectContent className="bg-gray-900 border-white/20 max-h-[250px] notranslate">
                     <SelectItem value="Chill">Chill / Détendu</SelectItem>
                     <SelectItem value="Energetic">Énergique</SelectItem>
                     <SelectItem value="Dark">Sombre</SelectItem>

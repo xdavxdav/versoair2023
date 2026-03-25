@@ -16,6 +16,8 @@ const SponsorSlotMachine: React.FC<SponsorSlotMachineProps> = ({
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   useEffect(() => {
     if (!containerRef.current || !scrollerRef.current) return;
+    // Clear previous content to prevent stacking duplicates on re-render
+    scrollerRef.current.innerHTML = "";
     const allWords = [...words, ...words];
     scrollerRef.current.innerHTML = allWords
       .map((word) => `<div class="slot-item">${word}</div>`)

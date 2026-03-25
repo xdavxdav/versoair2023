@@ -405,7 +405,7 @@ export default function UsersControlPanel() {
             legend: "L",
           }[division] || "D";
         const d = new Date();
-        const dateStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+        const dateStr = `${String(d.getFullYear() % 100).padStart(2, "0")}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
         setArtistCodePreview(`VA_${prefix}_${divCode}_${dateStr}_XXXXXX`);
       }
     }, 400);

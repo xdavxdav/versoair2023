@@ -3154,7 +3154,8 @@ export default function Home() {
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
                       Rejoignez notre mouvement pour soutenir les artisans et
-                      transformer les communautés à travers {countryMeta.nameFr}.
+                      transformer les communautés à travers {countryMeta.nameFr}
+                      .
                     </p>
                   </div>
 
