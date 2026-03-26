@@ -165,51 +165,38 @@ interface PublicStats {
 
 // ─── MOCK DATA (Replace with real API when ready) ───────────────────────────────
 
-function getMockBusiness(tier: TierKey): BusinessData {
+function getPlaceholderBusiness(tier: TierKey): BusinessData {
   return {
-    id: 1,
-    name: "My Business",
-    description: "A great business on the VersoAir platform",
-    category: "Commerce",
-    location: "Paris, France",
-    rating: 4.2,
-    reviewCount: 23,
-    verification_status: "verified",
-    is_active: true,
-    is_advertiser: tier !== "free",
-    photos_count: 3,
-    products_count: 12,
-    created_at: "2025-11-15T10:30:00Z",
+    id: 0,
+    name: "",
+    description: "",
+    category: "",
+    location: "",
+    rating: 0,
+    reviewCount: 0,
+    verification_status: "unverified",
+    is_active: false,
+    is_advertiser: false,
+    photos_count: 0,
+    products_count: 0,
+    created_at: new Date().toISOString(),
   };
 }
 
-function getMockAnalytics(tier: TierKey): BusinessAnalytics {
-  const power = TIERS[tier].rankingPower;
+function getEmptyAnalytics(_tier: TierKey): BusinessAnalytics {
   return {
-    pageViews: 120 * power,
-    uniqueVisitors: 85 * power,
-    clicks: 34 * power,
-    conversions: 8 * power,
-    searchAppearances: 450 * power,
-    categoryAvgSearches: 1200,
-    topKeywords: [
-      { keyword: "restaurant paris", count: 45 * power },
-      { keyword: "best food delivery", count: 32 * power },
-      { keyword: "catering service", count: 28 * power },
-      { keyword: "lunch menu", count: 21 * power },
-      { keyword: "business lunch", count: 15 * power },
-    ],
-    viewsHistory: Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString(
-        "en-US",
-        { weekday: "short" },
-      ),
-      views: Math.floor(15 * power + Math.random() * 20 * power),
-    })),
-    competitorAvgRating: 3.8,
-    competitorAvgReviews: 15,
-    categoryRank: Math.max(1, Math.floor(50 / power)),
-    categoryTotal: 120,
+    pageViews: 0,
+    uniqueVisitors: 0,
+    clicks: 0,
+    conversions: 0,
+    searchAppearances: 0,
+    categoryAvgSearches: 0,
+    topKeywords: [],
+    viewsHistory: [],
+    competitorAvgRating: 0,
+    competitorAvgReviews: 0,
+    categoryRank: 0,
+    categoryTotal: 0,
   };
 }
 
@@ -812,12 +799,12 @@ export default function UserDashboard() {
       const idx = Math.min(selectedBusinessIdx, userBusinesses.length - 1);
       return userBusinesses[idx];
     }
-    return getMockBusiness(currentTier);
+    return getPlaceholderBusiness(currentTier);
   }, [userBusinesses, currentTier, selectedBusinessIdx]);
 
   const hasRealBusiness = !!(userBusinesses && userBusinesses.length > 0);
 
-  const analytics = useMemo(() => getMockAnalytics(currentTier), [currentTier]);
+  const analytics = useMemo(() => getEmptyAnalytics(currentTier), [currentTier]);
 
   const rankScore = useMemo(
     () =>

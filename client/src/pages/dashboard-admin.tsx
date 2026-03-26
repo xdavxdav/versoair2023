@@ -1021,24 +1021,9 @@ const BusinessManagement = ({
         // Categories are loaded separately in their own useEffect
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        // Mock data fallback
-        const mockBusinesses = [
-          {
-            id: 1,
-            name: "Verso Air",
-            categoryId: 1,
-            email: "info@versoair.com",
-            phone: "+33123456789",
-            address: "123 Business St, Paris",
-            description: "Leading business intelligence platform",
-            isVerified: true,
-            isAdvertiser: false,
-          },
-          // ... more mock businesses (omitted for brevity)
-        ];
-        setBusinesses(mockBusinesses);
+        setBusinesses([]);
         setTotalPages(1);
-        setTotalCount(mockBusinesses.length);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }

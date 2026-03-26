@@ -110,118 +110,32 @@ interface Order {
 }
 
 // ─────────────────────────────────────────────────────
-// Mock Data
+// Placeholder Data (replaced by API when available)
 // ─────────────────────────────────────────────────────
-const MOCK_PROFILE: ArtisanProfile = {
-  id: "artisan_001",
-  displayName: "Marie Kouassi",
-  email: "marie@example.com",
-  phone: "+225 07 00 00 00",
-  bio: "Artisane spécialisée dans la création de bijoux traditionnels africains. Passionnée par la préservation du patrimoine culturel à travers l'artisanat.",
-  location: "Abidjan, Côte d'Ivoire",
-  website: "www.mariekouassi.ci",
-  specializations: ["Bijoux", "Perles", "Tissage", "Accessoires"],
-  yearsExperience: 8,
-  hourlyRate: 15000,
-  isVerified: true,
-  rating: 4.8,
-  reviewCount: 47,
-  portfolioCount: 24,
-  orderCount: 156,
-  joinedDate: "2024-03-15",
+const EMPTY_PROFILE: ArtisanProfile = {
+  id: "",
+  displayName: "",
+  email: "",
+  phone: "",
+  bio: "",
+  location: "",
+  website: "",
+  specializations: [],
+  yearsExperience: 0,
+  hourlyRate: 0,
+  isVerified: false,
+  rating: 0,
+  reviewCount: 0,
+  portfolioCount: 0,
+  orderCount: 0,
+  joinedDate: new Date().toISOString().split("T")[0],
 };
 
-const MOCK_PORTFOLIO: PortfolioItem[] = [
-  {
-    id: "p1",
-    title: "Collier Akan Royal",
-    description: "Collier traditionnel inspiré de la royauté Akan",
-    imageUrl:
-      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400",
-    category: "Bijoux",
-    createdAt: "2024-12-01",
-    likes: 234,
-    views: 1890,
-  },
-  {
-    id: "p2",
-    title: "Bracelet Perlé Moderne",
-    description: "Fusion de techniques traditionnelles et design contemporain",
-    imageUrl:
-      "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400",
-    category: "Perles",
-    createdAt: "2024-11-15",
-    likes: 189,
-    views: 1456,
-  },
-  {
-    id: "p3",
-    title: "Boucles d'Oreilles Soleil",
-    description: "Inspirées des motifs solaires africains",
-    imageUrl:
-      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400",
-    category: "Bijoux",
-    createdAt: "2024-10-20",
-    likes: 312,
-    views: 2134,
-  },
-];
+const EMPTY_PORTFOLIO: PortfolioItem[] = [];
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: "r1",
-    authorName: "Amara Diallo",
-    rating: 5,
-    comment:
-      "Travail exceptionnel! Le collier est encore plus beau en vrai. Marie a été très à l'écoute de mes demandes.",
-    createdAt: "2025-01-15",
-    projectTitle: "Collier personnalisé",
-  },
-  {
-    id: "r2",
-    authorName: "Jean-Pierre Koffi",
-    rating: 5,
-    comment: "Artisane talentueuse et professionnelle. Je recommande vivement!",
-    createdAt: "2025-01-10",
-  },
-  {
-    id: "r3",
-    authorName: "Fatou Bamba",
-    rating: 4,
-    comment:
-      "Très satisfaite de ma commande. Livraison rapide et emballage soigné.",
-    createdAt: "2024-12-28",
-    projectTitle: "Ensemble bracelet & boucles",
-  },
-];
+const EMPTY_REVIEWS: Review[] = [];
 
-const MOCK_ORDERS: Order[] = [
-  {
-    id: "o1",
-    clientName: "Sophie Martin",
-    title: "Collier mariage personnalisé",
-    status: "in_progress",
-    amount: 85000,
-    createdAt: "2025-03-20",
-    deadline: "2025-04-15",
-  },
-  {
-    id: "o2",
-    clientName: "Paul Gbagbo",
-    title: "Lot de 5 bracelets",
-    status: "pending",
-    amount: 45000,
-    createdAt: "2025-03-22",
-  },
-  {
-    id: "o3",
-    clientName: "Aïcha Touré",
-    title: "Boucles d'oreilles uniques",
-    status: "completed",
-    amount: 25000,
-    createdAt: "2025-03-01",
-  },
-];
+const EMPTY_ORDERS: Order[] = [];
 
 const SPECIALIZATIONS = [
   "Bijoux",
@@ -715,10 +629,10 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
 // ─────────────────────────────────────────────────────
 export default function ArtisansPortal() {
   const [location] = useLocation();
-  const [profile] = useState<ArtisanProfile>(MOCK_PROFILE);
-  const [portfolio] = useState<PortfolioItem[]>(MOCK_PORTFOLIO);
-  const [reviews] = useState<Review[]>(MOCK_REVIEWS);
-  const [orders] = useState<Order[]>(MOCK_ORDERS);
+  const [profile] = useState<ArtisanProfile>(EMPTY_PROFILE);
+  const [portfolio] = useState<PortfolioItem[]>(EMPTY_PORTFOLIO);
+  const [reviews] = useState<Review[]>(EMPTY_REVIEWS);
+  const [orders] = useState<Order[]>(EMPTY_ORDERS);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Get active tab from URL
