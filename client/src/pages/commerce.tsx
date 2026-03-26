@@ -158,41 +158,19 @@ async function fetchCommerceAnalytics(): Promise<CommerceAnalytics> {
     return await response.json();
   } catch (error) {
     console.error("Failed to fetch commerce analytics:", error);
-    // Return mock data for development
+    // Return empty data when API is unavailable
     return {
-      total_revenue: 4250000,
-      total_ads: 2850,
-      total_businesses: 1240,
-      average_rating: 4.6,
-      average_ctr: 5.2,
-      average_roi: 4.2,
-      year_over_year_growth: 18,
-      top_categories: [
-        { category: "electronics", revenue: 1254000, ads_count: 420 },
-        { category: "fashion", revenue: 892000, ads_count: 385 },
-        { category: "food", revenue: 568000, ads_count: 298 },
-        { category: "technology", revenue: 423000, ads_count: 245 },
-        { category: "real-estate", revenue: 287000, ads_count: 198 },
-      ],
-      monthly_trends: [
-        { month: "Jan", revenue: 320000, ads_published: 210 },
-        { month: "Feb", revenue: 350000, ads_published: 235 },
-        { month: "Mar", revenue: 380000, ads_published: 255 },
-        { month: "Apr", revenue: 410000, ads_published: 280 },
-        { month: "May", revenue: 440000, ads_published: 300 },
-        { month: "Jun", revenue: 480000, ads_published: 325 },
-      ],
-      top_regions: [
-        { region: "Europe", revenue: 1985200, percentage: 41 },
-        { region: "North America", revenue: 1763400, percentage: 32 },
-        { region: "Asia Pacific", revenue: 1432100, percentage: 18 },
-        { region: "Africa", revenue: 6219300, percentage: 9 },
-      ],
-      platform_stats: [
-        { platform: "Web", ads_count: 1200, avg_ctr: 4.8 },
-        { platform: "Mobile", ads_count: 950, avg_ctr: 5.6 },
-        { platform: "Social", ads_count: 700, avg_ctr: 6.2 },
-      ],
+      total_revenue: 0,
+      total_ads: 0,
+      total_businesses: 0,
+      average_rating: 0,
+      average_ctr: 0,
+      average_roi: 0,
+      year_over_year_growth: 0,
+      top_categories: [],
+      monthly_trends: [],
+      top_regions: [],
+      platform_stats: [],
     };
   }
 }

@@ -261,69 +261,6 @@ router.get("/artists/:id", async (req, res) => {
   }
 });
 
-// POST /api/music/artists/generate-random
-router.post("/artists/generate-random", async (req, res) => {
-  try {
-    const { count: artistCount = 10 } = req.body;
-    console.log(`🎵 [MUSIC] Generating ${artistCount} random artists`);
-
-    const genres = [
-      "Pop",
-      "Rock",
-      "Hip Hop",
-      "Electronic",
-      "Jazz",
-      "R&B",
-      "Country",
-      "Reggae",
-      "Latin",
-      "Classical",
-    ];
-    const firstNames = [
-      "Alex",
-      "Jordan",
-      "Taylor",
-      "Morgan",
-      "Casey",
-      "Riley",
-      "Drew",
-      "Sage",
-    ];
-    const lastNames = [
-      "Storm",
-      "Phoenix",
-      "Rivers",
-      "Knight",
-      "Azure",
-      "Blaze",
-      "Nova",
-    ];
-
-    const artists = [];
-    for (let i = 0; i < artistCount; i++) {
-      const firstName =
-        firstNames[Math.floor(Math.random() * firstNames.length)];
-      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const genre = genres[Math.floor(Math.random() * genres.length)];
-
-      const [artist] = await db
-        .insert(schema.musicArtists)
-        .values({ name: `${firstName} ${lastName}`, genre })
-        .returning();
-      artists.push(artist);
-    }
-
-    res.json({ success: true, data: artists, count: artists.length });
-  } catch (error: any) {
-    console.error("❌ Generate artists error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to generate artists",
-      details: error.message,
-    });
-  }
-});
-
 // ═════════════════════════════════════════════════════════════════════
 // � MY ARTIST — GET /api/music/my-artist (requires auth)
 // Returns the artists table row linked to the current user

@@ -4,23 +4,8 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { seedStreamingPlatform } from "../services/streaming-seed";
 
 const router = Router();
-
-// ═══════════════════════════════════════════════════════════
-// INITIALIZATION — Auto-seed on first request
-// ═══════════════════════════════════════════════════════════
-let initialized = false;
-async function ensureInit() {
-  if (initialized) return;
-  initialized = true;
-  try {
-    await seedStreamingPlatform();
-  } catch (e: any) {
-    console.error("[Streaming] Init error:", e.message);
-  }
-}
 
 // ═══════════════════════════════════════════════════════════
 // TRACKS
@@ -28,7 +13,6 @@ async function ensureInit() {
 
 // GET /api/streaming/tracks — Browse all tracks with filters
 router.get("/tracks", async (req: Request, res: Response) => {
-  await ensureInit();
   try {
     const {
       genre,
@@ -123,7 +107,6 @@ router.get("/tracks", async (req: Request, res: Response) => {
 // GET /api/streaming/tracks/featured — Featured/trending tracks
 // Now prioritizes artists with active contracts and can_be_featured = true
 router.get("/tracks/featured", async (_req: Request, res: Response) => {
-  await ensureInit();
   try {
     const featured = await pool.query(`
       SELECT mt.*, ma.name as artist_name, ma.image_url as artist_image,
@@ -166,7 +149,6 @@ router.get("/tracks/featured", async (_req: Request, res: Response) => {
 
 // GET /api/streaming/tracks/:id — Single track with full details
 router.get("/tracks/:id", async (req: Request, res: Response) => {
-  await ensureInit();
   try {
     const { id } = req.params;
     const track = await pool.query(
@@ -480,7 +462,6 @@ router.post("/record-play", async (req: Request, res: Response) => {
 
 // GET /api/streaming/artists — Browse artists
 router.get("/artists", async (req: Request, res: Response) => {
-  await ensureInit();
   try {
     const {
       search,
@@ -548,7 +529,6 @@ router.get("/artists", async (req: Request, res: Response) => {
 
 // GET /api/streaming/artists/:id — Single artist profile
 router.get("/artists/:id", async (req: Request, res: Response) => {
-  await ensureInit();
   try {
     const { id } = req.params;
     const artist = await pool.query(
@@ -1149,7 +1129,6 @@ router.get("/history", async (req: Request, res: Response) => {
 
 // GET /api/streaming/analytics/overview — Platform-wide analytics
 router.get("/analytics/overview", async (_req: Request, res: Response) => {
-  await ensureInit();
   try {
     // Total stats
     const stats = await pool.query(`
@@ -1545,7 +1524,6 @@ router.get("/subscription/status", async (req: Request, res: Response) => {
 
 // GET /api/streaming/search — Global search across tracks, artists, albums, playlists
 router.get("/search", async (req: Request, res: Response) => {
-  await ensureInit();
   try {
     const { q } = req.query;
     if (!q)

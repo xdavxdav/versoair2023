@@ -317,6 +317,11 @@
 			"label": "Git stage and check",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git status --short | head -40"
+		},
+		{
+			"label": "Git status count",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git status --short | wc -l && echo '---' && git status --short | head -60"
 		}
 	]
 }

@@ -178,173 +178,6 @@ const MOCK_CATEGORIES: FaqCategory[] = [
   },
 ];
 
-const generateMockFaqPosts = (): FaqPost[] => {
-  const topics = [
-    {
-      title: "How do I reset my password?",
-      category: "account",
-      content:
-        "I forgot my password and the reset email isn't arriving. What should I do?",
-      resolved: true,
-    },
-    {
-      title: "Can I export my analytics data?",
-      category: "business",
-      content:
-        "I need to download my business analytics as a CSV file. Is this possible?",
-      resolved: true,
-    },
-    {
-      title: "What payment methods are accepted?",
-      category: "billing",
-      content:
-        "I want to know which credit cards and payment services are supported for premium subscriptions.",
-      resolved: true,
-    },
-    {
-      title: "How to add a new business listing?",
-      category: "business",
-      content:
-        "I'm trying to add my restaurant to the directory but I can't find the right form.",
-      resolved: false,
-    },
-    {
-      title: "Dashboard loading slowly on mobile",
-      category: "technical",
-      content:
-        "The analytics dashboard takes 10+ seconds to load on my iPhone. Anyone else experiencing this?",
-      resolved: false,
-    },
-    {
-      title: "What is Geo Admin?",
-      category: "platform",
-      content:
-        "I see a Geo Admin option in the menu but I'm not sure what it does. Can someone explain?",
-      resolved: true,
-    },
-    {
-      title: "How do reservations work?",
-      category: "general",
-      content:
-        "I want to book a table through the platform. How does the RSVP system work?",
-      resolved: false,
-    },
-    {
-      title: "API rate limits for developers",
-      category: "technical",
-      content:
-        "What are the current API rate limits for the v1 endpoints? I'm building an integration.",
-      resolved: true,
-    },
-    {
-      title: "How to verify my business?",
-      category: "business",
-      content:
-        "I submitted my verification documents last week but haven't heard back. What's the timeline?",
-      resolved: false,
-    },
-    {
-      title: "Multi-language support?",
-      category: "platform",
-      content:
-        "Is the platform available in languages other than English and French?",
-      resolved: false,
-    },
-    {
-      title: "Cancel subscription anytime?",
-      category: "billing",
-      content:
-        "If I sign up for the annual plan, can I cancel mid-year and get a refund?",
-      resolved: true,
-    },
-    {
-      title: "Two-factor authentication setup",
-      category: "account",
-      content: "How do I enable 2FA on my account? I want to improve security.",
-      resolved: true,
-    },
-  ];
-
-  return topics.map((topic, i) => ({
-    id: i + 1,
-    title: topic.title,
-    content: topic.content,
-    faqCategory: topic.category,
-    authorId: i + 1,
-    commentCount: Math.floor(Math.random() * 20) + 1,
-    viewCount: Math.floor(Math.random() * 500) + 50,
-    isResolved: topic.resolved,
-    createdAt: new Date(
-      Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-    ).toISOString(),
-    author: {
-      displayName: [
-        "Alex Martin",
-        "Sophie Dubois",
-        "Jean Moreau",
-        "Marie Laurent",
-        "Thomas Bernard",
-        "Clara Petit",
-      ][i % 6],
-      profession: [
-        "Developer",
-        "Business Owner",
-        "Analyst",
-        "Manager",
-        "Designer",
-        "Consultant",
-      ][i % 6],
-      verifiedBadge: Math.random() > 0.5,
-    },
-  }));
-};
-
-const generateMockReplies = (): FaqReply[] => [
-  {
-    id: 1,
-    content:
-      "You can reset your password from the login page — click 'Forgot Password' and follow the email link. If the email doesn't arrive, check your spam folder.",
-    authorId: 2,
-    likeCount: 12,
-    replyCount: 1,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    parentCommentId: null,
-    author: {
-      displayName: "Sophie Dubois",
-      profession: "Support Team",
-      verifiedBadge: true,
-    },
-    replies: [
-      {
-        id: 3,
-        content: "This worked! Thank you Sophie.",
-        authorId: 1,
-        likeCount: 3,
-        replyCount: 0,
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        parentCommentId: 1,
-        author: { displayName: "Alex Martin", verifiedBadge: false },
-      },
-    ],
-  },
-  {
-    id: 2,
-    content:
-      "Also make sure to use the email address you originally signed up with, not a different one.",
-    authorId: 3,
-    likeCount: 5,
-    replyCount: 0,
-    createdAt: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000).toISOString(),
-    parentCommentId: null,
-    author: {
-      displayName: "Jean Moreau",
-      profession: "Developer",
-      verifiedBadge: false,
-    },
-    replies: [],
-  },
-];
-
 // ─── Helper: Time ago ───────────────────────────────────
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -412,37 +245,14 @@ export default function FaqPage() {
         setPosts(data.data);
         setTotalPages(data.pagination?.totalPages || 1);
       } else {
-        // Fallback to mock data
-        let mockPosts = generateMockFaqPosts();
-        if (searchQuery) {
-          mockPosts = mockPosts.filter(
-            (p) =>
-              p.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-              p.content.toLowerCase().startsWith(searchQuery.toLowerCase()),
-          );
-        }
-        if (selectedCategory !== "all") {
-          mockPosts = mockPosts.filter(
-            (p) => p.faqCategory === selectedCategory,
-          );
-        }
-        setPosts(mockPosts);
+        // No results from API
+        setPosts([]);
         setTotalPages(1);
       }
     } catch {
-      // Use mock data on error
-      let mockPosts = generateMockFaqPosts();
-      if (searchQuery) {
-        mockPosts = mockPosts.filter(
-          (p) =>
-            p.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-            p.content.toLowerCase().startsWith(searchQuery.toLowerCase()),
-        );
-      }
-      if (selectedCategory !== "all") {
-        mockPosts = mockPosts.filter((p) => p.faqCategory === selectedCategory);
-      }
-      setPosts(mockPosts);
+      // API error — show empty state
+      setPosts([]);
+      setTotalPages(1);
       setTotalPages(1);
     } finally {
       setIsLoading(false);
@@ -461,16 +271,9 @@ export default function FaqPage() {
     } catch {
       // fallback
     }
-    // Mock fallback
-    const mockPost = generateMockFaqPosts().find((p) => p.id === topicId);
-    if (mockPost) {
-      setSelectedTopic({
-        ...mockPost,
-        replies: generateMockReplies(),
-        totalReplies: 3,
-      });
-      setIsDetailView(true);
-    }
+    // No API data — show nothing
+    setSelectedTopic(null);
+    setIsDetailView(false);
   }, []);
 
   useEffect(() => {

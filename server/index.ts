@@ -35,8 +35,6 @@ import { serveStatic, log } from "./prod-static";
 import { setupCategoryIntegrityCheck } from "./services/category-integrity-check";
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
-import { autoSeedArtists } from "./services/auto-seed-artists";
-import { autoSeedMarketingData } from "./services/auto-seed-marketing";
 import { ensureAllTables } from "./services/ensure-tables";
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
@@ -190,12 +188,6 @@ app.use((req, res, next) => {
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
   console.log("✅ [SERVER] Routes registered successfully");
-
-  // Auto-seed artists if table is empty (idempotent)
-  await autoSeedArtists();
-
-  // Auto-seed marketing packs + print products (idempotent)
-  await autoSeedMarketingData();
 
   // Setup category integrity check (runs daily + on startup)
   setupCategoryIntegrityCheck();

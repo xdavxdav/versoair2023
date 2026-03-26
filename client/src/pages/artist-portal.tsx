@@ -256,6 +256,7 @@ import {
   login as authLogin,
   logout as authLogout,
 } from "@/lib/auth";
+import { useAudio } from "@/lib/audio-context";
 import {
   useArtistStats,
   useLeaderboard,
@@ -434,8 +435,7 @@ export default function ArtistPortal() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [volume, setVolume] = useState([50]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const globalAudio = useAudio();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAdvancedUpload, setShowAdvancedUpload] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -474,11 +474,13 @@ export default function ArtistPortal() {
     }[]
   >([]);
 
-  // ── Audio player refs & state ──
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [audioProgress, setAudioProgress] = useState(0); // 0–100
-  const [audioCurrentTime, setAudioCurrentTime] = useState(0); // seconds
-  const [audioDuration, setAudioDuration] = useState(0); // seconds
+  // ── Audio player — delegate to global AudioProvider ──
+  // Local aliases for the global player state
+  const isPlaying = globalAudio.isPlaying;
+  const currentTrack = globalAudio.currentTrack as Track | null;
+  const audioProgress = globalAudio.progress * 100;
+  const audioCurrentTime = globalAudio.currentTime;
+  const audioDuration = globalAudio.duration;
 
   const { data: artists, isLoading: loadingArtists } = useMusicArtists();
   const { data: tracks, isLoading: loadingTracks } = useMusicTracks();
@@ -788,7 +790,11 @@ export default function ArtistPortal() {
 
   // ── Derive display data from real API hooks (no mock arrays) ──
   const displayArtists = artists || [];
-  const displayTracks = tracks || [];
+  // Only show tracks belonging to the logged-in artist
+  const displayTracks = (tracks || []).filter((t: any) => {
+    if (!myArtist?.id) return true; // Show all while loading artist profile
+    return String(t.artistId || t.artist_id) === String(myArtist.id);
+  });
 
   // Compute analytics from real data
   const computedAnalytics = useMemo(() => {
@@ -931,120 +937,69 @@ export default function ArtistPortal() {
 
   const handlePlayTrack = useCallback(
     (track: any) => {
-      const t = track as Track;
       const hasAudio = !!(track as any).hasAudio || !!(track as any).file_path;
+      if (!hasAudio) return;
 
-      setCurrentTrack(t);
-      setIsPlaying(true);
-      setAudioProgress(0);
-      setAudioCurrentTime(0);
+      const trackId =
+        typeof track.id === "string"
+          ? parseInt(track.id, 10)
+          : Number(track.id);
+      // Find artist name for display in global player
+      const artistName =
+        displayArtists.find((a) => a.id === track.artistId)?.name ||
+        connectedUser.name ||
+        "Artiste";
 
-      if (hasAudio && audioRef.current) {
-        const trackId =
-          typeof t.id === "string" ? parseInt(t.id, 10) : Number(t.id);
-        audioRef.current.src = `/api/music/tracks/${trackId}/stream`;
-        audioRef.current.load();
-        audioRef.current.play().catch(() => {
-          // Autoplay may be blocked — user can click play in the bar
-          setIsPlaying(false);
-        });
-        // Start royalty tracking
-        startStream(trackId);
-      }
+      globalAudio.playTrack({
+        id: trackId,
+        title: track.title,
+        artist_id: track.artistId ? Number(track.artistId) : undefined,
+        artist_name: artistName,
+        duration: track.duration || 0,
+        file_path: (track as any).file_path || "uploaded",
+        cover_art: (track as any).coverArt || null,
+        genre: (track as any).genre || null,
+      });
+      // Start royalty tracking
+      startStream(trackId);
     },
-    [startStream],
+    [startStream, globalAudio, displayArtists, connectedUser.name],
   );
 
   const handleTogglePlayPause = useCallback(() => {
-    if (!audioRef.current || !currentTrack) return;
+    if (!currentTrack) return;
+    globalAudio.togglePlay();
     if (isPlaying) {
-      audioRef.current.pause();
       pauseStream();
-      setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
       resumeStream();
-      setIsPlaying(true);
     }
-  }, [isPlaying, currentTrack, pauseStream, resumeStream]);
+  }, [isPlaying, currentTrack, pauseStream, resumeStream, globalAudio]);
 
   const handleSkipTrack = useCallback(
     (direction: "next" | "prev") => {
-      if (!currentTrack || !displayTracks.length) return;
-      const idx = displayTracks.findIndex(
-        (t) => String(t.id) === String(currentTrack.id),
-      );
-      let nextIdx: number;
       if (direction === "next") {
-        nextIdx = idx < displayTracks.length - 1 ? idx + 1 : 0;
+        globalAudio.next();
       } else {
-        nextIdx = idx > 0 ? idx - 1 : displayTracks.length - 1;
+        globalAudio.previous();
       }
-      handlePlayTrack(displayTracks[nextIdx]);
     },
-    [currentTrack, displayTracks, handlePlayTrack],
+    [globalAudio],
   );
 
   const handleSeek = useCallback(
     (values: number[]) => {
-      if (!audioRef.current || !audioDuration) return;
+      if (!audioDuration) return;
       const pct = values[0];
-      const time = (pct / 100) * audioDuration;
-      audioRef.current.currentTime = time;
-      setAudioProgress(pct);
-      setAudioCurrentTime(time);
+      globalAudio.seekPercent(pct / 100);
     },
-    [audioDuration],
+    [audioDuration, globalAudio],
   );
 
-  // Wire up <audio> events
+  // Sync volume slider → global audio
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => {
-      setAudioCurrentTime(audio.currentTime);
-      if (audio.duration && isFinite(audio.duration)) {
-        setAudioProgress((audio.currentTime / audio.duration) * 100);
-      }
-    };
-    const onLoadedMetadata = () => {
-      if (audio.duration && isFinite(audio.duration)) {
-        setAudioDuration(audio.duration);
-      }
-    };
-    const onEnded = () => {
-      setIsPlaying(false);
-      setAudioProgress(100);
-      completeStream();
-      // Auto-play next track
-      if (currentTrack && displayTracks.length > 1) {
-        const idx = displayTracks.findIndex(
-          (t) => String(t.id) === String(currentTrack.id),
-        );
-        if (idx < displayTracks.length - 1) {
-          handlePlayTrack(displayTracks[idx + 1]);
-        }
-      }
-    };
-
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("ended", onEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("ended", onEnded);
-    };
-  }, [currentTrack, displayTracks, completeStream, handlePlayTrack]);
-
-  // Sync volume slider → <audio> element
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = (volume[0] ?? 50) / 100;
-    }
-  }, [volume]);
+    globalAudio.setVolume((volume[0] ?? 50) / 100);
+  }, [volume, globalAudio]);
 
   const handleUploadTrack = () => {
     setShowUploadModal(true);
@@ -1706,18 +1661,20 @@ export default function ArtistPortal() {
                               : "bg-white/20 hover:bg-white/30"
                           }`}
                           disabled={!hasAudio}
+                          translate="no"
                         >
                           {currentTrack &&
                           String(currentTrack.id) === String(track.id) &&
                           isPlaying ? (
-                            <>
-                              <Pause className="mr-1 h-4 w-4 animate-pulse" />{" "}
-                              Pause
-                            </>
+                            <span className="inline-flex items-center notranslate">
+                              <Pause className="mr-1 h-4 w-4 animate-pulse" />
+                              <span>Pause</span>
+                            </span>
                           ) : (
-                            <>
-                              <Play className="mr-1 h-4 w-4" /> Écouter
-                            </>
+                            <span className="inline-flex items-center notranslate">
+                              <Play className="mr-1 h-4 w-4" />
+                              <span>Écouter</span>
+                            </span>
                           )}
                         </Button>
                         {hasAudio && (
@@ -3282,129 +3239,7 @@ export default function ArtistPortal() {
       }
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Hidden audio element — drives all playback */}
-      <audio ref={audioRef} preload="auto" crossOrigin="use-credentials" />
-
-      {/* Now Playing Bar */}
-      {currentTrack && (
-        <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md border-t border-white/20 z-50">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 min-w-0">
-                <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <Music2 className="h-6 w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-white font-medium truncate">
-                    {currentTrack.title}
-                  </p>
-                  <p className="text-purple-200 text-sm truncate">
-                    {displayArtists.find((a) => a.id === currentTrack.artistId)
-                      ?.name || "Unknown Artist"}
-                  </p>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-purple-200 hover:text-white hover:bg-white/10 flex-shrink-0"
-                  onClick={handleTogglePlayPause}
-                >
-                  {isPlaying ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div className="hidden md:block">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-200 text-sm tabular-nums">
-                      {Math.floor(audioCurrentTime / 60)}:
-                      {String(Math.floor(audioCurrentTime % 60)).padStart(
-                        2,
-                        "0",
-                      )}
-                    </span>
-                    <Slider
-                      value={[audioProgress]}
-                      onValueChange={handleSeek}
-                      max={100}
-                      step={0.1}
-                      className="w-64"
-                    />
-                    <span className="text-purple-200 text-sm tabular-nums">
-                      {Math.floor(audioDuration / 60)}:
-                      {String(Math.floor(audioDuration % 60)).padStart(2, "0")}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-purple-200 hover:text-white hover:bg-white/10"
-                    onClick={() => handleSkipTrack("prev")}
-                  >
-                    <SkipBack className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="bg-white/10 text-white hover:bg-white/20"
-                    onClick={handleTogglePlayPause}
-                  >
-                    {isPlaying ? (
-                      <Pause className="h-5 w-5" />
-                    ) : (
-                      <Play className="h-5 w-5" />
-                    )}
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-purple-200 hover:text-white hover:bg-white/10"
-                    onClick={() => handleSkipTrack("next")}
-                  >
-                    <SkipForward className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="hidden sm:flex items-center space-x-2">
-                  <Volume1 className="h-4 w-4 text-purple-200" />
-                  <Slider
-                    value={volume}
-                    onValueChange={setVolume}
-                    max={100}
-                    step={1}
-                    className="w-24"
-                  />
-                </div>
-
-                {/* Download from Now Playing */}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                  title="Télécharger"
-                  onClick={() => {
-                    if (currentTrack) {
-                      window.open(
-                        `/api/music/tracks/${currentTrack.id}/download`,
-                        "_blank",
-                      );
-                    }
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Global AudioPlayer (in App.tsx) handles the Now Playing bar */}
 
       {/* Artist Portal Header */}
       <div className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-8 z-40">

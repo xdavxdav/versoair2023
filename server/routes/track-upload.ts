@@ -420,12 +420,10 @@ router.delete(
       );
 
       if (track.rows.length === 0) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: "Track not found or not owned by you",
-          });
+        return res.status(404).json({
+          success: false,
+          error: "Track not found or not owned by you",
+        });
       }
 
       const row = track.rows[0];

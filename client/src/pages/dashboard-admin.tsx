@@ -774,7 +774,6 @@ const BusinessManagement = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [currentBusiness, setCurrentBusiness] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [seedingLoading, setSeedingLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -1161,34 +1160,6 @@ const BusinessManagement = ({
     setShowCategoryDropdown(false);
   };
 
-  const handleSeedData = async () => {
-    setSeedingLoading(true);
-    try {
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/api/v1/admin/businesses/seed/data`,
-        { method: "POST" },
-      );
-      const data = await response.json();
-      if (data.success) {
-        setPage(1);
-        await fetchBusinesses("", "all", 1, selectedCountry);
-        toast({
-          title: "Success",
-          description: `${data.count} sample businesses added 🎉`,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to seed data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add sample data",
-        variant: "destructive",
-      });
-    } finally {
-      setSeedingLoading(false);
-    }
-  };
-
   const handleAddBusiness = async () => {
     if (!newBusiness.name || !newBusiness.categoryId) {
       toast({
@@ -1368,20 +1339,6 @@ const BusinessManagement = ({
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              onClick={handleSeedData}
-              disabled={seedingLoading || businesses.length > 0}
-              variant="outline"
-              className="gap-1.5 text-xs sm:text-sm"
-            >
-              {seedingLoading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5" />
-              )}
-              {seedingLoading ? "Loading..." : "Sample Data"}
-            </Button>
             <Button
               size="sm"
               onClick={() => {
