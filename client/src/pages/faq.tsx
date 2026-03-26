@@ -132,8 +132,8 @@ const CATEGORY_COLORS: Record<
   },
 };
 
-// ─── Mock Data (fallback when DB unavailable) ───────────
-const MOCK_CATEGORIES: FaqCategory[] = [
+// ─── Default Categories ─────────────────────────────
+const DEFAULT_CATEGORIES: FaqCategory[] = [
   {
     name: "general",
     label: "General",
@@ -202,7 +202,7 @@ export default function FaqPage() {
   const initialTopic = params.get("topic");
 
   // State
-  const [categories, setCategories] = useState<FaqCategory[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState<FaqCategory[]>(DEFAULT_CATEGORIES);
   const [posts, setPosts] = useState<FaqPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState(initialSearch);
