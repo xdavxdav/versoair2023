@@ -246,8 +246,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       } else if (track.audio_url) {
         url = track.audio_url;
       } else {
-        // Generate placeholder audio
-        url = `/api/streaming/audio/generate?title=${encodeURIComponent(track.title)}`;
+        // No audio available — skip this track
+        console.warn(`Track "${track.title}" has no audio file`);
+        setIsLoading(false);
+        return;
       }
 
       audio.src = url;

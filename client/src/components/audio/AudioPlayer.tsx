@@ -131,8 +131,22 @@ export default function AudioPlayer() {
   useEffect(() => {
     const checkPath = () => {
       const path = window.location.pathname;
-      const contentNavPaths = ["/blog", "/marketplace", "/services", "/marketing", "/artisans", "/artisan-workshops", "/programs", "/communities", "/community", "/contracts", "/tickets"];
-      const isContentPage = contentNavPaths.some(p => path === p || path.startsWith(p + "/"));
+      const contentNavPaths = [
+        "/blog",
+        "/marketplace",
+        "/services",
+        "/marketing",
+        "/artisans",
+        "/artisan-workshops",
+        "/programs",
+        "/communities",
+        "/community",
+        "/contracts",
+        "/tickets",
+      ];
+      const isContentPage = contentNavPaths.some(
+        (p) => path === p || path.startsWith(p + "/"),
+      );
       setTiroirMode(isContentPage);
     };
     checkPath();
@@ -150,7 +164,11 @@ export default function AudioPlayer() {
 
   // Dispatch a custom event so ContentNav can shift up when player is visible
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("audio-player-state", { detail: { visible: !!audio.currentTrack } }));
+    window.dispatchEvent(
+      new CustomEvent("audio-player-state", {
+        detail: { visible: !!audio.currentTrack },
+      }),
+    );
   }, [audio.currentTrack]);
 
   const handleProgressClick = useCallback(
@@ -471,7 +489,11 @@ export default function AudioPlayer() {
             onClick={() => setTiroirOpen(!tiroirOpen)}
             className="absolute -left-8 top-1/2 -translate-y-1/2 w-8 h-12 bg-gray-950/98 backdrop-blur-xl border border-r-0 border-amber-500/20 rounded-l-lg flex items-center justify-center text-amber-400 hover:text-amber-300 transition-colors"
           >
-            {tiroirOpen ? <ChevronDown className="w-4 h-4 rotate-[-90deg]" /> : <ChevronUp className="w-4 h-4 rotate-[-90deg]" />}
+            {tiroirOpen ? (
+              <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+            ) : (
+              <ChevronUp className="w-4 h-4 rotate-[-90deg]" />
+            )}
           </button>
 
           {/* Thin progress bar */}
@@ -493,47 +515,6 @@ export default function AudioPlayer() {
               className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center"
             >
               {track.cover_art || track.album_cover ? (
-                <img src={track.cover_art || track.album_cover || ""} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <Disc3 className={`w-5 h-5 text-white/70 ${audio.isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }} />
-              )}
-            </button>
-            <div className="min-w-0 flex-1">
-              <p className="text-white text-xs font-medium truncate">{track.title}</p>
-              <p className="text-gray-400 text-[10px] truncate">{track.artist_name}</p>
-            </div>
-            <button onClick={audio.togglePlay} className="w-8 h-8 bg-white hover:bg-amber-100 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
-              {audio.isPlaying ? <Pause className="w-3.5 h-3.5 text-black" /> : <Play className="w-3.5 h-3.5 text-black ml-0.5" />}
-            </button>
-          </div>
-        </motion.div>
-      ) : (
-
-      <div className="fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
-        {/* Progress bar (thin, clickable) */}
-        <div
-          className="w-full h-1 bg-gray-800 cursor-pointer group relative"
-          onClick={handleProgressClick}
-          ref={!expanded ? progressBarRef : undefined}
-        >
-          <div
-            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
-            style={{ width: `${audio.progress * 100}%` }}
-          />
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ left: `${audio.progress * 100}%`, marginLeft: -6 }}
-          />
-        </div>
-
-        <div className="flex items-center h-16 px-3 sm:px-4 gap-3">
-          {/* Track Info (left) */}
-          <div className="flex items-center gap-3 flex-1 min-w-0 max-w-xs">
-            <button
-              onClick={() => setExpanded(true)}
-              className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center group relative"
-            >
-              {track.cover_art || track.album_cover ? (
                 <img
                   src={track.cover_art || track.album_cover || ""}
                   alt=""
@@ -541,139 +522,196 @@ export default function AudioPlayer() {
                 />
               ) : (
                 <Disc3
-                  className={`w-6 h-6 text-white/70 ${audio.isPlaying ? "animate-spin" : ""}`}
+                  className={`w-5 h-5 text-white/70 ${audio.isPlaying ? "animate-spin" : ""}`}
                   style={{ animationDuration: "3s" }}
                 />
               )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Maximize2 className="w-4 h-4 text-white" />
-              </div>
             </button>
-            <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-xs font-medium truncate">
                 {track.title}
               </p>
-              <Link href={`/artist-catalogue/${track.artist_id}`}>
-                <p className="text-gray-400 text-xs truncate hover:text-amber-400 cursor-pointer transition-colors">
-                  {track.artist_name}
-                </p>
-              </Link>
+              <p className="text-gray-400 text-[10px] truncate">
+                {track.artist_name}
+              </p>
             </div>
-            <Heart className="w-4 h-4 text-gray-500 hover:text-red-400 cursor-pointer transition-colors flex-shrink-0 hidden sm:block" />
-          </div>
-
-          {/* Center Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={audio.toggleShuffle}
-              className={`hidden sm:block transition-colors ${audio.shuffle ? "text-amber-400" : "text-gray-500 hover:text-white"}`}
-            >
-              <Shuffle className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={audio.previous}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              <SkipBack className="w-5 h-5" />
-            </button>
             <button
               onClick={audio.togglePlay}
-              className="w-9 h-9 bg-white hover:bg-amber-100 rounded-full flex items-center justify-center transition-colors"
+              className="w-8 h-8 bg-white hover:bg-amber-100 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
             >
-              {audio.isLoading ? (
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
-              ) : audio.isPlaying ? (
-                <Pause className="w-4 h-4 text-black" />
+              {audio.isPlaying ? (
+                <Pause className="w-3.5 h-3.5 text-black" />
               ) : (
-                <Play className="w-4 h-4 text-black ml-0.5" />
+                <Play className="w-3.5 h-3.5 text-black ml-0.5" />
               )}
             </button>
-            <button
-              onClick={audio.next}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              <SkipForward className="w-5 h-5" />
-            </button>
-            <button
-              onClick={audio.cycleRepeat}
-              className={`hidden sm:block transition-colors ${audio.repeat !== "none" ? "text-amber-400" : "text-gray-500 hover:text-white"}`}
-            >
-              {repeatIcon()}
-            </button>
           </div>
-
-          {/* Waveform (center-right) */}
-          <div className="hidden lg:block flex-shrink-0">
-            <WaveformVisualizer
-              analyser={audio.analyserNode}
-              isPlaying={audio.isPlaying}
+        </motion.div>
+      ) : (
+        <div className="fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
+          {/* Progress bar (thin, clickable) */}
+          <div
+            className="w-full h-1 bg-gray-800 cursor-pointer group relative"
+            onClick={handleProgressClick}
+            ref={!expanded ? progressBarRef : undefined}
+          >
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
+              style={{ width: `${audio.progress * 100}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `${audio.progress * 100}%`, marginLeft: -6 }}
             />
           </div>
 
-          {/* Time display */}
-          <div className="hidden md:flex items-center text-xs text-gray-500 gap-1 flex-shrink-0">
-            <span>{formatTime(audio.currentTime)}</span>
-            <span>/</span>
-            <span>{formatTime(audio.duration)}</span>
-          </div>
-
-          {/* Right Controls */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Speed */}
-            <button
-              onClick={() => setShowSpeed(!showSpeed)}
-              className="hidden sm:flex items-center text-xs text-gray-400 hover:text-white transition-colors"
-              title="Vitesse de lecture"
-            >
-              <Gauge className="w-3.5 h-3.5 mr-0.5" />
-              {audio.playbackRate !== 1 && <span>{audio.playbackRate}x</span>}
-            </button>
-
-            {/* Volume */}
-            <div className="hidden md:flex items-center gap-1 group">
+          <div className="flex items-center h-16 px-3 sm:px-4 gap-3">
+            {/* Track Info (left) */}
+            <div className="flex items-center gap-3 flex-1 min-w-0 max-w-xs">
               <button
-                onClick={audio.toggleMute}
-                className="text-gray-400 hover:text-white transition-colors"
+                onClick={() => setExpanded(true)}
+                className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center group relative"
               >
-                {volumeIcon()}
+                {track.cover_art || track.album_cover ? (
+                  <img
+                    src={track.cover_art || track.album_cover || ""}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Disc3
+                    className={`w-6 h-6 text-white/70 ${audio.isPlaying ? "animate-spin" : ""}`}
+                    style={{ animationDuration: "3s" }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Maximize2 className="w-4 h-4 text-white" />
+                </div>
               </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={audio.isMuted ? 0 : audio.volume}
-                onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
-                className="w-16 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-amber-400 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:appearance-none"
+              <div className="min-w-0">
+                <p className="text-white text-sm font-medium truncate">
+                  {track.title}
+                </p>
+                <Link href={`/artist-catalogue/${track.artist_id}`}>
+                  <p className="text-gray-400 text-xs truncate hover:text-amber-400 cursor-pointer transition-colors">
+                    {track.artist_name}
+                  </p>
+                </Link>
+              </div>
+              <Heart className="w-4 h-4 text-gray-500 hover:text-red-400 cursor-pointer transition-colors flex-shrink-0 hidden sm:block" />
+            </div>
+
+            {/* Center Controls */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={audio.toggleShuffle}
+                className={`hidden sm:block transition-colors ${audio.shuffle ? "text-amber-400" : "text-gray-500 hover:text-white"}`}
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={audio.previous}
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                <SkipBack className="w-5 h-5" />
+              </button>
+              <button
+                onClick={audio.togglePlay}
+                className="w-9 h-9 bg-white hover:bg-amber-100 rounded-full flex items-center justify-center transition-colors"
+              >
+                {audio.isLoading ? (
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-black rounded-full animate-spin" />
+                ) : audio.isPlaying ? (
+                  <Pause className="w-4 h-4 text-black" />
+                ) : (
+                  <Play className="w-4 h-4 text-black ml-0.5" />
+                )}
+              </button>
+              <button
+                onClick={audio.next}
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                <SkipForward className="w-5 h-5" />
+              </button>
+              <button
+                onClick={audio.cycleRepeat}
+                className={`hidden sm:block transition-colors ${audio.repeat !== "none" ? "text-amber-400" : "text-gray-500 hover:text-white"}`}
+              >
+                {repeatIcon()}
+              </button>
+            </div>
+
+            {/* Waveform (center-right) */}
+            <div className="hidden lg:block flex-shrink-0">
+              <WaveformVisualizer
+                analyser={audio.analyserNode}
+                isPlaying={audio.isPlaying}
               />
             </div>
 
-            {/* Queue */}
-            <button
-              onClick={() => setShowQueue(!showQueue)}
-              className={`transition-colors ${showQueue ? "text-amber-400" : "text-gray-400 hover:text-white"}`}
-              title="File d'attente"
-            >
-              <ListMusic className="w-4 h-4" />
-              {audio.queue.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 text-[8px] text-black rounded-full flex items-center justify-center font-bold">
-                  {audio.queue.length}
-                </span>
-              )}
-            </button>
+            {/* Time display */}
+            <div className="hidden md:flex items-center text-xs text-gray-500 gap-1 flex-shrink-0">
+              <span>{formatTime(audio.currentTime)}</span>
+              <span>/</span>
+              <span>{formatTime(audio.duration)}</span>
+            </div>
 
-            {/* Expand */}
-            <button
-              onClick={() => setExpanded(true)}
-              className="text-gray-400 hover:text-white transition-colors hidden sm:block"
-              title="Plein écran"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
+            {/* Right Controls */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Speed */}
+              <button
+                onClick={() => setShowSpeed(!showSpeed)}
+                className="hidden sm:flex items-center text-xs text-gray-400 hover:text-white transition-colors"
+                title="Vitesse de lecture"
+              >
+                <Gauge className="w-3.5 h-3.5 mr-0.5" />
+                {audio.playbackRate !== 1 && <span>{audio.playbackRate}x</span>}
+              </button>
+
+              {/* Volume */}
+              <div className="hidden md:flex items-center gap-1 group">
+                <button
+                  onClick={audio.toggleMute}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {volumeIcon()}
+                </button>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={audio.isMuted ? 0 : audio.volume}
+                  onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
+                  className="w-16 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-amber-400 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:appearance-none"
+                />
+              </div>
+
+              {/* Queue */}
+              <button
+                onClick={() => setShowQueue(!showQueue)}
+                className={`transition-colors ${showQueue ? "text-amber-400" : "text-gray-400 hover:text-white"}`}
+                title="File d'attente"
+              >
+                <ListMusic className="w-4 h-4" />
+                {audio.queue.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 text-[8px] text-black rounded-full flex items-center justify-center font-bold">
+                    {audio.queue.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Expand */}
+              <button
+                onClick={() => setExpanded(true)}
+                className="text-gray-400 hover:text-white transition-colors hidden sm:block"
+                title="Plein écran"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
       )}
     </>
   );
