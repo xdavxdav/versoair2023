@@ -25,14 +25,25 @@ const router = Router();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UPLOAD DIRECTORY — Local storage (swap to S3/R2 SDK when ready)
+// Production (Render): /tmp is the only writable directory
 // ═══════════════════════════════════════════════════════════════════════════════
-const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", "tracks");
-const COVER_DIR = path.resolve(process.cwd(), "uploads", "covers");
+const UPLOAD_DIR =
+  process.env.NODE_ENV === "production"
+    ? path.join("/tmp", "uploads", "tracks")
+    : path.resolve("uploads", "tracks");
+const COVER_DIR =
+  process.env.NODE_ENV === "production"
+    ? path.join("/tmp", "uploads", "covers")
+    : path.resolve("uploads", "covers");
 
 // Ensure dirs exist
-[UPLOAD_DIR, COVER_DIR].forEach((dir) => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+try {
+  [UPLOAD_DIR, COVER_DIR].forEach((dir) => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  });
+} catch (err: any) {
+  console.warn(`⚠️  Could not create upload dirs: ${err.message}`);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MULTER CONFIG
