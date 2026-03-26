@@ -372,6 +372,7 @@ export default function ContentNav() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [audioPlayerVisible, setAudioPlayerVisible] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const tapCountRef = useRef(0);
@@ -430,6 +431,16 @@ export default function ContentNav() {
     }, 4000);
     return () => clearTimeout(t);
   }, [showTip]);
+
+  // Listen for audio player visibility to shift dock up
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setAudioPlayerVisible(!!detail?.visible);
+    };
+    window.addEventListener("audio-player-state", handler);
+    return () => window.removeEventListener("audio-player-state", handler);
+  }, []);
 
   const isAuth =
     !!user || localStorage.getItem("blog_community_auth") === "true";
@@ -503,7 +514,7 @@ export default function ContentNav() {
     <>
       {/* ══ DESKTOP ════════════════════════════════════════════════════ */}
       <div
-        className="hidden md:block fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
+        className={`hidden md:block fixed left-0 right-0 z-50 pointer-events-none transition-all duration-300 ${audioPlayerVisible ? "bottom-[68px]" : "bottom-0"}`}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <motion.div
@@ -741,7 +752,7 @@ export default function ContentNav() {
 
       {/* ══ MOBILE ═════════════════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
+        className={`md:hidden fixed left-0 right-0 z-50 pointer-events-none transition-all duration-300 ${audioPlayerVisible ? "bottom-[68px]" : "bottom-0"}`}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <motion.div

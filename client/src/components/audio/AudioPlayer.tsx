@@ -122,7 +122,36 @@ export default function AudioPlayer() {
   const [showQueue, setShowQueue] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showSpeed, setShowSpeed] = useState(false);
+  const [tiroirMode, setTiroirMode] = useState(false);
+  const [tiroirOpen, setTiroirOpen] = useState(true);
   const progressBarRef = useRef<HTMLDivElement>(null);
+
+  // Detect if we're on a page with ContentNav (blog, marketplace, etc.)
+  // so we can switch to tiroir (drawer) mode
+  useEffect(() => {
+    const checkPath = () => {
+      const path = window.location.pathname;
+      const contentNavPaths = ["/blog", "/marketplace", "/services", "/marketing", "/artisans", "/artisan-workshops", "/programs", "/communities", "/community", "/contracts", "/tickets"];
+      const isContentPage = contentNavPaths.some(p => path === p || path.startsWith(p + "/"));
+      setTiroirMode(isContentPage);
+    };
+    checkPath();
+    // Listen for popstate (back/forward) and pushstate
+    window.addEventListener("popstate", checkPath);
+    // Re-check on any navigation via a MutationObserver on <title> changes
+    const observer = new MutationObserver(checkPath);
+    const title = document.querySelector("title");
+    if (title) observer.observe(title, { childList: true });
+    return () => {
+      window.removeEventListener("popstate", checkPath);
+      observer.disconnect();
+    };
+  }, []);
+
+  // Dispatch a custom event so ContentNav can shift up when player is visible
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("audio-player-state", { detail: { visible: !!audio.currentTrack } }));
+  }, [audio.currentTrack]);
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -426,8 +455,60 @@ export default function AudioPlayer() {
       </AnimatePresence>
 
       {/* ═══════════════════════════════════════════════════ */}
-      {/* BOTTOM BAR PLAYER */}
-      {/* ═══════════════════════════════════════════════════ */}
+      {/* BOTTOM BAR PLAYER — or side tiroir on content pages */}
+      {/* ═════════════════════════════════════════════════ */}
+
+      {/* Tiroir (side drawer) mode for blog/marketplace pages */}
+      {tiroirMode ? (
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: tiroirOpen ? 0 : "calc(100% - 48px)" }}
+          transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          className="fixed bottom-20 right-0 z-[80] w-72 bg-gray-950/98 backdrop-blur-xl border border-amber-500/20 rounded-l-xl shadow-2xl"
+        >
+          {/* Toggle tab */}
+          <button
+            onClick={() => setTiroirOpen(!tiroirOpen)}
+            className="absolute -left-8 top-1/2 -translate-y-1/2 w-8 h-12 bg-gray-950/98 backdrop-blur-xl border border-r-0 border-amber-500/20 rounded-l-lg flex items-center justify-center text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            {tiroirOpen ? <ChevronDown className="w-4 h-4 rotate-[-90deg]" /> : <ChevronUp className="w-4 h-4 rotate-[-90deg]" />}
+          </button>
+
+          {/* Thin progress bar */}
+          <div
+            className="w-full h-1 bg-gray-800 cursor-pointer rounded-tl-xl overflow-hidden"
+            onClick={handleProgressClick}
+            ref={!expanded ? progressBarRef : undefined}
+          >
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
+              style={{ width: `${audio.progress * 100}%` }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 p-2">
+            {/* Mini cover */}
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center"
+            >
+              {track.cover_art || track.album_cover ? (
+                <img src={track.cover_art || track.album_cover || ""} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Disc3 className={`w-5 h-5 text-white/70 ${audio.isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }} />
+              )}
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-xs font-medium truncate">{track.title}</p>
+              <p className="text-gray-400 text-[10px] truncate">{track.artist_name}</p>
+            </div>
+            <button onClick={audio.togglePlay} className="w-8 h-8 bg-white hover:bg-amber-100 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+              {audio.isPlaying ? <Pause className="w-3.5 h-3.5 text-black" /> : <Play className="w-3.5 h-3.5 text-black ml-0.5" />}
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+
       <div className="fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
         {/* Progress bar (thin, clickable) */}
         <div
@@ -592,6 +673,8 @@ export default function AudioPlayer() {
           </div>
         </div>
       </div>
+
+      )}
     </>
   );
 }

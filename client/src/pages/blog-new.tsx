@@ -11,122 +11,38 @@ import UserProfileCard from "@/components/UserProfileCard";
 import CreatePostModal from "@/components/CreatePostModal";
 import { useSocialFeed } from "@/hooks/use-social-feed";
 
-// Mock data generator for initial launch
-const generateMockPosts = (count: number) => {
-  const posts = [];
-  const names = [
-    "Sarah Chen",
-    "Marcus Johnson",
-    "Elena Rodriguez",
-    "James Wilson",
-    "Priya Patel",
-  ];
-  const professions = [
-    "Business Analyst",
-    "Data Scientist",
-    "Product Manager",
-    "Strategy Consultant",
-    "Marketing Director",
-  ];
-  const contents = [
-    "Just launched our new analytics dashboard - the engagement metrics are incredible! Seeing 300% improvement in user satisfaction scores.",
-    "Thinking about the future of small business intelligence... The gap between data-rich enterprises and SMBs is widening. What solutions are you seeing?",
-    "Hot take: Real-time analytics should be the default, not a premium feature. Your customers deserve better visibility.",
-    "Our team just hit 1000+ businesses in the network! So proud of what we're building together.",
-    "Industry insight: 78% of business decisions are still made on gut feeling. That needs to change. Here's how we're tackling it.",
-  ];
-  const hashtags = [
-    ["#Analytics", "#DataDriven", "#BusinessIntelligence"],
-    ["#SmallBusiness", "#Startups", "#Growth"],
-    ["#RealTime", "#Innovation", "#FutureOfWork"],
-    ["#Community", "#Collaboration", "#Success"],
-    ["#DataDecisions", "#Analytics", "#AI"],
-  ];
-
-  for (let i = 0; i < count; i++) {
-    posts.push({
-      id: i + 1,
-      authorId: Math.floor(Math.random() * 5) + 1,
-      content: contents[i % contents.length],
-      tags: hashtags[i % hashtags.length],
-      likeCount: Math.floor(Math.random() * 500),
-      commentCount: Math.floor(Math.random() * 100),
-      shareCount: Math.floor(Math.random() * 50),
-      engagementScore: Math.random() * 100,
-      isTrending: Math.random() > 0.7,
-      createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      author: {
-        id: Math.floor(Math.random() * 5) + 1,
-        displayName: names[i % names.length],
-        profession: professions[i % professions.length],
-        profileImageUrl: `https://images.unsplash.com/photo-${
-          1494790108755 + i * 100
-        }?ixlib=rb-4.0.3&w=100&h=100&fit=crop&crop=face`,
-        verifiedBadge: Math.random() > 0.7,
-        premiumMember: Math.random() > 0.5,
-      },
-    });
-  }
-
-  return posts;
-};
-
-const generateMockUsers = (count: number) => {
-  const names = [
-    "Sarah Chen",
-    "Marcus Johnson",
-    "Elena Rodriguez",
-    "James Wilson",
-    "Priya Patel",
-  ];
-  const professions = [
-    "Business Analyst",
-    "Data Scientist",
-    "Product Manager",
-    "Strategy Consultant",
-    "Marketing Director",
-  ];
-
-  const users = [];
-  for (let i = 0; i < count; i++) {
-    users.push({
-      id: i + 1,
-      displayName: names[i % names.length],
-      profession: professions[i % professions.length],
-      profileImageUrl: `https://images.unsplash.com/photo-${
-        1494790108755 + i * 100
-      }?ixlib=rb-4.0.3&w=400&h=400&fit=crop&crop=face`,
-      coverImageUrl: `https://images.unsplash.com/photo-${
-        1557821552 + i * 100
-      }?ixlib=rb-4.0.3&w=600&h=300&fit=crop`,
-      bio: "Passionate about business intelligence and data-driven decisions",
-      verifiedBadge: Math.random() > 0.7,
-      premiumMember: Math.random() > 0.5,
-      followerCount: Math.floor(Math.random() * 5000),
-      followingCount: Math.floor(Math.random() * 1000),
-      postCount: Math.floor(Math.random() * 200),
-      satisfactionRating: (Math.random() * 2 + 3.5).toFixed(1),
-      engagementScore: (Math.random() * 50).toFixed(1),
-    });
-  }
-
-  return users;
-};
-
 export default function BlogPage() {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
-  const [posts, setPosts] = useState(generateMockPosts(10));
-  const [suggestedUsers] = useState(generateMockUsers(3));
+
+  // Real API data via useSocialFeed hook
+  const {
+    posts: feedPosts,
+    isLoading: feedLoading,
+    loadMore,
+    hasNextPage,
+    createPost: apiCreatePost,
+    isCreatingPost,
+  } = useSocialFeed(1, 10, sortBy);
+
+  const [posts, setPosts] = useState<any[]>([]);
+  const [suggestedUsers] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Simulate infinite scroll
+  // Sync posts from API
+  useEffect(() => {
+    if (feedPosts && feedPosts.length > 0) {
+      setPosts(feedPosts);
+    }
+  }, [feedPosts]);
+
+  // Infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore) {
+        if (entries[0].isIntersecting && !isLoadingMore && hasNextPage) {
           loadMorePosts();
         }
       },
@@ -138,16 +54,15 @@ export default function BlogPage() {
     }
 
     return () => observer.disconnect();
-  }, [isLoadingMore]);
+  }, [isLoadingMore, hasNextPage]);
 
   const loadMorePosts = useCallback(() => {
-    setIsLoadingMore(true);
-    // Simulate network delay
-    setTimeout(() => {
-      setPosts((prev) => [...prev, ...generateMockPosts(5)]);
+    if (hasNextPage) {
+      setIsLoadingMore(true);
+      loadMore();
       setIsLoadingMore(false);
-    }, 800);
-  }, []);
+    }
+  }, [hasNextPage, loadMore]);
 
   const handleToggleLike = useCallback((postId: number) => {
     setLikedPosts((prev) =>
@@ -162,29 +77,12 @@ export default function BlogPage() {
     imageUrls?: string[];
     tags?: string[];
   }) => {
-    const newPost = {
-      id: Math.max(...posts.map((p) => p.id)) + 1,
+    apiCreatePost({
       authorId: 1,
       content: postData.content,
-      tags: postData.tags || [],
-      likeCount: 0,
-      commentCount: 0,
-      shareCount: 0,
-      engagementScore: 0,
-      isTrending: false,
-      createdAt: new Date(),
-      author: {
-        id: 1,
-        displayName: "You",
-        profession: "Business Owner",
-        profileImageUrl:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&w=100&h=100&fit=crop&crop=face",
-        verifiedBadge: true,
-        premiumMember: true,
-      },
-    };
-
-    setPosts((prev) => [newPost, ...prev]);
+      imageUrls: postData.imageUrls,
+      tags: postData.tags,
+    });
     setIsCreatePostOpen(false);
   };
 

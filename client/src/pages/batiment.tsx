@@ -330,73 +330,8 @@ async function searchBatimentFacilities(params: {
     };
   } catch (error) {
     console.error("Search failed:", error);
-    // Fallback mock data for construction/building
-    const mockFacilities: BatimentFacility[] = Array.from(
-      { length: params.limit || 9 },
-      (_, i) => ({
-        id: `batiment-${i}`,
-        title: `${
-          [
-            "Entrepreneurs Généraux Ltda",
-            "Corp. Bâtiment Spécialisé",
-            "Solutions Infrastructure",
-            "Experts Rénovation Inc",
-            "Construction Industrielle Co",
-          ][i % 5]
-        } ${i + 1}`,
-        description: `Entreprise de construction professionnelle spécialisée dans ${
-          [
-            "la construction résidentielle",
-            "les projets commerciaux",
-            "le développement d'infrastructure",
-            "la rénovation et le remodelage",
-            "la construction industrielle",
-          ][i % 5]
-        }.`,
-        category: [
-          "residential",
-          "commercial",
-          "infrastructure",
-          "renovation",
-          "industrial",
-        ][i % 5],
-        location: ["Abidjan", "Yamoussoukro", "Bouaké", "Daloa", "San Pedro"][
-          i % 5
-        ],
-        address: `Zone de construction, District ${i + 1}`,
-        phone: `+225 01 25 48 69 8${i}`,
-        email: `info@batiment${i + 1}.com`,
-        rating: 3.8 + Math.random() * 1.2,
-        reviews: Math.floor(Math.random() * 420),
-        tags: ["Agréé", "Cautionné", "Assuré", "Rapide", "Construction verte"],
-        latitude: 5.36 + Math.random() * 0.1,
-        longitude: -4.008 + Math.random() * 0.1,
-        revenue: 150000 + Math.random() * 600000,
-        employees: Math.floor(Math.random() * 250) + 10,
-        amenities: [
-          "Gestion de site",
-          "Équipement lourd",
-          "Certifié sécurité",
-          "Planification de projet",
-          "Contrôle qualité",
-        ],
-        star_rating: Math.floor(Math.random() * 3) + 4,
-        status: ["active", "verified", "premium"][
-          Math.floor(Math.random() * 3)
-        ] as any,
-        project_count: Math.floor(Math.random() * 85) + 15,
-        workers_count: Math.floor(Math.random() * 180) + 30,
-        specialization: [
-          "Résidentiel",
-          "Commercial",
-          "Infrastructure",
-          "Rénovation",
-        ],
-        equipment: Math.random() > 0.2,
-        project_capacity: Math.floor(Math.random() * 12) + 3,
-      }),
-    ) as unknown as BatimentFacility[];
-    return { data: mockFacilities, total: 285, success: true };
+    // Return empty data when API is unavailable
+    return { data: [] as BatimentFacility[], total: 0, success: false };
   }
 }
 

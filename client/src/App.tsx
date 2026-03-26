@@ -739,7 +739,7 @@ function AppContent() {
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""}`}
+        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} pb-[68px]`}
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
