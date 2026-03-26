@@ -1080,6 +1080,9 @@ export const artistProfiles = pgTable(
       precision: 4,
       scale: 2,
     }).default("0.00"), // badge bonus
+    // ── Unified Identity Links ──
+    musicArtistId: integer("music_artist_id"), // → music_artists.id (catalog identity)
+    legacyArtistId: integer("legacy_artist_id"), // → artists.id (directory identity, deprecated)
     // Status
     isActive: boolean("is_active").default(true),
     createdAt: timestamp("created_at").defaultNow(),
@@ -1092,6 +1095,9 @@ export const artistProfiles = pgTable(
     streamsIdx: index("artist_profiles_streams_idx").on(t.lifetimeStreams),
     codeIdx: index("artist_profiles_code_idx").on(t.artistCode),
     divisionIdx: index("artist_profiles_division_idx").on(t.division),
+    musicArtistIdx: index("artist_profiles_music_artist_idx").on(
+      t.musicArtistId,
+    ),
   }),
 );
 
@@ -1198,6 +1204,12 @@ export const listenerSubscriptions = pgTable(
     currentPeriodStart: timestamp("current_period_start"),
     currentPeriodEnd: timestamp("current_period_end"),
     boostCreditsRemaining: integer("boost_credits_remaining").default(0),
+    // ── Stream Economy (usage tracking & rollover) ──
+    streamsUsedThisWeek: integer("streams_used_this_week").default(0),
+    streamsRollover: integer("streams_rollover").default(0), // unused credits, cap 1.5x
+    downloadsUsedThisMonth: integer("downloads_used_this_month").default(0),
+    lastStreamReset: timestamp("last_stream_reset"),
+    lastDownloadReset: timestamp("last_download_reset"),
     cancelledAt: timestamp("cancelled_at"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -1720,6 +1732,7 @@ export const adJournalListings = pgTable(
     type: varchar("type", { length: 20 }).default("free"), // 'free' | 'premium'
     status: varchar("status", { length: 20 }).default("draft"), // 'draft' | 'pending' | 'active' | 'expired' | 'rejected'
     images: jsonb("images").$type<string[]>().default([]),
+    videos: jsonb("videos").$type<string[]>().default([]),
     contactEmail: varchar("contact_email"),
     contactPhone: varchar("contact_phone"),
     businessName: text("business_name"),
@@ -2074,11 +2087,11 @@ export const artistCollaborations = pgTable(
   {
     id: serial("id").primaryKey(),
     requesterId: integer("requester_id").notNull(), // artist who sent the request
-    targetId: integer("target_id").notNull(),       // artist who receives the request
+    targetId: integer("target_id").notNull(), // artist who receives the request
     status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, active, completed, declined
-    trackTitle: text("track_title"),                // proposed track name
+    trackTitle: text("track_title"), // proposed track name
     revenueShare: integer("revenue_share").default(50), // % for target artist
-    message: text("message"),                       // intro message
+    message: text("message"), // intro message
     genre: text("genre"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -2091,4 +2104,402 @@ export const artistCollaborations = pgTable(
 );
 
 export type ArtistCollaboration = typeof artistCollaborations.$inferSelect;
-export type InsertArtistCollaboration = typeof artistCollaborations.$inferInsert;
+export type InsertArtistCollaboration =
+  typeof artistCollaborations.$inferInsert;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🎵 VERSOAIR ENHANCED STREAMING SYSTEM — Phase 1-5 Tables
+// ══════════════════════════════════════════════════════════════════════════════
+
+// --- CONTEST VOTES (StreamRoyale Arena Hybrid Lock voting) ---
+export const contestVotes = pgTable(
+  "contest_votes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    contestId: integer("contest_id").notNull(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    streamCount: integer("stream_count").default(0),
+    voteStatus: varchar("vote_status", { length: 20 })
+      .default("soft")
+      .notNull(), // soft | locked | admin_unlocked
+    lockedAt: timestamp("locked_at"),
+    adminUnlockReason: text("admin_unlock_reason"),
+    unlockedBy: integer("unlocked_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userContestIdx: index("contest_votes_user_contest_idx").on(
+      t.userId,
+      t.contestId,
+    ),
+    artistIdx: index("contest_votes_artist_idx").on(t.artistProfileId),
+    statusIdx: index("contest_votes_status_idx").on(t.voteStatus),
+    uniqueVote: unique("contest_votes_unique").on(
+      t.userId,
+      t.contestId,
+      t.artistProfileId,
+    ),
+  }),
+);
+
+// --- ARTIST SUBSCRIPTIONS (Spark / Flame / Blaze / Inferno — yearly allowance tiers) ---
+export const artistSubscriptions = pgTable(
+  "artist_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    tier: varchar("tier", { length: 20 }).default("spark").notNull(), // spark | flame | blaze | inferno
+    // Payment tracking (supports multi-method — not Stripe-only)
+    paymentMethod: varchar("payment_method", { length: 30 }).default("none"), // none | wallet | paypal | crypto | mobile_money | bank
+    paymentReference: varchar("payment_reference", { length: 255 }), // external txn ID
+    // Period
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    // Usage counters
+    uploadCountThisPeriod: integer("upload_count_this_period").default(0),
+    boostCreditsRemaining: integer("boost_credits_remaining").default(0),
+    // Status
+    status: varchar("status", { length: 20 }).default("active"), // active | cancelled | past_due | trialing
+    cancelledAt: timestamp("cancelled_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    artistIdx: index("artist_subs_artist_idx").on(t.artistProfileId),
+    tierIdx: index("artist_subs_tier_idx").on(t.tier),
+    statusIdx: index("artist_subs_status_idx").on(t.status),
+  }),
+);
+
+// --- ARENA CONTESTS (Weekly Battle Royale — 16 artists, 4 rounds, 7 days) ---
+export const arenaContests = pgTable(
+  "arena_contests",
+  {
+    id: serial("id").primaryKey(),
+    genre: varchar("genre", { length: 100 }).notNull(),
+    weekNumber: integer("week_number").notNull(),
+    yearNumber: integer("year_number").notNull(),
+    weekStart: timestamp("week_start").notNull(),
+    weekEnd: timestamp("week_end").notNull(),
+    currentRound: integer("current_round").default(1), // 1-4
+    status: varchar("status", { length: 20 }).default("open"), // open | in_progress | elimination | completed | cancelled
+    winnerId: integer("winner_id").references(() => artistProfiles.id),
+    bonusPoolPercent: integer("bonus_pool_percent").default(30), // winner gets 30% bonus from weekly pool
+    totalVotes: integer("total_votes").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    weekIdx: index("arena_contests_week_idx").on(t.weekNumber, t.yearNumber),
+    genreIdx: index("arena_contests_genre_idx").on(t.genre),
+    statusIdx: index("arena_contests_status_idx").on(t.status),
+  }),
+);
+
+// --- ARENA BRACKETS (Artist entries per contest round) ---
+export const arenaBrackets = pgTable(
+  "arena_brackets",
+  {
+    id: serial("id").primaryKey(),
+    contestId: integer("contest_id")
+      .references(() => arenaContests.id, { onDelete: "cascade" })
+      .notNull(),
+    round: integer("round").notNull(), // 1-4
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    streams: integer("streams").default(0),
+    voteCount: integer("vote_count").default(0),
+    eliminated: boolean("eliminated").default(false),
+    eliminatedAt: timestamp("eliminated_at"),
+    seedPosition: integer("seed_position"), // 1-16 initial seeding
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    contestRoundIdx: index("arena_brackets_contest_round_idx").on(
+      t.contestId,
+      t.round,
+    ),
+    artistIdx: index("arena_brackets_artist_idx").on(t.artistProfileId),
+  }),
+);
+
+// --- ARENA VOTES (Listener votes within a contest — 1 stream = 1 vote, max 100/listener/contest) ---
+export const arenaVotes = pgTable(
+  "arena_votes",
+  {
+    id: serial("id").primaryKey(),
+    contestId: integer("contest_id")
+      .references(() => arenaContests.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    artistProfileId: integer("artist_profile_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    streamCount: integer("stream_count").default(0), // capped at 100
+    locked: boolean("locked").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    contestUserIdx: index("arena_votes_contest_user_idx").on(
+      t.contestId,
+      t.userId,
+    ),
+    artistIdx: index("arena_votes_artist_idx").on(t.artistProfileId),
+    uniqueVote: unique("arena_votes_unique").on(
+      t.contestId,
+      t.userId,
+      t.artistProfileId,
+    ),
+  }),
+);
+
+// --- VAULT RULES (Verso Vault — Exclusivity Engine for tracks) ---
+export const vaultRules = pgTable(
+  "vault_rules",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    ruleType: varchar("rule_type", { length: 20 }).notNull(), // time_gate | stream_gate | tier_gate | collab_gate
+    thresholdValue: text("threshold_value").notNull(), // "500" (listeners), "7" (days), "patron" (tier), "1000" (streams)
+    currentProgress: integer("current_progress").default(0), // for stream_gate: current stream count
+    unlockedAt: timestamp("unlocked_at"),
+    status: varchar("status", { length: 20 }).default("locked"), // locked | unlocked | expired
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("vault_rules_track_idx").on(t.trackId),
+    statusIdx: index("vault_rules_status_idx").on(t.status),
+  }),
+);
+
+// --- COLLAB REQUESTS (Open Verse / Viral Remix system) ---
+export const collabRequests = pgTable(
+  "collab_requests",
+  {
+    id: serial("id").primaryKey(),
+    originalTrackId: integer("original_track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    requestingArtistId: integer("requesting_artist_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    ownerArtistId: integer("owner_artist_id")
+      .references(() => artistProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    verseAudioUrl: text("verse_audio_url"),
+    message: text("message"),
+    status: varchar("status", { length: 20 }).default("pending"), // pending | approved | rejected | completed
+    revenueSplitPercent: integer("revenue_split_percent").default(50), // requestor's share
+    resultTrackId: integer("result_track_id").references(() => musicTracks.id), // created collab track
+    approvedAt: timestamp("approved_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("collab_requests_track_idx").on(t.originalTrackId),
+    requesterIdx: index("collab_requests_requester_idx").on(
+      t.requestingArtistId,
+    ),
+    ownerIdx: index("collab_requests_owner_idx").on(t.ownerArtistId),
+    statusIdx: index("collab_requests_status_idx").on(t.status),
+  }),
+);
+
+// --- PLATFORM WALLET (Internal credits — cashable, multi-currency) ---
+export const platformWallets = pgTable(
+  "platform_wallets",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    balance: decimal("balance", { precision: 14, scale: 2 }).default("0.00"),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    totalDeposited: decimal("total_deposited", {
+      precision: 14,
+      scale: 2,
+    }).default("0.00"),
+    totalWithdrawn: decimal("total_withdrawn", {
+      precision: 14,
+      scale: 2,
+    }).default("0.00"),
+    totalSpent: decimal("total_spent", { precision: 14, scale: 2 }).default(
+      "0.00",
+    ),
+    totalEarned: decimal("total_earned", { precision: 14, scale: 2 }).default(
+      "0.00",
+    ), // from royalties, tips
+    frozenBalance: decimal("frozen_balance", {
+      precision: 14,
+      scale: 2,
+    }).default("0.00"), // held during disputes
+    status: varchar("status", { length: 20 }).default("active"), // active | frozen | suspended
+    lastTransactionAt: timestamp("last_transaction_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("platform_wallets_user_idx").on(t.userId),
+    statusIdx: index("platform_wallets_status_idx").on(t.status),
+  }),
+);
+
+// --- WALLET TRANSACTIONS (Full ledger — every credit/debit) ---
+export const walletTransactions = pgTable(
+  "wallet_transactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    walletId: integer("wallet_id")
+      .references(() => platformWallets.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    type: varchar("type", { length: 30 }).notNull(), // deposit | withdrawal | purchase | royalty_credit | tip_received | tip_sent | refund | boost_purchase | subscription_payment | arena_reward | transfer
+    amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+    balanceBefore: decimal("balance_before", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+    balanceAfter: decimal("balance_after", {
+      precision: 14,
+      scale: 2,
+    }).notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    // Payment method used
+    paymentMethod: varchar("payment_method", { length: 30 }), // wallet | paypal | crypto | mobile_money | bank
+    externalReference: varchar("external_reference", { length: 255 }), // PayPal txn ID, BTC txn hash, MTN ref, etc.
+    // Context
+    description: text("description"),
+    relatedEntityType: varchar("related_entity_type", { length: 30 }), // track | subscription | payout | contest | tip | boost
+    relatedEntityId: text("related_entity_id"),
+    // Status
+    status: varchar("status", { length: 20 }).default("completed"), // pending | completed | failed | reversed
+    metadata: jsonb("metadata").$type<Record<string, any>>(), // flexible extra data
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    walletIdx: index("wallet_txn_wallet_idx").on(t.walletId),
+    userIdx: index("wallet_txn_user_idx").on(t.userId),
+    typeIdx: index("wallet_txn_type_idx").on(t.type),
+    dateIdx: index("wallet_txn_date_idx").on(t.createdAt),
+    statusIdx: index("wallet_txn_status_idx").on(t.status),
+  }),
+);
+
+// --- PAYMENT METHODS (User registered payment instruments) ---
+export const userPaymentMethods = pgTable(
+  "user_payment_methods",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    method: varchar("method", { length: 30 }).notNull(), // wallet | paypal | crypto | mobile_money | bank
+    isDefault: boolean("is_default").default(false),
+    label: varchar("label", { length: 100 }), // "My PayPal", "BTC Wallet", "Orange Money"
+    // Status & availability
+    status: varchar("status", { length: 20 }).default("active"), // active | pending_verification | disabled | coming_soon
+    availableSoon: boolean("available_soon").default(false), // for greyed-out methods
+    // PayPal
+    paypalEmail: varchar("paypal_email", { length: 255 }),
+    // Crypto (BTC, USDT)
+    cryptoType: varchar("crypto_type", { length: 10 }), // BTC | USDT | ETH
+    cryptoWalletAddress: varchar("crypto_wallet_address", { length: 255 }),
+    cryptoNetwork: varchar("crypto_network", { length: 20 }), // mainnet | tron_trc20 | erc20
+    // Mobile Money (Orange Money, MTN, Wave)
+    mobileProvider: varchar("mobile_provider", { length: 30 }), // orange_money | mtn_momo | wave | mpesa
+    mobileNumber: varchar("mobile_number", { length: 20 }),
+    mobileCountryCode: varchar("mobile_country_code", { length: 2 }),
+    // Bank Transfer
+    bankName: varchar("bank_name", { length: 100 }),
+    bankAccountNumber: varchar("bank_account_number", { length: 50 }),
+    bankRoutingNumber: varchar("bank_routing_number", { length: 50 }),
+    bankSwiftCode: varchar("bank_swift_code", { length: 15 }),
+    bankIban: varchar("bank_iban", { length: 40 }),
+    bankCountry: varchar("bank_country", { length: 2 }),
+    bankHolderName: varchar("bank_holder_name", { length: 100 }),
+    // Verification
+    verified: boolean("verified").default(false),
+    verifiedAt: timestamp("verified_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("user_pay_methods_user_idx").on(t.userId),
+    methodIdx: index("user_pay_methods_method_idx").on(t.method),
+  }),
+);
+
+// --- BANK TRANSFER REQUESTS (Manual with admin verification) ---
+export const bankTransferRequests = pgTable(
+  "bank_transfer_requests",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    walletId: integer("wallet_id")
+      .references(() => platformWallets.id)
+      .notNull(),
+    direction: varchar("direction", { length: 10 }).notNull(), // deposit | withdrawal
+    amount: decimal("amount", { precision: 14, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    // Transfer details
+    bankReference: varchar("bank_reference", { length: 100 }), // user provides proof
+    proofImageUrl: text("proof_image_url"), // screenshot of transfer
+    // Admin review
+    status: varchar("status", { length: 20 }).default("pending"), // pending | reviewing | approved | rejected
+    reviewedBy: integer("reviewed_by").references(() => users.id),
+    reviewNotes: text("review_notes"),
+    reviewedAt: timestamp("reviewed_at"),
+    // Tracking
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("bank_transfer_user_idx").on(t.userId),
+    statusIdx: index("bank_transfer_status_idx").on(t.status),
+  }),
+);
+
+// ═══ Insert schemas & Types ═══
+
+export const insertContestVoteSchema = createInsertSchema(contestVotes);
+export const insertArtistSubscriptionSchema =
+  createInsertSchema(artistSubscriptions);
+export const insertArenaContestSchema = createInsertSchema(arenaContests);
+export const insertArenaBracketSchema = createInsertSchema(arenaBrackets);
+export const insertArenaVoteSchema = createInsertSchema(arenaVotes);
+export const insertVaultRuleSchema = createInsertSchema(vaultRules);
+export const insertCollabRequestSchema = createInsertSchema(collabRequests);
+export const insertPlatformWalletSchema = createInsertSchema(platformWallets);
+export const insertWalletTransactionSchema =
+  createInsertSchema(walletTransactions);
+export const insertUserPaymentMethodSchema =
+  createInsertSchema(userPaymentMethods);
+export const insertBankTransferRequestSchema =
+  createInsertSchema(bankTransferRequests);
+
+export type ContestVote = typeof contestVotes.$inferSelect;
+export type ArtistSubscription = typeof artistSubscriptions.$inferSelect;
+export type ArenaContest = typeof arenaContests.$inferSelect;
+export type ArenaBracket = typeof arenaBrackets.$inferSelect;
+export type ArenaVote = typeof arenaVotes.$inferSelect;
+export type VaultRule = typeof vaultRules.$inferSelect;
+export type CollabRequest = typeof collabRequests.$inferSelect;
+export type PlatformWallet = typeof platformWallets.$inferSelect;
+export type WalletTransaction = typeof walletTransactions.$inferSelect;
+export type UserPaymentMethod = typeof userPaymentMethods.$inferSelect;
+export type BankTransferRequest = typeof bankTransferRequests.$inferSelect;

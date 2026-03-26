@@ -1,9 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { MusicArtist, MusicTrack, MusicAnalytics } from "@shared/schema";
-import {
-  authenticatedFetch,
-  getAuthToken,
-} from "@/lib/auth";
+import { authenticatedFetch, getAuthToken } from "@/lib/auth";
 
 // GET all music artists (optionally filtered by country)
 export function useMusicArtists(countryCode?: string) {
@@ -104,7 +101,11 @@ export function useMyArtist() {
         throw new Error("Failed to fetch artist profile");
       }
       const data = await response.json();
-      return data.data as { id: number; stageName: string; genre: string } | null;
+      return data.data as {
+        id: number;
+        stageName: string;
+        genre: string;
+      } | null;
     },
     retry: false,
   });

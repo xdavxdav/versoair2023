@@ -925,10 +925,10 @@ function MiniStudio({
 
   return (
     <motion.div
-      className="absolute bottom-4 left-4 z-30"
-      initial={{ opacity: 0, x: -20 }}
+      className="absolute top-4 right-4 z-30"
+      initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.4, delay: 1.6 }}
       style={{ width: collapsed ? "auto" : undefined }}
     >
@@ -2116,7 +2116,9 @@ export default function ArtistPortalWelcome() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 2, duration: 0.8 }}
                 >
-                  <p className="text-white/20 text-xs mb-2">Vous n'êtes pas artiste ?</p>
+                  <p className="text-white/20 text-xs mb-2">
+                    Vous n'êtes pas artiste ?
+                  </p>
                   <a
                     href="/stream"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-white/50 hover:text-white/70 transition-all text-sm"

@@ -29,6 +29,13 @@ import capabilitiesRouter from "./routes/capabilities";
 import evaluationsRouter from "./routes/evaluations";
 import marketingRouter from "./routes/marketing";
 import userHistoryRouter from "./routes/user-history";
+import trackUploadRouter from "./routes/track-upload";
+import artistSubscriptionsRouter from "./routes/artist-subscriptions";
+import paymentsRouter from "./routes/payments";
+import arenaRouter from "./routes/arena";
+import vaultRouter from "./routes/vault";
+import collabChainsRouter from "./routes/collab-chains";
+import revenuePulseRouter from "./routes/revenue-pulse";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -220,6 +227,15 @@ export async function registerRoutes(app: Express) {
 
   // Register user browsing history routes
   app.use("/api/user/history", userHistoryRouter);
+
+  // ═══ Enhanced Streaming System Routes ═══
+  app.use("/api/tracks", trackUploadRouter); // Track upload & management
+  app.use("/api/artist-subscriptions", artistSubscriptionsRouter); // Spark/Flame/Blaze/Inferno tiers
+  app.use("/api/payments", paymentsRouter); // Wallet, payment methods, bank transfers
+  app.use("/api/arena", arenaRouter); // StreamRoyale Arena battle royale
+  app.use("/api/vault", vaultRouter); // Verso Vault exclusivity engine
+  app.use("/api/collab-chains", collabChainsRouter); // Collab Chains viral remix system
+  app.use("/api/revenue-pulse", revenuePulseRouter); // Revenue Pulse transparency dashboard
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {
