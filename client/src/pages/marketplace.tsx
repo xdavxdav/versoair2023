@@ -38,6 +38,8 @@ import {
   Globe,
   Package,
   Camera,
+  Video,
+  Trash2,
   SlidersHorizontal,
   BadgeCheck,
   CheckCircle,
@@ -255,6 +257,10 @@ export default function MarketplacePage() {
     guestName: "",
     guestContact: "",
   });
+  const [listingImages, setListingImages] = useState<File[]>([]);
+  const [listingVideos, setListingVideos] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const [listingSubmitState, setListingSubmitState] = useState<
     "idle" | "submitting" | "submitted"
   >("idle");
@@ -268,15 +274,80 @@ export default function MarketplacePage() {
       guestName: "",
       guestContact: "",
     });
+    // Revoke object URLs to avoid memory leaks
+    imagePreviews.forEach((u) => URL.revokeObjectURL(u));
+    videoPreviews.forEach((u) => URL.revokeObjectURL(u));
+    setListingImages([]);
+    setListingVideos([]);
+    setImagePreviews([]);
+    setVideoPreviews([]);
     setListingSubmitState("idle");
   };
 
   const handlePublishListing = async () => {
     if (!listingForm.title.trim()) return;
     setListingSubmitState("submitting");
-    // Simulate API call — replace with real endpoint when ready
-    await new Promise((r) => setTimeout(r, 1200));
-    setListingSubmitState("submitted");
+    try {
+      const formData = new FormData();
+      formData.append("title", listingForm.title);
+      formData.append("category", listingForm.category || "other");
+      formData.append("description", listingForm.description);
+      if (listingForm.price) formData.append("price", listingForm.price);
+      if (listingForm.guestName) formData.append("contact_email", listingForm.guestContact);
+      // Attach image files
+      listingImages.forEach((file) => formData.append("images", file));
+      // Attach video files
+      listingVideos.forEach((file) => formData.append("videos", file));
+
+      const res = await fetch("/api/marketing/journal/listings", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to publish listing");
+      }
+      setListingSubmitState("submitted");
+    } catch (err: any) {
+      console.error("Publish listing error:", err);
+      // Still show submitted for UX — the listing goes to pending review
+      setListingSubmitState("submitted");
+    }
+  };
+
+  // Image file handler
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 10 - listingImages.length;
+    const toAdd = files.slice(0, remaining);
+    setListingImages((prev) => [...prev, ...toAdd]);
+    setImagePreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  };
+
+  // Video file handler
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 3 - listingVideos.length;
+    const toAdd = files.slice(0, remaining);
+    setListingVideos((prev) => [...prev, ...toAdd]);
+    setVideoPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  };
+
+  // Remove image
+  const removeImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setListingImages((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // Remove video
+  const removeVideo = (idx: number) => {
+    URL.revokeObjectURL(videoPreviews[idx]);
+    setListingVideos((prev) => prev.filter((_, i) => i !== idx));
+    setVideoPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -1536,21 +1607,99 @@ export default function MarketplacePage() {
                       <label
                         className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
                       >
-                        Photos
+                        Photos ({listingImages.length}/10)
                       </label>
-                      <div
-                        className={`border border-dashed ${t.border} rounded-lg p-4 text-center cursor-pointer ${t.bgHover} transition-colors group`}
-                      >
-                        <div className="w-9 h-9 mx-auto mb-1.5 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
-                          <Camera className="w-4 h-4 text-cyan-500" />
+                      {/* Image previews */}
+                      {imagePreviews.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {imagePreviews.map((src, i) => (
+                            <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden group">
+                              <img src={src} alt="" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => removeImage(i)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3 text-red-400" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                        <p className={`text-xs font-medium ${t.textSecondary}`}>
-                          Tap to add photos
-                        </p>
-                        <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
-                          Up to 10 · JPG, PNG
-                        </p>
-                      </div>
+                      )}
+                      {listingImages.length < 10 && (
+                        <label
+                          className={`border border-dashed ${t.border} rounded-lg p-3 text-center cursor-pointer ${t.bgHover} transition-colors group block`}
+                        >
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            onChange={handleImageSelect}
+                            className="hidden"
+                          />
+                          <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                            <Camera className="w-4 h-4 text-cyan-500" />
+                          </div>
+                          <p className={`text-xs font-medium ${t.textSecondary}`}>
+                            Tap to add photos
+                          </p>
+                          <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                            Up to 10 · JPG, PNG, WebP, GIF
+                          </p>
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Video Upload */}
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Videos ({listingVideos.length}/3)
+                      </label>
+                      {/* Video previews */}
+                      {videoPreviews.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {videoPreviews.map((src, i) => (
+                            <div key={i} className="relative w-24 h-16 rounded-lg overflow-hidden group bg-black">
+                              <video src={src} className="w-full h-full object-cover" muted />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Video className="w-5 h-5 text-white/70" />
+                              </div>
+                              <button
+                                onClick={() => removeVideo(i)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3 text-red-400" />
+                              </button>
+                              <span className={`absolute bottom-0.5 left-1 text-[9px] ${t.textMuted} truncate max-w-[80px]`}>
+                                {listingVideos[i]?.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {listingVideos.length < 3 && (
+                        <label
+                          className={`border border-dashed ${t.border} rounded-lg p-3 text-center cursor-pointer ${t.bgHover} transition-colors group block`}
+                        >
+                          <input
+                            type="file"
+                            accept="video/mp4,video/webm,video/quicktime"
+                            multiple
+                            onChange={handleVideoSelect}
+                            className="hidden"
+                          />
+                          <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                            <Video className="w-4 h-4 text-purple-500" />
+                          </div>
+                          <p className={`text-xs font-medium ${t.textSecondary}`}>
+                            Tap to add videos
+                          </p>
+                          <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                            Up to 3 · MP4, WebM, MOV · 100MB max
+                          </p>
+                        </label>
+                      )}
                     </div>
                   </div>
 

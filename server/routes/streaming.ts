@@ -257,7 +257,120 @@ setInterval(
   10 * 60 * 1000,
 );
 
+// ── Stream Economy: Weekly Caps per Listener Tier ──
+// Guest (no subscription):  20 streams/week
+// Supporter (plan_id=1):   300 streams/week
+// Champion  (plan_id=2): 1,500 streams/week
+// Patron    (plan_id=3): unlimited
+const STREAM_CAPS: Record<string, number> = {
+  guest: 20,
+  supporter: 300,
+  champion: 1500,
+  patron: Infinity,
+};
+const ROLLOVER_CAP_MULTIPLIER = 1.5; // unused streams carry over up to 1.5× base cap
+
+/**
+ * Resolve the listener's weekly stream limit, current usage, and rollover.
+ * Also performs weekly reset if needed.
+ */
+async function getStreamBudget(userId: number | null): Promise<{
+  tier: string;
+  weeklyLimit: number;
+  used: number;
+  rollover: number;
+  allowed: boolean;
+  remaining: number;
+  subscriptionId: number | null;
+}> {
+  if (!userId) {
+    return {
+      tier: "guest",
+      weeklyLimit: STREAM_CAPS.guest,
+      used: 0,
+      rollover: 0,
+      allowed: true,
+      remaining: STREAM_CAPS.guest,
+      subscriptionId: null,
+    };
+  }
+
+  // Fetch listener subscription + plan name
+  const sub = await pool.query(
+    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, sp.name as plan_name
+     FROM listener_subscriptions ls
+     JOIN streaming_plans sp ON sp.id = ls.plan_id
+     WHERE ls.user_id = $1 AND ls.status = 'active'
+     ORDER BY sp.monthly_fee DESC LIMIT 1`,
+    [userId],
+  );
+
+  if (sub.rows.length === 0) {
+    // No active subscription → guest tier
+    // Track guest usage via a lightweight approach (count recent stream_plays)
+    const guestUsage = await pool.query(
+      `SELECT COUNT(*) as cnt FROM stream_plays
+       WHERE user_id = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+      [userId],
+    );
+    const used = parseInt(guestUsage.rows[0]?.cnt || "0");
+    return {
+      tier: "guest",
+      weeklyLimit: STREAM_CAPS.guest,
+      used,
+      rollover: 0,
+      allowed: used < STREAM_CAPS.guest,
+      remaining: Math.max(0, STREAM_CAPS.guest - used),
+      subscriptionId: null,
+    };
+  }
+
+  const s = sub.rows[0];
+  const tierName = (s.plan_name || "supporter").toLowerCase();
+  const baseCap = STREAM_CAPS[tierName] || STREAM_CAPS.supporter;
+  let used = parseInt(s.streams_used_this_week || "0");
+  let rollover = parseInt(s.streams_rollover || "0");
+
+  // Weekly reset check — if last_stream_reset is >7 days ago, reset counters & carry over unused
+  const lastReset = s.last_stream_reset ? new Date(s.last_stream_reset) : null;
+  const daysSinceReset = lastReset
+    ? (Date.now() - lastReset.getTime()) / (1000 * 60 * 60 * 24)
+    : 999;
+
+  if (daysSinceReset >= 7) {
+    // Calculate rollover: unused streams from last week, capped at 1.5× base cap
+    const unused = Math.max(0, baseCap - used);
+    const maxRollover = Math.floor(baseCap * ROLLOVER_CAP_MULTIPLIER);
+    rollover = Math.min(rollover + unused, maxRollover);
+    used = 0;
+
+    await pool.query(
+      `UPDATE listener_subscriptions
+       SET streams_used_this_week = 0, streams_rollover = $1, last_stream_reset = NOW()
+       WHERE id = $2`,
+      [rollover, s.id],
+    );
+  }
+
+  // Effective limit = base cap + rollover
+  const effectiveLimit = baseCap === Infinity ? Infinity : baseCap + rollover;
+  const allowed = baseCap === Infinity || used < effectiveLimit;
+  const remaining =
+    baseCap === Infinity ? Infinity : Math.max(0, effectiveLimit - used);
+
+  return {
+    tier: tierName,
+    weeklyLimit: effectiveLimit,
+    used,
+    rollover,
+    allowed,
+    remaining,
+    subscriptionId: s.id,
+  };
+}
+
 // POST /api/streaming/record-play — Record a stream play (must be ≥30 seconds)
+// Enforces weekly stream caps per listener subscription tier.
 router.post("/record-play", async (req: Request, res: Response) => {
   try {
     const { trackId, duration, sessionId } = req.body;
@@ -279,6 +392,25 @@ router.post("/record-play", async (req: Request, res: Response) => {
     }
     recentStreams.set(dedupKey, Date.now());
 
+    // ── Stream Economy: Check weekly cap ──
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+
+    if (!budget.allowed) {
+      return res.status(429).json({
+        recorded: false,
+        reason: "Weekly stream limit reached",
+        tier: budget.tier,
+        weeklyLimit: budget.weeklyLimit,
+        used: budget.used,
+        rollover: budget.rollover,
+        upgradeHint:
+          budget.tier === "patron"
+            ? null
+            : `Upgrade your plan for more streams. Current: ${budget.tier}`,
+      });
+    }
+
     // Get artist ID for this track
     const trackRow = await pool.query(
       `SELECT artist_id FROM music_tracks WHERE id = $1`,
@@ -288,52 +420,54 @@ router.post("/record-play", async (req: Request, res: Response) => {
 
     // Record the stream play
     await pool.query(
-      `
-      INSERT INTO stream_plays (track_id, user_id, artist_id, duration, completed, session_id, ip_address)
-      VALUES ($1, $2, $3, $4, true, $5, $6)
-    `,
-      [
-        trackId,
-        (req as any).user?.id || null,
-        artistId,
-        duration,
-        sessionId || null,
-        req.ip,
-      ],
+      `INSERT INTO stream_plays (track_id, user_id, artist_id, duration, completed, session_id, ip_address)
+       VALUES ($1, $2, $3, $4, true, $5, $6)`,
+      [trackId, userId, artistId, duration, sessionId || null, req.ip],
     );
 
     // Increment track stream count
     await pool.query(
-      `
-      UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1, play_count = COALESCE(play_count, 0) + 1
-      WHERE id = $1
-    `,
+      `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1, play_count = COALESCE(play_count, 0) + 1
+       WHERE id = $1`,
       [trackId],
     );
 
     // Increment artist total streams
     if (artistId) {
       await pool.query(
-        `
-        UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1
-        WHERE id = $1
-      `,
+        `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1
+         WHERE id = $1`,
         [artistId],
       );
     }
 
-    // Record in listening history if user is authenticated
-    if ((req as any).user?.id) {
+    // Increment listener subscription usage counter
+    if (budget.subscriptionId) {
       await pool.query(
-        `
-        INSERT INTO listening_history (user_id, track_id, duration)
-        VALUES ($1, $2, $3)
-      `,
-        [(req as any).user.id, trackId, duration],
+        `UPDATE listener_subscriptions SET streams_used_this_week = streams_used_this_week + 1
+         WHERE id = $1`,
+        [budget.subscriptionId],
       );
     }
 
-    res.json({ recorded: true });
+    // Record in listening history if user is authenticated
+    if (userId) {
+      await pool.query(
+        `INSERT INTO listening_history (user_id, track_id, duration)
+         VALUES ($1, $2, $3)`,
+        [userId, trackId, duration],
+      );
+    }
+
+    res.json({
+      recorded: true,
+      streamBudget: {
+        tier: budget.tier,
+        remaining:
+          budget.remaining === Infinity ? "unlimited" : budget.remaining - 1,
+        rollover: budget.rollover,
+      },
+    });
   } catch (err: any) {
     console.error("[Streaming] record-play error:", err.message);
     res.status(500).json({ error: "Failed to record play" });

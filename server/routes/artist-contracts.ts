@@ -236,21 +236,17 @@ router.post("/apply", async (req: Request, res: Response) => {
     if (existing.rows.length > 0) {
       const ex = existing.rows[0];
       if (ex.status === "approved") {
-        return res
-          .status(409)
-          .json({
-            error: "Vous avez déjà un contrat actif",
-            contractId: ex.id,
-            grade: ex.grade,
-          });
-      }
-      return res
-        .status(409)
-        .json({
-          error: "Vous avez déjà une candidature en cours",
+        return res.status(409).json({
+          error: "Vous avez déjà un contrat actif",
           contractId: ex.id,
-          status: ex.status,
+          grade: ex.grade,
         });
+      }
+      return res.status(409).json({
+        error: "Vous avez déjà une candidature en cours",
+        contractId: ex.id,
+        status: ex.status,
+      });
     }
 
     // Check cooldown for rejected applications (30 day wait)
@@ -267,11 +263,9 @@ router.post("/apply", async (req: Request, res: Response) => {
         (1000 * 60 * 60 * 24);
       if (daysSinceRejection < 30) {
         const daysLeft = Math.ceil(30 - daysSinceRejection);
-        return res
-          .status(429)
-          .json({
-            error: `Veuillez attendre ${daysLeft} jours avant de soumettre une nouvelle candidature`,
-          });
+        return res.status(429).json({
+          error: `Veuillez attendre ${daysLeft} jours avant de soumettre une nouvelle candidature`,
+        });
       }
     }
 
@@ -533,12 +527,10 @@ router.put("/admin/review/:id", async (req: Request, res: Response) => {
       !action ||
       !["approve", "reject", "under_review", "suspend"].includes(action)
     ) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Action invalide. Utilisez: approve, reject, under_review, suspend",
-        });
+      return res.status(400).json({
+        error:
+          "Action invalide. Utilisez: approve, reject, under_review, suspend",
+      });
     }
 
     // Fetch current application
@@ -584,6 +576,65 @@ router.put("/admin/review/:id", async (req: Request, res: Response) => {
           ],
         );
         artistId = artistResult.rows[0].id;
+      }
+
+      // ── Unified Identity: ensure artist_profiles exists and links to music_artists ──
+      let artistProfileId: number | null = null;
+      const existingProfile = await pool.query(
+        `SELECT id FROM artist_profiles WHERE user_id = $1`,
+        [app.user_id],
+      );
+      if (existingProfile.rows.length > 0) {
+        artistProfileId = existingProfile.rows[0].id;
+        // Update the profile to link to the music_artists entry + set division from grade
+        const divisionMap: Record<string, string> = {
+          S: "elite",
+          A: "pro",
+          B: "indie",
+          C: "discovery",
+        };
+        await pool.query(
+          `UPDATE artist_profiles
+           SET music_artist_id = $1, division = $2, evaluation_status = 'approved',
+               contract_access = $3, updated_at = NOW()
+           WHERE id = $4`,
+          [
+            artistId,
+            divisionMap[grade] || "discovery",
+            grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
+            artistProfileId,
+          ],
+        );
+      } else {
+        // Create a new artist_profiles row linked to both user and music_artists
+        const divisionMap: Record<string, string> = {
+          S: "elite",
+          A: "pro",
+          B: "indie",
+          C: "discovery",
+        };
+        const profileResult = await pool.query(
+          `INSERT INTO artist_profiles (user_id, stage_name, genre, country, country_code, bio,
+            spotify_url, instagram_handle, profile_image_url, music_artist_id, division,
+            evaluation_status, contract_access, is_active)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'approved', $12, true)
+           RETURNING id`,
+          [
+            app.user_id,
+            app.stage_name,
+            JSON.stringify(app.genre ? [app.genre] : []),
+            app.country,
+            app.country_code,
+            app.biography,
+            app.spotify_url,
+            app.instagram_url,
+            app.profile_image_url || null,
+            artistId,
+            divisionMap[grade] || "discovery",
+            grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
+          ],
+        );
+        artistProfileId = profileResult.rows[0].id;
       }
 
       await pool.query(
@@ -633,6 +684,7 @@ router.put("/admin/review/:id", async (req: Request, res: Response) => {
         grade,
         tier,
         artistId,
+        artistProfileId,
       });
     }
 

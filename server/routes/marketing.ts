@@ -70,6 +70,60 @@ const printUpload = multer({
   },
 });
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Multer: marketplace listing media uploads (images + videos)
+// ──────────────────────────────────────────────────────────────────────────────
+const LISTING_UPLOADS_DIR =
+  process.env.NODE_ENV === "production"
+    ? path.join("/tmp", "uploads", "listings")
+    : path.resolve("uploads", "listings");
+
+try {
+  if (!fs.existsSync(LISTING_UPLOADS_DIR)) {
+    fs.mkdirSync(LISTING_UPLOADS_DIR, { recursive: true });
+  }
+} catch (err: any) {
+  console.warn(`⚠️  Could not create listing uploads dir: ${err.message}`);
+}
+
+const listingStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `listing-${uniqueSuffix}${ext}`);
+  },
+});
+
+const ALLOWED_LISTING_IMAGES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+]);
+const ALLOWED_LISTING_VIDEOS = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-msvideo",
+]);
+
+const listingUpload = multer({
+  storage: listingStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB max per file
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_LISTING_IMAGES.has(file.mimetype) || ALLOWED_LISTING_VIDEOS.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`));
+    }
+  },
+}).fields([
+  { name: "images", maxCount: 10 },
+  { name: "videos", maxCount: 3 },
+]);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 📰  AD JOURNAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -135,11 +189,23 @@ router.get("/journal/listings", async (req: Request, res: Response) => {
 
 /**
  * POST /api/marketing/journal/listings
- * Auth: Create a new free ad listing
+ * Auth: Create a new ad listing with optional image/video uploads
+ * Accepts multipart/form-data with fields: images[] (up to 10), videos[] (up to 3)
  */
 router.post(
   "/journal/listings",
   requireAuth(),
+  (req: Request, res: Response, next: Function) => {
+    listingUpload(req, res, (err: any) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+      }
+      if (err) {
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      next();
+    });
+  },
   async (req: Request, res: Response) => {
     try {
       const userId = req.user!.userId;
@@ -154,32 +220,48 @@ router.post(
         website_url,
       } = req.body;
 
-      if (!title || !description || !category) {
+      if (!title || !category) {
         return res.status(400).json({
           success: false,
-          error: "Title, description, and category are required",
+          error: "Title and category are required",
         });
       }
 
+      // Collect uploaded file paths
+      const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+      const imagePaths: string[] = (files?.images || []).map(
+        (f) => `/uploads/listings/${path.basename(f.path)}`
+      );
+      const videoPaths: string[] = (files?.videos || []).map(
+        (f) => `/uploads/listings/${path.basename(f.path)}`
+      );
+
       const result = await pool.query(
         `INSERT INTO ad_journal_listings
-       (user_id, title, description, category, contact_phone, contact_email, address, city, website_url, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+       (user_id, title, description, category, contact_phone, contact_email, location, business_name, images, videos, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
        RETURNING *`,
         [
           userId,
           title,
-          description,
+          description || null,
           category,
-          contact_phone,
-          contact_email,
-          address,
-          city,
-          website_url,
+          contact_phone || null,
+          contact_email || null,
+          address || city || null,
+          website_url || null,
+          JSON.stringify(imagePaths),
+          JSON.stringify(videoPaths),
         ],
       );
 
-      res.status(201).json({ success: true, data: result.rows[0] });
+      console.log(`📦 [LISTING] New listing "${title}" by user ${userId} — ${imagePaths.length} images, ${videoPaths.length} videos`);
+
+      res.status(201).json({
+        success: true,
+        data: result.rows[0],
+        media: { images: imagePaths, videos: videoPaths },
+      });
     } catch (error: any) {
       console.error("[MARKETING] Create listing error:", error);
       res.status(500).json({ success: false, error: error.message });
@@ -253,6 +335,8 @@ router.put(
         });
       }
 
+      const { images, videos } = req.body;
+
       const result = await pool.query(
         `UPDATE ad_journal_listings
        SET title = COALESCE($1, title),
@@ -263,6 +347,8 @@ router.put(
            address = COALESCE($6, address),
            city = COALESCE($7, city),
            website_url = COALESCE($8, website_url),
+           images = COALESCE($10, images),
+           videos = COALESCE($11, videos),
            updated_at = NOW()
        WHERE id = $9
        RETURNING *`,
@@ -276,6 +362,8 @@ router.put(
           city,
           website_url,
           listingId,
+          images ? JSON.stringify(images) : null,
+          videos ? JSON.stringify(videos) : null,
         ],
       );
 

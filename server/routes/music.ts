@@ -108,11 +108,19 @@ async function ensureTrackColumns(): Promise<void> {
   // Drop orphan FK constraints that reference the wrong table
   // (fk_music_track_artist may point to music_artists instead of artists)
   try {
-    await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`);
-  } catch { /* constraint may not exist */ }
+    await pool.query(
+      `ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`,
+    );
+  } catch {
+    /* constraint may not exist */
+  }
   try {
-    await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`);
-  } catch { /* constraint may not exist */ }
+    await pool.query(
+      `ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`,
+    );
+  } catch {
+    /* constraint may not exist */
+  }
 }
 
 // Check if country_code column exists on artists table (cached)
@@ -449,11 +457,28 @@ router.post(
         result = await pool.query(insertSQL, insertParams);
       } catch (insertErr: any) {
         // FK constraint mismatch: artist_id FK may reference music_artists instead of artists
-        if (insertErr.message?.includes("fk_music_track_artist") || insertErr.message?.includes("foreign key")) {
-          console.warn("⚠️ [MUSIC] FK constraint blocking insert — dropping orphan constraints and retrying");
-          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`).catch(() => {});
-          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`).catch(() => {});
-          await pool.query(`ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_music_artists_id_fk`).catch(() => {});
+        if (
+          insertErr.message?.includes("fk_music_track_artist") ||
+          insertErr.message?.includes("foreign key")
+        ) {
+          console.warn(
+            "⚠️ [MUSIC] FK constraint blocking insert — dropping orphan constraints and retrying",
+          );
+          await pool
+            .query(
+              `ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS fk_music_track_artist`,
+            )
+            .catch(() => {});
+          await pool
+            .query(
+              `ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_fkey`,
+            )
+            .catch(() => {});
+          await pool
+            .query(
+              `ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_artist_id_music_artists_id_fk`,
+            )
+            .catch(() => {});
           // Retry the insert
           result = await pool.query(insertSQL, insertParams);
         } else {
@@ -800,7 +825,8 @@ router.post("/albums", requireAuth(), async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { title, genre, description, albumType, trackIds } = req.body;
-    if (!title) return res.status(400).json({ success: false, error: "Title required" });
+    if (!title)
+      return res.status(400).json({ success: false, error: "Title required" });
 
     // Resolve artist_id from the logged-in user
     const userId = (req as any).user?.id;
@@ -816,7 +842,14 @@ router.post("/albums", requireAuth(), async (req, res) => {
     const result = await pool.query(
       `INSERT INTO albums (title, artist_id, genre, description, album_type, total_tracks)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, artistId, genre || null, description || null, albumType || "album", (trackIds || []).length],
+      [
+        title,
+        artistId,
+        genre || null,
+        description || null,
+        albumType || "album",
+        (trackIds || []).length,
+      ],
     );
 
     const album = result.rows[0];
@@ -824,7 +857,10 @@ router.post("/albums", requireAuth(), async (req, res) => {
     // Assign tracks to this album
     if (trackIds && trackIds.length > 0) {
       for (const trackId of trackIds) {
-        await pool.query(`UPDATE music_tracks SET album_id = $1 WHERE id = $2`, [album.id, trackId]);
+        await pool.query(
+          `UPDATE music_tracks SET album_id = $1 WHERE id = $2`,
+          [album.id, trackId],
+        );
       }
     }
 
@@ -841,7 +877,10 @@ router.delete("/albums/:id", requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;
     // Unlink tracks first
-    await pool.query(`UPDATE music_tracks SET album_id = NULL WHERE album_id = $1`, [parseInt(id)]);
+    await pool.query(
+      `UPDATE music_tracks SET album_id = NULL WHERE album_id = $1`,
+      [parseInt(id)],
+    );
     await pool.query(`DELETE FROM albums WHERE id = $1`, [parseInt(id)]);
     res.json({ success: true });
   } catch (error: any) {
@@ -910,14 +949,19 @@ router.post("/collaborations", requireAuth(), async (req, res) => {
     const userId = (req as any).user?.id;
     const { targetId, trackTitle, revenueShare, message, genre } = req.body;
 
-    if (!targetId) return res.status(400).json({ success: false, error: "targetId required" });
+    if (!targetId)
+      return res
+        .status(400)
+        .json({ success: false, error: "targetId required" });
 
     const artistRes = await pool.query(
       `SELECT id FROM artists WHERE user_id = $1 LIMIT 1`,
       [userId],
     );
     if (!artistRes.rows.length) {
-      return res.status(400).json({ success: false, error: "You must be an artist" });
+      return res
+        .status(400)
+        .json({ success: false, error: "You must be an artist" });
     }
     const requesterId = artistRes.rows[0].id;
 
@@ -928,16 +972,27 @@ router.post("/collaborations", requireAuth(), async (req, res) => {
       [requesterId, targetId],
     );
     if (existing.rows.length) {
-      return res.status(409).json({ success: false, error: "Request already pending" });
+      return res
+        .status(409)
+        .json({ success: false, error: "Request already pending" });
     }
 
     const result = await pool.query(
       `INSERT INTO artist_collaborations (requester_id, target_id, track_title, revenue_share, message, genre)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [requesterId, targetId, trackTitle || null, revenueShare || 50, message || null, genre || null],
+      [
+        requesterId,
+        targetId,
+        trackTitle || null,
+        revenueShare || 50,
+        message || null,
+        genre || null,
+      ],
     );
 
-    console.log(`🤝 [COLLAB] Request sent from artist #${requesterId} → #${targetId}`);
+    console.log(
+      `🤝 [COLLAB] Request sent from artist #${requesterId} → #${targetId}`,
+    );
     res.json({ success: true, data: result.rows[0] });
   } catch (error: any) {
     console.error("❌ Create collab error:", error);
@@ -958,7 +1013,8 @@ router.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
       `UPDATE artist_collaborations SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
       [status, parseInt(id)],
     );
-    if (!result.rows.length) return res.status(404).json({ success: false, error: "Not found" });
+    if (!result.rows.length)
+      return res.status(404).json({ success: false, error: "Not found" });
     res.json({ success: true, data: result.rows[0] });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

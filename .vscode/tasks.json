@@ -282,6 +282,41 @@
 			"label": "Git push loading speed",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'perf: reduce loading overlay — initial cold-load 5s→300ms, page nav 900ms→300ms' && git push"
+		},
+		{
+			"label": "Create Streaming Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _create_streaming_tables.cjs"
+		},
+		{
+			"label": "Verify Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config(); const pg=require('pg'); const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}}); pool.query(\\\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('contest_votes','artist_subscriptions','arena_contests','arena_brackets','arena_votes','vault_rules','collab_requests','platform_wallets','wallet_transactions','user_payment_methods','bank_transfer_requests') ORDER BY table_name\\\").then(r=>{console.log(r.rows.length+'/11 tables found:'); r.rows.forEach(x=>console.log('  ✓ '+x.table_name)); pool.end()}).catch(e=>{console.error(e.message);pool.end()})\""
+		},
+		{
+			"label": "Count Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT count(*) as n FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('contest_votes','artist_subscriptions','arena_contests','arena_brackets','arena_votes','vault_rules','collab_requests','platform_wallets','wallet_transactions','user_payment_methods','bank_transfer_requests')\\\").then(r=>{console.log(r.rows[0].n+'/11 OK');c.end()})\""
+		},
+		{
+			"label": "Push videos column + verify DB",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_videos_column.cjs"
+		},
+		{
+			"label": "Verify DB sync",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_videos_column.cjs 2>&1 | tail -30"
+		},
+		{
+			"label": "Check videos col",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='ad_journal_listings' AND column_name='videos'\\\").then(r=>{console.log('videos col exists:',r.rows.length>0);c.end()})\""
+		},
+		{
+			"label": "Git stage and check",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git status --short | head -40"
 		}
 	]
 }

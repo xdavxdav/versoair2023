@@ -445,12 +445,25 @@ export default function ArtistPortal() {
   const [collabSearch, setCollabSearch] = useState("");
   const [showCollabSearch, setShowCollabSearch] = useState(false);
   const [showAlbumModal, setShowAlbumModal] = useState(false);
-  const [albumForm, setAlbumForm] = useState({ title: "", genre: "", description: "", albumType: "album", trackIds: [] as number[] });
+  const [albumForm, setAlbumForm] = useState({
+    title: "",
+    genre: "",
+    description: "",
+    albumType: "album",
+    trackIds: [] as number[],
+  });
   const [albumCreating, setAlbumCreating] = useState(false);
   const [showCollabRequestModal, setShowCollabRequestModal] = useState(false);
   const [collabTargetArtist, setCollabTargetArtist] = useState<any>(null);
-  const [collabForm, setCollabForm] = useState({ trackTitle: "", revenueShare: 50, message: "", genre: "" });
-  const [incognitoMode, setIncognitoMode] = useState(() => localStorage.getItem("artist_incognito") === "true");
+  const [collabForm, setCollabForm] = useState({
+    trackTitle: "",
+    revenueShare: 50,
+    message: "",
+    genre: "",
+  });
+  const [incognitoMode, setIncognitoMode] = useState(
+    () => localStorage.getItem("artist_incognito") === "true",
+  );
   const [notifications, setNotifications] = useState<
     {
       id: number;
@@ -859,14 +872,18 @@ export default function ArtistPortal() {
   }, [displayTracks]);
 
   // Collaborations from API
-  const displayCollaborations: Collaboration[] = (collabsData || []).map((c: any) => ({
-    id: String(c.id),
-    artist: c.requester_name || c.target_name || "Artiste",
-    status: c.status as "active" | "pending" | "completed",
-    track: c.track_title || "—",
-    revenueShare: c.revenue_share || 50,
-    date: c.created_at ? new Date(c.created_at).toLocaleDateString("fr-FR") : "—",
-  }));
+  const displayCollaborations: Collaboration[] = (collabsData || []).map(
+    (c: any) => ({
+      id: String(c.id),
+      artist: c.requester_name || c.target_name || "Artiste",
+      status: c.status as "active" | "pending" | "completed",
+      track: c.track_title || "—",
+      revenueShare: c.revenue_share || 50,
+      date: c.created_at
+        ? new Date(c.created_at).toLocaleDateString("fr-FR")
+        : "—",
+    }),
+  );
 
   // Calculate totals from real data
   const totalStreams = computedAnalytics.totalStreams;
@@ -1414,7 +1431,9 @@ export default function ArtistPortal() {
                 <div
                   key={artist.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                  onClick={() => window.location.href = `/artist-catalogue/${artist.id}`}
+                  onClick={() =>
+                    (window.location.href = `/artist-catalogue/${artist.id}`)
+                  }
                 >
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
@@ -1443,8 +1462,14 @@ export default function ArtistPortal() {
                     {(() => {
                       // Compute growth: position-based ranking metric
                       const artistStreams = (artist as any).totalStreams || 0;
-                      const avgStreams = totalStreams / Math.max(totalArtists, 1);
-                      const growth = avgStreams > 0 ? Math.round(((artistStreams - avgStreams) / avgStreams) * 100) : 0;
+                      const avgStreams =
+                        totalStreams / Math.max(totalArtists, 1);
+                      const growth =
+                        avgStreams > 0
+                          ? Math.round(
+                              ((artistStreams - avgStreams) / avgStreams) * 100,
+                            )
+                          : 0;
                       return (
                         <>
                           <div className="flex items-center justify-end space-x-1">
@@ -1453,8 +1478,13 @@ export default function ArtistPortal() {
                             ) : (
                               <TrendingDown className="h-4 w-4 text-red-400" />
                             )}
-                            <span className={growth >= 0 ? "text-green-400" : "text-red-400"}>
-                              {growth >= 0 ? "+" : ""}{growth}%
+                            <span
+                              className={
+                                growth >= 0 ? "text-green-400" : "text-red-400"
+                              }
+                            >
+                              {growth >= 0 ? "+" : ""}
+                              {growth}%
                             </span>
                           </div>
                           <p className="text-purple-200 text-sm">vs moyenne</p>
@@ -1588,14 +1618,29 @@ export default function ArtistPortal() {
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {(albumsData || []).map((album: any) => (
-              <Card key={album.id} className="bg-white/5 backdrop-blur-sm border-white/10 hover:border-purple-400/30 hover:bg-white/10 transition-all cursor-pointer group">
+              <Card
+                key={album.id}
+                className="bg-white/5 backdrop-blur-sm border-white/10 hover:border-purple-400/30 hover:bg-white/10 transition-all cursor-pointer group"
+              >
                 <CardContent className="p-4">
                   <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-purple-600/40 to-pink-600/40 flex items-center justify-center mb-3">
                     <Music2 className="h-10 w-10 text-white/40" />
                   </div>
-                  <p className="text-white font-medium text-sm truncate">{album.title}</p>
-                  <p className="text-purple-200/60 text-xs">{album.album_type?.toUpperCase() || "ALBUM"} • {album.track_count || album.total_tracks || 0} titres</p>
-                  {album.genre && <Badge variant="outline" className="mt-1 border-purple-400/30 text-purple-300 text-[10px]">{album.genre}</Badge>}
+                  <p className="text-white font-medium text-sm truncate">
+                    {album.title}
+                  </p>
+                  <p className="text-purple-200/60 text-xs">
+                    {album.album_type?.toUpperCase() || "ALBUM"} •{" "}
+                    {album.track_count || album.total_tracks || 0} titres
+                  </p>
+                  {album.genre && (
+                    <Badge
+                      variant="outline"
+                      className="mt-1 border-purple-400/30 text-purple-300 text-[10px]"
+                    >
+                      {album.genre}
+                    </Badge>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -1643,23 +1688,36 @@ export default function ArtistPortal() {
                       <div className="absolute bottom-4 left-4 right-4 flex gap-2">
                         <Button
                           onClick={() => {
-                            if (currentTrack && String(currentTrack.id) === String(track.id) && isPlaying) {
+                            if (
+                              currentTrack &&
+                              String(currentTrack.id) === String(track.id) &&
+                              isPlaying
+                            ) {
                               handleTogglePlayPause();
                             } else {
                               handlePlayTrack(track);
                             }
                           }}
                           className={`flex-1 backdrop-blur-sm text-white transition-all ${
-                            currentTrack && String(currentTrack.id) === String(track.id) && isPlaying
+                            currentTrack &&
+                            String(currentTrack.id) === String(track.id) &&
+                            isPlaying
                               ? "bg-purple-500/60 hover:bg-purple-500/80 ring-2 ring-purple-400/50"
                               : "bg-white/20 hover:bg-white/30"
                           }`}
                           disabled={!hasAudio}
                         >
-                          {currentTrack && String(currentTrack.id) === String(track.id) && isPlaying ? (
-                            <><Pause className="mr-1 h-4 w-4 animate-pulse" /> Pause</>
+                          {currentTrack &&
+                          String(currentTrack.id) === String(track.id) &&
+                          isPlaying ? (
+                            <>
+                              <Pause className="mr-1 h-4 w-4 animate-pulse" />{" "}
+                              Pause
+                            </>
                           ) : (
-                            <><Play className="mr-1 h-4 w-4" /> Écouter</>
+                            <>
+                              <Play className="mr-1 h-4 w-4" /> Écouter
+                            </>
                           )}
                         </Button>
                         {hasAudio && (
@@ -1832,19 +1890,27 @@ export default function ArtistPortal() {
                     {hasAudio && (
                       <button
                         onClick={() => {
-                          if (currentTrack && String(currentTrack.id) === String(track.id) && isPlaying) {
+                          if (
+                            currentTrack &&
+                            String(currentTrack.id) === String(track.id) &&
+                            isPlaying
+                          ) {
                             handleTogglePlayPause();
                           } else {
                             handlePlayTrack(track);
                           }
                         }}
                         className={`absolute inset-0 rounded-lg flex items-center justify-center transition-all ${
-                          currentTrack && String(currentTrack.id) === String(track.id) && isPlaying
+                          currentTrack &&
+                          String(currentTrack.id) === String(track.id) &&
+                          isPlaying
                             ? "bg-purple-500/60 opacity-100 ring-2 ring-purple-400/50"
                             : "bg-black/60 opacity-0 group-hover:opacity-100"
                         }`}
                       >
-                        {currentTrack && String(currentTrack.id) === String(track.id) && isPlaying ? (
+                        {currentTrack &&
+                        String(currentTrack.id) === String(track.id) &&
+                        isPlaying ? (
                           <Pause className="h-4 w-4 text-white animate-pulse" />
                         ) : (
                           <Play className="h-4 w-4 text-white" />
@@ -2914,9 +2980,8 @@ export default function ArtistPortal() {
 
   const renderCollaborations = () => {
     // Use server-side search results when query present, otherwise all artists
-    const filteredCollabArtists = collabSearch && searchedArtists
-      ? searchedArtists
-      : displayArtists;
+    const filteredCollabArtists =
+      collabSearch && searchedArtists ? searchedArtists : displayArtists;
 
     return (
       <div className="space-y-6">
@@ -2984,7 +3049,12 @@ export default function ArtistPortal() {
                       <div
                         key={artist.id}
                         className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-400/30 transition-all cursor-pointer group"
-                        onClick={() => window.open(`/artist-catalogue/${artist.id}`, "_blank")}
+                        onClick={() =>
+                          window.open(
+                            `/artist-catalogue/${artist.id}`,
+                            "_blank",
+                          )
+                        }
                         title="Voir le profil de l'artiste"
                       >
                         <Avatar className="h-10 w-10">
@@ -3161,7 +3231,10 @@ export default function ArtistPortal() {
                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
                             onClick={async () => {
                               try {
-                                await updateCollabStatus(parseInt(collab.id), "active");
+                                await updateCollabStatus(
+                                  parseInt(collab.id),
+                                  "active",
+                                );
                                 invalidateTracks();
                               } catch {}
                             }}
@@ -3175,7 +3248,10 @@ export default function ArtistPortal() {
                             className="flex-1 border-red-400 text-red-400 hover:bg-red-400/10"
                             onClick={async () => {
                               try {
-                                await updateCollabStatus(parseInt(collab.id), "declined");
+                                await updateCollabStatus(
+                                  parseInt(collab.id),
+                                  "declined",
+                                );
                                 invalidateTracks();
                               } catch {}
                             }}
@@ -3315,7 +3391,10 @@ export default function ArtistPortal() {
                   title="Télécharger"
                   onClick={() => {
                     if (currentTrack) {
-                      window.open(`/api/music/tracks/${currentTrack.id}/download`, "_blank");
+                      window.open(
+                        `/api/music/tracks/${currentTrack.id}/download`,
+                        "_blank",
+                      );
                     }
                   }}
                 >
@@ -3371,11 +3450,20 @@ export default function ArtistPortal() {
                         localStorage.setItem("artist_incognito", String(next));
                       }}
                     >
-                      {incognitoMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {incognitoMode ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-gray-900 border-white/20 text-white">
-                    {incognitoMode ? "Mode incognito activé — vous apparaissez comme un auditeur" : "Activer le mode incognito — se fondre dans la masse"}
+                  <TooltipContent
+                    side="bottom"
+                    className="bg-gray-900 border-white/20 text-white"
+                  >
+                    {incognitoMode
+                      ? "Mode incognito activé — vous apparaissez comme un auditeur"
+                      : "Activer le mode incognito — se fondre dans la masse"}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -4060,13 +4148,19 @@ export default function ArtistPortal() {
             {/* BPM / Key / Mood — collapsed by default */}
             <button
               type="button"
-              onClick={() => setShowAdvancedUpload(p => !p)}
+              onClick={() => setShowAdvancedUpload((p) => !p)}
               className="flex items-center gap-2 text-sm text-purple-300/70 hover:text-purple-200 transition-colors py-1"
             >
-              {showAdvancedUpload ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAdvancedUpload ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
               Options avancées (BPM, Tonalité, Ambiance)
             </button>
-            <div className={`grid grid-cols-3 gap-3 transition-all overflow-hidden ${showAdvancedUpload ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
+            <div
+              className={`grid grid-cols-3 gap-3 transition-all overflow-hidden ${showAdvancedUpload ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}
+            >
               <div className="space-y-2">
                 <Label>BPM</Label>
                 <Select
@@ -4425,7 +4519,9 @@ export default function ArtistPortal() {
               <Label>Titre de l'album</Label>
               <Input
                 value={albumForm.title}
-                onChange={(e) => setAlbumForm(f => ({ ...f, title: e.target.value }))}
+                onChange={(e) =>
+                  setAlbumForm((f) => ({ ...f, title: e.target.value }))
+                }
                 placeholder="Mon premier album..."
                 className="bg-white/10 border-white/30 text-white"
               />
@@ -4433,7 +4529,12 @@ export default function ArtistPortal() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={albumForm.albumType} onValueChange={(v) => setAlbumForm(f => ({ ...f, albumType: v }))}>
+                <Select
+                  value={albumForm.albumType}
+                  onValueChange={(v) =>
+                    setAlbumForm((f) => ({ ...f, albumType: v }))
+                  }
+                >
                   <SelectTrigger className="bg-white/10 border-white/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -4447,13 +4548,51 @@ export default function ArtistPortal() {
               </div>
               <div className="space-y-2">
                 <Label>Genre</Label>
-                <Select value={albumForm.genre} onValueChange={(v) => setAlbumForm(f => ({ ...f, genre: v }))}>
+                <Select
+                  value={albumForm.genre}
+                  onValueChange={(v) =>
+                    setAlbumForm((f) => ({ ...f, genre: v }))
+                  }
+                >
                   <SelectTrigger className="bg-white/10 border-white/30 text-white notranslate">
                     <SelectValue placeholder="Genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20 notranslate">
-                    {["Afrobeats","Amapiano","RnB","Hip-Hop","Rap","Trap","Drill","Pop","Jazz","Reggae","Latin","Electronic","Dancehall","Gospel","Rock","Classical","Kompa","Coupé-décalé","Ndombolo","Zouk","Gqom","Kizomba","Bongo Flava","Highlife","Mbalax","Gnawa","Raï","Afro-Fusion","Afro-Pop","Afro-Soul"].map(g => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    {[
+                      "Afrobeats",
+                      "Amapiano",
+                      "RnB",
+                      "Hip-Hop",
+                      "Rap",
+                      "Trap",
+                      "Drill",
+                      "Pop",
+                      "Jazz",
+                      "Reggae",
+                      "Latin",
+                      "Electronic",
+                      "Dancehall",
+                      "Gospel",
+                      "Rock",
+                      "Classical",
+                      "Kompa",
+                      "Coupé-décalé",
+                      "Ndombolo",
+                      "Zouk",
+                      "Gqom",
+                      "Kizomba",
+                      "Bongo Flava",
+                      "Highlife",
+                      "Mbalax",
+                      "Gnawa",
+                      "Raï",
+                      "Afro-Fusion",
+                      "Afro-Pop",
+                      "Afro-Soul",
+                    ].map((g) => (
+                      <SelectItem key={g} value={g}>
+                        {g}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -4463,7 +4602,9 @@ export default function ArtistPortal() {
               <Label>Description (optionnel)</Label>
               <Textarea
                 value={albumForm.description}
-                onChange={(e) => setAlbumForm(f => ({ ...f, description: e.target.value }))}
+                onChange={(e) =>
+                  setAlbumForm((f) => ({ ...f, description: e.target.value }))
+                }
                 placeholder="L'histoire derrière cet album..."
                 className="bg-white/10 border-white/30 text-white min-h-[60px]"
               />
@@ -4473,7 +4614,9 @@ export default function ArtistPortal() {
               <Label>Titres à inclure</Label>
               <div className="max-h-48 overflow-y-auto space-y-1 rounded-lg border border-white/10 p-2 bg-white/5">
                 {displayTracks.length === 0 ? (
-                  <p className="text-white/30 text-sm text-center py-4">Aucun titre disponible — téléversez d'abord des titres</p>
+                  <p className="text-white/30 text-sm text-center py-4">
+                    Aucun titre disponible — téléversez d'abord des titres
+                  </p>
                 ) : (
                   displayTracks.map((track) => (
                     <label
@@ -4485,24 +4628,32 @@ export default function ArtistPortal() {
                         checked={albumForm.trackIds.includes(Number(track.id))}
                         onChange={(e) => {
                           const tid = Number(track.id);
-                          setAlbumForm(f => ({
+                          setAlbumForm((f) => ({
                             ...f,
                             trackIds: e.target.checked
                               ? [...f.trackIds, tid]
-                              : f.trackIds.filter(id => id !== tid),
+                              : f.trackIds.filter((id) => id !== tid),
                           }));
                         }}
                         className="rounded border-purple-400"
                       />
                       <Music2 className="h-4 w-4 text-purple-300" />
-                      <span className="text-white text-sm flex-1 truncate">{track.title}</span>
-                      <span className="text-purple-200/50 text-xs">{(track as any).genre || ""}</span>
+                      <span className="text-white text-sm flex-1 truncate">
+                        {track.title}
+                      </span>
+                      <span className="text-purple-200/50 text-xs">
+                        {(track as any).genre || ""}
+                      </span>
                     </label>
                   ))
                 )}
               </div>
               {albumForm.trackIds.length > 0 && (
-                <p className="text-purple-200/60 text-xs">{albumForm.trackIds.length} titre{albumForm.trackIds.length > 1 ? "s" : ""} sélectionné{albumForm.trackIds.length > 1 ? "s" : ""}</p>
+                <p className="text-purple-200/60 text-xs">
+                  {albumForm.trackIds.length} titre
+                  {albumForm.trackIds.length > 1 ? "s" : ""} sélectionné
+                  {albumForm.trackIds.length > 1 ? "s" : ""}
+                </p>
               )}
             </div>
           </div>
@@ -4523,7 +4674,13 @@ export default function ArtistPortal() {
                   await createAlbum(albumForm);
                   invalidateTracks();
                   setShowAlbumModal(false);
-                  setAlbumForm({ title: "", genre: "", description: "", albumType: "album", trackIds: [] });
+                  setAlbumForm({
+                    title: "",
+                    genre: "",
+                    description: "",
+                    albumType: "album",
+                    trackIds: [],
+                  });
                 } catch (err: any) {
                   console.error("Album creation failed:", err);
                 } finally {
@@ -4541,7 +4698,10 @@ export default function ArtistPortal() {
       {/* ═══════════════════════════════════════════════════════
           Collaboration Request Modal — opens when clicking + on artist card
           ═══════════════════════════════════════════════════════ */}
-      <Dialog open={showCollabRequestModal} onOpenChange={setShowCollabRequestModal}>
+      <Dialog
+        open={showCollabRequestModal}
+        onOpenChange={setShowCollabRequestModal}
+      >
         <DialogContent className="sm:max-w-[480px] bg-gray-900 border-white/20 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -4549,7 +4709,9 @@ export default function ArtistPortal() {
               Proposer une collaboration
             </DialogTitle>
             <DialogDescription className="text-purple-200">
-              {collabTargetArtist ? `Envoyer une demande à ${collabTargetArtist.name || collabTargetArtist.stage_name}` : "Collaboration musicale professionnelle"}
+              {collabTargetArtist
+                ? `Envoyer une demande à ${collabTargetArtist.name || collabTargetArtist.stage_name}`
+                : "Collaboration musicale professionnelle"}
             </DialogDescription>
           </DialogHeader>
           {collabTargetArtist && (
@@ -4558,18 +4720,32 @@ export default function ArtistPortal() {
               <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                    {(collabTargetArtist.name || collabTargetArtist.stage_name || "?").charAt(0)}
+                    {(
+                      collabTargetArtist.name ||
+                      collabTargetArtist.stage_name ||
+                      "?"
+                    ).charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-white font-medium">{collabTargetArtist.name || collabTargetArtist.stage_name}</p>
-                  <p className="text-purple-200/60 text-xs">{collabTargetArtist.genre || "—"} • {collabTargetArtist.country || "Mondial"}</p>
+                  <p className="text-white font-medium">
+                    {collabTargetArtist.name || collabTargetArtist.stage_name}
+                  </p>
+                  <p className="text-purple-200/60 text-xs">
+                    {collabTargetArtist.genre || "—"} •{" "}
+                    {collabTargetArtist.country || "Mondial"}
+                  </p>
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="ml-auto text-purple-300 hover:text-white"
-                  onClick={() => window.open(`/artist-catalogue/${collabTargetArtist.id}`, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      `/artist-catalogue/${collabTargetArtist.id}`,
+                      "_blank",
+                    )
+                  }
                 >
                   <Eye className="h-4 w-4 mr-1" /> Profil
                 </Button>
@@ -4578,7 +4754,8 @@ export default function ArtistPortal() {
               {/* Pro collaboration info */}
               <div className="rounded-lg bg-white/5 border border-white/10 p-4 space-y-3">
                 <h4 className="text-sm font-semibold text-purple-300 flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" /> Infos collaboration professionnelle
+                  <Briefcase className="h-4 w-4" /> Infos collaboration
+                  professionnelle
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2 rounded bg-white/5">
@@ -4591,11 +4768,15 @@ export default function ArtistPortal() {
                   </div>
                   <div className="p-2 rounded bg-white/5">
                     <p className="text-purple-200/60">Droits d'auteur</p>
-                    <p className="text-white font-medium">Co-écriture partagée</p>
+                    <p className="text-white font-medium">
+                      Co-écriture partagée
+                    </p>
                   </div>
                   <div className="p-2 rounded bg-white/5">
                     <p className="text-purple-200/60">Publication</p>
-                    <p className="text-white font-medium">Distribué par Verso Air</p>
+                    <p className="text-white font-medium">
+                      Distribué par Verso Air
+                    </p>
                   </div>
                 </div>
               </div>
@@ -4606,7 +4787,12 @@ export default function ArtistPortal() {
                   <Label className="text-sm">Titre du projet (optionnel)</Label>
                   <Input
                     value={collabForm.trackTitle}
-                    onChange={(e) => setCollabForm(f => ({ ...f, trackTitle: e.target.value }))}
+                    onChange={(e) =>
+                      setCollabForm((f) => ({
+                        ...f,
+                        trackTitle: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Summer Vibes feat. ..."
                     className="bg-white/10 border-white/30 text-white"
                   />
@@ -4616,9 +4802,15 @@ export default function ArtistPortal() {
                     <Label className="text-sm">Partage revenus (%)</Label>
                     <Input
                       type="number"
-                      min={10} max={90}
+                      min={10}
+                      max={90}
                       value={collabForm.revenueShare}
-                      onChange={(e) => setCollabForm(f => ({ ...f, revenueShare: parseInt(e.target.value) || 50 }))}
+                      onChange={(e) =>
+                        setCollabForm((f) => ({
+                          ...f,
+                          revenueShare: parseInt(e.target.value) || 50,
+                        }))
+                      }
                       className="bg-white/10 border-white/30 text-white"
                     />
                   </div>
@@ -4626,7 +4818,9 @@ export default function ArtistPortal() {
                     <Label className="text-sm">Genre</Label>
                     <Input
                       value={collabForm.genre}
-                      onChange={(e) => setCollabForm(f => ({ ...f, genre: e.target.value }))}
+                      onChange={(e) =>
+                        setCollabForm((f) => ({ ...f, genre: e.target.value }))
+                      }
                       placeholder="Afrobeats, Hip-Hop..."
                       className="bg-white/10 border-white/30 text-white"
                     />
@@ -4636,7 +4830,9 @@ export default function ArtistPortal() {
                   <Label className="text-sm">Message d'introduction</Label>
                   <Textarea
                     value={collabForm.message}
-                    onChange={(e) => setCollabForm(f => ({ ...f, message: e.target.value }))}
+                    onChange={(e) =>
+                      setCollabForm((f) => ({ ...f, message: e.target.value }))
+                    }
                     placeholder="Salut ! J'aimerais collaborer avec toi sur un projet..."
                     className="bg-white/10 border-white/30 text-white min-h-[80px]"
                   />
@@ -4647,7 +4843,10 @@ export default function ArtistPortal() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => { setShowCollabRequestModal(false); setCollabTargetArtist(null); }}
+              onClick={() => {
+                setShowCollabRequestModal(false);
+                setCollabTargetArtist(null);
+              }}
               className="border-white/30 text-white hover:bg-white/10"
             >
               Annuler
@@ -4668,7 +4867,12 @@ export default function ArtistPortal() {
                   invalidateTracks();
                   setShowCollabRequestModal(false);
                   setCollabTargetArtist(null);
-                  setCollabForm({ trackTitle: "", revenueShare: 50, message: "", genre: "" });
+                  setCollabForm({
+                    trackTitle: "",
+                    revenueShare: 50,
+                    message: "",
+                    genre: "",
+                  });
                 } catch (err: any) {
                   console.error("Collab request failed:", err);
                 }
