@@ -104,13 +104,14 @@ router.post("/deposit", requireAuth, async (req: Request, res: Response) => {
       creditAmount = depositAmount * 1.12; // +12%
     else if (depositAmount >= 10) creditAmount = depositAmount * 1.1; // +10%
 
-    // TODO: Create Stripe PaymentIntent here when ready
-    // For now, return the credit amount that WOULD be granted
+    // Redirect user to PayPal checkout flow
     res.json({
-      success: false,
+      success: true,
+      redirect: "/api/paypal/create-order",
       message:
-        "Payment processing not yet available. Earn credits through games and streaming!",
-      wouldReceive: {
+        "Use PayPal to complete your deposit. Call POST /api/paypal/create-order with { amount } to start.",
+      paymentMethod: "paypal",
+      preview: {
         depositAmount,
         creditAmount: Math.round(creditAmount * 100) / 100,
         bonusPercent:
