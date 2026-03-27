@@ -245,7 +245,10 @@ router.post(
     let artistCode: string | undefined;
     if (role === "artist" && stageName) {
       try {
-        artistCode = generateArtistCode(stageName, division || "discovery");
+        artistCode = generateArtistCode(
+          stageName, division || "discovery", new Date(), undefined, undefined,
+          country || 0, "MOD", "x",
+        );
 
         await db.insert(artistProfiles).values({
           userId: user.id,
@@ -298,7 +301,11 @@ router.get(
         error: { message: "stageName query param is required" },
       });
     }
-    const code = generateArtistCode(stageName, division as string);
+    const { countryCode: cc } = req.query;
+    const code = generateArtistCode(
+      stageName, division as string, new Date(), undefined, undefined,
+      typeof cc === "string" ? cc : 0, "MOD", "x",
+    );
     res.json({ success: true, artistCode: code, stageName, division });
   }),
 );

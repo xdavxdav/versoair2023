@@ -277,6 +277,10 @@ router.post(
       "discovery",
       new Date(),
       gateUser || undefined,
+      undefined,
+      country || 0,
+      "MOD",
+      "x",
     );
 
     // Create artist profile

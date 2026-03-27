@@ -229,7 +229,9 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    const { gameType, wagerAmount, rounds } = req.body;
+    const gameType = req.body.gameType || req.body.game_type;
+    const wagerAmount = req.body.wagerAmount ?? req.body.wager_amount;
+    const rounds = req.body.rounds || req.body.round_count;
 
     // Validate game type
     const validTypes = ["music_trivia", "prediction_market", "card_battle"];
@@ -243,6 +245,25 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ error: "Wager must be between 0 and 100 credits" });
+    }
+
+    // Contract gate: user must have signed contract + valid platform ID to wager
+    if (wager > 0) {
+      const contract = await pool.query(
+        `SELECT ac.status, ac.grade, ap.artist_code
+         FROM artist_contracts ac
+         JOIN artist_profiles ap ON ap.id = ac.artist_id
+         WHERE ap.user_id = $1 AND ac.status = 'approved'
+         LIMIT 1`,
+        [userId],
+      );
+      if (contract.rows.length === 0) {
+        return res.status(403).json({
+          error:
+            "Contrat requis — signez un contrat artiste ou utilisateur pour accéder aux mises.",
+          requiresContract: true,
+        });
+      }
     }
 
     // Age check for wagering
@@ -380,6 +401,23 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
 
     const wager = parseFloat(m.wager_amount || "0");
 
+    // Contract gate
+    if (wager > 0) {
+      const contract = await pool.query(
+        `SELECT ac.status FROM artist_contracts ac
+         JOIN artist_profiles ap ON ap.id = ac.artist_id
+         WHERE ap.user_id = $1 AND ac.status = 'approved' LIMIT 1`,
+        [userId],
+      );
+      if (contract.rows.length === 0) {
+        return res.status(403).json({
+          error:
+            "Contrat requis — signez un contrat pour rejoindre les duels avec mise.",
+          requiresContract: true,
+        });
+      }
+    }
+
     // Age check
     if (wager > 0) {
       const user = await pool.query(
@@ -387,12 +425,10 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
         [userId],
       );
       if (!user.rows[0]?.age_verified_at) {
-        return res
-          .status(403)
-          .json({
-            error: "Age verification required",
-            requiresAgeVerification: true,
-          });
+        return res.status(403).json({
+          error: "Age verification required",
+          requiresAgeVerification: true,
+        });
       }
     }
 

@@ -790,18 +790,24 @@ export default function ArtistPortal() {
         const data = await res.json();
         const price = data.price ?? 99;
         const title = data.trackTitle || "Ce titre";
-        const balanceInfo = data.balance !== undefined ? ` (votre solde: ${data.balance} cr)` : "";
+        const balanceInfo =
+          data.balance !== undefined
+            ? ` (votre solde: ${data.balance} cr)`
+            : "";
         const proceed = window.confirm(
           `"${title}" coûte ${price} crédits${balanceInfo}.\n\nAcheter maintenant?`,
         );
         if (!proceed) return;
 
         // Attempt credit purchase
-        const purchaseRes = await fetch(`/api/music/tracks/${trackId}/purchase`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
+        const purchaseRes = await fetch(
+          `/api/music/tracks/${trackId}/purchase`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
         const purchaseData = await purchaseRes.json();
 
         if (purchaseRes.status === 402) {

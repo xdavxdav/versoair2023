@@ -115,27 +115,75 @@ export default function ArcadePage() {
   const [activeTab, setActiveTab] = useState("play");
   const [wagerAmount, setWagerAmount] = useState("50");
   const [activeMatch, setActiveMatch] = useState<GameMatch | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(
+    null,
+  );
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answerResult, setAnswerResult] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showAgeModal, setShowAgeModal] = useState(false);
   const [dob, setDob] = useState("");
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("10");
+  const [depositLoading, setDepositLoading] = useState(false);
+  const [showContractGate, setShowContractGate] = useState(false);
 
   // ── Data fetching ──
   const { data: wallet, refetch: refetchWallet } = useQuery<WalletBalance>({
     queryKey: ["/api/wallet/balance"],
     queryFn: async () => {
       const res = await authFetch("/api/wallet/balance");
-      if (!res.ok) return { balance: "0", frozen_balance: "0", currency: "credits", withdrawal_locked: true };
+      if (!res.ok)
+        return {
+          balance: "0",
+          frozen_balance: "0",
+          currency: "credits",
+          withdrawal_locked: true,
+        };
       return res.json();
     },
     enabled: !!user,
     staleTime: 10_000,
   });
 
-  const { data: openMatches = [], refetch: refetchOpen } = useQuery<GameMatch[]>({
+  // PayPal configuration — check if PayPal is available
+  const { data: paypalConfig } = useQuery<{ enabled: boolean; mode: string; bonusTiers: any[] }>({
+    queryKey: ["/api/paypal/config"],
+    queryFn: async () => {
+      const res = await authFetch("/api/paypal/config");
+      if (!res.ok) return { enabled: false, mode: "sandbox", bonusTiers: [] };
+      return res.json();
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  // ── Handle PayPal redirect params ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paypalResult = params.get("paypal");
+    if (paypalResult === "success") {
+      toast({
+        title: "💰 Dépôt réussi!",
+        description: "Vos crédits ont été ajoutés à votre portefeuille.",
+      });
+      refetchWallet();
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (paypalResult === "cancelled") {
+      toast({
+        title: "Dépôt annulé",
+        description: "Le paiement PayPal a été annulé.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const { data: openMatches = [], refetch: refetchOpen } = useQuery<
+    GameMatch[]
+  >({
     queryKey: ["/api/games/open"],
     queryFn: async () => {
       const res = await authFetch("/api/games/open");
@@ -179,7 +227,9 @@ export default function ArcadePage() {
           return c - 1;
         });
       }, 1000);
-      return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+      return () => {
+        if (countdownRef.current) clearInterval(countdownRef.current);
+      };
     }
   }, [countdown]);
 
@@ -187,7 +237,7 @@ export default function ArcadePage() {
   useEffect(() => {
     if (activeMatch?.status === "active" && activeMatch.game_state?.questions) {
       const q = activeMatch.game_state.questions.find(
-        (q: TriviaQuestion) => q.round === activeMatch.current_round
+        (q: TriviaQuestion) => q.round === activeMatch.current_round,
       );
       if (q) {
         setCurrentQuestion(q);
@@ -201,7 +251,11 @@ export default function ArcadePage() {
   // ── Create challenge ──
   const createChallenge = useCallback(async () => {
     if (!user) {
-      toast({ title: "Connexion requise", description: "Connectez-vous pour jouer.", variant: "destructive" });
+      toast({
+        title: "Connexion requise",
+        description: "Connectez-vous pour jouer.",
+        variant: "destructive",
+      });
       return;
     }
     const wager = parseInt(wagerAmount);
@@ -211,7 +265,11 @@ export default function ArcadePage() {
     }
     const balance = parseFloat(wallet?.balance || "0");
     if (wager > balance) {
-      toast({ title: "Solde insuffisant", description: `Vous avez ${balance} crédits.`, variant: "destructive" });
+      toast({
+        title: "Solde insuffisant",
+        description: `Vous avez ${balance} crédits.`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -226,10 +284,21 @@ export default function ArcadePage() {
         setShowAgeModal(true);
         return;
       }
-      toast({ title: "Erreur", description: data.error || "Échec de création", variant: "destructive" });
+      if (data.requiresContract) {
+        setShowContractGate(true);
+        return;
+      }
+      toast({
+        title: "Erreur",
+        description: data.error || "Échec de création",
+        variant: "destructive",
+      });
       return;
     }
-    toast({ title: "Duel créé!", description: `Match #${data.match.id} — en attente d'adversaire...` });
+    toast({
+      title: "Duel créé!",
+      description: `Match #${data.match.id} — en attente d'adversaire...`,
+    });
     setActiveMatch(data.match);
     refetchWallet();
     refetchOpen();
@@ -237,60 +306,80 @@ export default function ArcadePage() {
   }, [user, wagerAmount, wallet, toast, refetchWallet, refetchOpen, refetchMy]);
 
   // ── Join match ──
-  const joinMatch = useCallback(async (matchId: number) => {
-    const res = await authJson(`/api/games/${matchId}/join`);
-    const data = await res.json();
-    if (!res.ok) {
-      if (data.needsAge) {
-        setShowAgeModal(true);
+  const joinMatch = useCallback(
+    async (matchId: number) => {
+      const res = await authJson(`/api/games/${matchId}/join`);
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.needsAge) {
+          setShowAgeModal(true);
+          return;
+        }
+        if (data.requiresContract) {
+          setShowContractGate(true);
+          return;
+        }
+        toast({
+          title: "Erreur",
+          description: data.error || "Impossible de rejoindre",
+          variant: "destructive",
+        });
         return;
       }
-      toast({ title: "Erreur", description: data.error || "Impossible de rejoindre", variant: "destructive" });
-      return;
-    }
-    toast({ title: "Rejoint!", description: "Le duel commence!" });
-    setActiveMatch(data.match);
-    refetchWallet();
-    refetchOpen();
-    refetchMy();
-  }, [toast, refetchWallet, refetchOpen, refetchMy]);
+      toast({ title: "Rejoint!", description: "Le duel commence!" });
+      setActiveMatch(data.match);
+      refetchWallet();
+      refetchOpen();
+      refetchMy();
+    },
+    [toast, refetchWallet, refetchOpen, refetchMy],
+  );
 
   // ── Submit answer ──
-  const submitAnswer = useCallback(async (answerIndex: number) => {
-    if (!activeMatch || selectedAnswer !== null) return;
-    setSelectedAnswer(answerIndex);
-    if (countdownRef.current) clearInterval(countdownRef.current);
+  const submitAnswer = useCallback(
+    async (answerIndex: number) => {
+      if (!activeMatch || selectedAnswer !== null) return;
+      setSelectedAnswer(answerIndex);
+      if (countdownRef.current) clearInterval(countdownRef.current);
 
-    const res = await authJson(`/api/games/${activeMatch.id}/answer`, {
-      round: activeMatch.current_round,
-      answer_index: answerIndex,
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      toast({ title: "Erreur", description: data.error || "Échec", variant: "destructive" });
-      return;
-    }
-
-    setAnswerResult(data);
-
-    // Auto-advance to next round after 2.5s
-    setTimeout(() => {
-      if (data.match_status === "completed") {
-        setActiveMatch(null);
-        setCurrentQuestion(null);
+      const res = await authJson(`/api/games/${activeMatch.id}/answer`, {
+        round: activeMatch.current_round,
+        answer_index: answerIndex,
+      });
+      const data = await res.json();
+      if (!res.ok) {
         toast({
-          title: data.winner_id === user?.id ? "🏆 Victoire!" : "Match terminé",
-          description: data.winner_id === user?.id
-            ? `Vous remportez ${data.payout || "le pot"}!`
-            : "Bien joué! Retentez votre chance.",
+          title: "Erreur",
+          description: data.error || "Échec",
+          variant: "destructive",
         });
-        refetchWallet();
-        refetchMy();
-      } else if (data.match) {
-        setActiveMatch(data.match);
+        return;
       }
-    }, 2500);
-  }, [activeMatch, selectedAnswer, user, toast, refetchWallet, refetchMy]);
+
+      setAnswerResult(data);
+
+      // Auto-advance to next round after 2.5s
+      setTimeout(() => {
+        if (data.match_status === "completed") {
+          setActiveMatch(null);
+          setCurrentQuestion(null);
+          toast({
+            title:
+              data.winner_id === user?.id ? "🏆 Victoire!" : "Match terminé",
+            description:
+              data.winner_id === user?.id
+                ? `Vous remportez ${data.payout || "le pot"}!`
+                : "Bien joué! Retentez votre chance.",
+          });
+          refetchWallet();
+          refetchMy();
+        } else if (data.match) {
+          setActiveMatch(data.match);
+        }
+      }, 2500);
+    },
+    [activeMatch, selectedAnswer, user, toast, refetchWallet, refetchMy],
+  );
 
   // ── Age verification ──
   const verifyAge = useCallback(async () => {
@@ -298,7 +387,11 @@ export default function ArcadePage() {
     const res = await authJson("/api/games/verify-age", { date_of_birth: dob });
     const data = await res.json();
     if (!res.ok) {
-      toast({ title: "Erreur", description: data.error || "Vérification échouée", variant: "destructive" });
+      toast({
+        title: "Erreur",
+        description: data.error || "Vérification échouée",
+        variant: "destructive",
+      });
       return;
     }
     toast({ title: "Vérifié ✓", description: "Vous pouvez maintenant jouer!" });
@@ -308,7 +401,8 @@ export default function ArcadePage() {
   // ── Stats ──
   const totalWins = myMatches.filter((m) => m.winner_id === user?.id).length;
   const totalPlayed = myMatches.filter((m) => m.status === "completed").length;
-  const winRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
+  const winRate =
+    totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
   const balance = parseFloat(wallet?.balance || "0");
   const frozenBalance = parseFloat(wallet?.frozen_balance || "0");
 
@@ -319,8 +413,13 @@ export default function ArcadePage() {
         <Card className="bg-black/40 border-purple-500/30 max-w-md w-full text-center p-8">
           <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-purple-400" />
           <h2 className="text-2xl font-bold text-white mb-2">Arcade</h2>
-          <p className="text-gray-400 mb-6">Connectez-vous pour accéder aux duels PvP et aux mini-jeux.</p>
-          <Button onClick={() => navigate("/signin")} className="bg-purple-600 hover:bg-purple-700">
+          <p className="text-gray-400 mb-6">
+            Connectez-vous pour accéder aux duels PvP et aux mini-jeux.
+          </p>
+          <Button
+            onClick={() => navigate("/signin")}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
             Se connecter
           </Button>
         </Card>
@@ -351,25 +450,57 @@ export default function ArcadePage() {
                 <Gamepad2 className="w-8 h-8 text-purple-400" />
                 Arcade
               </h1>
-              <p className="text-gray-400 mt-1">Duels musicaux PvP • Misez vos crédits • Grimpez le classement</p>
+              <p className="text-gray-400 mt-1">
+                Duels musicaux PvP • Misez vos crédits • Grimpez le classement
+              </p>
             </div>
 
             {/* Wallet strip */}
             <div className="flex items-center gap-4 bg-black/50 border border-purple-500/30 rounded-xl px-5 py-3">
               <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Solde</p>
-                <p className="text-xl font-bold text-amber-400">{balance.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  Solde
+                </p>
+                <p className="text-xl font-bold text-amber-400">
+                  {balance.toLocaleString()}
+                </p>
               </div>
-              <Separator orientation="vertical" className="h-8 bg-purple-500/30" />
+              <Separator
+                orientation="vertical"
+                className="h-8 bg-purple-500/30"
+              />
               <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">En jeu</p>
-                <p className="text-lg font-semibold text-fuchsia-400">{frozenBalance.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  En jeu
+                </p>
+                <p className="text-lg font-semibold text-fuchsia-400">
+                  {frozenBalance.toLocaleString()}
+                </p>
               </div>
-              <Separator orientation="vertical" className="h-8 bg-purple-500/30" />
+              <Separator
+                orientation="vertical"
+                className="h-8 bg-purple-500/30"
+              />
               <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Win%</p>
-                <p className="text-lg font-semibold text-green-400">{winRate}%</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">
+                  Win%
+                </p>
+                <p className="text-lg font-semibold text-green-400">
+                  {winRate}%
+                </p>
               </div>
+              <Separator
+                orientation="vertical"
+                className="h-8 bg-purple-500/30"
+              />
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                onClick={() => setShowDeposit(true)}
+              >
+                <CircleDollarSign className="w-4 h-4 mr-1" />
+                Déposer
+              </Button>
             </div>
           </div>
         </div>
@@ -377,18 +508,34 @@ export default function ArcadePage() {
 
       {/* ── Main Tabs ── */}
       <div className="max-w-7xl mx-auto px-4 pb-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="bg-black/40 border border-purple-500/20 p-1">
-            <TabsTrigger value="play" className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white">
+            <TabsTrigger
+              value="play"
+              className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white"
+            >
               <Swords className="w-4 h-4 mr-2" /> Jouer
             </TabsTrigger>
-            <TabsTrigger value="lobby" className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white">
+            <TabsTrigger
+              value="lobby"
+              className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white"
+            >
               <Users className="w-4 h-4 mr-2" /> Lobby
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white">
+            <TabsTrigger
+              value="history"
+              className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white"
+            >
               <Clock className="w-4 h-4 mr-2" /> Historique
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white">
+            <TabsTrigger
+              value="leaderboard"
+              className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white"
+            >
               <Trophy className="w-4 h-4 mr-2" /> Classement
             </TabsTrigger>
           </TabsList>
@@ -396,25 +543,32 @@ export default function ArcadePage() {
           {/* ═══════════ PLAY TAB ═══════════ */}
           <TabsContent value="play" className="space-y-6">
             <AnimatePresence mode="wait">
-              {activeMatch && activeMatch.status === "active" && currentQuestion ? (
+              {activeMatch &&
+              activeMatch.status === "active" &&
+              currentQuestion ? (
                 /* ── Active Game: Answer Questions ── */
                 <motion.div key="game" {...fadeInUp}>
                   <Card className="bg-black/50 border-purple-500/30">
                     <CardHeader className="text-center">
                       <Badge className="mx-auto mb-2 bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/40">
-                        Round {activeMatch.current_round} / {activeMatch.round_count}
+                        Round {activeMatch.current_round} /{" "}
+                        {activeMatch.round_count}
                       </Badge>
                       <CardTitle className="text-xl text-white">
                         {currentQuestion.question}
                       </CardTitle>
                       <div className="flex items-center justify-center gap-2 mt-3">
                         <Timer className="w-4 h-4 text-amber-400" />
-                        <span className={`text-lg font-bold ${countdown <= 5 ? "text-red-400 animate-pulse" : "text-amber-400"}`}>
+                        <span
+                          className={`text-lg font-bold ${countdown <= 5 ? "text-red-400 animate-pulse" : "text-amber-400"}`}
+                        >
                           {countdown}s
                         </span>
                       </div>
                       <Progress
-                        value={(countdown / (currentQuestion.time_limit || 20)) * 100}
+                        value={
+                          (countdown / (currentQuestion.time_limit || 20)) * 100
+                        }
                         className="mt-2 h-2"
                       />
                     </CardHeader>
@@ -423,15 +577,20 @@ export default function ArcadePage() {
                         const isSelected = selectedAnswer === idx;
                         const isCorrect = answerResult?.correct_index === idx;
                         const showResult = answerResult !== null;
-                        let btnClass = "w-full justify-start text-left py-4 px-5 text-base border ";
+                        let btnClass =
+                          "w-full justify-start text-left py-4 px-5 text-base border ";
                         if (showResult && isCorrect) {
-                          btnClass += "bg-green-600/30 border-green-500 text-green-200";
+                          btnClass +=
+                            "bg-green-600/30 border-green-500 text-green-200";
                         } else if (showResult && isSelected && !isCorrect) {
-                          btnClass += "bg-red-600/30 border-red-500 text-red-200";
+                          btnClass +=
+                            "bg-red-600/30 border-red-500 text-red-200";
                         } else if (isSelected) {
-                          btnClass += "bg-purple-600/40 border-purple-500 text-white";
+                          btnClass +=
+                            "bg-purple-600/40 border-purple-500 text-white";
                         } else {
-                          btnClass += "bg-black/30 border-gray-700 text-gray-200 hover:border-purple-500/50 hover:bg-purple-900/20";
+                          btnClass +=
+                            "bg-black/30 border-gray-700 text-gray-200 hover:border-purple-500/50 hover:bg-purple-900/20";
                         }
 
                         return (
@@ -446,8 +605,12 @@ export default function ArcadePage() {
                               {String.fromCharCode(65 + idx)}
                             </span>
                             {opt}
-                            {showResult && isCorrect && <CheckCircle2 className="ml-auto w-5 h-5 text-green-400" />}
-                            {showResult && isSelected && !isCorrect && <XCircle className="ml-auto w-5 h-5 text-red-400" />}
+                            {showResult && isCorrect && (
+                              <CheckCircle2 className="ml-auto w-5 h-5 text-green-400" />
+                            )}
+                            {showResult && isSelected && !isCorrect && (
+                              <XCircle className="ml-auto w-5 h-5 text-red-400" />
+                            )}
                           </Button>
                         );
                       })}
@@ -458,12 +621,22 @@ export default function ArcadePage() {
                           animate={{ opacity: 1, y: 0 }}
                           className="mt-4 text-center"
                         >
-                          <p className={answerResult.is_correct ? "text-green-400 font-semibold" : "text-red-400"}>
-                            {answerResult.is_correct ? "✅ Correct!" : "❌ Incorrect"}
-                            {answerResult.points_earned > 0 && ` — +${answerResult.points_earned} pts`}
+                          <p
+                            className={
+                              answerResult.is_correct
+                                ? "text-green-400 font-semibold"
+                                : "text-red-400"
+                            }
+                          >
+                            {answerResult.is_correct
+                              ? "✅ Correct!"
+                              : "❌ Incorrect"}
+                            {answerResult.points_earned > 0 &&
+                              ` — +${answerResult.points_earned} pts`}
                           </p>
                           <p className="text-gray-500 text-sm mt-1">
-                            Score: {answerResult.your_score} vs {answerResult.opponent_score}
+                            Score: {answerResult.your_score} vs{" "}
+                            {answerResult.opponent_score}
                           </p>
                         </motion.div>
                       )}
@@ -475,13 +648,23 @@ export default function ArcadePage() {
                 <motion.div key="waiting" {...fadeInUp}>
                   <Card className="bg-black/50 border-purple-500/30 text-center py-12">
                     <Loader2 className="w-12 h-12 mx-auto text-purple-400 animate-spin mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">En attente d'un adversaire...</h3>
-                    <p className="text-gray-400 mb-1">Match #{activeMatch.id} • Mise: {activeMatch.wager_amount} crédits</p>
-                    <p className="text-gray-500 text-sm">Partagez le lien pour défier un ami!</p>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      En attente d'un adversaire...
+                    </h3>
+                    <p className="text-gray-400 mb-1">
+                      Match #{activeMatch.id} • Mise: {activeMatch.wager_amount}{" "}
+                      crédits
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Partagez le lien pour défier un ami!
+                    </p>
                     <Button
                       variant="outline"
                       className="mt-6 border-red-500/40 text-red-400 hover:bg-red-900/20"
-                      onClick={() => { setActiveMatch(null); refetchOpen(); }}
+                      onClick={() => {
+                        setActiveMatch(null);
+                        refetchOpen();
+                      }}
                     >
                       Annuler
                     </Button>
@@ -497,7 +680,8 @@ export default function ArcadePage() {
                         Lancer un Duel Musical
                       </CardTitle>
                       <CardDescription className="text-gray-400">
-                        5 questions de culture musicale. Le plus rapide et le plus précis gagne la mise!
+                        5 questions de culture musicale. Le plus rapide et le
+                        plus précis gagne la mise!
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -506,8 +690,12 @@ export default function ArcadePage() {
                         <div className="flex items-center gap-3 mb-3">
                           <Music className="w-6 h-6 text-fuchsia-400" />
                           <div>
-                            <h4 className="font-semibold text-white">Music Trivia Duel</h4>
-                            <p className="text-sm text-gray-400">5 rounds • 20s par question • Bonus vitesse</p>
+                            <h4 className="font-semibold text-white">
+                              Music Trivia Duel
+                            </h4>
+                            <p className="text-sm text-gray-400">
+                              5 rounds • 20s par question • Bonus vitesse
+                            </p>
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3 text-center text-sm">
@@ -528,7 +716,9 @@ export default function ArcadePage() {
 
                       {/* Wager selector */}
                       <div>
-                        <label className="text-sm text-gray-400 mb-2 block">Montant de la mise</label>
+                        <label className="text-sm text-gray-400 mb-2 block">
+                          Montant de la mise
+                        </label>
                         <div className="flex gap-2 flex-wrap">
                           {["10", "25", "50", "100", "250"].map((amt) => (
                             <Button
@@ -562,22 +752,30 @@ export default function ArcadePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
                     <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
                       <Swords className="w-5 h-5 mx-auto text-purple-400 mb-1" />
-                      <p className="text-2xl font-bold text-white">{totalPlayed}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {totalPlayed}
+                      </p>
                       <p className="text-xs text-gray-500">Matchs joués</p>
                     </Card>
                     <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
                       <Trophy className="w-5 h-5 mx-auto text-amber-400 mb-1" />
-                      <p className="text-2xl font-bold text-white">{totalWins}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {totalWins}
+                      </p>
                       <p className="text-xs text-gray-500">Victoires</p>
                     </Card>
                     <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
                       <Target className="w-5 h-5 mx-auto text-green-400 mb-1" />
-                      <p className="text-2xl font-bold text-white">{winRate}%</p>
+                      <p className="text-2xl font-bold text-white">
+                        {winRate}%
+                      </p>
                       <p className="text-xs text-gray-500">Win Rate</p>
                     </Card>
                     <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
                       <CircleDollarSign className="w-5 h-5 mx-auto text-fuchsia-400 mb-1" />
-                      <p className="text-2xl font-bold text-white">{balance.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {balance.toLocaleString()}
+                      </p>
                       <p className="text-xs text-gray-500">Crédits</p>
                     </Card>
                   </div>
@@ -593,7 +791,12 @@ export default function ArcadePage() {
                 <Users className="w-5 h-5 text-purple-400" />
                 Duels ouverts
               </h3>
-              <Button variant="ghost" size="sm" onClick={() => refetchOpen()} className="text-gray-400 hover:text-white">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchOpen()}
+                className="text-gray-400 hover:text-white"
+              >
                 <RefreshCw className="w-4 h-4 mr-1" /> Refresh
               </Button>
             </div>
@@ -622,7 +825,8 @@ export default function ArcadePage() {
                           </div>
                           <div>
                             <p className="text-white font-medium">
-                              {match.player1_name || `Joueur #${match.player1_id}`}
+                              {match.player1_name ||
+                                `Joueur #${match.player1_id}`}
                             </p>
                             <p className="text-gray-500 text-sm">
                               Music Trivia • {match.round_count} rounds
@@ -659,18 +863,27 @@ export default function ArcadePage() {
               <Card className="bg-black/40 border-purple-500/20 py-12 text-center">
                 <Swords className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Aucun match encore</p>
-                <p className="text-gray-500 text-sm mt-1">Lancez votre premier duel!</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Lancez votre premier duel!
+                </p>
               </Card>
             ) : (
               <div className="space-y-3">
                 {myMatches.slice(0, 20).map((match) => {
                   const won = match.winner_id === user?.id;
                   const isP1 = match.player1_id === user?.id;
-                  const myScore = isP1 ? match.player1_score : match.player2_score;
-                  const oppScore = isP1 ? match.player2_score : match.player1_score;
+                  const myScore = isP1
+                    ? match.player1_score
+                    : match.player2_score;
+                  const oppScore = isP1
+                    ? match.player2_score
+                    : match.player1_score;
 
                   return (
-                    <Card key={match.id} className="bg-black/40 border-purple-500/20">
+                    <Card
+                      key={match.id}
+                      className="bg-black/40 border-purple-500/20"
+                    >
                       <CardContent className="flex items-center justify-between py-4">
                         <div className="flex items-center gap-3">
                           {match.status === "completed" ? (
@@ -692,14 +905,18 @@ export default function ArcadePage() {
                             <p className="text-white font-medium">
                               Match #{match.id}
                               {match.status === "completed" && (
-                                <span className={`ml-2 text-sm ${won ? "text-green-400" : "text-red-400"}`}>
+                                <span
+                                  className={`ml-2 text-sm ${won ? "text-green-400" : "text-red-400"}`}
+                                >
                                   {won ? "Victoire" : "Défaite"}
                                 </span>
                               )}
                             </p>
                             <p className="text-gray-500 text-sm">
                               Score: {myScore} - {oppScore} •{" "}
-                              {new Date(match.created_at).toLocaleDateString("fr-FR")}
+                              {new Date(match.created_at).toLocaleDateString(
+                                "fr-FR",
+                              )}
                             </p>
                           </div>
                         </div>
@@ -715,7 +932,9 @@ export default function ArcadePage() {
                           >
                             {match.wager_amount} cr
                           </Badge>
-                          <p className="text-xs text-gray-500 mt-1 capitalize">{match.status}</p>
+                          <p className="text-xs text-gray-500 mt-1 capitalize">
+                            {match.status}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -735,12 +954,17 @@ export default function ArcadePage() {
               <Card className="bg-black/40 border-purple-500/20 py-12 text-center">
                 <Crown className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Le classement est vide</p>
-                <p className="text-gray-500 text-sm mt-1">Soyez le premier à jouer!</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Soyez le premier à jouer!
+                </p>
               </Card>
             ) : (
               <div className="space-y-3">
                 {leaderboard.map((entry, idx) => (
-                  <Card key={entry.user_id} className="bg-black/40 border-purple-500/20">
+                  <Card
+                    key={entry.user_id}
+                    className="bg-black/40 border-purple-500/20"
+                  >
                     <CardContent className="flex items-center justify-between py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -757,13 +981,17 @@ export default function ArcadePage() {
                           {idx + 1}
                         </div>
                         <div>
-                          <p className="text-white font-medium">{entry.username}</p>
+                          <p className="text-white font-medium">
+                            {entry.username}
+                          </p>
                           <p className="text-gray-500 text-sm">
-                            {entry.wins}W / {entry.total_matches}G — {
-                              entry.total_matches > 0
-                                ? Math.round((entry.wins / entry.total_matches) * 100)
-                                : 0
-                            }% WR
+                            {entry.wins}W / {entry.total_matches}G —{" "}
+                            {entry.total_matches > 0
+                              ? Math.round(
+                                  (entry.wins / entry.total_matches) * 100,
+                                )
+                              : 0}
+                            % WR
                           </p>
                         </div>
                       </div>
@@ -799,13 +1027,17 @@ export default function ArcadePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <ShieldCheck className="w-12 h-12 mx-auto text-purple-400 mb-4" />
-              <h3 className="text-xl font-bold text-white text-center mb-2">Vérification d'âge</h3>
+              <h3 className="text-xl font-bold text-white text-center mb-2">
+                Vérification d'âge
+              </h3>
               <p className="text-gray-400 text-sm text-center mb-6">
                 Vous devez avoir 18 ans ou plus pour jouer avec des crédits.
               </p>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Date de naissance</label>
+                  <label className="text-sm text-gray-400 mb-1 block">
+                    Date de naissance
+                  </label>
                   <input
                     type="date"
                     value={dob}
@@ -829,6 +1061,189 @@ export default function ArcadePage() {
                   Annuler
                 </Button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── PayPal Deposit Modal ── */}
+      <AnimatePresence>
+        {showDeposit && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setShowDeposit(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#0f0520] border border-amber-500/30 rounded-2xl p-6 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CircleDollarSign className="w-12 h-12 mx-auto text-amber-400 mb-4" />
+              <h3 className="text-xl font-bold text-white text-center mb-2">
+                Déposer des crédits
+              </h3>
+              <p className="text-gray-400 text-sm text-center mb-6">
+                Alimentez votre portefeuille via PayPal.
+                {paypalConfig?.mode === "sandbox" && (
+                  <span className="block text-amber-500 text-xs mt-1">
+                    ⚠ Mode test (sandbox) — aucun vrai prélèvement
+                  </span>
+                )}
+              </p>
+
+              {/* Bonus schedule */}
+              {paypalConfig?.bonusTiers && paypalConfig.bonusTiers.length > 0 && (
+                <div className="bg-black/40 border border-amber-500/20 rounded-lg p-3 mb-5">
+                  <p className="text-xs text-amber-400 font-semibold mb-2 uppercase tracking-wider">
+                    Bonus de dépôt
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {paypalConfig.bonusTiers.map((tier: any, i: number) => (
+                      <div key={i} className="flex justify-between text-gray-300">
+                        <span>${tier.min}+</span>
+                        <span className="text-amber-300 font-semibold">+{tier.bonus}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Amount selector */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">
+                    Montant (USD)
+                  </label>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {["5", "10", "25", "50", "100"].map((amt) => (
+                      <Button
+                        key={amt}
+                        variant="outline"
+                        size="sm"
+                        className={`border-amber-500/30 ${
+                          depositAmount === amt
+                            ? "bg-amber-600/40 text-white border-amber-500"
+                            : "text-gray-400 hover:text-white hover:border-amber-500/50"
+                        }`}
+                        onClick={() => setDepositAmount(amt)}
+                      >
+                        ${amt}
+                      </Button>
+                    ))}
+                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="w-full bg-black/50 border border-amber-500/30 rounded-lg px-4 py-2 text-white text-center text-lg font-bold focus:outline-none focus:border-amber-500"
+                  />
+                  <p className="text-center text-gray-500 text-xs mt-1">
+                    1 USD = 100 crédits
+                  </p>
+                </div>
+
+                <Button
+                  disabled={depositLoading || !paypalConfig?.enabled}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold py-3 text-lg"
+                  onClick={async () => {
+                    setDepositLoading(true);
+                    try {
+                      const res = await authJson("/api/paypal/create-order", {
+                        amount: parseFloat(depositAmount),
+                        description: "Arcade credit deposit",
+                      });
+                      const data = await res.json();
+                      if (data.approvalUrl) {
+                        window.location.href = data.approvalUrl;
+                      } else {
+                        toast({
+                          title: "Erreur PayPal",
+                          description: data.error || "Impossible de créer la commande",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch {
+                      toast({
+                        title: "Erreur réseau",
+                        description: "Impossible de contacter PayPal",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setDepositLoading(false);
+                    }
+                  }}
+                >
+                  {depositLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  ) : (
+                    <Wallet className="w-5 h-5 mr-2" />
+                  )}
+                  {paypalConfig?.enabled
+                    ? `Payer $${depositAmount} via PayPal`
+                    : "PayPal non configuré"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowDeposit(false)}
+                  className="w-full text-gray-500"
+                >
+                  Annuler
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Contract Gate Modal ── */}
+      <AnimatePresence>
+        {showContractGate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setShowContractGate(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#0f0520] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ShieldCheck className="w-12 h-12 mx-auto text-red-400 mb-4" />
+              <h3 className="text-xl font-bold text-white text-center mb-2">
+                Contrat requis
+              </h3>
+              <p className="text-gray-400 text-sm text-center mb-6">
+                Vous devez avoir un contrat artiste approuvé pour accéder aux
+                duels avec mise. Rendez-vous dans votre portail artiste pour
+                signer votre contrat.
+              </p>
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  setShowContractGate(false);
+                  navigate("/artist-portal");
+                }}
+              >
+                Aller au portail artiste
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowContractGate(false)}
+                className="w-full text-gray-500 mt-2"
+              >
+                Fermer
+              </Button>
             </motion.div>
           </motion.div>
         )}

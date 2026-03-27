@@ -1,43 +1,37 @@
 /**
- * Artist Code Generator
+ * Artist & User ID Generator — Verso Air Platform
  *
- * Format: VA_[PREFIX]_[TIER]_[YYMMDD]_[CCC+HEX]
- *   - VA     = Verso Artist
- *   - PREFIX = 2-char consonant extract from stage name (e.g. Nooka → NK)
- *   - TIER   = System code (1 letter) + 3 profile letters (see below)
- *   - YYMMDD = Join date (2-digit year)
- *   - CCC+HEX = 3-digit ISO country code + 3-char random hex
+ * ═══ NEW FORMAT (v2) ═══
+ * VA_NK-E_260115_A2V2F5.b
  *
- * ═══ THREE SUPER-CATEGORY SYSTEMS ═══
+ *   VA       = Verso Air
+ *   NK       = 2-char consonant extract from stage name (Nooka → NK)
+ *   -E       = Division letter: D=Discovery, I=Indie, P=Pro, E=Elite, S=Signed, L=Legend
+ *   260115   = DDMMYY join date
+ *   A2V2F5   = Status flags interleaved with country calling code digits:
+ *              A = Active       + 1st digit of country code
+ *              V = Verified     + 2nd digit of country code
+ *              F = Full access  + 3rd digit of country code
+ *              So for country 225 (Côte d'Ivoire) → A2V2F5
+ *              For country 001 (Canada/US)        → A0V0F1
+ *              For country 033 (France)            → A0V3F3
+ *   .b       = Initial from real name provided in contract signature (lowercase)
  *
- * 1. ARC — Status-Based (artists/creators)
- *    Position 1: Division    : D=Discovery, I=Indie, P=Pro, E=Elite, S=Signed, L=Legend
- *    Position 2: Account Type: S=Solo, G=Group/Band, C=Composer/Producer
- *    Position 3: Verification: V=Verified, U=Unverified, P=Premium/Partner
- *    Position 4: Rights/Tier : F=Full Rights, L=Licensed, E=Emerging
- *    Example: VA_NK_ESVF_260215_225A1B  (Nooka, Elite Solo Verified Full, Côte d'Ivoire)
- *
- * 2. MOD — Tier-Based (performance-driven streaming)
- *    Position 1: Division    : D=Discovery, I=Indie, P=Pro, E=Elite, S=Signed, L=Legend
- *    Position 2: Genre/Class : M=Mainstream, I=Indie, O=Orchestral
- *    Position 3: Engagement  : A=Active, D=Dormant
- *    Position 4: Monetization: P=Paid, R=Royalty-Free
- *    Example: VA_NK_EIAP_260215_225A1B  (Nooka, Elite Indie Active Paid, Côte d'Ivoire)
- *
- * 3. TAG — Administrative (staff, labels, podcasters)
- *    Position 1: Type      : A=Artist, L=Label, P=Podcaster
- *    Position 2: Authority : I=Independent, S=Signed, M=Managed
- *    Position 3: Grade     : B=Bronze, S=Silver, G=Gold
- *    Example: VA_ADM_ASG_260215_225A1B  (Admin, Artist Signed Gold)
+ * Status flag values:
+ *   Position 1: A=Active, I=Inactive, S=Suspended
+ *   Position 2: V=Verified, U=Unverified, P=Pending
+ *   Position 3: F=Full privilege, L=Limited, E=Emerging, R=Restricted
  *
  * Staff override: VA_[NAME]_SYS_[ROLE] (e.g. VA_JOE_SYS_MASTER)
+ *
+ * ═══ LEGACY FORMAT (v1) — still parsed, no longer generated ═══
+ * VA_NK_ESVF_260215_225A1B
  */
 
 import crypto from "crypto";
 
 // ═══════════════════════════════════════════════════════════
 // Unicode → ASCII transliteration map
-// Covers accented Latin, Cyrillic, Arabic, CJK phonetic approximations
 // ═══════════════════════════════════════════════════════════
 const TRANSLITERATION_MAP: Record<string, string> = {
   // Accented Latin
@@ -227,23 +221,18 @@ const DIVISION_CODES: Record<string, string> = {
 /**
  * Extract a 2-character consonant prefix from a stage name.
  * Strips vowels and takes the first two consonants for a compact, readable ID.
- * Supports Unicode via transliteration (accented Latin, Cyrillic, Arabic, CJK).
  *
  * Examples:
  *   Nooka     → NK    (N, K)
  *   DJ Shadow → DJ    (D, J)
  *   Élodie    → LD    (L, D)
- *   Al        → AL    (fallback — only 1 consonant)
+ *   Al        → AL    (fallback)
  */
 export function extractStagePrefix(stageName: string): string {
-  // Step 1: Transliterate common Unicode characters to ASCII
   const transliterated = transliterateToAscii(stageName);
-
-  // Step 2: Clean — keep alphanumeric only, uppercase
   const clean = transliterated.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
   if (clean.length === 0) {
-    // Last resort: use first 2 Unicode codepoints as hex prefix
     const codepoints = [...stageName]
       .slice(0, 2)
       .map((c) => c.codePointAt(0)!.toString(16).toUpperCase())
@@ -251,22 +240,29 @@ export function extractStagePrefix(stageName: string): string {
     return codepoints.slice(0, 2) || "XX";
   }
 
-  // Extract consonants (letters only — skip vowels and digits)
   const vowels = new Set(["A", "E", "I", "O", "U"]);
   const consonants = clean
     .split("")
     .filter((c) => /[A-Z]/.test(c) && !vowels.has(c));
 
   if (consonants.length >= 2) return consonants[0] + consonants[1];
-
-  // Fewer than 2 consonants — use first 2 characters of clean name
   return clean.slice(0, 2);
 }
 
 /**
- * Format a date as YYMMDD string (2-digit year)
+ * Format a date as DDMMYY string (v2 format — day first, 2-digit year)
  */
-function formatDate(date: Date): string {
+function formatDateV2(date: Date): string {
+  const d = date.getDate().toString().padStart(2, "0");
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const y = (date.getFullYear() % 100).toString().padStart(2, "0");
+  return `${d}${m}${y}`;
+}
+
+/**
+ * Format a date as YYMMDD string (v1 legacy)
+ */
+function formatDateV1(date: Date): string {
   const y = (date.getFullYear() % 100).toString().padStart(2, "0");
   const m = (date.getMonth() + 1).toString().padStart(2, "0");
   const d = date.getDate().toString().padStart(2, "0");
@@ -275,7 +271,6 @@ function formatDate(date: Date): string {
 
 /**
  * Staff artist code overrides
- * Map of staff gate usernames to their custom codes
  */
 const STAFF_CODES: Record<string, string> = {
   joel_007: "VA_JOE_SYS_MASTER",
@@ -283,114 +278,132 @@ const STAFF_CODES: Record<string, string> = {
   mod_010: "VA_MOD_SYS_WATCH",
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SUPER-CATEGORY SYSTEMS — ARC (Status) / MOD (Tier) / TAG (Administrative)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// STATUS FLAGS — Interleaved with country code digits
+// ═══════════════════════════════════════════════════════════════════
 
-/** System identifier for the 3 super-categories */
+/** Activity status: A=Active, I=Inactive, S=Suspended */
+export type ActivityStatus = "A" | "I" | "S";
+
+/** Verification status: V=Verified, U=Unverified, P=Pending */
+export type VerificationStatus = "V" | "U" | "P";
+
+/** Privilege level: F=Full, L=Limited, E=Emerging, R=Restricted */
+export type PrivilegeLevel = "F" | "L" | "E" | "R";
+
+/**
+ * Build the status+country block: interleave status flags with country code digits.
+ *
+ * Country code 225 (Côte d'Ivoire):  A2V2F5
+ * Country code 001 (Canada/US):      A0V0F1
+ * Country code 033 (France):         A0V3F3
+ * Country code 234 (Nigeria):        A2V3F4
+ *
+ * @param countryCode  - International dialing code (number or string, e.g. 225, "001")
+ * @param activity     - A=Active, I=Inactive, S=Suspended (default: A)
+ * @param verification - V=Verified, U=Unverified, P=Pending (default: U)
+ * @param privilege    - F=Full, L=Limited, E=Emerging, R=Restricted (default: E)
+ */
+function buildStatusBlock(
+  countryCode: number | string = 0,
+  activity: ActivityStatus = "A",
+  verification: VerificationStatus = "U",
+  privilege: PrivilegeLevel = "E",
+): string {
+  const cc = String(countryCode).padStart(3, "0").slice(-3);
+  return `${activity}${cc[0]}${verification}${cc[1]}${privilege}${cc[2]}`;
+}
+
+/**
+ * Parse a status block back to its components.
+ * E.g. "A2V2F5" → { activity: "A", verification: "V", privilege: "F", countryCode: "225" }
+ */
+export function parseStatusBlock(block: string): {
+  activity: string;
+  verification: string;
+  privilege: string;
+  countryCode: string;
+} | null {
+  if (block.length !== 6) return null;
+  return {
+    activity: block[0],
+    countryCode: `${block[1]}${block[3]}${block[5]}`,
+    verification: block[2],
+    privilege: block[4],
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SUPER-CATEGORY SYSTEMS (preserved for legacy parsing)
+// ═══════════════════════════════════════════════════════════════════
 export type ArtistSystem = "ARC" | "MOD" | "TAG";
 
-// ── ARC System — Status-Based ──────────────────────────────────────────────
-const ARC_ACCOUNT: Record<string, string> = {
-  solo: "S",
-  group: "G",
-  composer: "C",
-};
-const ARC_VERIFICATION: Record<string, string> = {
-  verified: "V",
-  unverified: "U",
-  premium: "P",
-};
-const ARC_RIGHTS: Record<string, string> = {
-  full: "F",
-  licensed: "L",
-  emerging: "E",
-};
-
-// ── MOD System — Tier-Based ────────────────────────────────────────────────
-const MOD_GENRE: Record<string, string> = {
-  mainstream: "M",
-  indie: "I",
-  orchestral: "O",
-};
-const MOD_ENGAGEMENT: Record<string, string> = {
-  active: "A",
-  dormant: "D",
-};
-const MOD_MONETIZATION: Record<string, string> = {
-  paid: "P",
-  "royalty-free": "R",
-};
-
-// ── TAG System — Administrative ────────────────────────────────────────────
-const TAG_TYPE: Record<string, string> = {
-  artist: "A",
-  label: "L",
-  podcaster: "P",
-};
-const TAG_AUTHORITY: Record<string, string> = {
-  independent: "I",
-  signed: "S",
-  managed: "M",
-};
-const TAG_GRADE: Record<string, string> = {
-  bronze: "B",
-  silver: "S",
-  gold: "G",
-};
-
-// ── Shared: Country-encoded hex suffix ─────────────────────────────────────
-/**
- * Build the 6-char suffix: first 3 = zero-padded country code, last 3 = random hex.
- * E.g. country 225 (Côte d'Ivoire) → "225A1B"
- * If no country provided, falls back to 6 random hex chars.
- */
-function buildSuffix(countryCode?: number | string): string {
-  const hex3 = crypto.randomBytes(2).toString("hex").toUpperCase().slice(0, 3);
-  if (countryCode !== undefined && countryCode !== null) {
-    const cc = String(countryCode).padStart(3, "0").slice(0, 3);
-    return `${cc}${hex3}`;
-  }
-  // No country — full random 6 hex
-  return crypto.randomBytes(3).toString("hex").toUpperCase();
-}
-
-/** Helper: resolve a code letter from a map, with fallback to first char uppercase */
-function resolveCode(map: Record<string, string>, value?: string): string {
-  if (!value) return "";
-  return map[value.toLowerCase()] || value[0].toUpperCase();
-}
-
-// ── Profile options per system ─────────────────────────────────────────────
 export interface ArcProfile {
-  account?: string; // S=Solo, G=Group, C=Composer
-  verification?: string; // V=Verified, U=Unverified, P=Premium
-  rights?: string; // F=Full, L=Licensed, E=Emerging
+  account?: string;
+  verification?: string;
+  rights?: string;
 }
-
 export interface ModProfile {
-  genre?: string; // M=Mainstream, I=Indie, O=Orchestral
-  engagement?: string; // A=Active, D=Dormant
-  monetization?: string; // P=Paid, R=Royalty-Free
+  genre?: string;
+  engagement?: string;
+  monetization?: string;
+}
+export interface TagProfile {
+  type?: string;
+  authority?: string;
+  grade?: string;
 }
 
-export interface TagProfile {
-  type?: string; // A=Artist, L=Label, P=Podcaster
-  authority?: string; // I=Independent, S=Signed, M=Managed
-  grade?: string; // B=Bronze, S=Silver, G=Gold
+// ═══════════════════════════════════════════════════════════════════
+// v2 GENERATOR — New Format: VA_NK-E_260115_A2V2F5.b
+// ═══════════════════════════════════════════════════════════════════
+
+export interface GenerateCodeOptions {
+  stageName: string;
+  division?: string; // discovery|indie|pro|elite|signed|legend
+  joinDate?: Date;
+  staffUsername?: string;
+  countryCode?: number | string; // International dialing code (225, "001", etc.)
+  contractInitial?: string; // First letter of real name from contract signature
+  activity?: ActivityStatus; // A=Active, I=Inactive, S=Suspended
+  verification?: VerificationStatus; // V=Verified, U=Unverified, P=Pending
+  privilege?: PrivilegeLevel; // F=Full, L=Limited, E=Emerging, R=Restricted
 }
 
 /**
- * Generate a Verso Artist Code
+ * Generate a Verso Air Platform ID (v2 format)
  *
- * @param stageName    - Artist's stage name
- * @param division     - Division: discovery|indie|pro|elite|signed|legend (ARC/MOD only)
- * @param joinDate     - Join date (default: now)
- * @param staffUsername - Staff gate username for fixed override codes
- * @param system       - Super-category: "ARC" | "MOD" | "TAG" (default: MOD)
- * @param profile      - System-specific profile (ArcProfile | ModProfile | TagProfile)
- * @param countryCode  - ISO numeric country code (e.g. 225 for Côte d'Ivoire)
- * @returns The generated artist code string
+ * Output: VA_NK-E_260115_A2V2F5.b
+ *
+ * @param opts - Generation options (see GenerateCodeOptions)
+ * @returns The generated ID string
+ */
+export function generatePlatformId(opts: GenerateCodeOptions): string {
+  // Staff override
+  if (opts.staffUsername && STAFF_CODES[opts.staffUsername]) {
+    return STAFF_CODES[opts.staffUsername];
+  }
+
+  const prefix = extractStagePrefix(opts.stageName);
+  const div =
+    DIVISION_CODES[(opts.division || "discovery").toLowerCase()] || "D";
+  const dateStr = formatDateV2(opts.joinDate || new Date());
+  const statusBlock = buildStatusBlock(
+    opts.countryCode || 0,
+    opts.activity || "A",
+    opts.verification || "U",
+    opts.privilege || "E",
+  );
+  const initial = (opts.contractInitial || "x")[0].toLowerCase();
+
+  return `VA_${prefix}-${div}_${dateStr}_${statusBlock}.${initial}`;
+}
+
+/**
+ * Generate an artist code — backwards-compatible wrapper.
+ *
+ * This now produces v2 format (VA_NK-E_260115_A2V2F5.b) by default.
+ * Pass contractInitial for the .x suffix; defaults to "x" if not provided.
  */
 export function generateArtistCode(
   stageName: string,
@@ -400,126 +413,137 @@ export function generateArtistCode(
   profile?: ArcProfile | ModProfile | TagProfile,
   countryCode?: number | string,
   system: ArtistSystem = "MOD",
+  contractInitial?: string,
 ): string {
-  // Staff override — fixed memorable codes
+  // Staff override
   if (staffUsername && STAFF_CODES[staffUsername]) {
     return STAFF_CODES[staffUsername];
   }
 
-  const prefix = extractStagePrefix(stageName);
-  const dateStr = formatDate(joinDate);
-  const suffix = buildSuffix(countryCode);
+  // Determine verification/privilege from legacy profile if provided
+  let verification: VerificationStatus = "U";
+  let privilege: PrivilegeLevel = "E";
 
-  let tier: string;
-
-  switch (system) {
-    case "ARC": {
-      const p = (profile as ArcProfile) || {};
-      const divCode = DIVISION_CODES[division.toLowerCase()] || "D";
-      tier =
-        divCode +
-        resolveCode(ARC_ACCOUNT, p.account) +
-        resolveCode(ARC_VERIFICATION, p.verification) +
-        resolveCode(ARC_RIGHTS, p.rights);
-      break;
-    }
-    case "TAG": {
-      const p = (profile as TagProfile) || {};
-      // TAG has no division — 3 letters only
-      tier =
-        resolveCode(TAG_TYPE, p.type) +
-        resolveCode(TAG_AUTHORITY, p.authority) +
-        resolveCode(TAG_GRADE, p.grade);
-      break;
-    }
-    case "MOD":
-    default: {
-      const p = (profile as ModProfile) || {};
-      const divCode = DIVISION_CODES[division.toLowerCase()] || "D";
-      tier =
-        divCode +
-        resolveCode(MOD_GENRE, p.genre) +
-        resolveCode(MOD_ENGAGEMENT, p.engagement) +
-        resolveCode(MOD_MONETIZATION, p.monetization);
-      break;
-    }
+  if (profile && system === "ARC") {
+    const p = profile as ArcProfile;
+    if (p.verification === "verified" || p.verification === "premium")
+      verification = "V";
+    if (p.rights === "full") privilege = "F";
+    else if (p.rights === "licensed") privilege = "L";
+  } else if (profile && system === "MOD") {
+    const p = profile as ModProfile;
+    if (p.monetization === "paid") privilege = "F";
   }
 
-  // Strip empty positions (if no profile values given, tier may be just the division letter)
-  tier = tier || "D";
-
-  return `VA_${prefix}_${tier}_${dateStr}_${suffix}`;
+  return generatePlatformId({
+    stageName,
+    division,
+    joinDate,
+    staffUsername,
+    countryCode,
+    contractInitial: contractInitial || "x",
+    activity: "A",
+    verification,
+    privilege,
+  });
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// VALIDATORS — Support both v1 and v2 formats
+// ═══════════════════════════════════════════════════════════════════
+
 /**
- * Validate that a string looks like a valid artist code
+ * Validate that a string looks like a valid platform ID (v1 or v2)
  */
 export function isValidArtistCode(code: string): boolean {
   // Staff codes: VA_XXX_SYS_ROLE
   if (/^VA_[A-Z]{2,4}_SYS_[A-Z]+$/.test(code)) return true;
-  // Current format: VA_XX_TIER_YYMMDD_SUFFIX (tier = 1-4 letters, suffix = 6 alphanum)
+  // v2 format: VA_XX-D_DDMMYY_AXVXFX.x (with dot initial)
+  if (
+    /^VA_[A-Z0-9]{2}-[DIPELS]_\d{6}_[AISPVU][0-9][VUP][0-9][FLER][0-9]\.[a-z]$/i.test(
+      code,
+    )
+  )
+    return true;
+  // v1 format: VA_XX_TIER_YYMMDD_SUFFIX (legacy — still accepted)
   if (/^VA_[A-Z0-9]{2}_[A-Z]{1,4}_\d{6}_[A-Z0-9]{6}$/i.test(code)) return true;
-  // Legacy 8-digit date codes (pre-update)
+  // Legacy 8-digit date codes
   if (/^VA_[A-Z0-9]{2,4}_[DIPESL]_\d{8}_[A-F0-9]{6}$/i.test(code)) return true;
   return false;
 }
 
 /**
- * Parse an artist code into its components (supports ARC/MOD/TAG + legacy)
+ * Parse a platform ID / artist code into its components
+ * Supports v2 (new) and v1 (legacy) formats.
  */
 export function parseArtistCode(code: string): {
+  format: "v2" | "v1" | "staff";
   prefix: string;
-  system?: ArtistSystem;
   division?: string;
-  // ARC fields
-  account?: string;
+  // v2 fields
+  activity?: string;
   verification?: string;
+  privilege?: string;
+  countryCode?: string;
+  contractInitial?: string;
+  // v1 legacy fields
+  system?: ArtistSystem;
+  account?: string;
   rights?: string;
-  // MOD fields
   genre?: string;
   engagement?: string;
   monetization?: string;
-  // TAG fields
   type?: string;
   authority?: string;
   grade?: string;
-  // Common fields
-  joinDate?: string;
-  countryCode?: string;
   uniqueHex?: string;
+  // Common
+  joinDate?: string;
   isStaff: boolean;
 } | null {
   // Staff code
   const staffMatch = code.match(/^VA_([A-Z]{2,4})_SYS_([A-Z]+)$/);
   if (staffMatch) {
-    return { prefix: staffMatch[1], system: "TAG", isStaff: true };
+    return { format: "staff", prefix: staffMatch[1], isStaff: true };
   }
 
-  // Current format: VA_XX_TIER_YYMMDD_SUFFIX
-  const stdMatch = code.match(
-    /^VA_([A-Z0-9]{2})_([A-Z]{1,4})_(\d{6})_([A-Z0-9]{6})$/i,
+  // v2 format: VA_XX-D_DDMMYY_AXVXFX.x
+  const v2Match = code.match(
+    /^VA_([A-Z0-9]{2})-([DIPELS])_(\d{6})_([A-Z0-9]{6})\.([a-z])$/i,
   );
-  // Legacy 8-digit date fallback
-  const legacyMatch = !stdMatch
-    ? code.match(/^VA_([A-Z0-9]{2,4})_([A-Z]{1,4})_(\d{8})_([A-Z0-9]{6})$/i)
-    : null;
-
-  const match = stdMatch || legacyMatch;
-  if (!match) return null;
-
-  const tierBlock = match[2].toUpperCase();
-  const suffix = match[4].toUpperCase();
-
-  // Parse suffix: first 3 chars may be country code if all digits
-  let countryCode: string | undefined;
-  let uniqueHex: string;
-  if (/^\d{3}/.test(suffix)) {
-    countryCode = suffix.slice(0, 3);
-    uniqueHex = suffix.slice(3);
-  } else {
-    uniqueHex = suffix;
+  if (v2Match) {
+    const divMap: Record<string, string> = {
+      D: "discovery",
+      I: "indie",
+      P: "pro",
+      E: "elite",
+      S: "signed",
+      L: "legend",
+    };
+    const statusBlock = v2Match[4].toUpperCase();
+    const parsed = parseStatusBlock(statusBlock);
+    return {
+      format: "v2",
+      prefix: v2Match[1].toUpperCase(),
+      division: divMap[v2Match[2].toUpperCase()] || v2Match[2],
+      joinDate: v2Match[3],
+      activity: parsed?.activity,
+      verification: parsed?.verification,
+      privilege: parsed?.privilege,
+      countryCode: parsed?.countryCode,
+      contractInitial: v2Match[5],
+      isStaff: false,
+    };
   }
 
+  // v1 format: VA_XX_TIER_YYMMDD_SUFFIX
+  const v1Match = code.match(
+    /^VA_([A-Z0-9]{2})_([A-Z]{1,4})_(\d{6,8})_([A-Z0-9]{6})$/i,
+  );
+  if (!v1Match) return null;
+
+  const tierBlock = v1Match[2].toUpperCase();
+  const suffix = v1Match[4].toUpperCase();
   const divMap: Record<string, string> = {
     D: "discovery",
     I: "indie",
@@ -529,104 +553,23 @@ export function parseArtistCode(code: string): {
     L: "legend",
   };
 
-  // Detect system based on tier block pattern
-  const firstLetter = tierBlock[0];
-
-  // TAG system: first letter is A/L/P (type), no division letter
-  if (tierBlock.length === 3 && /^[ALP]/.test(firstLetter)) {
-    const tagTypeMap: Record<string, string> = {
-      A: "artist",
-      L: "label",
-      P: "podcaster",
-    };
-    const tagAuthMap: Record<string, string> = {
-      I: "independent",
-      S: "signed",
-      M: "managed",
-    };
-    const tagGradeMap: Record<string, string> = {
-      B: "bronze",
-      S: "silver",
-      G: "gold",
-    };
-    return {
-      prefix: match[1],
-      system: "TAG",
-      type: tagTypeMap[tierBlock[0]] || tierBlock[0],
-      authority: tagAuthMap[tierBlock[1]] || tierBlock[1],
-      grade: tagGradeMap[tierBlock[2]] || tierBlock[2],
-      joinDate: match[3],
-      countryCode,
-      uniqueHex,
-      isStaff: false,
-    };
+  let countryCode: string | undefined;
+  let uniqueHex: string;
+  if (/^\d{3}/.test(suffix)) {
+    countryCode = suffix.slice(0, 3);
+    uniqueHex = suffix.slice(3);
+  } else {
+    uniqueHex = suffix;
   }
 
-  // ARC or MOD: first letter is a division letter
-  const division = divMap[firstLetter] || "discovery";
+  const division = divMap[tierBlock[0]] || "discovery";
 
-  if (tierBlock.length === 4) {
-    // Check if position 2 is an ARC account type (S/G/C)
-    const arcAccountSet = new Set(["S", "G", "C"]);
-    if (arcAccountSet.has(tierBlock[1])) {
-      // ARC system
-      const arcAccMap: Record<string, string> = {
-        S: "solo",
-        G: "group",
-        C: "composer",
-      };
-      const arcVerMap: Record<string, string> = {
-        V: "verified",
-        U: "unverified",
-        P: "premium",
-      };
-      const arcRtsMap: Record<string, string> = {
-        F: "full",
-        L: "licensed",
-        E: "emerging",
-      };
-      return {
-        prefix: match[1],
-        system: "ARC",
-        division,
-        account: arcAccMap[tierBlock[1]] || tierBlock[1],
-        verification: arcVerMap[tierBlock[2]] || tierBlock[2],
-        rights: arcRtsMap[tierBlock[3]] || tierBlock[3],
-        joinDate: match[3],
-        countryCode,
-        uniqueHex,
-        isStaff: false,
-      };
-    }
-
-    // MOD system (4 letters: div + genre + engagement + monetization)
-    const modGenMap: Record<string, string> = {
-      M: "mainstream",
-      I: "indie",
-      O: "orchestral",
-    };
-    const modEngMap: Record<string, string> = { A: "active", D: "dormant" };
-    const modMonMap: Record<string, string> = { P: "paid", R: "royalty-free" };
-    return {
-      prefix: match[1],
-      system: "MOD",
-      division,
-      genre: modGenMap[tierBlock[1]] || tierBlock[1],
-      engagement: modEngMap[tierBlock[2]] || tierBlock[2],
-      monetization: modMonMap[tierBlock[3]] || tierBlock[3],
-      joinDate: match[3],
-      countryCode,
-      uniqueHex,
-      isStaff: false,
-    };
-  }
-
-  // Short tier (just division letter or partial)
   return {
-    prefix: match[1],
+    format: "v1",
+    prefix: v1Match[1],
     system: "MOD",
     division,
-    joinDate: match[3],
+    joinDate: v1Match[3],
     countryCode,
     uniqueHex,
     isStaff: false,

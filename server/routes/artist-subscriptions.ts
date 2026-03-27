@@ -213,12 +213,10 @@ router.post(
       const { tier, paymentMethod } = req.body;
 
       if (!tier || !ARTIST_TIERS[tier]) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Invalid tier. Choose: spark, flame, blaze, inferno",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Invalid tier. Choose: spark, flame, blaze, inferno",
+        });
       }
 
       const tierInfo = ARTIST_TIERS[tier];
@@ -299,13 +297,14 @@ router.post(
           ],
         );
       } else if (method === "paypal") {
-        // PayPal integration placeholder — for now, record as pending
-        // In production: redirect to PayPal checkout, webhook confirms payment
+        // Redirect to PayPal checkout — client calls /api/paypal/create-order
         return res.json({
-          success: false,
-          error: "PayPal checkout — redirect URL would be returned here",
-          message: "PayPal integration coming in next deployment",
-          availableSoon: true,
+          success: true,
+          redirect: "/api/paypal/create-order",
+          paymentMethod: "paypal",
+          message: `Proceed to PayPal to pay $${tierInfo.price} for ${tierInfo.name} tier. Call POST /api/paypal/create-order with { amount: ${tierInfo.price}, purpose: 'subscription_${tier}' }`,
+          amount: tierInfo.price,
+          tier: tier,
         });
       } else if (method === "crypto" || method === "mobile_money") {
         return res.json({
