@@ -36,6 +36,8 @@ import arenaRouter from "./routes/arena";
 import vaultRouter from "./routes/vault";
 import collabChainsRouter from "./routes/collab-chains";
 import revenuePulseRouter from "./routes/revenue-pulse";
+import walletRouter from "./routes/wallet";
+import gamesRouter from "./routes/games";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -236,6 +238,8 @@ export async function registerRoutes(app: Express) {
   app.use("/api/vault", vaultRouter); // Verso Vault exclusivity engine
   app.use("/api/collab-chains", collabChainsRouter); // Collab Chains viral remix system
   app.use("/api/revenue-pulse", revenuePulseRouter); // Revenue Pulse transparency dashboard
+  app.use("/api/wallet", walletRouter); // Credits wallet (balance, deposit, game rewards)
+  app.use("/api/games", gamesRouter); // PvP skill games (trivia, prediction, card battle)
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

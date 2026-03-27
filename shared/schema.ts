@@ -90,6 +90,10 @@ export const users = pgTable("users", {
   // Role switching — stores original staff role when user switches to artist mode
   previousRole: varchar("previous_role", { length: 20 }),
 
+  // Age verification for wagering
+  dateOfBirth: date("date_of_birth"),
+  ageVerifiedAt: timestamp("age_verified_at"),
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -568,7 +572,10 @@ export const trackPurchases = pgTable(
   (t) => ({
     userIdx: index("track_purchases_user_idx").on(t.userId),
     trackIdx: index("track_purchases_track_idx").on(t.trackId),
-    userTrackIdx: index("track_purchases_user_track_idx").on(t.userId, t.trackId),
+    userTrackIdx: index("track_purchases_user_track_idx").on(
+      t.userId,
+      t.trackId,
+    ),
   }),
 );
 
@@ -2364,7 +2371,8 @@ export const platformWallets = pgTable(
     frozenBalance: decimal("frozen_balance", {
       precision: 14,
       scale: 2,
-    }).default("0.00"), // held during disputes
+    }).default("0.00"), // held during disputes / wager escrow
+    withdrawalLocked: boolean("withdrawal_locked").default(true), // credits-only until KYC verified
     status: varchar("status", { length: 20 }).default("active"), // active | frozen | suspended
     lastTransactionAt: timestamp("last_transaction_at"),
     createdAt: timestamp("created_at").defaultNow(),
@@ -2495,6 +2503,72 @@ export const bankTransferRequests = pgTable(
 );
 
 // ═══ Insert schemas & Types ═══
+
+// --- PVP GAME MATCHES (skill-based wagering: trivia, prediction, card battle) ---
+export const gameMatches = pgTable(
+  "game_matches",
+  {
+    id: serial("id").primaryKey(),
+    gameType: varchar("game_type", { length: 30 }).notNull(), // music_trivia | prediction_market | card_battle
+    player1Id: integer("player1_id")
+      .references(() => users.id)
+      .notNull(),
+    player2Id: integer("player2_id").references(() => users.id),
+    wagerAmount: decimal("wager_amount", { precision: 10, scale: 2 }).default(
+      "0.00",
+    ),
+    platformCut: decimal("platform_cut", { precision: 10, scale: 2 }).default(
+      "0.00",
+    ), // 10% of total pot
+    status: varchar("status", { length: 20 }).default("waiting").notNull(), // waiting | active | completed | cancelled | disputed
+    winnerId: integer("winner_id").references(() => users.id),
+    gameState: jsonb("game_state").$type<Record<string, any>>().default({}), // current round, scores, questions, etc.
+    roundCount: integer("round_count").default(5),
+    currentRound: integer("current_round").default(0),
+    player1Score: integer("player1_score").default(0),
+    player2Score: integer("player2_score").default(0),
+    player1HoldTxnId: uuid("player1_hold_txn_id"),
+    player2HoldTxnId: uuid("player2_hold_txn_id"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    player1Idx: index("game_matches_p1_idx").on(t.player1Id),
+    player2Idx: index("game_matches_p2_idx").on(t.player2Id),
+    statusIdx: index("game_matches_status_idx").on(t.status),
+    typeIdx: index("game_matches_type_idx").on(t.gameType),
+  }),
+);
+
+// --- GAME MOVES (per-round actions within a match) ---
+export const gameMoves = pgTable(
+  "game_moves",
+  {
+    id: serial("id").primaryKey(),
+    matchId: integer("match_id")
+      .references(() => gameMatches.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id)
+      .notNull(),
+    round: integer("round").notNull(),
+    moveData: jsonb("move_data").$type<Record<string, any>>().notNull(), // answer, prediction, card_played, etc.
+    isCorrect: boolean("is_correct"),
+    pointsEarned: integer("points_earned").default(0),
+    responseTimeMs: integer("response_time_ms"), // speed bonus for trivia
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    matchIdx: index("game_moves_match_idx").on(t.matchId),
+    userIdx: index("game_moves_user_idx").on(t.userId),
+  }),
+);
+
+export const insertGameMatchSchema = createInsertSchema(gameMatches);
+export const insertGameMoveSchema = createInsertSchema(gameMoves);
+export type GameMatch = typeof gameMatches.$inferSelect;
+export type GameMove = typeof gameMoves.$inferSelect;
 
 export const insertContestVoteSchema = createInsertSchema(contestVotes);
 export const insertArtistSubscriptionSchema =

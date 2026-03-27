@@ -204,10 +204,16 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
               )) || (
                 <>
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-purple-500"></div>
+                    <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
+                      <span className="text-purple-300 text-xs">♪</span>
+                    </div>
                     <div>
-                      <p className="font-medium">Loading artists...</p>
-                      <p className="text-sm text-purple-200">Please wait</p>
+                      <p className="font-medium text-purple-200">
+                        Aucun artiste inscrit
+                      </p>
+                      <p className="text-sm text-purple-300">
+                        Soyez le premier
+                      </p>
                     </div>
                   </div>
                 </>
@@ -227,11 +233,11 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Total Streams:</span>
-                <span>47.2M</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Monthly Growth:</span>
-                <span>+23%</span>
+                <span>
+                  {artists
+                    ?.reduce((s, a) => s + (a.totalStreams || 0), 0)
+                    .toLocaleString() || "0"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Active Artists:</span>

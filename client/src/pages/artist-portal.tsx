@@ -774,35 +774,58 @@ export default function ArtistPortal() {
     [invalidateTracks],
   );
 
-  // Handle track download with payment gate
-  const handleDownloadTrack = useCallback(
-    async (trackId: number | string) => {
-      try {
-        const res = await fetch(`/api/music/tracks/${trackId}/download`, {
+  // Handle track download with credit-based purchase gate
+  const handleDownloadTrack = useCallback(async (trackId: number | string) => {
+    try {
+      const res = await fetch(`/api/music/tracks/${trackId}/download`, {
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        alert("Connectez-vous pour télécharger ce titre.");
+        return;
+      }
+
+      if (res.status === 402) {
+        const data = await res.json();
+        const price = data.price ?? 99;
+        const title = data.trackTitle || "Ce titre";
+        const balanceInfo = data.balance !== undefined ? ` (votre solde: ${data.balance} cr)` : "";
+        const proceed = window.confirm(
+          `"${title}" coûte ${price} crédits${balanceInfo}.\n\nAcheter maintenant?`,
+        );
+        if (!proceed) return;
+
+        // Attempt credit purchase
+        const purchaseRes = await fetch(`/api/music/tracks/${trackId}/purchase`, {
+          method: "POST",
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
         });
+        const purchaseData = await purchaseRes.json();
 
-        if (res.status === 401) {
-          alert("Connectez-vous pour télécharger ce titre.");
-          return;
-        }
-
-        if (res.status === 402) {
-          const data = await res.json();
+        if (purchaseRes.status === 402) {
           alert(
-            `Achat requis — "${data.trackTitle || "Ce titre"}" coûte ${data.price ?? "0.99"} $. Le paiement sera bientôt disponible.`,
+            `Solde insuffisant — il vous faut ${purchaseData.required} crédits (solde: ${purchaseData.balance} cr). Rechargez dans l'Arcade!`,
           );
           return;
         }
 
-        if (!res.ok) {
-          alert("Échec du téléchargement.");
+        if (!purchaseRes.ok) {
+          alert(purchaseData.error || "Échec de l'achat.");
           return;
         }
 
-        // Success — trigger browser download from blob
-        const blob = await res.blob();
-        const disposition = res.headers.get("content-disposition");
+        // Purchase succeeded — retry the download
+        const retryRes = await fetch(`/api/music/tracks/${trackId}/download`, {
+          credentials: "include",
+        });
+        if (!retryRes.ok) {
+          alert("Achat réussi! Mais le téléchargement a échoué. Réessayez.");
+          return;
+        }
+        const blob = await retryRes.blob();
+        const disposition = retryRes.headers.get("content-disposition");
         let filename = `track-${trackId}.mp3`;
         if (disposition) {
           const match = disposition.match(/filename="?([^"]+)"?/);
@@ -816,12 +839,34 @@ export default function ArtistPortal() {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-      } catch {
-        alert("Erreur réseau lors du téléchargement.");
+        return;
       }
-    },
-    [],
-  );
+
+      if (!res.ok) {
+        alert("Échec du téléchargement.");
+        return;
+      }
+
+      // Success — trigger browser download from blob
+      const blob = await res.blob();
+      const disposition = res.headers.get("content-disposition");
+      let filename = `track-${trackId}.mp3`;
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Erreur réseau lors du téléchargement.");
+    }
+  }, []);
 
   // Handle monetization update
   const handleUpdatePrice = useCallback(
@@ -1431,73 +1476,95 @@ export default function ArtistPortal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {displayArtists.slice(0, 5).map((artist, index) => (
-                <div
-                  key={artist.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                  onClick={() =>
-                    (window.location.href = `/artist-catalogue/${artist.id}`)
-                  }
-                >
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={(artist as any).avatar || ""} />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                        {artist.name?.charAt(0) ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-white font-medium">{artist.name}</p>
-                        <Badge
-                          variant="outline"
-                          className="border-purple-400 text-purple-400 text-xs"
-                        >
-                          {artist.genre}
-                        </Badge>
+              {displayArtists.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mb-3">
+                    <Music2 className="h-7 w-7 text-purple-400/50" />
+                  </div>
+                  <p className="text-purple-200 font-medium">
+                    Aucun artiste classé
+                  </p>
+                  <p className="text-purple-300/60 text-sm mt-1">
+                    Le classement se remplira au fur et à mesure des
+                    inscriptions
+                  </p>
+                </div>
+              ) : (
+                displayArtists.slice(0, 5).map((artist, index) => (
+                  <div
+                    key={artist.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                    onClick={() =>
+                      (window.location.href = `/artist-catalogue/${artist.id}`)
+                    }
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={(artist as any).avatar || ""} />
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                          {artist.name?.charAt(0) ?? "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-white font-medium">
+                            {artist.name}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="border-purple-400 text-purple-400 text-xs"
+                          >
+                            {artist.genre}
+                          </Badge>
+                        </div>
+                        <p className="text-purple-200 text-sm">
+                          {formatNumber((artist as any).totalStreams || 0)}{" "}
+                          écoutes totales
+                        </p>
                       </div>
-                      <p className="text-purple-200 text-sm">
-                        {formatNumber((artist as any).totalStreams || 0)}{" "}
-                        écoutes totales
-                      </p>
+                    </div>
+                    <div className="text-right">
+                      {(() => {
+                        // Compute growth: position-based ranking metric
+                        const artistStreams = (artist as any).totalStreams || 0;
+                        const avgStreams =
+                          totalStreams / Math.max(totalArtists, 1);
+                        const growth =
+                          avgStreams > 0
+                            ? Math.round(
+                                ((artistStreams - avgStreams) / avgStreams) *
+                                  100,
+                              )
+                            : 0;
+                        return (
+                          <>
+                            <div className="flex items-center justify-end space-x-1">
+                              {growth >= 0 ? (
+                                <TrendingUp className="h-4 w-4 text-green-400" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4 text-red-400" />
+                              )}
+                              <span
+                                className={
+                                  growth >= 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }
+                              >
+                                {growth >= 0 ? "+" : ""}
+                                {growth}%
+                              </span>
+                            </div>
+                            <p className="text-purple-200 text-sm">
+                              vs moyenne
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
-                  <div className="text-right">
-                    {(() => {
-                      // Compute growth: position-based ranking metric
-                      const artistStreams = (artist as any).totalStreams || 0;
-                      const avgStreams =
-                        totalStreams / Math.max(totalArtists, 1);
-                      const growth =
-                        avgStreams > 0
-                          ? Math.round(
-                              ((artistStreams - avgStreams) / avgStreams) * 100,
-                            )
-                          : 0;
-                      return (
-                        <>
-                          <div className="flex items-center justify-end space-x-1">
-                            {growth >= 0 ? (
-                              <TrendingUp className="h-4 w-4 text-green-400" />
-                            ) : (
-                              <TrendingDown className="h-4 w-4 text-red-400" />
-                            )}
-                            <span
-                              className={
-                                growth >= 0 ? "text-green-400" : "text-red-400"
-                              }
-                            >
-                              {growth >= 0 ? "+" : ""}
-                              {growth}%
-                            </span>
-                          </div>
-                          <p className="text-purple-200 text-sm">vs moyenne</p>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

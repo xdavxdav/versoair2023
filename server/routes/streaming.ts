@@ -414,7 +414,9 @@ router.post("/record-play", async (req: Request, res: Response) => {
             [artistId, userId],
           );
           if (selfCheck.rows.length > 0) isSelfStream = true;
-        } catch (_) { /* skip */ }
+        } catch (_) {
+          /* skip */
+        }
         // Also check via artist_profiles
         if (!isSelfStream) {
           try {
@@ -433,7 +435,9 @@ router.post("/record-play", async (req: Request, res: Response) => {
                 isSelfStream = true;
               }
             }
-          } catch (_) { /* skip */ }
+          } catch (_) {
+            /* skip */
+          }
         }
       }
     }
@@ -1281,16 +1285,8 @@ router.get("/analytics/artist/:id", async (req: Request, res: Response) => {
       /* artist_contracts table might not exist yet */
     }
 
-    // Revenue per stream based on grade tier
-    const gradeRates: Record<string, number> = {
-      S: 0.0085,
-      A: 0.0075,
-      B: 0.0065,
-      C: 0.0055,
-    };
-    const perStreamRate = contract
-      ? gradeRates[contract.grade] || 0.004
-      : 0.004;
+    // Flat revenue per stream — same for all artists regardless of contract grade
+    const perStreamRate = 0.007;
 
     // Track performance
     const trackPerformance = await pool.query(
