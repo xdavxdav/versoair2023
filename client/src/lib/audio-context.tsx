@@ -223,6 +223,21 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => loadAndPlay(first), 50);
         return allTracks.slice(1);
       } else {
+        // ── Fix: stop audio cleanly — no lingering last-note ──
+        const audio = audioRef.current;
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+        // Suspend Web Audio processing thread so AnalyserNode stops reading stale buffer
+        if (audioContextRef.current?.state === "running") {
+          audioContextRef.current.suspend().catch(() => {});
+        }
+        // Clear stream recording timer
+        if (streamTimerRef.current) {
+          clearTimeout(streamTimerRef.current);
+          streamTimerRef.current = null;
+        }
         setIsPlaying(false);
         return prev;
       }
@@ -349,6 +364,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
+    // Fix: cancel the 30s stream recording timer on pause
+    if (streamTimerRef.current) {
+      clearTimeout(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
   }, []);
 
   const resume = useCallback(() => {
@@ -457,7 +477,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queue]);
 
-  // Media Session controls
+  // Media Session controls (complete set for mobile lock-screen)
   useEffect(() => {
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", () => resume());
@@ -466,8 +486,57 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         previous(),
       );
       navigator.mediaSession.setActionHandler("nexttrack", () => next());
+      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+        const audio = audioRef.current;
+        if (audio)
+          audio.currentTime = Math.max(
+            0,
+            audio.currentTime - (details.seekOffset || 10),
+          );
+      });
+      navigator.mediaSession.setActionHandler("seekforward", (details) => {
+        const audio = audioRef.current;
+        if (audio)
+          audio.currentTime = Math.min(
+            audio.duration || 0,
+            audio.currentTime + (details.seekOffset || 10),
+          );
+      });
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        const audio = audioRef.current;
+        if (audio && details.seekTime != null)
+          audio.currentTime = details.seekTime;
+      });
+      navigator.mediaSession.setActionHandler("stop", () => {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+        setIsPlaying(false);
+      });
     }
   }, [resume, pause, previous, next]);
+
+  // Fix #2: Resume AudioContext + re-assert playbackRate on mobile visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Resume suspended AudioContext (prevents pitch glitch)
+        if (audioContextRef.current?.state === "suspended") {
+          audioContextRef.current.resume().catch(() => {});
+        }
+        // Re-assert playbackRate in case browser reset it
+        const audio = audioRef.current;
+        if (audio && audio.playbackRate !== playbackRate) {
+          audio.playbackRate = playbackRate;
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [playbackRate]);
 
   // Cleanup on unmount
   useEffect(() => {

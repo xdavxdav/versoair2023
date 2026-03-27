@@ -1,19 +1,26 @@
 {
-  "name": "VersoAir Online",
+  "name": "VersoAir Music & Games",
   "short_name": "VersoAir",
+  "description": "Stream, discover and support artists. Play skill-based games. Earn credits.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["music", "entertainment", "games"],
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
+      "src": "https://i.ibb.co/gL34XNP5/Logo-page.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "https://i.ibb.co/gL34XNP5/Logo-page.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "theme_color": "#d97706",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "background_color": "#0f172a"
 }

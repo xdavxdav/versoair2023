@@ -34,3 +34,10 @@ if (typeof Node !== "undefined" && Node.prototype) {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Register Service Worker for PWA background audio + offline caching
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
