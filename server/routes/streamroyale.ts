@@ -427,8 +427,8 @@ router.post(
       );
 
       // If valid, update pool and artist stats
-      if (isValid && session.artistProfileId) {
-        // Increment artist streams
+      if (isValid && session.artistProfileId && !isSelfStream) {
+        // Increment artist streams (only for real listeners, NOT self-streams)
         await pool.query(
           `UPDATE artist_profiles SET 
          lifetime_streams = COALESCE(lifetime_streams, 0) + 1,

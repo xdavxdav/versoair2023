@@ -552,6 +552,26 @@ export const musicAnalytics = pgTable("music_analytics", {
   recordedAt: timestamp("recorded_at").defaultNow(),
 });
 
+// Track purchases — records when a user buys the right to download a track
+export const trackPurchases = pgTable(
+  "track_purchases",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull(),
+    trackId: integer("track_id").notNull(),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    status: varchar("status", { length: 20 }).default("completed").notNull(),
+    stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+    purchasedAt: timestamp("purchased_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("track_purchases_user_idx").on(t.userId),
+    trackIdx: index("track_purchases_track_idx").on(t.trackId),
+    userTrackIdx: index("track_purchases_user_track_idx").on(t.userId, t.trackId),
+  }),
+);
+
 // Dedicated music_artists table (separate from the legacy 'artists' table)
 export const musicArtists = pgTable(
   "music_artists",

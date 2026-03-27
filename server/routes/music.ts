@@ -446,6 +446,16 @@ router.get("/tracks/:id/download", async (req, res) => {
     await ensureTrackColumns();
     const { id } = req.params;
 
+    // ── Authentication required ──
+    const userId = (req as any).user?.id || (req as any).user?.userId || null;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Connexion requise pour télécharger",
+        requiresAuth: true,
+      });
+    }
+
     const result = await pool.query(
       "SELECT * FROM music_tracks WHERE id = $1",
       [parseInt(id)],
@@ -462,14 +472,58 @@ router.get("/tracks/:id/download", async (req, res) => {
         .json({ success: false, error: "Audio file not found on server" });
     }
 
-    // Increment download count and add revenue
-    const trackPrice = parseFloat(track.price || "0.99");
-    const currentRevenue = parseFloat(track.revenue || "0.00");
-    const newRevenue = (currentRevenue + trackPrice).toFixed(2);
+    // ── Payment gate: artist can download own tracks for free, listeners must pay ──
+    const isOwner = track.artist_id && String(track.artist_id) === String(userId);
+    // Also check via music_artists → user_id link
+    let isArtistOwner = isOwner;
+    if (!isArtistOwner && track.artist_id) {
+      try {
+        const artistCheck = await pool.query(
+          "SELECT user_id FROM music_artists WHERE id = $1",
+          [track.artist_id],
+        );
+        if (artistCheck.rows[0]?.user_id && String(artistCheck.rows[0].user_id) === String(userId)) {
+          isArtistOwner = true;
+        }
+      } catch (_) { /* skip */ }
+    }
 
+    if (!isArtistOwner) {
+      // Check if user has purchased this track
+      try {
+        const purchaseCheck = await pool.query(
+          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+          [userId, parseInt(id)],
+        );
+        if (!purchaseCheck.rows.length) {
+          const trackPrice = parseFloat(track.price || "0.99");
+          return res.status(402).json({
+            success: false,
+            error: "Achat requis pour télécharger",
+            requiresPayment: true,
+            price: trackPrice,
+            trackId: parseInt(id),
+            trackTitle: track.title,
+          });
+        }
+      } catch (_) {
+        // track_purchases table may not exist yet — block download
+        const trackPrice = parseFloat(track.price || "0.99");
+        return res.status(402).json({
+          success: false,
+          error: "Achat requis pour télécharger",
+          requiresPayment: true,
+          price: trackPrice,
+          trackId: parseInt(id),
+          trackTitle: track.title,
+        });
+      }
+    }
+
+    // Increment download count only (revenue is tracked via purchases, not downloads)
     await pool.query(
-      "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1, revenue = $1 WHERE id = $2",
-      [newRevenue, parseInt(id)],
+      "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1",
+      [parseInt(id)],
     );
 
     // Set headers for file download

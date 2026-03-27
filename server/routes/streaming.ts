@@ -400,30 +400,71 @@ router.post("/record-play", async (req: Request, res: Response) => {
     );
     const artistId = trackRow.rows[0]?.artist_id || null;
 
-    // Record the stream play
+    // ── Self-stream check: artist playing own content does NOT count ──
+    let isSelfStream = false;
+    if (userId && artistId) {
+      // Direct match: user_id === artist_id
+      if (String(userId) === String(artistId)) {
+        isSelfStream = true;
+      } else {
+        // Check via music_artists table (artist_id is the music_artists.id, not user_id)
+        try {
+          const selfCheck = await pool.query(
+            `SELECT id FROM music_artists WHERE id = $1 AND user_id = $2`,
+            [artistId, userId],
+          );
+          if (selfCheck.rows.length > 0) isSelfStream = true;
+        } catch (_) { /* skip */ }
+        // Also check via artist_profiles
+        if (!isSelfStream) {
+          try {
+            const profileCheck = await pool.query(
+              `SELECT id FROM artist_profiles WHERE user_id = $1`,
+              [userId],
+            );
+            if (profileCheck.rows.length > 0) {
+              // This user is an artist — check if this track belongs to them
+              const trackArtistCheck = await pool.query(
+                `SELECT artist_id FROM music_tracks WHERE id = $1`,
+                [trackId],
+              );
+              const tArtistId = trackArtistCheck.rows[0]?.artist_id;
+              if (tArtistId && String(tArtistId) === String(userId)) {
+                isSelfStream = true;
+              }
+            }
+          } catch (_) { /* skip */ }
+        }
+      }
+    }
+
+    // Record the stream play (mark self-streams)
     await pool.query(
       `INSERT INTO stream_plays (track_id, user_id, artist_id, duration, completed, session_id, ip_address)
        VALUES ($1, $2, $3, $4, true, $5, $6)`,
       [trackId, userId, artistId, duration, sessionId || null, req.ip],
     );
 
-    // Increment track stream count
-    await pool.query(
-      `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1, play_count = COALESCE(play_count, 0) + 1
-       WHERE id = $1`,
-      [trackId],
-    );
-
-    // Increment artist total streams
-    if (artistId) {
+    // Only count metrics for real listeners, NOT self-streams
+    if (!isSelfStream) {
+      // Increment track stream count
       await pool.query(
-        `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1
+        `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1, play_count = COALESCE(play_count, 0) + 1
          WHERE id = $1`,
-        [artistId],
+        [trackId],
       );
+
+      // Increment artist total streams
+      if (artistId) {
+        await pool.query(
+          `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1
+           WHERE id = $1`,
+          [artistId],
+        );
+      }
     }
 
-    // Increment listener subscription usage counter
+    // Increment listener subscription usage counter (even for self-streams — it's their quota)
     if (budget.subscriptionId) {
       await pool.query(
         `UPDATE listener_subscriptions SET streams_used_this_week = streams_used_this_week + 1

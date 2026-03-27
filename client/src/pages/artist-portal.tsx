@@ -774,6 +774,55 @@ export default function ArtistPortal() {
     [invalidateTracks],
   );
 
+  // Handle track download with payment gate
+  const handleDownloadTrack = useCallback(
+    async (trackId: number | string) => {
+      try {
+        const res = await fetch(`/api/music/tracks/${trackId}/download`, {
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          alert("Connectez-vous pour télécharger ce titre.");
+          return;
+        }
+
+        if (res.status === 402) {
+          const data = await res.json();
+          alert(
+            `Achat requis — "${data.trackTitle || "Ce titre"}" coûte ${data.price ?? "0.99"} $. Le paiement sera bientôt disponible.`,
+          );
+          return;
+        }
+
+        if (!res.ok) {
+          alert("Échec du téléchargement.");
+          return;
+        }
+
+        // Success — trigger browser download from blob
+        const blob = await res.blob();
+        const disposition = res.headers.get("content-disposition");
+        let filename = `track-${trackId}.mp3`;
+        if (disposition) {
+          const match = disposition.match(/filename="?([^"]+)"?/);
+          if (match) filename = match[1];
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch {
+        alert("Erreur réseau lors du téléchargement.");
+      }
+    },
+    [],
+  );
+
   // Handle monetization update
   const handleUpdatePrice = useCallback(
     async (trackId: number, newPrice: string) => {
@@ -1679,12 +1728,7 @@ export default function ArtistPortal() {
                         </Button>
                         {hasAudio && (
                           <Button
-                            onClick={() => {
-                              window.open(
-                                `/api/music/tracks/${track.id}/download`,
-                                "_blank",
-                              );
-                            }}
+                            onClick={() => handleDownloadTrack(track.id)}
                             className="bg-green-600/80 hover:bg-green-500 text-white"
                             size="icon"
                             title="Télécharger"
@@ -1731,12 +1775,7 @@ export default function ArtistPortal() {
                           {hasAudio && (
                             <DropdownMenuItem
                               className="text-white"
-                              onClick={() =>
-                                window.open(
-                                  `/api/music/tracks/${track.id}/download`,
-                                  "_blank",
-                                )
-                              }
+                              onClick={() => handleDownloadTrack(track.id)}
                             >
                               <Download className="mr-2 h-4 w-4" />
                               Télécharger
@@ -1937,12 +1976,7 @@ export default function ArtistPortal() {
                       size="icon"
                       variant="ghost"
                       className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      onClick={() =>
-                        window.open(
-                          `/api/music/tracks/${track.id}/download`,
-                          "_blank",
-                        )
-                      }
+                      onClick={() => handleDownloadTrack(track.id)}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -1973,12 +2007,7 @@ export default function ArtistPortal() {
                       {hasAudio && (
                         <DropdownMenuItem
                           className="text-white"
-                          onClick={() =>
-                            window.open(
-                              `/api/music/tracks/${track.id}/download`,
-                              "_blank",
-                            )
-                          }
+                          onClick={() => handleDownloadTrack(track.id)}
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Télécharger
@@ -3375,25 +3404,37 @@ export default function ArtistPortal() {
                     Mon compte
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/20" />
-                  <DropdownMenuItem className="text-white">
+                  <DropdownMenuItem
+                    className="text-white cursor-pointer"
+                    onClick={() => setActiveTab("royalties")}
+                  >
                     <User className="mr-2 h-4 w-4" />
-                    Profil
+                    Profil & Royalties
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-white">
+                  <DropdownMenuItem
+                    className="text-white cursor-pointer"
+                    onClick={() => setActiveTab("analytics")}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
-                    Paramètres
+                    Analyses & Paramètres
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-white">
+                  <DropdownMenuItem
+                    className="text-white cursor-pointer"
+                    onClick={() => setActiveTab("royalties")}
+                  >
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Facturation
+                    Facturation & Paiements
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/20" />
-                  <DropdownMenuItem className="text-white">
+                  <DropdownMenuItem
+                    className="text-white cursor-pointer"
+                    onClick={() => window.open("/faq", "_blank")}
+                  >
                     <HelpCircle className="mr-2 h-4 w-4" />
                     Assistance
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="text-red-400"
+                    className="text-red-400 cursor-pointer"
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />

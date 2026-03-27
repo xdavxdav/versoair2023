@@ -804,7 +804,10 @@ export default function UserDashboard() {
 
   const hasRealBusiness = !!(userBusinesses && userBusinesses.length > 0);
 
-  const analytics = useMemo(() => getEmptyAnalytics(currentTier), [currentTier]);
+  const analytics = useMemo(
+    () => getEmptyAnalytics(currentTier),
+    [currentTier],
+  );
 
   const rankScore = useMemo(
     () =>
