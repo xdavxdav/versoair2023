@@ -530,7 +530,8 @@ function AppContent() {
   const { user } = useAuthContext();
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
-  const showContentNav = isContentNavPage && isAuthed;
+  // Show ContentNav (bottom dock) on blog/marketplace pages for ALL users (authed or not)
+  const showContentNav = isContentNavPage;
   const isAuthPage = currentPath.startsWith("/auth");
   // Track when loading just finished so we can apply page-enter animation
   const [pageEnter, setPageEnter] = useState(false);
@@ -686,15 +687,11 @@ function AppContent() {
               </div>
             )}
 
-          {/* Blog Navbar — only when ContentNav (insta dock) is NOT active.
-              Hidden on phones (<768px) — the Instagram-like bottom dock handles mobile nav. */}
+          {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active.
+              Now visible on mobile too (no md:block restriction). */}
           {(currentPath === "/blog" || currentPath === "/marketplace") &&
             !marketplaceModalOpen &&
-            !showContentNav && (
-              <div className="hidden md:block">
-                <BlogNavbar />
-              </div>
-            )}
+            !showContentNav && <BlogNavbar />}
         </div>
       )}
       {/* Spacer for fixed header */}

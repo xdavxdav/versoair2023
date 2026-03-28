@@ -109,16 +109,16 @@ router.get("/api/location/country", async (req: Request, res: Response) => {
       }
     }
 
-    // 3) Final fallback: call ipwho.is with no IP (uses server's public IP)
+    // 3) Final fallback: use api.country.is (works server-side, no auth needed)
+    //    Note: ipwho.is blocks server-side requests on free plan with "CORS not supported"
     try {
-      const response = await fetch(
-        "https://ipwho.is/?fields=success,country_code",
-        { signal: AbortSignal.timeout(4000) },
-      );
+      const response = await fetch("https://api.country.is", {
+        signal: AbortSignal.timeout(4000),
+      });
       if (response.ok) {
         const data = await response.json();
-        const code = normalizeCode(data?.country_code);
-        if (data?.success && code) {
+        const code = normalizeCode(data?.country);
+        if (code) {
           return res.json({
             success: true,
             countryCode: code,

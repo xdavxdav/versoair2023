@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   LogOut,
   Store,
   Headphones,
   ShoppingBag,
   ChevronDown,
+  Home,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -42,6 +43,17 @@ export default function BlogNavbar({
 }: BlogNavbarProps) {
   const { user, logout } = useAuthContext();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+
+  // ─── Home button gesture state ───────────────────────────────────────
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdStartRef = useRef(0);
+  const holdCompletedRef = useRef(false);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
 
   const marketplaceAuth =
     localStorage.getItem("blog_community_auth") === "true";
@@ -67,32 +79,172 @@ export default function BlogNavbar({
   const open = (key: string) => setOpenMenu(key);
   const close = () => setOpenMenu(null);
 
+  // ─── Home button gestures: tap=marketplace, double-tap=home, hold 2s=logout ───
+  const handleHomeTap = useCallback(() => {
+    if (holdCompletedRef.current) {
+      holdCompletedRef.current = false;
+      return;
+    }
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      const count = tapCountRef.current;
+      tapCountRef.current = 0;
+      if (count >= 2) {
+        // Double-tap → go home
+        setLocation("/");
+      } else {
+        // Single tap → marketplace or scroll to top
+        if (currentPath === "/marketplace") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          window.dispatchEvent(new CustomEvent("marketplace:refresh"));
+        } else {
+          setLocation("/marketplace");
+        }
+      }
+    }, 300);
+  }, [currentPath, setLocation]);
+
+  const handlePressStart = useCallback(() => {
+    if (!isAuthenticated) return;
+    holdCompletedRef.current = false;
+    holdStartRef.current = Date.now();
+    setIsHolding(true);
+    setHoldProgress(0);
+    holdIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - holdStartRef.current;
+      setHoldProgress(Math.min((elapsed / 2000) * 100, 100));
+    }, 16);
+    holdTimerRef.current = setTimeout(() => {
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      setIsHolding(false);
+      setHoldProgress(0);
+      holdCompletedRef.current = true;
+      // Hold 2s = logout
+      logout();
+      localStorage.removeItem("blog_community_auth");
+      localStorage.removeItem("blog_community_user");
+      window.location.reload();
+    }, 2000);
+  }, [isAuthenticated, logout]);
+
+  const handlePressEnd = useCallback(() => {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+    setIsHolding(false);
+    setHoldProgress(0);
+  }, []);
+
   return (
     <>
       <nav
-        className="hidden md:block bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
+        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
         style={{ overflow: "visible" }}
       >
         <div className="max-w-full mx-auto px-3 md:px-5">
-          <div className="flex items-center justify-between h-16 gap-3">
-            {/* Logo */}
-            <Link href="/">
-              <a className="flex-shrink-0 group relative">
-                <div className="absolute -inset-4 bg-cyan-400/0 group-hover:bg-cyan-400/40 rounded-xl blur-xl transition-all duration-500 pointer-events-none" />
-                <img
-                  src="https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png"
-                  alt="Verso"
-                  className="relative h-[clamp(2.4rem,5vw,3.6rem)] w-auto transition-all duration-300 group-hover:scale-105"
+          <div className="flex items-center justify-between h-14 md:h-16 gap-2 md:gap-3">
+            {/* Home button with gestures: tap=marketplace, double-tap=home, hold 2s=logout */}
+            <div className="relative flex-shrink-0">
+              {isHolding && (
+                <svg
+                  className="absolute pointer-events-none z-10"
                   style={{
-                    filter:
-                      "brightness(1.1) sepia(1) saturate(5) hue-rotate(155deg)",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%,-50%)",
+                    width: "48px",
+                    height: "48px",
                   }}
-                />
-              </a>
-            </Link>
+                  viewBox="0 0 48 48"
+                >
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    fill="none"
+                    stroke="rgba(239,68,68,0.15)"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 21}`}
+                    strokeDashoffset={`${2 * Math.PI * 21 * (1 - holdProgress / 100)}`}
+                    transform="rotate(-90 24 24)"
+                  />
+                </svg>
+              )}
+              <button
+                onClick={handleHomeTap}
+                onPointerDown={handlePressStart}
+                onPointerUp={handlePressEnd}
+                onPointerLeave={handlePressEnd}
+                onPointerCancel={handlePressEnd}
+                onContextMenu={(e) => e.preventDefault()}
+                className="flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
+                title="Tap=Marketplace · Double-tap=Home · Hold 2s=Logout"
+              >
+                <Home className="w-4 h-4" />
+                <span className="hidden sm:inline">Accueil</span>
+              </button>
+            </div>
 
-            {/* ── Centered nav ── */}
-            <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
+            {/* ── Mobile quick nav pills ── */}
+            <div className="flex md:hidden items-center gap-1 flex-1 justify-center overflow-x-auto scrollbar-hide">
+              <Link href="/blog">
+                <a
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
+                    currentPath === "/blog"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  }`}
+                >
+                  Blog
+                </a>
+              </Link>
+              <Link href="/marketplace">
+                <a
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
+                    currentPath === "/marketplace"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  }`}
+                >
+                  <ShoppingBag className="w-3 h-3 inline mr-1" />
+                  Shop
+                </a>
+              </Link>
+              <Link href="/stream">
+                <a
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
+                    currentPath === "/stream"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  }`}
+                >
+                  🎵
+                </a>
+              </Link>
+              <Link href="/versoai">
+                <a
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
+                    currentPath === "/versoai"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                  }`}
+                >
+                  AI
+                </a>
+              </Link>
+            </div>
+
+            {/* ── Centered nav (desktop only) ── */}
+            <div className="hidden md:flex items-center gap-1 flex-1 justify-center min-w-0">
               {/* Entreprises */}
               <div
                 className="relative"

@@ -362,8 +362,31 @@ export function MobileMenuBubble() {
     return () => observer.disconnect();
   }, []);
 
-  if (location === "/blog") return null;
+  // Hide bubble on pages where ContentNav (bottom dock) is active
+  // ContentNav handles navigation on these pages
+  const isContentNavPage =
+    location === "/blog" ||
+    location.startsWith("/blog/") ||
+    location === "/marketplace" ||
+    location.startsWith("/marketplace/") ||
+    location === "/services" ||
+    location.startsWith("/services/") ||
+    location === "/marketing" ||
+    location.startsWith("/marketing/") ||
+    location === "/artisans" ||
+    location.startsWith("/artisans/") ||
+    location === "/programs" ||
+    location.startsWith("/programs/") ||
+    location === "/communities" ||
+    location.startsWith("/communities/") ||
+    location === "/community" ||
+    location.startsWith("/community/") ||
+    location === "/contracts" ||
+    location.startsWith("/contracts/") ||
+    location === "/tickets" ||
+    location.startsWith("/tickets/");
 
+  if (isContentNavPage) return null;
   if (dialogOpen) return null;
 
   return (

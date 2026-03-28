@@ -107,7 +107,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<RepeatMode>("none");
-  const [playbackRate, setPlaybackRateState] = useState(1);
+  const [playbackRate, setPlaybackRateState] = useState(() => {
+    const saved = localStorage.getItem("verso_speed");
+    const parsed = saved ? parseFloat(saved) : 1;
+    return [0.5, 0.75, 1, 1.25, 1.5, 2].includes(parsed) ? parsed : 1;
+  });
 
   // History for previous track
   const historyRef = useRef<AudioTrack[]>([]);
@@ -509,6 +513,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const setPlaybackRate = useCallback((rate: number) => {
     const clampedRate = Math.max(0.25, Math.min(rate, 4)); // safety clamp
     setPlaybackRateState(clampedRate);
+    localStorage.setItem("verso_speed", String(clampedRate));
     if (audioRef.current) {
       // Re-assert pitch preservation before changing rate
       (audioRef.current as any).preservesPitch = true;
