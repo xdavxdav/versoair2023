@@ -178,7 +178,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Setup Web Audio API for waveform
   const setupAudioContext = useCallback(() => {
-    if (audioContextRef.current || !audioRef.current) return;
+    if (!audioRef.current) return;
+
+    // If context already exists, just make sure it's running
+    if (audioContextRef.current) {
+      if (audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume().catch(() => {});
+      }
+      return;
+    }
 
     try {
       const ctx = new (
@@ -195,6 +203,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audioContextRef.current = ctx;
       analyserRef.current = analyser;
       sourceRef.current = source;
+
+      // Ensure context is running (browsers may start it as "suspended")
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
     } catch (e) {
       console.warn("[Audio] Web Audio API setup failed:", e);
     }
@@ -287,6 +300,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           .then(() => {
             setIsPlaying(true);
             setupAudioContext();
+            // Belt-and-suspenders: ensure AudioContext is running after play
+            if (audioContextRef.current?.state === "suspended") {
+              audioContextRef.current.resume().catch(() => {});
+            }
             // Record stream after 30 seconds
             recordStreamAfterDelay(track.id);
           })
