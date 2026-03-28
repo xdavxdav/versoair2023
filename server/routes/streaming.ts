@@ -66,14 +66,17 @@ router.get("/tracks", async (req: Request, res: Response) => {
     else if (sort === "duration") orderBy = "ORDER BY mt.duration ASC";
 
     const query = `
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
-        COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+        COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
+        COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
+        a.title as album_title, a.cover_art as album_cover,
         COALESCE(
           (SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0
         ) as like_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       ${where}
       ${orderBy}
@@ -121,14 +124,17 @@ router.get("/tracks", async (req: Request, res: Response) => {
 router.get("/tracks/featured", async (_req: Request, res: Response) => {
   try {
     const featured = await pool.query(`
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
-        COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+        COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
+        COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
+        a.title as album_title, a.cover_art as album_cover,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count,
         ac.grade as contract_grade,
         ac.can_be_featured as has_featuring_rights
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       LEFT JOIN artist_contracts ac ON ac.artist_id = mt.artist_id AND ac.status = 'approved'
       WHERE mt.status = 'published'
@@ -167,13 +173,16 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const track = await pool.query(
       `
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
-        COALESCE(ma.verified, false) as artist_verified, COALESCE(ma.genre, art.genre) as artist_genre,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+        COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
+        COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
+        COALESCE(ma.genre, art.genre) as artist_genre,
         a.title as album_title, a.cover_art as album_cover, a.id as album_id,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       WHERE mt.id = $1
     `,
@@ -577,32 +586,42 @@ router.get("/artists", async (req: Request, res: Response) => {
     let paramIdx = 1;
 
     if (search) {
-      where += ` AND (name ILIKE $${paramIdx} OR genre ILIKE $${paramIdx})`;
+      where += ` AND (COALESCE(ap.stage_name, art.stage_name) ILIKE $${paramIdx} OR COALESCE(ap.genre #>> '{}', art.genre) ILIKE $${paramIdx})`;
       params.push(`%${search}%`);
       paramIdx++;
     }
     if (genre) {
-      where += ` AND genre ILIKE $${paramIdx}`;
+      where += ` AND COALESCE(ap.genre #>> '{}', art.genre) ILIKE $${paramIdx}`;
       params.push(`%${genre}%`);
       paramIdx++;
     }
     if (country) {
-      where += ` AND country_code = $${paramIdx}`;
+      where += ` AND art.country_code = $${paramIdx}`;
       params.push(country);
       paramIdx++;
     }
 
-    let orderBy = "ORDER BY total_streams DESC";
-    if (sort === "name") orderBy = "ORDER BY name ASC";
-    else if (sort === "followers") orderBy = "ORDER BY followers DESC";
-    else if (sort === "monthly") orderBy = "ORDER BY monthly_listeners DESC";
+    let orderBy = "ORDER BY COALESCE(ap.lifetime_streams, 0) DESC";
+    if (sort === "name") orderBy = "ORDER BY COALESCE(ap.stage_name, art.stage_name) ASC";
+    else if (sort === "followers") orderBy = "ORDER BY follower_count DESC";
+    else if (sort === "monthly") orderBy = "ORDER BY COALESCE(ap.lifetime_streams, 0) DESC";
 
     const artists = await pool.query(
       `
-      SELECT ma.*,
-        (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = ma.id) as follower_count,
-        (SELECT COUNT(*) FROM music_tracks mt WHERE mt.artist_id = ma.id) as track_count
-      FROM music_artists ma
+      SELECT
+        art.id,
+        COALESCE(ap.stage_name, art.stage_name) as name,
+        COALESCE(ap.genre #>> '{}', art.genre) as genre,
+        ap.profile_image_url as image_url,
+        ap.bio,
+        art.country_code,
+        ap.country as country,
+        COALESCE(ap.verified_for_payout, false) as verified,
+        ap.lifetime_streams as total_streams,
+        (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count,
+        (SELECT COUNT(*) FROM music_tracks mt WHERE mt.artist_id = art.id AND mt.status = 'published') as track_count
+      FROM artists art
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
       ${where}
       ${orderBy}
       LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
@@ -611,7 +630,7 @@ router.get("/artists", async (req: Request, res: Response) => {
     );
 
     const countResult = await pool.query(
-      `SELECT COUNT(*) as total FROM music_artists ${where}`,
+      `SELECT COUNT(*) as total FROM artists art LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id ${where}`,
       params,
     );
 
@@ -622,6 +641,7 @@ router.get("/artists", async (req: Request, res: Response) => {
       limit: parseInt(limit as string),
     });
   } catch (err: any) {
+    console.error("[STREAMING] artists error:", err.message);
     res.status(500).json({ error: "Failed to fetch artists" });
   }
 });
@@ -632,9 +652,22 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const artist = await pool.query(
       `
-      SELECT ma.*,
-        (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = ma.id) as follower_count
-      FROM music_artists ma WHERE ma.id = $1
+      SELECT
+        art.id,
+        COALESCE(ap.stage_name, art.stage_name) as name,
+        COALESCE(ap.genre #>> '{}', art.genre) as genre,
+        ap.profile_image_url as image_url,
+        ap.bio,
+        art.country_code,
+        ap.country as country,
+        COALESCE(ap.verified_for_payout, false) as verified,
+        ap.lifetime_streams as total_streams,
+        ap.instagram_handle,
+        ap.spotify_url,
+        (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
+      FROM artists art
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      WHERE art.id = $1
     `,
       [id],
     );
@@ -678,10 +711,18 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
     // Related artists (same genre or country)
     const related = await pool.query(
       `
-      SELECT id, name, genre, image_url, country, country_code, monthly_listeners, verified
-      FROM music_artists
-      WHERE id != $1 AND (genre = $2 OR country_code = $3)
-      ORDER BY total_streams DESC LIMIT 6
+      SELECT
+        art.id,
+        COALESCE(ap.stage_name, art.stage_name) as name,
+        COALESCE(ap.genre #>> '{}', art.genre) as genre,
+        ap.profile_image_url as image_url,
+        art.country_code,
+        ap.country,
+        COALESCE(ap.verified_for_payout, false) as verified
+      FROM artists art
+      LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      WHERE art.id != $1 AND (COALESCE(ap.genre #>> '{}', art.genre) = $2 OR art.country_code = $3)
+      ORDER BY COALESCE(ap.lifetime_streams, 0) DESC LIMIT 6
     `,
       [id, artist.rows[0].genre, artist.rows[0].country_code],
     );
