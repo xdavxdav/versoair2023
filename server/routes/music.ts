@@ -94,6 +94,12 @@ async function ensureTrackColumns(): Promise<void> {
     { name: "is_explicit", def: "BOOLEAN DEFAULT false" },
     { name: "lyrics", def: "TEXT" },
     { name: "audio_data", def: "BYTEA" },
+    // Extended media info columns
+    { name: "pochette", def: "TEXT" },         // cover art image as base64 data-URI
+    { name: "bts_content", def: "TEXT" },      // Behind The Scenes notes/stories
+    { name: "flop_notes", def: "TEXT" },       // FLOP: outtakes, failures, funny moments
+    { name: "credits", def: "TEXT" },          // production credits, featured artists
+    { name: "recording_location", def: "TEXT" }, // studio/city where recorded
   ];
   for (const col of cols) {
     try {
@@ -176,6 +182,7 @@ router.get("/tracks", async (_req, res) => {
       `SELECT id, title, artist_id, duration, streams, play_count, release_date, genre,
               file_path, file_name, file_size, mime_type, description, price,
               downloads, revenue, status, bpm, musical_key, mood, cover_art, created_at,
+              pochette, bts_content, flop_notes, credits, recording_location,
               (audio_data IS NOT NULL) AS has_audio_data
        FROM music_tracks ORDER BY id DESC`,
     );
@@ -191,6 +198,11 @@ router.get("/tracks", async (_req, res) => {
       mimeType: t.mime_type,
       musicalKey: t.musical_key,
       coverArt: t.cover_art,
+      pochette: t.pochette,
+      btsContent: t.bts_content,
+      flopNotes: t.flop_notes,
+      credits: t.credits,
+      recordingLocation: t.recording_location,
     }));
     res.json({ success: true, data: tracks, count: tracks.length });
   } catch (error: any) {
@@ -782,7 +794,9 @@ router.get("/tracks/:id/stream", async (req, res) => {
     let isSelfStream = false;
     try {
       const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : (req.cookies?.auth_token || null);
+      const token = authHeader?.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : req.cookies?.auth_token || null;
       if (token && track.artist_id) {
         const jwt = require("jsonwebtoken");
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
@@ -801,7 +815,9 @@ router.get("/tracks/:id/stream", async (req, res) => {
           }
         }
       }
-    } catch { /* token missing/invalid — treat as non-owner listener */ }
+    } catch {
+      /* token missing/invalid — treat as non-owner listener */
+    }
 
     // Only increment play count for real listeners (not artist previewing own track)
     // Debounce: same IP + track only increments once per 30s
@@ -809,7 +825,11 @@ router.get("/tracks/:id/stream", async (req, res) => {
     const debounceKey = `${clientIp}:${id}`;
     const lastPlayed = playCountDebounce.get(debounceKey) || 0;
     const isRange = !!req.headers.range;
-    if (!isSelfStream && !isRange && Date.now() - lastPlayed > PLAY_DEBOUNCE_MS) {
+    if (
+      !isSelfStream &&
+      !isRange &&
+      Date.now() - lastPlayed > PLAY_DEBOUNCE_MS
+    ) {
       playCountDebounce.set(debounceKey, Date.now());
       await pool.query(
         "UPDATE music_tracks SET play_count = COALESCE(play_count, 0) + 1, streams = COALESCE(streams, 0) + 1 WHERE id = $1",
@@ -1045,7 +1065,9 @@ router.put(
       );
       if (!existing.rows.length) {
         fs.unlinkSync(file.path);
-        return res.status(404).json({ success: false, error: "Track not found" });
+        return res
+          .status(404)
+          .json({ success: false, error: "Track not found" });
       }
 
       // Read file buffer and persist to DB + update file metadata
@@ -1054,7 +1076,14 @@ router.put(
         `UPDATE music_tracks
          SET audio_data = $1, file_path = $2, file_name = $3, file_size = $4, mime_type = $5
          WHERE id = $6`,
-        [audioBuffer, file.path, file.originalname, file.size, file.mimetype, parseInt(id)],
+        [
+          audioBuffer,
+          file.path,
+          file.originalname,
+          file.size,
+          file.mimetype,
+          parseInt(id),
+        ],
       );
 
       console.log(
@@ -1063,13 +1092,95 @@ router.put(
       res.json({ success: true, message: "Audio re-uploaded and persisted" });
     } catch (error: any) {
       console.error("❌ Track re-upload error:", error);
-      res.status(500).json({ success: false, error: "Failed to re-upload track" });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to re-upload track" });
     }
   },
 );
 
 // ═════════════════════════════════════════════════════════════════════
-// �🗑️  DELETE TRACK — DELETE /api/music/tracks/:id
+// EDIT TRACK METADATA — PUT /api/music/tracks/:id/edit
+// Update title, genre, description, BTS, FLOP, credits, pochette, etc.
+// ═════════════════════════════════════════════════════════════════════
+router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
+  try {
+    await ensureTrackColumns();
+    const { id } = req.params;
+    const trackId = parseInt(id);
+
+    const existing = await pool.query(
+      "SELECT id, title, artist_id FROM music_tracks WHERE id = $1",
+      [trackId],
+    );
+    if (!existing.rows.length) {
+      return res.status(404).json({ success: false, error: "Track not found" });
+    }
+
+    const track = existing.rows[0];
+    if (track.artist_id && req.user?.userId) {
+      const ownerCheck = await pool.query(
+        "SELECT id FROM artists WHERE id = $1 AND user_id = $2",
+        [track.artist_id, parseInt(req.user.userId)],
+      );
+      if (!ownerCheck.rows.length) {
+        return res.status(403).json({ success: false, error: "Not your track" });
+      }
+    }
+
+    const allowedFields: Record<string, string> = {
+      title: "title",
+      genre: "genre",
+      description: "description",
+      mood: "mood",
+      bpm: "bpm",
+      musicalKey: "musical_key",
+      price: "price",
+      status: "status",
+      lyrics: "lyrics",
+      isExplicit: "is_explicit",
+      wikiUrl: "wiki_url",
+      coverArt: "cover_art",
+      pochette: "pochette",
+      btsContent: "bts_content",
+      flopNotes: "flop_notes",
+      credits: "credits",
+      recordingLocation: "recording_location",
+    };
+
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    let paramIdx = 1;
+
+    for (const [bodyKey, dbCol] of Object.entries(allowedFields)) {
+      if (req.body[bodyKey] !== undefined) {
+        let val = req.body[bodyKey];
+        if (dbCol === "bpm" && val !== null) val = val ? parseInt(val) : null;
+        if (dbCol === "is_explicit") val = val === true || val === "true";
+        setClauses.push(`${dbCol} = $${paramIdx}`);
+        values.push(val);
+        paramIdx++;
+      }
+    }
+
+    if (setClauses.length === 0) {
+      return res.status(400).json({ success: false, error: "No fields to update" });
+    }
+
+    values.push(trackId);
+    const sql = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
+    const result = await pool.query(sql, values);
+
+    console.log("[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)");
+    res.json({ success: true, track: result.rows[0] });
+  } catch (error: any) {
+    console.error("Track edit error:", error);
+    res.status(500).json({ success: false, error: "Failed to edit track" });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════
+// DELETE TRACK — DELETE /api/music/tracks/:id
 // ═════════════════════════════════════════════════════════════════════
 router.delete("/tracks/:id", requireAuth(), async (req, res) => {
   try {
