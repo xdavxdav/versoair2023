@@ -1,0 +1,98 @@
+# Verso Air Business Intelligence Platform - Production Environment Configuration
+# ⚠️ SECURITY WARNING: Keep these values secure and never commit to version control
+
+# Database Configuration (REQUIRED - Update with your production database)
+# Local dev fallback (uncomment to use local PostgreSQL instead of Neon):
+# DATABASE_URL=postgresql://postgres:password@localhost:5432/versoair_business_intelligence
+#
+# Neon — org: org-dry-bonus-48541547 | project: old-shape-21860213 (Verso)
+DATABASE_URL=postgresql://neondb_owner:npg_BXkIiD9dQA3f@ep-red-term-aifm0yb8.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+# VersoAI — Groq Cloud LLM (free tier: groq.com/keys)
+# Provides full conversational AI when Ollama is not available (e.g. on Render)
+GROQ_API_KEY=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
+# GROQ_MODEL=llama-3.3-70b-versatile
+
+# Session & JWT Security (REQUIRED - Generate new random values for production)
+# Generate using: openssl rand -hex 32
+# ⚠️ PRODUCTION SECRETS — rotated 2026-03-14
+SESSION_SECRET=4691e184a208e7cdfcb33c16198a0b86f5154e9352050ccab09acca209f80792
+JWT_SECRET=b4cde56a202acb457edbe3ae9d5e9c2d5007e03b754e094515dc63e32b187d0f
+JWT_EXPIRES_IN=7d
+
+# Application Settings
+NODE_ENV=development
+PORT=5003
+
+# Frontend/Client Configuration (REQUIRED - Update with your production domain)
+VITE_API_URL=http://localhost:5003
+VITE_APP_NAME=Verso Air Dashboard
+VERSOAIR_URL=http://localhost:5003
+
+# CORS Configuration (REQUIRED - Update with your production domain)
+# Comma-separated: local dev + Render production
+CORS_ORIGIN=http://localhost:5003,https://verso-air-online.onrender.com
+
+# Database Connection Pool Settings (Optional - Production recommended)
+DB_POOL_MIN=5
+DB_POOL_MAX=20
+DB_IDLE_TIMEOUT=30000
+DB_CONNECTION_TIMEOUT=5000
+
+# Email Notifications (Gmail App Password)
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=luqjoey@gmail.com
+SMTP_PASS=wygavbuqolnzwqze
+SMTP_FROM=luqjoey@gmail.com
+
+# Socket.io Configuration (Optional - Enables real-time notifications)
+SOCKET_PORT=5003
+SOCKET_NAMESPACE=/socket.io
+
+# Redis Configuration (For serverless rate limiting - Optional)
+# Use Upstash for serverless deployments
+UPSTASH_REDIS_REST_URL=https://your-upstash-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-token-here
+
+# ─── OAuth / SSO Credentials ──────────────────────────────────────────────────
+# Get these from each provider's developer console (see instructions above)
+
+# Google: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Microsoft: https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+
+# Apple: https://developer.apple.com/account/resources
+APPLE_CLIENT_ID=
+APPLE_CLIENT_SECRET=
+
+# LinkedIn: https://www.linkedin.com/developers/apps
+LINKEDIN_CLIENT_ID=
+LINKEDIN_CLIENT_SECRET=
+
+# Indeed: https://secure.indeed.com/account/apikeys
+INDEED_CLIENT_ID=
+INDEED_CLIENT_SECRET=
+
+# Glassdoor (if available)
+GLASSDOOR_CLIENT_ID=
+GLASSDOOR_CLIENT_SECRET=
+
+# Super-admin email (matches DB user #1)
+SUPERADMIN_EMAIL=superadmin@versoair.test
+
+# Logging & Debugging (Optional - Set to true for verbose logging in production)
+DEBUG=false
+LOG_LEVEL=info
+
+# ─── PayPal Payment Gateway ───────────────────────────────────────────────────
+# Get credentials from https://developer.paypal.com/dashboard/applications
+# Mode: "sandbox" for testing, "live" for production
+PAYPAL_MODE=sandbox
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=

@@ -115,6 +115,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       const audio = new Audio();
       audio.crossOrigin = "anonymous";
       audio.preload = "auto";
+      // ── CRITICAL: preserve pitch at any playback speed ──
+      // Without this, 0.75x sounds deep/slow and 1.5x sounds chipmunk-fast
+      // which risks audio safety (distorted bass can damage speakers/hearing)
+      (audio as any).preservesPitch = true;
+      (audio as any).mozPreservesPitch = true;  // Firefox
+      (audio as any).webkitPreservesPitch = true; // Safari/older Chrome
       audioRef.current = audio;
     }
 
@@ -269,6 +275,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       audio.src = url;
       audio.volume = isMuted ? 0 : volume;
+      // Ensure pitch-safe playback at any speed
+      (audio as any).preservesPitch = true;
+      (audio as any).mozPreservesPitch = true;
+      (audio as any).webkitPreservesPitch = true;
       audio.playbackRate = playbackRate;
 
       const playPromise = audio.play();
@@ -445,8 +455,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {
-    setPlaybackRateState(rate);
-    if (audioRef.current) audioRef.current.playbackRate = rate;
+    const clampedRate = Math.max(0.25, Math.min(rate, 4)); // safety clamp
+    setPlaybackRateState(clampedRate);
+    if (audioRef.current) {
+      // Re-assert pitch preservation before changing rate
+      (audioRef.current as any).preservesPitch = true;
+      (audioRef.current as any).mozPreservesPitch = true;
+      (audioRef.current as any).webkitPreservesPitch = true;
+      audioRef.current.playbackRate = clampedRate;
+    }
   }, []);
 
   const addToQueue = useCallback((track: AudioTrack) => {
@@ -526,10 +543,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (audioContextRef.current?.state === "suspended") {
           audioContextRef.current.resume().catch(() => {});
         }
-        // Re-assert playbackRate in case browser reset it
+        // Re-assert playbackRate + preservesPitch in case browser reset them
         const audio = audioRef.current;
-        if (audio && audio.playbackRate !== playbackRate) {
-          audio.playbackRate = playbackRate;
+        if (audio) {
+          (audio as any).preservesPitch = true;
+          (audio as any).mozPreservesPitch = true;
+          (audio as any).webkitPreservesPitch = true;
+          if (audio.playbackRate !== playbackRate) {
+            audio.playbackRate = playbackRate;
+          }
         }
       }
     };
