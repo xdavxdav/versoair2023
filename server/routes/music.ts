@@ -93,6 +93,7 @@ async function ensureTrackColumns(): Promise<void> {
     { name: "wiki_url", def: "TEXT" },
     { name: "is_explicit", def: "BOOLEAN DEFAULT false" },
     { name: "lyrics", def: "TEXT" },
+    { name: "audio_data", def: "BYTEA" },
   ];
   for (const col of cols) {
     try {
@@ -174,13 +175,14 @@ router.get("/tracks", async (_req, res) => {
     const result = await pool.query(
       `SELECT id, title, artist_id, duration, streams, play_count, release_date, genre,
               file_path, file_name, file_size, mime_type, description, price,
-              downloads, revenue, status, bpm, musical_key, mood, cover_art, created_at
+              downloads, revenue, status, bpm, musical_key, mood, cover_art, created_at,
+              (audio_data IS NOT NULL) AS has_audio_data
        FROM music_tracks ORDER BY id DESC`,
     );
-    // Mark which tracks have a real uploaded file
+    // Mark which tracks have a real uploaded file (disk OR persistent DB)
     const tracks = result.rows.map((t: any) => ({
       ...t,
-      hasAudio: !!t.file_path,
+      hasAudio: !!t.file_path || !!t.has_audio_data,
       artistId: t.artist_id,
       playCount: t.play_count,
       releaseDate: t.release_date,
@@ -423,9 +425,21 @@ router.post(
         }
       }
 
-      console.log(
-        `🎵 [MUSIC] Track uploaded: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
-      );
+      // Persist audio binary into DB so it survives Render's ephemeral /tmp wipe
+      try {
+        const audioBuffer = fs.readFileSync(file.path);
+        await pool.query(
+          "UPDATE music_tracks SET audio_data = $1 WHERE id = $2",
+          [audioBuffer, result.rows[0].id],
+        );
+        console.log(
+          `🎵 [MUSIC] Track uploaded + persisted to DB: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
+        );
+      } catch (persistErr: any) {
+        console.warn(
+          `⚠️ [MUSIC] Track uploaded to disk but DB persist failed: ${persistErr.message}`,
+        );
+      }
       res.json({ success: true, data: result.rows[0] });
     } catch (error: any) {
       console.error("❌ Track upload error:", error);
@@ -465,11 +479,19 @@ router.get("/tracks/:id/download", async (req, res) => {
     }
 
     const track = result.rows[0];
+    const fileOnDisk = track.file_path && fs.existsSync(track.file_path);
 
-    if (!track.file_path || !fs.existsSync(track.file_path)) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Audio file not found on server" });
+    // Check if audio exists either on disk or in DB
+    if (!fileOnDisk) {
+      const audioCheck = await pool.query(
+        "SELECT (audio_data IS NOT NULL) AS has_data FROM music_tracks WHERE id = $1",
+        [parseInt(id)],
+      );
+      if (!audioCheck.rows[0]?.has_data) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Audio file not found on server" });
+      }
     }
 
     // ── Payment gate: artist can download own tracks for free, listeners must pay ──
@@ -537,8 +559,20 @@ router.get("/tracks/:id/download", async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", track.mime_type || "audio/mpeg");
 
-    const fileStream = fs.createReadStream(track.file_path);
-    fileStream.pipe(res);
+    if (fileOnDisk) {
+      fs.createReadStream(track.file_path).pipe(res);
+    } else {
+      // Serve from DB audio_data
+      const audioResult = await pool.query(
+        "SELECT audio_data FROM music_tracks WHERE id = $1",
+        [parseInt(id)],
+      );
+      if (audioResult.rows[0]?.audio_data) {
+        res.end(audioResult.rows[0].audio_data);
+      } else {
+        res.status(404).json({ success: false, error: "Audio file not found" });
+      }
+    }
   } catch (error: any) {
     console.error("❌ Track download error:", error);
     res.status(500).json({
@@ -739,11 +773,7 @@ router.get("/tracks/:id/stream", async (req, res) => {
     }
 
     const track = result.rows[0];
-    if (!track.file_path || !fs.existsSync(track.file_path)) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Audio file not found" });
-    }
+    const fileOnDisk = track.file_path && fs.existsSync(track.file_path);
 
     // Only increment play count on fresh plays (not seek/range re-requests)
     // Debounce: same IP + track only increments once per 30s
@@ -759,29 +789,77 @@ router.get("/tracks/:id/stream", async (req, res) => {
       );
     }
 
-    const stat = fs.statSync(track.file_path);
-    const range = req.headers.range;
+    if (fileOnDisk) {
+      // ── Serve from filesystem (fast, for fresh uploads on this dyno) ──
+      const stat = fs.statSync(track.file_path);
+      const range = req.headers.range;
 
-    if (range) {
-      // Support range requests for seeking
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
-      const chunkSize = end - start + 1;
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+        const chunkSize = end - start + 1;
 
-      res.writeHead(206, {
-        "Content-Range": `bytes ${start}-${end}/${stat.size}`,
-        "Accept-Ranges": "bytes",
-        "Content-Length": chunkSize,
-        "Content-Type": track.mime_type || "audio/mpeg",
-      });
-      fs.createReadStream(track.file_path, { start, end }).pipe(res);
+        res.writeHead(206, {
+          "Content-Range": `bytes ${start}-${end}/${stat.size}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunkSize,
+          "Content-Type": track.mime_type || "audio/mpeg",
+        });
+        fs.createReadStream(track.file_path, { start, end }).pipe(res);
+      } else {
+        res.writeHead(200, {
+          "Content-Length": stat.size,
+          "Content-Type": track.mime_type || "audio/mpeg",
+        });
+        fs.createReadStream(track.file_path).pipe(res);
+      }
     } else {
-      res.writeHead(200, {
-        "Content-Length": stat.size,
-        "Content-Type": track.mime_type || "audio/mpeg",
-      });
-      fs.createReadStream(track.file_path).pipe(res);
+      // ── Fallback: serve from database BYTEA (persists across Render redeploys) ──
+      const audioResult = await pool.query(
+        "SELECT audio_data, mime_type FROM music_tracks WHERE id = $1 AND audio_data IS NOT NULL",
+        [parseInt(id)],
+      );
+      if (!audioResult.rows.length || !audioResult.rows[0].audio_data) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Audio file not found" });
+      }
+
+      const buffer: Buffer = audioResult.rows[0].audio_data;
+      const mimeType = audioResult.rows[0].mime_type || "audio/mpeg";
+      const range = req.headers.range;
+
+      // Also re-cache to disk so subsequent seeks are fast
+      try {
+        if (track.file_path) {
+          const dir = path.dirname(track.file_path);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          fs.writeFileSync(track.file_path, buffer);
+        }
+      } catch { /* best-effort disk cache */ }
+
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+        const chunkSize = end - start + 1;
+
+        res.writeHead(206, {
+          "Content-Range": `bytes ${start}-${end}/${buffer.length}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunkSize,
+          "Content-Type": mimeType,
+        });
+        res.end(buffer.slice(start, end + 1));
+      } else {
+        res.writeHead(200, {
+          "Content-Length": buffer.length,
+          "Content-Type": mimeType,
+          "Accept-Ranges": "bytes",
+        });
+        res.end(buffer);
+      }
     }
   } catch (error: any) {
     console.error("❌ Track stream error:", error);
