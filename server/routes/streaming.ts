@@ -12,8 +12,9 @@ const MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.duration, mt.streams, mt.play_count, mt.likes, mt.release_date, mt.genre,
   mt.file_path, mt.file_name, mt.file_size, mt.mime_type, mt.audio_url,
   mt.description, mt.price, mt.downloads, mt.revenue, mt.status,
-  mt.bpm, mt.musical_key, mt.mood, mt.cover_art, mt.pochette,
+  mt.bpm, mt.musical_key, mt.mood, mt.cover_art,
   mt.is_explicit, mt.created_at,
+  (mt.pochette IS NOT NULL) AS has_pochette,
   (mt.audio_data IS NOT NULL) AS has_audio_data`;
 
 // ═══════════════════════════════════════════════════════════
@@ -65,13 +66,14 @@ router.get("/tracks", async (req: Request, res: Response) => {
     else if (sort === "duration") orderBy = "ORDER BY mt.duration ASC";
 
     const query = `
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
-        ma.verified as artist_verified, a.title as album_title, a.cover_art as album_cover,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+        COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover,
         COALESCE(
           (SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0
         ) as like_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       ${where}
       ${orderBy}
@@ -82,6 +84,7 @@ router.get("/tracks", async (req: Request, res: Response) => {
     const countQuery = `
       SELECT COUNT(*) as total FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       ${where}
     `;
 
@@ -118,13 +121,14 @@ router.get("/tracks", async (req: Request, res: Response) => {
 router.get("/tracks/featured", async (_req: Request, res: Response) => {
   try {
     const featured = await pool.query(`
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
-        ma.verified as artist_verified, a.title as album_title, a.cover_art as album_cover,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+        COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count,
         ac.grade as contract_grade,
         ac.can_be_featured as has_featuring_rights
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       LEFT JOIN artist_contracts ac ON ac.artist_id = mt.artist_id AND ac.status = 'approved'
       WHERE mt.status = 'published'
@@ -137,10 +141,11 @@ router.get("/tracks/featured", async (_req: Request, res: Response) => {
 
     // New releases (last 2 years by release date)
     const newReleases = await pool.query(`
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
-        ma.verified as artist_verified, a.title as album_title, a.cover_art as album_cover
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+        COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       WHERE mt.status = 'published' AND mt.release_date IS NOT NULL
       ORDER BY mt.release_date DESC
@@ -162,12 +167,13 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const track = await pool.query(
       `
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
-        ma.verified as artist_verified, ma.genre as artist_genre,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+        COALESCE(ma.verified, false) as artist_verified, COALESCE(ma.genre, art.genre) as artist_genre,
         a.title as album_title, a.cover_art as album_cover, a.id as album_id,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       WHERE mt.id = $1
     `,
@@ -182,9 +188,10 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     const related = await pool.query(
       `
       SELECT mt.id, mt.title, mt.duration, mt.streams, mt.cover_art, mt.genre,
-        ma.name as artist_name, ma.image_url as artist_image
+        COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       WHERE mt.id != $1 AND (mt.artist_id = $2 OR mt.genre = $3)
       ORDER BY mt.streams DESC LIMIT 8
     `,
@@ -227,6 +234,36 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch track" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// POCHETTE IMAGE — Serves the BYTEA cover art as an image
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/tracks/:id/pochette — serve pochette BYTEA as image
+router.get("/tracks/:id/pochette", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT pochette, mime_type FROM music_tracks WHERE id = $1",
+      [parseInt(id)],
+    );
+    if (!result.rows[0]?.pochette) {
+      return res.status(404).json({ error: "No pochette found" });
+    }
+    const buf = result.rows[0].pochette;
+    // Detect JPEG/PNG from magic bytes, fallback to mime_type or jpeg
+    let contentType = "image/jpeg";
+    if (buf[0] === 0x89 && buf[1] === 0x50) contentType = "image/png";
+    else if (buf[0] === 0x47 && buf[1] === 0x49) contentType = "image/gif";
+    else if (buf[0] === 0x52 && buf[1] === 0x49) contentType = "image/webp";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400"); // cache 24h
+    res.setHeader("Content-Length", buf.length);
+    res.end(buf);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to serve pochette" });
   }
 });
 
@@ -676,9 +713,10 @@ router.get("/albums/:id", async (req: Request, res: Response) => {
   try {
     const album = await pool.query(
       `
-      SELECT a.*, ma.name as artist_name, ma.image_url as artist_image, ma.verified as artist_verified
+      SELECT a.*, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image, COALESCE(ma.verified, false) as artist_verified
       FROM albums a
       LEFT JOIN music_artists ma ON a.artist_id = ma.id
+      LEFT JOIN artists art ON a.artist_id = art.id
       WHERE a.id = $1
     `,
       [req.params.id],
@@ -922,12 +960,13 @@ router.get("/playlists/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Playlist not found" });
 
     const tracks = await pool.query(`
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         a.title as album_title, a.cover_art as album_cover, pt.position,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM playlist_tracks pt
       JOIN music_tracks mt ON pt.track_id = mt.id
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       ORDER BY pt.position ASC
     `);
@@ -999,11 +1038,12 @@ router.get("/liked", async (req: Request, res: Response) => {
 
     const liked = await pool.query(
       `
-      SELECT ${MT_COLS}, ma.name as artist_name, ma.image_url as artist_image,
+      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         a.title as album_title, a.cover_art as album_cover, tl.created_at as liked_at
       FROM track_likes tl
       JOIN music_tracks mt ON tl.track_id = mt.id
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
       WHERE tl.user_id = $1
       ORDER BY tl.created_at DESC
@@ -1184,10 +1224,11 @@ router.get("/history", async (req: Request, res: Response) => {
     const history = await pool.query(
       `
       SELECT lh.*, mt.title, mt.cover_art, mt.duration as track_duration,
-        ma.name as artist_name, ma.image_url as artist_image
+        COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image
       FROM listening_history lh
       JOIN music_tracks mt ON lh.track_id = mt.id
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       WHERE lh.user_id = $1
       ORDER BY lh.played_at DESC
       LIMIT 50
@@ -1232,9 +1273,10 @@ router.get("/analytics/overview", async (_req: Request, res: Response) => {
     // Top tracks
     const topTracks = await pool.query(`
       SELECT mt.id, mt.title, mt.streams, mt.duration, mt.cover_art, mt.genre,
-        ma.name as artist_name, ma.image_url as artist_image
+        COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+      LEFT JOIN artists art ON mt.artist_id = art.id
       ORDER BY mt.streams DESC
       LIMIT 10
     `);
@@ -1604,13 +1646,15 @@ router.get("/search", async (req: Request, res: Response) => {
     const [tracks, artists, albums, playlists] = await Promise.all([
       pool.query(
         `
-        SELECT mt.id, mt.title, mt.duration, mt.streams, mt.cover_art, mt.pochette,
+        SELECT mt.id, mt.title, mt.duration, mt.streams, mt.cover_art,
+          (mt.pochette IS NOT NULL) AS has_pochette,
           mt.genre, mt.file_path, mt.audio_url,
           (mt.audio_data IS NOT NULL) AS has_audio_data,
-          ma.name as artist_name, ma.image_url as artist_image
+          COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image
         FROM music_tracks mt
         LEFT JOIN music_artists ma ON mt.artist_id = ma.id
-        WHERE mt.title ILIKE $1 OR ma.name ILIKE $1
+        LEFT JOIN artists art ON mt.artist_id = art.id
+        WHERE mt.title ILIKE $1 OR ma.name ILIKE $1 OR art.stage_name ILIKE $1
         ORDER BY mt.streams DESC LIMIT 10
       `,
         [searchTerm],
@@ -1627,10 +1671,11 @@ router.get("/search", async (req: Request, res: Response) => {
       pool.query(
         `
         SELECT a.id, a.title, a.cover_art, a.album_type, a.release_date,
-          ma.name as artist_name
+          COALESCE(ma.name, art.stage_name) as artist_name
         FROM albums a
         LEFT JOIN music_artists ma ON a.artist_id = ma.id
-        WHERE a.title ILIKE $1 OR ma.name ILIKE $1
+        LEFT JOIN artists art ON a.artist_id = art.id
+        WHERE a.title ILIKE $1 OR ma.name ILIKE $1 OR art.stage_name ILIKE $1
         ORDER BY a.release_date DESC NULLS LAST LIMIT 5
       `,
         [searchTerm],
@@ -1756,9 +1801,10 @@ router.get("/top", async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT mt.id, mt.title, mt.streams, mt.cover_art, mt.duration, mt.genre,
-              ma.name as artist_name, ma.id as artist_id, ma.image_url as artist_image
+              COALESCE(ma.name, art.stage_name) as artist_name, mt.artist_id as artist_id, ma.image_url as artist_image
        FROM music_tracks mt
        LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+       LEFT JOIN artists art ON mt.artist_id = art.id
        ORDER BY mt.streams DESC NULLS LAST
        LIMIT 50`,
     );

@@ -32,6 +32,14 @@ import {
   Minimize2,
 } from "lucide-react";
 
+/** Resolve cover art URL — prefers cover_art URL, then pochette endpoint, then album_cover */
+function getCover(t: any): string | null {
+  if (t?.cover_art) return t.cover_art;
+  if (t?.has_pochette) return `/api/streaming/tracks/${t.id}/pochette`;
+  if (t?.album_cover) return t.album_cover;
+  return null;
+}
+
 // ═══════════════════════════════════════════════════════════
 // WAVEFORM VISUALIZER
 // ═══════════════════════════════════════════════════════════
@@ -349,11 +357,9 @@ export default function AudioPlayer() {
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center flex-shrink-0">
-                  {track.cover_art || track.pochette || track.album_cover ? (
+                  {getCover(track) ? (
                     <img
-                      src={
-                        track.cover_art || track.pochette || track.album_cover
-                      }
+                      src={getCover(track)!}
                       alt=""
                       className="w-full h-full rounded object-cover"
                     />
@@ -402,9 +408,9 @@ export default function AudioPlayer() {
                   >
                     <GripVertical className="w-3 h-3 text-gray-600 cursor-grab" />
                     <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {q.cover_art || q.pochette || q.album_cover ? (
+                      {getCover(q) ? (
                         <img
-                          src={q.cover_art || q.pochette || q.album_cover}
+                          src={getCover(q)!}
                           alt=""
                           className="w-full h-full object-cover"
                         />
@@ -503,11 +509,9 @@ export default function AudioPlayer() {
               transition={{ delay: 0.1 }}
               className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/20 mb-8"
             >
-              {track.cover_art || track.pochette || track.album_cover ? (
+              {getCover(track) ? (
                 <img
-                  src={
-                    track.cover_art || track.pochette || track.album_cover || ""
-                  }
+                  src={getCover(track)!}
                   alt={track.title}
                   className="w-full h-full object-cover"
                 />
@@ -689,11 +693,9 @@ export default function AudioPlayer() {
               onClick={() => setExpanded(true)}
               className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center"
             >
-              {track.cover_art || track.pochette || track.album_cover ? (
+              {getCover(track) ? (
                 <img
-                  src={
-                    track.cover_art || track.pochette || track.album_cover || ""
-                  }
+                  src={getCover(track)!}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -762,14 +764,9 @@ export default function AudioPlayer() {
                 onClick={() => setExpanded(true)}
                 className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center group relative"
               >
-                {track.cover_art || track.pochette || track.album_cover ? (
+                {getCover(track) ? (
                   <img
-                    src={
-                      track.cover_art ||
-                      track.pochette ||
-                      track.album_cover ||
-                      ""
-                    }
+                    src={getCover(track)!}
                     alt=""
                     className="w-full h-full object-cover"
                   />

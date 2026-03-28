@@ -29,6 +29,7 @@ export interface AudioTrack {
   album_cover?: string | null;
   album_id?: number | null;
   pochette?: string | null;
+  has_pochette?: boolean;
   file_path?: string | null;
   audio_url?: string | null;
   like_count?: number;
@@ -330,24 +331,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       // Update media session
       if ("mediaSession" in navigator) {
+        const coverUrl = track.cover_art || (track.has_pochette ? `/api/streaming/tracks/${track.id}/pochette` : null) || track.album_cover;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.title,
           artist: track.artist_name || "Verso Air",
           album: track.album_title || "Verso Air Music",
-          artwork:
-            track.cover_art || track.pochette || track.album_cover
-              ? [
-                  {
-                    src:
-                      track.cover_art ||
-                      track.pochette ||
-                      track.album_cover ||
-                      "",
-                    sizes: "512x512",
-                    type: "image/jpeg",
-                  },
-                ]
-              : [],
+          artwork: coverUrl
+            ? [
+                {
+                  src: coverUrl,
+                  sizes: "512x512",
+                  type: "image/jpeg",
+                },
+              ]
+            : [],
         });
       }
     },

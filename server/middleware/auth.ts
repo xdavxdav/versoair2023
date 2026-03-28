@@ -111,6 +111,11 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/jobs/search", // Public career portal
   "/api/commerce/", // Commerce search & analytics
   "/api/properties/", // Property search & analytics
+  "/api/streaming/tracks", // Streaming browse — tracks, featured, detail
+  "/api/streaming/artists", // Streaming browse — artist listing & profiles
+  "/api/streaming/albums/", // Streaming browse — album details
+  "/api/streaming/search", // Streaming search
+  "/api/streaming/subscription/plans", // Subscription plan listing (public)
 ];
 
 /**
