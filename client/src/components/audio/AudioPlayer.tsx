@@ -152,7 +152,10 @@ export default function AudioPlayer() {
 
   // Mouse handlers
   const handleBarMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>, barRef: React.RefObject<HTMLDivElement | null>) => {
+    (
+      e: React.MouseEvent<HTMLDivElement>,
+      barRef: React.RefObject<HTMLDivElement | null>,
+    ) => {
       e.preventDefault();
       activeBarRef.current = barRef.current;
       draggingRef.current = true;
@@ -166,7 +169,10 @@ export default function AudioPlayer() {
 
   // Touch handlers
   const handleBarTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>, barRef: React.RefObject<HTMLDivElement | null>) => {
+    (
+      e: React.TouchEvent<HTMLDivElement>,
+      barRef: React.RefObject<HTMLDivElement | null>,
+    ) => {
       activeBarRef.current = barRef.current;
       draggingRef.current = true;
       setIsDragging(true);
@@ -222,8 +228,10 @@ export default function AudioPlayer() {
     if (!showSpeed) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node) &&
-        speedBtnRef.current && !speedBtnRef.current.contains(e.target as Node)
+        speedMenuRef.current &&
+        !speedMenuRef.current.contains(e.target as Node) &&
+        speedBtnRef.current &&
+        !speedBtnRef.current.contains(e.target as Node)
       ) {
         setShowSpeed(false);
       }
@@ -432,15 +440,20 @@ export default function AudioPlayer() {
             exit={{ opacity: 0, y: 8 }}
             className="fixed bg-gray-800 rounded-xl border border-gray-700/80 shadow-2xl z-[101] overflow-hidden py-1 min-w-[100px]"
             style={{
-              bottom: (speedBtnRef.current
-                ? window.innerHeight - speedBtnRef.current.getBoundingClientRect().top + 8
-                : 96),
-              right: (speedBtnRef.current
-                ? window.innerWidth - speedBtnRef.current.getBoundingClientRect().right
-                : 144),
+              bottom: speedBtnRef.current
+                ? window.innerHeight -
+                  speedBtnRef.current.getBoundingClientRect().top +
+                  8
+                : 96,
+              right: speedBtnRef.current
+                ? window.innerWidth -
+                  speedBtnRef.current.getBoundingClientRect().right
+                : 144,
             }}
           >
-            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 font-medium">Vitesse</div>
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 font-medium">
+              Vitesse
+            </div>
             {speeds.map((s) => (
               <button
                 key={s}
@@ -540,7 +553,10 @@ export default function AudioPlayer() {
               >
                 <div
                   className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                  style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+                  style={{
+                    width: `${audio.progress * 100}%`,
+                    transition: isDragging ? "none" : "width 150ms",
+                  }}
                 />
                 {/* Draggable thumb — always visible in expanded mode */}
                 <div
@@ -647,12 +663,19 @@ export default function AudioPlayer() {
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
-                style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+                style={{
+                  width: `${audio.progress * 100}%`,
+                  transition: isDragging ? "none" : "width 150ms",
+                }}
               />
             </div>
             <div
               className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-amber-400 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: `${audio.progress * 100}%`, marginLeft: -5, ...(isDragging ? { opacity: 1 } : {}) }}
+              style={{
+                left: `${audio.progress * 100}%`,
+                marginLeft: -5,
+                ...(isDragging ? { opacity: 1 } : {}),
+              }}
             />
           </div>
 
@@ -709,15 +732,18 @@ export default function AudioPlayer() {
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
-                style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+                style={{
+                  width: `${audio.progress * 100}%`,
+                  transition: isDragging ? "none" : "width 150ms",
+                }}
               />
             </div>
             {/* Draggable thumb */}
             <div
               className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-amber-400 rounded-full shadow-lg shadow-black/40 transition-all cursor-grab active:cursor-grabbing ${
                 isDragging
-                  ? 'opacity-100 scale-125'
-                  : 'opacity-0 group-hover:opacity-100 scale-100'
+                  ? "opacity-100 scale-125"
+                  : "opacity-0 group-hover:opacity-100 scale-100"
               }`}
               style={{ left: `${audio.progress * 100}%`, marginLeft: -7 }}
             />
