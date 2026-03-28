@@ -119,7 +119,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       // Without this, 0.75x sounds deep/slow and 1.5x sounds chipmunk-fast
       // which risks audio safety (distorted bass can damage speakers/hearing)
       (audio as any).preservesPitch = true;
-      (audio as any).mozPreservesPitch = true;  // Firefox
+      (audio as any).mozPreservesPitch = true; // Firefox
       (audio as any).webkitPreservesPitch = true; // Safari/older Chrome
       audioRef.current = audio;
     }

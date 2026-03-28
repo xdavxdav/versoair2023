@@ -95,10 +95,10 @@ async function ensureTrackColumns(): Promise<void> {
     { name: "lyrics", def: "TEXT" },
     { name: "audio_data", def: "BYTEA" },
     // Extended media info columns
-    { name: "pochette", def: "TEXT" },         // cover art image as base64 data-URI
-    { name: "bts_content", def: "TEXT" },      // Behind The Scenes notes/stories
-    { name: "flop_notes", def: "TEXT" },       // FLOP: outtakes, failures, funny moments
-    { name: "credits", def: "TEXT" },          // production credits, featured artists
+    { name: "pochette", def: "TEXT" }, // cover art image as base64 data-URI
+    { name: "bts_content", def: "TEXT" }, // Behind The Scenes notes/stories
+    { name: "flop_notes", def: "TEXT" }, // FLOP: outtakes, failures, funny moments
+    { name: "credits", def: "TEXT" }, // production credits, featured artists
     { name: "recording_location", def: "TEXT" }, // studio/city where recorded
   ];
   for (const col of cols) {
@@ -1124,7 +1124,9 @@ router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
         [track.artist_id, parseInt(req.user.userId)],
       );
       if (!ownerCheck.rows.length) {
-        return res.status(403).json({ success: false, error: "Not your track" });
+        return res
+          .status(403)
+          .json({ success: false, error: "Not your track" });
       }
     }
 
@@ -1164,14 +1166,18 @@ router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
     }
 
     if (setClauses.length === 0) {
-      return res.status(400).json({ success: false, error: "No fields to update" });
+      return res
+        .status(400)
+        .json({ success: false, error: "No fields to update" });
     }
 
     values.push(trackId);
     const sql = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
     const result = await pool.query(sql, values);
 
-    console.log("[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)");
+    console.log(
+      "[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)",
+    );
     res.json({ success: true, track: result.rows[0] });
   } catch (error: any) {
     console.error("Track edit error:", error);
