@@ -210,7 +210,9 @@ export default function ArcadePage() {
     queryFn: async () => {
       const res = await authFetch("/api/games/open");
       if (!res.ok) return [];
-      return res.json();
+      const json = await res.json();
+      // API may return { success, data: [...] } or raw array
+      return Array.isArray(json) ? json : (json.data ?? []);
     },
     enabled: !!user,
     refetchInterval: 8_000,
@@ -221,7 +223,8 @@ export default function ArcadePage() {
     queryFn: async () => {
       const res = await authFetch("/api/games/my");
       if (!res.ok) return [];
-      return res.json();
+      const json = await res.json();
+      return Array.isArray(json) ? json : (json.data ?? []);
     },
     enabled: !!user,
     refetchInterval: 10_000,
@@ -232,7 +235,8 @@ export default function ArcadePage() {
     queryFn: async () => {
       const res = await authFetch("/api/games/leaderboard");
       if (!res.ok) return [];
-      return res.json();
+      const json = await res.json();
+      return Array.isArray(json) ? json : (json.data ?? []);
     },
     staleTime: 30_000,
   });
