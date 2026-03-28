@@ -383,10 +383,15 @@ export default function ContentNav() {
   const holdCompletedRef = useRef(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
+  const [holdCountdown, setHoldCountdown] = useState(5); // 5 second countdown
   const [showTip, setShowTip] = useState(
     () => !localStorage.getItem("contentnav_tip_seen"),
   );
 
+  // Home button gestures:
+  // - Single tap → /marketplace (unified timeline like Twitter)
+  // - Double tap → /blog
+  // - Hold 5s → / (home.tsx) with full-screen darkening countdown
   const handleHomeTap = useCallback(() => {
     if (holdCompletedRef.current) {
       holdCompletedRef.current = false;
@@ -398,8 +403,10 @@ export default function ContentNav() {
       const count = tapCountRef.current;
       tapCountRef.current = 0;
       if (count >= 2) {
-        setLocation("/");
+        // Double tap → /blog
+        setLocation("/blog");
       } else {
+        // Single tap → /marketplace (or scroll to top if already there)
         if (location === "/marketplace") {
           window.scrollTo({ top: 0, behavior: "smooth" });
           window.dispatchEvent(new CustomEvent("marketplace:refresh"));
@@ -456,27 +463,28 @@ export default function ContentNav() {
     window.location.reload();
   };
 
+  // Hold 5 seconds → navigate to home with full-screen darkening effect
   const handlePressStart = useCallback(() => {
-    if (!isAuth) return;
     holdCompletedRef.current = false;
     holdStartRef.current = Date.now();
     setIsHolding(true);
     setHoldProgress(0);
+    setHoldCountdown(5);
     holdIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - holdStartRef.current;
-      setHoldProgress(Math.min((elapsed / 2000) * 100, 100));
+      const progress = Math.min((elapsed / 5000) * 100, 100); // 5 seconds
+      setHoldProgress(progress);
+      setHoldCountdown(Math.max(0, Math.ceil(5 - elapsed / 1000)));
     }, 16);
     holdTimerRef.current = setTimeout(() => {
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      logout();
-      localStorage.removeItem("blog_community_auth");
-      localStorage.removeItem("blog_community_user");
-      window.location.reload();
-    }, 2000);
-  }, [isAuth, logout]);
+      // Navigate to home after 5 second hold
+      setLocation("/");
+    }, 5000);
+  }, [setLocation]);
 
   const handlePressEnd = useCallback(() => {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -512,6 +520,69 @@ export default function ContentNav() {
 
   return (
     <>
+      {/* ═══ Full-screen darkening overlay during hold countdown ═══ */}
+      <AnimatePresence>
+        {isHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: holdProgress / 100 * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            {/* Countdown circle */}
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                {/* Background ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                {/* Progress ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="url(#holdGradient)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - holdProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <defs>
+                  <linearGradient id="holdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#22d3ee" />
+                    <stop offset="100%" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {/* Countdown number */}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {holdCountdown}
+                </span>
+              </motion.div>
+              {/* Label */}
+              <p className="text-white/60 text-sm font-medium tracking-wide">
+                Retour à l'accueil...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ══ DESKTOP ════════════════════════════════════════════════════ */}
       <div
         className={`hidden md:block fixed left-0 right-0 z-50 pointer-events-none transition-all duration-300 ${audioPlayerVisible ? "bottom-[68px]" : "bottom-0"}`}
@@ -551,7 +622,7 @@ export default function ContentNav() {
                   cy="20"
                   r="17"
                   fill="none"
-                  stroke="rgba(239,68,68,0.15)"
+                  stroke="rgba(34,211,238,0.15)"
                   strokeWidth="1.5"
                 />
                 <circle
@@ -559,7 +630,7 @@ export default function ContentNav() {
                   cy="20"
                   r="17"
                   fill="none"
-                  stroke="#ef4444"
+                  stroke="#22d3ee"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 17}`}
@@ -576,6 +647,7 @@ export default function ContentNav() {
               onPointerCancel={handlePressEnd}
               onContextMenu={(e) => e.preventDefault()}
               className={location === "/" ? ACTIVE : BASE}
+              title="Tap=Marketplace · Double-tap=Blog · Hold 5s=Home"
             >
               <Home className="h-3.5 w-3.5" />
               Home
