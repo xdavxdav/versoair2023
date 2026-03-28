@@ -201,7 +201,7 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     // Get comments
     const comments = await pool.query(
       `
-      SELECT tc.*, u.username, u.display_name
+      SELECT tc.*, u.username, u.username as display_name
       FROM track_comments tc
       LEFT JOIN users u ON tc.user_id = u.id
       WHERE tc.track_id = $1
@@ -233,6 +233,7 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
       albumTracks,
     });
   } catch (err: any) {
+    console.error("❌ track detail error:", err.message);
     res.status(500).json({ error: "Failed to fetch track" });
   }
 });
@@ -241,27 +242,34 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
 // POCHETTE IMAGE — Serves the BYTEA cover art as an image
 // ═══════════════════════════════════════════════════════════
 
-// GET /api/streaming/tracks/:id/pochette — serve pochette BYTEA as image
+// GET /api/streaming/tracks/:id/pochette — serve pochette as image
 router.get("/tracks/:id/pochette", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      "SELECT pochette, mime_type FROM music_tracks WHERE id = $1",
+      "SELECT pochette FROM music_tracks WHERE id = $1",
       [parseInt(id)],
     );
-    if (!result.rows[0]?.pochette) {
+    const pochette: string | null = result.rows[0]?.pochette;
+    if (!pochette) {
       return res.status(404).json({ error: "No pochette found" });
     }
-    const buf = result.rows[0].pochette;
-    // Detect JPEG/PNG from magic bytes, fallback to mime_type or jpeg
-    let contentType = "image/jpeg";
-    if (buf[0] === 0x89 && buf[1] === 0x50) contentType = "image/png";
-    else if (buf[0] === 0x47 && buf[1] === 0x49) contentType = "image/gif";
-    else if (buf[0] === 0x52 && buf[1] === 0x49) contentType = "image/webp";
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400"); // cache 24h
-    res.setHeader("Content-Length", buf.length);
-    res.end(buf);
+
+    // pochette is stored as a base64 data-URI: "data:image/jpeg;base64,..."
+    if (pochette.startsWith("data:")) {
+      const comma = pochette.indexOf(",");
+      const header = pochette.slice(0, comma); // "data:image/jpeg;base64"
+      const b64 = pochette.slice(comma + 1);
+      const contentType = header.split(":")[1]?.split(";")[0] || "image/jpeg";
+      const buf = Buffer.from(b64, "base64");
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "no-store"); // always fresh so edits show immediately
+      res.setHeader("Content-Length", buf.length);
+      return res.end(buf);
+    }
+
+    // Fallback: if it's already a URL, redirect
+    res.redirect(302, pochette);
   } catch (err: any) {
     res.status(500).json({ error: "Failed to serve pochette" });
   }

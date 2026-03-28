@@ -46,7 +46,7 @@ export function useStreamingTracks(filters?: {
   return useQuery({
     queryKey: ["streaming-tracks", filters],
     queryFn: () => fetchJson(`${BASE}/tracks?${params.toString()}`),
-    staleTime: 60_000,
+    staleTime: 10_000,
   });
 }
 
@@ -54,7 +54,7 @@ export function useFeaturedTracks() {
   return useQuery({
     queryKey: ["streaming-featured"],
     queryFn: () => fetchJson(`${BASE}/tracks/featured`),
-    staleTime: 120_000,
+    staleTime: 10_000,
   });
 }
 
@@ -63,7 +63,7 @@ export function useTrackDetail(id: number | string | undefined) {
     queryKey: ["streaming-track", id],
     queryFn: () => fetchJson(`${BASE}/tracks/${id}`),
     enabled: !!id,
-    staleTime: 60_000,
+    staleTime: 10_000,
   });
 }
 
