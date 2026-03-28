@@ -85,6 +85,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<globalThis.AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressRef = useRef<number>(0);
@@ -196,12 +197,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
 
+      const gain = ctx.createGain();
+      // Read saved volume (avoid closure dep on volume/isMuted — this only runs once)
+      const savedVol = parseFloat(localStorage.getItem("verso_volume") || "0.7");
+      gain.gain.value = savedVol;
+
       const source = ctx.createMediaElementSource(audioRef.current);
       source.connect(analyser);
-      analyser.connect(ctx.destination);
+      analyser.connect(gain);
+      gain.connect(ctx.destination);
 
       audioContextRef.current = ctx;
       analyserRef.current = analyser;
+      gainRef.current = gain;
       sourceRef.current = source;
 
       // Ensure context is running (browsers may start it as "suspended")
@@ -288,6 +296,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       audio.src = url;
       audio.volume = isMuted ? 0 : volume;
+      // Sync GainNode volume for Web Audio API routing
+      if (gainRef.current) {
+        gainRef.current.gain.value = isMuted ? 0 : volume;
+      }
       // Ensure pitch-safe playback at any speed
       (audio as any).preservesPitch = true;
       (audio as any).mozPreservesPitch = true;
@@ -444,6 +456,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const setVolume = useCallback((vol: number) => {
     const v = Math.max(0, Math.min(1, vol));
     setVolumeState(v);
+    // Primary: GainNode controls actual output volume in Web Audio graph
+    if (gainRef.current) {
+      gainRef.current.gain.setTargetAtTime(v, gainRef.current.context.currentTime, 0.015);
+    }
+    // Fallback: also set on element (covers pre-WebAudio or no-context cases)
     if (audioRef.current) audioRef.current.volume = v;
     localStorage.setItem("verso_volume", String(v));
     if (v > 0) setIsMuted(false);
@@ -452,8 +469,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => {
       const newMuted = !prev;
+      const targetVol = newMuted ? 0 : volume;
+      // Primary: GainNode
+      if (gainRef.current) {
+        gainRef.current.gain.setTargetAtTime(targetVol, gainRef.current.context.currentTime, 0.015);
+      }
+      // Fallback: element
       if (audioRef.current) {
-        audioRef.current.volume = newMuted ? 0 : volume;
+        audioRef.current.volume = targetVol;
       }
       return newMuted;
     });
