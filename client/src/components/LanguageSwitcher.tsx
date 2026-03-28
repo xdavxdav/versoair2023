@@ -24,6 +24,7 @@ import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry, isBaseLang } from "@/utils/country-language";
 
 const LANG_CACHE_KEY = "fsa_selected_language";
+const LANG_OVERRIDE_KEY = "fsa_language_override"; // true when user manually picked a language
 
 declare global {
   interface Window {
@@ -183,6 +184,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   });
   const [previousLang, setPreviousLang] = useState("fr");
   const [autoDetectedLang, setAutoDetectedLang] = useState("fr");
+  const [isManualOverride, setIsManualOverride] = useState(() => {
+    try {
+      return localStorage.getItem(LANG_OVERRIDE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -276,6 +284,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // If user manually chose a language (Language tab), respect it —
+    // don't override their choice when country changes or is re-detected.
+    if (isManualOverride) return;
+
     // Guard: skip if selectLanguage from CountryDropdown already handled this
     if (currentLang === lang) return;
 
@@ -319,7 +331,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       `Auto-translated to ${lang.toUpperCase()} based on your location`,
       false,
     );
-  }, [selectedCountry, detecting, flashBanner]);
+  }, [selectedCountry, detecting, flashBanner, isManualOverride]);
 
   // ── Manual language switch (from dropdown) ──
   const selectLanguage = useCallback(
@@ -342,6 +354,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setPreviousLang(prev);
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
+
+      // Track manual override: if user explicitly picked a language,
+      // country changes should NOT reset it. Country-triggered changes
+      // clear the override so auto-detection works normally.
+      if (source === "manual") {
+        setIsManualOverride(true);
+        localStorage.setItem(LANG_OVERRIDE_KEY, "true");
+      } else {
+        setIsManualOverride(false);
+        localStorage.removeItem(LANG_OVERRIDE_KEY);
+      }
 
       // Set cookie + try combo for instant switch
       const switched = switchLanguage(lang);
