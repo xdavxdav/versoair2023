@@ -128,6 +128,7 @@ import {
   Speaker,
   VolumeX,
   Volume1,
+  Gauge,
   Maximize2,
   Minimize2,
   SkipBack,
@@ -290,7 +291,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+// (Slider removed — inline player uses native range input)
 import {
   Tooltip,
   TooltipContent,
@@ -436,7 +437,6 @@ export default function ArtistPortal() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [volume, setVolume] = useState([50]);
   const globalAudio = useAudio();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAdvancedUpload, setShowAdvancedUpload] = useState(false);
@@ -1241,11 +1241,6 @@ export default function ArtistPortal() {
     [audioDuration, globalAudio],
   );
 
-  // Sync volume slider → global audio
-  useEffect(() => {
-    globalAudio.setVolume((volume[0] ?? 50) / 100);
-  }, [volume, globalAudio]);
-
   const handleUploadTrack = () => {
     setShowUploadModal(true);
   };
@@ -1830,6 +1825,154 @@ export default function ArtistPortal() {
           </div>
         </div>
       </div>
+
+      {/* ═══ NOW PLAYING — Inline Mini-Player ═══ */}
+      {currentTrack && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-purple-900/40 via-fuchsia-900/30 to-pink-900/40 backdrop-blur-xl border border-purple-400/20 rounded-2xl p-4 space-y-3"
+        >
+          <div className="flex items-center gap-4">
+            {/* Cover art */}
+            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+              {(currentTrack as any).cover_art || (currentTrack as any).album_cover ? (
+                <img
+                  src={(currentTrack as any).cover_art || (currentTrack as any).album_cover || ""}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Music2 className="w-7 h-7 text-white/60" />
+              )}
+            </div>
+
+            {/* Track info + controls */}
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">
+                {currentTrack.title}
+              </p>
+              <p className="text-purple-300 text-xs truncate">
+                {(currentTrack as any).artist_name || "Artiste"}
+              </p>
+            </div>
+
+            {/* Transport controls */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSkipTrack("prev")}
+                className="text-purple-300 hover:text-white transition-colors"
+              >
+                <SkipBack className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleTogglePlayPause}
+                className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 rounded-full flex items-center justify-center transition-all shadow-lg shadow-purple-500/30"
+              >
+                {isPlaying ? (
+                  <Pause className="w-4 h-4 text-white" />
+                ) : (
+                  <Play className="w-4 h-4 text-white ml-0.5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleSkipTrack("next")}
+                className="text-purple-300 hover:text-white transition-colors"
+              >
+                <SkipForward className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Volume */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                onClick={globalAudio.toggleMute}
+                className="text-purple-300 hover:text-white transition-colors"
+              >
+                {globalAudio.isMuted || globalAudio.volume === 0 ? (
+                  <VolumeX className="w-4 h-4" />
+                ) : globalAudio.volume < 0.5 ? (
+                  <Volume1 className="w-4 h-4" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={globalAudio.isMuted ? 0 : globalAudio.volume}
+                onChange={(e) => globalAudio.setVolume(parseFloat(e.target.value))}
+                className="w-20 h-1 bg-purple-800 rounded-full appearance-none cursor-pointer accent-purple-400 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
+              />
+            </div>
+          </div>
+
+          {/* Progress bar (draggable) */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-purple-300 tabular-nums w-8 text-right">
+              {Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, "0")}
+            </span>
+            <div
+              className="flex-1 h-2.5 bg-purple-900/60 rounded-full cursor-pointer group relative flex items-center"
+              onMouseDown={(e) => {
+                const bar = e.currentTarget;
+                const update = (cx: number) => {
+                  const rect = bar.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+                  globalAudio.seekPercent(pct);
+                };
+                update(e.clientX);
+                const onMove = (ev: MouseEvent) => { ev.preventDefault(); update(ev.clientX); };
+                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+                document.addEventListener("mousemove", onMove);
+                document.addEventListener("mouseup", onUp);
+              }}
+              onTouchStart={(e) => {
+                const bar = e.currentTarget;
+                const update = (cx: number) => {
+                  const rect = bar.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+                  globalAudio.seekPercent(pct);
+                };
+                update(e.touches[0].clientX);
+                const onMove = (ev: TouchEvent) => update(ev.touches[0].clientX);
+                const onEnd = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd); };
+                document.addEventListener("touchmove", onMove, { passive: true });
+                document.addEventListener("touchend", onEnd);
+              }}
+            >
+              <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: `${audioProgress}%` }} />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-lg shadow-purple-500/40 ring-2 ring-purple-400/50 cursor-grab active:cursor-grabbing active:scale-110 transition-transform"
+                style={{ left: `${audioProgress}%`, marginLeft: -7 }}
+              />
+            </div>
+            <span className="text-[10px] text-purple-300 tabular-nums w-8">
+              {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, "0")}
+            </span>
+          </div>
+
+          {/* Speed pills */}
+          <div className="flex items-center gap-1.5">
+            <Gauge className="w-3 h-3 text-purple-400" />
+            {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
+              <button
+                key={s}
+                onClick={() => globalAudio.setPlaybackRate(s)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all ${
+                  globalAudio.playbackRate === s
+                    ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
+                    : "bg-white/5 text-purple-300 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {s === 1 ? "1× Normal" : `${s}×`}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Albums Section */}
       {(albumsData || []).length > 0 && (
