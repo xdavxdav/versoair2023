@@ -1836,9 +1836,14 @@ export default function ArtistPortal() {
           <div className="flex items-center gap-4">
             {/* Cover art */}
             <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              {(currentTrack as any).cover_art || (currentTrack as any).album_cover ? (
+              {(currentTrack as any).cover_art ||
+              (currentTrack as any).album_cover ? (
                 <img
-                  src={(currentTrack as any).cover_art || (currentTrack as any).album_cover || ""}
+                  src={
+                    (currentTrack as any).cover_art ||
+                    (currentTrack as any).album_cover ||
+                    ""
+                  }
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -1903,7 +1908,9 @@ export default function ArtistPortal() {
                 max={1}
                 step={0.01}
                 value={globalAudio.isMuted ? 0 : globalAudio.volume}
-                onChange={(e) => globalAudio.setVolume(parseFloat(e.target.value))}
+                onChange={(e) =>
+                  globalAudio.setVolume(parseFloat(e.target.value))
+                }
                 className="w-20 h-1 bg-purple-800 rounded-full appearance-none cursor-pointer accent-purple-400 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
               />
             </div>
@@ -1912,7 +1919,8 @@ export default function ArtistPortal() {
           {/* Progress bar (draggable) */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-purple-300 tabular-nums w-8 text-right">
-              {Math.floor(audioCurrentTime / 60)}:{String(Math.floor(audioCurrentTime % 60)).padStart(2, "0")}
+              {Math.floor(audioCurrentTime / 60)}:
+              {String(Math.floor(audioCurrentTime % 60)).padStart(2, "0")}
             </span>
             <div
               className="flex-1 h-2.5 bg-purple-900/60 rounded-full cursor-pointer group relative flex items-center"
@@ -1920,12 +1928,21 @@ export default function ArtistPortal() {
                 const bar = e.currentTarget;
                 const update = (cx: number) => {
                   const rect = bar.getBoundingClientRect();
-                  const pct = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+                  const pct = Math.max(
+                    0,
+                    Math.min(1, (cx - rect.left) / rect.width),
+                  );
                   globalAudio.seekPercent(pct);
                 };
                 update(e.clientX);
-                const onMove = (ev: MouseEvent) => { ev.preventDefault(); update(ev.clientX); };
-                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+                const onMove = (ev: MouseEvent) => {
+                  ev.preventDefault();
+                  update(ev.clientX);
+                };
+                const onUp = () => {
+                  document.removeEventListener("mousemove", onMove);
+                  document.removeEventListener("mouseup", onUp);
+                };
                 document.addEventListener("mousemove", onMove);
                 document.addEventListener("mouseup", onUp);
               }}
@@ -1933,24 +1950,37 @@ export default function ArtistPortal() {
                 const bar = e.currentTarget;
                 const update = (cx: number) => {
                   const rect = bar.getBoundingClientRect();
-                  const pct = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+                  const pct = Math.max(
+                    0,
+                    Math.min(1, (cx - rect.left) / rect.width),
+                  );
                   globalAudio.seekPercent(pct);
                 };
                 update(e.touches[0].clientX);
-                const onMove = (ev: TouchEvent) => update(ev.touches[0].clientX);
-                const onEnd = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd); };
-                document.addEventListener("touchmove", onMove, { passive: true });
+                const onMove = (ev: TouchEvent) =>
+                  update(ev.touches[0].clientX);
+                const onEnd = () => {
+                  document.removeEventListener("touchmove", onMove);
+                  document.removeEventListener("touchend", onEnd);
+                };
+                document.addEventListener("touchmove", onMove, {
+                  passive: true,
+                });
                 document.addEventListener("touchend", onEnd);
               }}
             >
-              <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: `${audioProgress}%` }} />
+              <div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                style={{ width: `${audioProgress}%` }}
+              />
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-lg shadow-purple-500/40 ring-2 ring-purple-400/50 cursor-grab active:cursor-grabbing active:scale-110 transition-transform"
                 style={{ left: `${audioProgress}%`, marginLeft: -7 }}
               />
             </div>
             <span className="text-[10px] text-purple-300 tabular-nums w-8">
-              {Math.floor(audioDuration / 60)}:{String(Math.floor(audioDuration % 60)).padStart(2, "0")}
+              {Math.floor(audioDuration / 60)}:
+              {String(Math.floor(audioDuration % 60)).padStart(2, "0")}
             </span>
           </div>
 
