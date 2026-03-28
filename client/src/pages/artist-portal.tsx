@@ -568,7 +568,7 @@ export default function ArtistPortal() {
   }, [myArtist, isLoggedIn, resolveConnectedUser]);
 
   // ── Auth check on mount — unified additive portal access system ──
-  const { user: authCtxUser, token: authCtxToken } = useAuthContext();
+  const { user: authCtxUser, token: authCtxToken, login } = useAuthContext();
   const { allowed: portalAllowed, loading: portalLoading } =
     useRequirePortal("artist");
 
@@ -638,6 +638,10 @@ export default function ArtistPortal() {
         if (data.user) {
           localStorage.setItem("artist_profile", JSON.stringify(data.user));
           localStorage.setItem("auth_user", JSON.stringify(data.user));
+        }
+        // Update AuthContext React state so portal guards see the user
+        if (data.token && data.user) {
+          login(data.token, data.user);
         }
         setIsLoggedIn(true);
         setLoginEmail("");
