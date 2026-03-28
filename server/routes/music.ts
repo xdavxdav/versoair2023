@@ -548,11 +548,13 @@ router.get("/tracks/:id/download", async (req, res) => {
       }
     }
 
-    // Increment download count only (revenue is tracked via purchases, not downloads)
-    await pool.query(
-      "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1",
-      [parseInt(id)],
-    );
+    // Increment download count only for real listeners (not artist downloading own track)
+    if (!isArtistOwner) {
+      await pool.query(
+        "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1",
+        [parseInt(id)],
+      );
+    }
 
     // Set headers for file download
     const fileName = track.file_name || `track-${id}.mp3`;
@@ -775,13 +777,39 @@ router.get("/tracks/:id/stream", async (req, res) => {
     const track = result.rows[0];
     const fileOnDisk = track.file_path && fs.existsSync(track.file_path);
 
-    // Only increment play count on fresh plays (not seek/range re-requests)
+    // ── Self-stream guard: artist playing own track does NOT count ──
+    // Extract user identity optionally (no auth required to stream, but we check if present)
+    let isSelfStream = false;
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : (req.cookies?.auth_token || null);
+      if (token && track.artist_id) {
+        const jwt = require("jsonwebtoken");
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded?.userId || decoded?.id;
+        if (userId) {
+          // Direct match: user_id === artist_id
+          if (String(userId) === String(track.artist_id)) {
+            isSelfStream = true;
+          } else {
+            // Check via artists table: artist row linked to this user
+            const ownerCheck = await pool.query(
+              "SELECT id FROM artists WHERE id = $1 AND user_id = $2",
+              [track.artist_id, parseInt(userId)],
+            );
+            if (ownerCheck.rows.length > 0) isSelfStream = true;
+          }
+        }
+      }
+    } catch { /* token missing/invalid — treat as non-owner listener */ }
+
+    // Only increment play count for real listeners (not artist previewing own track)
     // Debounce: same IP + track only increments once per 30s
     const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
     const debounceKey = `${clientIp}:${id}`;
     const lastPlayed = playCountDebounce.get(debounceKey) || 0;
     const isRange = !!req.headers.range;
-    if (!isRange && Date.now() - lastPlayed > PLAY_DEBOUNCE_MS) {
+    if (!isSelfStream && !isRange && Date.now() - lastPlayed > PLAY_DEBOUNCE_MS) {
       playCountDebounce.set(debounceKey, Date.now());
       await pool.query(
         "UPDATE music_tracks SET play_count = COALESCE(play_count, 0) + 1, streams = COALESCE(streams, 0) + 1 WHERE id = $1",
