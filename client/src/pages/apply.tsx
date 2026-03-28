@@ -21,6 +21,7 @@ import {
   Heart,
   BookOpen,
   Briefcase,
+  Headphones,
   Phone,
   AlertCircle,
   CheckCircle2,
@@ -145,6 +146,26 @@ const PORTALS: Portal[] = [
     loginEndpoint: "/auth/community/login",
     redirectPath: "/artisans-portal",
     badge: "Community",
+  },
+  {
+    id: "streamer",
+    name: "Streamer / Listener",
+    description:
+      "Stream music, play Arcade duels, follow artists, and enjoy the full Verso Air audio experience — no business account needed.",
+    icon: Headphones,
+    color: "fuchsia",
+    gradient: "from-fuchsia-500 to-purple-600",
+    features: [
+      "Unlimited music streaming",
+      "Arcade PvP duels — free access",
+      "Follow & support artists",
+      "Playlists & listening history",
+      "Community interactions",
+    ],
+    registerEndpoint: "/auth/register",
+    loginEndpoint: "/auth/login",
+    redirectPath: "/stream",
+    badge: "Free",
   },
   {
     id: "business",
@@ -340,8 +361,11 @@ export default function ApplyPage() {
       } else if (selectedPortal.id === "community") {
         body.displayName = formData.displayName || formData.email.split("@")[0];
       } else {
-        // General / Business
+        // General / Business / Streamer / Contractor
         body.firstName = formData.displayName || formData.email.split("@")[0];
+        if (selectedPortal.id === "streamer") {
+          body.portals = ["general"];
+        }
       }
 
       const response = await fetch(selectedPortal.registerEndpoint, {

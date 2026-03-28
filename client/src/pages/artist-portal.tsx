@@ -344,6 +344,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import DivisionProgress from "@/components/DivisionProgress";
 import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useRequirePortal } from "@/hooks/useRequirePortal";
 
 // Mock data types
 interface Artist {
@@ -565,54 +567,46 @@ export default function ArtistPortal() {
     if (myArtist && isLoggedIn) resolveConnectedUser();
   }, [myArtist, isLoggedIn, resolveConnectedUser]);
 
-  // ── Auth check on mount ──
+  // ── Auth check on mount — unified additive portal access system ──
+  const { user: authCtxUser, token: authCtxToken } = useAuthContext();
+  const { allowed: portalAllowed, loading: portalLoading } =
+    useRequirePortal("artist");
+
   useEffect(() => {
-    // Hydrate in-memory auth token from localStorage before checking
-    const storedToken = localStorage.getItem("artist_token");
+    // Hydrate in-memory auth token from the unified key
+    const storedToken =
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token");
+
     if (storedToken) {
       import("@/lib/auth").then(({ setAuthToken }) =>
         setAuthToken(storedToken),
       );
     }
 
-    checkAuth()
-      .then((user) => {
-        if (user) {
-          setIsLoggedIn(true);
-          setAuthLoading(false);
-          resolveConnectedUser(user);
-          setTimeout(() => setPortalRevealed(true), 200);
-        } else if (storedToken) {
-          // Server session expired but we have a local token — trust the stored profile
-          const profile = localStorage.getItem("artist_profile");
-          if (profile) {
-            setIsLoggedIn(true);
-            setAuthLoading(false);
-            resolveConnectedUser(JSON.parse(profile));
-            setTimeout(() => setPortalRevealed(true), 200);
-            return;
-          }
-          setIsLoggedIn(false);
-          setAuthLoading(false);
-        } else {
-          setIsLoggedIn(false);
-          setAuthLoading(false);
-        }
-      })
-      .catch(() => {
-        // Even on network error, if we have stored credentials, stay logged in
-        const profile = localStorage.getItem("artist_profile");
-        if (storedToken && profile) {
-          setIsLoggedIn(true);
-          setAuthLoading(false);
-          resolveConnectedUser(JSON.parse(profile));
-          setTimeout(() => setPortalRevealed(true), 200);
-        } else {
-          setIsLoggedIn(false);
-          setAuthLoading(false);
-        }
-      });
-  }, [resolveConnectedUser]);
+    if (portalLoading) return;
+
+    if (portalAllowed && authCtxUser) {
+      if (authCtxToken) {
+        import("@/lib/auth").then(({ setAuthToken }) =>
+          setAuthToken(authCtxToken),
+        );
+      }
+      setIsLoggedIn(true);
+      setAuthLoading(false);
+      resolveConnectedUser(authCtxUser as any);
+      setTimeout(() => setPortalRevealed(true), 200);
+    } else {
+      setAuthLoading(false);
+    }
+  }, [
+    resolveConnectedUser,
+    authCtxUser,
+    authCtxToken,
+    portalAllowed,
+    portalLoading,
+  ]);
 
   // ── Login handler ──
   const handleLogin = useCallback(async () => {
@@ -632,10 +626,18 @@ export default function ArtistPortal() {
       });
       const data = await res.json();
       if (data.success) {
-        // Store token in memory for Authorization header
+        // Store token in memory + all localStorage keys for cross-portal auth
         if (data.token) {
           const { setAuthToken } = await import("@/lib/auth");
           setAuthToken(data.token);
+          localStorage.setItem("artist_token", data.token);
+          localStorage.setItem("authToken", data.token);
+          localStorage.setItem("auth_token", data.token);
+          localStorage.setItem("token", data.token);
+        }
+        if (data.user) {
+          localStorage.setItem("artist_profile", JSON.stringify(data.user));
+          localStorage.setItem("auth_user", JSON.stringify(data.user));
         }
         setIsLoggedIn(true);
         setLoginEmail("");

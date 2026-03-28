@@ -46,6 +46,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCapabilities } from "@/hooks/useCapabilities";
 import {
   fadeInUp,
   staggerContainer,
@@ -109,10 +110,27 @@ interface TriviaQuestion {
 // ── Arcade Page ──
 export default function ArcadePage() {
   const { user } = useAuthContext();
+  const { capabilities } = useCapabilities();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("play");
+
+  // ── Access control ──
+  // Artists: arcade counts against their subscription tier (essential+ required)
+  // Streamers / audience / listeners: free access
+  const isArtist =
+    user?.role === "artist" ||
+    user?.hasArtistProfile === true ||
+    user?.portals?.includes("artist") ||
+    capabilities?.hasArtistProfile === true;
+
+  const artistTier =
+    user?.subscriptionTier ||
+    user?.subscription_tier ||
+    capabilities?.subscriptionTier ||
+    "free";
+  const artistNeedsUpgrade = isArtist && artistTier === "free";
   const [wagerAmount, setWagerAmount] = useState("50");
   const [activeMatch, setActiveMatch] = useState<GameMatch | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(
@@ -148,7 +166,11 @@ export default function ArcadePage() {
   });
 
   // PayPal configuration — check if PayPal is available
-  const { data: paypalConfig } = useQuery<{ enabled: boolean; mode: string; bonusTiers: any[] }>({
+  const { data: paypalConfig } = useQuery<{
+    enabled: boolean;
+    mode: string;
+    bonusTiers: any[];
+  }>({
     queryKey: ["/api/paypal/config"],
     queryFn: async () => {
       const res = await authFetch("/api/paypal/config");
@@ -363,13 +385,12 @@ export default function ArcadePage() {
         if (data.match_status === "completed") {
           setActiveMatch(null);
           setCurrentQuestion(null);
+          const isWinner = String(data.winner_id) === String(user?.id);
           toast({
-            title:
-              data.winner_id === user?.id ? "🏆 Victoire!" : "Match terminé",
-            description:
-              data.winner_id === user?.id
-                ? `Vous remportez ${data.payout || "le pot"}!`
-                : "Bien joué! Retentez votre chance.",
+            title: isWinner ? "🏆 Victoire!" : "Match terminé",
+            description: isWinner
+              ? `Vous remportez ${data.payout || "le pot"}!`
+              : "Bien joué! Retentez votre chance.",
           });
           refetchWallet();
           refetchMy();
@@ -399,29 +420,86 @@ export default function ArcadePage() {
   }, [dob, toast]);
 
   // ── Stats ──
-  const totalWins = myMatches.filter((m) => m.winner_id === user?.id).length;
+  const userId = user?.id ? Number(user.id) : null;
+  const totalWins = myMatches.filter((m) => m.winner_id === userId).length;
   const totalPlayed = myMatches.filter((m) => m.status === "completed").length;
   const winRate =
     totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
   const balance = parseFloat(wallet?.balance || "0");
   const frozenBalance = parseFloat(wallet?.frozen_balance || "0");
 
-  // ── No auth state ──
+  // ── No auth state — any account type can access, but must be logged in ──
   if (!user) {
     return (
       <div className="min-h-screen bg-[#06020f] flex items-center justify-center p-4">
         <Card className="bg-black/40 border-purple-500/30 max-w-md w-full text-center p-8">
           <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-purple-400" />
           <h2 className="text-2xl font-bold text-white mb-2">Arcade</h2>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-4">
             Connectez-vous pour accéder aux duels PvP et aux mini-jeux.
           </p>
-          <Button
-            onClick={() => navigate("/signin")}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            Se connecter
-          </Button>
+          <p className="text-gray-500 text-sm mb-6">
+            Ouvert à tous les comptes : General, Contractor, Business,
+            Community, Premium, Creator.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => navigate("/apply")}
+              className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+            >
+              Créer un compte
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/auth/signin")}
+              className="border-purple-500/40 text-purple-300 hover:bg-purple-900/20"
+            >
+              J'ai déjà un compte
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── Artist on free tier — needs subscription upgrade ──
+  if (artistNeedsUpgrade) {
+    return (
+      <div className="min-h-screen bg-[#06020f] flex items-center justify-center p-4">
+        <Card className="bg-black/40 border-amber-500/30 max-w-md w-full text-center p-8">
+          <Crown className="w-16 h-16 mx-auto mb-4 text-amber-400" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Arcade — Accès Artiste
+          </h2>
+          <Badge className="mx-auto mb-4 bg-amber-600/30 text-amber-300 border-amber-500/40">
+            Tier actuel : Free
+          </Badge>
+          <p className="text-gray-400 mb-2">
+            L'Arcade est incluse dans votre abonnement artiste à partir du tier{" "}
+            <span className="text-blue-400 font-semibold">Essential</span>.
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
+            Les auditeurs et streamers y accèdent gratuitement — en tant
+            qu'artiste, passez au niveau supérieur pour débloquer les duels PvP
+            et les mini-jeux.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => navigate("/pricing")}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Voir les abonnements
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/stream")}
+              className="text-gray-500 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Retour au stream
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -453,6 +531,18 @@ export default function ArcadePage() {
               <p className="text-gray-400 mt-1">
                 Duels musicaux PvP • Misez vos crédits • Grimpez le classement
               </p>
+              {isArtist && (
+                <Badge className="mt-2 bg-amber-600/20 text-amber-300 border-amber-500/30 text-xs">
+                  <Star className="w-3 h-3 mr-1" />
+                  Inclus dans votre abonnement {artistTier}
+                </Badge>
+              )}
+              {!isArtist && (
+                <Badge className="mt-2 bg-green-600/20 text-green-300 border-green-500/30 text-xs">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Accès gratuit
+                </Badge>
+              )}
             </div>
 
             {/* Wallet strip */}
@@ -870,8 +960,8 @@ export default function ArcadePage() {
             ) : (
               <div className="space-y-3">
                 {myMatches.slice(0, 20).map((match) => {
-                  const won = match.winner_id === user?.id;
-                  const isP1 = match.player1_id === user?.id;
+                  const won = match.winner_id === userId;
+                  const isP1 = match.player1_id === userId;
                   const myScore = isP1
                     ? match.player1_score
                     : match.player2_score;
@@ -1097,21 +1187,27 @@ export default function ArcadePage() {
               </p>
 
               {/* Bonus schedule */}
-              {paypalConfig?.bonusTiers && paypalConfig.bonusTiers.length > 0 && (
-                <div className="bg-black/40 border border-amber-500/20 rounded-lg p-3 mb-5">
-                  <p className="text-xs text-amber-400 font-semibold mb-2 uppercase tracking-wider">
-                    Bonus de dépôt
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {paypalConfig.bonusTiers.map((tier: any, i: number) => (
-                      <div key={i} className="flex justify-between text-gray-300">
-                        <span>${tier.min}+</span>
-                        <span className="text-amber-300 font-semibold">+{tier.bonus}%</span>
-                      </div>
-                    ))}
+              {paypalConfig?.bonusTiers &&
+                paypalConfig.bonusTiers.length > 0 && (
+                  <div className="bg-black/40 border border-amber-500/20 rounded-lg p-3 mb-5">
+                    <p className="text-xs text-amber-400 font-semibold mb-2 uppercase tracking-wider">
+                      Bonus de dépôt
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {paypalConfig.bonusTiers.map((tier: any, i: number) => (
+                        <div
+                          key={i}
+                          className="flex justify-between text-gray-300"
+                        >
+                          <span>${tier.min}+</span>
+                          <span className="text-amber-300 font-semibold">
+                            +{tier.bonus}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Amount selector */}
               <div className="space-y-4">
@@ -1165,7 +1261,8 @@ export default function ArcadePage() {
                       } else {
                         toast({
                           title: "Erreur PayPal",
-                          description: data.error || "Impossible de créer la commande",
+                          description:
+                            data.error || "Impossible de créer la commande",
                           variant: "destructive",
                         });
                       }

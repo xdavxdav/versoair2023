@@ -3,7 +3,7 @@
 // Location: server/routes/social-api.ts
 
 import { Router, Request, Response } from "express";
-import { db } from "../../server/db";
+import { db, pool } from "../../server/db";
 import { desc, eq, isNull, and, inArray } from "drizzle-orm";
 import {
   socialPosts,
@@ -376,6 +376,47 @@ router.post("/follow/:userId", async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ success: false, error: "Missing followerId" });
+    }
+
+    // ── Artist protection: non-artist users cannot follow artist accounts ──
+    // Artists can view and link with users, but users cannot link with artists.
+    // Users should use /api/streaming/follow for artist follows instead.
+    try {
+      const targetUser = await pool.query(
+        "SELECT role FROM users WHERE id = $1",
+        [parseInt(userId)],
+      );
+      const targetHasArtist = await pool.query(
+        "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+        [parseInt(userId)],
+      );
+      if (
+        targetUser.rows[0]?.role === "artist" ||
+        targetHasArtist.rows.length > 0
+      ) {
+        // Check if the follower is also an artist — artists CAN follow other artists
+        const followerUser = await pool.query(
+          "SELECT role FROM users WHERE id = $1",
+          [followerId],
+        );
+        const followerHasArtist = await pool.query(
+          "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+          [followerId],
+        );
+        const followerIsArtist =
+          followerUser.rows[0]?.role === "artist" ||
+          followerHasArtist.rows.length > 0;
+
+        if (!followerIsArtist) {
+          return res.status(403).json({
+            success: false,
+            error: "Pour suivre un artiste, utilisez le portail streaming.",
+            useStreamingFollow: true,
+          });
+        }
+      }
+    } catch (_artistCheckErr) {
+      // If check fails, allow the follow to proceed
     }
 
     // Check if already following

@@ -458,7 +458,9 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
     );
     await pool.query("COMMIT");
 
-    console.log(`[PAYPAL] ✅ User ${userId} deposited $${capturedAmount} → ${creditAmount} credits (via redirect)`);
+    console.log(
+      `[PAYPAL] ✅ User ${userId} deposited $${capturedAmount} → ${creditAmount} credits (via redirect)`,
+    );
     res.redirect("/arcade?paypal=success");
   } catch (err: any) {
     await pool.query("ROLLBACK").catch(() => {});

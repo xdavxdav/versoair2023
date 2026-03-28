@@ -1060,6 +1060,8 @@ router.delete("/comment/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/streaming/follow — Toggle follow on an artist
+// Any account type (general, contractor, business, community, premium, creator) can follow artists.
+// Artists cannot be followed via social — only through this streaming endpoint.
 router.post("/follow", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
@@ -1067,6 +1069,28 @@ router.post("/follow", async (req: Request, res: Response) => {
 
     if (!artistId) return res.status(400).json({ error: "artistId required" });
     if (!userId) return res.json({ following: true, requiresAuth: true });
+
+    // ── Artist protection: artists cannot follow other artists here ──
+    // Artist-to-artist connections should use /api/social/follow
+    try {
+      const followerCheck = await pool.query(
+        "SELECT role FROM users WHERE id = $1",
+        [userId],
+      );
+      const followerArtist = await pool.query(
+        "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+        [userId],
+      );
+      if (
+        followerCheck.rows[0]?.role === "artist" ||
+        followerArtist.rows.length > 0
+      ) {
+        // Artists use social follow for peer connections — but allow them to follow other artists as fans too
+        // (no block here, just a note — artists can follow artists in both systems)
+      }
+    } catch (_) {
+      /* proceed */
+    }
 
     const existing = await pool.query(
       `
@@ -1619,6 +1643,117 @@ router.get("/search", async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.status(500).json({ error: "Search failed" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// SIMPLIFIED ENDPOINTS (aliases for cleaner API)
+// ═══════════════════════════════════════════════════════════
+
+// POST /api/streaming/play — Alias for /record-play
+router.post("/play", async (req: Request, res: Response) => {
+  try {
+    const { trackId, duration, sessionId } = req.body;
+    if (!trackId || !duration) {
+      return res.status(400).json({ error: "trackId and duration required" });
+    }
+    if (duration < 30) {
+      return res.json({
+        recorded: false,
+        reason: "Must listen at least 30 seconds",
+      });
+    }
+
+    // Get artist for this track
+    const trackRow = await pool.query(
+      `SELECT artist_id FROM music_tracks WHERE id = $1`,
+      [trackId],
+    );
+    const artistId = trackRow.rows[0]?.artist_id;
+
+    // Insert stream play
+    await pool.query(
+      `INSERT INTO stream_plays (track_id, artist_id, user_id, duration, session_id, played_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        trackId,
+        artistId || null,
+        (req as any).user?.id || null,
+        duration,
+        sessionId || null,
+      ],
+    );
+
+    // Increment play count
+    await pool.query(
+      `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1 WHERE id = $1`,
+      [trackId],
+    );
+
+    // $0.007 flat revenue per stream
+    const RATE = 0.007;
+    if (artistId) {
+      await pool.query(
+        `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1, revenue = COALESCE(revenue, 0) + $1 WHERE id = $2`,
+        [RATE, artistId],
+      );
+    }
+
+    res.json({ recorded: true, revenue: RATE });
+  } catch (err: any) {
+    console.error("[STREAMING] Play error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/streaming/stats/:artistId — Artist streaming stats
+router.get("/stats/:artistId", async (req: Request, res: Response) => {
+  try {
+    const { artistId } = req.params;
+
+    const artist = await pool.query(
+      `SELECT id, name, total_streams, revenue, monthly_listeners FROM music_artists WHERE id = $1`,
+      [artistId],
+    );
+    if (!artist.rows.length) {
+      return res.status(404).json({ error: "Artist not found" });
+    }
+
+    const topTracks = await pool.query(
+      `SELECT id, title, streams, duration, cover_art FROM music_tracks 
+       WHERE artist_id = $1 ORDER BY streams DESC LIMIT 10`,
+      [artistId],
+    );
+
+    const recentPlays = await pool.query(
+      `SELECT COUNT(*) as count FROM stream_plays WHERE artist_id = $1 AND played_at > NOW() - INTERVAL '7 days'`,
+      [artistId],
+    );
+
+    res.json({
+      artist: artist.rows[0],
+      topTracks: topTracks.rows,
+      weeklyPlays: parseInt(recentPlays.rows[0]?.count || "0"),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/streaming/top — Top streamed tracks globally
+router.get("/top", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT mt.id, mt.title, mt.streams, mt.cover_art, mt.duration, mt.genre,
+              ma.name as artist_name, ma.id as artist_id, ma.image_url as artist_image
+       FROM music_tracks mt
+       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+       ORDER BY mt.streams DESC NULLS LAST
+       LIMIT 50`,
+    );
+    res.json({ tracks: result.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

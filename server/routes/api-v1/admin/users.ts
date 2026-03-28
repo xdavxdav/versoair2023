@@ -246,8 +246,14 @@ router.post(
     if (role === "artist" && stageName) {
       try {
         artistCode = generateArtistCode(
-          stageName, division || "discovery", new Date(), undefined, undefined,
-          country || 0, "MOD", "x",
+          stageName,
+          division || "discovery",
+          new Date(),
+          undefined,
+          undefined,
+          country || 0,
+          "MOD",
+          "x",
         );
 
         await db.insert(artistProfiles).values({
@@ -303,8 +309,14 @@ router.get(
     }
     const { countryCode: cc } = req.query;
     const code = generateArtistCode(
-      stageName, division as string, new Date(), undefined, undefined,
-      typeof cc === "string" ? cc : 0, "MOD", "x",
+      stageName,
+      division as string,
+      new Date(),
+      undefined,
+      undefined,
+      typeof cc === "string" ? cc : 0,
+      "MOD",
+      "x",
     );
     res.json({ success: true, artistCode: code, stageName, division });
   }),

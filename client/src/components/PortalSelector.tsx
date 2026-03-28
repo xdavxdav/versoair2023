@@ -8,14 +8,16 @@
  */
 
 import { useLocation } from "wouter";
-import { useCapabilities } from "@/hooks/useCapabilities";
+import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
 import {
   Globe,
   Music,
   Crown,
   MessageSquare,
   Briefcase,
+  Headphones,
   LayoutDashboard,
   Lock,
   ArrowRight,
@@ -75,6 +77,16 @@ const PORTAL_DEFINITIONS: PortalDefinition[] = [
     badge: "Community",
   },
   {
+    id: "streamer",
+    label: "Streamer / Listener",
+    description: "Music streaming, arcade & community",
+    icon: <Headphones className="w-6 h-6" />,
+    href: "/stream",
+    gradient: "from-fuchsia-600 to-purple-500",
+    borderColor: "border-fuchsia-500/30",
+    badge: "Free",
+  },
+  {
     id: "contractor",
     label: "Contractor Portal",
     description: "Projects, availability & contractor services",
@@ -112,7 +124,7 @@ export default function PortalSelector({
   className = "",
 }: PortalSelectorProps) {
   const { user } = useAuthContext();
-  const { capabilities, isLoading } = useCapabilities();
+  const { access, canAccessAdmin, isLoading } = usePortalAccess();
   const [, setLocation] = useLocation();
 
   if (!user) return null;
@@ -126,24 +138,22 @@ export default function PortalSelector({
     );
   }
 
-  const userPortals = capabilities?.portals || user.portals || ["general"];
-  const isAdmin = ["admin", "moderator", "superuser"].includes(user.role || "");
-
   // Build portal list: accessible ones first, then locked ones
   const allPortals = [...PORTAL_DEFINITIONS];
-  if (isAdmin) allPortals.push(ADMIN_PORTAL);
+  if (canAccessAdmin) allPortals.push(ADMIN_PORTAL);
 
   const accessiblePortals = allPortals.filter(
-    (p) => userPortals.includes(p.id) || (p.id === "admin" && isAdmin),
+    (p) => access[p.id as PortalId] === true,
   );
   const lockedPortals = PORTAL_DEFINITIONS.filter(
-    (p) => !userPortals.includes(p.id) && p.id !== "general",
+    (p) => access[p.id as PortalId] !== true && p.id !== "general",
   );
 
   const unlockHref: Record<string, string> = {
     artist: "/apply",
     "geo-admin": "/apply",
     community: "/apply",
+    streamer: "/apply",
     contractor: "/apply",
   };
 
@@ -229,7 +239,7 @@ export default function PortalSelector({
                   {portal.label}
                 </h3>
                 <p className="text-white/20 text-xs mt-1">
-                  {portal.description}
+                  {UNLOCK_REASONS[portal.id] || portal.description}
                 </p>
               </button>
             ))}
