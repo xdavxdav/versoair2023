@@ -322,6 +322,24 @@
 			"label": "Git status count",
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git status --short | wc -l && echo '---' && git status --short | head -60"
+		},
+		{
+			"label": "Test streaming API",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks?limit=1' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['tracks'][0]; print('title:', t.get('title')); print('artist_name:', t.get('artist_name')); print('has_pochette:', t.get('has_pochette')); print('payload bytes:', len(sys.stdin.read()) if False else len(json.dumps(d)))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test search and pochette",
+			"type": "shell",
+			"command": "echo '=== Search admin_001 ===' && curl -s 'http://localhost:5003/api/streaming/search?q=admin_001' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('tracks:', len(d.get('tracks',[])), [(t['title'], t.get('artist_name')) for t in d.get('tracks',[])])\" && echo '=== Pochette image ===' && curl -s -o /dev/null -w 'HTTP %{http_code} | %{content_type} | %{size_download} bytes' 'http://localhost:5003/api/streaming/tracks/103/pochette'",
+			"group": "test"
+		},
+		{
+			"label": "Git stage changes",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && rm -f _check_artist_tables.cjs && git add -A && git status --short",
+			"group": "build"
 		}
 	]
 }

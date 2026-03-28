@@ -68,6 +68,14 @@ function getFlag(code: string): string {
   );
 }
 
+/** Resolve cover art URL — prefers cover_art URL, then pochette endpoint, then album_cover */
+function getCover(t: any): string | null {
+  if (t.cover_art) return t.cover_art;
+  if (t.has_pochette) return `/api/streaming/tracks/${t.id}/pochette`;
+  if (t.album_cover) return t.album_cover;
+  return null;
+}
+
 // ====================================================================
 // IMMERSIVE BACKGROUND -- Nebula + Stars + Floating Orbs
 // ====================================================================
@@ -434,11 +442,9 @@ export default function StreamPage() {
                           className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
                         >
                           <div className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-white/5">
-                            {t.cover_art || t.pochette || t.album_cover ? (
+                            {getCover(t) ? (
                               <img
-                                src={
-                                  t.cover_art || t.pochette || t.album_cover
-                                }
+                                src={getCover(t)!}
                                 alt={t.title}
                                 className="w-full h-full object-cover"
                               />
@@ -526,15 +532,9 @@ export default function StreamPage() {
                     onClick={() => audio.playTrack(track)}
                   >
                     <div className="relative w-48 h-48 rounded-2xl overflow-hidden mb-3 shadow-xl shadow-black/40 ring-1 ring-white/5 group-hover:ring-amber-500/30 transition-all duration-300">
-                      {track.cover_art ||
-                      track.pochette ||
-                      track.album_cover ? (
+                      {getCover(track) ? (
                         <img
-                          src={
-                            track.cover_art ||
-                            track.pochette ||
-                            track.album_cover
-                          }
+                          src={getCover(track)!}
                           alt=""
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -682,11 +682,9 @@ export default function StreamPage() {
                 className="group cursor-pointer bg-white/[0.02] backdrop-blur-sm rounded-xl p-3 hover:bg-white/[0.06] border border-white/[0.03] hover:border-amber-500/20 transition-all duration-300"
               >
                 <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-800 mb-3 ring-1 ring-white/5 shadow-lg shadow-black/30">
-                  {track.cover_art || track.pochette || track.album_cover ? (
+                  {getCover(track) ? (
                     <img
-                      src={
-                        track.cover_art || track.pochette || track.album_cover
-                      }
+                      src={getCover(track)!}
                       alt=""
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -950,15 +948,9 @@ export default function StreamPage() {
 
                     {/* Cover */}
                     <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 ring-1 ring-white/5 shadow-md shadow-black/20">
-                      {track.cover_art ||
-                      track.pochette ||
-                      track.album_cover ? (
+                      {getCover(track) ? (
                         <img
-                          src={
-                            track.cover_art ||
-                            track.pochette ||
-                            track.album_cover
-                          }
+                          src={getCover(track)!}
                           alt=""
                           className="w-full h-full object-cover"
                         />
@@ -1092,7 +1084,8 @@ export default function StreamPage() {
             <div
               className="absolute inset-0 opacity-[0.015]"
               style={{
-                backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
                 backgroundSize: "40px 40px",
               }}
             />
