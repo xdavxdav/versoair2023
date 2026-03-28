@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { usePortalAccess } from "@/hooks/usePortalAccess";
 import {
   Music,
   Mic2,
@@ -1642,6 +1644,19 @@ export default function ArtistPortalWelcome() {
   const [phase, setPhase] = useState<"intro" | "reveal" | "ready">("intro");
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [, navigate] = useLocation();
+
+  // ── Auto-redirect: if already has artist portal access, go straight to dashboard ──
+  const { canAccessArtist, isLoading: portalLoading } = usePortalAccess();
+
+  useEffect(() => {
+    if (portalLoading) return; // Wait for portal access check to finish
+
+    if (canAccessArtist) {
+      navigate("/artist-portal/dashboard");
+    }
+  }, [canAccessArtist, portalLoading, navigate]);
+
   // Shared audio state — connects MiniStudio engine → AudioVisualizer display
   const analyserNodeRef = useRef<AnalyserNode | null>(null);
   const [analyserLive, setAnalyserLive] = useState(false);
@@ -1670,8 +1685,6 @@ export default function ArtistPortalWelcome() {
       clearTimeout(t2);
     };
   }, []);
-
-  const [, navigate] = useLocation();
 
   // ── Auth form state (inline sign-in / apply) ──
   type AuthTab = "signin" | "apply";
@@ -1756,6 +1769,11 @@ export default function ArtistPortalWelcome() {
       // Store artist data for portal usage
       localStorage.setItem("artist_token", data.token);
       localStorage.setItem("artist_profile", JSON.stringify(data.user));
+      // Also store in main auth keys so all portals recognize the session
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("auth_user", JSON.stringify(data.user));
       // Set in-memory auth token so dashboard's checkAuth() finds it
       if (data.token) {
         const { setAuthToken } = await import("@/lib/auth");
@@ -1833,6 +1851,11 @@ export default function ArtistPortalWelcome() {
       // Store artist data
       localStorage.setItem("artist_token", regData.token);
       localStorage.setItem("artist_profile", JSON.stringify(regData.user));
+      // Also store in main auth keys so all portals recognize the session
+      localStorage.setItem("authToken", regData.token);
+      localStorage.setItem("auth_token", regData.token);
+      localStorage.setItem("token", regData.token);
+      localStorage.setItem("auth_user", JSON.stringify(regData.user));
       // Set in-memory auth token so dashboard's checkAuth() finds it
       if (regData.token) {
         const { setAuthToken } = await import("@/lib/auth");
@@ -2266,7 +2289,7 @@ export default function ArtistPortalWelcome() {
           </div>
 
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            {/* Sample Artist Card */}
+            {/* Sample Artist Card — Premium Holographic Design */}
             <motion.div
               className="flex-shrink-0"
               variants={{
@@ -2274,84 +2297,190 @@ export default function ArtistPortalWelcome() {
                 visible: { opacity: 1, x: 0 },
               }}
             >
-              <div className="relative w-72 md:w-80">
-                {/* Card glow */}
-                <div className="absolute -inset-4 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/10 to-cyan-500/20 rounded-3xl blur-xl" />
+              <div className="relative w-80 md:w-[22rem] group/card">
+                {/* Animated holographic glow */}
+                <motion.div
+                  className="absolute -inset-6 rounded-[2rem] blur-2xl opacity-60"
+                  style={{
+                    background:
+                      "conic-gradient(from 180deg, rgba(168,85,247,0.3), rgba(236,72,153,0.2), rgba(34,211,238,0.2), rgba(168,85,247,0.3))",
+                  }}
+                  animate={{ rotate: [0, 360] }}
+                  transition={{
+                    duration: 12,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
 
                 {/* The card */}
-                <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a0a2e] to-[#0d0a1a] border border-purple-500/20 p-6">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center">
-                        <Music className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-white/60 text-xs tracking-wider uppercase font-medium">
-                        Artiste Verso
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30">
-                      <Crown className="w-3 h-3 text-purple-400" />
-                      <span className="text-purple-400 text-[10px] font-semibold">
-                        ÉLITE
-                      </span>
-                    </div>
-                  </div>
+                <div
+                  className="relative rounded-[1.25rem] overflow-hidden border border-white/[0.12] p-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #120826 0%, #1a0a35 35%, #0f0a1e 70%, #0a0612 100%)",
+                  }}
+                >
+                  {/* Holographic shimmer stripe */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, transparent, #a855f7, #ec4899, #22d3ee, #a855f7, transparent)",
+                    }}
+                  />
 
-                  {/* Avatar & Info */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-2xl">
-                      🎤
+                  {/* Card inner padding */}
+                  <div className="p-6 pb-5">
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                          <Music className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <span className="text-white/70 text-[10px] tracking-[0.25em] uppercase font-semibold block leading-none">
+                            Verso Artist
+                          </span>
+                          <span className="text-white/25 text-[9px] tracking-wider uppercase">
+                            Carte d'identité
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/15 to-yellow-500/15 border border-amber-400/25">
+                        <Crown className="w-3 h-3 text-amber-400" />
+                        <span className="text-amber-400 text-[10px] font-bold tracking-wide">
+                          ÉLITE
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg">Nooka</h3>
-                      <p className="text-white/40 text-sm">
-                        Coupé-Décalé • Afrobeats
+
+                    {/* Artist identity — large avatar + name */}
+                    <div className="flex items-center gap-5 mb-5">
+                      <div className="relative">
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 flex items-center justify-center text-3xl shadow-xl shadow-purple-600/25 ring-2 ring-white/[0.08]">
+                          🎤
+                        </div>
+                        {/* Online indicator */}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#120826]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-bold text-xl tracking-tight leading-tight">
+                          Nooka
+                        </h3>
+                        <p className="text-white/35 text-sm font-medium mt-0.5">
+                          Coupé-Décalé • Afrobeats
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          <span className="text-emerald-400/80 text-[10px] font-medium">
+                            Actif maintenant
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* VAC Code — monospaced highlight */}
+                    <div className="bg-white/[0.03] rounded-xl p-3.5 mb-4 border border-white/[0.06] backdrop-blur-sm">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-white/25 text-[9px] tracking-[0.2em] uppercase font-semibold">
+                          Code Artiste Verso
+                        </span>
+                        <div className="flex items-center gap-1 text-purple-400/50">
+                          <Shield className="w-2.5 h-2.5" />
+                          <span className="text-[8px] font-medium">
+                            Vérifié
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 font-mono text-lg font-bold tracking-wider">
+                        VA_NK_E_20260115_8F3A1B
                       </p>
                     </div>
-                  </div>
 
-                  {/* VAC Code */}
-                  <div className="bg-white/[0.04] rounded-xl p-3 mb-4 border border-white/[0.06]">
-                    <span className="text-white/30 text-[10px] tracking-widest uppercase">
-                      Code Artiste Verso
-                    </span>
-                    <p className="text-purple-300 font-mono text-lg font-bold mt-0.5">
-                      VA_NK_E_20260115_8F3A1B
-                    </p>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center">
-                      <p className="text-white font-bold text-sm">1.2M</p>
-                      <p className="text-white/20 text-[10px]">Écoutes</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-white font-bold text-sm">38</p>
-                      <p className="text-white/20 text-[10px]">Titres</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-white font-bold text-sm">28.7K</p>
-                      <p className="text-white/20 text-[10px]">Auditeurs</p>
-                    </div>
-                  </div>
-
-                  {/* QR placeholder */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                      <div className="grid grid-cols-3 gap-[2px]">
-                        {Array.from({ length: 9 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-1.5 h-1.5 rounded-[1px] ${Math.random() > 0.3 ? "bg-white/60" : "bg-white/15"}`}
-                          />
-                        ))}
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                        <p className="text-white font-bold text-base leading-none">
+                          1.2M
+                        </p>
+                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
+                          Écoutes
+                        </p>
+                      </div>
+                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                        <p className="text-white font-bold text-base leading-none">
+                          38
+                        </p>
+                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
+                          Titres
+                        </p>
+                      </div>
+                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                        <p className="text-white font-bold text-base leading-none">
+                          28.7K
+                        </p>
+                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
+                          Auditeurs
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-white/20 text-[10px]">Membre depuis</p>
-                      <p className="text-white/50 text-xs">Janv. 2026</p>
+
+                    {/* Division + earnings bar */}
+                    <div className="flex items-center gap-3 mb-4 px-1">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-white/30 text-[9px] uppercase tracking-wider font-semibold">
+                            Division Or
+                          </span>
+                          <span className="text-amber-400 text-[10px] font-bold">
+                            78%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-400"
+                            initial={{ width: 0 }}
+                            whileInView={{ width: "78%" }}
+                            viewport={{ once: true }}
+                            transition={{
+                              duration: 1.2,
+                              delay: 0.5,
+                              ease: "easeOut",
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-emerald-400 font-bold text-sm leading-none">
+                          $4.2K
+                        </p>
+                        <p className="text-white/15 text-[8px] mt-0.5">
+                          revenus
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer: QR + member since */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
+                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center border border-white/[0.04]">
+                        <div className="grid grid-cols-4 gap-[1.5px]">
+                          {Array.from({ length: 16 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 h-1 rounded-[0.5px] ${[0, 1, 3, 4, 5, 7, 8, 10, 12, 13, 15].includes(i) ? "bg-white/50" : "bg-white/10"}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white/15 text-[9px] uppercase tracking-wider">
+                          Membre depuis
+                        </p>
+                        <p className="text-white/40 text-xs font-medium">
+                          Janv. 2026
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

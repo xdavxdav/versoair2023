@@ -51,6 +51,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Restore authentication from localStorage
   const restoreAuth = useCallback(async () => {
     try {
+      // ── Legacy token migration ──
+      // If user only has an artist_token (old portal-specific key),
+      // migrate it into the unified keys so every portal recognises them.
+      const legacyArtistToken = localStorage.getItem("artist_token");
+      if (legacyArtistToken && !localStorage.getItem("authToken")) {
+        localStorage.setItem("authToken", legacyArtistToken);
+        localStorage.setItem("auth_token", legacyArtistToken);
+        localStorage.setItem("token", legacyArtistToken);
+        // Migrate cached profile too
+        const legacyProfile = localStorage.getItem("artist_profile");
+        if (legacyProfile && !localStorage.getItem("auth_user")) {
+          localStorage.setItem("auth_user", legacyProfile);
+        }
+        // Clean up legacy keys
+        localStorage.removeItem("artist_token");
+        localStorage.removeItem("artist_profile");
+      }
+
       // Try all possible token storage keys for backward compatibility
       const storedToken =
         localStorage.getItem("authToken") ||
@@ -89,11 +107,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setToken(null);
           }
         } else if (response.status === 401) {
-          // Token expired — clear in-memory state only.
-          // Keep localStorage tokens so gateBypass (geo-admin, etc.) persists
-          // across reloads. Tokens are only cleared on explicit logout.
-          setUser(null);
-          setToken(null);
+          // Token expired — try to keep session from cached user rather
+          // than logging out immediately. Only explicit logout clears tokens.
+          const cachedUser = localStorage.getItem("auth_user");
+          if (cachedUser && storedToken) {
+            try {
+              setUser(JSON.parse(cachedUser));
+              setToken(storedToken);
+              setAuthToken(storedToken);
+            } catch {
+              setUser(null);
+              setToken(null);
+            }
+          } else {
+            setUser(null);
+            setToken(null);
+          }
         }
       } catch (error) {
         // Network error - still restore user from localStorage for offline support
@@ -120,6 +149,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     restoreAuth();
   }, [restoreAuth]);
+
+  // ── Heartbeat: re-verify token every 5 min to keep session alive ──
+  useEffect(() => {
+    if (!user) return;
+
+    const HEARTBEAT_MS = 5 * 60 * 1000; // 5 minutes
+
+    const heartbeat = async () => {
+      const storedToken =
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token");
+      if (!storedToken) return;
+
+      try {
+        const res = await fetch("/auth/verify", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+        if (res.ok) {
+          // Token still valid — keep session alive
+          const data = await res.json();
+          if (data.success && data.user) {
+            setAuthToken(storedToken);
+          }
+        }
+        // Don't clear on failure — let explicit logout handle that
+      } catch {
+        // Network error — keep local state, retry next heartbeat
+      }
+    };
+
+    const interval = setInterval(heartbeat, HEARTBEAT_MS);
+
+    // Also re-verify when tab regains focus
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        heartbeat();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [user]);
 
   // Listen for logout from other tabs
   useEffect(() => {
@@ -165,8 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    // Clear token from all storage locations
+    // Clear token from all storage locations (unified + legacy)
     clearAllTokens();
+    localStorage.removeItem("artist_token");
+    localStorage.removeItem("artist_profile");
 
     // Clear user data
     localStorage.removeItem("auth_user");

@@ -234,6 +234,7 @@ export async function registerRoutes(app: Express) {
   // ═══ Enhanced Streaming System Routes ═══
   app.use("/api/tracks", trackUploadRouter); // Track upload & management
   app.use("/api/artist-subscriptions", artistSubscriptionsRouter); // Spark/Flame/Blaze/Inferno tiers
+  app.use("/api/artist", artistSubscriptionsRouter); // Alias: /api/artist/tiers, /api/artist/subscribe, etc.
   app.use("/api/payments", paymentsRouter); // Wallet, payment methods, bank transfers
   app.use("/api/arena", arenaRouter); // StreamRoyale Arena battle royale
   app.use("/api/vault", vaultRouter); // Verso Vault exclusivity engine

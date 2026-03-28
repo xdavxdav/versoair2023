@@ -1833,8 +1833,14 @@ router.post(
     // Create artist profile
     try {
       const artistCode = generateArtistCode(
-        stageName, "discovery", new Date(), undefined, undefined,
-        country || 0, "MOD", "x",
+        stageName,
+        "discovery",
+        new Date(),
+        undefined,
+        undefined,
+        country || 0,
+        "MOD",
+        "x",
       );
       await db.insert(schema.artistProfiles).values({
         userId: newUser.id,

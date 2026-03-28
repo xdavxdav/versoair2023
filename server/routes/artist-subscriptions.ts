@@ -399,4 +399,55 @@ router.post("/cancel", requireAuth(), async (req: Request, res: Response) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /subscription — Alias for /my-subscription (simpler URL)
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get(
+  "/subscription",
+  optionalAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user ? parseInt(req.user.userId) : null;
+      if (!userId) {
+        return res.json({
+          success: true,
+          subscription: null,
+          tier: ARTIST_TIERS.spark,
+          tierId: "spark",
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT as2.*, ap.stage_name, ap.artist_code, ap.division
+       FROM artist_subscriptions as2
+       JOIN artist_profiles ap ON ap.id = as2.artist_profile_id
+       WHERE ap.user_id = $1 AND as2.status = 'active' LIMIT 1`,
+        [userId],
+      );
+
+      if (result.rows.length === 0) {
+        return res.json({
+          success: true,
+          subscription: null,
+          tier: ARTIST_TIERS.spark,
+          tierId: "spark",
+        });
+      }
+
+      const sub = result.rows[0];
+      const tierInfo = ARTIST_TIERS[sub.tier] || ARTIST_TIERS.spark;
+      res.json({
+        success: true,
+        subscription: sub,
+        tier: tierInfo,
+        tierId: sub.tier,
+      });
+    } catch (err: any) {
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch subscription" });
+    }
+  },
+);
+
 export default router;

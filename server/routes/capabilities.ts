@@ -57,7 +57,8 @@ export async function computeUserCapabilities(userId: number) {
   }
 
   // 5. Build portals array from DB column or compute fresh
-  const portals = new Set<string>(["general"]);
+  //    Base: every authenticated user gets general + streamer (additive model)
+  const portals = new Set<string>(["general", "streamer"]);
 
   if (hasArtistProfile || user.role === "artist") portals.add("artist");
   if (isContractor) portals.add("contractor");
@@ -67,7 +68,16 @@ export async function computeUserCapabilities(userId: number) {
   ) {
     portals.add("geo-admin");
   }
-  if (user.username?.startsWith("community_")) portals.add("community");
+  // Community: check portal_access JSONB, or fallback to username prefix
+  const existingPortalAccess: string[] = Array.isArray(user.portal_access)
+    ? user.portal_access
+    : [];
+  if (
+    existingPortalAccess.includes("community") ||
+    user.username?.startsWith("community_")
+  ) {
+    portals.add("community");
+  }
   // Admin/moderator/superuser get all portals
   if (["admin", "moderator", "superuser"].includes(user.role)) {
     portals.add("artist");

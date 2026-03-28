@@ -1213,4 +1213,144 @@ router.get("/artists/search", async (req, res) => {
   }
 });
 
+// ═════════════════════════════════════════════════════════════════════
+// POST /api/music/purchase — Simplified purchase (trackId in body)
+// ═════════════════════════════════════════════════════════════════════
+router.post("/purchase", requireAuth, async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user?.id;
+    const { trackId } = req.body;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+    if (!trackId) return res.status(400).json({ error: "trackId required" });
+
+    // Forward to the existing /tracks/:id/purchase handler logic
+    const trackResult = await pool.query(
+      "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
+      [trackId],
+    );
+    if (!trackResult.rows.length) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+    const track = trackResult.rows[0];
+    const price = parseFloat(track.price || "1.29");
+
+    // Already purchased?
+    try {
+      const existing = await pool.query(
+        "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+        [userId, trackId],
+      );
+      if (existing.rows.length > 0) {
+        return res.json({
+          success: true,
+          alreadyOwned: true,
+          message: "Track already purchased",
+        });
+      }
+    } catch {
+      /* table may not exist */
+    }
+
+    // Get buyer wallet
+    let buyerWallet = await pool.query(
+      "SELECT * FROM platform_wallets WHERE user_id = $1",
+      [userId],
+    );
+    if (buyerWallet.rows.length === 0) {
+      buyerWallet = await pool.query(
+        "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+        [userId],
+      );
+    }
+    const buyerBalance = parseFloat(buyerWallet.rows[0].balance || "0");
+
+    if (buyerBalance < price) {
+      return res.status(402).json({
+        error: "Insufficient credits",
+        required: price,
+        current: buyerBalance,
+      });
+    }
+
+    // Debit buyer
+    const artistShare = price * 0.7;
+    const platformShare = price * 0.3;
+    const newBuyerBalance = buyerBalance - price;
+    await pool.query(
+      "UPDATE platform_wallets SET balance = $1 WHERE user_id = $2",
+      [newBuyerBalance.toFixed(2), userId],
+    );
+
+    // Credit artist
+    if (track.artist_id) {
+      const artistUser = await pool.query(
+        "SELECT user_id FROM artist_profiles WHERE id = $1",
+        [track.artist_id],
+      );
+      if (artistUser.rows.length) {
+        const artistUserId = artistUser.rows[0].user_id;
+        await pool.query(
+          `INSERT INTO platform_wallets (user_id, balance, currency) VALUES ($1, $2, 'USD')
+           ON CONFLICT (user_id) DO UPDATE SET balance = platform_wallets.balance::numeric + $2`,
+          [artistUserId, artistShare.toFixed(2)],
+        );
+      }
+    }
+
+    // Record purchase
+    try {
+      await pool.query(
+        `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
+         VALUES ($1, $2, $3, $4, $5, 'completed', NOW())`,
+        [
+          userId,
+          trackId,
+          price.toFixed(2),
+          artistShare.toFixed(2),
+          platformShare.toFixed(2),
+        ],
+      );
+    } catch {
+      /* table may not exist */
+    }
+
+    res.json({
+      success: true,
+      trackId,
+      price,
+      newBalance: newBuyerBalance,
+      artistShare,
+      platformShare,
+    });
+  } catch (err: any) {
+    console.error("[MUSIC] Purchase error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════
+// GET /api/music/my-purchases — User's purchased tracks
+// ═════════════════════════════════════════════════════════════════════
+router.get("/my-purchases", requireAuth, async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    const result = await pool.query(
+      `SELECT tp.*, mt.title, mt.cover_art, mt.duration, mt.audio_url, ma.name as artist_name
+       FROM track_purchases tp
+       LEFT JOIN music_tracks mt ON tp.track_id = mt.id
+       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+       WHERE tp.user_id = $1 AND tp.status = 'completed'
+       ORDER BY tp.purchased_at DESC`,
+      [userId],
+    );
+
+    res.json({ success: true, purchases: result.rows });
+  } catch (err: any) {
+    // Table might not exist
+    res.json({ success: true, purchases: [] });
+  }
+});
+
 export default router;
