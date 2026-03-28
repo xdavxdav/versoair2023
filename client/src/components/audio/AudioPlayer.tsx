@@ -351,7 +351,9 @@ export default function AudioPlayer() {
                 <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center flex-shrink-0">
                   {track.cover_art || track.pochette || track.album_cover ? (
                     <img
-                      src={track.cover_art || track.pochette || track.album_cover}
+                      src={
+                        track.cover_art || track.pochette || track.album_cover
+                      }
                       alt=""
                       className="w-full h-full rounded object-cover"
                     />
@@ -503,7 +505,9 @@ export default function AudioPlayer() {
             >
               {track.cover_art || track.pochette || track.album_cover ? (
                 <img
-                  src={track.cover_art || track.pochette || track.album_cover || ""}
+                  src={
+                    track.cover_art || track.pochette || track.album_cover || ""
+                  }
                   alt={track.title}
                   className="w-full h-full object-cover"
                 />
@@ -687,7 +691,9 @@ export default function AudioPlayer() {
             >
               {track.cover_art || track.pochette || track.album_cover ? (
                 <img
-                  src={track.cover_art || track.pochette || track.album_cover || ""}
+                  src={
+                    track.cover_art || track.pochette || track.album_cover || ""
+                  }
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -758,7 +764,12 @@ export default function AudioPlayer() {
               >
                 {track.cover_art || track.pochette || track.album_cover ? (
                   <img
-                    src={track.cover_art || track.pochette || track.album_cover || ""}
+                    src={
+                      track.cover_art ||
+                      track.pochette ||
+                      track.album_cover ||
+                      ""
+                    }
                     alt=""
                     className="w-full h-full object-cover"
                   />
