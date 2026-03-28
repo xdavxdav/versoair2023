@@ -295,9 +295,9 @@ export default function StreamPage() {
                           className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-pointer"
                         >
                           <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {t.cover_art ? (
+                            {t.cover_art || t.pochette || t.album_cover ? (
                               <img
-                                src={t.cover_art}
+                                src={t.cover_art || t.pochette || t.album_cover}
                                 alt={t.title}
                                 className="w-full h-full object-cover"
                               />
@@ -382,9 +382,9 @@ export default function StreamPage() {
                     onClick={() => audio.playTrack(track)}
                   >
                     <div className="relative w-44 h-44 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 mb-2 shadow-lg">
-                      {track.cover_art || track.album_cover ? (
+                      {track.cover_art || track.pochette || track.album_cover ? (
                         <img
-                          src={track.cover_art || track.album_cover}
+                          src={track.cover_art || track.pochette || track.album_cover}
                           alt=""
                           className="w-full h-full object-cover"
                         />
@@ -507,9 +507,9 @@ export default function StreamPage() {
                 className="group cursor-pointer bg-gray-800/30 rounded-lg p-3 hover:bg-gray-800/60 transition-all"
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-800 mb-2">
-                  {track.cover_art || track.album_cover ? (
+                  {track.cover_art || track.pochette || track.album_cover ? (
                     <img
-                      src={track.cover_art || track.album_cover}
+                      src={track.cover_art || track.pochette || track.album_cover}
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -737,9 +737,9 @@ export default function StreamPage() {
 
                     {/* Cover */}
                     <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
-                      {track.cover_art || track.album_cover ? (
+                      {track.cover_art || track.pochette || track.album_cover ? (
                         <img
-                          src={track.cover_art || track.album_cover}
+                          src={track.cover_art || track.pochette || track.album_cover}
                           alt=""
                           className="w-full h-full object-cover"
                         />

@@ -28,6 +28,7 @@ export interface AudioTrack {
   album_title?: string | null;
   album_cover?: string | null;
   album_id?: number | null;
+  pochette?: string | null;
   file_path?: string | null;
   audio_url?: string | null;
   like_count?: number;
@@ -199,7 +200,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       const gain = ctx.createGain();
       // Read saved volume (avoid closure dep on volume/isMuted — this only runs once)
-      const savedVol = parseFloat(localStorage.getItem("verso_volume") || "0.7");
+      const savedVol = parseFloat(
+        localStorage.getItem("verso_volume") || "0.7",
+      );
       gain.gain.value = savedVol;
 
       const source = ctx.createMediaElementSource(audioRef.current);
@@ -283,7 +286,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       // Determine audio URL
       let url: string;
-      if (track.file_path) {
+      if (track.file_path || (track as any).has_audio_data) {
         url = `/api/music/tracks/${track.id}/stream`;
       } else if (track.audio_url) {
         url = track.audio_url;
@@ -332,10 +335,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           artist: track.artist_name || "Verso Air",
           album: track.album_title || "Verso Air Music",
           artwork:
-            track.cover_art || track.album_cover
+            track.cover_art || track.pochette || track.album_cover
               ? [
                   {
-                    src: track.cover_art || track.album_cover || "",
+                    src: track.cover_art || track.pochette || track.album_cover || "",
                     sizes: "512x512",
                     type: "image/jpeg",
                   },
@@ -458,7 +461,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setVolumeState(v);
     // Primary: GainNode controls actual output volume in Web Audio graph
     if (gainRef.current) {
-      gainRef.current.gain.setTargetAtTime(v, gainRef.current.context.currentTime, 0.015);
+      gainRef.current.gain.setTargetAtTime(
+        v,
+        gainRef.current.context.currentTime,
+        0.015,
+      );
     }
     // Fallback: also set on element (covers pre-WebAudio or no-context cases)
     if (audioRef.current) audioRef.current.volume = v;
@@ -472,7 +479,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       const targetVol = newMuted ? 0 : volume;
       // Primary: GainNode
       if (gainRef.current) {
-        gainRef.current.gain.setTargetAtTime(targetVol, gainRef.current.context.currentTime, 0.015);
+        gainRef.current.gain.setTargetAtTime(
+          targetVol,
+          gainRef.current.context.currentTime,
+          0.015,
+        );
       }
       // Fallback: element
       if (audioRef.current) {

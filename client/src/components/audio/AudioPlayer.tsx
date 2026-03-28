@@ -349,9 +349,9 @@ export default function AudioPlayer() {
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center flex-shrink-0">
-                  {track.cover_art ? (
+                  {track.cover_art || track.pochette || track.album_cover ? (
                     <img
-                      src={track.cover_art}
+                      src={track.cover_art || track.pochette || track.album_cover}
                       alt=""
                       className="w-full h-full rounded object-cover"
                     />
@@ -400,9 +400,9 @@ export default function AudioPlayer() {
                   >
                     <GripVertical className="w-3 h-3 text-gray-600 cursor-grab" />
                     <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {q.cover_art ? (
+                      {q.cover_art || q.pochette || q.album_cover ? (
                         <img
-                          src={q.cover_art}
+                          src={q.cover_art || q.pochette || q.album_cover}
                           alt=""
                           className="w-full h-full object-cover"
                         />
@@ -501,9 +501,9 @@ export default function AudioPlayer() {
               transition={{ delay: 0.1 }}
               className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/20 mb-8"
             >
-              {track.cover_art || track.album_cover ? (
+              {track.cover_art || track.pochette || track.album_cover ? (
                 <img
-                  src={track.cover_art || track.album_cover || ""}
+                  src={track.cover_art || track.pochette || track.album_cover || ""}
                   alt={track.title}
                   className="w-full h-full object-cover"
                 />
@@ -685,9 +685,9 @@ export default function AudioPlayer() {
               onClick={() => setExpanded(true)}
               className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center"
             >
-              {track.cover_art || track.album_cover ? (
+              {track.cover_art || track.pochette || track.album_cover ? (
                 <img
-                  src={track.cover_art || track.album_cover || ""}
+                  src={track.cover_art || track.pochette || track.album_cover || ""}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -756,9 +756,9 @@ export default function AudioPlayer() {
                 onClick={() => setExpanded(true)}
                 className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center group relative"
               >
-                {track.cover_art || track.album_cover ? (
+                {track.cover_art || track.pochette || track.album_cover ? (
                   <img
-                    src={track.cover_art || track.album_cover || ""}
+                    src={track.cover_art || track.pochette || track.album_cover || ""}
                     alt=""
                     className="w-full h-full object-cover"
                   />
