@@ -780,6 +780,47 @@ export default function ArtistPortal() {
     [invalidateTracks],
   );
 
+  // Handle re-upload for tracks that lost their audio after Render redeploy
+  const reuploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [reuploadTrackId, setReuploadTrackId] = useState<number | null>(null);
+  const handleReupload = useCallback(
+    async (file: File) => {
+      if (!reuploadTrackId || !file) return;
+      const formData = new FormData();
+      formData.append("audio", file);
+      try {
+        const { getCsrfToken, initializeCsrfToken } = await import(
+          "@/lib/auth"
+        );
+        let csrf = getCsrfToken();
+        if (!csrf) {
+          await initializeCsrfToken();
+          csrf = getCsrfToken();
+        }
+        const headers: Record<string, string> = {};
+        if (csrf) headers["x-csrf-token"] = csrf;
+        const token = (await import("@/lib/auth")).getAuthToken();
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(
+          `/api/music/tracks/${reuploadTrackId}/reupload`,
+          { method: "PUT", body: formData, credentials: "include", headers },
+        );
+        const data = await res.json();
+        if (data.success) {
+          invalidateTracks();
+          alert("✅ Audio re-uploaded successfully!");
+        } else {
+          alert("Re-upload failed: " + (data.error || "Unknown error"));
+        }
+      } catch (err: any) {
+        alert("Re-upload failed: " + (err.message || "Network error"));
+      }
+      setReuploadTrackId(null);
+    },
+    [reuploadTrackId, invalidateTracks],
+  );
+
   // Handle track download with credit-based purchase gate
   const handleDownloadTrack = useCallback(async (trackId: number | string) => {
     try {
@@ -1757,7 +1798,19 @@ export default function ArtistPortal() {
                           </span>
                         </div>
                       ) : (
-                        <Music2 className="h-16 w-16 text-white/30" />
+                        <div className="text-center">
+                          <Music2 className="h-14 w-14 text-white/30 mx-auto" />
+                          <button
+                            className="mt-2 text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReuploadTrackId(Number(track.id));
+                              reuploadInputRef.current?.click();
+                            }}
+                          >
+                            ⚠️ Re-upload audio
+                          </button>
+                        </div>
                       )}
                     </div>
                     {/* Price tag */}
@@ -1865,6 +1918,18 @@ export default function ArtistPortal() {
                             Partager
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/20" />
+                          {!hasAudio && (
+                            <DropdownMenuItem
+                              className="text-amber-400"
+                              onClick={() => {
+                                setReuploadTrackId(Number(track.id));
+                                reuploadInputRef.current?.click();
+                              }}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Re-upload Audio
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="text-red-400"
                             onClick={() => handleDeleteTrack(Number(track.id))}
@@ -2097,6 +2162,18 @@ export default function ArtistPortal() {
                         Partager
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-white/20" />
+                      {!hasAudio && (
+                        <DropdownMenuItem
+                          className="text-amber-400"
+                          onClick={() => {
+                            setReuploadTrackId(Number(track.id));
+                            reuploadInputRef.current?.click();
+                          }}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Re-upload Audio
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="text-red-400"
                         onClick={() => handleDeleteTrack(Number(track.id))}
@@ -3347,6 +3424,18 @@ export default function ArtistPortal() {
       }
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* Hidden file input for re-uploading audio to existing tracks */}
+      <input
+        ref={reuploadInputRef}
+        type="file"
+        accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleReupload(file);
+          e.target.value = "";
+        }}
+      />
       {/* Global AudioPlayer (in App.tsx) handles the Now Playing bar */}
 
       {/* Artist Portal Header */}

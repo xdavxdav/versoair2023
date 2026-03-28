@@ -837,7 +837,9 @@ router.get("/tracks/:id/stream", async (req, res) => {
           if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
           fs.writeFileSync(track.file_path, buffer);
         }
-      } catch { /* best-effort disk cache */ }
+      } catch {
+        /* best-effort disk cache */
+      }
 
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
@@ -964,14 +966,14 @@ router.get("/earnings", async (_req, res) => {
         COALESCE(SUM(CASE WHEN created_at > NOW() - INTERVAL '1 day'
           THEN revenue::numeric ELSE 0 END), 0)::text AS revenue_today
       FROM music_tracks
-      WHERE file_path IS NOT NULL
+      WHERE file_path IS NOT NULL OR audio_data IS NOT NULL
     `);
 
     // Per-track breakdown
     const tracks = await pool.query(`
       SELECT id, title, genre, price, downloads, revenue, streams, play_count, status, created_at
       FROM music_tracks
-      WHERE file_path IS NOT NULL
+      WHERE file_path IS NOT NULL OR audio_data IS NOT NULL
       ORDER BY revenue::numeric DESC
       LIMIT 50
     `);
@@ -990,7 +992,56 @@ router.get("/earnings", async (_req, res) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════
-// 🗑️  DELETE TRACK — DELETE /api/music/tracks/:id
+// � RE-UPLOAD AUDIO — PUT /api/music/tracks/:id/reupload
+// Backfills audio_data for tracks that lost their /tmp file on redeploy
+// ═════════════════════════════════════════════════════════════════════
+router.put(
+  "/tracks/:id/reupload",
+  requireAuth(),
+  upload.single("audio"),
+  async (req, res) => {
+    try {
+      await ensureTrackColumns();
+      const { id } = req.params;
+      const file = req.file;
+      if (!file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "No audio file provided" });
+      }
+
+      // Check track exists
+      const existing = await pool.query(
+        "SELECT id, title FROM music_tracks WHERE id = $1",
+        [parseInt(id)],
+      );
+      if (!existing.rows.length) {
+        fs.unlinkSync(file.path);
+        return res.status(404).json({ success: false, error: "Track not found" });
+      }
+
+      // Read file buffer and persist to DB + update file metadata
+      const audioBuffer = fs.readFileSync(file.path);
+      await pool.query(
+        `UPDATE music_tracks
+         SET audio_data = $1, file_path = $2, file_name = $3, file_size = $4, mime_type = $5
+         WHERE id = $6`,
+        [audioBuffer, file.path, file.originalname, file.size, file.mimetype, parseInt(id)],
+      );
+
+      console.log(
+        `🔄 [MUSIC] Track #${id} "${existing.rows[0].title}" re-uploaded + persisted (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
+      );
+      res.json({ success: true, message: "Audio re-uploaded and persisted" });
+    } catch (error: any) {
+      console.error("❌ Track re-upload error:", error);
+      res.status(500).json({ success: false, error: "Failed to re-upload track" });
+    }
+  },
+);
+
+// ═════════════════════════════════════════════════════════════════════
+// �🗑️  DELETE TRACK — DELETE /api/music/tracks/:id
 // ═════════════════════════════════════════════════════════════════════
 router.delete("/tracks/:id", requireAuth(), async (req, res) => {
   try {
