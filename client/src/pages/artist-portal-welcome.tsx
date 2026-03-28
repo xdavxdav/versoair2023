@@ -1646,6 +1646,9 @@ export default function ArtistPortalWelcome() {
 
   const [, navigate] = useLocation();
 
+  // ── Auth context: call login() after sign-in/register so React state updates ──
+  const { login } = useAuthContext();
+
   // ── Auto-redirect: if already has artist portal access, go straight to dashboard ──
   const { canAccessArtist, isLoading: portalLoading } = usePortalAccess();
 
@@ -1779,6 +1782,10 @@ export default function ArtistPortalWelcome() {
         const { setAuthToken } = await import("@/lib/auth");
         setAuthToken(data.token);
       }
+      // Update AuthContext React state so useRequirePortal sees the user
+      if (data.token && data.user) {
+        login(data.token, data.user);
+      }
       setIsAuthLoading(false);
       // Trigger cinematic transition instead of abrupt navigate
       setTransitionArtist(
@@ -1860,6 +1867,10 @@ export default function ArtistPortalWelcome() {
       if (regData.token) {
         const { setAuthToken } = await import("@/lib/auth");
         setAuthToken(regData.token);
+      }
+      // Update AuthContext React state so useRequirePortal sees the user
+      if (regData.token && regData.user) {
+        login(regData.token, regData.user);
       }
 
       // Step 2: Also submit contract application
