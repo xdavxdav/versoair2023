@@ -340,6 +340,126 @@
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && rm -f _check_artist_tables.cjs && git add -A && git status --short",
 			"group": "build"
+		},
+		{
+			"label": "Git commit and push streaming fixes",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git commit -m 'fix: public streaming browse + pochette optimization + artist name fallback\\n\\n- auth.ts: add /api/streaming/* to PUBLIC_PATH_PREFIXES (was returning 401 for all guests)\\n- streaming.ts MT_COLS: replace raw pochette BYTEA with (IS NOT NULL) AS has_pochette\\n- streaming.ts: add GET /tracks/:id/pochette endpoint to serve image (24h cache)\\n- streaming.ts: all 14 track queries now LEFT JOIN artists for COALESCE(ma.name, art.stage_name)\\n- stream.tsx + AudioPlayer.tsx: getCover() helper using /pochette URL when has_pochette=true\\n\\nPayload: 255KB → 891 bytes per track (290x reduction). Artist name now resolves for portal-uploaded tracks.' && git push",
+			"group": "build"
+		},
+		{
+			"label": "Check track 103 fields",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['track']; print('cover_art:', repr(t.get('cover_art'))[:80]); print('has_pochette:', t.get('has_pochette')); print('artist_name:', t.get('artist_name')); print('title:', t.get('title')); print('status:', t.get('status'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track response shape",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(list(d.keys()))\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track 103 auth",
+			"type": "shell",
+			"command": "curl -sv 'http://localhost:5003/api/streaming/tracks/103' 2>&1 | grep -E 'HTTP|error|{' | head -5",
+			"group": "test"
+		},
+		{
+			"label": "Check server error log",
+			"type": "shell",
+			"command": "tail -30 /tmp/fsa-server.log",
+			"group": "test"
+		},
+		{
+			"label": "Test track SQL",
+			"type": "shell",
+			"command": "node /Users/joe/Downloads/FSA/_test_track_query.cjs",
+			"group": "test"
+		},
+		{
+			"label": "Check tables exist",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('track_comments','listening_history','track_likes')\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track_comments columns",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='track_comments' ORDER BY ordinal_position\\\").then(r=>{console.log(r.rows.map(x=>x.column_name));c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Restart and test track detail error",
+			"type": "shell",
+			"command": "lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2 && cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 8 && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('error'), d.get('detail'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test track detail error msg",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('error'), '|', d.get('detail'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test track detail v2",
+			"type": "shell",
+			"command": "sleep 5 && curl -s 'http://localhost:5003/api/health' | head -c 50 && echo '' && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('error:', d.get('detail','track' in d))\"",
+			"group": "test"
+		},
+		{
+			"label": "Wait and test track 103",
+			"type": "shell",
+			"command": "sleep 10 && tail -5 /tmp/fsa-server.log && echo '---' && curl -s http://localhost:5003/api/streaming/tracks/103",
+			"group": "test"
+		},
+		{
+			"label": "Check port 5003",
+			"type": "shell",
+			"command": "lsof -ti :5003 && echo 'running' || echo 'not running'",
+			"group": "test"
+		},
+		{
+			"label": "Check why server died",
+			"type": "shell",
+			"command": "tail -20 /tmp/fsa-server.log | grep -E 'ERROR|error|crash|EADDR|listen'",
+			"group": "test"
+		},
+		{
+			"label": "Test track 103 detail",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/streaming/tracks/103",
+			"group": "test"
+		},
+		{
+			"label": "Check users name columns",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name LIKE '%name%' OR table_name='users' AND column_name LIKE '%display%'\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Check pochette column type",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='music_tracks' AND column_name IN ('pochette','cover_art','audio_data')\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Full streaming verification",
+			"type": "shell",
+			"command": "lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2 && cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 12 && echo '=== track list ===' && curl -s 'http://localhost:5003/api/streaming/tracks?limit=1' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['tracks'][0]; print('title:', t['title'],'| artist:', t.get('artist_name'),'| has_pochette:', t.get('has_pochette'))\" && echo '=== track detail ===' && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('keys:', list(d.keys())) if 'error' not in d else print('ERROR:', d)\" && echo '=== pochette image ===' && curl -s -o /dev/null -w 'HTTP %{http_code} | %{content_type} | %{size_download} bytes' 'http://localhost:5003/api/streaming/tracks/103/pochette' && echo '' && echo '=== search ===' && curl -s 'http://localhost:5003/api/streaming/search?q=Fantome' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('found:', len(d.get('tracks',[])), [t['title'] for t in d.get('tracks',[])])\"",
+			"group": "test"
+		},
+		{
+			"label": "Track 103 quick test",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/streaming/tracks/103 | python3 -c \"import sys,json; d=json.load(sys.stdin); print('OK' if 'track' in d else 'ERR: '+str(d))\"",
+			"group": "test"
+		},
+		{
+			"label": "Restart + full verify",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 1; NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 &\necho \"PID=$!\"\nsleep 14\necho '--- Track list ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks?limit=2' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('tracks',[]); print(f'tracks={len(t)}, has_pochette={t[0].get(\\\"has_pochette\\\")}, artist={t[0].get(\\\"artist_name\\\")}') if t else print('EMPTY:', d)\"\necho '--- Track detail 103 ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('OK keys='+str(list(d.keys()))) if 'track' in d else print('ERR:',d)\"\necho '--- Pochette 103 ---'\ncurl -s -o /dev/null -w 'HTTP %{http_code} type=%{content_type} size=%{size_download}' 'http://localhost:5003/api/streaming/tracks/103/pochette'",
+			"group": "test"
 		}
 	]
 }

@@ -2405,7 +2405,7 @@ export default function ArtistPortalWelcome() {
                         </div>
                       </div>
                       <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 font-mono text-lg font-bold tracking-wider">
-                        VA_NK_E_20260115_8F3A1B
+                        VA_NK-E_150126_A2V2F5.n
                       </p>
                     </div>
 
