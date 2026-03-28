@@ -860,7 +860,7 @@ export default function AudioPlayer() {
               </button>
 
               {/* Volume */}
-              <div className="hidden md:flex items-center gap-1 group">
+              <div className="flex items-center gap-1 group">
                 <button
                   onClick={audio.toggleMute}
                   className="text-gray-400 hover:text-white transition-colors"
