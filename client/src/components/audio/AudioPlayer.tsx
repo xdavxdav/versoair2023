@@ -124,7 +124,96 @@ export default function AudioPlayer() {
   const [showSpeed, setShowSpeed] = useState(false);
   const [tiroirMode, setTiroirMode] = useState(false);
   const [tiroirOpen, setTiroirOpen] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const expandedBarRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+  const activeBarRef = useRef<HTMLDivElement | null>(null);
+
+  // ── Drag-to-seek: compute percent from pointer position relative to a bar ──
+  const getPercentFromEvent = useCallback(
+    (clientX: number, bar: HTMLDivElement | null) => {
+      if (!bar) return null;
+      const rect = bar.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    },
+    [],
+  );
+
+  const seekFromEvent = useCallback(
+    (clientX: number) => {
+      const pct = getPercentFromEvent(clientX, activeBarRef.current);
+      if (pct !== null) audio.seekPercent(pct);
+    },
+    [audio, getPercentFromEvent],
+  );
+
+  // Mouse handlers
+  const handleBarMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>, barRef: React.RefObject<HTMLDivElement | null>) => {
+      e.preventDefault();
+      activeBarRef.current = barRef.current;
+      draggingRef.current = true;
+      setIsDragging(true);
+      // Seek immediately on mousedown
+      const pct = getPercentFromEvent(e.clientX, barRef.current);
+      if (pct !== null) audio.seekPercent(pct);
+    },
+    [audio, getPercentFromEvent],
+  );
+
+  // Touch handlers
+  const handleBarTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>, barRef: React.RefObject<HTMLDivElement | null>) => {
+      activeBarRef.current = barRef.current;
+      draggingRef.current = true;
+      setIsDragging(true);
+      const touch = e.touches[0];
+      const pct = getPercentFromEvent(touch.clientX, barRef.current);
+      if (pct !== null) audio.seekPercent(pct);
+    },
+    [audio, getPercentFromEvent],
+  );
+
+  // Global mousemove/mouseup/touchmove/touchend listeners
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      const pct = getPercentFromEvent(e.clientX, activeBarRef.current);
+      if (pct !== null) audio.seekPercent(pct);
+    };
+    const handleMouseUp = () => {
+      if (draggingRef.current) {
+        draggingRef.current = false;
+        setIsDragging(false);
+        activeBarRef.current = null;
+      }
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!draggingRef.current) return;
+      const touch = e.touches[0];
+      const pct = getPercentFromEvent(touch.clientX, activeBarRef.current);
+      if (pct !== null) audio.seekPercent(pct);
+    };
+    const handleTouchEnd = () => {
+      if (draggingRef.current) {
+        draggingRef.current = false;
+        setIsDragging(false);
+        activeBarRef.current = null;
+      }
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [audio, getPercentFromEvent]);
 
   // Detect if we're on a page with ContentNav (blog, marketplace, etc.)
   // so we can switch to tiroir (drawer) mode
@@ -171,15 +260,17 @@ export default function AudioPlayer() {
     );
   }, [audio.currentTrack]);
 
+  // Fallback click handler (drag handlers are primary for the bottom/expanded bars)
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const bar = progressBarRef.current;
-      if (!bar) return;
+      // Skip if this was the end of a drag
+      if (isDragging) return;
+      const bar = e.currentTarget;
       const rect = bar.getBoundingClientRect();
       const percent = (e.clientX - rect.left) / rect.width;
       audio.seekPercent(Math.max(0, Math.min(1, percent)));
     },
-    [audio],
+    [audio, isDragging],
   );
 
   // Don't render if no track
@@ -411,19 +502,24 @@ export default function AudioPlayer() {
               />
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar — draggable */}
             <div className="w-full max-w-md px-8 mb-4">
               <div
-                ref={progressBarRef}
+                ref={expandedBarRef}
                 className="w-full h-2 bg-gray-700 rounded-full cursor-pointer relative group"
+                onMouseDown={(e) => handleBarMouseDown(e, expandedBarRef)}
+                onTouchStart={(e) => handleBarTouchStart(e, expandedBarRef)}
                 onClick={handleProgressClick}
               >
                 <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full relative"
-                  style={{ width: `${audio.progress * 100}%` }}
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                  style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+                />
+                {/* Draggable thumb — always visible in expanded mode */}
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg shadow-black/30 ring-2 ring-amber-400/50 cursor-grab active:cursor-grabbing active:scale-110 transition-transform"
+                  style={{ left: `${audio.progress * 100}%`, marginLeft: -10 }}
+                />
               </div>
               <div className="flex justify-between mt-1 text-xs text-gray-500">
                 <span>{formatTime(audio.currentTime)}</span>
@@ -496,15 +592,23 @@ export default function AudioPlayer() {
             )}
           </button>
 
-          {/* Thin progress bar */}
+          {/* Thin progress bar — draggable */}
           <div
-            className="w-full h-1 bg-gray-800 cursor-pointer rounded-tl-xl overflow-hidden"
+            className="w-full h-3 bg-gray-800 cursor-pointer rounded-tl-xl relative flex items-center group"
+            onMouseDown={(e) => handleBarMouseDown(e, progressBarRef)}
+            onTouchStart={(e) => handleBarTouchStart(e, progressBarRef)}
             onClick={handleProgressClick}
             ref={!expanded ? progressBarRef : undefined}
           >
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+              />
+            </div>
             <div
-              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
-              style={{ width: `${audio.progress * 100}%` }}
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-amber-400 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `${audio.progress * 100}%`, marginLeft: -5, ...(isDragging ? { opacity: 1 } : {}) }}
             />
           </div>
 
@@ -549,19 +653,29 @@ export default function AudioPlayer() {
         </motion.div>
       ) : (
         <div className="fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
-          {/* Progress bar (thin, clickable) */}
+          {/* Progress bar (draggable scrubber) */}
           <div
-            className="w-full h-1 bg-gray-800 cursor-pointer group relative"
+            className="w-full h-3 bg-transparent cursor-pointer group relative flex items-center"
+            onMouseDown={(e) => handleBarMouseDown(e, progressBarRef)}
+            onTouchStart={(e) => handleBarTouchStart(e, progressBarRef)}
             onClick={handleProgressClick}
             ref={!expanded ? progressBarRef : undefined}
           >
+            {/* Track rail */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                style={{ width: `${audio.progress * 100}%`, transition: isDragging ? 'none' : 'width 150ms' }}
+              />
+            </div>
+            {/* Draggable thumb */}
             <div
-              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-150"
-              style={{ width: `${audio.progress * 100}%` }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: `${audio.progress * 100}%`, marginLeft: -6 }}
+              className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-amber-400 rounded-full shadow-lg shadow-black/40 transition-all cursor-grab active:cursor-grabbing ${
+                isDragging
+                  ? 'opacity-100 scale-125'
+                  : 'opacity-0 group-hover:opacity-100 scale-100'
+              }`}
+              style={{ left: `${audio.progress * 100}%`, marginLeft: -7 }}
             />
           </div>
 

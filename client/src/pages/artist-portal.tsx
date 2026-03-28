@@ -831,10 +831,10 @@ export default function ArtistPortal() {
     musicalKey: "",
     price: "",
     lyrics: "",
-    pochette: "",       // base64 data-URI for cover image
-    btsContent: "",     // Behind The Scenes
-    flopNotes: "",      // FLOP — outtakes, fails, funny stories
-    credits: "",        // Production credits, featured artists
+    pochette: "", // base64 data-URI for cover image
+    btsContent: "", // Behind The Scenes
+    flopNotes: "", // FLOP — outtakes, fails, funny stories
+    credits: "", // Production credits, featured artists
     recordingLocation: "",
   });
   const [editSaving, setEditSaving] = useState(false);
@@ -855,24 +855,30 @@ export default function ArtistPortal() {
       btsContent: (track as any).btsContent || (track as any).bts_content || "",
       flopNotes: (track as any).flopNotes || (track as any).flop_notes || "",
       credits: (track as any).credits || "",
-      recordingLocation: (track as any).recordingLocation || (track as any).recording_location || "",
+      recordingLocation:
+        (track as any).recordingLocation ||
+        (track as any).recording_location ||
+        "",
     });
   }, []);
 
-  const handlePochetteUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image trop grande (max 5 MB)");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setEditForm(prev => ({ ...prev, pochette: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }, []);
+  const handlePochetteUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image trop grande (max 5 MB)");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditForm((prev) => ({ ...prev, pochette: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    [],
+  );
 
   const handleSaveEdit = useCallback(async () => {
     if (!editingTrack) return;
@@ -885,7 +891,9 @@ export default function ArtistPortal() {
         await initializeCsrfToken();
         csrf = getCsrfToken();
       }
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
       if (csrf) headers["x-csrf-token"] = csrf;
       const token = getAuthToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -1876,16 +1884,26 @@ export default function ArtistPortal() {
                 <CardContent className="p-0">
                   <div className="relative aspect-square bg-gradient-to-br from-purple-500/20 to-pink-500/20">
                     {/* Pochette background if available */}
-                    {((track as any).pochette || (track as any).cover_art || (track as any).coverArt) && (
+                    {((track as any).pochette ||
+                      (track as any).cover_art ||
+                      (track as any).coverArt) && (
                       <img
-                        src={(track as any).pochette || (track as any).cover_art || (track as any).coverArt}
+                        src={
+                          (track as any).pochette ||
+                          (track as any).cover_art ||
+                          (track as any).coverArt
+                        }
                         alt=""
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                     )}
                     <div className="absolute inset-0 flex items-center justify-center">
                       {hasAudio ? (
-                        !((track as any).pochette || (track as any).cover_art || (track as any).coverArt) && (
+                        !(
+                          (track as any).pochette ||
+                          (track as any).cover_art ||
+                          (track as any).coverArt
+                        ) && (
                           <div className="text-center">
                             <Music2 className="h-14 w-14 text-purple-400/60 mx-auto" />
                             <span className="text-[10px] text-green-400/70 mt-1 block">
@@ -2104,14 +2122,20 @@ export default function ArtistPortal() {
                       </div>
                     </div>
                     {/* BTS / FLOP / Credits badges */}
-                    {((track as any).btsContent || (track as any).bts_content || (track as any).flopNotes || (track as any).flop_notes || (track as any).credits) && (
+                    {((track as any).btsContent ||
+                      (track as any).bts_content ||
+                      (track as any).flopNotes ||
+                      (track as any).flop_notes ||
+                      (track as any).credits) && (
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {((track as any).btsContent || (track as any).bts_content) && (
+                        {((track as any).btsContent ||
+                          (track as any).bts_content) && (
                           <Badge className="bg-blue-500/20 text-blue-300 text-[9px] border-blue-500/30">
                             <Video className="h-2.5 w-2.5 mr-0.5" /> BTS
                           </Badge>
                         )}
-                        {((track as any).flopNotes || (track as any).flop_notes) && (
+                        {((track as any).flopNotes ||
+                          (track as any).flop_notes) && (
                           <Badge className="bg-red-500/20 text-red-300 text-[9px] border-red-500/30">
                             <Zap className="h-2.5 w-2.5 mr-0.5" /> FLOP
                           </Badge>
@@ -3580,7 +3604,12 @@ export default function ArtistPortal() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* EDIT TRACK DIALOG                                          */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <Dialog open={!!editingTrack} onOpenChange={(open) => { if (!open) setEditingTrack(null); }}>
+      <Dialog
+        open={!!editingTrack}
+        onOpenChange={(open) => {
+          if (!open) setEditingTrack(null);
+        }}
+      >
         <DialogContent className="bg-gray-950 border-purple-500/30 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
@@ -3605,11 +3634,17 @@ export default function ArtistPortal() {
                   className="w-28 h-28 rounded-xl border-2 border-dashed border-purple-500/30 hover:border-purple-400/60 bg-purple-500/5 flex items-center justify-center transition-all overflow-hidden group"
                 >
                   {editForm.pochette ? (
-                    <img src={editForm.pochette} alt="Pochette" className="w-full h-full object-cover" />
+                    <img
+                      src={editForm.pochette}
+                      alt="Pochette"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="text-center">
                       <Camera className="h-6 w-6 text-purple-400/60 mx-auto group-hover:text-purple-300" />
-                      <span className="text-[10px] text-purple-300/50 mt-1 block">Ajouter</span>
+                      <span className="text-[10px] text-purple-300/50 mt-1 block">
+                        Ajouter
+                      </span>
                     </div>
                   )}
                 </button>
@@ -3618,7 +3653,9 @@ export default function ArtistPortal() {
                   {editForm.pochette && (
                     <button
                       type="button"
-                      onClick={() => setEditForm(prev => ({ ...prev, pochette: "" }))}
+                      onClick={() =>
+                        setEditForm((prev) => ({ ...prev, pochette: "" }))
+                      }
                       className="text-red-400 hover:text-red-300 text-xs underline"
                     >
                       Supprimer l'image
@@ -3634,7 +3671,9 @@ export default function ArtistPortal() {
                 <Label className="text-purple-200 text-sm">Titre</Label>
                 <Input
                   value={editForm.title}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="Nom du titre"
                 />
@@ -3643,7 +3682,9 @@ export default function ArtistPortal() {
                 <Label className="text-purple-200 text-sm">Genre</Label>
                 <Input
                   value={editForm.genre}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, genre: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, genre: e.target.value }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="Hip-Hop, Pop, R&B..."
                 />
@@ -3657,7 +3698,9 @@ export default function ArtistPortal() {
                 <Input
                   type="number"
                   value={editForm.bpm}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, bpm: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, bpm: e.target.value }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="128"
                 />
@@ -3666,7 +3709,12 @@ export default function ArtistPortal() {
                 <Label className="text-purple-200 text-sm">Tonalité</Label>
                 <Input
                   value={editForm.musicalKey}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, musicalKey: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      musicalKey: e.target.value,
+                    }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="C Major, A Minor..."
                 />
@@ -3675,7 +3723,9 @@ export default function ArtistPortal() {
                 <Label className="text-purple-200 text-sm">Prix ($)</Label>
                 <Input
                   value={editForm.price}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, price: e.target.value }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="0.99"
                 />
@@ -3690,7 +3740,9 @@ export default function ArtistPortal() {
                 </Label>
                 <Input
                   value={editForm.mood}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, mood: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, mood: e.target.value }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="Chill, Energetic, Dark..."
                 />
@@ -3701,7 +3753,12 @@ export default function ArtistPortal() {
                 </Label>
                 <Input
                   value={editForm.recordingLocation}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, recordingLocation: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      recordingLocation: e.target.value,
+                    }))
+                  }
                   className="bg-white/5 border-white/10 text-white"
                   placeholder="Studio X, Paris..."
                 />
@@ -3713,7 +3770,12 @@ export default function ArtistPortal() {
               <Label className="text-purple-200 text-sm">Description</Label>
               <Textarea
                 value={editForm.description}
-                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="bg-white/5 border-white/10 text-white min-h-[70px]"
                 placeholder="À propos de ce titre..."
               />
@@ -3722,11 +3784,14 @@ export default function ArtistPortal() {
             {/* ── Credits ── */}
             <div className="space-y-1.5">
               <Label className="text-purple-200 text-sm font-semibold flex items-center gap-2">
-                <Award className="h-4 w-4 text-amber-400" /> Crédits & Collaborateurs
+                <Award className="h-4 w-4 text-amber-400" /> Crédits &
+                Collaborateurs
               </Label>
               <Textarea
                 value={editForm.credits}
-                onChange={(e) => setEditForm(prev => ({ ...prev, credits: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, credits: e.target.value }))
+                }
                 className="bg-white/5 border-white/10 text-white min-h-[60px]"
                 placeholder="Prod: ..., Mix: ..., feat. ..."
               />
@@ -3735,12 +3800,20 @@ export default function ArtistPortal() {
             {/* ── BTS (Behind The Scenes) ── */}
             <div className="space-y-1.5">
               <Label className="text-purple-200 text-sm font-semibold flex items-center gap-2">
-                <Video className="h-4 w-4 text-blue-400" /> BTS — Behind The Scenes
+                <Video className="h-4 w-4 text-blue-400" /> BTS — Behind The
+                Scenes
               </Label>
-              <p className="text-purple-300/40 text-xs -mt-1">L'histoire derrière la création, les anecdotes de studio</p>
+              <p className="text-purple-300/40 text-xs -mt-1">
+                L'histoire derrière la création, les anecdotes de studio
+              </p>
               <Textarea
                 value={editForm.btsContent}
-                onChange={(e) => setEditForm(prev => ({ ...prev, btsContent: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    btsContent: e.target.value,
+                  }))
+                }
                 className="bg-white/5 border-white/10 text-white min-h-[80px]"
                 placeholder="L'histoire de cette chanson..."
               />
@@ -3751,10 +3824,17 @@ export default function ArtistPortal() {
               <Label className="text-purple-200 text-sm font-semibold flex items-center gap-2">
                 <Zap className="h-4 w-4 text-red-400" /> FLOP — Outtakes & Fails
               </Label>
-              <p className="text-purple-300/40 text-xs -mt-1">Les moments ratés, les prises hilarantes, les faux départs</p>
+              <p className="text-purple-300/40 text-xs -mt-1">
+                Les moments ratés, les prises hilarantes, les faux départs
+              </p>
               <Textarea
                 value={editForm.flopNotes}
-                onChange={(e) => setEditForm(prev => ({ ...prev, flopNotes: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    flopNotes: e.target.value,
+                  }))
+                }
                 className="bg-white/5 border-white/10 text-white min-h-[80px]"
                 placeholder="On a dû refaire le refrain 47 fois..."
               />
@@ -3767,7 +3847,9 @@ export default function ArtistPortal() {
               </Label>
               <Textarea
                 value={editForm.lyrics}
-                onChange={(e) => setEditForm(prev => ({ ...prev, lyrics: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, lyrics: e.target.value }))
+                }
                 className="bg-white/5 border-white/10 text-white min-h-[100px] font-mono text-sm"
                 placeholder="Verse 1:\n..."
               />
