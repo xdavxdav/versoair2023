@@ -129,6 +129,8 @@ export default function AudioPlayer() {
   const expandedBarRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
   const activeBarRef = useRef<HTMLDivElement | null>(null);
+  const speedBtnRef = useRef<HTMLButtonElement>(null);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
 
   // ── Drag-to-seek: compute percent from pointer position relative to a bar ──
   const getPercentFromEvent = useCallback(
@@ -214,6 +216,21 @@ export default function AudioPlayer() {
       document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [audio, getPercentFromEvent]);
+
+  // Close speed menu on click outside
+  useEffect(() => {
+    if (!showSpeed) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node) &&
+        speedBtnRef.current && !speedBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowSpeed(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSpeed]);
 
   // Detect if we're on a page with ContentNav (blog, marketplace, etc.)
   // so we can switch to tiroir (drawer) mode
@@ -405,15 +422,25 @@ export default function AudioPlayer() {
         )}
       </AnimatePresence>
 
-      {/* Speed Menu */}
+      {/* Speed Menu — anchored above the speed button */}
       <AnimatePresence>
         {showSpeed && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            ref={speedMenuRef}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="fixed bottom-24 right-36 bg-gray-800 rounded-lg border border-gray-700 shadow-xl z-[91] overflow-hidden"
+            exit={{ opacity: 0, y: 8 }}
+            className="fixed bg-gray-800 rounded-xl border border-gray-700/80 shadow-2xl z-[101] overflow-hidden py-1 min-w-[100px]"
+            style={{
+              bottom: (speedBtnRef.current
+                ? window.innerHeight - speedBtnRef.current.getBoundingClientRect().top + 8
+                : 96),
+              right: (speedBtnRef.current
+                ? window.innerWidth - speedBtnRef.current.getBoundingClientRect().right
+                : 144),
+            }}
           >
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 font-medium">Vitesse</div>
             {speeds.map((s) => (
               <button
                 key={s}
@@ -421,13 +448,13 @@ export default function AudioPlayer() {
                   audio.setPlaybackRate(s);
                   setShowSpeed(false);
                 }}
-                className={`block w-full px-4 py-2 text-sm text-left hover:bg-gray-700 transition-colors ${
+                className={`block w-full px-4 py-2 text-sm text-left hover:bg-gray-700/60 transition-colors ${
                   audio.playbackRate === s
-                    ? "text-amber-400 bg-amber-400/10"
+                    ? "text-amber-400 bg-amber-400/10 font-semibold"
                     : "text-gray-300"
                 }`}
               >
-                {s}x
+                {s === 1 ? "1x (Normal)" : `${s}x`}
               </button>
             ))}
           </motion.div>
@@ -563,6 +590,23 @@ export default function AudioPlayer() {
               >
                 {repeatIcon()}
               </button>
+            </div>
+
+            {/* Speed selector row in expanded view */}
+            <div className="flex items-center gap-2 mt-4">
+              {speeds.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => audio.setPlaybackRate(s)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    audio.playbackRate === s
+                      ? "bg-amber-500 text-black shadow-lg shadow-amber-500/30"
+                      : "bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700"
+                  }`}
+                >
+                  {s === 1 ? "1×" : `${s}×`}
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
@@ -774,12 +818,19 @@ export default function AudioPlayer() {
             <div className="flex items-center gap-2 flex-shrink-0">
               {/* Speed */}
               <button
+                ref={speedBtnRef}
                 onClick={() => setShowSpeed(!showSpeed)}
-                className="hidden sm:flex items-center text-xs text-gray-400 hover:text-white transition-colors"
+                className={`hidden sm:flex items-center text-xs transition-colors ${
+                  showSpeed || audio.playbackRate !== 1
+                    ? "text-amber-400"
+                    : "text-gray-400 hover:text-white"
+                }`}
                 title="Vitesse de lecture"
               >
                 <Gauge className="w-3.5 h-3.5 mr-0.5" />
-                {audio.playbackRate !== 1 && <span>{audio.playbackRate}x</span>}
+                {audio.playbackRate !== 1 && (
+                  <span className="font-semibold">{audio.playbackRate}x</span>
+                )}
               </button>
 
               {/* Volume */}

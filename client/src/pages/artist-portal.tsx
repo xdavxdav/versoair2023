@@ -1198,7 +1198,7 @@ export default function ArtistPortal() {
         artist_name: artistName,
         duration: track.duration || 0,
         file_path: (track as any).file_path || "uploaded",
-        cover_art: (track as any).coverArt || null,
+        cover_art: (track as any).pochette || (track as any).coverArt || (track as any).cover_art || null,
         genre: (track as any).genre || null,
       });
       // Start royalty tracking
