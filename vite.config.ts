@@ -68,9 +68,15 @@ export default defineConfig({
     },
   },
 
-  // ✅ Fix global variable issues
+  // ✅ Fix global variable issues + production API URL override.
+  // In production, force VITE_API_URL to "" so all fetch() calls use relative
+  // paths (same-origin). This prevents stale localhost:5003 URLs being baked
+  // into the bundle when the env var isn't set correctly on Render/Vercel.
   define: {
     "process.env": {},
     global: "window",
+    ...(process.env.NODE_ENV === "production"
+      ? { "import.meta.env.VITE_API_URL": JSON.stringify("") }
+      : {}),
   },
 });
