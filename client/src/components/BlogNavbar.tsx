@@ -230,6 +230,17 @@ export default function BlogNavbar({
                   🎵
                 </a>
               </Link>
+              <Link href="/arcade">
+                <a
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
+                    currentPath === "/arcade"
+                      ? "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30"
+                      : "text-slate-400 hover:text-fuchsia-300 hover:bg-fuchsia-500/10"
+                  }`}
+                >
+                  🎮
+                </a>
+              </Link>
               <Link href="/versoai">
                 <a
                   className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${

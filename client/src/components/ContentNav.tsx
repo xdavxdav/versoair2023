@@ -104,6 +104,22 @@ const GROUPS = [
     ],
   },
   {
+    key: "play",
+    label: "Play",
+    Icon: Play,
+    match: (p: string) =>
+      p.startsWith("/stream") ||
+      p.startsWith("/arcade") ||
+      p.startsWith("/arena") ||
+      p.startsWith("/library"),
+    items: [
+      { href: "/stream", label: "🎵 Stream Music" },
+      { href: "/arcade", label: "🎮 Arcade (PvP)" },
+      { href: "/arena", label: "🏆 Arena Contests" },
+      { href: "/library", label: "📚 My Library" },
+    ],
+  },
+  {
     key: "create",
     label: "Create",
     Icon: Palette,
@@ -525,7 +541,7 @@ export default function ContentNav() {
         {isHolding && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: holdProgress / 100 * 0.85 }}
+            animate={{ opacity: (holdProgress / 100) * 0.85 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
@@ -558,7 +574,13 @@ export default function ContentNav() {
                   style={{ transition: "stroke-dashoffset 0.05s linear" }}
                 />
                 <defs>
-                  <linearGradient id="holdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient
+                    id="holdGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#22d3ee" />
                     <stop offset="100%" stopColor="#a855f7" />
                   </linearGradient>
