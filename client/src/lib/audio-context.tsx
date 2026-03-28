@@ -338,7 +338,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             track.cover_art || track.pochette || track.album_cover
               ? [
                   {
-                    src: track.cover_art || track.pochette || track.album_cover || "",
+                    src:
+                      track.cover_art ||
+                      track.pochette ||
+                      track.album_cover ||
+                      "",
                     sizes: "512x512",
                     type: "image/jpeg",
                   },
