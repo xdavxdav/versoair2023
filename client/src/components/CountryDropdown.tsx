@@ -182,11 +182,13 @@ export function CountryDropdown() {
     queryKey: ["countries-list"],
     queryFn: async () => {
       const res = await fetch(`${API_BASE_URL}/api/countries`);
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`Countries fetch failed: ${res.status}`);
       const json = await res.json();
       return Array.isArray(json) ? json : json.data || [];
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5,  // 5 min
+    retry: 4,
+    retryDelay: 1500,
   });
 
   useEffect(() => {
