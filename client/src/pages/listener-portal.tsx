@@ -361,6 +361,29 @@ export default function ListenerPortal() {
                 ))}
               </div>
 
+              {/* Arena Contest Quick Access */}
+              <motion.div variants={staggerItem}>
+                <Card 
+                  className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-amber-500/40 hover:border-amber-400/60 cursor-pointer transition-all group"
+                  onClick={() => navigate("/arena")}
+                >
+                  <CardContent className="p-5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors">
+                        <Trophy className="h-7 w-7 text-amber-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-semibold text-lg">Arena Contests</h3>
+                        <p className="text-amber-200/80 text-sm">Vote for artists, earn XP & win prediction bonuses</p>
+                      </div>
+                    </div>
+                    <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+                      Enter Arena <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
               {(stats?.pendingBonuses?.filter((b) => !b.claimed).length || 0) >
                 0 && (
                 <motion.div variants={staggerItem}>
