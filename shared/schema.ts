@@ -1222,6 +1222,11 @@ export const streamingPlans = pgTable("streaming_plans", {
   streamLimit: integer("stream_limit"), // null = unlimited
   poolContributionPercent: integer("pool_contribution_percent").notNull(), // 70, 75, 80
   boostCredits: integer("boost_credits").default(0), // 0, 5, 20
+  // ── Preview Mode Fields ──
+  previewDurationSeconds: integer("preview_duration_seconds").default(30), // 30s preview clip
+  previewBitrate: integer("preview_bitrate").default(128), // 128kbps free, 192kbps paid
+  paylistAccess: boolean("paylist_access").default(false), // Can access exclusive paylist
+  paylistTier: integer("paylist_tier").default(0), // 0=none, 1=basic, 2=full, 3=vip
   stripePriceId: varchar("stripe_price_id", { length: 255 }),
   stripeProductId: varchar("stripe_product_id", { length: 255 }),
   isActive: boolean("is_active").default(true),
@@ -1259,6 +1264,60 @@ export const listenerSubscriptions = pgTable(
     statusIdx: index("listener_subs_status_idx").on(t.status),
   }),
 );
+
+// --- PAYLIST ITEMS (Exclusive/Curated Tracks) ---
+export const paylistItems = pgTable(
+  "paylist_items",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    minTierRequired: integer("min_tier_required").default(0), // 0=free preview, 1=Supporter, 2=Champion, 3=Patron
+    isExclusive: boolean("is_exclusive").default(false), // Platform exclusive flag
+    curatedRank: integer("curated_rank").default(0), // Sort order for display
+    releaseDate: timestamp("release_date"), // For early access gating
+    expiresAt: timestamp("expires_at"), // Optional expiration for limited drops
+    description: text("description"),
+    badgeText: varchar("badge_text", { length: 30 }), // "Exclusive", "Early Access", "Patron Only"
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("paylist_items_track_idx").on(t.trackId),
+    tierIdx: index("paylist_items_tier_idx").on(t.minTierRequired),
+    rankIdx: index("paylist_items_rank_idx").on(t.curatedRank),
+    releaseIdx: index("paylist_items_release_idx").on(t.releaseDate),
+  }),
+);
+
+export type PaylistItem = typeof paylistItems.$inferSelect;
+export type InsertPaylistItem = typeof paylistItems.$inferInsert;
+
+// --- PAYLIST ACCESS LOG (Analytics) ---
+export const paylistAccessLog = pgTable(
+  "paylist_access_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    trackId: integer("track_id").references(() => musicTracks.id, {
+      onDelete: "cascade",
+    }),
+    accessType: varchar("access_type", { length: 20 }).notNull(), // 'preview' | 'full'
+    tierAtAccess: varchar("tier_at_access", { length: 20 }), // User's tier when accessed
+    accessedAt: timestamp("accessed_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("paylist_access_user_idx").on(t.userId),
+    trackIdx: index("paylist_access_track_idx").on(t.trackId),
+    typeIdx: index("paylist_access_type_idx").on(t.accessType),
+  }),
+);
+
+export type PaylistAccessLog = typeof paylistAccessLog.$inferSelect;
+export type InsertPaylistAccessLog = typeof paylistAccessLog.$inferInsert;
 
 // --- STREAM EVENTS (Individual validated stream records) ---
 export const streamEvents = pgTable(

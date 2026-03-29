@@ -316,3 +316,52 @@ export function useStreamingSearch(query: string) {
     staleTime: 30_000,
   });
 }
+
+// ═══════════════════════════════════════════════════════════
+// BUDGET & QUOTA
+// ═══════════════════════════════════════════════════════════
+
+export function useStreamingBudget() {
+  return useQuery({
+    queryKey: ["streaming-budget"],
+    queryFn: () => fetchJson(`${BASE}/budget`),
+    staleTime: 30_000,
+    refetchInterval: 60_000, // Refresh budget every minute
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// PREVIEW MODE
+// ═══════════════════════════════════════════════════════════
+
+export function useTrackPreview(trackId: number | string | undefined) {
+  return useQuery({
+    queryKey: ["streaming-preview", trackId],
+    queryFn: () => fetchJson(`${BASE}/tracks/${trackId}/preview`),
+    enabled: !!trackId,
+    staleTime: 60_000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// PAYLIST (Exclusive Content)
+// ═══════════════════════════════════════════════════════════
+
+export function usePaylist() {
+  return useQuery({
+    queryKey: ["streaming-paylist"],
+    queryFn: () => fetchJson(`${BASE}/paylist`),
+    staleTime: 60_000,
+  });
+}
+
+export function usePaylistAccess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (trackId: number) => postJson(`${BASE}/paylist/${trackId}/access`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["streaming-paylist"] });
+      qc.invalidateQueries({ queryKey: ["streaming-budget"] });
+    },
+  });
+}
