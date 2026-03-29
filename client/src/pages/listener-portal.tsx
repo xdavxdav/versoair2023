@@ -754,6 +754,117 @@ export default function ListenerPortal() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Subscription Tiers Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-10"
+        >
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Upgrade Your Experience</h2>
+            <p className="text-gray-400">Unlock premium features and earn more XP</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Free Tier */}
+            <motion.div
+              whileHover={{ scale: 1.02, y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className="bg-black/40 border-gray-500/30 hover:border-gray-400/50 transition-all relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent" />
+                <CardHeader className="relative">
+                  <div className="w-12 h-12 rounded-full bg-gray-500/20 flex items-center justify-center mb-3">
+                    <Headphones className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <CardTitle className="text-white text-xl">Free</CardTitle>
+                  <p className="text-gray-400 text-sm">Basic streaming access</p>
+                  <div className="text-2xl font-bold text-white mt-2">$0<span className="text-sm text-gray-500">/month</span></div>
+                </CardHeader>
+                <CardContent className="relative space-y-3">
+                  {["Stream music", "Earn XP from listening", "Join contests (vote)", "Basic badges"].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 text-gray-300 text-sm">
+                      <CheckCircle className="w-4 h-4 text-gray-500" />
+                      {feature}
+                    </div>
+                  ))}
+                  <Button variant="outline" className="w-full mt-4 border-gray-500/50 text-gray-400" disabled>
+                    Current Plan
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Pro Tier */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -6 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className="bg-black/40 border-purple-500/50 hover:border-purple-400/70 transition-all relative overflow-hidden ring-2 ring-purple-500/20 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-fuchsia-500/5" />
+                <div className="absolute top-0 right-0 px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-bl-lg">POPULAR</div>
+                <CardHeader className="relative">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 to-fuchsia-500/30 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                    <Crown className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <CardTitle className="text-white text-xl">Pro</CardTitle>
+                  <p className="text-purple-300 text-sm">Enhanced streaming perks</p>
+                  <div className="text-2xl font-bold text-white mt-2">$4.99<span className="text-sm text-gray-500">/month</span></div>
+                </CardHeader>
+                <CardContent className="relative space-y-3">
+                  {["All Free features", "2x XP earnings", "Exclusive badges", "Priority arena access", "Ad-free listening"].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 text-gray-200 text-sm">
+                      <CheckCircle className="w-4 h-4 text-purple-400" />
+                      {feature}
+                    </div>
+                  ))}
+                  <Button 
+                    className="w-full mt-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                    onClick={() => navigate("/subscribe?tier=pro")}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Upgrade to Pro
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Legend Tier */}
+            <motion.div
+              whileHover={{ scale: 1.02, y: -4 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className="bg-black/40 border-amber-500/50 hover:border-amber-400/70 transition-all relative overflow-hidden shadow-[0_0_25px_rgba(245,158,11,0.1)]">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/5" />
+                <CardHeader className="relative">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                    <Trophy className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <CardTitle className="text-white text-xl">Legend</CardTitle>
+                  <p className="text-amber-300 text-sm">Ultimate listener experience</p>
+                  <div className="text-2xl font-bold text-white mt-2">$9.99<span className="text-sm text-gray-500">/month</span></div>
+                </CardHeader>
+                <CardContent className="relative space-y-3">
+                  {["All Pro features", "5x XP earnings", "Legendary badges", "Kingmaker bonus (150 XP)", "Early contest access", "Exclusive NFT drops"].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 text-gray-200 text-sm">
+                      <CheckCircle className="w-4 h-4 text-amber-400" />
+                      {feature}
+                    </div>
+                  ))}
+                  <Button 
+                    className="w-full mt-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+                    onClick={() => navigate("/subscribe?tier=legend")}
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Go Legend
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
