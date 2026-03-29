@@ -43,6 +43,8 @@ import {
   Flame,
   Music2,
   Waves,
+  Trophy,
+  Gamepad2,
 } from "lucide-react";
 
 // ====================================================================
@@ -319,6 +321,18 @@ export default function StreamPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Link href="/arena">
+                <button className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30 rounded-xl hover:from-amber-500/30 hover:to-orange-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]">
+                  <Trophy className="w-4 h-4" />
+                  Arena
+                </button>
+              </Link>
+              <Link href="/arcade">
+                <button className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
+                  <Gamepad2 className="w-4 h-4" />
+                  Arcade
+                </button>
+              </Link>
               <Link href="/library">
                 <button className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm text-gray-400 hover:text-white bg-white/[0.03] backdrop-blur border border-white/10 rounded-xl hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
                   <Music2 className="w-3.5 h-3.5" />

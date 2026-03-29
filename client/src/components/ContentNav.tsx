@@ -841,14 +841,21 @@ export default function ContentNav() {
               <a
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold flex-shrink-0 transition-all hover:scale-105"
                 style={{
-                  background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(34,211,238,0.12))",
+                  background:
+                    "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(34,211,238,0.12))",
                   border: "1px solid rgba(99,179,237,0.35)",
                   color: "#7dd3fc",
-                  boxShadow: "0 0 12px rgba(59,130,246,0.25), 0 0 20px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+                  boxShadow:
+                    "0 0 12px rgba(59,130,246,0.25), 0 0 20px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
                   textShadow: "0 0 8px rgba(125,211,252,0.5)",
                 }}
               >
-                <UserCircle2 className="h-3.5 w-3.5" style={{ filter: "drop-shadow(0 0 4px rgba(125,211,252,0.6))" }} />
+                <UserCircle2
+                  className="h-3.5 w-3.5"
+                  style={{
+                    filter: "drop-shadow(0 0 4px rgba(125,211,252,0.6))",
+                  }}
+                />
                 Sign In
               </a>
             </Link>
