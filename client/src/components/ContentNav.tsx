@@ -473,9 +473,10 @@ export default function ContentNav() {
     user?.email?.split("@")[0] ??
     localStorage.getItem("blog_community_user") ??
     "User";
-  
+
   // Check if we're on an auth page (hide sign in button)
-  const isOnAuthPage = location.startsWith("/auth") || 
+  const isOnAuthPage =
+    location.startsWith("/auth") ||
     location.startsWith("/artist-portal-signin") ||
     location.startsWith("/admin/login");
 
@@ -838,12 +839,13 @@ export default function ContentNav() {
           ) : !isOnAuthPage ? (
             <Link href="/auth/signin">
               <a
-                className="px-3 py-1.5 rounded-full text-[11px] font-semibold text-cyan-300 flex-shrink-0 transition-all hover:text-cyan-200"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-cyan-300 flex-shrink-0 transition-all hover:text-cyan-200"
                 style={{
                   background: "rgba(34,211,238,0.08)",
                   border: "1px solid rgba(34,211,238,0.2)",
                 }}
               >
+                <UserCircle2 className="h-3.5 w-3.5" />
                 Sign In
               </a>
             </Link>
