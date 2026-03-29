@@ -198,6 +198,7 @@ const AnalyticsStreamingPage = lazy(
 const ArenaContestPage = lazy(() => import("@/pages/arena-contest"));
 const RevenuePulsePage = lazy(() => import("@/pages/revenue-pulse"));
 const ArcadePage = lazy(() => import("@/pages/arcade"));
+const ListenerPortal = lazy(() => import("@/pages/listener-portal"));
 
 // ─────────────────────────────────────────────────────
 // 📢 Marketing Platform (lazy-loaded)
@@ -513,6 +514,7 @@ function Router() {
       <Route path="/arena/:id" component={ArenaContestPage} />
       <Route path="/revenue-pulse" component={RevenuePulsePage} />
       <Route path="/arcade" component={ArcadePage} />
+      <Route path="/listener-portal" component={ListenerPortal} />
 
       {/* 404 Fallback */}
       <Route component={NotFound} />

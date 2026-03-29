@@ -1107,6 +1107,19 @@ export const artistProfiles = pgTable(
       precision: 4,
       scale: 2,
     }).default("0.00"), // badge bonus
+
+    // ── Contest Participation Tracking ──
+    contestParticipationRate: decimal("contest_participation_rate", {
+      precision: 5,
+      scale: 2,
+    }).default("0.00"), // % of streams during active contests (target: 20%+)
+    contestsEntered: integer("contests_entered").default(0),
+    contestsWon: integer("contests_won").default(0),
+    contestsSkipped: integer("contests_skipped").default(0), // eligible but didn't enter
+    lastContestAt: timestamp("last_contest_at"),
+    contestEligible: boolean("contest_eligible").default(false), // computed: badge ≥ Silver & participation ≥ 20%
+    contestExemptUntil: timestamp("contest_exempt_until"), // grace period for new artists
+
     // ── Unified Identity Links ──
     musicArtistId: integer("music_artist_id"), // → music_artists.id (catalog identity)
     legacyArtistId: integer("legacy_artist_id"), // → artists.id (directory identity, deprecated)
@@ -2290,6 +2303,68 @@ export const arenaVotes = pgTable(
   }),
 );
 
+// --- CONTEST PARTICIPATION REQUIREMENTS (Tier-based thresholds) ---
+export const contestParticipationRequirements = pgTable(
+  "contest_participation_requirements",
+  {
+    id: serial("id").primaryKey(),
+    division: varchar("division", { length: 20 }).notNull().unique(), // discovery | indie | pro | elite | signed | legend
+    minParticipationRate: decimal("min_participation_rate", {
+      precision: 5,
+      scale: 2,
+    }).default("0.00"), // % required
+    minBadgeTier: integer("min_badge_tier").default(1), // 1-7
+    contestsPerQuarter: integer("contests_per_quarter").default(0), // min contests to enter
+    exemptionPeriodDays: integer("exemption_period_days").default(90), // grace period for new artists
+    revenueMultiplier: decimal("revenue_multiplier", {
+      precision: 4,
+      scale: 2,
+    }).default("1.00"), // bonus for participation
+    penaltyMultiplier: decimal("penalty_multiplier", {
+      precision: 4,
+      scale: 2,
+    }).default("1.00"), // penalty for skipping
+    description: text("description"),
+    isActive: boolean("is_active").default(true),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    divisionIdx: index("contest_req_division_idx").on(t.division),
+  }),
+);
+
+// --- LISTENER CONTEST REWARDS (XP bonuses for voting correctly) ---
+export const listenerContestRewards = pgTable(
+  "listener_contest_rewards",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    contestId: integer("contest_id")
+      .references(() => arenaContests.id, { onDelete: "cascade" })
+      .notNull(),
+    artistProfileId: integer("artist_profile_id").references(
+      () => artistProfiles.id,
+      { onDelete: "cascade" },
+    ),
+    rewardType: varchar("reward_type", { length: 30 }).notNull(), // vote | prediction_correct | streak | kingmaker | underdog
+    xpAwarded: integer("xp_awarded").default(0),
+    claimed: boolean("claimed").default(false),
+    claimedAt: timestamp("claimed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_contest_rewards_user_idx").on(t.userId),
+    contestIdx: index("listener_contest_rewards_contest_idx").on(t.contestId),
+    uniqueReward: unique("listener_contest_rewards_unique").on(
+      t.userId,
+      t.contestId,
+      t.rewardType,
+    ),
+  }),
+);
+
 // --- VAULT RULES (Verso Vault — Exclusivity Engine for tracks) ---
 export const vaultRules = pgTable(
   "vault_rules",
@@ -2569,6 +2644,115 @@ export const insertGameMatchSchema = createInsertSchema(gameMatches);
 export const insertGameMoveSchema = createInsertSchema(gameMoves);
 export type GameMatch = typeof gameMatches.$inferSelect;
 export type GameMove = typeof gameMoves.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎧 LISTENER PORTAL — Stats, activity, bonuses, badges for streamers
+// ═══════════════════════════════════════════════════════════════════════════
+
+// --- LISTENER STATS (aggregate stats per user) ---
+export const listenerStats = pgTable(
+  "listener_stats",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    totalPoints: integer("total_points").default(0),
+    totalListenTime: integer("total_listen_time").default(0), // minutes
+    tracksPlayed: integer("tracks_played").default(0),
+    artistsDiscovered: integer("artists_discovered").default(0),
+    currentStreak: integer("current_streak").default(0), // consecutive days
+    longestStreak: integer("longest_streak").default(0),
+    lastActive: timestamp("last_active").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_stats_user_idx").on(t.userId),
+  }),
+);
+
+// --- LISTENER ACTIVITY (XP earning events) ---
+export const listenerActivity = pgTable(
+  "listener_activity",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    activityType: varchar("activity_type", { length: 30 }).notNull(), // listen | achievement | vote | prediction | bonus | streak
+    description: text("description"),
+    pointsEarned: integer("points_earned").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_activity_user_idx").on(t.userId),
+    typeIdx: index("listener_activity_type_idx").on(t.activityType),
+  }),
+);
+
+// --- LISTENER BONUSES (claimable rewards) ---
+export const listenerBonuses = pgTable(
+  "listener_bonuses",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    bonusType: varchar("bonus_type", { length: 30 }).notNull(), // streak | prediction | milestone | welcome | event
+    amount: integer("amount").notNull(), // XP amount
+    description: text("description"),
+    expiresAt: timestamp("expires_at"),
+    claimed: boolean("claimed").default(false),
+    claimedAt: timestamp("claimed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_bonuses_user_idx").on(t.userId),
+    claimedIdx: index("listener_bonuses_claimed_idx").on(t.claimed),
+  }),
+);
+
+// --- LISTENER BADGES (achievements/trophies) ---
+export const listenerBadges = pgTable(
+  "listener_badges",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    badgeId: varchar("badge_id", { length: 50 }).notNull(), // unique badge identifier
+    name: varchar("name", { length: 100 }).notNull(),
+    description: text("description"),
+    icon: varchar("icon", { length: 10 }), // emoji
+    rarity: varchar("rarity", { length: 20 }).default("common"), // common | rare | epic | legendary
+    earnedAt: timestamp("earned_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("listener_badges_user_idx").on(t.userId),
+    uniqueBadge: unique("listener_badges_unique").on(t.userId, t.badgeId),
+  }),
+);
+
+export const insertListenerStatsSchema = createInsertSchema(listenerStats);
+export const insertListenerActivitySchema =
+  createInsertSchema(listenerActivity);
+export const insertListenerBonusesSchema = createInsertSchema(listenerBonuses);
+export const insertListenerBadgesSchema = createInsertSchema(listenerBadges);
+export const insertContestParticipationRequirementsSchema = createInsertSchema(
+  contestParticipationRequirements,
+);
+export const insertListenerContestRewardsSchema = createInsertSchema(
+  listenerContestRewards,
+);
+
+export type ListenerStats = typeof listenerStats.$inferSelect;
+export type ListenerActivity = typeof listenerActivity.$inferSelect;
+export type ListenerBonus = typeof listenerBonuses.$inferSelect;
+export type ListenerBadge = typeof listenerBadges.$inferSelect;
+export type ContestParticipationRequirement =
+  typeof contestParticipationRequirements.$inferSelect;
+export type ListenerContestReward = typeof listenerContestRewards.$inferSelect;
 
 export const insertContestVoteSchema = createInsertSchema(contestVotes);
 export const insertArtistSubscriptionSchema =

@@ -55,6 +55,20 @@ const BADGE_HIERARCHY = [
   "legendary_titan",
 ];
 
+// Contest participation constants
+const MIN_PARTICIPATION_RATE = 20; // 20% of streams during contests required
+const GRACE_PERIOD_DAYS = 90; // new artists exempt for 90 days
+const MIN_CONTESTS_PER_QUARTER = 2; // at least 2 contests per quarter for established artists
+
+// XP rewards for listeners
+const XP_REWARDS = {
+  VOTE: 25, // XP per vote cast
+  PREDICTION_CORRECT: 100, // voted for winner
+  STREAK_WEEKLY: 50, // voted in 4+ consecutive weeks
+  KINGMAKER: 150, // voted for 3+ different winners
+  UNDERDOG: 25, // supported eliminated artist (consolation)
+};
+
 // Helper: get ISO week number
 function getWeekNumber(date: Date): { week: number; year: number } {
   const d = new Date(
@@ -247,6 +261,7 @@ router.post(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /:id/enter — Artist enters contest (round 1)
+// Enhanced with participation rate checking and eligibility validation
 // ═══════════════════════════════════════════════════════════════════════════════
 router.post(
   "/:id/enter",
@@ -256,9 +271,11 @@ router.post(
       const userId = parseInt(req.user!.userId);
       const contestId = parseInt(req.params.id);
 
-      // Get artist profile with badge
+      // Get artist profile with badge and participation data
       const profile = await pool.query(
-        `SELECT id, current_badge_tier, lifetime_streams, stage_name
+        `SELECT id, current_badge_tier, lifetime_streams, stage_name, division,
+                contest_participation_rate, contests_entered, contests_skipped,
+                contest_exempt_until, created_at
          FROM artist_profiles WHERE user_id = $1 AND is_active = true`,
         [userId],
       );
@@ -277,6 +294,31 @@ router.post(
           success: false,
           error: `Silver badge or higher required (tier 3+). Your tier: ${badgeTier} (${BADGE_HIERARCHY[badgeTier - 1] || "unknown"})`,
         });
+      }
+
+      // Check if artist is in grace period (new artists exempt for 90 days)
+      const now = new Date();
+      const createdAt = new Date(artist.created_at);
+      const daysSinceCreation = Math.floor(
+        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const isInGracePeriod =
+        daysSinceCreation < GRACE_PERIOD_DAYS ||
+        (artist.contest_exempt_until &&
+          new Date(artist.contest_exempt_until) > now);
+
+      // Check participation rate for established artists (not in grace period)
+      const participationRate =
+        parseFloat(artist.contest_participation_rate) || 0;
+      if (
+        !isInGracePeriod &&
+        participationRate < MIN_PARTICIPATION_RATE &&
+        artist.lifetime_streams > 100000
+      ) {
+        // Warn but allow entry — track as "at risk"
+        console.log(
+          `[ARENA] Artist ${artist.stage_name} has low participation rate: ${participationRate}%`,
+        );
       }
 
       // Check contest is open for registration
@@ -324,6 +366,15 @@ router.post(
         [contestId, artist.id, seedPosition],
       );
 
+      // Update artist contest stats
+      await pool.query(
+        `UPDATE artist_profiles 
+         SET contests_entered = COALESCE(contests_entered, 0) + 1,
+             last_contest_at = NOW()
+         WHERE id = $1`,
+        [artist.id],
+      );
+
       // Auto-start when 16 artists enter
       if (currentCount + 1 >= 16) {
         await pool.query(
@@ -338,6 +389,8 @@ router.post(
         seedPosition,
         slotsRemaining: Math.max(0, 16 - currentCount - 1),
         contestStarted: currentCount + 1 >= 16,
+        participationRate: participationRate,
+        isInGracePeriod,
       });
     } catch (err: any) {
       console.error("[ARENA] Enter error:", err);
@@ -490,6 +543,40 @@ router.post("/:id/vote", requireAuth(), async (req: Request, res: Response) => {
       [contestId],
     );
 
+    // ── Award XP to listener for voting ──
+    // Only award XP once per unique vote (not per stream)
+    if (existingVote.rows.length === 0) {
+      // First vote for this artist — award 25 XP
+      await pool
+        .query(
+          `INSERT INTO listener_stats (user_id, total_points)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET
+           total_points = COALESCE(listener_stats.total_points, 0) + $2`,
+          [userId, XP_REWARDS.VOTE],
+        )
+        .catch(() => {});
+
+      // Log activity
+      await pool
+        .query(
+          `INSERT INTO listener_activity (user_id, activity_type, description, points_earned)
+         VALUES ($1, 'vote', $2, $3)`,
+          [userId, `Voted in arena contest`, XP_REWARDS.VOTE],
+        )
+        .catch(() => {});
+
+      // Create contest reward record for tracking
+      await pool
+        .query(
+          `INSERT INTO listener_contest_rewards (user_id, contest_id, artist_profile_id, reward_type, xp_awarded, claimed)
+         VALUES ($1, $2, $3, 'vote', $4, true)
+         ON CONFLICT ON CONSTRAINT listener_contest_rewards_unique DO NOTHING`,
+          [userId, contestId, artistProfileId, XP_REWARDS.VOTE],
+        )
+        .catch(() => {});
+    }
+
     res.json({
       success: true,
       message: isNewlyLocked
@@ -499,6 +586,7 @@ router.post("/:id/vote", requireAuth(), async (req: Request, res: Response) => {
       streamCount,
       isNewlyLocked,
       votesRemaining: MAX_VOTES_PER_LISTENER - totalUsed - 1,
+      xpAwarded: existingVote.rows.length === 0 ? XP_REWARDS.VOTE : 0,
       lockInfo: {
         threshold: LOCK_STREAM_THRESHOLD,
         graceWindowHours: SOFT_VOTE_WINDOW_HOURS,
@@ -800,6 +888,273 @@ router.get("/history", async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ success: false, error: "Failed to fetch arena history" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /eligible-artists — Artists eligible for upcoming contests
+// Returns artists with badge tier ≥ Silver (3) sorted by participation rate
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get("/eligible-artists", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+         ap.id,
+         ap.user_id,
+         ap.stage_name,
+         ap.profile_image_url,
+         ap.division,
+         ap.current_badge_tier,
+         ap.lifetime_streams,
+         ap.weekly_streams,
+         ap.contest_participation_rate,
+         ap.contests_entered,
+         ap.contests_won,
+         ap.contests_skipped,
+         ap.contest_exempt_until,
+         ap.created_at,
+         CASE 
+           WHEN ap.contest_exempt_until > NOW() THEN true
+           WHEN (NOW() - ap.created_at) < INTERVAL '90 days' THEN true
+           ELSE false
+         END as is_in_grace_period,
+         CASE
+           WHEN COALESCE(ap.contest_participation_rate, 0) >= 20 THEN 'compliant'
+           WHEN ap.contest_exempt_until > NOW() OR (NOW() - ap.created_at) < INTERVAL '90 days' THEN 'exempt'
+           ELSE 'at_risk'
+         END as participation_status
+       FROM artist_profiles ap
+       WHERE ap.is_active = true 
+         AND ap.current_badge_tier >= 3
+       ORDER BY ap.contest_participation_rate DESC NULLS LAST, ap.lifetime_streams DESC
+       LIMIT 100`,
+    );
+
+    res.json({
+      success: true,
+      artists: result.rows,
+      count: result.rows.length,
+      thresholds: {
+        minBadgeTier: 3,
+        minParticipationRate: MIN_PARTICIPATION_RATE,
+        gracePeriodDays: GRACE_PERIOD_DAYS,
+      },
+    });
+  } catch (err: any) {
+    console.error("[ARENA] Eligible artists error:", err);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch eligible artists" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /:id/award-predictions — Award XP to users who voted for winner (admin)
+// Called when a contest is completed
+// ═══════════════════════════════════════════════════════════════════════════════
+router.post(
+  "/:id/award-predictions",
+  requireAuth(["admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const contestId = parseInt(req.params.id);
+
+      // Get contest with winner
+      const contest = await pool.query(
+        `SELECT * FROM arena_contests WHERE id = $1 AND status = 'completed'`,
+        [contestId],
+      );
+      if (contest.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Contest not found or not completed",
+        });
+      }
+
+      const winnerId = contest.rows[0].winner_id;
+      if (!winnerId) {
+        return res.status(400).json({
+          success: false,
+          error: "Contest has no winner set",
+        });
+      }
+
+      // Find all users who voted for the winner
+      const votersResult = await pool.query(
+        `SELECT DISTINCT av.user_id 
+         FROM arena_votes av
+         WHERE av.contest_id = $1 AND av.artist_profile_id = $2`,
+        [contestId, winnerId],
+      );
+
+      let awardedCount = 0;
+
+      for (const voter of votersResult.rows) {
+        // Check if already awarded
+        const existing = await pool.query(
+          `SELECT id FROM listener_contest_rewards 
+           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'prediction_correct'`,
+          [voter.user_id, contestId],
+        );
+
+        if (existing.rows.length === 0) {
+          // Award prediction XP
+          await pool
+            .query(
+              `INSERT INTO listener_stats (user_id, total_points)
+             VALUES ($1, $2)
+             ON CONFLICT (user_id) DO UPDATE SET
+               total_points = COALESCE(listener_stats.total_points, 0) + $2`,
+              [voter.user_id, XP_REWARDS.PREDICTION_CORRECT],
+            )
+            .catch(() => {});
+
+          // Log activity
+          await pool
+            .query(
+              `INSERT INTO listener_activity (user_id, activity_type, description, points_earned)
+             VALUES ($1, 'prediction', $2, $3)`,
+              [
+                voter.user_id,
+                `Correct arena prediction! Voted for the winner`,
+                XP_REWARDS.PREDICTION_CORRECT,
+              ],
+            )
+            .catch(() => {});
+
+          // Create reward record
+          await pool
+            .query(
+              `INSERT INTO listener_contest_rewards (user_id, contest_id, artist_profile_id, reward_type, xp_awarded, claimed)
+             VALUES ($1, $2, $3, 'prediction_correct', $4, true)`,
+              [
+                voter.user_id,
+                contestId,
+                winnerId,
+                XP_REWARDS.PREDICTION_CORRECT,
+              ],
+            )
+            .catch(() => {});
+
+          awardedCount++;
+        }
+      }
+
+      // Also award underdog XP to those who supported eliminated artists (consolation)
+      const underdogResult = await pool.query(
+        `SELECT DISTINCT av.user_id, av.artist_profile_id
+         FROM arena_votes av
+         JOIN arena_brackets ab ON ab.contest_id = av.contest_id AND ab.artist_profile_id = av.artist_profile_id
+         WHERE av.contest_id = $1 AND ab.eliminated = true`,
+        [contestId],
+      );
+
+      let underdogCount = 0;
+      for (const underdog of underdogResult.rows) {
+        const existing = await pool.query(
+          `SELECT id FROM listener_contest_rewards 
+           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'underdog'`,
+          [underdog.user_id, contestId],
+        );
+
+        if (existing.rows.length === 0) {
+          await pool
+            .query(
+              `INSERT INTO listener_stats (user_id, total_points)
+             VALUES ($1, $2)
+             ON CONFLICT (user_id) DO UPDATE SET
+               total_points = COALESCE(listener_stats.total_points, 0) + $2`,
+              [underdog.user_id, XP_REWARDS.UNDERDOG],
+            )
+            .catch(() => {});
+
+          await pool
+            .query(
+              `INSERT INTO listener_activity (user_id, activity_type, description, points_earned)
+             VALUES ($1, 'achievement', $2, $3)`,
+              [
+                underdog.user_id,
+                `Underdog supporter bonus`,
+                XP_REWARDS.UNDERDOG,
+              ],
+            )
+            .catch(() => {});
+
+          await pool
+            .query(
+              `INSERT INTO listener_contest_rewards (user_id, contest_id, artist_profile_id, reward_type, xp_awarded, claimed)
+             VALUES ($1, $2, $3, 'underdog', $4, true)`,
+              [
+                underdog.user_id,
+                contestId,
+                underdog.artist_profile_id,
+                XP_REWARDS.UNDERDOG,
+              ],
+            )
+            .catch(() => {});
+
+          underdogCount++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Prediction rewards distributed`,
+        winnerId,
+        predictionWinners: awardedCount,
+        xpPerWinner: XP_REWARDS.PREDICTION_CORRECT,
+        underdogBonuses: underdogCount,
+        xpPerUnderdog: XP_REWARDS.UNDERDOG,
+      });
+    } catch (err: any) {
+      console.error("[ARENA] Award predictions error:", err);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to award predictions" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /participation-stats — Platform-wide participation statistics
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get("/participation-stats", async (_req: Request, res: Response) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE current_badge_tier >= 3) as eligible_artists,
+        COUNT(*) FILTER (WHERE current_badge_tier >= 3 AND COALESCE(contest_participation_rate, 0) >= 20) as compliant_artists,
+        COUNT(*) FILTER (WHERE current_badge_tier >= 3 AND COALESCE(contest_participation_rate, 0) < 20 
+          AND contest_exempt_until IS NULL 
+          AND (NOW() - created_at) >= INTERVAL '90 days') as at_risk_artists,
+        AVG(COALESCE(contest_participation_rate, 0)) FILTER (WHERE current_badge_tier >= 3) as avg_participation_rate,
+        SUM(COALESCE(contests_entered, 0)) as total_contest_entries,
+        SUM(COALESCE(contests_won, 0)) as total_contest_wins
+      FROM artist_profiles
+      WHERE is_active = true
+    `);
+
+    const contestStats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_contests,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_contests,
+        SUM(COALESCE(total_votes, 0)) as total_votes_all_time
+      FROM arena_contests
+    `);
+
+    res.json({
+      success: true,
+      artists: stats.rows[0],
+      contests: contestStats.rows[0],
+      thresholds: {
+        minParticipationRate: MIN_PARTICIPATION_RATE,
+        gracePeriodDays: GRACE_PERIOD_DAYS,
+        minContestsPerQuarter: MIN_CONTESTS_PER_QUARTER,
+      },
+    });
+  } catch (err: any) {
+    console.error("[ARENA] Participation stats error:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
 
