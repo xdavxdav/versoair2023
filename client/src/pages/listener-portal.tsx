@@ -363,7 +363,7 @@ export default function ListenerPortal() {
 
               {/* Arena Contest Quick Access */}
               <motion.div variants={staggerItem}>
-                <Card 
+                <Card
                   className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-amber-500/40 hover:border-amber-400/60 cursor-pointer transition-all group"
                   onClick={() => navigate("/arena")}
                 >
@@ -373,8 +373,12 @@ export default function ListenerPortal() {
                         <Trophy className="h-7 w-7 text-amber-400" />
                       </div>
                       <div>
-                        <h3 className="text-white font-semibold text-lg">Arena Contests</h3>
-                        <p className="text-amber-200/80 text-sm">Vote for artists, earn XP & win prediction bonuses</p>
+                        <h3 className="text-white font-semibold text-lg">
+                          Arena Contests
+                        </h3>
+                        <p className="text-amber-200/80 text-sm">
+                          Vote for artists, earn XP & win prediction bonuses
+                        </p>
                       </div>
                     </div>
                     <Button className="bg-amber-600 hover:bg-amber-700 text-white">
