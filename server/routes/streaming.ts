@@ -285,6 +285,202 @@ router.get("/tracks/:id/pochette", async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// PREVIEW MODE — 30-second clips for quota-exceeded users
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/tracks/:id/preview — Stream 30-second preview clip
+// Available to ALL users regardless of quota (previews never count toward limits)
+router.get("/tracks/:id/preview", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.id || null;
+    
+    // Get track info and user's preview settings
+    const track = await pool.query(
+      `SELECT mt.id, mt.title, mt.audio_url, mt.duration, mt.artist_id
+       FROM music_tracks mt WHERE mt.id = $1`,
+      [id],
+    );
+    
+    if (track.rows.length === 0) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+    
+    const t = track.rows[0];
+    const budget = await getStreamBudget(userId);
+    
+    // Log preview access for analytics
+    if (userId) {
+      await pool.query(
+        `INSERT INTO paylist_access_log (user_id, track_id, access_type, tier_at_access)
+         VALUES ($1, $2, 'preview', $3)
+         ON CONFLICT DO NOTHING`,
+        [userId, id, budget.tier],
+      ).catch(() => {}); // Ignore if table doesn't exist yet
+    }
+    
+    // Return preview metadata — actual audio byte-range serving handled by CDN/storage
+    res.json({
+      trackId: t.id,
+      title: t.title,
+      previewUrl: t.audio_url, // Client will use byte-range requests for 30s
+      previewDuration: budget.previewDuration,
+      previewBitrate: budget.previewBitrate,
+      fullDuration: t.duration,
+      isPreview: true,
+      quotaExceeded: !budget.allowed,
+      tier: budget.tier,
+      upgradeHint: budget.upgradeHint,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] GET /tracks/:id/preview error:", err.message);
+    res.status(500).json({ error: "Failed to fetch preview" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// BUDGET ENDPOINT — Check streaming quota status
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/budget — Get current user's streaming budget/quota status
+router.get("/budget", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+    
+    res.json({
+      tier: budget.tier,
+      weeklyLimit: budget.weeklyLimit,
+      used: budget.used,
+      remaining: budget.remaining,
+      rollover: budget.rollover,
+      quotaExceeded: !budget.allowed,
+      quotaWarning: budget.quotaWarning,
+      previewAvailable: budget.previewAvailable,
+      previewDuration: budget.previewDuration,
+      previewBitrate: budget.previewBitrate,
+      paylistUnlocked: budget.paylistUnlocked,
+      paylistTier: budget.paylistTier,
+      upgradeHint: budget.upgradeHint,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] GET /budget error:", err.message);
+    res.status(500).json({ error: "Failed to fetch budget" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// PAYLIST — Exclusive/curated content gated by tier
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/paylist — Get paylist items for user's tier
+router.get("/paylist", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+    
+    // Fetch paylist items that match user's tier level
+    const paylist = await pool.query(
+      `SELECT pi.*, mt.title, mt.audio_url, mt.duration, mt.cover_art_url, mt.streams,
+              COALESCE(ma.name, ap.stage_name) as artist_name
+       FROM paylist_items pi
+       JOIN music_tracks mt ON mt.id = pi.track_id
+       LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+       LEFT JOIN artist_profiles ap ON ap.id = mt.artist_id
+       WHERE pi.min_tier_required <= $1
+         AND (pi.release_date IS NULL OR pi.release_date <= NOW())
+         AND (pi.expires_at IS NULL OR pi.expires_at > NOW())
+       ORDER BY pi.curated_rank ASC, pi.created_at DESC
+       LIMIT 50`,
+      [budget.paylistTier],
+    );
+    
+    res.json({
+      tier: budget.tier,
+      paylistTier: budget.paylistTier,
+      paylistUnlocked: budget.paylistUnlocked,
+      items: paylist.rows.map((item: any) => ({
+        id: item.id,
+        trackId: item.track_id,
+        title: item.title,
+        artistName: item.artist_name,
+        duration: item.duration,
+        coverArtUrl: item.cover_art_url,
+        streams: item.streams,
+        isExclusive: item.is_exclusive,
+        badgeText: item.badge_text,
+        description: item.description,
+        minTierRequired: item.min_tier_required,
+        canAccess: budget.paylistTier >= item.min_tier_required,
+      })),
+      upgradeHint: budget.paylistTier < 3 
+        ? "Upgrade to unlock more exclusive content" 
+        : null,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] GET /paylist error:", err.message);
+    // Return empty paylist if table doesn't exist yet
+    res.json({
+      tier: "guest",
+      paylistTier: 0,
+      paylistUnlocked: false,
+      items: [],
+      upgradeHint: "Upgrade to Supporter to unlock exclusive content",
+    });
+  }
+});
+
+// POST /api/streaming/paylist/:trackId/access — Log paylist track access
+router.post("/paylist/:trackId/access", async (req: Request, res: Response) => {
+  try {
+    const { trackId } = req.params;
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const budget = await getStreamBudget(userId);
+    
+    // Check if user has access to this paylist item
+    const item = await pool.query(
+      `SELECT * FROM paylist_items WHERE track_id = $1`,
+      [trackId],
+    );
+    
+    if (item.rows.length === 0) {
+      return res.status(404).json({ error: "Paylist item not found" });
+    }
+    
+    if (budget.paylistTier < item.rows[0].min_tier_required) {
+      return res.status(403).json({ 
+        error: "Tier upgrade required",
+        currentTier: budget.paylistTier,
+        requiredTier: item.rows[0].min_tier_required,
+        upgradeHint: budget.upgradeHint,
+      });
+    }
+    
+    // Log access
+    await pool.query(
+      `INSERT INTO paylist_access_log (user_id, track_id, access_type, tier_at_access)
+       VALUES ($1, $2, 'full', $3)`,
+      [userId, trackId, budget.tier],
+    );
+    
+    res.json({ 
+      success: true,
+      accessType: "full",
+      canStream: budget.allowed,
+      previewAvailable: budget.previewAvailable,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] POST /paylist/:trackId/access error:", err.message);
+    res.status(500).json({ error: "Failed to log paylist access" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 // STREAM RECORDING (30-second rule)
 // ═══════════════════════════════════════════════════════════
 
@@ -315,9 +511,17 @@ const STREAM_CAPS: Record<string, number> = {
 };
 const ROLLOVER_CAP_MULTIPLIER = 1.5; // unused streams carry over up to 1.5× base cap
 
+// Preview defaults per tier (used when DB columns not yet populated)
+const PREVIEW_DEFAULTS: Record<string, { duration: number; bitrate: number; paylistTier: number }> = {
+  guest: { duration: 30, bitrate: 128, paylistTier: 0 },
+  supporter: { duration: 30, bitrate: 192, paylistTier: 1 },
+  champion: { duration: 30, bitrate: 192, paylistTier: 2 },
+  patron: { duration: 30, bitrate: 192, paylistTier: 3 },
+};
+
 /**
  * Resolve the listener's weekly stream limit, current usage, and rollover.
- * Also performs weekly reset if needed.
+ * Also performs weekly reset if needed. Now includes preview/paylist data.
  */
 async function getStreamBudget(userId: number | null): Promise<{
   tier: string;
@@ -327,6 +531,14 @@ async function getStreamBudget(userId: number | null): Promise<{
   allowed: boolean;
   remaining: number;
   subscriptionId: number | null;
+  // Preview Mode fields
+  previewAvailable: boolean;
+  previewDuration: number;
+  previewBitrate: number;
+  quotaWarning: boolean;
+  paylistUnlocked: boolean;
+  paylistTier: number;
+  upgradeHint: string | null;
 }> {
   if (!userId) {
     return {
@@ -337,12 +549,22 @@ async function getStreamBudget(userId: number | null): Promise<{
       allowed: true,
       remaining: STREAM_CAPS.guest,
       subscriptionId: null,
+      // Preview always available
+      previewAvailable: true,
+      previewDuration: PREVIEW_DEFAULTS.guest.duration,
+      previewBitrate: PREVIEW_DEFAULTS.guest.bitrate,
+      quotaWarning: false,
+      paylistUnlocked: false,
+      paylistTier: 0,
+      upgradeHint: "Sign up to unlock more streams and exclusive content",
     };
   }
 
-  // Fetch listener subscription + plan name
+  // Fetch listener subscription + plan name + preview fields
   const sub = await pool.query(
-    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, sp.name as plan_name
+    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, 
+            sp.name as plan_name, sp.preview_duration_seconds, sp.preview_bitrate, 
+            sp.paylist_access, sp.paylist_tier
      FROM listener_subscriptions ls
      JOIN streaming_plans sp ON sp.id = ls.plan_id
      WHERE ls.user_id = $1 AND ls.status = 'active'
@@ -359,6 +581,7 @@ async function getStreamBudget(userId: number | null): Promise<{
       [userId],
     );
     const used = parseInt(guestUsage.rows[0]?.cnt || "0");
+    const quotaPercent = (used / STREAM_CAPS.guest) * 100;
     return {
       tier: "guest",
       weeklyLimit: STREAM_CAPS.guest,
@@ -367,6 +590,15 @@ async function getStreamBudget(userId: number | null): Promise<{
       allowed: used < STREAM_CAPS.guest,
       remaining: Math.max(0, STREAM_CAPS.guest - used),
       subscriptionId: null,
+      previewAvailable: true,
+      previewDuration: PREVIEW_DEFAULTS.guest.duration,
+      previewBitrate: PREVIEW_DEFAULTS.guest.bitrate,
+      quotaWarning: quotaPercent >= 80,
+      paylistUnlocked: false,
+      paylistTier: 0,
+      upgradeHint: used >= STREAM_CAPS.guest 
+        ? "Upgrade to Supporter for 300 streams/week + Paylist access"
+        : null,
     };
   }
 
@@ -402,6 +634,25 @@ async function getStreamBudget(userId: number | null): Promise<{
   const allowed = baseCap === Infinity || used < effectiveLimit;
   const remaining =
     baseCap === Infinity ? Infinity : Math.max(0, effectiveLimit - used);
+  
+  // Quota warning at 80%
+  const quotaPercent = baseCap === Infinity ? 0 : (used / effectiveLimit) * 100;
+  
+  // Preview fields (use DB values or fallback to defaults)
+  const previewDuration = s.preview_duration_seconds || PREVIEW_DEFAULTS[tierName]?.duration || 30;
+  const previewBitrate = s.preview_bitrate || PREVIEW_DEFAULTS[tierName]?.bitrate || 128;
+  const paylistTier = s.paylist_tier || PREVIEW_DEFAULTS[tierName]?.paylistTier || 0;
+  const paylistUnlocked = s.paylist_access === true || paylistTier > 0;
+  
+  // Upgrade hint based on current tier
+  let upgradeHint: string | null = null;
+  if (!allowed) {
+    if (tierName === "supporter") {
+      upgradeHint = "Upgrade to Champion for 1,500 streams/week";
+    } else if (tierName === "champion") {
+      upgradeHint = "Upgrade to Patron for unlimited streams";
+    }
+  }
 
   return {
     tier: tierName,
@@ -411,6 +662,13 @@ async function getStreamBudget(userId: number | null): Promise<{
     allowed,
     remaining,
     subscriptionId: s.id,
+    previewAvailable: true,
+    previewDuration,
+    previewBitrate,
+    quotaWarning: quotaPercent >= 80,
+    paylistUnlocked,
+    paylistTier,
+    upgradeHint,
   };
 }
 
@@ -442,17 +700,21 @@ router.post("/record-play", async (req: Request, res: Response) => {
     const budget = await getStreamBudget(userId);
 
     if (!budget.allowed) {
-      return res.status(429).json({
+      // Return 200 with quotaExceeded instead of 429 — allows graceful preview fallback
+      return res.json({
         recorded: false,
         reason: "Weekly stream limit reached",
+        quotaExceeded: true,
         tier: budget.tier,
         weeklyLimit: budget.weeklyLimit,
         used: budget.used,
         rollover: budget.rollover,
-        upgradeHint:
-          budget.tier === "patron"
-            ? null
-            : `Upgrade your plan for more streams. Current: ${budget.tier}`,
+        // Preview Mode: always allow previews when quota exceeded
+        previewAvailable: budget.previewAvailable,
+        previewDuration: budget.previewDuration,
+        previewBitrate: budget.previewBitrate,
+        paylistUnlocked: budget.paylistUnlocked,
+        upgradeHint: budget.upgradeHint,
       });
     }
 
@@ -1519,62 +1781,118 @@ router.get("/subscription/plans", async (_req: Request, res: Response) => {
         ads: true,
         offline: false,
         color: "gray",
+        // Preview Mode
+        previewAvailable: true,
+        previewDuration: 30,
+        previewBitrate: 128,
+        paylistAccess: false,
+        paylistTier: 0,
+        weeklyStreamLimit: 20,
       },
       {
-        id: "premium",
-        name: "Premium",
-        nameEn: "Premium",
+        id: "supporter",
+        name: "Supporter",
+        nameEn: "Supporter",
         price: 4.99,
         currency: "USD",
         features: [
           "Streaming sans publicité",
-          "Haute qualité audio (320kbps)",
-          "5 téléchargements/mois",
-          "Lecture hors-ligne",
-          "Accès anticipé aux sorties",
+          "300 streams/semaine",
+          "Qualité audio HD (192kbps)",
+          "Accès Paylist basique",
+          "Préviews 30s illimités",
         ],
         featuresEn: [
           "Ad-free streaming",
-          "High quality audio (320kbps)",
-          "5 downloads/month",
-          "Offline playback",
+          "300 streams/week",
+          "HD audio quality (192kbps)",
+          "Basic Paylist access",
+          "Unlimited 30s previews",
+        ],
+        downloadsPerMonth: 0,
+        audioQuality: "192kbps",
+        ads: false,
+        offline: false,
+        color: "amber",
+        // Preview Mode
+        previewAvailable: true,
+        previewDuration: 30,
+        previewBitrate: 192,
+        paylistAccess: true,
+        paylistTier: 1,
+        weeklyStreamLimit: 300,
+      },
+      {
+        id: "champion",
+        name: "Champion",
+        nameEn: "Champion",
+        price: 9.99,
+        currency: "USD",
+        features: [
+          "Tout Supporter inclus",
+          "1 500 streams/semaine",
+          "Qualité audio HD (320kbps)",
+          "Accès Paylist complet",
+          "Accès anticipé aux sorties",
+          "5 téléchargements/mois",
+        ],
+        featuresEn: [
+          "Everything in Supporter",
+          "1,500 streams/week",
+          "HD audio quality (320kbps)",
+          "Full Paylist access",
           "Early access to releases",
+          "5 downloads/month",
         ],
         downloadsPerMonth: 5,
         audioQuality: "320kbps",
         ads: false,
         offline: true,
-        color: "amber",
+        color: "blue",
+        // Preview Mode
+        previewAvailable: true,
+        previewDuration: 30,
+        previewBitrate: 192,
+        paylistAccess: true,
+        paylistTier: 2,
+        weeklyStreamLimit: 1500,
       },
       {
-        id: "artist",
-        name: "Artiste Pro",
-        nameEn: "Artist Pro",
-        price: 9.99,
+        id: "patron",
+        name: "Patron",
+        nameEn: "Patron",
+        price: 19.99,
         currency: "USD",
         features: [
-          "Tout Premium inclus",
-          "Téléchargements illimités",
+          "Tout Champion inclus",
+          "Streaming illimité",
           "Qualité FLAC (lossless)",
-          "Analytics avancés",
-          "Badges prioritaires",
+          "Accès Paylist VIP + exclusifs",
+          "Téléchargements illimités",
+          "Drops exclusifs",
           "Support prioritaire",
-          "Upload de pistes",
         ],
         featuresEn: [
-          "Everything in Premium",
-          "Unlimited downloads",
+          "Everything in Champion",
+          "Unlimited streaming",
           "FLAC quality (lossless)",
-          "Advanced analytics",
-          "Priority badges",
+          "VIP Paylist access + exclusives",
+          "Unlimited downloads",
+          "Exclusive drops",
           "Priority support",
-          "Track uploads",
         ],
         downloadsPerMonth: -1,
         audioQuality: "FLAC",
         ads: false,
         offline: true,
         color: "purple",
+        // Preview Mode
+        previewAvailable: true,
+        previewDuration: 30,
+        previewBitrate: 192,
+        paylistAccess: true,
+        paylistTier: 3,
+        weeklyStreamLimit: -1, // unlimited
       },
     ],
     benefitChart: {
@@ -1662,12 +1980,16 @@ router.get("/subscription/status", async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     if (!userId) return res.json({ tier: "free", authenticated: false });
 
-    const sub = await pool.query(
-      `
-      SELECT * FROM streaming_subscriptions WHERE user_id = $1
+  const sub = await pool.query(
+    `
+    SELECT ls.*, sp.name as plan_name, sp.stream_limit, sp.pool_contribution_percent
+    FROM listener_subscriptions ls
+    JOIN streaming_plans sp ON sp.id = ls.plan_id
+    WHERE ls.user_id = $1 AND ls.status = 'active'
+    ORDER BY sp.monthly_fee DESC LIMIT 1
     `,
-      [userId],
-    );
+    [userId],
+  );
 
     if (sub.rows.length === 0) {
       return res.json({ tier: "free", authenticated: true });
