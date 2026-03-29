@@ -111,14 +111,12 @@ const GROUPS = [
       p.startsWith("/stream") ||
       p.startsWith("/arcade") ||
       p.startsWith("/arena") ||
-      p.startsWith("/library") ||
-      p.startsWith("/listener-portal"),
+      p.startsWith("/library"),
     items: [
       { href: "/stream", label: "🎵 Stream Music" },
       { href: "/arcade", label: "🎮 Arcade (PvP)" },
       { href: "/arena", label: "🏆 Arena Contests" },
       { href: "/library", label: "📚 My Library" },
-      { href: "/listener-portal", label: "🎧 Listener Portal" },
     ],
   },
   {

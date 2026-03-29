@@ -3,9 +3,13 @@
  * Immersive dark theme with cinematic depth, glass morphism, and animated ambiance
  */
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useAudio } from "@/lib/audio-context";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   useStreamingTracks,
   useFeaturedTracks,
@@ -45,6 +49,10 @@ import {
   Waves,
   Trophy,
   Gamepad2,
+  Target,
+  Gift,
+  Medal,
+  ChevronUp,
 } from "lucide-react";
 
 // ====================================================================
@@ -234,14 +242,54 @@ function SectionGlow() {
 // ====================================================================
 // MAIN COMPONENT
 // ====================================================================
+const LEVEL_NAMES = [
+  "Newbie",
+  "Explorer",
+  "Fan",
+  "Superfan",
+  "Devotee",
+  "Champion",
+  "Legend",
+  "Icon",
+  "Mythic",
+  "Transcendent",
+];
+const LEVEL_THRESHOLDS = [
+  0, 100, 300, 600, 1000, 1500, 2500, 4000, 6000, 10000,
+];
+
 export default function StreamPage() {
   const audio = useAudio();
+  const { user } = useAuthContext();
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGenre, setActiveGenre] = useState("");
   const [activeMood, setActiveMood] = useState("");
   const [sortBy, setSortBy] = useState("popular");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [showMyStats, setShowMyStats] = useState(false);
+
+  // Listener stats
+  const { data: listenerStats } = useQuery({
+    queryKey: ["listener-stats", user?.id],
+    queryFn: async () => {
+      const res = await fetch("/api/listener/stats", {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const stats = listenerStats?.stats;
+  const currentLevel = stats?.level || 1;
+  const levelName =
+    LEVEL_NAMES[Math.min(currentLevel - 1, LEVEL_NAMES.length - 1)];
+  const currentPoints = stats?.totalPoints || 0;
+  const nextLevelPoints =
+    stats?.nextLevelPoints || LEVEL_THRESHOLDS[currentLevel] || 100;
 
   const { data: featuredData } = useFeaturedTracks();
   const { data: tracksData, isLoading } = useStreamingTracks({
@@ -272,6 +320,110 @@ export default function StreamPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden">
       <ImmersiveBackground />
+
+      {/* ========================================= */}
+      {/* FLOATING MY STATS PANEL */}
+      {/* ========================================= */}
+      {user && (
+        <div className="fixed bottom-24 right-4 z-50">
+          <AnimatePresence>
+            {showMyStats && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                className="mb-3"
+              >
+                <Card className="bg-gray-900/95 backdrop-blur-xl border-purple-500/30 shadow-2xl shadow-purple-500/10 w-72">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
+                        <Headphones className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold">{user.username || user.email?.split("@")[0]}</p>
+                        <Badge className="bg-purple-500/20 text-purple-300 text-xs">
+                          <Crown className="w-3 h-3 mr-1" />
+                          {levelName} · Lv.{currentLevel}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-400">XP Progress</span>
+                        <span className="text-purple-400">{currentPoints} / {nextLevelPoints}</span>
+                      </div>
+                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, (currentPoints / nextLevelPoints) * 100)}%` }}
+                          className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="text-center p-2 bg-gray-800/50 rounded-lg">
+                        <div className="text-amber-400 font-bold flex items-center justify-center gap-1">
+                          <Flame className="w-3.5 h-3.5" />
+                          {stats?.currentStreak || 0}
+                        </div>
+                        <div className="text-[10px] text-gray-500">Streak</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-800/50 rounded-lg">
+                        <div className="text-green-400 font-bold">#{stats?.rank || "—"}</div>
+                        <div className="text-[10px] text-gray-500">Rank</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-800/50 rounded-lg">
+                        <div className="text-fuchsia-400 font-bold">{stats?.correctPredictions || 0}</div>
+                        <div className="text-[10px] text-gray-500">Wins</div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate("/arena")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-medium hover:bg-amber-500/30 transition-all"
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        Arena
+                      </button>
+                      <button
+                        onClick={() => navigate("/arcade")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
+                      >
+                        <Gamepad2 className="w-3.5 h-3.5" />
+                        Arcade
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <motion.button
+            onClick={() => setShowMyStats(!showMyStats)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-purple-500/30 relative"
+          >
+            {showMyStats ? (
+              <ChevronDown className="w-6 h-6 text-white" />
+            ) : (
+              <>
+                <Headphones className="w-6 h-6 text-white" />
+                {currentPoints > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {currentLevel}
+                  </span>
+                )}
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
 
       {/* ========================================= */}
       {/* HERO SECTION */}
