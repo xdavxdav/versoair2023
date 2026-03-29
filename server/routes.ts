@@ -39,6 +39,7 @@ import revenuePulseRouter from "./routes/revenue-pulse";
 import walletRouter from "./routes/wallet";
 import gamesRouter from "./routes/games";
 import paypalRouter from "./routes/paypal";
+import listenerRouter from "./routes/listener";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -243,6 +244,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/wallet", walletRouter); // Credits wallet (balance, deposit, game rewards)
   app.use("/api/games", gamesRouter); // PvP skill games (trivia, prediction, card battle)
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
+  app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

@@ -186,7 +186,7 @@ export function CountryDropdown() {
       const json = await res.json();
       return Array.isArray(json) ? json : json.data || [];
     },
-    staleTime: 1000 * 60 * 5,  // 5 min
+    staleTime: 1000 * 60 * 5, // 5 min
     retry: 4,
     retryDelay: 1500,
   });
