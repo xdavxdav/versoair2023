@@ -34,6 +34,16 @@ router.get("/stats", requireAuth(), async (req: Request, res: Response) => {
         .json({ success: false, error: "Not authenticated" });
     }
 
+    // Get streaming subscription tier
+    const subResult = await pool
+      .query(
+        `SELECT tier, status FROM streaming_subscriptions WHERE user_id = $1`,
+        [userId],
+      )
+      .catch(() => ({ rows: [] }));
+    const streamingTier = subResult.rows[0]?.tier || "guest";
+    const subscriptionStatus = subResult.rows[0]?.status || "inactive";
+
     // Get or create listener stats
     let statsResult = await pool.query(
       `SELECT * FROM listener_stats WHERE user_id = $1`,
@@ -163,6 +173,8 @@ router.get("/stats", requireAuth(), async (req: Request, res: Response) => {
       .catch(() => ({ rows: [{ rank: 1 }] }));
 
     const stats = {
+      streamingTier,
+      subscriptionStatus,
       totalListenTime: parseInt(listenerStats.total_listen_time) || 0,
       tracksPlayed: parseInt(listenerStats.tracks_played) || 0,
       artistsDiscovered: parseInt(listenerStats.artists_discovered) || 0,
@@ -237,12 +249,10 @@ router.post(
       );
 
       if (bonusResult.rows.length === 0) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: "Bonus not found or already claimed",
-          });
+        return res.status(404).json({
+          success: false,
+          error: "Bonus not found or already claimed",
+        });
       }
 
       const bonus = bonusResult.rows[0];

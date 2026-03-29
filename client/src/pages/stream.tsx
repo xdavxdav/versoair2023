@@ -283,7 +283,16 @@ export default function StreamPage() {
     enabled: !!user,
   });
 
-  const stats = listenerStats?.stats;
+  const stats = listenerStats?.data || listenerStats?.stats;
+  const streamingTier = stats?.streamingTier || "guest";
+  const PAID_STREAMER_TIERS = [
+    "supporter",
+    "champion",
+    "patron",
+    "premium",
+    "pro",
+  ];
+  const canAccessArcade = PAID_STREAMER_TIERS.includes(streamingTier);
   const currentLevel = stats?.level || 1;
   const levelName =
     LEVEL_NAMES[Math.min(currentLevel - 1, LEVEL_NAMES.length - 1)];
@@ -341,23 +350,29 @@ export default function StreamPage() {
                         <Headphones className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-semibold">{user.username || user.email?.split("@")[0]}</p>
+                        <p className="text-white font-semibold">
+                          {user.username || user.email?.split("@")[0]}
+                        </p>
                         <Badge className="bg-purple-500/20 text-purple-300 text-xs">
                           <Crown className="w-3 h-3 mr-1" />
                           {levelName} · Lv.{currentLevel}
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <div className="mb-4">
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-gray-400">XP Progress</span>
-                        <span className="text-purple-400">{currentPoints} / {nextLevelPoints}</span>
+                        <span className="text-purple-400">
+                          {currentPoints} / {nextLevelPoints}
+                        </span>
                       </div>
                       <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, (currentPoints / nextLevelPoints) * 100)}%` }}
+                          animate={{
+                            width: `${Math.min(100, (currentPoints / nextLevelPoints) * 100)}%`,
+                          }}
                           className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-600"
                         />
                       </div>
@@ -372,11 +387,15 @@ export default function StreamPage() {
                         <div className="text-[10px] text-gray-500">Streak</div>
                       </div>
                       <div className="text-center p-2 bg-gray-800/50 rounded-lg">
-                        <div className="text-green-400 font-bold">#{stats?.rank || "—"}</div>
+                        <div className="text-green-400 font-bold">
+                          #{stats?.rank || "—"}
+                        </div>
                         <div className="text-[10px] text-gray-500">Rank</div>
                       </div>
                       <div className="text-center p-2 bg-gray-800/50 rounded-lg">
-                        <div className="text-fuchsia-400 font-bold">{stats?.correctPredictions || 0}</div>
+                        <div className="text-fuchsia-400 font-bold">
+                          {stats?.correctPredictions || 0}
+                        </div>
                         <div className="text-[10px] text-gray-500">Wins</div>
                       </div>
                     </div>
@@ -389,20 +408,31 @@ export default function StreamPage() {
                         <Trophy className="w-3.5 h-3.5" />
                         Arena
                       </button>
-                      <button
-                        onClick={() => navigate("/arcade")}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
-                      >
-                        <Gamepad2 className="w-3.5 h-3.5" />
-                        Arcade
-                      </button>
+                      {canAccessArcade ? (
+                        <button
+                          onClick={() => navigate("/arcade")}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
+                        >
+                          <Gamepad2 className="w-3.5 h-3.5" />
+                          Arcade
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => navigate("/arcade")}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-700/30 text-gray-500 rounded-lg text-xs font-medium hover:bg-gray-700/50 transition-all"
+                          title="Supporter+ requis"
+                        >
+                          <Gamepad2 className="w-3.5 h-3.5" />
+                          <Crown className="w-3 h-3 text-purple-400" />
+                        </button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           <motion.button
             onClick={() => setShowMyStats(!showMyStats)}
             whileHover={{ scale: 1.05 }}
@@ -479,12 +509,24 @@ export default function StreamPage() {
                   Arena
                 </button>
               </Link>
-              <Link href="/arcade">
-                <button className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
+              {canAccessArcade ? (
+                <Link href="/arcade">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
+                    <Gamepad2 className="w-4 h-4" />
+                    Arcade
+                  </button>
+                </Link>
+              ) : (
+                <button
+                  onClick={() => navigate("/arcade")}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gray-800/50 text-gray-500 border border-gray-700/50 rounded-xl cursor-pointer hover:bg-gray-800/70 transition-all group relative"
+                  title="Abonnement Supporter+ requis"
+                >
                   <Gamepad2 className="w-4 h-4" />
                   Arcade
+                  <Crown className="w-3 h-3 text-purple-400 ml-1" />
                 </button>
-              </Link>
+              )}
               <Link href="/library">
                 <button className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm text-gray-400 hover:text-white bg-white/[0.03] backdrop-blur border border-white/10 rounded-xl hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
                   <Music2 className="w-3.5 h-3.5" />

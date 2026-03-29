@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 
 export default function ListenerPortal() {
   const [, navigate] = useLocation();
-  
+
   useEffect(() => {
     navigate("/stream", { replace: true });
   }, [navigate]);

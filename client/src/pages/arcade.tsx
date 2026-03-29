@@ -118,7 +118,7 @@ export default function ArcadePage() {
 
   // ── Access control ──
   // Artists: arcade counts against their subscription tier (essential+ required)
-  // Streamers / audience / listeners: free access
+  // Streamers: Need supporter/champion/patron tier (NOT guest/free)
   const isArtist =
     user?.role === "artist" ||
     user?.hasArtistProfile === true ||
@@ -131,6 +131,32 @@ export default function ArcadePage() {
     capabilities?.subscriptionTier ||
     "free";
   const artistNeedsUpgrade = isArtist && artistTier === "free";
+
+  // Fetch streamer subscription for non-artists
+  const { data: listenerData } = useQuery<{
+    data?: { streamingTier?: string };
+  }>({
+    queryKey: ["/api/listener/stats"],
+    queryFn: async () => {
+      const res = await authFetch("/api/listener/stats");
+      if (!res.ok) return { data: { streamingTier: "guest" } };
+      return res.json();
+    },
+    enabled: !!user && !isArtist,
+    staleTime: 30_000,
+  });
+
+  const streamerTier =
+    listenerData?.data?.streamingTier || listenerData?.streamingTier || "guest";
+  const PAID_STREAMER_TIERS = [
+    "supporter",
+    "champion",
+    "patron",
+    "premium",
+    "pro",
+  ];
+  const streamerNeedsUpgrade =
+    !isArtist && !PAID_STREAMER_TIERS.includes(streamerTier);
   const [wagerAmount, setWagerAmount] = useState("50");
   const [activeMatch, setActiveMatch] = useState<GameMatch | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(
@@ -509,6 +535,50 @@ export default function ArcadePage() {
     );
   }
 
+  // ── Streamer on free tier — needs subscription upgrade ──
+  if (streamerNeedsUpgrade) {
+    return (
+      <div className="min-h-screen bg-[#06020f] flex items-center justify-center p-4">
+        <Card className="bg-black/40 border-purple-500/30 max-w-md w-full text-center p-8">
+          <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-purple-400" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Arcade — Accès Premium
+          </h2>
+          <Badge className="mx-auto mb-4 bg-gray-600/30 text-gray-300 border-gray-500/40">
+            Tier actuel : {streamerTier === "guest" ? "Free" : streamerTier}
+          </Badge>
+          <p className="text-gray-400 mb-2">
+            L'Arcade est réservée aux streamers avec un abonnement{" "}
+            <span className="text-purple-400 font-semibold">Supporter</span>,{" "}
+            <span className="text-purple-400 font-semibold">Champion</span>, ou{" "}
+            <span className="text-purple-400 font-semibold">Patron</span>.
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
+            Passez à un abonnement payant pour débloquer les duels PvP, les
+            mini-jeux et les récompenses en crédits.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => navigate("/stream")}
+              className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Voir les abonnements
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/stream")}
+              className="text-gray-500 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Retour au stream
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#06020f] text-white">
       {/* ── Hero Header ── */}
@@ -542,9 +612,10 @@ export default function ArcadePage() {
                 </Badge>
               )}
               {!isArtist && (
-                <Badge className="mt-2 bg-green-600/20 text-green-300 border-green-500/30 text-xs">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Accès gratuit
+                <Badge className="mt-2 bg-purple-600/20 text-purple-300 border-purple-500/30 text-xs">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Accès{" "}
+                  {streamerTier.charAt(0).toUpperCase() + streamerTier.slice(1)}
                 </Badge>
               )}
             </div>
