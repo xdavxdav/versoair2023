@@ -473,6 +473,11 @@ export default function ContentNav() {
     user?.email?.split("@")[0] ??
     localStorage.getItem("blog_community_user") ??
     "User";
+  
+  // Check if we're on an auth page (hide sign in button)
+  const isOnAuthPage = location.startsWith("/auth") || 
+    location.startsWith("/artist-portal-signin") ||
+    location.startsWith("/admin/login");
 
   const handleLogout = () => {
     logout();
@@ -830,7 +835,7 @@ export default function ContentNav() {
                 <LogOut className="h-3.5 w-3.5" />
               </button>
             </>
-          ) : (
+          ) : !isOnAuthPage ? (
             <Link href="/auth/signin">
               <a
                 className="px-3 py-1.5 rounded-full text-[11px] font-semibold text-cyan-300 flex-shrink-0 transition-all hover:text-cyan-200"
@@ -842,7 +847,7 @@ export default function ContentNav() {
                 Sign In
               </a>
             </Link>
-          )}
+          ) : null}
         </motion.div>
       </div>
 

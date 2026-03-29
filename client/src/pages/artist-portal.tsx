@@ -1424,7 +1424,8 @@ export default function ArtistPortal() {
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
         <motion.div variants={staggerItem}>
-          <Card className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-md border-amber-500/30 hover:border-amber-400/50 transition-all cursor-pointer group"
+          <Card
+            className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-md border-amber-500/30 hover:border-amber-400/50 transition-all cursor-pointer group"
             onClick={() => navigate("/arena")}
           >
             <CardContent className="p-5 flex items-center justify-between">
@@ -1433,8 +1434,12 @@ export default function ArtistPortal() {
                   <Trophy className="h-6 w-6 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-lg">Arena Contests</h3>
-                  <p className="text-amber-200/80 text-sm">Compete for weekly prize pool & bonus royalties</p>
+                  <h3 className="text-white font-semibold text-lg">
+                    Arena Contests
+                  </h3>
+                  <p className="text-amber-200/80 text-sm">
+                    Compete for weekly prize pool & bonus royalties
+                  </p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-amber-400 group-hover:translate-x-1 transition-transform" />
@@ -1443,7 +1448,8 @@ export default function ArtistPortal() {
         </motion.div>
 
         <motion.div variants={staggerItem}>
-          <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md border-purple-500/30 hover:border-purple-400/50 transition-all cursor-pointer group"
+          <Card
+            className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md border-purple-500/30 hover:border-purple-400/50 transition-all cursor-pointer group"
             onClick={() => navigate("/stream")}
           >
             <CardContent className="p-5 flex items-center justify-between">
@@ -1452,8 +1458,12 @@ export default function ArtistPortal() {
                   <Radio className="h-6 w-6 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-lg">Stream Music</h3>
-                  <p className="text-purple-200/80 text-sm">Listen & boost your tracks during contests</p>
+                  <h3 className="text-white font-semibold text-lg">
+                    Stream Music
+                  </h3>
+                  <p className="text-purple-200/80 text-sm">
+                    Listen & boost your tracks during contests
+                  </p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-purple-400 group-hover:translate-x-1 transition-transform" />
