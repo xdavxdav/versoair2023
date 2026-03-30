@@ -195,15 +195,28 @@ export function CountryDropdown() {
   const { data: countries = FALLBACK_COUNTRIES } = useQuery<Country[]>({
     queryKey: ["countries-list"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/countries`);
-      if (!res.ok) throw new Error(`Countries fetch failed: ${res.status}`);
-      const json = await res.json();
-      const list = Array.isArray(json) ? json : json.data || [];
-      return list.length > 0 ? list : FALLBACK_COUNTRIES;
+      // Try relative path first (works on same-origin prod), then with base URL
+      const urls = ["/api/countries", `${API_BASE_URL}/api/countries`].filter(
+        (u, i, a) => a.indexOf(u) === i
+      );
+      for (const url of urls) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const json = await res.json();
+            const list = Array.isArray(json) ? json : json.data || [];
+            if (list.length > 0) return list;
+          }
+        } catch {
+          // Try next URL
+        }
+      }
+      console.warn("Countries API failed, using fallback");
+      return FALLBACK_COUNTRIES;
     },
     staleTime: 1000 * 60 * 5, // 5 min
-    retry: 4,
-    retryDelay: 1500,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
