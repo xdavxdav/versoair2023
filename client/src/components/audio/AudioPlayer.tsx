@@ -724,6 +724,14 @@ export default function AudioPlayer() {
                 <Play className="w-3.5 h-3.5 text-black ml-0.5" />
               )}
             </button>
+            {/* Close button */}
+            <button
+              onClick={audio.closePlayer}
+              className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors flex-shrink-0"
+              title="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </motion.div>
       ) : (
@@ -907,6 +915,15 @@ export default function AudioPlayer() {
                 title="Plein écran"
               >
                 <ChevronUp className="w-4 h-4" />
+              </button>
+
+              {/* Close player */}
+              <button
+                onClick={audio.closePlayer}
+                className="text-gray-400 hover:text-red-400 transition-colors"
+                title="Fermer le lecteur"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>

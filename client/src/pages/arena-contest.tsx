@@ -141,7 +141,9 @@ function getBadgeColor(tier: number): string {
 // Arena List — shows active + history
 // ═══════════════════════════════════════════════════════════
 function ArenaList() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const fromPage =
+    new URLSearchParams(window.location.search).get("from") || "";
 
   const { data: activeData, isLoading: loadingActive } = useQuery({
     queryKey: ["arena", "active"],
@@ -165,6 +167,46 @@ function ArenaList() {
 
   return (
     <div className="space-y-8">
+      {/* Navigation */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "stream"
+              ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
+              : "text-gray-400 hover:text-white"
+          }
+          onClick={() => navigate("/stream?from=arena")}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Stream
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "artist-portal"
+              ? "text-emerald-200 bg-emerald-500/30 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
+              : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+          }
+          onClick={() => navigate("/artist-portal?from=arena")}
+        >
+          Portail Artiste
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "arcade"
+              ? "text-purple-200 bg-purple-500/30 border-2 border-purple-400/60 shadow-[0_0_16px_rgba(168,85,247,0.4)] ring-2 ring-purple-400/30"
+              : "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+          }
+          onClick={() => navigate("/arcade?from=arena")}
+        >
+          Arcade
+        </Button>
+      </div>
+
       {/* Active Contests */}
       <section>
         <div className="flex items-center gap-3 mb-6">
@@ -325,7 +367,9 @@ function ArenaList() {
 // Arena Detail — Bracket + Voting
 // ═══════════════════════════════════════════════════════════
 function ArenaDetail({ contestId }: { contestId: number }) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const fromPage =
+    new URLSearchParams(window.location.search).get("from") || "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -424,14 +468,52 @@ function ArenaDetail({ contestId }: { contestId: number }) {
   return (
     <div className="space-y-6">
       {/* Back nav */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-gray-400 hover:text-white"
-        onClick={() => navigate("/arena")}
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" /> All Arenas
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-gray-400 hover:text-white"
+          onClick={() => navigate("/arena?from=arena-detail")}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Arenas
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "stream"
+              ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
+              : "text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-500/10"
+          }
+          onClick={() => navigate("/stream?from=arena")}
+        >
+          Stream
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "artist-portal"
+              ? "text-emerald-200 bg-emerald-500/30 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
+              : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+          }
+          onClick={() => navigate("/artist-portal?from=arena")}
+        >
+          Portail Artiste
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={
+            fromPage === "arcade"
+              ? "text-purple-200 bg-purple-500/30 border-2 border-purple-400/60 shadow-[0_0_16px_rgba(168,85,247,0.4)] ring-2 ring-purple-400/30"
+              : "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+          }
+          onClick={() => navigate("/arcade?from=arena")}
+        >
+          Arcade
+        </Button>
+      </div>
 
       {/* Contest Header */}
       <motion.div

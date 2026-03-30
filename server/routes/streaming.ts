@@ -167,6 +167,69 @@ router.get("/tracks/featured", async (_req: Request, res: Response) => {
   }
 });
 
+// GET /api/streaming/tracks/:id/preview — Get 30-second preview clip (no quota impact)
+// Always available to all users, regardless of quota status
+// NOTE: This route MUST come before /tracks/:id to avoid being caught by the generic route
+router.get("/tracks/:id/preview", async (req: Request, res: Response) => {
+  console.log("[PREVIEW] HIT - trackId:", req.params.id);
+  try {
+    const trackId = parseInt(req.params.id);
+    if (!trackId || isNaN(trackId)) {
+      return res.status(400).json({ error: "Invalid track ID" });
+    }
+
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+
+    // Fetch track details
+    const trackResult = await pool.query(
+      `SELECT mt.id, mt.title, mt.file_url, mt.duration, mt.cover_url,
+              COALESCE(ma.stage_name, ap.stage_name) as artist_name
+       FROM music_tracks mt
+       LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+       LEFT JOIN artist_profiles ap ON ap.user_id = mt.artist_id
+       WHERE mt.id = $1`,
+      [trackId],
+    );
+
+    if (trackResult.rows.length === 0) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+
+    const track = trackResult.rows[0];
+
+    // Log preview access for analytics (does NOT count toward quota)
+    if (userId) {
+      await pool
+        .query(
+          `INSERT INTO paylist_access_log (user_id, track_id, access_type)
+         VALUES ($1, $2, 'preview')
+         ON CONFLICT DO NOTHING`,
+          [userId, trackId],
+        )
+        .catch(() => {}); // Silently fail if table doesn't exist yet
+    }
+
+    // Return preview metadata (frontend will handle 30-second clip playback)
+    res.json({
+      trackId: track.id,
+      title: track.title,
+      artistName: track.artist_name,
+      coverUrl: track.cover_url,
+      previewUrl: track.file_url, // Frontend caps at previewDuration
+      fullDuration: track.duration,
+      previewDuration: budget.previewDuration,
+      previewBitrate: budget.previewBitrate,
+      isPreview: true,
+      seekable: true, // Full seek within 30s window
+      quotaImpact: 0, // Previews never count toward quota
+    });
+  } catch (err: any) {
+    console.error("[Streaming] preview error:", err.message);
+    res.status(500).json({ error: "Failed to load preview" });
+  }
+});
+
 // GET /api/streaming/tracks/:id — Single track with full details
 router.get("/tracks/:id", async (req: Request, res: Response) => {
   try {
@@ -315,34 +378,70 @@ const STREAM_CAPS: Record<string, number> = {
 };
 const ROLLOVER_CAP_MULTIPLIER = 1.5; // unused streams carry over up to 1.5× base cap
 
+// Preview bitrate by tier (kbps)
+const PREVIEW_BITRATE: Record<string, number> = {
+  guest: 128,
+  supporter: 192,
+  champion: 192,
+  patron: 192,
+};
+
+// Tier level mapping for paylist access (0=free, 1=supporter, 2=champion, 3=patron)
+const TIER_LEVEL: Record<string, number> = {
+  guest: 0,
+  supporter: 1,
+  champion: 2,
+  patron: 3,
+};
+
 /**
- * Resolve the listener's weekly stream limit, current usage, and rollover.
+ * Resolve the listener's weekly stream limit, current usage, rollover, and preview/paylist status.
  * Also performs weekly reset if needed.
  */
 async function getStreamBudget(userId: number | null): Promise<{
   tier: string;
+  tierLevel: number;
   weeklyLimit: number;
   used: number;
   rollover: number;
   allowed: boolean;
   remaining: number;
   subscriptionId: number | null;
+  // ── Preview Mode (always available) ──
+  previewAvailable: boolean;
+  previewDuration: number;
+  previewBitrate: number;
+  // ── Quota warnings ──
+  quotaExceeded: boolean;
+  quotaWarning: boolean; // true when ≥80% used
+  // ── Paylist access ──
+  paylistUnlocked: boolean;
+  upgradeHint: string | null;
 }> {
   if (!userId) {
     return {
       tier: "guest",
+      tierLevel: 0,
       weeklyLimit: STREAM_CAPS.guest,
       used: 0,
       rollover: 0,
       allowed: true,
       remaining: STREAM_CAPS.guest,
       subscriptionId: null,
+      previewAvailable: true,
+      previewDuration: 30,
+      previewBitrate: PREVIEW_BITRATE.guest,
+      quotaExceeded: false,
+      quotaWarning: false,
+      paylistUnlocked: false,
+      upgradeHint: "Upgrade to Supporter for 300 streams/week + Paylist access",
     };
   }
 
   // Fetch listener subscription + plan name
   const sub = await pool.query(
-    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, sp.name as plan_name
+    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, 
+            sp.name as plan_name, sp.preview_duration_seconds, sp.preview_bitrate
      FROM listener_subscriptions ls
      JOIN streaming_plans sp ON sp.id = ls.plan_id
      WHERE ls.user_id = $1 AND ls.status = 'active'
@@ -359,20 +458,37 @@ async function getStreamBudget(userId: number | null): Promise<{
       [userId],
     );
     const used = parseInt(guestUsage.rows[0]?.cnt || "0");
+    const quotaExceeded = used >= STREAM_CAPS.guest;
+    const quotaWarning = used >= STREAM_CAPS.guest * 0.8;
     return {
       tier: "guest",
+      tierLevel: 0,
       weeklyLimit: STREAM_CAPS.guest,
       used,
       rollover: 0,
-      allowed: used < STREAM_CAPS.guest,
+      allowed: !quotaExceeded,
       remaining: Math.max(0, STREAM_CAPS.guest - used),
       subscriptionId: null,
+      previewAvailable: true,
+      previewDuration: 30,
+      previewBitrate: PREVIEW_BITRATE.guest,
+      quotaExceeded,
+      quotaWarning,
+      paylistUnlocked: false,
+      upgradeHint: quotaExceeded
+        ? "Quota exceeded! Preview mode active. Upgrade to Supporter for 300 streams/week"
+        : "Upgrade to Supporter for 300 streams/week + Paylist access",
     };
   }
 
   const s = sub.rows[0];
   const tierName = (s.plan_name || "supporter").toLowerCase();
+  const tierLevel = TIER_LEVEL[tierName] || 1;
   const baseCap = STREAM_CAPS[tierName] || STREAM_CAPS.supporter;
+  const previewDuration = parseInt(s.preview_duration_seconds || "30");
+  const previewBitrate = parseInt(
+    s.preview_bitrate || String(PREVIEW_BITRATE[tierName] || 192),
+  );
   let used = parseInt(s.streams_used_this_week || "0");
   let rollover = parseInt(s.streams_rollover || "0");
 
@@ -399,18 +515,42 @@ async function getStreamBudget(userId: number | null): Promise<{
 
   // Effective limit = base cap + rollover
   const effectiveLimit = baseCap === Infinity ? Infinity : baseCap + rollover;
-  const allowed = baseCap === Infinity || used < effectiveLimit;
+  const quotaExceeded = baseCap !== Infinity && used >= effectiveLimit;
+  const quotaWarning = baseCap !== Infinity && used >= effectiveLimit * 0.8;
+  const allowed = baseCap === Infinity || !quotaExceeded;
   const remaining =
     baseCap === Infinity ? Infinity : Math.max(0, effectiveLimit - used);
 
+  // Paylist unlocked for any paid tier
+  const paylistUnlocked = tierLevel >= 1;
+
+  // Upgrade hint based on tier
+  let upgradeHint: string | null = null;
+  if (quotaExceeded) {
+    upgradeHint =
+      tierName === "patron"
+        ? null
+        : `Quota exceeded! Preview mode active. Upgrade to ${tierName === "supporter" ? "Champion" : "Patron"} for more streams`;
+  } else if (tierName !== "patron") {
+    upgradeHint = `Upgrade to ${tierName === "supporter" ? "Champion" : "Patron"} for more features`;
+  }
+
   return {
     tier: tierName,
+    tierLevel,
     weeklyLimit: effectiveLimit,
     used,
     rollover,
     allowed,
     remaining,
     subscriptionId: s.id,
+    previewAvailable: true,
+    previewDuration,
+    previewBitrate,
+    quotaExceeded,
+    quotaWarning,
+    paylistUnlocked,
+    upgradeHint,
   };
 }
 
@@ -441,18 +581,20 @@ router.post("/record-play", async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || null;
     const budget = await getStreamBudget(userId);
 
+    // ── Graceful degradation: return preview-only mode instead of blocking ──
     if (!budget.allowed) {
-      return res.status(429).json({
+      return res.json({
         recorded: false,
-        reason: "Weekly stream limit reached",
+        reason: "Weekly stream limit reached - preview mode active",
+        quotaExceeded: true,
+        canPlayPreview: true,
+        previewDuration: budget.previewDuration,
+        previewBitrate: budget.previewBitrate,
         tier: budget.tier,
         weeklyLimit: budget.weeklyLimit,
         used: budget.used,
         rollover: budget.rollover,
-        upgradeHint:
-          budget.tier === "patron"
-            ? null
-            : `Upgrade your plan for more streams. Current: ${budget.tier}`,
+        upgradeHint: budget.upgradeHint,
       });
     }
 
@@ -565,6 +707,212 @@ router.post("/record-play", async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// PREVIEW MODE + PAYLIST SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/budget — Get user's streaming quota status with preview/paylist info
+router.get("/budget", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+
+    res.json({
+      tier: budget.tier,
+      tierLevel: budget.tierLevel,
+      weeklyLimit:
+        budget.weeklyLimit === Infinity ? "unlimited" : budget.weeklyLimit,
+      used: budget.used,
+      remaining: budget.remaining === Infinity ? "unlimited" : budget.remaining,
+      rollover: budget.rollover,
+      quotaExceeded: budget.quotaExceeded,
+      quotaWarning: budget.quotaWarning,
+      previewAvailable: budget.previewAvailable,
+      previewDuration: budget.previewDuration,
+      previewBitrate: budget.previewBitrate,
+      paylistUnlocked: budget.paylistUnlocked,
+      upgradeHint: budget.upgradeHint,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] budget error:", err.message);
+    res.status(500).json({ error: "Failed to get budget" });
+  }
+});
+
+// GET /api/streaming/paylist — Get platform-curated exclusive tracks (tier-filtered)
+router.get("/paylist", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id || null;
+    const budget = await getStreamBudget(userId);
+    const { page = "1", limit = "20" } = req.query;
+    const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    // Fetch paylist items filtered by user's tier level
+    const paylistResult = await pool.query(
+      `SELECT pi.id, pi.track_id, pi.min_tier_required, pi.is_exclusive, 
+              pi.curated_rank, pi.release_date, pi.description,
+              mt.title, mt.duration, mt.cover_url, mt.streams,
+              COALESCE(ma.stage_name, ap.stage_name) as artist_name,
+              CASE WHEN pi.min_tier_required <= $1 THEN true ELSE false END as unlocked,
+              CASE WHEN pi.release_date IS NOT NULL AND pi.release_date > NOW() THEN true ELSE false END as early_access
+       FROM paylist_items pi
+       JOIN music_tracks mt ON mt.id = pi.track_id
+       LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+       LEFT JOIN artist_profiles ap ON ap.user_id = mt.artist_id
+       WHERE pi.min_tier_required <= $1 
+         OR (pi.release_date IS NULL OR pi.release_date <= NOW())
+       ORDER BY pi.curated_rank ASC, pi.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [budget.tierLevel, parseInt(limit as string), offset],
+    );
+
+    // Count total for pagination
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM paylist_items
+       WHERE min_tier_required <= $1 
+         OR (release_date IS NULL OR release_date <= NOW())`,
+      [budget.tierLevel],
+    );
+
+    res.json({
+      paylistUnlocked: budget.paylistUnlocked,
+      tier: budget.tier,
+      tierLevel: budget.tierLevel,
+      items: paylistResult.rows.map((row) => ({
+        id: row.id,
+        trackId: row.track_id,
+        title: row.title,
+        artistName: row.artist_name,
+        duration: row.duration,
+        coverUrl: row.cover_url,
+        streams: row.streams,
+        minTierRequired: row.min_tier_required,
+        isExclusive: row.is_exclusive,
+        curatedRank: row.curated_rank,
+        releaseDate: row.release_date,
+        description: row.description,
+        unlocked: row.unlocked,
+        earlyAccess: row.early_access,
+        previewAvailable: true, // Previews always available
+      })),
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total: parseInt(countResult.rows[0]?.total || "0"),
+      },
+      upgradeHint: budget.paylistUnlocked
+        ? null
+        : "Upgrade to Supporter to unlock exclusive Paylist tracks",
+    });
+  } catch (err: any) {
+    console.error("[Streaming] paylist error:", err.message);
+    // Return empty paylist if table doesn't exist yet
+    res.json({
+      paylistUnlocked: false,
+      tier: "guest",
+      tierLevel: 0,
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0 },
+      upgradeHint: "Upgrade to Supporter to unlock exclusive Paylist tracks",
+    });
+  }
+});
+
+// POST /api/streaming/paylist/:trackId/access — Log full track access from paylist
+router.post("/paylist/:trackId/access", async (req: Request, res: Response) => {
+  try {
+    const trackId = parseInt(req.params.trackId);
+    if (!trackId || isNaN(trackId)) {
+      return res.status(400).json({ error: "Invalid track ID" });
+    }
+
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const budget = await getStreamBudget(userId);
+
+    // Check if this track is in the paylist
+    const paylistCheck = await pool.query(
+      `SELECT id, min_tier_required, release_date FROM paylist_items WHERE track_id = $1`,
+      [trackId],
+    );
+
+    if (paylistCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Track not in Paylist" });
+    }
+
+    const paylistItem = paylistCheck.rows[0];
+    const minTier = paylistItem.min_tier_required;
+    const releaseDate = paylistItem.release_date
+      ? new Date(paylistItem.release_date)
+      : null;
+
+    // Check tier access
+    if (budget.tierLevel < minTier) {
+      const tierNames = ["Free", "Supporter", "Champion", "Patron"];
+      return res.status(403).json({
+        error: "Tier upgrade required",
+        currentTier: budget.tier,
+        requiredTier: tierNames[minTier] || "Supporter",
+        previewAvailable: true,
+        previewDuration: budget.previewDuration,
+      });
+    }
+
+    // Check early access (if release_date is in the future, only Champion+ can access)
+    if (releaseDate && releaseDate > new Date() && budget.tierLevel < 2) {
+      return res.status(403).json({
+        error: "Early access - available to Champion+ tiers",
+        releaseDate: releaseDate.toISOString(),
+        previewAvailable: true,
+        previewDuration: budget.previewDuration,
+      });
+    }
+
+    // Log full access
+    await pool
+      .query(
+        `INSERT INTO paylist_access_log (user_id, track_id, access_type)
+       VALUES ($1, $2, 'full')`,
+        [userId, trackId],
+      )
+      .catch(() => {}); // Silently fail if table doesn't exist yet
+
+    // Get track details
+    const trackResult = await pool.query(
+      `SELECT mt.id, mt.title, mt.file_url, mt.duration, mt.cover_url,
+              COALESCE(ma.stage_name, ap.stage_name) as artist_name
+       FROM music_tracks mt
+       LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+       LEFT JOIN artist_profiles ap ON ap.user_id = mt.artist_id
+       WHERE mt.id = $1`,
+      [trackId],
+    );
+
+    if (trackResult.rows.length === 0) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+
+    const track = trackResult.rows[0];
+
+    res.json({
+      authorized: true,
+      trackId: track.id,
+      title: track.title,
+      artistName: track.artist_name,
+      coverUrl: track.cover_url,
+      streamUrl: track.file_url,
+      duration: track.duration,
+      isPaylistExclusive: true,
+    });
+  } catch (err: any) {
+    console.error("[Streaming] paylist access error:", err.message);
+    res.status(500).json({ error: "Failed to access track" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 // ARTISTS
 // ═══════════════════════════════════════════════════════════
 
@@ -602,9 +950,11 @@ router.get("/artists", async (req: Request, res: Response) => {
     }
 
     let orderBy = "ORDER BY COALESCE(ap.lifetime_streams, 0) DESC";
-    if (sort === "name") orderBy = "ORDER BY COALESCE(ap.stage_name, art.stage_name) ASC";
+    if (sort === "name")
+      orderBy = "ORDER BY COALESCE(ap.stage_name, art.stage_name) ASC";
     else if (sort === "followers") orderBy = "ORDER BY follower_count DESC";
-    else if (sort === "monthly") orderBy = "ORDER BY COALESCE(ap.lifetime_streams, 0) DESC";
+    else if (sort === "monthly")
+      orderBy = "ORDER BY COALESCE(ap.lifetime_streams, 0) DESC";
 
     const artists = await pool.query(
       `
@@ -1262,6 +1612,356 @@ router.get("/user/liked-tracks", async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// TRACK REACTIONS (emoji reactions on songs)
+// ═══════════════════════════════════════════════════════════
+
+const VALID_REACTIONS = ["fire", "heart", "clap", "mindblown", "party", "sad"];
+
+// POST /api/streaming/track/:id/react — Toggle reaction on a track
+router.post("/track/:id/react", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId)
+      return res.status(401).json({ error: "Authentication required" });
+
+    const trackId = parseInt(req.params.id);
+    const { reactionType } = req.body;
+
+    if (!reactionType || !VALID_REACTIONS.includes(reactionType)) {
+      return res.status(400).json({
+        error: "Invalid reaction type. Valid: " + VALID_REACTIONS.join(", "),
+      });
+    }
+
+    // Check if already reacted with this type
+    const existing = await pool.query(
+      `SELECT id FROM track_reactions WHERE track_id = $1 AND user_id = $2 AND reaction_type = $3`,
+      [trackId, userId, reactionType],
+    );
+
+    if (existing.rows.length > 0) {
+      // Remove reaction
+      await pool.query(
+        `DELETE FROM track_reactions WHERE track_id = $1 AND user_id = $2 AND reaction_type = $3`,
+        [trackId, userId, reactionType],
+      );
+      res.json({ reacted: false, reactionType });
+    } else {
+      // Add reaction
+      await pool.query(
+        `INSERT INTO track_reactions (track_id, user_id, reaction_type) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+        [trackId, userId, reactionType],
+      );
+      res.json({ reacted: true, reactionType });
+    }
+  } catch (err: any) {
+    console.error("React error:", err);
+    res.status(500).json({ error: "Failed to toggle reaction" });
+  }
+});
+
+// GET /api/streaming/track/:id/reactions — Get all reactions for a track
+router.get("/track/:id/reactions", async (req: Request, res: Response) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const userId = (req as any).user?.id;
+
+    // Get reaction counts by type
+    const counts = await pool.query(
+      `SELECT reaction_type, COUNT(*) as count
+       FROM track_reactions WHERE track_id = $1
+       GROUP BY reaction_type`,
+      [trackId],
+    );
+
+    // Get user's reactions if logged in
+    let userReactions: string[] = [];
+    if (userId) {
+      const userReactionsResult = await pool.query(
+        `SELECT reaction_type FROM track_reactions WHERE track_id = $1 AND user_id = $2`,
+        [trackId, userId],
+      );
+      userReactions = userReactionsResult.rows.map((r: any) => r.reaction_type);
+    }
+
+    // Build reaction summary
+    const reactionCounts: Record<string, number> = {};
+    counts.rows.forEach((r: any) => {
+      reactionCounts[r.reaction_type] = parseInt(r.count);
+    });
+
+    res.json({
+      reactions: reactionCounts,
+      userReactions,
+      totalReactions: counts.rows.reduce(
+        (sum: number, r: any) => sum + parseInt(r.count),
+        0,
+      ),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch reactions" });
+  }
+});
+
+// GET /api/streaming/user/reactions — Get all user's reactions
+router.get("/user/reactions", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) return res.json({ reactions: [] });
+
+    const result = await pool.query(
+      `SELECT track_id, reaction_type FROM track_reactions WHERE user_id = $1`,
+      [userId],
+    );
+
+    // Group by track
+    const byTrack: Record<number, string[]> = {};
+    result.rows.forEach((r: any) => {
+      if (!byTrack[r.track_id]) byTrack[r.track_id] = [];
+      byTrack[r.track_id].push(r.reaction_type);
+    });
+
+    res.json({ reactions: byTrack });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch user reactions" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// COMMENT THREADS (Twitter-style threads for songs)
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/track/:id/thread — Full comment thread for a track
+router.get("/track/:id/thread", async (req: Request, res: Response) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const { page = "1", limit = "50" } = req.query;
+    const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    // Get track info
+    const track = await pool.query(
+      `SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+         COALESCE(ma.image_url, ap.profile_image_url) as artist_image,
+         ma.verified as artist_verified,
+         a.title as album_title, a.cover_art as album_cover
+       FROM music_tracks mt
+       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
+       LEFT JOIN artists art ON mt.artist_id = art.id
+       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+       LEFT JOIN albums a ON mt.album_id = a.id
+       WHERE mt.id = $1`,
+      [trackId],
+    );
+
+    if (track.rows.length === 0) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+
+    // Get comments with user info (top-level first, then replies)
+    const comments = await pool.query(
+      `SELECT tc.*, u.username, u.display_name, u.avatar_url,
+         (SELECT COUNT(*) FROM track_comments WHERE parent_id = tc.id) as reply_count
+       FROM track_comments tc
+       JOIN users u ON tc.user_id = u.id
+       WHERE tc.track_id = $1 AND tc.parent_id IS NULL
+       ORDER BY tc.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [trackId, limit, offset],
+    );
+
+    // Get replies for each comment (max 3 per comment initially)
+    const commentsWithReplies = await Promise.all(
+      comments.rows.map(async (comment: any) => {
+        const replies = await pool.query(
+          `SELECT tc.*, u.username, u.display_name, u.avatar_url
+           FROM track_comments tc
+           JOIN users u ON tc.user_id = u.id
+           WHERE tc.parent_id = $1
+           ORDER BY tc.created_at ASC
+           LIMIT 3`,
+          [comment.id],
+        );
+        return { ...comment, replies: replies.rows };
+      }),
+    );
+
+    // Get total comment count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM track_comments WHERE track_id = $1`,
+      [trackId],
+    );
+
+    // Get reaction counts
+    const reactions = await pool.query(
+      `SELECT reaction_type, COUNT(*) as count
+       FROM track_reactions WHERE track_id = $1
+       GROUP BY reaction_type`,
+      [trackId],
+    );
+
+    const reactionCounts: Record<string, number> = {};
+    reactions.rows.forEach((r: any) => {
+      reactionCounts[r.reaction_type] = parseInt(r.count);
+    });
+
+    res.json({
+      track: track.rows[0],
+      comments: commentsWithReplies,
+      totalComments: parseInt(countResult.rows[0].total),
+      reactions: reactionCounts,
+      page: parseInt(page as string),
+      hasMore:
+        offset + comments.rows.length < parseInt(countResult.rows[0].total),
+    });
+  } catch (err: any) {
+    console.error("Thread error:", err);
+    res.status(500).json({ error: "Failed to fetch thread" });
+  }
+});
+
+// GET /api/streaming/comment/:id/replies — Get all replies for a comment
+router.get("/comment/:id/replies", async (req: Request, res: Response) => {
+  try {
+    const commentId = parseInt(req.params.id);
+
+    const replies = await pool.query(
+      `SELECT tc.*, u.username, u.display_name, u.avatar_url
+       FROM track_comments tc
+       JOIN users u ON tc.user_id = u.id
+       WHERE tc.parent_id = $1
+       ORDER BY tc.created_at ASC`,
+      [commentId],
+    );
+
+    res.json({ replies: replies.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch replies" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// ARTIST DASHBOARD (for streamers to view followed artists)
+// ═══════════════════════════════════════════════════════════
+
+// GET /api/streaming/artist/:id/dashboard — Full artist dashboard view
+router.get("/artist/:id/dashboard", async (req: Request, res: Response) => {
+  try {
+    const artistId = parseInt(req.params.id);
+    const userId = (req as any).user?.id;
+
+    // Get artist profile
+    const artist = await pool.query(
+      `SELECT ma.*, 
+         (SELECT COUNT(*) FROM artist_follows WHERE artist_id = ma.id) as follower_count,
+         (SELECT COUNT(*) FROM music_tracks WHERE artist_id = ma.id AND status = 'published') as track_count,
+         (SELECT COUNT(*) FROM albums WHERE artist_id = ma.id) as album_count
+       FROM music_artists ma
+       WHERE ma.id = $1`,
+      [artistId],
+    );
+
+    if (artist.rows.length === 0) {
+      return res.status(404).json({ error: "Artist not found" });
+    }
+
+    // Check if user follows this artist
+    let isFollowing = false;
+    if (userId) {
+      const followCheck = await pool.query(
+        `SELECT 1 FROM artist_follows WHERE artist_id = $1 AND user_id = $2`,
+        [artistId, userId],
+      );
+      isFollowing = followCheck.rows.length > 0;
+    }
+
+    // Get top tracks
+    const topTracks = await pool.query(
+      `SELECT ${MT_COLS}, 
+         a.title as album_title, a.cover_art as album_cover,
+         COALESCE((SELECT COUNT(*) FROM track_likes WHERE track_id = mt.id), 0) as like_count,
+         COALESCE((SELECT COUNT(*) FROM track_comments WHERE track_id = mt.id), 0) as comment_count
+       FROM music_tracks mt
+       LEFT JOIN albums a ON mt.album_id = a.id
+       WHERE mt.artist_id = $1 AND mt.status = 'published'
+       ORDER BY mt.streams DESC
+       LIMIT 10`,
+      [artistId],
+    );
+
+    // Get recent releases (albums + singles)
+    const recentReleases = await pool.query(
+      `SELECT a.*, 
+         (SELECT COUNT(*) FROM music_tracks WHERE album_id = a.id) as track_count,
+         (SELECT SUM(streams) FROM music_tracks WHERE album_id = a.id) as total_streams
+       FROM albums a
+       WHERE a.artist_id = $1
+       ORDER BY a.release_date DESC NULLS LAST
+       LIMIT 6`,
+      [artistId],
+    );
+
+    // Get streaming stats (last 30 days)
+    const streamStats = await pool.query(
+      `SELECT 
+         DATE_TRUNC('day', created_at) as day,
+         COUNT(*) as streams
+       FROM stream_plays
+       WHERE artist_id = $1 AND created_at > NOW() - INTERVAL '30 days'
+       GROUP BY DATE_TRUNC('day', created_at)
+       ORDER BY day ASC`,
+      [artistId],
+    );
+
+    // Get genre breakdown
+    const genreBreakdown = await pool.query(
+      `SELECT genre, COUNT(*) as count, SUM(streams) as total_streams
+       FROM music_tracks
+       WHERE artist_id = $1 AND status = 'published'
+       GROUP BY genre
+       ORDER BY total_streams DESC`,
+      [artistId],
+    );
+
+    res.json({
+      artist: artist.rows[0],
+      isFollowing,
+      topTracks: topTracks.rows,
+      recentReleases: recentReleases.rows,
+      streamStats: streamStats.rows,
+      genreBreakdown: genreBreakdown.rows,
+    });
+  } catch (err: any) {
+    console.error("Artist dashboard error:", err);
+    res.status(500).json({ error: "Failed to fetch artist dashboard" });
+  }
+});
+
+// GET /api/streaming/user/followed-artists — Get user's followed artists with dashboard preview
+router.get("/user/followed-artists", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) return res.json({ artists: [] });
+
+    const artists = await pool.query(
+      `SELECT ma.*,
+         af.created_at as followed_at,
+         (SELECT COUNT(*) FROM artist_follows WHERE artist_id = ma.id) as follower_count,
+         (SELECT COUNT(*) FROM music_tracks WHERE artist_id = ma.id AND status = 'published') as track_count,
+         (SELECT MAX(release_date) FROM music_tracks WHERE artist_id = ma.id) as latest_release
+       FROM artist_follows af
+       JOIN music_artists ma ON af.artist_id = ma.id
+       WHERE af.user_id = $1
+       ORDER BY af.created_at DESC`,
+      [userId],
+    );
+
+    res.json({ artists: artists.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch followed artists" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 // LISTENING HISTORY
 // ═══════════════════════════════════════════════════════════
 
@@ -1497,83 +2197,137 @@ router.get("/subscription/plans", async (_req: Request, res: Response) => {
   res.json({
     plans: [
       {
-        id: "free",
+        id: "guest",
         name: "Gratuit",
         nameEn: "Free",
+        tier: "guest",
         price: 0,
         currency: "USD",
+        weeklyStreams: 20,
         features: [
-          "Streaming illimité avec publicités",
-          "Qualité audio standard (128kbps)",
+          "20 streams par semaine",
+          "Qualité audio haute (256kbps)",
+          "Publicités entre les pistes",
           "Pas de téléchargement",
-          "Pas de lecture hors-ligne",
         ],
         featuresEn: [
-          "Unlimited streaming with ads",
-          "Standard audio quality (128kbps)",
+          "20 streams per week",
+          "High audio quality (256kbps)",
+          "Ads between tracks",
           "No downloads",
-          "No offline playback",
         ],
         downloadsPerMonth: 0,
-        audioQuality: "128kbps",
+        audioQuality: "256kbps",
         ads: true,
         offline: false,
+        arcadeAccess: false,
         color: "gray",
       },
       {
-        id: "premium",
-        name: "Premium",
-        nameEn: "Premium",
+        id: "supporter",
+        name: "Supporter",
+        nameEn: "Supporter",
+        tier: "supporter",
         price: 4.99,
         currency: "USD",
+        weeklyStreams: 300,
+        popular: false,
         features: [
-          "Streaming sans publicité",
-          "Haute qualité audio (320kbps)",
+          "300 streams par semaine",
+          "Sans publicité",
+          "Qualité HD (320kbps)",
           "5 téléchargements/mois",
-          "Lecture hors-ligne",
-          "Accès anticipé aux sorties",
+          "Accès Arcade",
+          "Badge Supporter",
         ],
         featuresEn: [
-          "Ad-free streaming",
-          "High quality audio (320kbps)",
+          "300 streams per week",
+          "Ad-free listening",
+          "HD quality (320kbps)",
           "5 downloads/month",
-          "Offline playback",
-          "Early access to releases",
+          "Arcade access",
+          "Supporter badge",
         ],
         downloadsPerMonth: 5,
         audioQuality: "320kbps",
         ads: false,
         offline: true,
+        arcadeAccess: true,
+        color: "blue",
+      },
+      {
+        id: "champion",
+        name: "Champion",
+        nameEn: "Champion",
+        tier: "champion",
+        price: 9.99,
+        currency: "USD",
+        weeklyStreams: 1500,
+        popular: true,
+        features: [
+          "1 500 streams par semaine",
+          "Sans publicité",
+          "Qualité FLAC (lossless)",
+          "20 téléchargements/mois",
+          "Accès Arcade",
+          "Sorties en avant-première",
+          "Badge Champion",
+          "Vote Arena ×2",
+        ],
+        featuresEn: [
+          "1,500 streams per week",
+          "Ad-free listening",
+          "FLAC quality (lossless)",
+          "20 downloads/month",
+          "Arcade access",
+          "Early access releases",
+          "Champion badge",
+          "Arena vote ×2",
+        ],
+        downloadsPerMonth: 20,
+        audioQuality: "FLAC",
+        ads: false,
+        offline: true,
+        arcadeAccess: true,
         color: "amber",
       },
       {
-        id: "artist",
-        name: "Artiste Pro",
-        nameEn: "Artist Pro",
-        price: 9.99,
+        id: "patron",
+        name: "Patron",
+        nameEn: "Patron",
+        tier: "patron",
+        price: 19.99,
         currency: "USD",
+        weeklyStreams: -1,
         features: [
-          "Tout Premium inclus",
-          "Téléchargements illimités",
+          "Streams illimités",
+          "Sans publicité",
           "Qualité FLAC (lossless)",
-          "Analytics avancés",
-          "Badges prioritaires",
+          "Téléchargements illimités",
+          "Accès Arcade",
+          "Exclusivités Patron",
+          "Badge Patron doré",
+          "Vote Arena ×3",
           "Support prioritaire",
-          "Upload de pistes",
+          "Rencontre artistes VIP",
         ],
         featuresEn: [
-          "Everything in Premium",
-          "Unlimited downloads",
+          "Unlimited streams",
+          "Ad-free listening",
           "FLAC quality (lossless)",
-          "Advanced analytics",
-          "Priority badges",
+          "Unlimited downloads",
+          "Arcade access",
+          "Patron exclusives",
+          "Gold Patron badge",
+          "Arena vote ×3",
           "Priority support",
-          "Track uploads",
+          "VIP artist meetups",
         ],
         downloadsPerMonth: -1,
         audioQuality: "FLAC",
         ads: false,
         offline: true,
+        arcadeAccess: true,
         color: "purple",
       },
     ],
@@ -1632,11 +2386,11 @@ router.get("/subscription/plans", async (_req: Request, res: Response) => {
             "Monthly subscription fees split — majority goes to artist royalty pool",
         },
         {
-          source: "Artist Pro Subscriptions ($9.99/mo)",
+          source: "Pro Streamer Subscriptions ($9.99/mo)",
           creatorShare: "50%",
           artistShare: "50%",
           description:
-            "Pro artist fees fund platform operations + artist tools development",
+            "Pro streamer fees fund platform operations + exclusive features",
         },
         {
           source: "Paid Track Uploads ($0.99-$2.99/track)",

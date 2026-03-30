@@ -430,15 +430,14 @@ export default function ApplyPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         {/* Header */}
         <div className="container mx-auto px-4 py-8">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              className="text-white/70 hover:text-white mb-8"
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="text-white/70 hover:text-white mb-8"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

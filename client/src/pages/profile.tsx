@@ -117,14 +117,13 @@ export default function ProfilePage() {
       {/* Profile Content */}
       <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10 pb-12 w-full">
         {/* Back button */}
-        <motion.button
+        <button
           onClick={() => window.history.back()}
-          whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors mb-6 text-sm"
+          className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200 text-white mb-6"
+          title="Go back"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </motion.button>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row gap-6 mb-8">

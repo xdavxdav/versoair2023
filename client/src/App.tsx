@@ -77,8 +77,6 @@ const Communities = lazy(() => import("@/pages/communities"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
 const ArtisanWorkshops = lazy(() => import("@/pages/artisan-workshops"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
-const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
-import ArtistPortalGate from "@/components/ArtistPortalGate";
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
 
 // Stable wrapper components — MUST be defined at module level (not inline)
@@ -87,13 +85,6 @@ const ArtistPortalWelcomePage = (props: any) => (
   <Suspense fallback={<PageLoader />}>
     <ArtistPortalWelcome {...props} />
   </Suspense>
-);
-const ArtistPortalDashboardPage = () => (
-  <ArtistPortalGate>
-    <Suspense fallback={<PageLoader />}>
-      <ArtistPortalDashboard />
-    </Suspense>
-  </ArtistPortalGate>
 );
 const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 
@@ -199,6 +190,15 @@ const ArenaContestPage = lazy(() => import("@/pages/arena-contest"));
 const RevenuePulsePage = lazy(() => import("@/pages/revenue-pulse"));
 const ArcadePage = lazy(() => import("@/pages/arcade"));
 const ListenerPortal = lazy(() => import("@/pages/listener-portal"));
+const StreamerPortal = lazy(() => import("@/pages/streamer-portal"));
+
+// ─────────────────────────────────────────────────────
+// 🎹 Musical Universe (lazy-loaded)
+// ─────────────────────────────────────────────────────
+const MusicDashboard = lazy(() => import("@/pages/music/dashboard"));
+const BeatmakerStudio = lazy(() => import("@/pages/music/beatmaker-studio"));
+const MusicVault = lazy(() => import("@/pages/music/vault"));
+const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
 
 // ─────────────────────────────────────────────────────
 // 📢 Marketing Platform (lazy-loaded)
@@ -348,10 +348,9 @@ function Router() {
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
-      <Route
-        path="/artist-portal/dashboard"
-        component={ArtistPortalDashboardPage}
-      />
+      <Route path="/artist-portal/dashboard">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
@@ -515,6 +514,44 @@ function Router() {
       <Route path="/revenue-pulse" component={RevenuePulsePage} />
       <Route path="/arcade" component={ArcadePage} />
       <Route path="/listener-portal" component={ListenerPortal} />
+      <Route path="/streamer-portal" component={StreamerPortal} />
+
+      {/* ═══════════════════════════════════════════════
+          🎹 MUSICAL UNIVERSE — Creator ecosystem
+          ═══════════════════════════════════════════════ */}
+      <Route path="/music" component={MusicDashboard} />
+      <Route path="/music/dashboard" component={MusicDashboard} />
+      <Route path="/music/studio" component={BeatmakerStudio} />
+      <Route path="/music/vault" component={MusicVault} />
+      <Route path="/music/royalties" component={MusicRoyalties} />
+      {/* Analytics/Insights — redirect to main analytics for now */}
+      <Route path="/music/insights">{() => <Redirect to="/analytics" />}</Route>
+      {/* Live/Royale — redirect to arena/stream */}
+      <Route path="/music/live">{() => <Redirect to="/stream" />}</Route>
+      {/* Management routes — redirect to dashboard until dedicated pages */}
+      <Route path="/music/projects">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
+      <Route path="/music/releases">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
+      <Route path="/music/planner">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
+      <Route path="/music/marketing">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
+      <Route path="/music/artists">{() => <Redirect to="/artistes" />}</Route>
+      <Route path="/music/a-and-r">
+        {() => <Redirect to="/music/dashboard" />}
+      </Route>
+      <Route path="/music/settings">{() => <Redirect to="/profile" />}</Route>
+      <Route path="/music/upgrade">{() => <Redirect to="/apply" />}</Route>
+      {/* StreamRoyale public access */}
+      <Route path="/streamroyale">{() => <Redirect to="/arena" />}</Route>
+      <Route path="/royale">{() => <Redirect to="/arena" />}</Route>
+      {/* Redirects for legacy/alternate paths */}
+      <Route path="/beatmaker">{() => <Redirect to="/music/studio" />}</Route>
 
       {/* 404 Fallback */}
       <Route component={NotFound} />
@@ -529,6 +566,14 @@ function AppContent() {
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
   const isContentNavPage = isContentNavPath(currentPath);
+  const isMusicPage =
+    currentPath.startsWith("/music") ||
+    currentPath.startsWith("/artist-portal") ||
+    currentPath.startsWith("/stream") ||
+    currentPath.startsWith("/streamer-portal") ||
+    currentPath.startsWith("/listener-portal") ||
+    currentPath.startsWith("/arcade") ||
+    currentPath.startsWith("/arena");
   const { user } = useAuthContext();
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
@@ -614,7 +659,8 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
-      {!versoaiFullscreen && (
+      {/* Hide on music pages (they have their own layout) */}
+      {!versoaiFullscreen && !isMusicPage && (
         <div
           ref={headerRef}
           className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
@@ -696,13 +742,53 @@ function AppContent() {
             !showContentNav && <BlogNavbar />}
         </div>
       )}
-      {/* Spacer for fixed header */}
-      {!versoaiFullscreen && <div style={{ height: headerHeight }} />}
+      {/* Spacer for fixed header — not needed on music pages */}
+      {!versoaiFullscreen && !isMusicPage && (
+        <div style={{ height: headerHeight }} />
+      )}
+
+      {/* ── Music Universe Navbar — shown on music/artist-portal pages ── */}
+      {isMusicPage && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-[#0a0512] border-b border-purple-500/20">
+          <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+            <a href="/music/dashboard" className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
+                <span className="text-white text-sm">♪</span>
+              </div>
+              <div>
+                <span className="text-base font-bold bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
+                  Musical Universe
+                </span>
+                <p className="text-[9px] text-white/40 -mt-0.5 hidden sm:block">
+                  by VersoAir
+                </p>
+              </div>
+            </a>
+            <div className="flex items-center gap-2">
+              {isAuthed ? (
+                <a
+                  href="/music/dashboard"
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 text-white hover:from-purple-500/30 hover:to-fuchsia-500/30 transition"
+                >
+                  Dashboard
+                </a>
+              ) : (
+                <span className="text-sm text-white/50">Sign in below</span>
+              )}
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+        </div>
+      )}
+      {/* Spacer for music navbar */}
+      {isMusicPage && <div className="h-14" />}
 
       <PullToRefresh />
-      <MobileMenuBubble />
+      {/* Instagram-style nav for non-music, non-content pages */}
+      {!isAuthPage && !showContentNav && !isMusicPage && <InstagramNav />}
       {showContentNav && <ContentNav />}
-      {!isAuthPage && !showContentNav && (
+      {/* Main Navbar — hide on auth pages, ContentNav pages, and music pages */}
+      {!isAuthPage && !showContentNav && !isMusicPage && (
         <div
           className={`hidden md:block transition-opacity duration-300 ${
             isLoading && !isFadingOut
@@ -740,7 +826,7 @@ function AppContent() {
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} pb-[68px]`}
+        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} ${isMusicPage ? "" : "pb-[68px]"}`}
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
@@ -757,9 +843,12 @@ function AppContent() {
           <SponsorsSection />
         </div>
       )}
-      <div>
-        <Footer />
-      </div>
+      {/* Footer — hide on music pages (they have their own layout) */}
+      {!isMusicPage && (
+        <div>
+          <Footer />
+        </div>
+      )}
     </div>
   );
 }

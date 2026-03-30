@@ -40,6 +40,7 @@ import walletRouter from "./routes/wallet";
 import gamesRouter from "./routes/games";
 import paypalRouter from "./routes/paypal";
 import listenerRouter from "./routes/listener";
+import beatmakerRouter from "./routes/beatmaker";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -216,6 +217,50 @@ export async function registerRoutes(app: Express) {
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/streamroyale", streamroyaleRouter);
+
+  // ─── PREVIEW ROUTE (must come before streaming router to avoid :id catch) ───
+  app.get("/api/streaming/tracks/:id/preview", async (req, res) => {
+    try {
+      const trackId = parseInt(req.params.id);
+      if (!trackId || isNaN(trackId)) {
+        return res.status(400).json({ error: "Invalid track ID" });
+      }
+
+      // Fetch track details (simple query)
+      const trackResult = await pool.query(
+        `SELECT mt.id, mt.title, mt.audio_url, mt.file_path, mt.duration, mt.cover_art, ma.name as artist_name
+         FROM music_tracks mt
+         LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+         WHERE mt.id = $1`,
+        [trackId],
+      );
+
+      if (trackResult.rows.length === 0) {
+        return res.status(404).json({ error: "Track not found" });
+      }
+
+      const track = trackResult.rows[0];
+
+      // Return preview metadata (frontend handles 30-second clip playback)
+      res.json({
+        trackId: track.id,
+        title: track.title,
+        artistName: track.artist_name || "Unknown Artist",
+        coverUrl: track.cover_art,
+        previewUrl: track.audio_url || track.file_path,
+        fullDuration: track.duration,
+        previewDuration: 30,
+        previewBitrate: 128,
+        isPreview: true,
+        seekable: true,
+        quotaImpact: 0,
+      });
+    } catch (err: any) {
+      console.error("[PREVIEW] error:", err.message);
+      res.status(500).json({ error: "Failed to load preview" });
+    }
+  });
+
   app.use("/api/streaming", streamingRouter);
   app.use("/api/contracts", artistContractsRouter);
   app.use("/api/artists", artistsRouter);
@@ -245,6 +290,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/games", gamesRouter); // PvP skill games (trivia, prediction, card battle)
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
   app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
+  app.use("/api/beatmaker", beatmakerRouter); // Beatmaker Studio — production requests & briefs
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

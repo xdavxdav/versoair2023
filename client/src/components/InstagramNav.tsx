@@ -405,13 +405,80 @@ export default function InstagramNav({
   onMusicPortalToggle,
   onLocationPanelToggle,
 }: InstagramNavProps) {
-  const [currentPath] = useLocation();
+  const [currentPath, setLocation] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user } = useAuthContext();
 
+  // ─── Home button tap/hold gesture state ───
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdStartRef = useRef(0);
+  const holdCompletedRef = useRef(false);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const [holdCountdown, setHoldCountdown] = useState(5);
+
   const toggleDrawer = useCallback(() => setDrawerOpen((p) => !p), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  // Home button gestures:
+  // - Single tap → /marketplace
+  // - Double tap → /blog
+  // - Hold 5s → / (home) with countdown
+  const handleHomeTap = useCallback(() => {
+    if (holdCompletedRef.current) {
+      holdCompletedRef.current = false;
+      return;
+    }
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      const count = tapCountRef.current;
+      tapCountRef.current = 0;
+      if (count >= 2) {
+        // Double tap → /blog
+        setLocation("/blog");
+      } else {
+        // Single tap → /marketplace (or scroll to top if already there)
+        if (currentPath === "/marketplace") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          setLocation("/marketplace");
+        }
+      }
+    }, 300);
+  }, [currentPath, setLocation]);
+
+  const handleHomePressStart = useCallback(() => {
+    holdCompletedRef.current = false;
+    holdStartRef.current = Date.now();
+    setIsHolding(true);
+    setHoldProgress(0);
+    setHoldCountdown(5);
+    holdIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - holdStartRef.current;
+      const progress = Math.min((elapsed / 5000) * 100, 100);
+      setHoldProgress(progress);
+      setHoldCountdown(Math.max(0, Math.ceil(5 - elapsed / 1000)));
+    }, 16);
+    holdTimerRef.current = setTimeout(() => {
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      setIsHolding(false);
+      setHoldProgress(0);
+      holdCompletedRef.current = true;
+      setLocation("/");
+    }, 5000);
+  }, [setLocation]);
+
+  const handleHomePressEnd = useCallback(() => {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+    setIsHolding(false);
+    setHoldProgress(0);
+  }, []);
 
   // Close drawer on route change
   useEffect(() => {
@@ -425,6 +492,70 @@ export default function InstagramNav({
 
   return (
     <>
+      {/* ═══ Full-screen darkening overlay during hold countdown ═══ */}
+      <AnimatePresence>
+        {isHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (holdProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="url(#holdGradientNav)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - holdProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <defs>
+                  <linearGradient
+                    id="holdGradientNav"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#ea580c" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {holdCountdown}
+                </span>
+              </motion.div>
+              <p className="text-white/60 text-sm font-medium tracking-wide">
+                Retour à l'accueil...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ═══════════════════════════════════════════════════════
           DESKTOP: Slim left side-rail (hidden on mobile)
           ═══════════════════════════════════════════════════════ */}
@@ -432,12 +563,55 @@ export default function InstagramNav({
         className="hidden md:flex fixed top-0 left-0 bottom-0 w-[72px] bg-gray-950/90 backdrop-blur-xl border-r border-gray-800/60 flex-col items-center py-4 z-[70] transition-all"
         aria-label="Side navigation"
       >
-        {/* Logo */}
-        <Link href="/" className="mb-6">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-amber-500/20">
+        {/* Logo with tap/hold gestures */}
+        <div className="relative mb-6">
+          {isHolding && (
+            <svg
+              className="absolute pointer-events-none z-10"
+              style={{
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%,-50%)",
+                width: "48px",
+                height: "48px",
+              }}
+              viewBox="0 0 48 48"
+            >
+              <circle
+                cx="24"
+                cy="24"
+                r="21"
+                fill="none"
+                stroke="rgba(245,158,11,0.2)"
+                strokeWidth="2"
+              />
+              <circle
+                cx="24"
+                cy="24"
+                r="21"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 21}`}
+                strokeDashoffset={`${2 * Math.PI * 21 * (1 - holdProgress / 100)}`}
+                transform="rotate(-90 24 24)"
+              />
+            </svg>
+          )}
+          <button
+            onClick={handleHomeTap}
+            onPointerDown={handleHomePressStart}
+            onPointerUp={handleHomePressEnd}
+            onPointerLeave={handleHomePressEnd}
+            onPointerCancel={handleHomePressEnd}
+            onContextMenu={(e) => e.preventDefault()}
+            className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-amber-500/20 select-none"
+            title="Tap=Marketplace · Double-tap=Blog · Hold 5s=Home"
+          >
             V
-          </div>
-        </Link>
+          </button>
+        </div>
 
         {/* Primary nav icons */}
         <div className="flex-1 flex flex-col items-center gap-1">
@@ -518,9 +692,51 @@ export default function InstagramNav({
         aria-label="Bottom navigation"
       >
         <div className="flex items-center justify-around h-14 px-1">
-          {/* Home */}
-          <Link href="/">
-            <div className="flex flex-col items-center gap-0.5 px-3 py-1">
+          {/* Home with tap/double-tap/hold gestures */}
+          <div className="relative">
+            {isHolding && (
+              <svg
+                className="absolute pointer-events-none z-10"
+                style={{
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%,-50%)",
+                  width: "36px",
+                  height: "36px",
+                }}
+                viewBox="0 0 36 36"
+              >
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  fill="none"
+                  stroke="rgba(245,158,11,0.2)"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  fill="none"
+                  stroke="#f59e0b"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 15}`}
+                  strokeDashoffset={`${2 * Math.PI * 15 * (1 - holdProgress / 100)}`}
+                  transform="rotate(-90 18 18)"
+                />
+              </svg>
+            )}
+            <button
+              onClick={handleHomeTap}
+              onPointerDown={handleHomePressStart}
+              onPointerUp={handleHomePressEnd}
+              onPointerLeave={handleHomePressEnd}
+              onPointerCancel={handleHomePressEnd}
+              onContextMenu={(e) => e.preventDefault()}
+              className="flex flex-col items-center gap-0.5 px-3 py-1 select-none"
+            >
               <Home
                 className={`h-6 w-6 transition-colors ${isHome ? "text-amber-400" : "text-gray-400"}`}
               />
@@ -529,8 +745,8 @@ export default function InstagramNav({
               >
                 Home
               </span>
-            </div>
-          </Link>
+            </button>
+          </div>
 
           {/* Search */}
           <button
