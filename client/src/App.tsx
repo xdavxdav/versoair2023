@@ -215,7 +215,6 @@ const AdminPrintshop = lazy(() => import("@/pages/admin-printshop"));
 // ─────────────────────────────────────────────────────
 // 🧩 Layout Components
 // ─────────────────────────────────────────────────────
-import InstagramNav from "@/components/InstagramNav";
 import Footer from "@/components/ui/footer";
 import Navbar from "@/components/ui/navbar";
 import BlogNavbar from "@/components/BlogNavbar";
@@ -784,8 +783,6 @@ function AppContent() {
       {isMusicPage && <div className="h-14" />}
 
       <PullToRefresh />
-      {/* Instagram-style nav for non-music, non-content pages */}
-      {!isAuthPage && !showContentNav && !isMusicPage && <InstagramNav />}
       {showContentNav && <ContentNav />}
       {/* Main Navbar — hide on auth pages, ContentNav pages, and music pages */}
       {!isAuthPage && !showContentNav && !isMusicPage && (
