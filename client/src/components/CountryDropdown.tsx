@@ -178,13 +178,28 @@ export function CountryDropdown() {
   const [tab, setTab] = useState<Tab>("country");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: countries = [] } = useQuery<Country[]>({
+  // Fallback countries if API fails
+  const FALLBACK_COUNTRIES: Country[] = [
+    { id: 9, code: "CI", name: "Côte d'Ivoire" },
+    { id: 3, code: "FR", name: "France" },
+    { id: 1, code: "US", name: "United States" },
+    { id: 2, code: "CA", name: "Canada" },
+    { id: 10, code: "SN", name: "Sénégal" },
+    { id: 11, code: "CM", name: "Cameroun" },
+    { id: 27, code: "BE", name: "Belgium" },
+    { id: 28, code: "CH", name: "Switzerland" },
+    { id: 4, code: "GB", name: "United Kingdom" },
+    { id: 5, code: "DE", name: "Germany" },
+  ];
+
+  const { data: countries = FALLBACK_COUNTRIES } = useQuery<Country[]>({
     queryKey: ["countries-list"],
     queryFn: async () => {
       const res = await fetch(`${API_BASE_URL}/api/countries`);
       if (!res.ok) throw new Error(`Countries fetch failed: ${res.status}`);
       const json = await res.json();
-      return Array.isArray(json) ? json : json.data || [];
+      const list = Array.isArray(json) ? json : json.data || [];
+      return list.length > 0 ? list : FALLBACK_COUNTRIES;
     },
     staleTime: 1000 * 60 * 5, // 5 min
     retry: 4,
