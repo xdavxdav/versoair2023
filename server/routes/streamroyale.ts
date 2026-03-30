@@ -220,11 +220,12 @@ async function ensureStreamRoyaleTables() {
         ON CONFLICT (name) DO NOTHING;
       `);
 
-      // Seed streaming plans
+      // Seed streaming plans (Streamer tiers only - no Artist tiers here)
       await pool.query(`
         INSERT INTO streaming_plans (name, monthly_fee, stream_limit, pool_contribution_percent, boost_credits) VALUES
-          ('Supporter', 4.99, 200, 70, 0),
-          ('Champion', 9.99, 1000, 75, 5),
+          ('Gratuit', 0, 20, 0, 0),
+          ('Supporter', 4.99, 300, 70, 0),
+          ('Champion', 9.99, 1500, 75, 5),
           ('Patron', 19.99, NULL, 80, 20)
         ON CONFLICT (name) DO NOTHING;
       `);

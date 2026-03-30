@@ -90,14 +90,19 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const detectFromIpApiCo = async () => {
+  const detectFromIpApi = async () => {
+    // ip-api.com — free, no API key, 45 req/min (plenty for geo detection)
     try {
-      const res = await fetch("https://ipapi.co/json/", {
-        signal: AbortSignal.timeout(5000),
-      });
+      const res = await fetch(
+        "http://ip-api.com/json/?fields=status,countryCode",
+        {
+          signal: AbortSignal.timeout(5000),
+        },
+      );
       if (!res.ok) return "";
       const data = await res.json();
-      return normalizeCode(data?.country_code || "");
+      if (data?.status !== "success") return "";
+      return normalizeCode(data?.countryCode || "");
     } catch {
       return "";
     }
@@ -182,7 +187,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         const strategies = [
           detectFromBackend,
           detectFromIpWhoIs,
-          detectFromIpApiCo,
+          detectFromIpApi,
           detectFromCountryIs,
         ];
 

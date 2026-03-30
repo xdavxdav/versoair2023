@@ -75,6 +75,7 @@ interface AudioContextType {
   removeFromQueue: (index: number) => void;
   clearQueue: () => void;
   reorderQueue: (from: number, to: number) => void;
+  closePlayer: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -335,7 +336,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       // Update media session
       if ("mediaSession" in navigator) {
-        const coverUrl = track.cover_art || (track.has_pochette ? `/api/streaming/tracks/${track.id}/pochette` : null) || track.album_cover;
+        const coverUrl =
+          track.cover_art ||
+          (track.has_pochette
+            ? `/api/streaming/tracks/${track.id}/pochette`
+            : null) ||
+          track.album_cover;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.title,
           artist: track.artist_name || "Verso Air",
@@ -544,6 +550,32 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Close the player completely (stop playback and hide)
+  const closePlayer = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    if (audioContextRef.current?.state === "running") {
+      audioContextRef.current.suspend().catch(() => {});
+    }
+    if (streamTimerRef.current) {
+      clearTimeout(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
+    setCurrentTrack(null);
+    setIsPlaying(false);
+    setProgress(0);
+    setCurrentTime(0);
+    setDuration(0);
+    historyRef.current = [];
+    // Dispatch event to notify other components
+    window.dispatchEvent(
+      new CustomEvent("audio-player-state", { detail: { visible: false } }),
+    );
+  }, []);
+
   // Persist queue to localStorage
   useEffect(() => {
     if (queue.length > 0) {
@@ -657,6 +689,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     removeFromQueue,
     clearQueue,
     reorderQueue,
+    closePlayer,
   };
 
   return (

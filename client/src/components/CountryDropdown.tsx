@@ -279,7 +279,7 @@ export function CountryDropdown() {
       {/* ── Language change confirmation banner ── */}
       {showBanner && (
         <div
-          className="notranslate fixed top-2 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-2.5 flex items-center gap-2.5 shadow-xl"
+          className="notranslate fixed top-16 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-2.5 flex items-center gap-2.5 shadow-xl"
           style={{ maxWidth: "92vw" }}
         >
           <Globe className="h-4 w-4 text-purple-400 flex-shrink-0" />
@@ -434,7 +434,7 @@ export function CountryDropdown() {
 
             {/* ── COUNTRY TAB ── */}
             {tab === "country" && (
-              <div className="max-h-56 overflow-y-auto py-1">
+              <div className="max-h-[50vh] overflow-y-auto py-1">
                 {filtered.map((c) => {
                   const isActive = selectedCountry === c.code;
                   const accent = c.code
@@ -484,7 +484,7 @@ export function CountryDropdown() {
 
             {/* ── LANGUAGE TAB ── */}
             {tab === "language" && (
-              <div className="max-h-56 overflow-y-auto py-1">
+              <div className="max-h-[50vh] overflow-y-auto py-1">
                 {/* Info note */}
                 <div className="px-3 py-2 mb-1">
                   <p className="text-[10px] text-gray-400 leading-snug">

@@ -549,9 +549,24 @@ export default function ArtistPortal() {
           .toUpperCase()
           .slice(0, 2) || "VA";
 
+      // GOD TIER check: CEO, superadmin, admin_001 get Boss tier
+      const username =
+        authUser?.email?.split("@")[0] ||
+        cachedUser?.email?.split("@")[0] ||
+        "";
+      const isGodTier =
+        username === "admin_001" ||
+        username === "superadmin" ||
+        username === "CEO" ||
+        username === "admin_025" ||
+        role === "admin" ||
+        role === "superadmin" ||
+        role === "ceo";
+
       // Determine tier from role
-      const tier =
-        role === "superuser" || role === "admin"
+      const tier = isGodTier
+        ? "Boss 👑"
+        : role === "superuser" || role === "admin"
           ? "Niveau Pro"
           : role === "premium"
             ? "Premium"
@@ -659,7 +674,9 @@ export default function ArtistPortal() {
   }, [loginEmail, loginPassword]);
 
   // ── Logout handler ──
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  const fromPage =
+    new URLSearchParams(window.location.search).get("from") || "";
   const handleLogout = useCallback(async () => {
     await authLogout();
     localStorage.removeItem("artist_token");
@@ -1426,7 +1443,7 @@ export default function ArtistPortal() {
         <motion.div variants={staggerItem}>
           <Card
             className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-md border-amber-500/30 hover:border-amber-400/50 transition-all cursor-pointer group"
-            onClick={() => navigate("/arena")}
+            onClick={() => navigate("/arena?from=artist-portal")}
           >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -1450,7 +1467,7 @@ export default function ArtistPortal() {
         <motion.div variants={staggerItem}>
           <Card
             className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md border-purple-500/30 hover:border-purple-400/50 transition-all cursor-pointer group"
-            onClick={() => navigate("/stream")}
+            onClick={() => navigate("/stream?from=artist-portal")}
           >
             <CardContent className="p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -4149,6 +4166,49 @@ export default function ArtistPortal() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Navigation Buttons */}
+              <div className="hidden md:flex items-center gap-2 mr-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/stream?from=artist-portal")}
+                  className={
+                    fromPage === "stream"
+                      ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
+                      : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                  }
+                >
+                  <Radio className="h-4 w-4 mr-1.5" />
+                  Stream
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/arena?from=artist-portal")}
+                  className={
+                    fromPage === "arena"
+                      ? "text-fuchsia-200 bg-fuchsia-500/30 border-2 border-fuchsia-400/60 shadow-[0_0_16px_rgba(217,70,239,0.4)] ring-2 ring-fuchsia-400/30"
+                      : "text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-500/10"
+                  }
+                >
+                  <Trophy className="h-4 w-4 mr-1.5" />
+                  Arena
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/arcade?from=artist-portal")}
+                  className={
+                    fromPage === "arcade"
+                      ? "text-purple-200 bg-purple-500/30 border-2 border-purple-400/60 shadow-[0_0_16px_rgba(168,85,247,0.4)] ring-2 ring-purple-400/30"
+                      : "text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                  }
+                >
+                  <Gamepad2 className="h-4 w-4 mr-1.5" />
+                  Arcade
+                </Button>
+              </div>
+
               {/* Incognito Mode Toggle */}
               <TooltipProvider>
                 <Tooltip>

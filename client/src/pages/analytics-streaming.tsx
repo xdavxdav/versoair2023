@@ -482,8 +482,8 @@ export default function AnalyticsPage() {
                     <>
                       <tr className="border-b border-gray-800/50">
                         <td className="py-2.5 text-white flex items-center gap-1.5">
-                          <Zap className="w-3 h-3 text-amber-400" /> Artist Pro
-                          Subscriptions
+                          <Zap className="w-3 h-3 text-amber-400" /> Pro
+                          Streamer Subscriptions
                         </td>
                         <td className="py-2.5 text-right text-green-400">
                           {formatCurrency(benefitChart.artistProSubs * 9.99)}
@@ -582,8 +582,8 @@ export default function AnalyticsPage() {
                 💡 <strong className="text-amber-400">Note:</strong> Ces
                 projections sont basées sur les abonnements actifs et le volume
                 de streams actuel. Les revenus des uploads payants incluent les
-                frais par piste des artistes utilisant l'Artist Pro tier. La
-                marge de plateforme varie selon la source de revenus.
+                frais par piste. La marge de plateforme varie selon la source de
+                revenus.
               </p>
             </div>
           </div>

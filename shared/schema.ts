@@ -1222,6 +1222,9 @@ export const streamingPlans = pgTable("streaming_plans", {
   streamLimit: integer("stream_limit"), // null = unlimited
   poolContributionPercent: integer("pool_contribution_percent").notNull(), // 70, 75, 80
   boostCredits: integer("boost_credits").default(0), // 0, 5, 20
+  // ── Preview Mode (Universal) ──
+  previewDurationSeconds: integer("preview_duration_seconds").default(30), // 30s clip for all
+  previewBitrate: integer("preview_bitrate").default(128), // 128kbps free, 192kbps paid
   stripePriceId: varchar("stripe_price_id", { length: 255 }),
   stripeProductId: varchar("stripe_product_id", { length: 255 }),
   isActive: boolean("is_active").default(true),
@@ -1580,6 +1583,35 @@ export const trackComments = pgTable(
     userIdx: index("track_comments_user_idx").on(t.userId),
   }),
 );
+
+// --- TRACK REACTIONS (emoji reactions on songs) ---
+export const trackReactions = pgTable(
+  "track_reactions",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    reactionType: varchar("reaction_type", { length: 20 }).notNull(), // fire, heart, clap, mindblown, party, sad
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    uniqueReaction: unique("track_reactions_unique").on(
+      t.trackId,
+      t.userId,
+      t.reactionType,
+    ),
+    trackIdx: index("track_reactions_track_idx").on(t.trackId),
+    userIdx: index("track_reactions_user_idx").on(t.userId),
+  }),
+);
+
+export const insertTrackReactionSchema = createInsertSchema(trackReactions);
+export type TrackReaction = typeof trackReactions.$inferSelect;
+export type InsertTrackReaction = typeof trackReactions.$inferInsert;
 
 // --- ARTIST FOLLOWS ---
 export const artistFollows = pgTable(
@@ -2781,3 +2813,59 @@ export type PlatformWallet = typeof platformWallets.$inferSelect;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type UserPaymentMethod = typeof userPaymentMethods.$inferSelect;
 export type BankTransferRequest = typeof bankTransferRequests.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════
+// PAYLIST SYSTEM (Exclusive content gated by tier)
+// ═══════════════════════════════════════════════════════════
+
+// --- PAYLIST ITEMS (Platform-curated exclusive tracks) ---
+export const paylistItems = pgTable(
+  "paylist_items",
+  {
+    id: serial("id").primaryKey(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    minTierRequired: integer("min_tier_required").default(1).notNull(), // 0=free, 1=Supporter, 2=Champion, 3=Patron
+    isExclusive: boolean("is_exclusive").default(true),
+    curatedRank: integer("curated_rank").default(0), // Sort order (lower = higher priority)
+    releaseDate: timestamp("release_date"), // Early access gating
+    description: text("description"), // Why this track is featured
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    trackIdx: index("paylist_items_track_idx").on(t.trackId),
+    tierIdx: index("paylist_items_tier_idx").on(t.minTierRequired),
+    rankIdx: index("paylist_items_rank_idx").on(t.curatedRank),
+    uniqueTrack: unique("paylist_items_track_uniq").on(t.trackId),
+  }),
+);
+
+// --- PAYLIST ACCESS LOG (Analytics for exclusive content) ---
+export const paylistAccessLog = pgTable(
+  "paylist_access_log",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    trackId: integer("track_id")
+      .references(() => musicTracks.id, { onDelete: "cascade" })
+      .notNull(),
+    accessType: varchar("access_type", { length: 20 })
+      .default("preview")
+      .notNull(), // 'preview' or 'full'
+    accessedAt: timestamp("accessed_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("paylist_access_user_idx").on(t.userId),
+    trackIdx: index("paylist_access_track_idx").on(t.trackId),
+    typeIdx: index("paylist_access_type_idx").on(t.accessType),
+  }),
+);
+
+export const insertPaylistItemSchema = createInsertSchema(paylistItems);
+export const insertPaylistAccessLogSchema =
+  createInsertSchema(paylistAccessLog);
+export type PaylistItem = typeof paylistItems.$inferSelect;
+export type PaylistAccessLog = typeof paylistAccessLog.$inferSelect;
