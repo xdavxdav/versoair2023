@@ -772,7 +772,20 @@ function AppContent() {
                   Dashboard
                 </a>
               ) : (
-                <span className="text-sm text-white/50">Sign in below</span>
+                <>
+                  <a
+                    href="/stream"
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition"
+                  >
+                    Explore
+                  </a>
+                  <a
+                    href="/auth/signin"
+                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition"
+                  >
+                    Sign In
+                  </a>
+                </>
               )}
             </div>
           </div>
