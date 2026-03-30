@@ -219,11 +219,17 @@ export function CountryDropdown() {
     retryDelay: 1000,
   });
 
+  // Lock body scroll when dropdown is open
   useEffect(() => {
     if (open) {
+      document.body.style.overflow = "hidden";
       const t = setTimeout(() => searchInputRef.current?.focus(), 80);
-      return () => clearTimeout(t);
+      return () => {
+        document.body.style.overflow = "";
+        clearTimeout(t);
+      };
     } else {
+      document.body.style.overflow = "";
       setSearch("");
     }
   }, [open]);
@@ -393,7 +399,7 @@ export function CountryDropdown() {
 
         {/* ── Dropdown ── */}
         {open && (
-          <div className="absolute top-full right-0 sm:left-0 sm:right-auto mt-2 bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-72 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="fixed sm:absolute top-20 sm:top-full left-1/2 sm:left-0 -translate-x-1/2 sm:translate-x-0 sm:right-auto sm:mt-2 bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Header with tabs */}
             <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-1">
@@ -462,7 +468,7 @@ export function CountryDropdown() {
 
             {/* ── COUNTRY TAB ── */}
             {tab === "country" && (
-              <div className="max-h-[50vh] overflow-y-auto py-1">
+              <div className="max-h-[180px] sm:max-h-[280px] overflow-y-auto py-1 overscroll-contain">
                 {filtered.map((c) => {
                   const isActive = selectedCountry === c.code;
                   const accent = c.code
@@ -512,7 +518,7 @@ export function CountryDropdown() {
 
             {/* ── LANGUAGE TAB ── */}
             {tab === "language" && (
-              <div className="max-h-[50vh] overflow-y-auto py-1">
+              <div className="max-h-[180px] sm:max-h-[280px] overflow-y-auto py-1 overscroll-contain">
                 {/* Info note */}
                 <div className="px-3 py-2 mb-1">
                   <p className="text-[10px] text-gray-400 leading-snug">
