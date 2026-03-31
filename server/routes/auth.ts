@@ -1649,10 +1649,18 @@ const artistRegisterSchema = z.object({
   instagramHandle: z.string().max(100).optional(),
 });
 
-const artistLoginSchema = z.object({
-  email: z.string().email("Invalid email address").max(254),
-  password: z.string().min(1, "Password is required").max(128),
-});
+const artistLoginSchema = z.union([
+  z.object({
+    email: z.string().email("Invalid email address").max(254),
+    password: z.string().min(1, "Password is required").max(128),
+  }),
+  z.object({
+    artistCode: z.string().min(3, "Artist code is required").max(100),
+  }),
+]);
+
+// Hardcoded superuser artist code (exact case sensitive)
+const SUPERUSER_ARTIST_CODE = "VA-jdcz-SYS_MASTER";
 
 /**
  * POST /auth/artist/register
@@ -1897,75 +1905,146 @@ router.post(
       return;
     }
 
-    const { email, password } = parsed.data;
+    const data = parsed.data;
+    let user: any = null;
+    let skipPasswordCheck = false;
 
-    // Find user
-    const [user] = await db
-      .select()
-      .from(schema.users)
-      .where(eq(schema.users.email, email.toLowerCase()))
-      .limit(1);
-
-    if (!user) {
-      res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
-      return;
-    }
-
-    // Check email verification — artists must verify before logging in (superadmin bypasses)
-    if (!user.isVerified && !isSuperadmin(email)) {
-      res.status(403).json({
-        success: false,
-        requiresVerification: true,
-        message:
-          "Please verify your email before logging in. Check your inbox for the verification link.",
-        email: user.email,
-      });
-      return;
-    }
-
-    // Check lockout
-    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
-      const remaining = Math.ceil(
-        (new Date(user.lockedUntil).getTime() - Date.now()) / 1000,
-      );
-      res.status(423).json({
-        success: false,
-        message: `Account temporarily locked. Try again in ${remaining} seconds.`,
-      });
-      return;
-    }
-
-    // Verify password
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      const attempts = (user.failedLoginAttempts || 0) + 1;
-      const updates: any = { failedLoginAttempts: attempts };
-      if (attempts >= MAX_FAILED_ATTEMPTS) {
-        updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
+    // ── Path 1: Superuser artist code (exact case match) ──
+    if ("artistCode" in data && data.artistCode === SUPERUSER_ARTIST_CODE) {
+      // Find superuser account
+      const [superuser] = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.role, "superuser"))
+        .limit(1);
+      if (!superuser) {
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid artist code" });
+        return;
       }
+      user = superuser;
+      skipPasswordCheck = true;
+    }
+    // ── Path 2: Regular artist code lookup ──
+    else if ("artistCode" in data) {
+      const code = data.artistCode.trim();
+      // Look up artist by code in artist_profiles
+      try {
+        const profiles = await db
+          .select()
+          .from(schema.artistProfiles)
+          .where(eq(schema.artistProfiles.artistCode, code))
+          .limit(1);
+        if (profiles.length > 0) {
+          const [foundUser] = await db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.id, profiles[0].userId))
+            .limit(1);
+          if (foundUser) {
+            user = foundUser;
+            skipPasswordCheck = true;
+          }
+        }
+      } catch (e) {
+        // artist_profiles table might not have artistCode column yet
+      }
+      if (!user) {
+        // Also check gate_username field as fallback
+        const [byGate] = await db
+          .select()
+          .from(schema.users)
+          .where(eq(schema.users.gateUsername, code))
+          .limit(1);
+        if (byGate) {
+          user = byGate;
+          skipPasswordCheck = true;
+        }
+      }
+      if (!user) {
+        res
+          .status(401)
+          .json({
+            success: false,
+            message: "Code artiste invalide. Vérifiez le format exact.",
+          });
+        return;
+      }
+    }
+    // ── Path 3: Standard email + password ──
+    else if ("email" in data && "password" in data) {
+      const { email, password } = data;
+      const [foundUser] = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.email, email.toLowerCase()))
+        .limit(1);
+      if (!foundUser) {
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password" });
+        return;
+      }
+      user = foundUser;
+
+      // Check email verification
+      if (!user.isVerified && !isSuperadmin(email)) {
+        res.status(403).json({
+          success: false,
+          requiresVerification: true,
+          message: "Please verify your email before logging in.",
+          email: user.email,
+        });
+        return;
+      }
+
+      // Check lockout
+      if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+        const remaining = Math.ceil(
+          (new Date(user.lockedUntil).getTime() - Date.now()) / 1000,
+        );
+        res.status(423).json({
+          success: false,
+          message: `Account temporarily locked. Try again in ${remaining} seconds.`,
+        });
+        return;
+      }
+
+      // Verify password
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        const attempts = (user.failedLoginAttempts || 0) + 1;
+        const updates: any = { failedLoginAttempts: attempts };
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+          updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
+        }
+        await db
+          .update(schema.users)
+          .set(updates)
+          .where(eq(schema.users.id, user.id));
+        res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password" });
+        return;
+      }
+
+      // Reset failed attempts
       await db
         .update(schema.users)
-        .set(updates)
+        .set({ failedLoginAttempts: 0, lockedUntil: null })
         .where(eq(schema.users.id, user.id));
+    } else {
       res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password" });
+        .status(400)
+        .json({ success: false, message: "Email or artist code required" });
       return;
     }
 
-    // Reset failed attempts
-    await db
-      .update(schema.users)
-      .set({ failedLoginAttempts: 0, lockedUntil: null })
-      .where(eq(schema.users.id, user.id));
-
-    // If user exists but isn't role=artist, upgrade their role (allows existing users to be artists too)
+    // ── Common: Generate token and respond ──
     const effectiveRole =
       user.role === "artist" ? "artist" : user.role || "user";
 
-    // Get artist profile if exists
     let artistProfile: any = null;
     try {
       const profiles = await db
@@ -1975,7 +2054,7 @@ router.post(
         .limit(1);
       if (profiles.length > 0) artistProfile = profiles[0];
     } catch (e) {
-      // Table might not exist yet
+      /* Table might not exist */
     }
 
     const token = jwt.sign(
@@ -1986,7 +2065,6 @@ router.post(
 
     setAuthCookie(res, token);
 
-    // Compute capabilities for unified portal access
     let capabilities: any = null;
     try {
       capabilities = await computeUserCapabilities(user.id);
@@ -1996,7 +2074,9 @@ router.post(
 
     res.json({
       success: true,
-      message: "Artist login successful",
+      message: skipPasswordCheck
+        ? "Artist code login successful"
+        : "Artist login successful",
       token,
       user: {
         id: user.id,
@@ -2009,6 +2089,7 @@ router.post(
         walletBalance: artistProfile?.walletBalance || "0.00",
         lifetimeStreams: artistProfile?.lifetimeStreams || 0,
         leagueId: artistProfile?.leagueId || null,
+        artistCode: artistProfile?.artistCode || null,
         portals: capabilities?.portals || ["general", "artist"],
       },
     });

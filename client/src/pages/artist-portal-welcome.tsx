@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import {
@@ -233,7 +234,7 @@ function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-// ─── Mini Studio Controller ─────────────────────────
+// ─── VersaBeat Studio Controller ─────────────────────────
 function MiniStudio({
   heroVisible,
   analyserRef,
@@ -294,6 +295,15 @@ function MiniStudio({
   const [reverbAmt, setReverbAmt] = useState(25);
   const [deEsserOn, setDeEsserOn] = useState(false);
   const [noiseGateOn, setNoiseGateOn] = useState(false);
+  // NEW PRO EFFECTS
+  const [limiterOn, setLimiterOn] = useState(false);
+  const [delayOn, setDelayOn] = useState(false);
+  const [delayTime, setDelayTime] = useState(250); // ms
+  const [delayFeedbackAmt, setDelayFeedbackAmt] = useState(30); // %
+  const [chorusOn, setChorusOn] = useState(false);
+  const [chorusDepth, setChorusDepth] = useState(40); // %
+  const [warmthOn, setWarmthOn] = useState(false); // Saturation/Warmth
+  const [activePreset, setActivePreset] = useState<string | null>(null);
   const [instrumentalName, setInstrumentalName] = useState<string | null>(null);
   const [instrumentalPlaying, setInstrumentalPlaying] = useState(false);
   const [instrumentalPaused, setInstrumentalPaused] = useState(false);
@@ -304,18 +314,56 @@ function MiniStudio({
   const [countdown, setCountdown] = useState<number | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState("verso-recording.webm");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // Start collapsed
+  const [isVanishing, setIsVanishing] = useState(false); // Scroll vanish effect
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollY = useRef(0);
 
-  // ── Lock body scroll when MiniStudio is expanded ──
+  // ── Lock body scroll when VersaBeat is expanded ──
   useEffect(() => {
     if (!collapsed) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [collapsed]);
+
+  // ── Auto-vanish on scroll when content comes into view ──
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const scrollingDown = scrollY > lastScrollY.current;
+      lastScrollY.current = scrollY;
+
+      // If scrolling down past 100px and not recording, trigger vanish
+      if (
+        scrollingDown &&
+        scrollY > 100 &&
+        recState === "idle" &&
+        heroVisible
+      ) {
+        if (!isVanishing && !collapsed) {
+          setIsVanishing(true);
+          setTimeout(() => {
+            setCollapsed(true);
+            setIsVanishing(false);
+          }, 300);
+        } else if (!isVanishing && collapsed) {
+          setIsVanishing(true);
+          setTimeout(() => setIsVanishing(false), 400);
+        }
+      } else if (scrollY < 50) {
+        // Reset vanish state when scrolled back to top
+        setIsVanishing(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [collapsed, isVanishing, recState, heroVisible]);
 
   // ── Init / teardown audio context ──
   const ensureAudioCtx = useCallback((): AudioContext | null => {
@@ -645,6 +693,91 @@ function MiniStudio({
     }
   }, [noiseGateOn]);
 
+  // NEW PRO EFFECT TOGGLES
+  const toggleLimiter = useCallback(() => {
+    setLimiterOn((prev) => !prev);
+    setActivePreset(null);
+  }, []);
+
+  const toggleDelay = useCallback(() => {
+    setDelayOn((prev) => !prev);
+    setActivePreset(null);
+  }, []);
+
+  const toggleChorus = useCallback(() => {
+    setChorusOn((prev) => !prev);
+    setActivePreset(null);
+  }, []);
+
+  const toggleWarmth = useCallback(() => {
+    setWarmthOn((prev) => !prev);
+    setActivePreset(null);
+  }, []);
+
+  // PRESET SYSTEM
+  const applyPreset = useCallback((preset: string) => {
+    setActivePreset(preset);
+    switch (preset) {
+      case "vocal-clean":
+        setCompressorOn(true);
+        setDeEsserOn(true);
+        setNoiseGateOn(true);
+        setReverbOn(false);
+        setLimiterOn(true);
+        setDelayOn(false);
+        setChorusOn(false);
+        setWarmthOn(false);
+        setEqLow(-2);
+        setEqMidVal(3);
+        setEqHigh(2);
+        break;
+      case "vocal-warm":
+        setCompressorOn(true);
+        setDeEsserOn(true);
+        setNoiseGateOn(false);
+        setReverbOn(true);
+        setReverbAmt(20);
+        setLimiterOn(true);
+        setDelayOn(false);
+        setChorusOn(false);
+        setWarmthOn(true);
+        setEqLow(3);
+        setEqMidVal(1);
+        setEqHigh(-1);
+        break;
+      case "vocal-bright":
+        setCompressorOn(true);
+        setDeEsserOn(false);
+        setNoiseGateOn(true);
+        setReverbOn(true);
+        setReverbAmt(15);
+        setLimiterOn(true);
+        setDelayOn(false);
+        setChorusOn(false);
+        setWarmthOn(false);
+        setEqLow(-1);
+        setEqMidVal(2);
+        setEqHigh(5);
+        break;
+      case "fx-creative":
+        setCompressorOn(true);
+        setDeEsserOn(false);
+        setNoiseGateOn(false);
+        setReverbOn(true);
+        setReverbAmt(45);
+        setLimiterOn(false);
+        setDelayOn(true);
+        setDelayTime(350);
+        setDelayFeedbackAmt(40);
+        setChorusOn(true);
+        setChorusDepth(60);
+        setWarmthOn(true);
+        break;
+      default:
+        break;
+    }
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -886,7 +1019,7 @@ function MiniStudio({
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
-    if (!heroVisible) return; // Only active when mini studio is visible
+    if (!heroVisible) return; // Only active when VersaBeat studio is visible
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in input/textarea
@@ -954,650 +1087,871 @@ function MiniStudio({
       <motion.div
         className={`fixed top-14 z-[50] transition-all duration-300 ${
           collapsed ? "right-4 left-auto" : "left-0 right-0"
-        }`}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.4, delay: 1.6 }}
+        } ${isVanishing ? "pointer-events-none" : ""}`}
+        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+        animate={{
+          opacity: isVanishing ? 0 : 1,
+          y: isVanishing ? -30 : 0,
+          scale: isVanishing ? 0.9 : 1,
+        }}
+        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+        transition={{
+          duration: isVanishing ? 0.35 : 0.4,
+          delay: isVanishing ? 0 : 1.6,
+          ease: "easeOut",
+        }}
       >
-      <div
-        className={`bg-[#0a0514]/95 backdrop-blur-xl border-b border-white/[0.06] transition-all duration-300 ${
-          collapsed
-            ? "py-1 px-3 rounded-b-xl border border-white/[0.06] inline-flex"
-            : "px-4 py-3"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto">
-          {/* Header — always visible, full width horizontal layout */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setCollapsed((c) => !c)}
-              className="flex items-center gap-2 group flex-shrink-0"
-            >
-              <div className="w-6 h-6 rounded-md bg-purple-600/40 flex items-center justify-center">
-                <Mic2 className="w-3.5 h-3.5 text-purple-300" />
-              </div>
-              <span className="text-white/50 text-[11px] tracking-wider uppercase font-medium">
-                Mini Studio
-              </span>
-            </button>
-
-            {/* Status + controls row */}
-            <div className="flex items-center gap-2 flex-1 justify-end">
-              {/* Compact status indicators */}
-              {isRecording && (
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              )}
-              {isPaused && (
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              )}
-              {micReady && recState === "idle" && (
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              )}
-              {instrumentalPlaying && (
-                <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-400" />
-              )}
-
-              {/* Mic on/off toggle — first click requests permission */}
-              <button
-                onClick={
-                  micReady ? toggleMic : micDenied ? undefined : requestMic
-                }
-                className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
-                  micDenied
-                    ? "border-red-500/20 opacity-40 cursor-not-allowed"
-                    : !micReady
-                      ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] cursor-pointer"
-                      : micMuted
-                        ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
-                        : "border-emerald-500/25 bg-emerald-500/15 hover:bg-emerald-500/25"
-                }`}
-                title={
-                  micDenied
-                    ? "Micro indisponible"
-                    : !micReady
-                      ? "Cliquez pour activer le micro"
-                      : micMuted
-                        ? "Activer le micro"
-                        : "Désactiver le micro"
-                }
-              >
-                {micReady && !micMuted ? (
-                  <Mic2 className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <MicOff className="w-3.5 h-3.5 text-white/40" />
-                )}
-              </button>
-
-              {/* Voice monitoring toggle */}
-              <button
-                onClick={
-                  micReady
-                    ? toggleMonitoring
-                    : micDenied
-                      ? undefined
-                      : requestMic
-                }
-                className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
-                  !micReady
-                    ? "border-white/[0.06] opacity-30 cursor-default"
-                    : monitoring
-                      ? "border-cyan-500/25 bg-cyan-500/15 hover:bg-cyan-500/25"
-                      : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
-                }`}
-                title={
-                  !micReady
-                    ? "Retour audio indisponible"
-                    : monitoring
-                      ? "Désactiver le retour voix"
-                      : "Écouter votre voix"
-                }
-              >
-                <Headphones
-                  className={`w-3.5 h-3.5 ${
-                    micReady && monitoring ? "text-cyan-400" : "text-white/30"
-                  }`}
-                />
-              </button>
-
-              {/* Settings toggle */}
-              <button
-                onClick={() => {
-                  setShowSettings((s) => !s);
-                  if (collapsed) setCollapsed(false);
-                }}
-                className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
-                  showSettings
-                    ? "border-purple-500/25 bg-purple-500/15 hover:bg-purple-500/25"
-                    : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
-                }`}
-                title="Mixeur & Effets"
-              >
-                <SlidersHorizontal
-                  className={`w-3.5 h-3.5 ${
-                    showSettings ? "text-purple-400" : "text-white/30"
-                  }`}
-                />
-              </button>
-
-              {/* Collapse / expand toggle */}
+        <div
+          className={`bg-[#0a0514]/95 backdrop-blur-xl border-b border-white/[0.06] transition-all duration-300 ${
+            collapsed
+              ? "py-1 px-3 rounded-b-xl border border-white/[0.06] inline-flex"
+              : "px-4 py-3"
+          }`}
+        >
+          <div className="max-w-7xl mx-auto">
+            {/* Header — always visible, full width horizontal layout */}
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setCollapsed((c) => !c)}
-                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.06] transition-colors"
+                className="flex items-center gap-2 group flex-shrink-0"
               >
-                {collapsed ? (
-                  <ChevronUp className="w-3 h-3 text-white/30" />
-                ) : (
-                  <Minus className="w-3 h-3 text-white/30" />
-                )}
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600/60 to-fuchsia-600/60 flex items-center justify-center ring-1 ring-purple-400/20 shadow-lg shadow-purple-500/20">
+                  <Mic2 className="w-4 h-4 text-purple-100" />
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-xs font-black tracking-wide bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+                    VersaBeat
+                  </span>
+                  <span className="text-fuchsia-400/50 text-[8px] tracking-widest uppercase">
+                    Pro Studio
+                  </span>
+                </div>
               </button>
-            </div>
-          </div>
 
-          {/* Collapsible body */}
-          <AnimatePresence initial={false}>
-            {!collapsed && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <div className="pt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* ── Column 1: Instrumental & Recording ── */}
-                  <div className="space-y-3">
-                    {/* Instrumental Upload */}
-                    <div className="space-y-1.5">
-                      {instrumentalName ? (
-                        <div className="flex items-center gap-2 bg-white/[0.04] rounded-lg p-2 border border-white/[0.05]">
-                          <Music className="w-3.5 h-3.5 text-fuchsia-400/60 flex-shrink-0" />
-                          <span className="text-white/40 text-[10px] truncate flex-1">
-                            {instrumentalName}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {/* Play / Pause */}
-                            {instrumentalPlaying ? (
+              {/* Status + controls row */}
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                {/* Compact status indicators */}
+                {isRecording && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                )}
+                {isPaused && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
+                {micReady && recState === "idle" && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
+                {instrumentalPlaying && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-400" />
+                )}
+
+                {/* Mic on/off toggle — first click requests permission */}
+                <button
+                  onClick={
+                    micReady ? toggleMic : micDenied ? undefined : requestMic
+                  }
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
+                    micDenied
+                      ? "border-red-500/20 opacity-40 cursor-not-allowed"
+                      : !micReady
+                        ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] cursor-pointer"
+                        : micMuted
+                          ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
+                          : "border-emerald-500/25 bg-emerald-500/15 hover:bg-emerald-500/25"
+                  }`}
+                  title={
+                    micDenied
+                      ? "Micro indisponible"
+                      : !micReady
+                        ? "Cliquez pour activer le micro"
+                        : micMuted
+                          ? "Activer le micro"
+                          : "Désactiver le micro"
+                  }
+                >
+                  {micReady && !micMuted ? (
+                    <Mic2 className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <MicOff className="w-3.5 h-3.5 text-white/40" />
+                  )}
+                </button>
+
+                {/* Voice monitoring toggle */}
+                <button
+                  onClick={
+                    micReady
+                      ? toggleMonitoring
+                      : micDenied
+                        ? undefined
+                        : requestMic
+                  }
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
+                    !micReady
+                      ? "border-white/[0.06] opacity-30 cursor-default"
+                      : monitoring
+                        ? "border-cyan-500/25 bg-cyan-500/15 hover:bg-cyan-500/25"
+                        : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
+                  }`}
+                  title={
+                    !micReady
+                      ? "Retour audio indisponible"
+                      : monitoring
+                        ? "Désactiver le retour voix"
+                        : "Écouter votre voix"
+                  }
+                >
+                  <Headphones
+                    className={`w-3.5 h-3.5 ${
+                      micReady && monitoring ? "text-cyan-400" : "text-white/30"
+                    }`}
+                  />
+                </button>
+
+                {/* Settings toggle */}
+                <button
+                  onClick={() => {
+                    setShowSettings((s) => !s);
+                    if (collapsed) setCollapsed(false);
+                  }}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
+                    showSettings
+                      ? "border-purple-500/25 bg-purple-500/15 hover:bg-purple-500/25"
+                      : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
+                  }`}
+                  title="Mixeur & Effets"
+                >
+                  <SlidersHorizontal
+                    className={`w-3.5 h-3.5 ${
+                      showSettings ? "text-purple-400" : "text-white/30"
+                    }`}
+                  />
+                </button>
+
+                {/* Collapse / expand toggle */}
+                <button
+                  onClick={() => setCollapsed((c) => !c)}
+                  className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.06] transition-colors"
+                >
+                  {collapsed ? (
+                    <ChevronUp className="w-3 h-3 text-white/30" />
+                  ) : (
+                    <Minus className="w-3 h-3 text-white/30" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible body */}
+            <AnimatePresence initial={false}>
+              {!collapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  {/* PRESET BAR */}
+                  <div className="pt-3 pb-2 border-b border-white/[0.04]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium mr-1">
+                        Presets
+                      </span>
+                      {[
+                        { id: "vocal-clean", label: "Clean", icon: "🎙️" },
+                        { id: "vocal-warm", label: "Warm", icon: "🔥" },
+                        { id: "vocal-bright", label: "Bright", icon: "✨" },
+                        { id: "fx-creative", label: "Creative FX", icon: "🎨" },
+                      ].map((preset) => (
+                        <button
+                          key={preset.id}
+                          onClick={() => applyPreset(preset.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                            activePreset === preset.id
+                              ? "bg-purple-500/25 text-purple-300 ring-1 ring-purple-500/30"
+                              : "bg-white/[0.04] text-white/40 hover:bg-white/[0.08] hover:text-white/60"
+                          }`}
+                        >
+                          <span className="mr-1">{preset.icon}</span>
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* ── Column 1: Instrumental & Recording ── */}
+                    <div className="space-y-3">
+                      {/* Instrumental Upload */}
+                      <div className="space-y-1.5">
+                        {instrumentalName ? (
+                          <div className="flex items-center gap-2 bg-white/[0.04] rounded-lg p-2 border border-white/[0.05]">
+                            <Music className="w-3.5 h-3.5 text-fuchsia-400/60 flex-shrink-0" />
+                            <span className="text-white/40 text-[10px] truncate flex-1">
+                              {instrumentalName}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {/* Play / Pause */}
+                              {instrumentalPlaying ? (
+                                <button
+                                  onClick={pauseInstrumental}
+                                  className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                                  title="Pause"
+                                >
+                                  <Pause className="w-2.5 h-2.5 text-white/50" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={
+                                    instrumentalPaused
+                                      ? resumeInstrumental
+                                      : () => playInstrumental(0)
+                                  }
+                                  className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                                  title={
+                                    instrumentalPaused ? "Reprendre" : "Lire"
+                                  }
+                                >
+                                  <Play
+                                    className="w-2.5 h-2.5 text-white/50"
+                                    fill="currentColor"
+                                  />
+                                </button>
+                              )}
+                              {/* Stop (reset to beginning) */}
+                              {(instrumentalPlaying || instrumentalPaused) && (
+                                <button
+                                  onClick={stopInstrumental}
+                                  className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                                  title="Arrêter"
+                                >
+                                  <Square className="w-2.5 h-2.5 text-white/50" />
+                                </button>
+                              )}
+                              {/* Remove */}
                               <button
-                                onClick={pauseInstrumental}
-                                className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                                title="Pause"
+                                onClick={removeInstrumental}
+                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/10 transition-colors"
                               >
-                                <Pause className="w-2.5 h-2.5 text-white/50" />
+                                <X className="w-2.5 h-2.5 text-white/30 hover:text-red-400" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex items-center gap-2 cursor-pointer bg-white/[0.03] hover:bg-white/[0.05] rounded-lg p-2 border border-dashed border-white/[0.08] transition-colors">
+                            <Upload className="w-3.5 h-3.5 text-white/20" />
+                            <span className="text-white/25 text-[10px]">
+                              Déposer un instrumental (.mp3, .wav)
+                            </span>
+                            <input
+                              type="file"
+                              accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/aiff,audio/x-aiff,audio/ogg,audio/mp4,audio/x-m4a"
+                              className="hidden"
+                              onChange={handleInstrumentalUpload}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ── Column 2: Settings Panel (Mixer, EQ & Effects) ── */}
+                    <div className="space-y-3">
+                      <div className="space-y-3 rounded-xl bg-white/[0.02] border border-white/[0.05] p-2.5">
+                        {/* Volume Sliders */}
+                        <div className="space-y-2">
+                          <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
+                            Mixeur
+                          </span>
+
+                          {/* Mic Volume */}
+                          <div className="flex items-center gap-2">
+                            <Mic2 className="w-3 h-3 text-emerald-400/60 flex-shrink-0" />
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={micVol}
+                              onChange={(e) =>
+                                setMicVolume(Number(e.target.value))
+                              }
+                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-emerald-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400 [&::-webkit-slider-thumb]:appearance-none"
+                            />
+                            <span className="text-[9px] text-white/25 w-6 text-right font-mono">
+                              {micVol}
+                            </span>
+                          </div>
+
+                          {/* Instrumental Volume */}
+                          <div className="flex items-center gap-2">
+                            <Music className="w-3 h-3 text-fuchsia-400/60 flex-shrink-0" />
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={instVol}
+                              onChange={(e) =>
+                                setInstVolume(Number(e.target.value))
+                              }
+                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-fuchsia-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-fuchsia-400 [&::-webkit-slider-thumb]:appearance-none"
+                            />
+                            <span className="text-[9px] text-white/25 w-6 text-right font-mono">
+                              {instVol}
+                            </span>
+                          </div>
+
+                          {/* Monitor Volume */}
+                          <div className="flex items-center gap-2">
+                            <Headphones className="w-3 h-3 text-cyan-400/60 flex-shrink-0" />
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={monitorVol}
+                              onChange={(e) =>
+                                setMonitorVolume(Number(e.target.value))
+                              }
+                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-cyan-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:appearance-none"
+                              disabled={!monitoring}
+                            />
+                            <span
+                              className={`text-[9px] w-6 text-right font-mono ${monitoring ? "text-white/25" : "text-white/10"}`}
+                            >
+                              {monitorVol}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-white/[0.05]" />
+
+                        {/* 3-Band EQ */}
+                        <div className="space-y-2">
+                          <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
+                            EQ
+                          </span>
+                          <div className="grid grid-cols-3 gap-2">
+                            {/* Low */}
+                            <div className="flex flex-col items-center gap-1">
+                              <input
+                                type="range"
+                                min={-12}
+                                max={12}
+                                value={eqLow}
+                                step={1}
+                                onChange={(e) =>
+                                  updateEq("low", Number(e.target.value))
+                                }
+                                className="w-full h-1 rounded-full appearance-none bg-white/10 accent-amber-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:appearance-none"
+                              />
+                              <div className="text-center">
+                                <span className="text-[8px] text-white/20 block">
+                                  Bas
+                                </span>
+                                <span className="text-[9px] text-white/30 font-mono">
+                                  {eqLow > 0 ? "+" : ""}
+                                  {eqLow}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Mid */}
+                            <div className="flex flex-col items-center gap-1">
+                              <input
+                                type="range"
+                                min={-12}
+                                max={12}
+                                value={eqMidVal}
+                                step={1}
+                                onChange={(e) =>
+                                  updateEq("mid", Number(e.target.value))
+                                }
+                                className="w-full h-1 rounded-full appearance-none bg-white/10 accent-purple-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
+                              />
+                              <div className="text-center">
+                                <span className="text-[8px] text-white/20 block">
+                                  Médium
+                                </span>
+                                <span className="text-[9px] text-white/30 font-mono">
+                                  {eqMidVal > 0 ? "+" : ""}
+                                  {eqMidVal}
+                                </span>
+                              </div>
+                            </div>
+                            {/* High */}
+                            <div className="flex flex-col items-center gap-1">
+                              <input
+                                type="range"
+                                min={-12}
+                                max={12}
+                                value={eqHigh}
+                                step={1}
+                                onChange={(e) =>
+                                  updateEq("high", Number(e.target.value))
+                                }
+                                className="w-full h-1 rounded-full appearance-none bg-white/10 accent-cyan-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:appearance-none"
+                              />
+                              <div className="text-center">
+                                <span className="text-[8px] text-white/20 block">
+                                  Haut
+                                </span>
+                                <span className="text-[9px] text-white/30 font-mono">
+                                  {eqHigh > 0 ? "+" : ""}
+                                  {eqHigh}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-white/[0.05]" />
+
+                        {/* Vocal Effects */}
+                        <div className="space-y-2">
+                          <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
+                            Effets Vocaux
+                          </span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {/* Compressor */}
+                            <button
+                              onClick={toggleCompressor}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                compressorOn
+                                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${compressorOn ? "bg-emerald-400" : "bg-white/15"}`}
+                              />
+                              Compresseur
+                            </button>
+
+                            {/* De-esser */}
+                            <button
+                              onClick={toggleDeEsser}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                deEsserOn
+                                  ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${deEsserOn ? "bg-amber-400" : "bg-white/15"}`}
+                              />
+                              Dé-esseur
+                            </button>
+
+                            {/* Noise Gate */}
+                            <button
+                              onClick={toggleNoiseGate}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                noiseGateOn
+                                  ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${noiseGateOn ? "bg-cyan-400" : "bg-white/15"}`}
+                              />
+                              Gate
+                            </button>
+
+                            {/* Reverb toggle */}
+                            <button
+                              onClick={toggleReverb}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                reverbOn
+                                  ? "border-purple-500/20 bg-purple-500/10 text-purple-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${reverbOn ? "bg-purple-400" : "bg-white/15"}`}
+                              />
+                              Réverb
+                            </button>
+                          </div>
+
+                          {/* Reverb amount slider (when on) */}
+                          {reverbOn && (
+                            <div className="flex items-center gap-2 pl-1">
+                              <span className="text-[8px] text-purple-400/40 uppercase">
+                                Wet
+                              </span>
+                              <input
+                                type="range"
+                                min={5}
+                                max={80}
+                                value={reverbAmt}
+                                onChange={(e) =>
+                                  setReverbAmount(Number(e.target.value))
+                                }
+                                className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-purple-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
+                              />
+                              <span className="text-[9px] text-white/20 w-6 text-right font-mono">
+                                {reverbAmt}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-white/[0.05]" />
+
+                        {/* PRO EFFECTS SECTION */}
+                        <div className="space-y-2">
+                          <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium flex items-center gap-1.5">
+                            <span className="px-1 py-0.5 text-[7px] font-bold tracking-wider rounded bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-300">
+                              PRO
+                            </span>
+                            Effets Studio
+                          </span>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {/* Limiter */}
+                            <button
+                              onClick={toggleLimiter}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                limiterOn
+                                  ? "border-rose-500/20 bg-rose-500/10 text-rose-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${limiterOn ? "bg-rose-400" : "bg-white/15"}`}
+                              />
+                              Limiteur
+                            </button>
+
+                            {/* Warmth / Saturation */}
+                            <button
+                              onClick={toggleWarmth}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                warmthOn
+                                  ? "border-orange-500/20 bg-orange-500/10 text-orange-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${warmthOn ? "bg-orange-400" : "bg-white/15"}`}
+                              />
+                              Warmth
+                            </button>
+
+                            {/* Delay */}
+                            <button
+                              onClick={toggleDelay}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                delayOn
+                                  ? "border-blue-500/20 bg-blue-500/10 text-blue-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${delayOn ? "bg-blue-400" : "bg-white/15"}`}
+                              />
+                              Delay
+                            </button>
+
+                            {/* Chorus */}
+                            <button
+                              onClick={toggleChorus}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                chorusOn
+                                  ? "border-indigo-500/20 bg-indigo-500/10 text-indigo-400"
+                                  : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${chorusOn ? "bg-indigo-400" : "bg-white/15"}`}
+                              />
+                              Chorus
+                            </button>
+                          </div>
+
+                          {/* Delay controls */}
+                          {delayOn && (
+                            <div className="space-y-1.5 pl-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[8px] text-blue-400/40 uppercase w-10">
+                                  Time
+                                </span>
+                                <input
+                                  type="range"
+                                  min={50}
+                                  max={800}
+                                  value={delayTime}
+                                  onChange={(e) =>
+                                    setDelayTime(Number(e.target.value))
+                                  }
+                                  className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-blue-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:appearance-none"
+                                />
+                                <span className="text-[9px] text-white/20 w-10 text-right font-mono">
+                                  {delayTime}ms
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[8px] text-blue-400/40 uppercase w-10">
+                                  Feed
+                                </span>
+                                <input
+                                  type="range"
+                                  min={0}
+                                  max={80}
+                                  value={delayFeedbackAmt}
+                                  onChange={(e) =>
+                                    setDelayFeedbackAmt(Number(e.target.value))
+                                  }
+                                  className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-blue-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-400 [&::-webkit-slider-thumb]:appearance-none"
+                                />
+                                <span className="text-[9px] text-white/20 w-10 text-right font-mono">
+                                  {delayFeedbackAmt}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Chorus depth */}
+                          {chorusOn && (
+                            <div className="flex items-center gap-2 pl-1">
+                              <span className="text-[8px] text-indigo-400/40 uppercase w-10">
+                                Depth
+                              </span>
+                              <input
+                                type="range"
+                                min={10}
+                                max={100}
+                                value={chorusDepth}
+                                onChange={(e) =>
+                                  setChorusDepth(Number(e.target.value))
+                                }
+                                className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-indigo-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:appearance-none"
+                              />
+                              <span className="text-[9px] text-white/20 w-10 text-right font-mono">
+                                {chorusDepth}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Column 3: Recording & Playback ── */}
+                    <div className="space-y-3">
+                      {/* Recording Controls */}
+                      <div className="flex items-center gap-2">
+                        {countdown !== null ? (
+                          <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-amber-500/20 border border-amber-500/20">
+                            <div className="w-8 h-8 rounded-full bg-amber-500/30 flex items-center justify-center animate-pulse">
+                              <span className="text-amber-300 text-lg font-bold">
+                                {countdown}
+                              </span>
+                            </div>
+                            <span className="text-amber-300 text-[11px] font-medium">
+                              Préparez-vous...
+                            </span>
+                          </div>
+                        ) : recState === "idle" ? (
+                          <button
+                            onClick={startRecording}
+                            disabled={!micReady && !instrumentalName}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/20 text-red-400 text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <div className="w-2 h-2 rounded-full bg-red-500" />
+                            Enregistrer{" "}
+                            <span className="text-red-300/50 text-[9px]">
+                              (Espace)
+                            </span>
+                          </button>
+                        ) : (
+                          <>
+                            {/* Pause / Resume */}
+                            {isRecording ? (
+                              <button
+                                onClick={pauseRecording}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/15 text-amber-400 text-[11px] font-medium transition-colors"
+                              >
+                                <Pause className="w-3 h-3" />
+                                Pause{" "}
+                                <span className="text-amber-300/40 text-[9px]">
+                                  (Espace)
+                                </span>
                               </button>
                             ) : (
                               <button
-                                onClick={
-                                  instrumentalPaused
-                                    ? resumeInstrumental
-                                    : () => playInstrumental(0)
-                                }
-                                className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                                title={
-                                  instrumentalPaused ? "Reprendre" : "Lire"
-                                }
+                                onClick={resumeRecording}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/15 text-emerald-400 text-[11px] font-medium transition-colors"
                               >
-                                <Play
-                                  className="w-2.5 h-2.5 text-white/50"
-                                  fill="currentColor"
-                                />
+                                <Play className="w-3 h-3" fill="currentColor" />
+                                Reprendre{" "}
+                                <span className="text-emerald-300/40 text-[9px]">
+                                  (Espace)
+                                </span>
                               </button>
                             )}
-                            {/* Stop (reset to beginning) */}
-                            {(instrumentalPlaying || instrumentalPaused) && (
-                              <button
-                                onClick={stopInstrumental}
-                                className="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
-                                title="Arrêter"
-                              >
-                                <Square className="w-2.5 h-2.5 text-white/50" />
-                              </button>
-                            )}
-                            {/* Remove */}
+                            {/* Stop */}
                             <button
-                              onClick={removeInstrumental}
-                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/10 transition-colors"
+                              onClick={stopRecording}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] text-white/50 text-[11px] font-medium transition-colors"
                             >
-                              <X className="w-2.5 h-2.5 text-white/30 hover:text-red-400" />
+                              <Square className="w-3 h-3" />
+                              Arrêter{" "}
+                              <span className="text-white/30 text-[9px]">
+                                (Échap)
+                              </span>
                             </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <label className="flex items-center gap-2 cursor-pointer bg-white/[0.03] hover:bg-white/[0.05] rounded-lg p-2 border border-dashed border-white/[0.08] transition-colors">
-                          <Upload className="w-3.5 h-3.5 text-white/20" />
-                          <span className="text-white/25 text-[10px]">
-                            Déposer un instrumental (.mp3, .wav)
-                          </span>
-                          <input
-                            type="file"
-                            accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/aiff,audio/x-aiff,audio/ogg,audio/mp4,audio/x-m4a"
-                            className="hidden"
-                            onChange={handleInstrumentalUpload}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* ── Column 2: Settings Panel (Mixer, EQ & Effects) ── */}
-                  <div className="space-y-3">
-                    <div className="space-y-3 rounded-xl bg-white/[0.02] border border-white/[0.05] p-2.5">
-                      {/* Volume Sliders */}
-                      <div className="space-y-2">
-                        <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
-                          Mixeur
-                        </span>
-
-                        {/* Mic Volume */}
-                        <div className="flex items-center gap-2">
-                          <Mic2 className="w-3 h-3 text-emerald-400/60 flex-shrink-0" />
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={micVol}
-                            onChange={(e) =>
-                              setMicVolume(Number(e.target.value))
-                            }
-                            className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-emerald-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400 [&::-webkit-slider-thumb]:appearance-none"
-                          />
-                          <span className="text-[9px] text-white/25 w-6 text-right font-mono">
-                            {micVol}
-                          </span>
-                        </div>
-
-                        {/* Instrumental Volume */}
-                        <div className="flex items-center gap-2">
-                          <Music className="w-3 h-3 text-fuchsia-400/60 flex-shrink-0" />
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={instVol}
-                            onChange={(e) =>
-                              setInstVolume(Number(e.target.value))
-                            }
-                            className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-fuchsia-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-fuchsia-400 [&::-webkit-slider-thumb]:appearance-none"
-                          />
-                          <span className="text-[9px] text-white/25 w-6 text-right font-mono">
-                            {instVol}
-                          </span>
-                        </div>
-
-                        {/* Monitor Volume */}
-                        <div className="flex items-center gap-2">
-                          <Headphones className="w-3 h-3 text-cyan-400/60 flex-shrink-0" />
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={monitorVol}
-                            onChange={(e) =>
-                              setMonitorVolume(Number(e.target.value))
-                            }
-                            className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-cyan-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:appearance-none"
-                            disabled={!monitoring}
-                          />
-                          <span
-                            className={`text-[9px] w-6 text-right font-mono ${monitoring ? "text-white/25" : "text-white/10"}`}
-                          >
-                            {monitorVol}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="h-px bg-white/[0.05]" />
-
-                      {/* 3-Band EQ */}
-                      <div className="space-y-2">
-                        <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
-                          EQ
-                        </span>
-                        <div className="grid grid-cols-3 gap-2">
-                          {/* Low */}
-                          <div className="flex flex-col items-center gap-1">
-                            <input
-                              type="range"
-                              min={-12}
-                              max={12}
-                              value={eqLow}
-                              step={1}
-                              onChange={(e) =>
-                                updateEq("low", Number(e.target.value))
-                              }
-                              className="w-full h-1 rounded-full appearance-none bg-white/10 accent-amber-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:appearance-none"
-                            />
-                            <div className="text-center">
-                              <span className="text-[8px] text-white/20 block">
-                                Bas
-                              </span>
-                              <span className="text-[9px] text-white/30 font-mono">
-                                {eqLow > 0 ? "+" : ""}
-                                {eqLow}
-                              </span>
-                            </div>
-                          </div>
-                          {/* Mid */}
-                          <div className="flex flex-col items-center gap-1">
-                            <input
-                              type="range"
-                              min={-12}
-                              max={12}
-                              value={eqMidVal}
-                              step={1}
-                              onChange={(e) =>
-                                updateEq("mid", Number(e.target.value))
-                              }
-                              className="w-full h-1 rounded-full appearance-none bg-white/10 accent-purple-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
-                            />
-                            <div className="text-center">
-                              <span className="text-[8px] text-white/20 block">
-                                Médium
-                              </span>
-                              <span className="text-[9px] text-white/30 font-mono">
-                                {eqMidVal > 0 ? "+" : ""}
-                                {eqMidVal}
-                              </span>
-                            </div>
-                          </div>
-                          {/* High */}
-                          <div className="flex flex-col items-center gap-1">
-                            <input
-                              type="range"
-                              min={-12}
-                              max={12}
-                              value={eqHigh}
-                              step={1}
-                              onChange={(e) =>
-                                updateEq("high", Number(e.target.value))
-                              }
-                              className="w-full h-1 rounded-full appearance-none bg-white/10 accent-cyan-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:appearance-none"
-                            />
-                            <div className="text-center">
-                              <span className="text-[8px] text-white/20 block">
-                                Haut
-                              </span>
-                              <span className="text-[9px] text-white/30 font-mono">
-                                {eqHigh > 0 ? "+" : ""}
-                                {eqHigh}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="h-px bg-white/[0.05]" />
-
-                      {/* Vocal Effects */}
-                      <div className="space-y-2">
-                        <span className="text-[9px] text-white/30 uppercase tracking-wider font-medium">
-                          Effets Vocaux
-                        </span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {/* Compressor */}
-                          <button
-                            onClick={toggleCompressor}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
-                              compressorOn
-                                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                                : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            <div
-                              className={`w-1.5 h-1.5 rounded-full ${compressorOn ? "bg-emerald-400" : "bg-white/15"}`}
-                            />
-                            Compresseur
-                          </button>
-
-                          {/* De-esser */}
-                          <button
-                            onClick={toggleDeEsser}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
-                              deEsserOn
-                                ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                                : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            <div
-                              className={`w-1.5 h-1.5 rounded-full ${deEsserOn ? "bg-amber-400" : "bg-white/15"}`}
-                            />
-                            Dé-esseur
-                          </button>
-
-                          {/* Noise Gate */}
-                          <button
-                            onClick={toggleNoiseGate}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
-                              noiseGateOn
-                                ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
-                                : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            <div
-                              className={`w-1.5 h-1.5 rounded-full ${noiseGateOn ? "bg-cyan-400" : "bg-white/15"}`}
-                            />
-                            Gate
-                          </button>
-
-                          {/* Reverb toggle */}
-                          <button
-                            onClick={toggleReverb}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
-                              reverbOn
-                                ? "border-purple-500/20 bg-purple-500/10 text-purple-400"
-                                : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            <div
-                              className={`w-1.5 h-1.5 rounded-full ${reverbOn ? "bg-purple-400" : "bg-white/15"}`}
-                            />
-                            Réverb
-                          </button>
-                        </div>
-
-                        {/* Reverb amount slider (when on) */}
-                        {reverbOn && (
-                          <div className="flex items-center gap-2 pl-1">
-                            <span className="text-[8px] text-purple-400/40 uppercase">
-                              Wet
-                            </span>
-                            <input
-                              type="range"
-                              min={5}
-                              max={80}
-                              value={reverbAmt}
-                              onChange={(e) =>
-                                setReverbAmount(Number(e.target.value))
-                              }
-                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-purple-500 cursor-pointer [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:appearance-none"
-                            />
-                            <span className="text-[9px] text-white/20 w-6 text-right font-mono">
-                              {reverbAmt}%
-                            </span>
-                          </div>
+                          </>
                         )}
                       </div>
-                    </div>
-                  </div>
 
-                  {/* ── Column 3: Recording & Playback ── */}
-                  <div className="space-y-3">
-                    {/* Recording Controls */}
-                    <div className="flex items-center gap-2">
-                      {countdown !== null ? (
-                        <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-amber-500/20 border border-amber-500/20">
-                          <div className="w-8 h-8 rounded-full bg-amber-500/30 flex items-center justify-center animate-pulse">
-                            <span className="text-amber-300 text-lg font-bold">
-                              {countdown}
+                      {/* Timer (when recording/paused) */}
+                      {recState !== "idle" && (
+                        <div className="flex items-center justify-center gap-2">
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-amber-400"}`}
+                          />
+                          <span className="text-white/40 text-xs font-mono tracking-wider">
+                            {formatTime(recTime)}
+                          </span>
+                          {isPaused && (
+                            <span className="text-amber-400/50 text-[9px] uppercase">
+                              En pause
                             </span>
-                          </div>
-                          <span className="text-amber-300 text-[11px] font-medium">
-                            Préparez-vous...
-                          </span>
-                        </div>
-                      ) : recState === "idle" ? (
-                        <button
-                          onClick={startRecording}
-                          disabled={!micReady && !instrumentalName}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/20 text-red-400 text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <div className="w-2 h-2 rounded-full bg-red-500" />
-                          Enregistrer{" "}
-                          <span className="text-red-300/50 text-[9px]">
-                            (Espace)
-                          </span>
-                        </button>
-                      ) : (
-                        <>
-                          {/* Pause / Resume */}
-                          {isRecording ? (
-                            <button
-                              onClick={pauseRecording}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/15 text-amber-400 text-[11px] font-medium transition-colors"
-                            >
-                              <Pause className="w-3 h-3" />
-                              Pause{" "}
-                              <span className="text-amber-300/40 text-[9px]">
-                                (Espace)
-                              </span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={resumeRecording}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/15 text-emerald-400 text-[11px] font-medium transition-colors"
-                            >
-                              <Play className="w-3 h-3" fill="currentColor" />
-                              Reprendre{" "}
-                              <span className="text-emerald-300/40 text-[9px]">
-                                (Espace)
-                              </span>
-                            </button>
                           )}
-                          {/* Stop */}
-                          <button
-                            onClick={stopRecording}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.06] text-white/50 text-[11px] font-medium transition-colors"
+                        </div>
+                      )}
+
+                      {/* Post-recording: playback + download + new */}
+                      <AnimatePresence>
+                        {downloadUrl && recState === "idle" && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
                           >
-                            <Square className="w-3 h-3" />
-                            Arrêter{" "}
-                            <span className="text-white/30 text-[9px]">
-                              (Échap)
-                            </span>
-                          </button>
-                        </>
-                      )}
-                    </div>
+                            <div className="space-y-2 rounded-xl bg-purple-500/[0.07] border border-purple-500/15 p-2.5">
+                              {/* Playback label */}
+                              <div className="flex items-center gap-1.5 px-0.5">
+                                <Volume2 className="w-3 h-3 text-purple-400/60" />
+                                <span className="text-[9px] text-purple-300/50 uppercase tracking-wider font-medium">
+                                  Enregistrement — {formatTime(recTime)}
+                                </span>
+                              </div>
 
-                    {/* Timer (when recording/paused) */}
-                    {recState !== "idle" && (
-                      <div className="flex items-center justify-center gap-2">
-                        <div
-                          className={`w-1.5 h-1.5 rounded-full ${isRecording ? "bg-red-500 animate-pulse" : "bg-amber-400"}`}
-                        />
-                        <span className="text-white/40 text-xs font-mono tracking-wider">
-                          {formatTime(recTime)}
-                        </span>
-                        {isPaused && (
-                          <span className="text-amber-400/50 text-[9px] uppercase">
-                            En pause
-                          </span>
+                              {/* Audio player */}
+                              <audio
+                                src={downloadUrl}
+                                controls
+                                controlsList="noplaybackrate"
+                                className="w-full h-8 rounded-md [&::-webkit-media-controls-panel]:bg-white/[0.06] [&::-webkit-media-controls-panel]:rounded-md"
+                                style={{
+                                  filter: "invert(0.85) hue-rotate(180deg)",
+                                }}
+                              />
+
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-1.5">
+                                <a
+                                  href={downloadUrl}
+                                  download={downloadName}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/40 text-purple-300 text-[11px] font-medium transition-colors"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  Sauvegarder
+                                </a>
+                                <button
+                                  onClick={() => {
+                                    URL.revokeObjectURL(downloadUrl);
+                                    setDownloadUrl(null);
+                                    setRecTime(0);
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] text-white/40 text-[11px] font-medium transition-colors"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  Nouveau
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    URL.revokeObjectURL(downloadUrl);
+                                    setDownloadUrl(null);
+                                    setRecTime(0);
+                                  }}
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-colors"
+                                  title="Supprimer l'enregistrement"
+                                >
+                                  <Trash2 className="w-3 h-3 text-white/20 hover:text-red-400" />
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
                         )}
-                      </div>
-                    )}
-
-                    {/* Post-recording: playback + download + new */}
-                    <AnimatePresence>
-                      {downloadUrl && recState === "idle" && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="space-y-2 rounded-xl bg-purple-500/[0.07] border border-purple-500/15 p-2.5">
-                            {/* Playback label */}
-                            <div className="flex items-center gap-1.5 px-0.5">
-                              <Volume2 className="w-3 h-3 text-purple-400/60" />
-                              <span className="text-[9px] text-purple-300/50 uppercase tracking-wider font-medium">
-                                Enregistrement — {formatTime(recTime)}
-                              </span>
-                            </div>
-
-                            {/* Audio player */}
-                            <audio
-                              src={downloadUrl}
-                              controls
-                              controlsList="noplaybackrate"
-                              className="w-full h-8 rounded-md [&::-webkit-media-controls-panel]:bg-white/[0.06] [&::-webkit-media-controls-panel]:rounded-md"
-                              style={{
-                                filter: "invert(0.85) hue-rotate(180deg)",
-                              }}
-                            />
-
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-1.5">
-                              <a
-                                href={downloadUrl}
-                                download={downloadName}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/40 text-purple-300 text-[11px] font-medium transition-colors"
-                              >
-                                <Download className="w-3 h-3" />
-                                Sauvegarder
-                              </a>
-                              <button
-                                onClick={() => {
-                                  URL.revokeObjectURL(downloadUrl);
-                                  setDownloadUrl(null);
-                                  setRecTime(0);
-                                }}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] text-white/40 text-[11px] font-medium transition-colors"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                                Nouveau
-                              </button>
-                              <button
-                                onClick={() => {
-                                  URL.revokeObjectURL(downloadUrl);
-                                  setDownloadUrl(null);
-                                  setRecTime(0);
-                                }}
-                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-colors"
-                                title="Supprimer l'enregistrement"
-                              >
-                                <Trash2 className="w-3 h-3 text-white/20 hover:text-red-400" />
-                              </button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                      </AnimatePresence>
+                    </div>
                   </div>
-                </div>
 
-                {/* MelodAI Premium Button */}
-                <div className="pt-3 border-t border-white/[0.04]">
-                  <a
-                    href="/music/studio"
-                    className="group flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-pink-500/15 border border-amber-500/25 hover:border-amber-400/40 hover:from-amber-500/25 hover:via-purple-500/25 hover:to-pink-500/25 transition-all duration-300"
-                  >
-                    <span className="text-sm">✨</span>
-                    <span className="text-[11px] font-bold tracking-wide bg-gradient-to-r from-amber-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
-                      MelodAI — Sur-Mesure
-                    </span>
-                    <span className="px-1.5 py-0.5 text-[8px] font-black tracking-wider rounded-md bg-gradient-to-r from-amber-500 to-amber-600 text-black uppercase">
-                      GODS
-                    </span>
-                  </a>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {/* Versabit Pro Upsell */}
+                  <div className="pt-3 border-t border-white/[0.04]">
+                    <div className="flex items-center justify-between gap-4">
+                      {/* Active Effects Counter */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-white/30 uppercase">
+                          Actifs:
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {[
+                            { on: compressorOn, color: "emerald" },
+                            { on: deEsserOn, color: "amber" },
+                            { on: noiseGateOn, color: "cyan" },
+                            { on: reverbOn, color: "purple" },
+                            { on: limiterOn, color: "rose" },
+                            { on: warmthOn, color: "orange" },
+                            { on: delayOn, color: "blue" },
+                            { on: chorusOn, color: "indigo" },
+                          ]
+                            .filter((e) => e.on)
+                            .map((effect, i) => (
+                              <div
+                                key={i}
+                                className={`w-1.5 h-1.5 rounded-full bg-${effect.color}-400`}
+                              />
+                            ))}
+                          {![
+                            compressorOn,
+                            deEsserOn,
+                            noiseGateOn,
+                            reverbOn,
+                            limiterOn,
+                            warmthOn,
+                            delayOn,
+                            chorusOn,
+                          ].some(Boolean) && (
+                            <span className="text-[9px] text-white/20">
+                              Aucun
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Studio Pro Link */}
+                      <a
+                        href="/music/studio"
+                        className="group flex items-center gap-2 py-1.5 px-3 rounded-lg bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/20 hover:border-fuchsia-400/40 hover:from-violet-600/30 hover:to-fuchsia-600/30 transition-all duration-300"
+                      >
+                        <span className="text-[10px] font-semibold text-violet-300/90 group-hover:text-fuchsia-200">
+                          VersaBeat Full Studio
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[7px] font-black tracking-wider rounded bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white uppercase">
+                          PRO
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
     </>
   );
 }
@@ -1752,6 +2106,9 @@ export default function ArtistPortalWelcome() {
     rememberMe: false,
   });
 
+  // Detect if user is entering an artist code (starts with VA_ or VA-)
+  const isArtistCodeInput = /^VA[_-]/i.test(signInForm.email.trim());
+
   const [applyForm, setApplyForm] = useState({
     email: "",
     password: "",
@@ -1802,14 +2159,16 @@ export default function ArtistPortalWelcome() {
     setIsAuthLoading(true);
     setAuthError("");
     try {
+      const isCodeLogin = /^VA[_-]/i.test(signInForm.email.trim());
       const res = await fetch("/auth/artist/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          email: signInForm.email,
-          password: signInForm.password,
-        }),
+        body: JSON.stringify(
+          isCodeLogin
+            ? { artistCode: signInForm.email.trim() }
+            : { email: signInForm.email, password: signInForm.password },
+        ),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -2075,7 +2434,7 @@ export default function ArtistPortalWelcome() {
         ref={heroSectionRef}
         className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-14"
       >
-        {/* Mini Studio — floats top-left when hero is visible */}
+        {/* VersaBeat Studio — floats top-right when hero is visible */}
         <AnimatePresence>
           {(phase === "reveal" || phase === "ready") && (
             <MiniStudio
@@ -2455,7 +2814,7 @@ export default function ArtistPortalWelcome() {
                         </div>
                       </div>
                       <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 font-mono text-lg font-bold tracking-wider">
-                        VA_NK-E_150126_A2V2F5.n
+                        VA_NK-E_SVF-IAP-ASG-225.n
                       </p>
                     </div>
 
@@ -2524,22 +2883,21 @@ export default function ArtistPortalWelcome() {
 
                     {/* Footer: QR + member since */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
-                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center border border-white/[0.04]">
-                        <div className="grid grid-cols-4 gap-[1.5px]">
-                          {Array.from({ length: 16 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`w-1 h-1 rounded-[0.5px] ${[0, 1, 3, 4, 5, 7, 8, 10, 12, 13, 15].includes(i) ? "bg-white/50" : "bg-white/10"}`}
-                            />
-                          ))}
-                        </div>
+                      <div className="w-11 h-11 rounded-lg bg-white flex items-center justify-center border border-white/[0.04] p-0.5">
+                        <QRCodeSVG
+                          value="https://versoair.app/artist/nooka"
+                          size={38}
+                          bgColor="#ffffff"
+                          fgColor="#1a0533"
+                          level="M"
+                        />
                       </div>
                       <div className="text-right">
                         <p className="text-white/15 text-[9px] uppercase tracking-wider">
                           Membre depuis
                         </p>
                         <p className="text-white/40 text-xs font-medium">
-                          Janv. 2026
+                          02 Jan 2026
                         </p>
                       </div>
                     </div>
@@ -2727,16 +3085,22 @@ export default function ArtistPortalWelcome() {
                           email: e.target.value,
                         })
                       }
-                      placeholder="you@email.com or VA-2026-XXXX"
+                      placeholder="you@email.com ou VA_NK-E_SVF-IAP-ASG-225.n"
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
-                <div>
+                <div
+                  className={
+                    isArtistCodeInput ? "opacity-40 pointer-events-none" : ""
+                  }
+                >
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    Mot de passe
+                    {isArtistCodeInput
+                      ? "Mot de passe (non requis avec code artiste)"
+                      : "Mot de passe"}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />

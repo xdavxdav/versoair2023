@@ -241,79 +241,218 @@ export default function MusicDashboard() {
           )}
         </div>
 
-        {/* ━━━ 4 Zentrr Stat Cards ━━━ */}
+        {/* ━━━ 4 Zentrr Stat Cards — Role-aware ━━━ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <DashStatCard
-            icon={Music2}
-            color="purple"
-            value={stats.tracks || 0}
-            label="Active Projects"
-            subLeft={`${stats.pendingRequests || 0} Completed`}
-            subRight="0 Ideas"
-            href="/music/projects"
-          />
-          <DashStatCard
-            icon={CalendarDays}
-            color="fuchsia"
-            value={0}
-            label="Upcoming Releases"
-            subLeft="— Next"
-            subRight=""
-            href="/music/releases"
-          />
-          <DashStatCard
-            icon={Users}
-            color="pink"
-            value={stats.followers || 0}
-            label="Signed Artists"
-            subLeft={`${stats.streams || 0} Listeners`}
-            subRight={`${stats.streams || 0} Streams`}
-            href="/music/artists"
-          />
-          <DashStatCard
-            icon={DollarSign}
-            color="violet"
-            value={`$${stats.earnings || 0}`}
-            label="Royalties"
-            subLeft="0 Pending"
-            subRight="0 Paid"
-            href="/music/royalties"
-          />
+          {isArtist ? (
+            /* ─── Artist View: Their own data ─── */
+            <>
+              <DashStatCard
+                icon={Music2}
+                color="purple"
+                value={stats.tracks || 0}
+                label="Active Projects"
+                subLeft={`${stats.pendingRequests || 0} Completed`}
+                subRight="0 Ideas"
+                href="/music/projects"
+              />
+              <DashStatCard
+                icon={CalendarDays}
+                color="fuchsia"
+                value={0}
+                label="Upcoming Releases"
+                subLeft="— Next"
+                subRight=""
+                href="/music/releases"
+              />
+              <DashStatCard
+                icon={Users}
+                color="pink"
+                value={stats.followers || 0}
+                label="Signed Artists"
+                subLeft={`${stats.streams || 0} Listeners`}
+                subRight={`${stats.streams || 0} Streams`}
+                href="/music/artists"
+              />
+              <DashStatCard
+                icon={DollarSign}
+                color="violet"
+                value={`$${stats.earnings || 0}`}
+                label="Royalties"
+                subLeft="0 Pending"
+                subRight="0 Paid"
+                href="/music/royalties"
+              />
+            </>
+          ) : (
+            /* ─── Streamer View: Artist discovery with aggregate stats ─── */
+            <>
+              <DashStatCard
+                icon={CalendarDays}
+                color="fuchsia"
+                value={stats.upcomingReleases || "—"}
+                label="Upcoming Releases"
+                subLeft="All Artists"
+                subRight="Public drops"
+                href="/music/releases"
+              />
+              <DashStatCard
+                icon={Music2}
+                color="purple"
+                value="Coming Soon"
+                label="Artist Projects"
+                subLeft="Teasers only"
+                subRight="Artist-controlled"
+                href="/music/projects"
+              />
+              <DashStatCard
+                icon={Users}
+                color="pink"
+                value={stats.totalArtists || "—"}
+                label="Signed Artists"
+                subLeft={isPremium ? "Contract Activity" : "🔒 Patron Only"}
+                subRight={isPremium ? "Full access" : ""}
+                href={isPremium ? "/music/artists" : "#"}
+              />
+              <DashStatCard
+                icon={TrendingUp}
+                color="violet"
+                value={`${stats.totalPlays || 0}`}
+                label="Total Plays"
+                subLeft="Trending"
+                subRight="Aggregate"
+                href="/music/insights"
+              />
+            </>
+          )}
         </div>
 
-        {/* ━━━ Core Tools Row (Studio / Vault / Royale) ━━━ */}
+        {/* ━━━ Core Tools Row — Role-aware ━━━ */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Your Tools</h2>
+            <h2 className="text-lg font-semibold text-white">
+              {isArtist ? "Your Tools" : "Discover"}
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MusicSectionCard
-              title="Studio"
-              description="Request production & sessions"
-              icon={Disc3}
-              href="/music/studio"
-              gradient="purple"
-              stats={[{ label: "Requests", value: stats.pendingRequests || 0 }]}
-            />
-            <MusicSectionCard
-              title="Vault"
-              description="Your music library"
-              icon={Library}
-              href="/music/vault"
-              gradient="pink"
-              stats={[{ label: "Tracks", value: stats.tracks }]}
-              disabled={!canAccessVault}
-            />
-            <MusicSectionCard
-              title="Royale"
-              description="Competitions & streaming"
-              icon={Flame}
-              href="/music/live"
-              gradient="amber"
-              badge="LIVE"
-            />
+            {isArtist ? (
+              /* ─── Artist Tools ─── */
+              <>
+                <MusicSectionCard
+                  title="Studio"
+                  description="Request production & sessions"
+                  icon={Disc3}
+                  href="/music/studio"
+                  gradient="purple"
+                  stats={[
+                    { label: "Requests", value: stats.pendingRequests || 0 },
+                  ]}
+                />
+                <MusicSectionCard
+                  title="Vault"
+                  description="Your music library"
+                  icon={Library}
+                  href="/music/vault"
+                  gradient="pink"
+                  stats={[{ label: "Tracks", value: stats.tracks }]}
+                  disabled={!canAccessVault}
+                />
+                <MusicSectionCard
+                  title="Royale"
+                  description="Competitions & streaming"
+                  icon={Flame}
+                  href="/music/live"
+                  gradient="amber"
+                  badge="LIVE"
+                />
+              </>
+            ) : (
+              /* ─── Streamer Discovery Cards ─── */
+              <>
+                <MusicSectionCard
+                  title="Browse Music"
+                  description="Explore new releases & artists"
+                  icon={Headphones}
+                  href="/stream"
+                  gradient="purple"
+                  stats={[{ label: "Tracks", value: "∞" }]}
+                />
+                <MusicSectionCard
+                  title="My Library"
+                  description="Saved tracks & playlists"
+                  icon={Library}
+                  href="/music/library"
+                  gradient="pink"
+                  stats={[{ label: "Saved", value: stats.savedTracks || 0 }]}
+                />
+                <MusicSectionCard
+                  title="Favorites"
+                  description="Your top picks"
+                  icon={Star}
+                  href="/music/favorites"
+                  gradient="amber"
+                  stats={[{ label: "Favorites", value: stats.favorites || 0 }]}
+                />
+              </>
+            )}
           </div>
         </section>
+
+        {/* ━━━ Artist Feed — Patron-exclusive (Streamers only) ━━━ */}
+        {!isArtist && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-white">
+                  Artist Feed
+                </h2>
+                <Badge
+                  variant="outline"
+                  className="border-amber-500/30 text-amber-400 bg-amber-500/10 text-[10px]"
+                >
+                  PATRON
+                </Badge>
+              </div>
+            </div>
+            {(isPremium && userTier === "patron") || userTier === "inferno" ? (
+              /* ─── Patron Feed: Twitter-like artist updates ─── */
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-amber-900/10 to-orange-900/5 backdrop-blur-md p-6"
+              >
+                <div className="space-y-4">
+                  {/* Empty state - waiting for artist posts */}
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+                      <Bell className="w-8 h-8 text-amber-400/60" />
+                    </div>
+                    <h3 className="text-white font-medium mb-2">
+                      No updates yet
+                    </h3>
+                    <p className="text-white/50 text-sm max-w-xs mx-auto">
+                      Artists are cooking up something special. When they share
+                      project updates, you'll see them here first.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              /* ─── Non-Patron: Upgrade gate ─── */
+              <MusicUpgradeGate
+                title="Artist Feed"
+                description="Get exclusive updates from your favorite artists"
+                benefits={[
+                  "Real-time project updates",
+                  "Behind-the-scenes content",
+                  "Early release announcements",
+                  "Direct artist interactions",
+                ]}
+                requiredTier="patron"
+                variant="card"
+              />
+            )}
+          </section>
+        )}
 
         {/* ━━━ Analytics + Royalties / Recent Activity ━━━ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

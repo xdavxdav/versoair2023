@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -24,7 +24,21 @@ export default function ProfilePage() {
   );
   const { user, logout } = useAuthContext();
   const { capabilities } = useCapabilities();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+
+  // Track referrer for proper back navigation
+  useEffect(() => {
+    // Check if we came from a music page (from document.referrer or history state)
+    const referrer = document.referrer;
+    if (
+      referrer &&
+      (referrer.includes("/music") ||
+        referrer.includes("/stream") ||
+        referrer.includes("/artist-portal"))
+    ) {
+      sessionStorage.setItem("music_referrer", referrer);
+    }
+  }, []);
 
   // Build display data from real auth user
   const displayName =
@@ -211,8 +225,15 @@ export default function ProfilePage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
+                  // Check if user came from music portal
+                  const referrer = sessionStorage.getItem("music_referrer");
+                  const isMusicUser =
+                    referrer?.startsWith("/music") ||
+                    referrer?.startsWith("/stream") ||
+                    referrer?.startsWith("/artist-portal");
                   logout();
-                  navigate("/");
+                  // Redirect based on where they came from
+                  navigate(isMusicUser ? "/artist-portal" : "/");
                 }}
                 className="flex items-center gap-2 px-5 py-2 bg-white/5 text-slate-400 rounded-lg border border-white/10 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all font-medium text-sm"
               >

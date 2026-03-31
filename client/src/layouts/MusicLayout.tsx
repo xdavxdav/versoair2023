@@ -24,8 +24,8 @@ export function MusicLayout({ children }: MusicLayoutProps) {
           <MusicMobileDock />
         </div>
 
-        {/* Page content — fills remaining width */}
-        <main className="flex-1 min-w-0 pt-14 md:pt-0 pb-20 md:pb-0">
+        {/* Page content — fills remaining width, offset from sidebar on desktop */}
+        <main className="flex-1 min-w-0 pt-14 md:pt-0 pb-20 md:pb-0 md:ml-16">
           {children}
         </main>
       </div>

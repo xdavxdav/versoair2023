@@ -56,11 +56,12 @@ function getTierRank(tier: string): number {
 }
 
 export function useMusicAccess(): MusicAccessState {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { user, loading: authLoading } = useAuthContext();
   const {
     canAccessArtist,
     canAccessStreamer,
     isLoading: portalLoading,
+    isAuthenticated,
   } = usePortalAccess();
 
   // Fetch user's streaming subscription
@@ -118,16 +119,19 @@ export function useMusicAccess(): MusicAccessState {
     const isAdmin = ["admin", "superuser", "moderator", "superadmin"].includes(
       userRole,
     );
+    const isSuperuser = userRole === "superuser" || userRole === "superadmin";
 
-    // Get subscription tier
-    const subTier = subscriptionData?.tier?.toLowerCase() || "free";
-    const tierRank = getTierRank(subTier);
+    // Get subscription tier - superusers get god-tier (inferno/patron level)
+    const subTier = isSuperuser
+      ? "inferno"
+      : subscriptionData?.tier?.toLowerCase() || "free";
+    const tierRank = isSuperuser ? 4 : getTierRank(subTier); // Superuser = max tier rank
 
     // Get artist tier (from StreamRoyale)
     const artistTier = artistData?.current_division?.toLowerCase() || null;
-    const isArtist = canAccessArtist || !!artistData?.id;
+    const isArtist = canAccessArtist || !!artistData?.id || isSuperuser; // Superuser can access artist features
 
-    // Premium = Supporter or higher
+    // Premium = Supporter or higher OR admin/superuser (god mode)
     const isPremium = tierRank >= 1 || isAdmin;
 
     // Access calculations
