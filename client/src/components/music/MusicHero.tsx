@@ -57,7 +57,7 @@ export function MusicHero({
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
               {greeting},{" "}
               <span className="bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
-                {user?.username || "Creator"}
+                {user?.name || user?.username || "there"}
               </span>
             </h1>
 

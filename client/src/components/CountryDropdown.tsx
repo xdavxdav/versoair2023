@@ -197,7 +197,7 @@ export function CountryDropdown() {
     queryFn: async () => {
       // Try relative path first (works on same-origin prod), then with base URL
       const urls = ["/api/countries", `${API_BASE_URL}/api/countries`].filter(
-        (u, i, a) => a.indexOf(u) === i
+        (u, i, a) => a.indexOf(u) === i,
       );
       for (const url of urls) {
         try {

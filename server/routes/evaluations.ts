@@ -17,6 +17,13 @@ import { db } from "../db";
 import * as schema from "@shared/schema";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
+import {
+  generateArtistCode,
+  scoreToRank,
+  streamsToGrade,
+  isoToPhoneCode,
+  type ArtistCodeInput,
+} from "../utils/artist-code-generator";
 
 const router = Router();
 
@@ -313,6 +320,49 @@ router.put(
       artistUpdates.promotionEligibleAt = new Date(
         Date.now() + 90 * 24 * 60 * 60 * 1000,
       );
+
+      // ── Auto-generate Artist Code on approval ──
+      try {
+        const [profile] = await db
+          .select({
+            stageName: schema.artistProfiles.stageName,
+            legalName: schema.artistProfiles.legalName,
+            countryCode: schema.artistProfiles.countryCode,
+            lifetimeStreams: schema.artistProfiles.lifetimeStreams,
+            division: schema.artistProfiles.division,
+            artistCode: schema.artistProfiles.artistCode,
+          })
+          .from(schema.artistProfiles)
+          .where(eq(schema.artistProfiles.id, submission.artistId))
+          .limit(1);
+
+        if (profile && !profile.artistCode) {
+          const codeInput: ArtistCodeInput = {
+            stageName: profile.stageName || "XX",
+            lastName: profile.legalName || profile.stageName || "x",
+            countryCode: isoToPhoneCode(profile.countryCode || ""),
+            rank: scoreToRank(finalScore),
+            accountType: "solo",
+            verification: "verified",
+            rights: finalScore >= 8 ? "full" : "emerging",
+            genreClass: "indie",
+            engagement: "active",
+            monetization: finalScore >= 7 ? "paid" : "royalty_free",
+            entityType: "artist",
+            authority: "independent",
+            grade: streamsToGrade(profile.lifetimeStreams || 0),
+          };
+
+          const code = generateArtistCode(codeInput);
+          artistUpdates.artistCode = code;
+          console.log(
+            `[A&R] Generated artist code for profile ${submission.artistId}: ${code}`,
+          );
+        }
+      } catch (codeErr) {
+        console.error("[A&R] Failed to generate artist code:", codeErr);
+        // Non-blocking — code generation failure should not block approval
+      }
     }
 
     await db

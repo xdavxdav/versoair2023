@@ -98,7 +98,9 @@ function ImmersiveBackground() {
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Deep space base */}
+      {/* Solid dark base */}
+      <div className="absolute inset-0 bg-gray-950" />
+      {/* Deep space gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,60,20,0.15),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(80,40,120,0.08),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_20%_80%,rgba(20,80,120,0.06),transparent)]" />
@@ -539,12 +541,12 @@ export default function StreamPage() {
         {/* HERO SECTION */}
         {/* ========================================= */}
         <section className="relative overflow-hidden">
-          {/* Hero cinematic gradients */}
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(245,158,11,0.08),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.06),transparent_50%)]" />
+          {/* Hero cinematic gradients - darker tones */}
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-950/30 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(180,83,9,0.12),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(109,40,217,0.08),transparent_50%)]" />
 
-          <div className="relative max-w-[95vw] mx-auto px-4 pt-8 pb-14 z-10">
+          <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-10 z-10">
             {/* Back Button - positioned below top bar, above header */}
             <button
               onClick={handleBack}

@@ -199,6 +199,7 @@ const MusicDashboard = lazy(() => import("@/pages/music/dashboard"));
 const BeatmakerStudio = lazy(() => import("@/pages/music/beatmaker-studio"));
 const MusicVault = lazy(() => import("@/pages/music/vault"));
 const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
+const MusicLibrary = lazy(() => import("@/pages/music/library"));
 
 // ─────────────────────────────────────────────────────
 // 📢 Marketing Platform (lazy-loaded)
@@ -523,6 +524,10 @@ function Router() {
       <Route path="/music/studio" component={BeatmakerStudio} />
       <Route path="/music/vault" component={MusicVault} />
       <Route path="/music/royalties" component={MusicRoyalties} />
+      <Route path="/music/library" component={MusicLibrary} />
+      <Route path="/music/favorites">
+        {() => <Redirect to="/music/library" />}
+      </Route>
       {/* Analytics/Insights — redirect to main analytics for now */}
       <Route path="/music/insights">{() => <Redirect to="/analytics" />}</Route>
       {/* Live/Royale — redirect to arena/stream */}
@@ -573,7 +578,7 @@ function AppContent() {
     currentPath.startsWith("/listener-portal") ||
     currentPath.startsWith("/arcade") ||
     currentPath.startsWith("/arena");
-  const { user } = useAuthContext();
+  const { user, logout } = useAuthContext();
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
   // Show ContentNav (bottom dock) on blog/marketplace pages for ALL users (authed or not)
@@ -748,29 +753,62 @@ function AppContent() {
 
       {/* ── Music Universe Navbar — shown on music/artist-portal pages ── */}
       {isMusicPage && (
-        <div className="fixed top-0 left-0 right-0 z-[60] bg-[#0a0512] border-b border-purple-500/20">
+        <div className="fixed top-0 left-0 md:left-16 right-0 z-[60] bg-[#0a0512] border-b border-purple-500/20">
           <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
             <a href="/music/dashboard" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/25">
-                <span className="text-white text-sm">♪</span>
-              </div>
-              <div>
-                <span className="text-base font-bold bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
-                  Musical Universe
-                </span>
-                <p className="text-[9px] text-white/40 -mt-0.5 hidden sm:block">
-                  by VersoAir
-                </p>
+              {/* Logo + Musical Universe branding */}
+              <div className="flex items-center gap-2">
+                <img
+                  src="https://i.ibb.co/8DL5vH7M/v-logo-extracted.png"
+                  alt="VersoAir"
+                  className="w-7 h-7 md:hidden object-contain brightness-125 drop-shadow-lg"
+                  onError={(e) => {
+                    const el = e.currentTarget;
+                    el.style.display = "none";
+                    const fb = el.parentElement?.querySelector(".nav-logo-fb");
+                    if (fb) (fb as HTMLElement).style.display = "flex";
+                  }}
+                />
+                <div
+                  className="nav-logo-fb w-7 h-7 md:hidden rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600 items-center justify-center text-white font-bold text-sm shadow-lg"
+                  style={{ display: "none" }}
+                >
+                  V
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-white via-purple-200 to-fuchsia-200 bg-clip-text text-transparent tracking-wide">
+                    Musical Universe
+                  </span>
+                  <div className="flex items-center gap-1 -mt-0.5">
+                    <span className="text-[7px] sm:text-[8px] text-white/30">
+                      powered by
+                    </span>
+                    <span className="text-[8px] sm:text-[9px] font-semibold bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
+                      VERSOAIR
+                    </span>
+                  </div>
+                </div>
               </div>
             </a>
             <div className="flex items-center gap-2">
               {isAuthed ? (
-                <a
-                  href="/music/dashboard"
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 text-white hover:from-purple-500/30 hover:to-fuchsia-500/30 transition"
-                >
-                  Dashboard
-                </a>
+                <>
+                  <a
+                    href="/music/dashboard"
+                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 text-white hover:from-purple-500/30 hover:to-fuchsia-500/30 transition"
+                  >
+                    Dashboard
+                  </a>
+                  <button
+                    onClick={() => {
+                      logout();
+                      window.location.href = "/music";
+                    }}
+                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition"
+                  >
+                    Sign Out
+                  </button>
+                </>
               ) : (
                 <>
                   <a
