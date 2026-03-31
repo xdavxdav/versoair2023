@@ -17,6 +17,7 @@ import {
 } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import ContentNav, { isContentNavPath } from "@/components/ContentNav";
+import QuickSignIn from "@/components/QuickSignIn";
 
 // ─────────────────────────────────────────────────────
 // 🏠 Public Pages (lazy-loaded — only fetched when navigated to)
@@ -147,6 +148,7 @@ const GuaranteeHelp = lazy(() => import("@/pages/help/guarantee"));
 // ─────────────────────────────────────────────────────
 const BillingPage = lazy(() => import("@/pages/billing"));
 const CardVaultPage = lazy(() => import("@/pages/card-vault"));
+const PayPalPortal = lazy(() => import("@/pages/paypal-portal"));
 const AdCampaignsPage = lazy(() => import("@/pages/ad-campaigns"));
 
 // ─────────────────────────────────────────────────────
@@ -219,6 +221,7 @@ const AdminPrintshop = lazy(() => import("@/pages/admin-printshop"));
 import Footer from "@/components/ui/footer";
 import Navbar from "@/components/ui/navbar";
 import BlogNavbar from "@/components/BlogNavbar";
+import { MusicNavbar } from "@/components/music/MusicNavbar";
 import LocationPanel from "@/components/ui/location-panel";
 import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
 import NavigationProgress from "@/components/ui/NavigationProgress";
@@ -311,6 +314,9 @@ function Router() {
       </Route>
       <Route path="/account/cards">
         {() => <ProtectedRoute component={CardVaultPage} />}
+      </Route>
+      <Route path="/account/paypal">
+        {() => <ProtectedRoute component={PayPalPortal} />}
       </Route>
       <Route path="/ad-campaigns" component={AdCampaignsPage} />
 
@@ -566,6 +572,7 @@ function Router() {
 function AppContent() {
   const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
+  const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
@@ -751,87 +758,14 @@ function AppContent() {
         <div style={{ height: headerHeight }} />
       )}
 
-      {/* ── Music Universe Navbar — shown on music/artist-portal pages ── */}
+      {/* ── Music Universe Navbar — the proper MusicNavbar from artist portal ── */}
       {isMusicPage && (
-        <div className="fixed top-0 left-0 md:left-16 right-0 z-[60] bg-[#0a0512] border-b border-purple-500/20">
-          <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="/music/dashboard" className="flex items-center gap-2">
-              {/* Logo + Musical Universe branding */}
-              <div className="flex items-center gap-2">
-                <img
-                  src="https://i.ibb.co/8DL5vH7M/v-logo-extracted.png"
-                  alt="VersoAir"
-                  className="w-7 h-7 md:hidden object-contain brightness-125 drop-shadow-lg"
-                  onError={(e) => {
-                    const el = e.currentTarget;
-                    el.style.display = "none";
-                    const fb = el.parentElement?.querySelector(".nav-logo-fb");
-                    if (fb) (fb as HTMLElement).style.display = "flex";
-                  }}
-                />
-                <div
-                  className="nav-logo-fb w-7 h-7 md:hidden rounded-lg bg-gradient-to-br from-purple-500 to-fuchsia-600 items-center justify-center text-white font-bold text-sm shadow-lg"
-                  style={{ display: "none" }}
-                >
-                  V
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-white via-purple-200 to-fuchsia-200 bg-clip-text text-transparent tracking-wide">
-                    Musical Universe
-                  </span>
-                  <div className="flex items-center gap-1 -mt-0.5">
-                    <span className="text-[7px] sm:text-[8px] text-white/30">
-                      powered by
-                    </span>
-                    <span className="text-[8px] sm:text-[9px] font-semibold bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                      VERSOAIR
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </a>
-            <div className="flex items-center gap-2">
-              {isAuthed ? (
-                <>
-                  <a
-                    href="/music/dashboard"
-                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 border border-purple-500/30 text-white hover:from-purple-500/30 hover:to-fuchsia-500/30 transition"
-                  >
-                    Dashboard
-                  </a>
-                  <button
-                    onClick={() => {
-                      logout();
-                      window.location.href = "/music";
-                    }}
-                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition"
-                  >
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <a
-                    href="/stream"
-                    className="px-2.5 py-1 text-xs font-medium rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition"
-                  >
-                    Explore
-                  </a>
-                  <a
-                    href="/auth/signin"
-                    className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition"
-                  >
-                    Sign In
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+        <div className="fixed top-0 left-0 right-0 z-[60]">
+          <MusicNavbar />
         </div>
       )}
       {/* Spacer for music navbar */}
-      {isMusicPage && <div className="h-14" />}
+      {isMusicPage && <div className="h-16" />}
 
       <PullToRefresh />
       {showContentNav && <ContentNav />}
@@ -897,6 +831,16 @@ function AppContent() {
           <Footer />
         </div>
       )}
+
+      {/* Mobile Menu Bubble — hide on Blog & Musical Universe (they have their own navs) */}
+      <MobileMenuBubble />
+
+      {/* Quick Sign In Modal — global shortcut */}
+      <QuickSignIn
+        open={showQuickSignIn}
+        onClose={() => setShowQuickSignIn(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 }

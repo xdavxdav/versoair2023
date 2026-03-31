@@ -362,31 +362,18 @@ export function MobileMenuBubble() {
     return () => observer.disconnect();
   }, []);
 
-  // Hide bubble on pages where ContentNav (bottom dock) is active
-  // ContentNav handles navigation on these pages
-  const isContentNavPage =
-    location === "/blog" ||
-    location.startsWith("/blog/") ||
-    location === "/marketplace" ||
-    location.startsWith("/marketplace/") ||
-    location === "/services" ||
-    location.startsWith("/services/") ||
-    location === "/marketing" ||
-    location.startsWith("/marketing/") ||
-    location === "/artisans" ||
-    location.startsWith("/artisans/") ||
-    location === "/programs" ||
-    location.startsWith("/programs/") ||
-    location === "/communities" ||
-    location.startsWith("/communities/") ||
-    location === "/community" ||
-    location.startsWith("/community/") ||
-    location === "/contracts" ||
-    location.startsWith("/contracts/") ||
-    location === "/tickets" ||
-    location.startsWith("/tickets/");
+  // Hide bubble on Blog & Musical Universe — they have their own navigation bars
+  const isBlogPage = location === "/blog" || location.startsWith("/blog/");
+  const isMusicPage =
+    location.startsWith("/music") ||
+    location.startsWith("/artist-portal") ||
+    location.startsWith("/stream") ||
+    location.startsWith("/streamer-portal") ||
+    location.startsWith("/listener-portal") ||
+    location.startsWith("/arcade") ||
+    location.startsWith("/arena");
 
-  if (isContentNavPage) return null;
+  if (isBlogPage || isMusicPage) return null;
   if (dialogOpen) return null;
 
   return (

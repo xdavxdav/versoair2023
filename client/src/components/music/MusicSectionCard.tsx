@@ -1,19 +1,22 @@
 /**
  * MusicSectionCard — Glass card for dashboard sections
+ * Can be used as a link card (with href) or container card (with children)
  */
 import { motion } from "framer-motion";
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { Link } from "wouter";
+import { ReactNode } from "react";
 
 interface MusicSectionCardProps {
   title: string;
   description?: string;
   icon: LucideIcon;
-  href: string;
+  href?: string;
   stats?: { label: string; value: string | number }[];
   gradient?: "purple" | "pink" | "blue" | "amber";
   badge?: string;
   disabled?: boolean;
+  children?: ReactNode;
 }
 
 const gradients = {
@@ -41,7 +44,40 @@ export function MusicSectionCard({
   gradient = "purple",
   badge,
   disabled = false,
+  children,
 }: MusicSectionCardProps) {
+  // Container mode: when children are provided, render as a section container
+  if (children) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent backdrop-blur-md p-5"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className={`w-10 h-10 rounded-xl bg-gradient-to-br ${iconBg[gradient]} flex items-center justify-center shadow-lg`}
+          >
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          {badge && (
+            <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+              {badge}
+            </span>
+          )}
+        </div>
+        {description && (
+          <p className="text-sm text-white/50 mb-4">{description}</p>
+        )}
+        {/* Content */}
+        {children}
+      </motion.div>
+    );
+  }
+
+  // Link card mode: original behavior
   const content = (
     <motion.div
       className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br ${gradients[gradient]} backdrop-blur-md p-5 transition-all duration-300 ${
@@ -106,7 +142,7 @@ export function MusicSectionCard({
     return content;
   }
 
-  return <Link href={href}>{content}</Link>;
+  return href ? <Link href={href}>{content}</Link> : content;
 }
 
 export default MusicSectionCard;

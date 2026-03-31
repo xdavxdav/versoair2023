@@ -14,12 +14,10 @@ import {
   Disc3,
   Plus,
   Search,
-  SlidersHorizontal,
 } from "lucide-react";
 import { MusicLayout } from "@/layouts/MusicLayout";
 import { MusicSectionCard, MusicEmptyState } from "@/components/music";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useState } from "react";
 
@@ -162,15 +160,10 @@ export default function MusicLibrary() {
               icon={ListMusic}
               title="Aucune playlist encore"
               description="Créez votre première playlist et commencez à organiser votre musique."
-              action={
-                <Button
-                  variant="outline"
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Créer une playlist
-                </Button>
-              }
+              action={{
+                label: "Créer une playlist",
+                onClick: () => {},
+              }}
             />
           </MusicSectionCard>
         )}
@@ -182,17 +175,10 @@ export default function MusicLibrary() {
               icon={Disc3}
               title="Aucun album sauvegardé"
               description="Parcourez le catalogue et sauvegardez vos albums préférés."
-              action={
-                <Link href="/stream">
-                  <Button
-                    variant="outline"
-                    className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-2"
-                  >
-                    <Search className="w-4 h-4" />
-                    Découvrir
-                  </Button>
-                </Link>
-              }
+              action={{
+                label: "Découvrir",
+                href: "/stream",
+              }}
             />
           </MusicSectionCard>
         )}
@@ -204,17 +190,10 @@ export default function MusicLibrary() {
               icon={Heart}
               title="Aucun titre aimé"
               description="Appuyez sur ❤️ pour sauvegarder vos morceaux favoris ici."
-              action={
-                <Link href="/stream">
-                  <Button
-                    variant="outline"
-                    className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-2"
-                  >
-                    <Search className="w-4 h-4" />
-                    Écouter de la musique
-                  </Button>
-                </Link>
-              }
+              action={{
+                label: "Écouter de la musique",
+                href: "/stream",
+              }}
             />
           </MusicSectionCard>
         )}

@@ -387,7 +387,7 @@ export default function StreamPage() {
       <div className="md:hidden">
         <MusicMobileDock />
       </div>
-      <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden md:ml-16">
+      <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden">
         <ImmersiveBackground />
 
         {/* ========================================= */}
@@ -546,7 +546,7 @@ export default function StreamPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(180,83,9,0.12),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(109,40,217,0.08),transparent_50%)]" />
 
-          <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-10 z-10">
+          <div className="relative max-w-[95vw] mx-auto px-4 md:pl-20 pt-6 pb-10 z-10">
             {/* Back Button - positioned below top bar, above header */}
             <button
               onClick={handleBack}

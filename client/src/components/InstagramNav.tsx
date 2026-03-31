@@ -49,6 +49,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import QuickSignIn from "@/components/QuickSignIn";
 import { useSubscription } from "@/hooks/use-subscription";
 import SearchModal from "@/components/SearchModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -133,10 +134,12 @@ function NavDrawer({
   open,
   onClose,
   origin,
+  onSignInClick,
 }: {
   open: boolean;
   onClose: () => void;
   origin: "bottom" | "left";
+  onSignInClick: () => void;
 }) {
   const [currentPath, navigate] = useLocation();
   const { user, logout } = useAuthContext();
@@ -318,14 +321,16 @@ function NavDrawer({
                       </button>
                     </>
                   ) : (
-                    <Link
-                      href="/auth/signin"
-                      onClick={onClose}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm text-amber-400 hover:bg-amber-500/15"
+                    <button
+                      onClick={() => {
+                        onClose();
+                        onSignInClick();
+                      }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm text-amber-400 hover:bg-amber-500/15 w-full"
                     >
                       <LogIn className="h-[18px] w-[18px]" />
                       <span>Sign In</span>
-                    </Link>
+                    </button>
                   )}
                 </div>
               </div>
@@ -408,6 +413,7 @@ export default function InstagramNav({
   const [currentPath, setLocation] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { user } = useAuthContext();
 
   // ─── Home button tap/hold gesture state ───
@@ -675,7 +681,11 @@ export default function InstagramNav({
               </div>
             </Link>
           ) : (
-            <IconButton href="/auth/signin" icon={LogIn} label="Sign In" />
+            <IconButton
+              onClick={() => setShowQuickSignIn(true)}
+              icon={LogIn}
+              label="Sign In"
+            />
           )}
         </div>
       </nav>
@@ -801,9 +811,9 @@ export default function InstagramNav({
           </Link>
 
           {/* Profile */}
-          <Link href={user ? "/profile" : "/auth/signin"}>
-            <div className="flex flex-col items-center gap-0.5 px-3 py-1">
-              {user ? (
+          {user ? (
+            <Link href="/profile">
+              <div className="flex flex-col items-center gap-0.5 px-3 py-1">
                 <div
                   className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ${
                     profileActive
@@ -813,24 +823,30 @@ export default function InstagramNav({
                 >
                   {(user.name || user.email || "U").charAt(0).toUpperCase()}
                 </div>
-              ) : (
-                <User
-                  className={`h-6 w-6 transition-colors ${
-                    profileActive ? "text-amber-400" : "text-gray-400"
+                <span
+                  className={`text-[10px] ${
+                    profileActive
+                      ? "text-amber-400 font-semibold"
+                      : "text-gray-500"
                   }`}
-                />
-              )}
-              <span
-                className={`text-[10px] ${
-                  profileActive
-                    ? "text-amber-400 font-semibold"
-                    : "text-gray-500"
+                >
+                  Profile
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <button
+              onClick={() => setShowQuickSignIn(true)}
+              className="flex flex-col items-center gap-0.5 px-3 py-1"
+            >
+              <User
+                className={`h-6 w-6 transition-colors ${
+                  profileActive ? "text-amber-400" : "text-gray-400"
                 }`}
-              >
-                {user ? "Profile" : "Sign In"}
-              </span>
-            </div>
-          </Link>
+              />
+              <span className="text-[10px] text-gray-500">Sign In</span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -839,17 +855,34 @@ export default function InstagramNav({
           ═══════════════════════════════════════════════════════ */}
       {/* Mobile: slides up from bottom */}
       <div className="md:hidden">
-        <NavDrawer open={drawerOpen} onClose={closeDrawer} origin="bottom" />
+        <NavDrawer
+          open={drawerOpen}
+          onClose={closeDrawer}
+          origin="bottom"
+          onSignInClick={() => setShowQuickSignIn(true)}
+        />
       </div>
       {/* Desktop: slides out from left */}
       <div className="hidden md:block">
-        <NavDrawer open={drawerOpen} onClose={closeDrawer} origin="left" />
+        <NavDrawer
+          open={drawerOpen}
+          onClose={closeDrawer}
+          origin="left"
+          onSignInClick={() => setShowQuickSignIn(true)}
+        />
       </div>
 
       {/* Search modal */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
+      />
+
+      {/* Quick Sign In modal */}
+      <QuickSignIn
+        open={showQuickSignIn}
+        onClose={() => setShowQuickSignIn(false)}
+        onSuccess={() => window.location.reload()}
       />
     </>
   );

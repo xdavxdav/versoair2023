@@ -120,6 +120,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
+import { usePaymentCountry } from "@/hooks/usePaymentCountry";
+import { PaymentTopBanner } from "@/components/PaymentTopBanner";
+import { PaymentLogo } from "@/components/PaymentLogos";
+import { type PaymentMethodId, PAYMENT_METHODS } from "@/lib/payment-methods";
 
 // Database API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -2400,32 +2404,10 @@ export default function HousingReservations() {
 
               <div className="space-y-2">
                 <Label>Payment Method</Label>
-                <RadioGroup
-                  value={bookingPaymentMethod}
-                  onValueChange={setBookingPaymentMethod}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
-                    <RadioGroupItem value="credit_card" id="credit_card" />
-                    <Label
-                      htmlFor="credit_card"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      Credit Card
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
-                    <RadioGroupItem value="paypal" id="paypal" />
-                    <Label
-                      htmlFor="paypal"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      PayPal
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <ReservationPaymentMethods
+                  selected={bookingPaymentMethod}
+                  onSelect={setBookingPaymentMethod}
+                />
               </div>
 
               <Separator />
@@ -2487,6 +2469,95 @@ export default function HousingReservations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Reservation Payment Methods — Shows ALL methods (greyed out if unavailable)
+   ═══════════════════════════════════════════════════════════ */
+function ReservationPaymentMethods({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  const { sortedMethods, countryCode, flag } = usePaymentCountry();
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        {flag} Methods for {countryCode}
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {sortedMethods.map((method) => {
+          const isActive = method.available;
+          const isSelected =
+            selected === method.id ||
+            (selected === "credit_card" && method.id === "stripe");
+          return (
+            <button
+              key={method.id}
+              type="button"
+              onClick={() => isActive && onSelect(method.id)}
+              disabled={!isActive}
+              className={`relative flex items-center gap-2 p-3 rounded-lg border text-left transition-all ${
+                isSelected
+                  ? "border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30"
+                  : isActive
+                    ? "border-border hover:border-purple-500/40 hover:bg-accent/50"
+                    : "border-muted bg-muted/30 opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <PaymentLogo methodId={method.id} size={20} />
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-xs font-medium truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {method.name}
+                </p>
+                {method.comingSoon && (
+                  <p className="text-[9px] text-amber-500">
+                    {method.estimatedLaunch}
+                  </p>
+                )}
+                {!method.comingSoon && !method.available && (
+                  <p className="text-[9px] text-red-400">Not available</p>
+                )}
+              </div>
+              {isSelected && (
+                <CheckCircle className="w-4 h-4 text-purple-500 absolute top-1 right-1" />
+              )}
+              {method.comingSoon && (
+                <Clock className="w-3 h-3 text-amber-400 absolute top-1 right-1" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 pt-2">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          See also:
+        </span>
+        <Link href="/account/billing">
+          <span className="text-xs text-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
+            💳 Billing & Payments
+          </span>
+        </Link>
+        <span className="text-muted-foreground/30">·</span>
+        <Link href="/streamer-portal">
+          <span className="text-xs text-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
+            📡 Streamer Portal
+          </span>
+        </Link>
+        <span className="text-muted-foreground/30">·</span>
+        <Link href="/music/dashboard">
+          <span className="text-xs text-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
+            🎵 Music Dashboard
+          </span>
+        </Link>
+      </div>
     </div>
   );
 }

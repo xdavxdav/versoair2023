@@ -15,6 +15,7 @@ import {
   Blocks,
   Settings,
   Package,
+  Gamepad2,
   Server,
   Key,
   Hash,
@@ -60,6 +61,7 @@ import {
 } from "./vault-shared";
 import UsersControlPanel from "./UsersControlPanel";
 import FinanceControlPanel from "./FinanceControlPanel";
+import GameControlPanel from "./GameControlPanel";
 
 type TabId =
   | "overview"
@@ -71,7 +73,8 @@ type TabId =
   | "env"
   | "stack"
   | "users"
-  | "finance";
+  | "finance"
+  | "games";
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "SYSTEM", icon: <Gauge className="h-3.5 w-3.5" /> },
@@ -95,6 +98,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
     icon: <Blocks className="h-3.5 w-3.5" />,
   },
   { id: "env", label: "ENV", icon: <Settings className="h-3.5 w-3.5" /> },
+  { id: "games", label: "GAMES", icon: <Gamepad2 className="h-3.5 w-3.5" /> },
   { id: "stack", label: "STACK", icon: <Package className="h-3.5 w-3.5" /> },
 ];
 
@@ -2002,6 +2006,9 @@ export default function CommandCenter() {
 
           {/* ═══ FINANCE & PAYMENTS ═══ */}
           {activeTab === "finance" && <FinanceControlPanel />}
+
+          {/* ═══ GAMES & ARCADE ═══ */}
+          {activeTab === "games" && <GameControlPanel />}
         </motion.div>
       </AnimatePresence>
     </section>
