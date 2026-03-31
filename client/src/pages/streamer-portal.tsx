@@ -50,6 +50,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useAudio } from "@/lib/audio-context";
+import { usePaymentCountry } from "@/hooks/usePaymentCountry";
+import { PaymentTopBanner } from "@/components/PaymentTopBanner";
+import { PAYMENT_METHODS, type PaymentMethodId } from "@/lib/payment-methods";
 
 // ── Reaction emoji mapping ──
 const REACTIONS = [
@@ -990,6 +993,15 @@ export default function StreamerPortal() {
                   Following
                 </TabsTrigger>
               )}
+              {user && (
+                <TabsTrigger
+                  value="wallet"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Wallet
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -1137,6 +1149,9 @@ export default function StreamerPortal() {
         )}
       </main>
 
+      {/* ═══ Wallet Tab Content ═══ */}
+      {activeTab === "wallet" && user && <StreamerWalletSection />}
+
       {/* Thread Modal */}
       <AnimatePresence>
         {selectedThread && (
@@ -1156,6 +1171,185 @@ export default function StreamerPortal() {
           />
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// STREAMER WALLET SECTION — Payment methods + subscription
+// ═══════════════════════════════════════════════════════════
+function StreamerWalletSection() {
+  const { format, sortedMethods, countryCode, currency, flag, currencyName } =
+    usePaymentCountry();
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Top Banner */}
+      <PaymentTopBanner compact subtitle="Your wallet & payment settings" />
+
+      {/* Wallet Balance Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/30 to-fuchsia-900/20 border border-purple-500/20 backdrop-blur-xl"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-400" /> Streamer Wallet
+          </h3>
+          <span className="text-xs text-purple-300/60">
+            {flag} {currency}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-white">{format(0)}</p>
+            <p className="text-xs text-gray-400">Balance</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-green-400">{format(0)}</p>
+            <p className="text-xs text-gray-400">Earnings</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-purple-400">0</p>
+            <p className="text-xs text-gray-400">Streams</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-amber-400">0</p>
+            <p className="text-xs text-gray-400">Tips</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          {
+            label: "Add Funds",
+            icon: "💰",
+            href: "/billing",
+            color: "from-green-600/20 to-green-900/10 border-green-500/20",
+          },
+          {
+            label: "My Music",
+            icon: "🎵",
+            href: "/music",
+            color: "from-purple-600/20 to-purple-900/10 border-purple-500/20",
+          },
+          {
+            label: "Music Vault",
+            icon: "🎶",
+            href: "/music/vault",
+            color: "from-blue-600/20 to-blue-900/10 border-blue-500/20",
+          },
+          {
+            label: "Reservations",
+            icon: "🏠",
+            href: "/reservations",
+            color: "from-amber-600/20 to-amber-900/10 border-amber-500/20",
+          },
+        ].map((action) => (
+          <Link key={action.label} href={action.href}>
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className={`p-4 rounded-xl border bg-gradient-to-br ${action.color} text-center cursor-pointer`}
+            >
+              <span className="text-2xl block mb-1">{action.icon}</span>
+              <p className="text-xs font-medium text-white">{action.label}</p>
+            </motion.div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Payment Methods */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-purple-400" />
+          Payment Methods for {countryCode}
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {sortedMethods.map((method) => (
+            <div
+              key={method.id}
+              className={`p-3 rounded-xl border transition-all ${
+                method.available
+                  ? "border-white/10 bg-white/5 hover:border-purple-500/30"
+                  : "border-gray-800 bg-gray-900/30 opacity-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <PaymentLogo methodId={method.id} size={22} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">
+                    {method.name}
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    {method.fee} • {method.processingTime}
+                  </p>
+                </div>
+                {method.available ? (
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                ) : (
+                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                )}
+              </div>
+              {method.comingSoon && (
+                <p className="text-[10px] text-amber-400 mt-1 pl-8">
+                  {method.estimatedLaunch}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Subscription Info */}
+      <div className="p-4 rounded-xl border border-white/10 bg-white/5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-semibold text-white">Subscription</h4>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Free tier • Upgrade for premium features
+            </p>
+          </div>
+          <Link href="/pricing">
+            <button className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors">
+              Upgrade
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div className="flex flex-wrap items-center gap-2 pt-2">
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+          See also:
+        </span>
+        <Link href="/account/billing">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            💳 Billing
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/music/dashboard">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            🎵 Dashboard
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/music/royalties">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            💰 Royalties
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/reservations">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            🏠 Reservations
+          </span>
+        </Link>
+      </div>
     </div>
   );
 }

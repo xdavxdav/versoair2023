@@ -86,6 +86,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import { usePaymentCountry } from "@/hooks/usePaymentCountry";
+import { PaymentLogo } from "@/components/PaymentLogos";
 import {
   useMusicTracks,
   useMyArtist,
@@ -1113,7 +1115,104 @@ export default function MusicVault() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* ━━━ Track Store Payment Methods ━━━ */}
+        <VaultPaymentFooter />
       </div>
     </MusicLayout>
+  );
+}
+
+/* ═══ Vault Payment Methods Footer ═══ */
+function VaultPaymentFooter() {
+  const { format, sortedMethods, countryCode, currency, currencySymbol, flag } =
+    usePaymentCountry();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-8 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-purple-900/10 to-fuchsia-900/5 backdrop-blur-md p-6"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+            <DollarSign className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Track Store</h3>
+            <p className="text-xs text-white/40">Purchase & sell beats</p>
+          </div>
+        </div>
+        <span className="text-xs text-purple-300/60">
+          {flag} {currency}
+        </span>
+      </div>
+
+      {/* Price display */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="text-center p-3 rounded-lg bg-white/5 border border-white/5">
+          <p className="text-xs text-gray-400">Basic License</p>
+          <p className="text-lg font-bold text-white">{format(29.99)}</p>
+        </div>
+        <div className="text-center p-3 rounded-lg bg-white/5 border border-white/5">
+          <p className="text-xs text-gray-400">Premium License</p>
+          <p className="text-lg font-bold text-white">{format(99.99)}</p>
+        </div>
+        <div className="text-center p-3 rounded-lg bg-white/5 border border-white/5">
+          <p className="text-xs text-gray-400">Exclusive</p>
+          <p className="text-lg font-bold text-white">{format(499.99)}</p>
+        </div>
+      </div>
+
+      {/* Payment methods */}
+      <div className="flex flex-wrap gap-2">
+        {sortedMethods.map((m) => (
+          <span
+            key={m.id}
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs ${
+              m.available
+                ? "bg-white/10 text-white border border-white/10"
+                : "bg-gray-900/50 text-gray-600 border border-gray-800"
+            }`}
+          >
+            <PaymentLogo methodId={m.id} size={16} /> {m.name}
+            {m.comingSoon && (
+              <span className="text-[9px] text-amber-400 ml-1">Soon</span>
+            )}
+          </span>
+        ))}
+      </div>
+
+      {/* Quick Links */}
+      <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-white/[0.06]">
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+          See also:
+        </span>
+        <Link href="/account/billing">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            💳 Billing
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/music/dashboard">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            🎵 Dashboard
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/streamer-portal">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            📡 Streamer
+          </span>
+        </Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/music/royalties">
+          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+            💰 Royalties
+          </span>
+        </Link>
+      </div>
+    </motion.div>
   );
 }

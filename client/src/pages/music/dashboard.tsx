@@ -45,6 +45,9 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import { usePaymentCountry } from "@/hooks/usePaymentCountry";
+import { PaymentTopBanner } from "@/components/PaymentTopBanner";
+import { PaymentLogo } from "@/components/PaymentLogos";
 
 /* ─── Colored icon badge (Zentrr style, purple/pink palette) ─── */
 function IconBadge({
@@ -771,6 +774,9 @@ export default function MusicDashboard() {
           </div>
         </motion.div>
 
+        {/* ━━━ Subscription Tiers & Payments ━━━ */}
+        <ArtistSubscriptionTiers />
+
         {/* ━━━ Announcements ━━━ */}
         <section>
           <motion.div
@@ -824,4 +830,188 @@ function formatTimeAgo(dateString: string): string {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   return `${diffDays}d ago`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Artist Subscription Tiers & Payment Section
+   ═══════════════════════════════════════════════════════════ */
+const ARTIST_TIERS = [
+  {
+    name: "Spark",
+    price: 0,
+    color: "from-gray-500 to-gray-600",
+    border: "border-gray-500/20",
+    features: ["5 track uploads", "Basic analytics", "Community access"],
+    badge: "FREE",
+    badgeColor: "bg-gray-500/20 text-gray-300",
+  },
+  {
+    name: "Flame",
+    price: 9.99,
+    color: "from-orange-500 to-amber-500",
+    border: "border-orange-500/30",
+    features: [
+      "25 track uploads",
+      "Advanced analytics",
+      "Priority support",
+      "Playlist placement",
+    ],
+    badge: "POPULAR",
+    badgeColor: "bg-orange-500/20 text-orange-300",
+  },
+  {
+    name: "Blaze",
+    price: 24.99,
+    color: "from-red-500 to-rose-500",
+    border: "border-red-500/30",
+    features: [
+      "Unlimited uploads",
+      "Full analytics suite",
+      "Promotion tools",
+      "Revenue sharing boost",
+      "Custom artist page",
+    ],
+    badge: "PRO",
+    badgeColor: "bg-red-500/20 text-red-300",
+  },
+  {
+    name: "Inferno",
+    price: 49.99,
+    color: "from-purple-500 to-fuchsia-500",
+    border: "border-purple-500/30",
+    features: [
+      "Everything in Blaze",
+      "A&R meetings",
+      "Label deal pipeline",
+      "Exclusive events",
+      "Patron feed access",
+      "Direct fan messaging",
+    ],
+    badge: "ELITE",
+    badgeColor: "bg-purple-500/20 text-purple-300",
+  },
+];
+
+function ArtistSubscriptionTiers() {
+  const { format, sortedMethods, countryCode, currency } = usePaymentCountry();
+
+  return (
+    <section>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-md p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <Flame className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Artist Tiers</h3>
+              <p className="text-sm text-white/50">
+                Upgrade to unlock more features
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant="outline"
+            className="border-purple-500/30 text-purple-400 bg-purple-500/10 text-[10px]"
+          >
+            {currency}
+          </Badge>
+        </div>
+
+        {/* Tier Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {ARTIST_TIERS.map((tier) => (
+            <div
+              key={tier.name}
+              className={`relative p-4 rounded-xl border ${tier.border} bg-gradient-to-b from-white/5 to-transparent hover:from-white/10 transition-all`}
+            >
+              <Badge className={`${tier.badgeColor} text-[10px] mb-2`}>
+                {tier.badge}
+              </Badge>
+              <h4 className="text-white font-bold text-lg">{tier.name}</h4>
+              <p className="text-white text-2xl font-bold mt-1">
+                {tier.price === 0 ? "Free" : format(tier.price)}
+                {tier.price > 0 && (
+                  <span className="text-xs text-gray-400 font-normal">/mo</span>
+                )}
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {tier.features.map((f) => (
+                  <li
+                    key={f}
+                    className="text-xs text-gray-300 flex items-start gap-1.5"
+                  >
+                    <span className="text-purple-400 mt-0.5">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/billing">
+                <button
+                  className={`w-full mt-4 py-2 rounded-lg text-sm font-medium transition-all bg-gradient-to-r ${tier.color} text-white hover:opacity-90`}
+                >
+                  {tier.price === 0 ? "Current" : "Upgrade"}
+                </button>
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {/* Payment methods summary */}
+        <div className="pt-4 border-t border-white/5">
+          <p className="text-xs text-gray-500 mb-3">
+            Accepted payment methods for {countryCode}:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {sortedMethods.map((m) => (
+              <span
+                key={m.id}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] ${
+                  m.available
+                    ? "bg-white/10 text-white"
+                    : "bg-gray-900/50 text-gray-500 line-through"
+                }`}
+              >
+                <PaymentLogo methodId={m.id} size={16} /> {m.name}
+              </span>
+            ))}
+          </div>
+
+          {/* Quick Links */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-white/5">
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+              See also:
+            </span>
+            <Link href="/account/billing">
+              <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+                💳 Billing & Payments
+              </span>
+            </Link>
+            <span className="text-gray-700">·</span>
+            <Link href="/music/vault">
+              <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+                🎶 Music Vault
+              </span>
+            </Link>
+            <span className="text-gray-700">·</span>
+            <Link href="/streamer-portal">
+              <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+                📡 Streamer Portal
+              </span>
+            </Link>
+            <span className="text-gray-700">·</span>
+            <Link href="/music/royalties">
+              <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+                💰 Royalties
+              </span>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
 }

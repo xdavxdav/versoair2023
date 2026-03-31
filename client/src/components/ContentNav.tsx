@@ -10,6 +10,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import QuickSignIn from "@/components/QuickSignIn";
 import {
   Home,
   BookOpen,
@@ -389,6 +390,7 @@ export default function ContentNav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [audioPlayerVisible, setAudioPlayerVisible] = useState(false);
+  const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const tapCountRef = useRef(0);
@@ -835,28 +837,27 @@ export default function ContentNav() {
               </button>
             </>
           ) : !isOnAuthPage ? (
-            <Link href="/auth/signin">
-              <a
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold flex-shrink-0 transition-all hover:scale-105"
+            <button
+              onClick={() => setShowQuickSignIn(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold flex-shrink-0 transition-all hover:scale-105"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(34,211,238,0.12))",
+                border: "1px solid rgba(99,179,237,0.35)",
+                color: "#7dd3fc",
+                boxShadow:
+                  "0 0 12px rgba(59,130,246,0.25), 0 0 20px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+                textShadow: "0 0 8px rgba(125,211,252,0.5)",
+              }}
+            >
+              <UserCircle2
+                className="h-3.5 w-3.5"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(34,211,238,0.12))",
-                  border: "1px solid rgba(99,179,237,0.35)",
-                  color: "#7dd3fc",
-                  boxShadow:
-                    "0 0 12px rgba(59,130,246,0.25), 0 0 20px rgba(34,211,238,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
-                  textShadow: "0 0 8px rgba(125,211,252,0.5)",
+                  filter: "drop-shadow(0 0 4px rgba(125,211,252,0.6))",
                 }}
-              >
-                <UserCircle2
-                  className="h-3.5 w-3.5"
-                  style={{
-                    filter: "drop-shadow(0 0 4px rgba(125,211,252,0.6))",
-                  }}
-                />
-                Sign In
-              </a>
-            </Link>
+              />
+              Sign In
+            </button>
           ) : null}
         </motion.div>
       </div>
@@ -1102,6 +1103,13 @@ export default function ContentNav() {
       <AnimatePresence>
         {searchOpen && <SmartSearch onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>
+
+      {/* ══ QUICK SIGN IN MODAL ═══════════════════════════════════════ */}
+      <QuickSignIn
+        open={showQuickSignIn}
+        onClose={() => setShowQuickSignIn(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </>
   );
 }

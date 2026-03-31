@@ -48,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import QuickSignIn from "@/components/QuickSignIn";
 import {
   fadeInUp,
   staggerContainer,
@@ -131,6 +132,7 @@ export default function ArcadePage() {
   const fromPage =
     new URLSearchParams(window.location.search).get("from") || "";
   const [activeTab, setActiveTab] = useState("play");
+  const [showQuickSignIn, setShowQuickSignIn] = useState(false);
 
   // ── Access control — Artist auth is the principal/primary auth ──
   // Artists: arcade counts against their subscription tier (essential+ required)
@@ -413,7 +415,8 @@ export default function ArcadePage() {
     if (!isAuthenticated || !user) {
       toast({
         title: "Connexion requise",
-        description: "Connectez-vous via le Portail Artiste ou Stream pour jouer.",
+        description:
+          "Connectez-vous via le Portail Artiste ou Stream pour jouer.",
         variant: "destructive",
       });
       navigate("/artist-portal");
@@ -449,7 +452,7 @@ export default function ArcadePage() {
       navigate("/stream");
       return;
     }
-    
+
     const wager = parseInt(wagerAmount);
     if (isNaN(wager) || wager < 10) {
       toast({ title: "Mise minimum: 10 crédits", variant: "destructive" });
@@ -599,7 +602,11 @@ export default function ArcadePage() {
   const frozenBalance = parseFloat(wallet?.frozen_balance || "0");
 
   // Determine if user can actually play (not just view)
-  const canPlay = isAuthenticated && hasPortalAccess && !artistNeedsUpgrade && !streamerNeedsUpgrade;
+  const canPlay =
+    isAuthenticated &&
+    hasPortalAccess &&
+    !artistNeedsUpgrade &&
+    !streamerNeedsUpgrade;
 
   // ── Loading state while portal/music access resolves ──
   if (portalLoading || musicLoading) {
@@ -689,15 +696,14 @@ export default function ArcadePage() {
               )}
             </div>
 
-            {/* Wallet strip - only show if authenticated */}
-            {isAuthenticated ? (
+            {/* Wallet stats strip - always visible */}
             <div className="flex items-center gap-4 bg-black/50 border border-purple-500/30 rounded-xl px-5 py-3">
               <div className="text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  Solde
+                  PAY
                 </p>
                 <p className="text-xl font-bold text-amber-400">
-                  {balance.toLocaleString()}
+                  {isAuthenticated ? balance.toLocaleString() : "—"}
                 </p>
               </div>
               <Separator
@@ -706,10 +712,10 @@ export default function ArcadePage() {
               />
               <div className="text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  En jeu
+                  STAKE
                 </p>
-                <p className="text-lg font-semibold text-fuchsia-400">
-                  {frozenBalance.toLocaleString()}
+                <p className="text-lg font-semibold text-red-400">
+                  {isAuthenticated ? frozenBalance.toLocaleString() : "—"}
                 </p>
               </div>
               <Separator
@@ -718,37 +724,36 @@ export default function ArcadePage() {
               />
               <div className="text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  Win%
+                  WIN%
                 </p>
                 <p className="text-lg font-semibold text-green-400">
-                  {winRate}%
+                  {isAuthenticated ? `${winRate}%` : "—"}
                 </p>
               </div>
               <Separator
                 orientation="vertical"
                 className="h-8 bg-purple-500/30"
               />
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                onClick={() => setShowDeposit(true)}
-              >
-                <CircleDollarSign className="w-4 h-4 mr-1" />
-                Déposer
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                  onClick={() => setShowDeposit(true)}
+                >
+                  <CircleDollarSign className="w-4 h-4 mr-1" />
+                  Déposer
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+                  onClick={() => setShowQuickSignIn(true)}
+                >
+                  <Music className="w-4 h-4 mr-1" />
+                  Se connecter
+                </Button>
+              )}
             </div>
-            ) : (
-            <div className="flex items-center gap-3 bg-black/50 border border-purple-500/30 rounded-xl px-5 py-3">
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
-                onClick={() => navigate("/artist-portal")}
-              >
-                <Music className="w-4 h-4 mr-1" />
-                Se connecter
-              </Button>
-            </div>
-            )}
           </div>
         </div>
       </div>
@@ -794,7 +799,12 @@ export default function ArcadePage() {
               activeMatch.status === "active" &&
               currentQuestion ? (
                 /* ── Active Game: Answer Questions ── */
-                <motion.div key="game" variants={fadeInUp} initial="hidden" animate="visible">
+                <motion.div
+                  key="game"
+                  variants={fadeInUp}
+                  initial="hidden"
+                  animate="visible"
+                >
                   <Card className="bg-black/50 border-purple-500/30">
                     <CardHeader className="text-center">
                       <Badge className="mx-auto mb-2 bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/40">
@@ -892,7 +902,12 @@ export default function ArcadePage() {
                 </motion.div>
               ) : activeMatch && activeMatch.status === "waiting" ? (
                 /* ── Waiting for opponent ── */
-<motion.div key="waiting" variants={fadeInUp} initial="hidden" animate="visible">
+                <motion.div
+                  key="waiting"
+                  variants={fadeInUp}
+                  initial="hidden"
+                  animate="visible"
+                >
                   <Card className="bg-black/50 border-purple-500/30 text-center py-12">
                     <Loader2 className="w-12 h-12 mx-auto text-purple-400 animate-spin mb-4" />
                     <h3 className="text-xl font-bold text-white mb-2">
@@ -919,7 +934,13 @@ export default function ArcadePage() {
                 </motion.div>
               ) : (
                 /* ── Create Challenge ── */
-<motion.div key="create" variants={fadeInUp} initial="hidden" animate="visible" className="space-y-6">
+                <motion.div
+                  key="create"
+                  variants={fadeInUp}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-6"
+                >
                   {/* ═══════════ AVAILABLE GAMES GRID ═══════════ */}
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -1604,6 +1625,13 @@ export default function ArcadePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Quick Sign In Modal */}
+      <QuickSignIn
+        open={showQuickSignIn}
+        onClose={() => setShowQuickSignIn(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   );
 }

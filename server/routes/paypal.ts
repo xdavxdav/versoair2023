@@ -379,7 +379,7 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
 
     if (!orderId || !userId) {
-      return res.redirect("/arcade?paypal=error");
+      return res.redirect("/account/paypal?paypal=error");
     }
 
     // Check if there's a pending transaction for this order
@@ -391,7 +391,7 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
     );
 
     if (pendingTxn.rows.length === 0) {
-      return res.redirect("/arcade?paypal=error");
+      return res.redirect("/account/paypal?paypal=error");
     }
 
     const accessToken = await getPayPalAccessToken();
@@ -413,7 +413,7 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
         `UPDATE wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = $1`,
         [pendingTxn.rows[0].id],
       );
-      return res.redirect("/arcade?paypal=error");
+      return res.redirect("/account/paypal?paypal=error");
     }
 
     const capture = await captureRes.json();
@@ -422,7 +422,7 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
         `UPDATE wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = $1`,
         [pendingTxn.rows[0].id],
       );
-      return res.redirect("/arcade?paypal=error");
+      return res.redirect("/account/paypal?paypal=error");
     }
 
     // Extract amount + apply bonus + credit wallet
@@ -461,11 +461,11 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
     console.log(
       `[PAYPAL] ✅ User ${userId} deposited $${capturedAmount} → ${creditAmount} credits (via redirect)`,
     );
-    res.redirect("/arcade?paypal=success");
+    res.redirect("/account/paypal?paypal=success");
   } catch (err: any) {
     await pool.query("ROLLBACK").catch(() => {});
     console.error("[PAYPAL] Success-redirect capture error:", err);
-    res.redirect("/arcade?paypal=error");
+    res.redirect("/account/paypal?paypal=error");
   }
 });
 
@@ -473,7 +473,7 @@ router.get("/success", requireAuth, async (req: Request, res: Response) => {
 // GET /api/paypal/cancel — Redirect page after PayPal cancellation
 // ═══════════════════════════════════════════════════════════════════
 router.get("/cancel", (_req: Request, res: Response) => {
-  res.redirect("/arcade?paypal=cancelled");
+  res.redirect("/account/paypal?paypal=cancelled");
 });
 
 export default router;
