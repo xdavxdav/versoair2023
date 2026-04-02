@@ -604,6 +604,7 @@ export const musicArtists = pgTable(
     totalAlbums: integer("total_albums").default(0),
     verified: boolean("verified").default(false),
     featuredTrackId: integer("featured_track_id"),
+    artistRole: text("artist_role"), // rapper, composer, dj, producer, singer, sound_engineer, other
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({
@@ -1121,6 +1122,9 @@ export const artistProfiles = pgTable(
     contestExemptUntil: timestamp("contest_exempt_until"), // grace period for new artists
 
     // ── Unified Identity Links ──
+    // ── Artist Role (creative specialty) ──
+    artistRole: varchar("artist_role", { length: 30 }), // rapper, composer, dj, producer, singer, sound_engineer
+
     musicArtistId: integer("music_artist_id"), // → music_artists.id (catalog identity)
     legacyArtistId: integer("legacy_artist_id"), // → artists.id (directory identity, deprecated)
     // Status

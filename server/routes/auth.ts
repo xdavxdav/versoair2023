@@ -1647,6 +1647,7 @@ const artistRegisterSchema = z.object({
   bio: z.string().max(2000).optional(),
   spotifyUrl: z.string().url().optional().or(z.literal("")),
   instagramHandle: z.string().max(100).optional(),
+  artistRole: z.enum(["rapper", "composer", "dj", "producer", "singer", "sound_engineer"]).optional(),
 });
 
 const artistLoginSchema = z.union([
@@ -1688,6 +1689,7 @@ router.post(
       bio,
       spotifyUrl,
       instagramHandle,
+      artistRole,
     } = parsed.data;
 
     // Check duplicate email
@@ -1859,6 +1861,7 @@ router.post(
         bio: bio || null,
         spotifyUrl: spotifyUrl || null,
         instagramHandle: instagramHandle || null,
+        artistRole: artistRole || null,
         leagueId: leagueId || null,
         payoutEmail: email.toLowerCase(),
         artistCode,

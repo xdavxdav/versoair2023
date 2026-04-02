@@ -489,11 +489,11 @@ export async function sendBusinessApprovalRequestEmail(
         <div class="container">
           <div class="header">
             <h1>📋 Business Registration Request</h1>
-            <p>A new business needs your approval</p>
+            <p>A new business needs your approval — 24h review deadline</p>
           </div>
           <div class="body">
             <p>Hi Admin,</p>
-            <p>A GeoAdmin user has submitted a new business for registration. Please review the details below:</p>
+            <p>A GeoAdmin user has submitted a new business for registration. Please review the details below within the <strong>24-hour review window</strong>:</p>
 
             <div style="background: #f8f9fa; border-left: 4px solid #bf831c; border-radius: 0 8px 8px 0; padding: 20px; margin: 20px 0;">
               <h3 style="margin: 0 0 12px; color: #1a1a2e;">${data.businessName}</h3>

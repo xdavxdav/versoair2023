@@ -2108,6 +2108,7 @@ export default function ArtistPortalWelcome() {
     stageName: "",
     legalName: "",
     genre: "",
+    artistRole: "",
     country: "",
     bio: "",
     spotifyUrl: "",
@@ -2195,7 +2196,7 @@ export default function ArtistPortalWelcome() {
           signInForm.email.split("@")[0],
       );
       setTransitioning(true);
-      setTimeout(() => navigate("/music/dashboard"), 2400);
+      setTimeout(() => navigate("/music/dashboard"), 400);
     } catch (err: any) {
       setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsAuthLoading(false);
@@ -2246,6 +2247,7 @@ export default function ArtistPortalWelcome() {
           bio: applyForm.bio,
           spotifyUrl: applyForm.spotifyUrl,
           instagramHandle: applyForm.instagramHandle,
+          artistRole: applyForm.artistRole || undefined,
         }),
       });
       const regData = await regRes.json();
@@ -2316,8 +2318,8 @@ export default function ArtistPortalWelcome() {
       );
       setTimeout(() => {
         setTransitioning(true);
-        setTimeout(() => navigate("/music/dashboard"), 2400);
-      }, 800);
+        setTimeout(() => navigate("/music/dashboard"), 400);
+      }, 200);
     } catch (err: any) {
       setApplyError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsAuthLoading(false);
@@ -3470,6 +3472,33 @@ export default function ArtistPortalWelcome() {
                                 {g}
                               </option>
                             ))}
+                          </select>
+                          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
+                          Rôle créatif
+                        </label>
+                        <div className="relative">
+                          <Music className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 z-10" />
+                          <select
+                            value={applyForm.artistRole}
+                            onChange={(e) =>
+                              setApplyForm({
+                                ...applyForm,
+                                artistRole: e.target.value,
+                              })
+                            }
+                            className="w-full pl-11 pr-10 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white focus:outline-none focus:border-purple-500/50 transition-all text-sm appearance-none cursor-pointer"
+                          >
+                            <option value="" className="bg-[#1a0a2e]">Choisissez votre spécialité</option>
+                            <option value="rapper" className="bg-[#1a0a2e]">🎤 Rapper</option>
+                            <option value="composer" className="bg-[#1a0a2e]">🎼 Composer</option>
+                            <option value="dj" className="bg-[#1a0a2e]">🎧 DJ / Disk Jockey</option>
+                            <option value="producer" className="bg-[#1a0a2e]">🎹 Producer / Beatmaker</option>
+                            <option value="singer" className="bg-[#1a0a2e]">🎙️ Singer / Vocalist</option>
+                            <option value="sound_engineer" className="bg-[#1a0a2e]">🎚️ Sound Engineer</option>
                           </select>
                           <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
                         </div>

@@ -471,14 +471,12 @@ export default function SignIn() {
             </div>
 
             <div className="text-center mt-8">
-              <Link href="/">
-                <Button
-                  variant="ghost"
-                  className="text-[#bf831c] hover:text-[#a6701a]"
-                >
-                  ← Back to Home
-                </Button>
-              </Link>
+              <button
+                onClick={() => window.history.back()}
+                className="text-[#bf831c] hover:text-[#a6701a] text-sm font-medium"
+              >
+                ← Back
+              </button>
             </div>
           </div>
         </div>
