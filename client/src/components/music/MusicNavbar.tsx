@@ -300,7 +300,10 @@ export function MusicNavbar() {
                       <DropdownMenuSeparator className="bg-white/10" />
                       <DropdownMenuItem
                         className="hover:bg-white/5 cursor-pointer text-pink-400"
-                        onClick={() => logout()}
+                        onClick={() => {
+                          logout();
+                          navigate("/artist-portal");
+                        }}
                       >
                         Sign out
                       </DropdownMenuItem>
@@ -310,7 +313,7 @@ export function MusicNavbar() {
                       <DropdownMenuSeparator className="bg-white/10" />
                       <DropdownMenuItem
                         className="hover:bg-white/5 cursor-pointer text-purple-400"
-                        onClick={() => navigate("/apply")}
+                        onClick={() => navigate("/artist-portal/welcome")}
                       >
                         <User className="w-4 h-4 mr-2" />
                         Sign in
@@ -324,7 +327,9 @@ export function MusicNavbar() {
                       pathname.startsWith("/artist-portal") ||
                       pathname === "/apply";
                     const portalHref =
-                      user && user.id ? "/artist-portal" : "/apply";
+                      user && user.id
+                        ? "/artist-portal"
+                        : "/artist-portal/welcome";
                     return (
                       <DropdownMenuItem
                         disabled={portalDisabled}
@@ -420,7 +425,7 @@ export function MusicNavbar() {
                   pathname.startsWith("/artist-portal") ||
                   pathname === "/apply";
                 const portalHref =
-                  user && user.id ? "/artist-portal" : "/apply";
+                  user && user.id ? "/artist-portal" : "/artist-portal/welcome";
                 return (
                   <Button
                     variant="ghost"
@@ -498,7 +503,10 @@ export function MusicNavbar() {
                       <DropdownMenuSeparator className="bg-white/5" />
                       <DropdownMenuItem
                         className="hover:bg-white/5 cursor-pointer text-pink-400"
-                        onClick={() => logout()}
+                        onClick={() => {
+                          logout();
+                          navigate("/artist-portal");
+                        }}
                       >
                         Sign out
                       </DropdownMenuItem>
@@ -509,7 +517,7 @@ export function MusicNavbar() {
                 <Button
                   variant="ghost"
                   className="flex items-center gap-2 px-4 py-2 text-purple-400 hover:text-purple-300 hover:bg-white/5 border border-purple-500/30 rounded-lg"
-                  onClick={() => navigate("/apply")}
+                  onClick={() => navigate("/artist-portal/welcome")}
                 >
                   <User className="w-4 h-4" />
                   Sign in

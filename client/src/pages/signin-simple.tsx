@@ -3,6 +3,8 @@ import { Link, useLocation } from "wouter";
 import { Mail, Lock, Loader, Clock } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
+import { AuthSplash } from "@/components/ui/auth-splash";
+import { AnimatePresence } from "framer-motion";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -12,6 +14,7 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState<string>("");
   const [, navigate] = useLocation();
@@ -70,11 +73,7 @@ export default function SignIn() {
         // Bootstrap CSRF token now that we're authenticated
         await initializeCsrfToken();
         setSuccess(true);
-
-        // Redirect to admin dashboard after 1 second
-        setTimeout(() => {
-          navigate("/geo-admin/dashboard");
-        }, 1000);
+        setShowSplash(true);
       } else if (response.status === 423) {
         // Account locked — extract unlock time from message
         const match = data.message?.match(/(\d+)\s+minute/);
@@ -94,13 +93,14 @@ export default function SignIn() {
 
   if (success) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-          <div className="text-green-500 mb-4">✓</div>
-          <h2 className="text-2xl font-bold mb-2">Login Successful!</h2>
-          <p className="text-gray-600">Redirecting to dashboard...</p>
-        </div>
-      </div>
+      <AnimatePresence>
+        {showSplash && (
+          <AuthSplash
+            action="signing-in"
+            onDone={() => navigate("/geo-admin/dashboard")}
+          />
+        )}
+      </AnimatePresence>
     );
   }
 

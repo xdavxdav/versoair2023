@@ -53,8 +53,8 @@ export function useRequirePortal(
     hasRedirected.current = true;
 
     if (!isAuthenticated) {
-      // Not logged in at all → general application portal
-      navigate("/apply");
+      // Not logged in at all → artist portal welcome
+      navigate("/artist-portal/welcome");
     } else {
       // Logged in but missing this portal → portal-specific redirect
       const target = redirectTo ?? PORTAL_REDIRECTS[portalId] ?? "/apply";

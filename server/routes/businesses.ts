@@ -1035,7 +1035,7 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
       success: true,
       data: newBusiness,
       message:
-        "Business submitted for approval. An admin will review your registration shortly.",
+        "Business submitted for approval. Your registration is now pending and will be reviewed within 24 hours. You will receive an email notification once a decision has been made.",
     });
   } catch (error) {
     console.error("Error submitting business:", error);

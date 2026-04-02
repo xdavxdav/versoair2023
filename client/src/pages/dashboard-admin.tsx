@@ -6500,14 +6500,38 @@ export default function AdminDashboard() {
   } = useSessionTimer(isAdminGateAuthenticated, true, handleSessionExpired); // enableTimeout=true for admin dashboard
 
   const SQL_SNIPPETS = [
-    { label: "Active Users", q: "SELECT id, username, email, role, created_at\nFROM users\nWHERE role != 'suspended'\nORDER BY created_at DESC\nLIMIT 20;" },
-    { label: "Revenue by Country", q: "SELECT country_code, COUNT(*) AS businesses, AVG(rating) AS avg_rating\nFROM businesses\nGROUP BY country_code\nORDER BY businesses DESC\nLIMIT 15;" },
-    { label: "Pending Approvals", q: "SELECT id, name, category_id, country_code, created_at\nFROM businesses\nWHERE approval_status = 'pending'\nORDER BY created_at ASC\nLIMIT 25;" },
-    { label: "Open Tickets", q: "SELECT id, title, status, priority, category, created_at\nFROM tickets\nWHERE status IN ('open','in_progress')\nORDER BY priority DESC, created_at ASC\nLIMIT 20;" },
-    { label: "Top Rated", q: "SELECT id, name, country_code, rating, review_count\nFROM businesses\nWHERE rating IS NOT NULL\nORDER BY rating DESC, review_count DESC\nLIMIT 20;" },
-    { label: "Recent Signups", q: "SELECT id, username, email, role, created_at\nFROM users\nORDER BY created_at DESC\nLIMIT 15;" },
-    { label: "DB Table Sizes", q: "SELECT relname AS table_name,\n  pg_size_pretty(pg_total_relation_size(relid)) AS total_size,\n  n_live_tup AS live_rows\nFROM pg_stat_user_tables\nORDER BY pg_total_relation_size(relid) DESC;" },
-    { label: "Streaming Tracks", q: "SELECT id, title, artist_name, genre, plays_count, created_at\nFROM tracks\nORDER BY plays_count DESC\nLIMIT 20;" },
+    {
+      label: "Active Users",
+      q: "SELECT id, username, email, role, created_at\nFROM users\nWHERE role != 'suspended'\nORDER BY created_at DESC\nLIMIT 20;",
+    },
+    {
+      label: "Revenue by Country",
+      q: "SELECT country_code, COUNT(*) AS businesses, AVG(rating) AS avg_rating\nFROM businesses\nGROUP BY country_code\nORDER BY businesses DESC\nLIMIT 15;",
+    },
+    {
+      label: "Pending Approvals",
+      q: "SELECT id, name, category_id, country_code, created_at\nFROM businesses\nWHERE approval_status = 'pending'\nORDER BY created_at ASC\nLIMIT 25;",
+    },
+    {
+      label: "Open Tickets",
+      q: "SELECT id, title, status, priority, category, created_at\nFROM tickets\nWHERE status IN ('open','in_progress')\nORDER BY priority DESC, created_at ASC\nLIMIT 20;",
+    },
+    {
+      label: "Top Rated",
+      q: "SELECT id, name, country_code, rating, review_count\nFROM businesses\nWHERE rating IS NOT NULL\nORDER BY rating DESC, review_count DESC\nLIMIT 20;",
+    },
+    {
+      label: "Recent Signups",
+      q: "SELECT id, username, email, role, created_at\nFROM users\nORDER BY created_at DESC\nLIMIT 15;",
+    },
+    {
+      label: "DB Table Sizes",
+      q: "SELECT relname AS table_name,\n  pg_size_pretty(pg_total_relation_size(relid)) AS total_size,\n  n_live_tup AS live_rows\nFROM pg_stat_user_tables\nORDER BY pg_total_relation_size(relid) DESC;",
+    },
+    {
+      label: "Streaming Tracks",
+      q: "SELECT id, title, artist_name, genre, plays_count, created_at\nFROM tracks\nORDER BY plays_count DESC\nLIMIT 20;",
+    },
   ];
 
   const [showSqlEditor, setShowSqlEditor] = useState(false);
@@ -7027,7 +7051,8 @@ export default function AdminDashboard() {
           setShowSqlEditor(open);
           if (open) {
             // Load a random snippet on every open
-            const pick = SQL_SNIPPETS[Math.floor(Math.random() * SQL_SNIPPETS.length)];
+            const pick =
+              SQL_SNIPPETS[Math.floor(Math.random() * SQL_SNIPPETS.length)];
             setSqlQuery(pick.q);
             setQueryResult(null);
             setSqlExecTime(null);
@@ -7046,9 +7071,13 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center gap-2 text-xs font-mono">
                 <Terminal className="h-3 w-3 text-purple-400" />
-                <span className="text-purple-300 font-semibold tracking-wide">SQL Console</span>
+                <span className="text-purple-300 font-semibold tracking-wide">
+                  SQL Console
+                </span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-500">versoair_business_intelligence</span>
+                <span className="text-slate-500">
+                  versoair_business_intelligence
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -7066,11 +7095,17 @@ export default function AdminDashboard() {
 
           {/* Snippet picker bar */}
           <div className="flex items-center gap-1.5 px-3 py-2 bg-[#0d1117] border-b border-white/5 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1">Quick load:</span>
+            <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1">
+              Quick load:
+            </span>
             {SQL_SNIPPETS.map((s) => (
               <button
                 key={s.label}
-                onClick={() => { setSqlQuery(s.q); setQueryResult(null); setSqlExecTime(null); }}
+                onClick={() => {
+                  setSqlQuery(s.q);
+                  setQueryResult(null);
+                  setSqlExecTime(null);
+                }}
                 className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 hover:text-purple-300 text-slate-400 border border-white/5 hover:border-purple-500/30 transition-all whitespace-nowrap"
               >
                 {s.label}
@@ -7079,7 +7114,10 @@ export default function AdminDashboard() {
             <div className="ml-auto flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => {
-                  const pick = SQL_SNIPPETS[Math.floor(Math.random() * SQL_SNIPPETS.length)];
+                  const pick =
+                    SQL_SNIPPETS[
+                      Math.floor(Math.random() * SQL_SNIPPETS.length)
+                    ];
                   setSqlQuery(pick.q);
                   setQueryResult(null);
                   setSqlExecTime(null);
@@ -7097,7 +7135,12 @@ export default function AdminDashboard() {
             {/* Gutter: line numbers */}
             <div className="select-none flex flex-col items-end pt-3 pb-3 pr-2 pl-3 bg-[#0d1117] border-r border-white/5 min-w-[42px]">
               {(sqlQuery || " ").split("\n").map((_, i) => (
-                <span key={i} className="text-[11px] font-mono text-slate-700 leading-6">{i + 1}</span>
+                <span
+                  key={i}
+                  className="text-[11px] font-mono text-slate-700 leading-6"
+                >
+                  {i + 1}
+                </span>
               ))}
             </div>
             {/* Code textarea */}
@@ -7111,7 +7154,9 @@ export default function AdminDashboard() {
                 }
               }}
               className="flex-1 font-mono text-[13px] leading-6 resize-none rounded-none border-0 bg-transparent text-slate-100 placeholder:text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 pt-3 pb-3"
-              placeholder={"-- Write your SQL here\nSELECT * FROM users LIMIT 10;"}
+              placeholder={
+                "-- Write your SQL here\nSELECT * FROM users LIMIT 10;"
+              }
               spellCheck={false}
               style={{ minHeight: 200 }}
             />
@@ -7121,14 +7166,16 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 px-4 py-1.5 bg-[#0a0e14] border-t border-white/5 text-[10px] font-mono">
             {[
               { kw: "SELECT", c: "text-[#79c0ff]" },
-              { kw: "FROM",   c: "text-[#ffa657]" },
-              { kw: "WHERE",  c: "text-[#7ee787]" },
-              { kw: "JOIN",   c: "text-[#e3b341]" },
-              { kw: "GROUP",  c: "text-[#d2a8ff]" },
-              { kw: "ORDER",  c: "text-[#f78166]" },
-              { kw: "LIMIT",  c: "text-[#79c0ff]" },
+              { kw: "FROM", c: "text-[#ffa657]" },
+              { kw: "WHERE", c: "text-[#7ee787]" },
+              { kw: "JOIN", c: "text-[#e3b341]" },
+              { kw: "GROUP", c: "text-[#d2a8ff]" },
+              { kw: "ORDER", c: "text-[#f78166]" },
+              { kw: "LIMIT", c: "text-[#79c0ff]" },
             ].map(({ kw, c }) => (
-              <span key={kw} className={c}>{kw}</span>
+              <span key={kw} className={c}>
+                {kw}
+              </span>
             ))}
             <span className="ml-auto text-slate-600">⌘ Return to run</span>
           </div>
@@ -7137,7 +7184,9 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-t border-white/10">
             <Button
               onClick={() => {
-                setSqlHistory((h) => sqlQuery ? [sqlQuery, ...h.slice(0, 9)] : h);
+                setSqlHistory((h) =>
+                  sqlQuery ? [sqlQuery, ...h.slice(0, 9)] : h,
+                );
                 handleExecuteQuery();
                 const t0 = Date.now();
                 setSqlExecTime(null);
@@ -7152,9 +7201,15 @@ export default function AdminDashboard() {
               className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs h-8 px-4 shadow-[0_0_12px_rgba(139,92,246,0.4)] border-0"
             >
               {isExecutingQuery ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin" />Running…</>
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Running…
+                </>
               ) : (
-                <><Play className="h-3.5 w-3.5" />Run Query</>
+                <>
+                  <Play className="h-3.5 w-3.5" />
+                  Run Query
+                </>
               )}
             </Button>
 
@@ -7168,14 +7223,22 @@ export default function AdminDashboard() {
               className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-8"
             >
               {sqlCopied ? (
-                <><span className="text-emerald-400">✓</span> Copied!</>
+                <>
+                  <span className="text-emerald-400">✓</span> Copied!
+                </>
               ) : (
-                <><Copy className="h-3 w-3" /> Copy</>
+                <>
+                  <Copy className="h-3 w-3" /> Copy
+                </>
               )}
             </button>
 
             <button
-              onClick={() => { setSqlQuery(""); setQueryResult(null); setSqlExecTime(null); }}
+              onClick={() => {
+                setSqlQuery("");
+                setQueryResult(null);
+                setSqlExecTime(null);
+              }}
               className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-white/5 hover:border-red-800/40 transition-all h-8"
             >
               Clear
@@ -7214,10 +7277,14 @@ export default function AdminDashboard() {
               {sqlHistory.map((h, i) => (
                 <button
                   key={i}
-                  onClick={() => { setSqlQuery(h); setShowSqlHistory(false); }}
+                  onClick={() => {
+                    setSqlQuery(h);
+                    setShowSqlHistory(false);
+                  }}
                   className="w-full text-left px-4 py-2 text-[11px] font-mono text-slate-400 hover:bg-white/5 hover:text-slate-200 border-b border-white/5 truncate transition-colors"
                 >
-                  <span className="text-slate-600 mr-2">{i + 1}.</span>{h.replace(/\n/g, " ")}
+                  <span className="text-slate-600 mr-2">{i + 1}.</span>
+                  {h.replace(/\n/g, " ")}
                 </button>
               ))}
             </div>
@@ -7235,22 +7302,38 @@ export default function AdminDashboard() {
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider">Query Error</span>
+                  <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider">
+                    Query Error
+                  </span>
                 </div>
                 <pre className="text-xs font-mono text-red-300 bg-red-950/30 border border-red-800/30 rounded p-3 whitespace-pre-wrap">
                   {queryResult.error}
                 </pre>
               </div>
-            ) : queryResult && Array.isArray(queryResult?.rows) && queryResult.rows.length > 0 ? (
+            ) : queryResult &&
+              Array.isArray(queryResult?.rows) &&
+              queryResult.rows.length > 0 ? (
               <div>
                 <div className="flex items-center gap-2 px-4 py-1.5 bg-[#161b22] border-b border-white/5 text-[10px] font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-400">{queryResult.rows.length} row{queryResult.rows.length !== 1 ? "s" : ""} returned</span>
-                  {sqlExecTime && <span className="text-slate-600 ml-1">in {sqlExecTime}ms</span>}
+                  <span className="text-emerald-400">
+                    {queryResult.rows.length} row
+                    {queryResult.rows.length !== 1 ? "s" : ""} returned
+                  </span>
+                  {sqlExecTime && (
+                    <span className="text-slate-600 ml-1">
+                      in {sqlExecTime}ms
+                    </span>
+                  )}
                   <button
                     onClick={() => {
                       const cols = Object.keys(queryResult.rows[0]);
-                      const csv = [cols.join(","), ...queryResult.rows.map((r: any) => cols.map((c) => JSON.stringify(r[c] ?? "")).join(","))].join("\n");
+                      const csv = [
+                        cols.join(","),
+                        ...queryResult.rows.map((r: any) =>
+                          cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
+                        ),
+                      ].join("\n");
                       navigator.clipboard.writeText(csv);
                     }}
                     className="ml-auto text-[9px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 border border-white/5 transition-all"
@@ -7262,28 +7345,54 @@ export default function AdminDashboard() {
                   <table className="w-full text-xs font-mono">
                     <thead>
                       <tr>
-                        <th className="px-3 py-1.5 text-center text-slate-700 bg-[#0d1117] border-b border-white/5 w-8">#</th>
+                        <th className="px-3 py-1.5 text-center text-slate-700 bg-[#0d1117] border-b border-white/5 w-8">
+                          #
+                        </th>
                         {Object.keys(queryResult.rows[0]).map((col) => (
-                          <th key={col} className="text-left px-4 py-1.5 text-slate-400 font-semibold bg-[#0d1117] border-b border-white/5 whitespace-nowrap">
-                            <span className="text-slate-600 mr-1">⬡</span>{col}
+                          <th
+                            key={col}
+                            className="text-left px-4 py-1.5 text-slate-400 font-semibold bg-[#0d1117] border-b border-white/5 whitespace-nowrap"
+                          >
+                            <span className="text-slate-600 mr-1">⬡</span>
+                            {col}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {queryResult.rows.map((row: any, i: number) => (
-                        <tr key={i} className={`border-b border-white/[0.03] transition-colors ${i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"} hover:bg-purple-500/5`}>
-                          <td className="px-3 py-1.5 text-center text-slate-700 text-[10px]">{i + 1}</td>
+                        <tr
+                          key={i}
+                          className={`border-b border-white/[0.03] transition-colors ${i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"} hover:bg-purple-500/5`}
+                        >
+                          <td className="px-3 py-1.5 text-center text-slate-700 text-[10px]">
+                            {i + 1}
+                          </td>
                           {Object.values(row).map((val: any, j: number) => (
-                            <td key={j} className="px-4 py-1.5 whitespace-nowrap max-w-[220px] truncate">
+                            <td
+                              key={j}
+                              className="px-4 py-1.5 whitespace-nowrap max-w-[220px] truncate"
+                            >
                               {val === null ? (
-                                <span className="text-slate-700 italic text-[10px]">NULL</span>
+                                <span className="text-slate-700 italic text-[10px]">
+                                  NULL
+                                </span>
                               ) : typeof val === "number" ? (
-                                <span className="text-[#79c0ff]">{String(val)}</span>
+                                <span className="text-[#79c0ff]">
+                                  {String(val)}
+                                </span>
                               ) : typeof val === "boolean" ? (
-                                <span className={val ? "text-emerald-400" : "text-red-400"}>{String(val)}</span>
+                                <span
+                                  className={
+                                    val ? "text-emerald-400" : "text-red-400"
+                                  }
+                                >
+                                  {String(val)}
+                                </span>
                               ) : (
-                                <span className="text-slate-300">{String(val)}</span>
+                                <span className="text-slate-300">
+                                  {String(val)}
+                                </span>
                               )}
                             </td>
                           ))}
@@ -7297,15 +7406,23 @@ export default function AdminDashboard() {
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-[10px] font-mono text-emerald-400">Query OK — {queryResult.rowCount ?? 0} row(s) affected</span>
+                  <span className="text-[10px] font-mono text-emerald-400">
+                    Query OK — {queryResult.rowCount ?? 0} row(s) affected
+                  </span>
                 </div>
-                <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap">{JSON.stringify(queryResult, null, 2)}</pre>
+                <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                  {JSON.stringify(queryResult, null, 2)}
+                </pre>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-slate-700 gap-2">
                 <Terminal className="h-8 w-8 opacity-20" />
-                <span className="text-xs font-mono">Run a query to see results</span>
-                <span className="text-[10px] font-mono text-slate-800">⌘ Return · or click Run Query</span>
+                <span className="text-xs font-mono">
+                  Run a query to see results
+                </span>
+                <span className="text-[10px] font-mono text-slate-800">
+                  ⌘ Return · or click Run Query
+                </span>
               </div>
             )}
           </div>
