@@ -318,11 +318,27 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       loadGTScript();
     } else {
       // GT already loaded (user changed country after initial load).
-      // Try combo for instant switch; graceful reload as last resort.
+      // Try combo for instant switch; if not ready yet, observe DOM until it is.
       const ok = switchLanguageViaCombo(lang);
       if (!ok) {
-        // Cookie is set — reload lets GT re-read it.
-        flashBanner(`Translating to ${lang.toUpperCase()}…`, true);
+        // Combo not ready yet — observe with retries (up to 2s) before reloading
+        let retries = 0;
+        const maxRetries = 8;
+        const retryInterval = setInterval(() => {
+          retries++;
+          const retryOk = switchLanguageViaCombo(lang);
+          if (retryOk) {
+            clearInterval(retryInterval);
+            flashBanner(
+              `Auto-translated to ${lang.toUpperCase()} based on your location`,
+              false,
+            );
+          } else if (retries >= maxRetries) {
+            clearInterval(retryInterval);
+            // Cookie is already set — reload as last resort
+            flashBanner(`Translating to ${lang.toUpperCase()}…`, true);
+          }
+        }, 250);
         return;
       }
     }
@@ -378,8 +394,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
             ? "Language restored to Français"
             : `Language overridden to ${lang.toUpperCase()}`;
 
-      // If combo worked → no reload needed. If not → reload as fallback.
-      flashBanner(msg, !switched);
+      if (switched) {
+        // Combo worked instantly — no reload needed
+        flashBanner(msg, false);
+      } else {
+        // Combo not ready — retry up to 8x over 2s, then reload as last resort
+        let retries = 0;
+        const retryInterval = setInterval(() => {
+          retries++;
+          const ok = switchLanguageViaCombo(lang);
+          if (ok) {
+            clearInterval(retryInterval);
+            flashBanner(msg, false);
+          } else if (retries >= 8) {
+            clearInterval(retryInterval);
+            flashBanner(msg, true); // cookie already set, reload will apply it
+          }
+        }, 250);
+      }
     },
     [currentLang, flashBanner],
   );

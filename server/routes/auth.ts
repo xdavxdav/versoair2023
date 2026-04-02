@@ -1963,12 +1963,10 @@ router.post(
         }
       }
       if (!user) {
-        res
-          .status(401)
-          .json({
-            success: false,
-            message: "Code artiste invalide. Vérifiez le format exact.",
-          });
+        res.status(401).json({
+          success: false,
+          message: "Code artiste invalide. Vérifiez le format exact.",
+        });
         return;
       }
     }

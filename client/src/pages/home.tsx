@@ -2858,13 +2858,17 @@ export default function Home() {
                           </motion.div>
                         ))}
                       </div>
-                      <Link to="/marketplace">
-                        <button className="w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
+                      <Link to="/blog">
+                        <button className="relative w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 group">
                           <ShoppingBag
                             size={14}
                             className="inline mr-1 sm:mr-2"
                           />
                           Parcourir le marché
+                          {/* Blinking marketplace hint */}
+                          <span className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-900/90 text-amber-200 text-[9px] px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none animate-pulse">
+                            🛒 Voir la marketplace
+                          </span>
                         </button>
                       </Link>
                     </motion.div>
@@ -2894,21 +2898,15 @@ export default function Home() {
                           Acheter maintenant
                         </motion.button>
                       </Link>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          window.dispatchEvent(
-                            new CustomEvent("marketplace-sos", {
-                              detail: { from: "shop-now" },
-                            }),
-                          );
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
-                      >
-                        Achat rapide ↑
-                      </motion.button>
+                      <Link to="/marketplace">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
+                        >
+                          Nos Offres →
+                        </motion.button>
+                      </Link>
                     </div>
                   </motion.div>
                 </div>

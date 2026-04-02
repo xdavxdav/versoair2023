@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
+import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
 
 import {
   Store,
@@ -384,6 +385,12 @@ const MAIN_SECTIONS = [
     label: "Advertising",
     icon: Megaphone,
     description: "Manage ad campaigns",
+  },
+  {
+    id: "marketplace",
+    label: "Marketplace",
+    icon: ShoppingBag,
+    description: "Review & approve marketplace listings",
   },
   {
     id: "jobs",
@@ -6852,6 +6859,7 @@ export default function AdminDashboard() {
             {activeSection === "categories" && <CategoryManagement />}
             {activeSection === "jobs" && <JobManagement />}
             {activeSection === "advertising" && <AdvertisingSection />}
+            {activeSection === "marketplace" && <MarketplaceModeration />}
             {activeSection === "artists" && <ArtistsSection />}
             {activeSection === "users" && <UsersSection />}
             {activeSection === "roles" && <RoleManagementSection />}
@@ -6999,55 +7007,201 @@ export default function AdminDashboard() {
 
       {/* SQL Editor Modal */}
       <Dialog open={showSqlEditor} onOpenChange={setShowSqlEditor}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Terminal className="h-5 w-5" />
-              SQL Query Editor
-            </DialogTitle>
-            <DialogDescription>
-              Execute SQL queries against the database
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>SQL Query</Label>
-              <Textarea
-                value={sqlQuery}
-                onChange={(e) => setSqlQuery(e.target.value)}
-                className="font-mono h-48"
-                placeholder="Enter your SQL query..."
-              />
+        <DialogContent className="max-w-5xl p-0 overflow-hidden bg-[#0d1117] border border-white/10 shadow-2xl">
+          {/* Title bar */}
+          <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-red-500/80" />
+                <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <span className="w-3 h-3 rounded-full bg-green-500/80" />
+              </div>
+              <div className="flex items-center gap-2 text-sm font-mono text-slate-400">
+                <Terminal className="h-3.5 w-3.5 text-purple-400" />
+                <span className="text-purple-300 font-semibold">
+                  SQL Editor
+                </span>
+                <span className="text-slate-600">—</span>
+                <span className="text-slate-500 text-xs">
+                  versoair_business_intelligence
+                </span>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-400 border border-emerald-700/40">
+                PostgreSQL
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-0">
+            {/* Query input area */}
+            <div className="relative bg-[#0d1117]">
+              {/* Line numbers + editor */}
+              <div className="flex">
+                {/* Line numbers */}
+                <div className="select-none flex flex-col items-end pr-3 pl-3 pt-3 pb-3 bg-[#0d1117] border-r border-white/5 min-w-[44px]">
+                  {(sqlQuery || "SELECT").split("\n").map((_, i) => (
+                    <span
+                      key={i}
+                      className="text-[11px] font-mono text-slate-600 leading-6"
+                    >
+                      {i + 1}
+                    </span>
+                  ))}
+                </div>
+                {/* Textarea */}
+                <Textarea
+                  value={sqlQuery}
+                  onChange={(e) => setSqlQuery(e.target.value)}
+                  className="flex-1 font-mono text-sm leading-6 h-52 resize-none rounded-none border-0 bg-transparent text-slate-200 placeholder:text-slate-600 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 pt-3 pb-3"
+                  placeholder={
+                    "-- Write your SQL query here\nSELECT * FROM users LIMIT 10;"
+                  }
+                  spellCheck={false}
+                />
+              </div>
+              {/* Syntax hint strip */}
+              <div className="flex items-center gap-3 px-4 py-1.5 bg-[#161b22] border-t border-white/5 text-[10px] font-mono text-slate-600">
+                <span className="text-blue-500">SELECT</span>
+                <span className="text-orange-400">FROM</span>
+                <span className="text-green-500">WHERE</span>
+                <span className="text-yellow-500">JOIN</span>
+                <span className="text-pink-400">INSERT</span>
+                <span className="text-red-400">DELETE</span>
+                <span className="text-purple-400">UPDATE</span>
+                <div className="ml-auto flex items-center gap-1 text-slate-500">
+                  <span>⌘ + Enter to run</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-t border-white/10">
               <Button
                 onClick={handleExecuteQuery}
                 disabled={isExecutingQuery}
-                className="gap-2"
+                className="gap-2 bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 px-3"
               >
                 {isExecutingQuery ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Executing...
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Running…
                   </>
                 ) : (
                   <>
-                    <Play className="h-4 w-4" />
-                    Execute Query
+                    <Play className="h-3.5 w-3.5" />
+                    Run Query
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={() => setSqlQuery("")}>
+              <Button
+                variant="ghost"
+                onClick={() => setSqlQuery("")}
+                className="text-slate-400 hover:text-white hover:bg-white/10 text-xs h-8 px-3"
+              >
                 Clear
               </Button>
-            </div>
-            {queryResult && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <pre className="text-sm whitespace-pre-wrap break-words">
-                  {JSON.stringify(queryResult, null, 2)}
-                </pre>
+              {/* Quick templates */}
+              <div className="ml-auto flex items-center gap-1.5">
+                {[
+                  {
+                    label: "All Users",
+                    q: "SELECT id, username, email, role FROM users ORDER BY created_at DESC LIMIT 20;",
+                  },
+                  {
+                    label: "Businesses",
+                    q: "SELECT id, name, category_id, country_code, approval_status FROM businesses ORDER BY id DESC LIMIT 20;",
+                  },
+                  {
+                    label: "Tickets",
+                    q: "SELECT id, title, status, priority, category, created_at FROM tickets ORDER BY created_at DESC LIMIT 20;",
+                  },
+                ].map((t) => (
+                  <button
+                    key={t.label}
+                    onClick={() => setSqlQuery(t.q)}
+                    className="text-[10px] font-mono px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5 transition-colors"
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Results panel */}
+            <div className="bg-[#0d1117] min-h-[100px] max-h-72 overflow-auto border-t border-white/10">
+              {isExecutingQuery ? (
+                <div className="flex items-center gap-2 p-4 text-slate-400 text-sm font-mono">
+                  <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
+                  Executing query…
+                </div>
+              ) : queryResult ? (
+                <div>
+                  {/* Results header */}
+                  <div className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border-b border-white/5 text-[10px] font-mono text-slate-500">
+                    <span className="text-emerald-400">●</span>
+                    <span>
+                      {Array.isArray(queryResult?.rows)
+                        ? `${queryResult.rows.length} row${queryResult.rows.length !== 1 ? "s" : ""} returned`
+                        : "Query executed"}
+                    </span>
+                  </div>
+                  {/* Table view if rows */}
+                  {Array.isArray(queryResult?.rows) &&
+                  queryResult.rows.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono">
+                        <thead>
+                          <tr className="border-b border-white/5">
+                            {Object.keys(queryResult.rows[0]).map((col) => (
+                              <th
+                                key={col}
+                                className="text-left px-4 py-2 text-slate-400 font-semibold bg-[#161b22] whitespace-nowrap"
+                              >
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {queryResult.rows.map((row: any, i: number) => (
+                            <tr
+                              key={i}
+                              className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                            >
+                              {Object.values(row).map((val: any, j: number) => (
+                                <td
+                                  key={j}
+                                  className="px-4 py-1.5 text-slate-300 whitespace-nowrap max-w-[200px] truncate"
+                                >
+                                  {val === null ? (
+                                    <span className="text-slate-600 italic">
+                                      null
+                                    </span>
+                                  ) : (
+                                    String(val)
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap break-words p-4">
+                      {JSON.stringify(queryResult, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-24 text-slate-600 text-xs font-mono gap-1">
+                  <Terminal className="h-5 w-5 opacity-30" />
+                  <span>Results will appear here</span>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

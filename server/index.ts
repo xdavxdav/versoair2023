@@ -41,6 +41,7 @@ import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { setupRoyaltyEngine } from "./services/royalty-engine";
 import { setupJournalCron } from "./services/journal-cron";
 import { setupNewsletterCron } from "./services/newsletter-cron";
+import { setupMarketplaceAutoApprove } from "./services/marketplace-auto-approve";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 import { globalAuthGate } from "./middleware/auth";
 
@@ -112,6 +113,7 @@ const allowedOrigins =
         "http://localhost:3000",
         "http://localhost:8080",
         "http://localhost:5173", // Vite dev server default port
+        "http://10.0.0.93:5003", // Local network access
       ];
 
 app.use(
@@ -213,6 +215,10 @@ app.use((req, res, next) => {
 
   setupNewsletterCron();
   console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
+
+  // Setup marketplace auto-approve (approves pending listings after 24h)
+  setupMarketplaceAutoApprove();
+  console.log("✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

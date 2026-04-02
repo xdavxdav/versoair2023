@@ -401,7 +401,7 @@ export default function ContentNav() {
   const holdCompletedRef = useRef(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
-  const [holdCountdown, setHoldCountdown] = useState(5); // 5 second countdown
+  const [holdCountdown, setHoldCountdown] = useState(3); // 3 second countdown
   const [showTip, setShowTip] = useState(
     () => !localStorage.getItem("contentnav_tip_seen"),
   );
@@ -409,7 +409,7 @@ export default function ContentNav() {
   // Home button gestures:
   // - Single tap → /marketplace (unified timeline like Twitter)
   // - Double tap → /blog
-  // - Hold 5s → / (home.tsx) with full-screen darkening countdown
+  // - Hold 3s → / (home.tsx) with full-screen darkening countdown
   const handleHomeTap = useCallback(() => {
     if (holdCompletedRef.current) {
       holdCompletedRef.current = false;
@@ -487,27 +487,27 @@ export default function ContentNav() {
     window.location.reload();
   };
 
-  // Hold 5 seconds → navigate to home with full-screen darkening effect
+  // Hold 3 seconds → navigate to home with full-screen darkening effect
   const handlePressStart = useCallback(() => {
     holdCompletedRef.current = false;
     holdStartRef.current = Date.now();
     setIsHolding(true);
     setHoldProgress(0);
-    setHoldCountdown(5);
+    setHoldCountdown(3);
     holdIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - holdStartRef.current;
-      const progress = Math.min((elapsed / 5000) * 100, 100); // 5 seconds
+      const progress = Math.min((elapsed / 3000) * 100, 100); // 3 seconds
       setHoldProgress(progress);
-      setHoldCountdown(Math.max(0, Math.ceil(5 - elapsed / 1000)));
+      setHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
     }, 16);
     holdTimerRef.current = setTimeout(() => {
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      // Navigate to home after 5 second hold
+      // Navigate to home after 3 second hold
       setLocation("/");
-    }, 5000);
+    }, 3000);
   }, [setLocation]);
 
   const handlePressEnd = useCallback(() => {
@@ -677,7 +677,7 @@ export default function ContentNav() {
               onPointerCancel={handlePressEnd}
               onContextMenu={(e) => e.preventDefault()}
               className={location === "/" ? ACTIVE : BASE}
-              title="Tap=Marketplace · Double-tap=Blog · Hold 5s=Home"
+              title="Tap=Marketplace · Double-tap=Blog · Hold 3s=Home"
             >
               <Home className="h-3.5 w-3.5" />
               Home

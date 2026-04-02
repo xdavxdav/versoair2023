@@ -146,40 +146,31 @@ export function MusicSidebar() {
 
       {/* Content */}
       <div className="relative flex flex-col h-full">
-        {/* Vertical VERSOAIR Logo - merges with top bar */}
+        {/* Purple Eagle Logo with glow */}
         <Link href="/music">
           <div className="h-14 flex items-center justify-center cursor-pointer group relative overflow-hidden">
-            {/* Ambient glow behind logo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            {/* Custom V logo image */}
-            <div className="relative">
+            {/* Ambient glow behind logo on hover */}
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 via-fuchsia-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Logo container with purple glow */}
+            <div className="relative w-10 h-10">
+              {/* Glow effect behind - always visible, stronger on hover */}
+              <div className="absolute inset-[-4px] rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 opacity-40 group-hover:opacity-70 blur-lg transition-opacity" />
+              {/* Eagle logo image with purple tint */}
               <img
                 src="https://i.ibb.co/8DL5vH7M/v-logo-extracted.png"
                 alt="VersoAir"
-                className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-200 drop-shadow-lg"
-                onError={(e) => {
-                  const el = e.currentTarget;
-                  el.style.display = "none";
-                  const fallback =
-                    el.parentElement?.querySelector(".logo-fallback");
-                  if (fallback)
-                    (fallback as HTMLElement).style.display = "flex";
+                className="relative w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-200"
+                style={{
+                  filter:
+                    "brightness(1.3) saturate(1.2) drop-shadow(0 0 10px rgba(168,85,247,0.8))",
                 }}
               />
-              <div
-                className="logo-fallback w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600 items-center justify-center text-white font-bold text-xl shadow-lg"
-                style={{ display: "none" }}
-              >
-                V
-              </div>
             </div>
           </div>
         </Link>
 
         {/* ─── Core section ─── */}
-        <div className="pt-2 border-t border-white/[0.04] mx-3" />
-
-        <nav className="px-2 space-y-1 pt-2">
+        <nav className="px-2 space-y-1 pt-3">
           {coreItems.map((item) => {
             const Icon = sidebarIconMap[item.icon];
             const isActive =

@@ -78,6 +78,7 @@ const Communities = lazy(() => import("@/pages/communities"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
 const ArtisanWorkshops = lazy(() => import("@/pages/artisan-workshops"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
+const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
 
 // Stable wrapper components — MUST be defined at module level (not inline)
@@ -353,10 +354,18 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
+      <Route
+        path="/artist-portal/welcome"
+        component={ArtistPortalWelcomePage}
+      />
       <Route path="/artist-portal/dashboard">
-        {() => <Redirect to="/music/dashboard" />}
+        {() => (
+          <Suspense fallback={<PageLoader />}>
+            <ArtistPortalDashboard />
+          </Suspense>
+        )}
       </Route>
+      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
