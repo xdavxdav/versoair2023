@@ -319,17 +319,8 @@ function MiniStudio({
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollY = useRef(0);
 
-  // ── Lock body scroll when VersaBeat is expanded ──
-  useEffect(() => {
-    if (!collapsed) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [collapsed]);
+  // ── Allow scrolling even when expanded - user needs to see full content ──
+  // No body scroll lock anymore
 
   // ── Auto-vanish on scroll when content comes into view ──
   useEffect(() => {
@@ -338,10 +329,11 @@ function MiniStudio({
       const scrollingDown = scrollY > lastScrollY.current;
       lastScrollY.current = scrollY;
 
-      // If scrolling down past 100px and not recording, trigger vanish
+      // If scrolling down past 400px and not recording, trigger vanish
+      // This gives user time to see full VersaBeat content before it vanishes
       if (
         scrollingDown &&
-        scrollY > 100 &&
+        scrollY > 400 &&
         recState === "idle" &&
         heroVisible
       ) {
@@ -355,7 +347,7 @@ function MiniStudio({
           setIsVanishing(true);
           setTimeout(() => setIsVanishing(false), 400);
         }
-      } else if (scrollY < 50) {
+      } else if (scrollY < 100) {
         // Reset vanish state when scrolled back to top
         setIsVanishing(false);
       }
@@ -1085,8 +1077,8 @@ function MiniStudio({
       </AnimatePresence>
 
       <motion.div
-        className={`fixed top-14 z-[50] transition-all duration-300 ${
-          collapsed ? "right-4 left-auto" : "left-0 right-0"
+        className={`fixed top-28 z-[60] transition-all duration-300 ${
+          collapsed ? "right-4 left-auto" : "left-4 right-4"
         } ${isVanishing ? "pointer-events-none" : ""}`}
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
         animate={{
@@ -1102,34 +1094,34 @@ function MiniStudio({
         }}
       >
         <div
-          className={`bg-[#0a0514]/95 backdrop-blur-xl border-b border-white/[0.06] transition-all duration-300 ${
+          className={`bg-[#0a0514]/95 backdrop-blur-xl border border-white/[0.08] transition-all duration-300 ${
             collapsed
-              ? "py-1 px-3 rounded-b-xl border border-white/[0.06] inline-flex"
-              : "px-4 py-3"
+              ? "py-1 px-2 sm:px-3 rounded-xl inline-flex"
+              : "px-3 sm:px-4 py-3 sm:py-4 rounded-xl max-h-[80vh] overflow-y-auto"
           }`}
         >
           <div className="max-w-7xl mx-auto">
             {/* Header — always visible, full width horizontal layout */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={() => setCollapsed((c) => !c)}
-                className="flex items-center gap-2 group flex-shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2 group flex-shrink-0"
               >
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600/60 to-fuchsia-600/60 flex items-center justify-center ring-1 ring-purple-400/20 shadow-lg shadow-purple-500/20">
-                  <Mic2 className="w-4 h-4 text-purple-100" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-br from-violet-600/60 to-fuchsia-600/60 flex items-center justify-center ring-1 ring-purple-400/20 shadow-lg shadow-purple-500/20">
+                  <Mic2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-100" />
                 </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-xs font-black tracking-wide bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+                <div className="hidden xs:flex flex-col items-start">
+                  <span className="text-[10px] sm:text-xs font-black tracking-wide bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
                     VersaBeat
                   </span>
-                  <span className="text-fuchsia-400/50 text-[8px] tracking-widest uppercase">
+                  <span className="text-fuchsia-400/50 text-[7px] sm:text-[8px] tracking-widest uppercase">
                     Pro Studio
                   </span>
                 </div>
               </button>
 
               {/* Status + controls row */}
-              <div className="flex items-center gap-2 flex-1 justify-end">
+              <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
                 {/* Compact status indicators */}
                 {isRecording && (
                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -1149,7 +1141,7 @@ function MiniStudio({
                   onClick={
                     micReady ? toggleMic : micDenied ? undefined : requestMic
                   }
-                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center transition-colors border ${
                     micDenied
                       ? "border-red-500/20 opacity-40 cursor-not-allowed"
                       : !micReady
@@ -1169,9 +1161,9 @@ function MiniStudio({
                   }
                 >
                   {micReady && !micMuted ? (
-                    <Mic2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <Mic2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
                   ) : (
-                    <MicOff className="w-3.5 h-3.5 text-white/40" />
+                    <MicOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/40" />
                   )}
                 </button>
 
@@ -1184,7 +1176,7 @@ function MiniStudio({
                         ? undefined
                         : requestMic
                   }
-                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors border ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center transition-colors border ${
                     !micReady
                       ? "border-white/[0.06] opacity-30 cursor-default"
                       : monitoring
@@ -1200,7 +1192,7 @@ function MiniStudio({
                   }
                 >
                   <Headphones
-                    className={`w-3.5 h-3.5 ${
+                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
                       micReady && monitoring ? "text-cyan-400" : "text-white/30"
                     }`}
                   />
@@ -1889,8 +1881,8 @@ function MiniStudio({
                     </div>
                   </div>
 
-                  {/* Versabit Pro Upsell */}
-                  <div className="pt-3 border-t border-white/[0.04]">
+                  {/* Versabit Pro Upsell - Sticky at bottom */}
+                  <div className="pt-3 mt-3 border-t border-white/[0.06] bg-[#0a0514]/95 sticky bottom-0">
                     <div className="flex items-center justify-between gap-4">
                       {/* Active Effects Counter */}
                       <div className="flex items-center gap-2">
@@ -1932,15 +1924,15 @@ function MiniStudio({
                         </div>
                       </div>
 
-                      {/* Studio Pro Link */}
+                      {/* Studio Pro Link - More prominent */}
                       <a
                         href="/music/studio"
-                        className="group flex items-center gap-2 py-1.5 px-3 rounded-lg bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/20 hover:border-fuchsia-400/40 hover:from-violet-600/30 hover:to-fuchsia-600/30 transition-all duration-300"
+                        className="group flex items-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-r from-violet-600/30 to-fuchsia-600/30 border border-violet-500/30 hover:border-fuchsia-400/50 hover:from-violet-600/40 hover:to-fuchsia-600/40 transition-all duration-300 shadow-lg shadow-purple-500/10"
                       >
-                        <span className="text-[10px] font-semibold text-violet-300/90 group-hover:text-fuchsia-200">
+                        <span className="text-xs font-semibold text-violet-200 group-hover:text-fuchsia-100">
                           VersaBeat Full Studio
                         </span>
-                        <span className="px-1.5 py-0.5 text-[7px] font-black tracking-wider rounded bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white uppercase">
+                        <span className="px-2 py-0.5 text-[8px] font-black tracking-wider rounded bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white uppercase">
                           PRO
                         </span>
                       </a>
@@ -2767,10 +2759,10 @@ export default function ArtistPortalWelcome() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/15 to-yellow-500/15 border border-amber-400/25">
-                        <Crown className="w-3 h-3 text-amber-400" />
-                        <span className="text-amber-400 text-[10px] font-bold tracking-wide">
-                          ÉLITE
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-500/15 to-fuchsia-500/15 border border-purple-400/25">
+                        <Crown className="w-3 h-3 text-purple-400" />
+                        <span className="text-purple-400 text-[10px] font-bold tracking-wide">
+                          TIER
                         </span>
                       </div>
                     </div>
@@ -2789,7 +2781,7 @@ export default function ArtistPortalWelcome() {
                           Nooka
                         </h3>
                         <p className="text-white/35 text-sm font-medium mt-0.5">
-                          Coupé-Décalé • Afrobeats
+                          Genre • Style
                         </p>
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -2814,7 +2806,7 @@ export default function ArtistPortalWelcome() {
                         </div>
                       </div>
                       <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-cyan-300 font-mono text-lg font-bold tracking-wider">
-                        VA_NK-E_SVF-IAP-ASG-225.n
+                        VA_XX-X_XXX-XXX-XXX-225.x
                       </p>
                     </div>
 
@@ -2897,7 +2889,7 @@ export default function ArtistPortalWelcome() {
                           Membre depuis
                         </p>
                         <p className="text-white/40 text-xs font-medium">
-                          02 Jan 2026
+                          XX XXX XXXX
                         </p>
                       </div>
                     </div>
@@ -3085,7 +3077,7 @@ export default function ArtistPortalWelcome() {
                           email: e.target.value,
                         })
                       }
-                      placeholder="you@email.com ou VA_NK-E_SVF-IAP-ASG-225.n"
+                      placeholder="you@email.com ou VA_XX-X_XXX-XXX-XXX-000.x"
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                   </div>

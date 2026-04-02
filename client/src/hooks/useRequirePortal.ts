@@ -7,7 +7,7 @@
  *   if (!allowed) return null; // redirect already fired
  *
  * The hook waits for auth + capabilities to resolve before deciding.
- * If the user isn't authenticated at all, it redirects to /auth/signin.
+ * If the user isn't authenticated at all, it redirects to /apply.
  * If authenticated but lacking the specific portal, it redirects to `redirectTo`.
  */
 
@@ -53,8 +53,8 @@ export function useRequirePortal(
     hasRedirected.current = true;
 
     if (!isAuthenticated) {
-      // Not logged in at all → sign-in page
-      navigate("/auth/signin");
+      // Not logged in at all → general application portal
+      navigate("/apply");
     } else {
       // Logged in but missing this portal → portal-specific redirect
       const target = redirectTo ?? PORTAL_REDIRECTS[portalId] ?? "/apply";

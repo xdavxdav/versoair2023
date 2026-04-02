@@ -40,13 +40,13 @@ export default defineConfig({
   // ✅ SERVER CONFIG - Single port 5003 for frontend + backend
   server: {
     port: 5003,
-    host: "localhost",
+    host: "0.0.0.0",
     strictPort: false,
     open: false,
 
     // ✅ HMR connects to port 5003 (no separate dev server)
     hmr: {
-      host: "localhost",
+      host: "10.0.0.93",
       port: 5003,
       protocol: "ws",
       clientPort: 5003,

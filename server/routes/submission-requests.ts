@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { sendEmail } from "../services/email-service";
+import { pool } from "../db";
 
 const router = Router();
 
@@ -10,6 +11,19 @@ const APP_URL =
   process.env.VITE_API_URL ||
   process.env.VERSOAIR_URL ||
   "http://localhost:5003";
+
+// ── Deduplication: prevent repeat submissions within 5 minutes ──
+// key = "type:normalised_name", value = timestamp of last submission
+const recentSubmissions = new Map<string, number>();
+const DEDUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+function isDuplicate(type: string, name: string): boolean {
+  const key = `${type}:${name.trim().toLowerCase()}`;
+  const last = recentSubmissions.get(key);
+  if (last && Date.now() - last < DEDUP_WINDOW_MS) return true;
+  recentSubmissions.set(key, Date.now());
+  return false;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // POST /api/request/business — Email-only business submission (no DB insert)
@@ -37,6 +51,14 @@ router.post("/business", async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ success: false, error: "Business name is required" });
+    }
+
+    if (isDuplicate("business", name)) {
+      return res.status(429).json({
+        success: false,
+        error:
+          "Duplicate submission detected. Please wait 5 minutes before resubmitting.",
+      });
     }
 
     const refId = `REQ-BIZ-${Date.now().toString(36).toUpperCase()}`;
@@ -152,6 +174,14 @@ router.post("/artist", async (req: Request, res: Response) => {
         .json({ success: false, error: "Stage name is required" });
     }
 
+    if (isDuplicate("artist", stageName)) {
+      return res.status(429).json({
+        success: false,
+        error:
+          "Duplicate submission detected. Please wait 5 minutes before resubmitting.",
+      });
+    }
+
     const refId = `REQ-ART-${Date.now().toString(36).toUpperCase()}`;
 
     const subject = `🎤 New Artist Request — ${stageName} (${refId})`;
@@ -229,6 +259,21 @@ router.post("/artist", async (req: Request, res: Response) => {
       `[REQUEST] Artist request received: "${stageName}" by ${username || "unknown"}. Ref: ${refId}. Email sent: ${sent}`,
     );
 
+    // Create ticket for tracking
+    try {
+      await pool.query(
+        `INSERT INTO tickets (title, description, status, priority, category, reporter, source, sla_target_hours, sla_breached, created_at, updated_at)
+         VALUES ($1, $2, 'open', 'medium', 'music-request', $3, 'artist-submission', 24, false, NOW(), NOW())`,
+        [
+          `🎤 Artist Request: ${stageName}`,
+          `Reference: ${refId}\nGenre: ${genre || "N/A"}\nLabel: ${labelStatus || "unsigned"}\nCountry: ${countryCode || "N/A"}\nSpotify: ${spotifyUrl || "N/A"}`,
+          username || "GeoAdmin User",
+        ],
+      );
+    } catch (ticketErr) {
+      console.warn("[REQUEST] Could not create ticket:", ticketErr);
+    }
+
     res.status(200).json({
       success: true,
       message:
@@ -272,6 +317,14 @@ router.post("/job", async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ success: false, error: "Company name is required" });
+    }
+
+    if (isDuplicate("job", `${title}:${company}`)) {
+      return res.status(429).json({
+        success: false,
+        error:
+          "Duplicate submission detected. Please wait 5 minutes before resubmitting.",
+      });
     }
 
     const refId = `REQ-JOB-${Date.now().toString(36).toUpperCase()}`;
@@ -356,6 +409,21 @@ router.post("/job", async (req: Request, res: Response) => {
     console.log(
       `[REQUEST] Job request received: "${title}" at "${company}" by ${username || "unknown"}. Ref: ${refId}. Email sent: ${sent}`,
     );
+
+    // Create ticket for tracking
+    try {
+      await pool.query(
+        `INSERT INTO tickets (title, description, status, priority, category, reporter, source, sla_target_hours, sla_breached, created_at, updated_at)
+         VALUES ($1, $2, 'open', 'medium', 'job-request', $3, 'job-submission', 24, false, NOW(), NOW())`,
+        [
+          `💼 Job Request: ${title} at ${company}`,
+          `Reference: ${refId}\nTitle: ${title}\nCompany: ${company}\nType: ${type || "N/A"}\nSector: ${sector || "N/A"}\nLocation: ${location || "N/A"}\nRemote: ${isRemote ? "Yes" : "No"}`,
+          username || "GeoAdmin User",
+        ],
+      );
+    } catch (ticketErr) {
+      console.warn("[REQUEST] Could not create ticket:", ticketErr);
+    }
 
     res.status(200).json({
       success: true,

@@ -28,7 +28,10 @@ export type CurrencyCode =
   | "GBP"
   | "GHS"
   | "KES"
-  | "NGN";
+  | "NGN"
+  | "BTC"
+  | "USDT"
+  | "ETH";
 export type CryptoType = "BTC" | "USDT" | "ETH";
 export type MobileMoneyProvider =
   | "orange_money"
@@ -50,6 +53,9 @@ export const CURRENCY_INFO: Record<
   GHS: { symbol: "₵", name: "Ghanaian Cedi", flag: "🇬🇭" },
   KES: { symbol: "KSh", name: "Kenyan Shilling", flag: "🇰🇪" },
   NGN: { symbol: "₦", name: "Nigerian Naira", flag: "🇳🇬" },
+  BTC: { symbol: "₿", name: "Bitcoin", flag: "🪙" },
+  USDT: { symbol: "₮", name: "Tether USD", flag: "💵" },
+  ETH: { symbol: "Ξ", name: "Ethereum", flag: "💎" },
 };
 
 /** Format an amount with the right currency symbol */

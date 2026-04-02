@@ -26,6 +26,7 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SuccessCelebration from "@/components/SuccessCelebration";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { usePortalAccess } from "@/hooks/usePortalAccess";
+import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -232,6 +236,19 @@ const SUBSCRIPTION_TIERS = [
   },
 ];
 
+// ─────────────────────────────────────────────────────
+// 🔐 Map apply-page portal IDs → portal-access PortalIds
+// ─────────────────────────────────────────────────────
+const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
+  general: "general",
+  artist: "artist",
+  subscriber: "geo-admin",
+  community: "community",
+  streamer: "streamer",
+  business: "general",
+  contractor: "contractor",
+};
+
 export default function ApplyPage() {
   const [, setLocation] = useLocation();
   const [selectedPortal, setSelectedPortal] = useState<Portal | null>(null);
@@ -240,6 +257,10 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // ── Auth-aware portal access ──
+  const { user } = useAuthContext();
+  const { access, isLoading: portalLoading } = usePortalAccess();
 
   // Track which fields the user has interacted with (for real-time validation)
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -423,7 +444,207 @@ export default function ApplyPage() {
   };
 
   // ─────────────────────────────────────────────────────
-  // 🎨 Portal Selection View
+  // 🔐 Authenticated Portal Selector — eligible / ineligible
+  // ─────────────────────────────────────────────────────
+  if (user && !selectedPortal) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="container mx-auto px-4 py-8">
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="text-white/70 hover:text-white mb-8"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white/80 text-sm mb-6">
+              <Shield className="h-4 w-4" />
+              Portal Access
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Your Portals
+            </h1>
+            <p className="text-xl text-white/60 max-w-2xl mx-auto">
+              Welcome back,{" "}
+              <span className="text-white font-medium">
+                {user.name || user.username || user.email}
+              </span>
+              . Select an eligible portal below, or apply to unlock new ones.
+            </p>
+          </motion.div>
+
+          {portalLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+              <span className="ml-2 text-white/50 text-sm">
+                Loading portal access…
+              </span>
+            </div>
+          ) : (
+            <>
+              {/* ── Eligible portals ── */}
+              {(() => {
+                const eligible = PORTALS.filter((p) => {
+                  const accessId = PORTAL_ACCESS_MAP[p.id];
+                  return accessId ? access[accessId] : false;
+                });
+                const ineligible = PORTALS.filter((p) => {
+                  const accessId = PORTAL_ACCESS_MAP[p.id];
+                  return accessId ? !access[accessId] : true;
+                });
+
+                return (
+                  <>
+                    {eligible.length > 0 && (
+                      <>
+                        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-green-400" />
+                          Eligible Portals
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[95vw] mx-auto mb-10">
+                          {eligible.map((portal, index) => (
+                            <motion.div
+                              key={portal.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.08 }}
+                            >
+                              <Card
+                                className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full"
+                                onClick={() => setLocation(portal.redirectPath)}
+                              >
+                                <div
+                                  className={`absolute inset-0 bg-gradient-to-br ${portal.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
+                                />
+                                <CardHeader>
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div
+                                      className={`p-3 rounded-xl bg-gradient-to-br ${portal.gradient}`}
+                                    >
+                                      <portal.icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    {portal.badge && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-white/10 text-white/80"
+                                      >
+                                        {portal.badge}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <CardTitle className="text-white text-xl">
+                                    {portal.name}
+                                  </CardTitle>
+                                  <CardDescription className="text-white/60">
+                                    {portal.description}
+                                  </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                  <Button
+                                    className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
+                                  >
+                                    Enter Portal
+                                    <ArrowRight className="h-4 w-4 ml-2" />
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {/* ── Ineligible portals (greyed out) ── */}
+                    {ineligible.length > 0 && (
+                      <>
+                        <h2 className="text-lg font-semibold text-white/40 mb-4 flex items-center gap-2 mt-4">
+                          <Lock className="h-5 w-5 text-white/30" />
+                          Available to Unlock
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[95vw] mx-auto">
+                          {ineligible.map((portal, index) => {
+                            const accessId = PORTAL_ACCESS_MAP[portal.id];
+                            const reason = accessId
+                              ? UNLOCK_REASONS[accessId] || portal.description
+                              : portal.description;
+                            return (
+                              <motion.div
+                                key={portal.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.08 + 0.3 }}
+                              >
+                                <Card className="relative overflow-hidden bg-white/[0.02] border-white/5 transition-all duration-300 cursor-not-allowed h-full opacity-50">
+                                  <CardHeader>
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="p-3 rounded-xl bg-white/[0.06]">
+                                        <portal.icon className="h-6 w-6 text-white/30" />
+                                      </div>
+                                      <span className="flex items-center gap-1 text-[10px] font-medium text-white/30 px-2 py-0.5 rounded-full border border-white/10">
+                                        <Lock className="w-3 h-3" />
+                                        Locked
+                                      </span>
+                                    </div>
+                                    <CardTitle className="text-white/40 text-xl">
+                                      {portal.name}
+                                    </CardTitle>
+                                    <CardDescription className="text-white/25">
+                                      {reason}
+                                    </CardDescription>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <Button
+                                      variant="outline"
+                                      className="w-full border-white/10 bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Allow applying for locked portals
+                                        setSelectedPortal(portal);
+                                      }}
+                                    >
+                                      Apply for Access
+                                      <ArrowRight className="h-4 w-4 ml-2" />
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </>
+          )}
+
+          {/* Sign out hint */}
+          <div className="text-center mt-12">
+            <p className="text-white/40 text-sm">
+              Not you?{" "}
+              <Link
+                href="/auth/signin?mode=login"
+                className="text-white/60 hover:text-white underline"
+              >
+                Sign in as someone else
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────
+  // 🎨 Portal Selection View (unauthenticated)
   // ─────────────────────────────────────────────────────
   if (!selectedPortal) {
     return (
