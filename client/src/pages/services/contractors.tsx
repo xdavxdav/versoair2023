@@ -82,7 +82,7 @@ import {
   type ApplicationJob,
 } from "@/components/job-application-modal";
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = "";
 
 const DB_CFG = {
   user: "versoair",

@@ -215,7 +215,7 @@ import { UsersSection } from "@/components/sections/UsersSection";
 import { AnalyticsSection } from "@/components/sections/AnalyticsSection";
 import { useCountry } from "@/contexts/CountryContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // Business categories mapping with styling (used for icons and colors)
 // Database has 20 total categories - these mappings provide visual styling

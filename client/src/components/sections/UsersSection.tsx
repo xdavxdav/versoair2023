@@ -221,7 +221,7 @@ const EMAIL_DOMAIN_OPTIONS = [
 ];
 
 const API_BASE_URL =
-  typeof window !== "undefined" ? import.meta.env.VITE_API_URL || "" : "";
+  typeof window !== "undefined" ? "" : "";
 
 // -------------------------------------------------------------------
 // Component

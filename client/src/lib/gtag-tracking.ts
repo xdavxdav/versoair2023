@@ -193,7 +193,7 @@ export function trackAddToFavorites(businessId: number, businessName: string) {
  * Log event to backend
  */
 function logEventToBackend(eventData: any) {
-  const apiUrl = import.meta.env.VITE_API_URL || "";
+  const apiUrl = "";
 
   authenticatedFetch(`${apiUrl}/api/v1/admin/gtm-events`, {
     method: "POST",

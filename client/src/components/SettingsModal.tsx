@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { Settings, Save, RotateCcw } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // Settings structure for each sector
 const SECTOR_SETTINGS: Record<string, Record<string, any>> = {

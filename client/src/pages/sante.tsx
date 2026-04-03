@@ -67,7 +67,7 @@ import {
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 // Database API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // Database types
 interface HealthcareAnalytics {

@@ -296,7 +296,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // Category groups for better visual hierarchy
 const CATEGORY_GROUPS = {

@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { ensureAuthenticated, authenticatedFetch } from "@/lib/auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 export default function APITestPage() {
   const [status, setStatus] = useState<string>("Initializing...");

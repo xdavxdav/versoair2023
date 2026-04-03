@@ -92,7 +92,7 @@ interface JobApplicationModalProps {
   onSubmitSuccess?: () => void;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = "";
 
 /* ── Helpers ── */
 

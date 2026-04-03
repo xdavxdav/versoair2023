@@ -6,7 +6,7 @@ import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { AuthSplash } from "@/components/ui/auth-splash";
 import { AnimatePresence } from "framer-motion";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");

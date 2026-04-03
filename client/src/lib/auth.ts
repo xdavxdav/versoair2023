@@ -12,7 +12,7 @@
  * localStorage is only used for non-sensitive UI state (user display info).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 const USER_KEY = "auth_user"; // non-sensitive display info only
 
 // ─── In-memory token storage (survives within a single page session) ──────────

@@ -40,7 +40,7 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 // import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // Types
 interface Artist {
