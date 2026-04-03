@@ -25,6 +25,8 @@ export interface Business {
   employees?: number;
   status?: "active" | "inactive" | "popular" | "verified" | "premium";
   countryCode?: string;
+  regionName?: string;
+  cityName?: string;
   specialization?: string[];
   years_experience?: number;
   distance?: number;
@@ -49,12 +51,25 @@ export interface BusinessResponse {
  * Normalize a raw DB row into a Business object
  */
 function normalizeRow(row: any): Business {
+  // Build a rich location string: "City, Region" or fallback to raw location
+  const city = row.city_name || "";
+  const region = row.region_name || "";
+  const rawLocation = row.location || "";
+  let locationDisplay = rawLocation;
+  if (city && region) {
+    locationDisplay = `${city}, ${region}`;
+  } else if (city) {
+    locationDisplay = city;
+  } else if (region) {
+    locationDisplay = region;
+  }
+
   return {
     id: row.id?.toString() || "",
     title: row.name || row.title || "",
     description: row.description || "",
     category: row.category_name || row.category || "",
-    location: row.location || row.city_name || "",
+    location: locationDisplay,
     address: row.address || "",
     phone: row.phone || "",
     email: row.email || "",
@@ -71,6 +86,8 @@ function normalizeRow(row: any): Business {
     employees: row.employees ? parseInt(row.employees) : undefined,
     status: row.is_active === false ? "inactive" : "active",
     countryCode: row.country_code || undefined,
+    regionName: row.region_name || undefined,
+    cityName: row.city_name || undefined,
     is_verified:
       row.is_verified === true ||
       row.is_verified === "true" ||

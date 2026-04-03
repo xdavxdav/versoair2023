@@ -3843,7 +3843,7 @@ export default function DatabaseExpert({
       <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
         <SheetContent
           side="left"
-          className="w-72 bg-slate-900/95 backdrop-blur-xl border-white/10"
+          className="w-72 bg-slate-900/95 backdrop-blur-xl border-white/10 flex flex-col"
         >
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-slate-100">
@@ -3854,7 +3854,7 @@ export default function DatabaseExpert({
               Navigation
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-2">
+          <div className="mt-6 flex-1 overflow-y-auto space-y-2 pr-1 pb-6">
             {[
               { label: "Dashboard", tab: "dashboard", icon: LayoutDashboard },
               ...(canManage

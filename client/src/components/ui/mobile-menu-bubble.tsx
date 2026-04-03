@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { isContentNavPath } from "@/components/ContentNav";
 import { LogoutDropdown } from "@/components/ui/logout-dropdown";
 import {
   Menu,
@@ -373,7 +374,10 @@ export function MobileMenuBubble() {
     location.startsWith("/arcade") ||
     location.startsWith("/arena");
 
+  const isAuth = !!user || localStorage.getItem("blog_community_auth") === "true";
+  const isContentNavPage = isContentNavPath(location);
   if (isBlogPage || isMusicPage) return null;
+  if (isContentNavPage && isAuth) return null;
   if (dialogOpen) return null;
 
   return (

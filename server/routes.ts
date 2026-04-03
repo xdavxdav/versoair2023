@@ -3749,8 +3749,10 @@ export async function registerRoutes(app: Express) {
       }
 
       if (location && typeof location === "string") {
-        whereConditions.push(`b.location ILIKE $${paramIndex}`);
-        params.push(`${location}%`);
+        whereConditions.push(
+          `(b.location ILIKE $${paramIndex} OR b.address ILIKE $${paramIndex} OR b.city_name ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`,
+        );
+        params.push(`%${location}%`);
         paramIndex += 1;
       }
 
@@ -3764,17 +3766,18 @@ export async function registerRoutes(app: Express) {
 
       // Get total count
       const countResult = await pool.query(
-        `SELECT COUNT(*) as count FROM businesses b WHERE ${whereClause}`,
+        `SELECT COUNT(*) as count FROM businesses b LEFT JOIN regions r ON b.region_id = r.id WHERE ${whereClause}`,
         params,
       );
       const total = parseInt(countResult.rows[0]?.count || "0");
 
       // 🛸 Growth Engine: Tier-weighted ranking — premium tiers appear first
       const businessesResult = await pool.query(
-        `SELECT b.*,
+        `SELECT b.*, r.name as region_name,
            COALESCE(u.subscription_tier, 'free') as owner_tier
          FROM businesses b
          LEFT JOIN users u ON b.owner_id = u.id
+         LEFT JOIN regions r ON b.region_id = r.id
          WHERE ${whereClause}
          ORDER BY
            CASE COALESCE(u.subscription_tier, 'free')

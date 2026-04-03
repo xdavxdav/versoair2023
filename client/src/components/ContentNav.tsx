@@ -484,7 +484,7 @@ export default function ContentNav() {
     logout();
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
-    window.location.reload();
+    setLocation("/");
   };
 
   // Hold 3 seconds → navigate to home with full-screen darkening effect
@@ -499,16 +499,20 @@ export default function ContentNav() {
       const progress = Math.min((elapsed / 3000) * 100, 100); // 3 seconds
       setHoldProgress(progress);
       setHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
-    }, 16);
+    }, 50);
     holdTimerRef.current = setTimeout(() => {
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      // Navigate to home after 3 second hold
-      setLocation("/");
+      // Auth-aware: sign out if logged in, redirect to login if not
+      if (isAuth) {
+        handleLogout();
+      } else {
+        setLocation("/auth/signin");
+      }
     }, 3000);
-  }, [setLocation]);
+  }, [setLocation, isAuth, handleLogout]);
 
   const handlePressEnd = useCallback(() => {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);

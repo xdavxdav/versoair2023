@@ -30,9 +30,30 @@ const ROMANIZATION_KEY = "romanization_enabled";
 
 /** Languages that use non-Latin scripts — romanization toggle is shown for these */
 export const NON_LATIN_LANGS = new Set([
-  "ja", "zh-CN", "zh-TW", "ko", "ar", "he", "hi", "bn", "th", "my",
-  "km", "lo", "ka", "hy", "am", "ne", "si", "fa", "ru", "uk", "bg",
-  "sr", "mn", "el",
+  "ja",
+  "zh-CN",
+  "zh-TW",
+  "ko",
+  "ar",
+  "he",
+  "hi",
+  "bn",
+  "th",
+  "my",
+  "km",
+  "lo",
+  "ka",
+  "hy",
+  "am",
+  "ne",
+  "si",
+  "fa",
+  "ru",
+  "uk",
+  "bg",
+  "sr",
+  "mn",
+  "el",
 ]);
 
 declare global {
@@ -590,12 +611,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       fonts.forEach((font) => {
         if (processedNodes.has(font)) return;
         // Skip GT UI elements
-        if (font.closest(".skiptranslate, .goog-te-gadget, #goog-gt-tt")) return;
+        if (font.closest(".skiptranslate, .goog-te-gadget, #goog-gt-tt"))
+          return;
         const text = font.textContent?.trim();
         if (!text || text.length < 2) return;
 
         // Check if text actually contains non-Latin characters
-        const hasNonLatin = /[^\u0000-\u024F\u1E00-\u1EFF\s\d.,;:!?'"()\-–—/\\@#$%&*+=<>[\]{}|~`^]/.test(text);
+        const hasNonLatin =
+          /[^\u0000-\u024F\u1E00-\u1EFF\s\d.,;:!?'"()\-–—/\\@#$%&*+=<>[\]{}|~`^]/.test(
+            text,
+          );
         if (!hasNonLatin) return;
 
         processedNodes.add(font);
@@ -629,7 +654,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const root = document.getElementById("root");
     if (root) {
-      observer.observe(root, { childList: true, subtree: true, characterData: true });
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
     }
 
     return () => {

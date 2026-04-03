@@ -637,7 +637,7 @@ export default function Hotellerie() {
             transition={{ duration: 1, delay: 0.6 }}
             className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
-            <Card className="bg-white/10 backdrop-blur-md border-purple-500/30">
+            <Card className="bg-white/10 md:backdrop-blur-md border-purple-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
@@ -650,7 +650,7 @@ export default function Hotellerie() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 backdrop-blur-md border-pink-500/30">
+            <Card className="bg-white/10 md:backdrop-blur-md border-pink-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
                   <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
@@ -674,7 +674,7 @@ export default function Hotellerie() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20"
+                className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -714,7 +714,7 @@ export default function Hotellerie() {
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl">
+        <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 md:backdrop-blur-md border-purple-700 shadow-2xl">
           <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
             <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
@@ -1139,7 +1139,7 @@ export default function Hotellerie() {
                 {/* Loading State */}
                 {isInitialLoading ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
-                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md border border-purple-500/20">
+                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md border border-purple-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
@@ -1161,7 +1161,7 @@ export default function Hotellerie() {
                         </div>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-md border border-purple-500/20">
+                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md border border-purple-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
@@ -1281,7 +1281,7 @@ export default function Hotellerie() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <AnimatedHeading
               text="Analytique Hôtelière"
               level={2}
@@ -1595,7 +1595,7 @@ export default function Hotellerie() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
               Tableau de bord financier
@@ -1636,7 +1636,7 @@ export default function Hotellerie() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
               Publicité & Promotions
@@ -1687,7 +1687,7 @@ export default function Hotellerie() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               Connexion base de données PostgreSQL
@@ -1775,7 +1775,7 @@ export default function Hotellerie() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-purple-900/30 backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-800/50 to-purple-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg">
@@ -1808,7 +1808,7 @@ export default function Hotellerie() {
               className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-purple-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
+              <div className="sticky top-0 bg-slate-800/90 md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
                 <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
                   {selectedBusiness.title}
                 </h2>

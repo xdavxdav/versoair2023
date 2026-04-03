@@ -72,7 +72,7 @@ export default function BlogNavbar({
     }
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
-    window.location.reload();
+    setLocation("/");
   };
   const [currentPath] = useLocation();
 
@@ -124,7 +124,7 @@ export default function BlogNavbar({
       logout();
       localStorage.removeItem("blog_community_auth");
       localStorage.removeItem("blog_community_user");
-      window.location.reload();
+      setLocation("/");
     }, 2000);
   }, [isAuthenticated, logout]);
 

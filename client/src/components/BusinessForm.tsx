@@ -106,12 +106,12 @@ export function BusinessForm({
 
   // Fetch cities filtered by region (or by country if no regions exist)
   const selectedRegionId = formData.regionId;
-  const { data: citiesList = [], isLoading: citiesLoading } = useQuery({
+  const { data: citiesRaw = [], isLoading: citiesLoading } = useQuery({
     queryKey: [
       "cities",
       selectedRegionId
         ? `region-${selectedRegionId}`
-        : `country-${matchedCountry?.id}`,
+        : `country-${matchedCountry?.id}-rl-${(regionsList as any[]).length}`,
     ],
     queryFn: async () => {
       if (selectedRegionId) {
@@ -131,6 +131,11 @@ export function BusinessForm({
     },
     enabled: !!matchedCountry?.id,
   });
+
+  // Deduplicate cities by name (API can return duplicates across regions)
+  const citiesList = Array.from(
+    new Map((citiesRaw as any[]).map((c: any) => [c.name, c])).values(),
+  );
 
   // Sync country when dashboard selection changes or dialog opens
   useEffect(() => {
@@ -219,6 +224,7 @@ export function BusinessForm({
           businessType: formData.businessType || null,
           countryCode: formData.countryCode,
           cityName: formData.cityName || null,
+          regionId: formData.regionId ? parseInt(formData.regionId) : null,
           regionName: formData.regionName || null,
           address: formData.address || null,
           phone: formData.phone || null,
@@ -448,7 +454,7 @@ export function BusinessForm({
                         onClick={() =>
                           setAutoPopulateRegion(!autoPopulateRegion)
                         }
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors touch-manipulation ${
                           autoPopulateRegion ? "bg-indigo-500" : "bg-slate-600"
                         }`}
                         title={
@@ -458,9 +464,9 @@ export function BusinessForm({
                         }
                       >
                         <span
-                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                          className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
                             autoPopulateRegion
-                              ? "translate-x-[18px]"
+                              ? "translate-x-[22px]"
                               : "translate-x-[3px]"
                           }`}
                         />
@@ -524,7 +530,7 @@ export function BusinessForm({
                       <button
                         type="button"
                         onClick={() => setAutoPopulateCity(!autoPopulateCity)}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors touch-manipulation ${
                           autoPopulateCity ? "bg-indigo-500" : "bg-slate-600"
                         }`}
                         title={
@@ -534,9 +540,9 @@ export function BusinessForm({
                         }
                       >
                         <span
-                          className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
+                          className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
                             autoPopulateCity
-                              ? "translate-x-[18px]"
+                              ? "translate-x-[22px]"
                               : "translate-x-[3px]"
                           }`}
                         />

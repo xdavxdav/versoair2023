@@ -1349,13 +1349,15 @@ export default function Home() {
   // Number of panels
   const NUM_PANELS = 4;
 
-  // Load initial data from database
+  // Load initial data from database (filtered by detected country)
   const loadInitialData = async () => {
     try {
-      const result = await getAllBusinesses();
+      const params: SearchParams = { query: "", limit: 5 };
+      if (selectedCountry) params.countryCode = selectedCountry;
+      const result = await searchBusinessesAPI(params);
       if (result.success && result.data.length > 0) {
         setSearchResults(result.data.slice(0, 5)); // Show first 5 businesses
-        setTotalDatabaseCount(result.total);
+        setTotalDatabaseCount(result.totalInDatabase || result.total);
         setHasSearched(true);
       }
     } catch (error) {
@@ -1374,10 +1376,14 @@ export default function Home() {
 
       if (connected) {
         // Load latest businesses so users can browse without searching
+        // NOTE: country filtering happens via handleSearch / searchBusinessesAPI
+        // Initial load deferred to handleSearch effect which passes selectedCountry
         try {
-          const result = await getAllBusinesses();
+          const params: SearchParams = { query: "", limit: 5 };
+          if (selectedCountry) params.countryCode = selectedCountry;
+          const result = await searchBusinessesAPI(params);
           if (result.success) {
-            setTotalDatabaseCount(result.total);
+            setTotalDatabaseCount(result.totalInDatabase || result.total);
             if (result.data.length > 0) {
               setSearchResults(result.data.slice(0, 5));
               setHasSearched(true);
@@ -1393,7 +1399,7 @@ export default function Home() {
     };
 
     initializeDatabase();
-  }, []);
+  }, [selectedCountry]);
 
   // FIXED: Smooth zoom-out → slide → zoom-in effect
   useLayoutEffect(() => {
@@ -1412,13 +1418,17 @@ export default function Home() {
       }
     });
 
+    // Skip expensive 3D transforms & zoom tweens on tablets/phones (≤1024px)
+    const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+
     const ctx = gsap.context(() => {
-      // Set initial state
+      // Set initial state — skip preserve-3d & perspective on mobile (GPU-heavy)
       gsap.set(panelsContainerRef.current, {
         x: 0,
         scale: 1,
-        transformStyle: "preserve-3d",
-        perspective: 1200,
+        ...(isMobile
+          ? {}
+          : { transformStyle: "preserve-3d" as const, perspective: 1200 }),
       });
 
       // Get all panel elements
@@ -1433,7 +1443,7 @@ export default function Home() {
       // Calculate animation stats
       const ZOOM_OUT_SCALE = 0.85; // Consistent zoom-out scale
       const ZOOM_IN_SCALE = 1; // Normal scale
-      const ZOOM_DURATION = 0.8; // Duration for zoom animations
+      const ZOOM_DURATION = isMobile ? 0 : 0.8; // Skip zoom on mobile
       const SLIDE_DURATION = 1.4; // Duration for slide animations
       const TOTAL_TRANSITION = ZOOM_DURATION * 2 + SLIDE_DURATION; // Total time per transition
       // Use percentage of container width for slides (container is NUM_PANELS * 100% wide)
@@ -1456,9 +1466,9 @@ export default function Home() {
       });
 
       // Panel 1 → Panel 2 transition
-      masterTimeline
-        // Zoom out current panel (Panel 1)
-        .to(
+      // Zoom out current panel (Panel 1) — desktop only
+      if (!isMobile) {
+        masterTimeline.to(
           panels[0],
           {
             scale: ZOOM_OUT_SCALE,
@@ -1466,19 +1476,21 @@ export default function Home() {
             ease: "power2.inOut",
           },
           "start",
-        )
-        // Slide to next panel while zoomed out
-        .to(
-          panelsContainerRef.current,
-          {
-            x: SLIDE_STEP,
-            duration: SLIDE_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${ZOOM_DURATION}`,
-        )
-        // Zoom in next panel (Panel 2)
-        .to(
+        );
+      }
+      // Slide to next panel
+      masterTimeline.to(
+        panelsContainerRef.current,
+        {
+          x: SLIDE_STEP,
+          duration: SLIDE_DURATION,
+          ease: "power2.inOut",
+        },
+        isMobile ? "start" : `start+=${ZOOM_DURATION}`,
+      );
+      // Zoom in next panel (Panel 2) — desktop only
+      if (!isMobile) {
+        masterTimeline.to(
           panels[1],
           {
             scale: ZOOM_IN_SCALE,
@@ -1487,10 +1499,11 @@ export default function Home() {
           },
           `start+=${ZOOM_DURATION + SLIDE_DURATION - 0.2}`,
         );
+      }
 
       // Panel 2 → Panel 3 transition
-      masterTimeline
-        .to(
+      if (!isMobile) {
+        masterTimeline.to(
           panels[1],
           {
             scale: ZOOM_OUT_SCALE,
@@ -1498,17 +1511,21 @@ export default function Home() {
             ease: "power2.inOut",
           },
           `start+=${TOTAL_TRANSITION}`,
-        )
-        .to(
-          panelsContainerRef.current,
-          {
-            x: `${(-2 * 100) / NUM_PANELS}%`,
-            duration: SLIDE_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${TOTAL_TRANSITION + ZOOM_DURATION}`,
-        )
-        .to(
+        );
+      }
+      masterTimeline.to(
+        panelsContainerRef.current,
+        {
+          x: `${(-2 * 100) / NUM_PANELS}%`,
+          duration: SLIDE_DURATION,
+          ease: "power2.inOut",
+        },
+        isMobile
+          ? `start+=${SLIDE_DURATION}`
+          : `start+=${TOTAL_TRANSITION + ZOOM_DURATION}`,
+      );
+      if (!isMobile) {
+        masterTimeline.to(
           panels[2],
           {
             scale: ZOOM_IN_SCALE,
@@ -1517,10 +1534,11 @@ export default function Home() {
           },
           `start+=${TOTAL_TRANSITION + ZOOM_DURATION + SLIDE_DURATION - 0.2}`,
         );
+      }
 
       // Panel 3 → Panel 4 transition
-      masterTimeline
-        .to(
+      if (!isMobile) {
+        masterTimeline.to(
           panels[2],
           {
             scale: ZOOM_OUT_SCALE,
@@ -1528,17 +1546,21 @@ export default function Home() {
             ease: "power2.inOut",
           },
           `start+=${TOTAL_TRANSITION * 2}`,
-        )
-        .to(
-          panelsContainerRef.current,
-          {
-            x: `${(-3 * 100) / NUM_PANELS}%`,
-            duration: SLIDE_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${TOTAL_TRANSITION * 2 + ZOOM_DURATION}`,
-        )
-        .to(
+        );
+      }
+      masterTimeline.to(
+        panelsContainerRef.current,
+        {
+          x: `${(-3 * 100) / NUM_PANELS}%`,
+          duration: SLIDE_DURATION,
+          ease: "power2.inOut",
+        },
+        isMobile
+          ? `start+=${SLIDE_DURATION * 2}`
+          : `start+=${TOTAL_TRANSITION * 2 + ZOOM_DURATION}`,
+      );
+      if (!isMobile) {
+        masterTimeline.to(
           panels[3],
           {
             scale: ZOOM_IN_SCALE,
@@ -1549,6 +1571,7 @@ export default function Home() {
             TOTAL_TRANSITION * 2 + ZOOM_DURATION + SLIDE_DURATION - 0.2
           }`,
         );
+      }
     });
 
     // Refresh ScrollTrigger
@@ -1656,12 +1679,14 @@ export default function Home() {
       !debouncedLocationQuery.trim() &&
       activeFilters.length === 0
     ) {
-      // If no search criteria, show latest businesses from database
+      // If no search criteria, show latest businesses from database (filtered by country)
       try {
-        const result = await getAllBusinesses();
+        const params: SearchParams = { query: "", limit: 5 };
+        if (selectedCountry) params.countryCode = selectedCountry;
+        const result = await searchBusinessesAPI(params);
         if (result.success && result.data.length > 0) {
           setSearchResults(result.data.slice(0, 5));
-          setTotalDatabaseCount(result.total);
+          setTotalDatabaseCount(result.totalInDatabase || result.total);
           setHasSearched(true);
         } else {
           setSearchResults([]);
