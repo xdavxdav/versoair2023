@@ -7,7 +7,6 @@ import {
   Search,
   Globe,
   Lock,
-  LogOut,
   ShoppingBag,
   User,
 } from "lucide-react";
@@ -17,6 +16,7 @@ import { useState, useEffect } from "react";
 import Logo from "../attached_assets/logo.png";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { LogoutDropdown } from "@/components/ui/logout-dropdown";
 import styles from "./versoair-logo.module.css";
 import SearchModal from "@/components/SearchModal";
 
@@ -49,7 +49,7 @@ export default function Navbar({
 
   const [location, navigate] = useLocation();
   const { isAuthenticated, loading: authLoading, tier } = useSubscription();
-  const { user, logout } = useAuthContext();
+  const { user } = useAuthContext();
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -714,10 +714,10 @@ export default function Navbar({
             {/* User Actions - Always visible */}
             {user ? (
               <div className="flex items-center gap-1.5">
-                {location !== "/dashboard" && (
+                {location !== "/geo-admin/dashboard" && (
                   <button
                     onClick={() => {
-                      navigate("/dashboard?from=sv");
+                      navigate("/geo-admin/dashboard");
                     }}
                     className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
                     title="Dashboard"
@@ -725,16 +725,7 @@ export default function Navbar({
                     <User className="h-3.5 w-3.5" />
                   </button>
                 )}
-                <button
-                  onClick={async () => {
-                    await logout();
-                    navigate("/");
-                  }}
-                  className="flex-shrink-0 flex items-center gap-1 bg-red-600 text-white px-2 md:px-3 py-2 rounded-md hover:bg-red-700 transition-colors text-xs font-medium whitespace-nowrap"
-                >
-                  <LogOut className="h-3 w-3" />
-                  <span className="hidden sm:inline">Déconnexion</span>
-                </button>
+                <LogoutDropdown variant="red-solid" />
               </div>
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">

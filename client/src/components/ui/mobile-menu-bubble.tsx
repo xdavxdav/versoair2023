@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { LogoutDropdown } from "@/components/ui/logout-dropdown";
 import {
   Menu,
   X,
@@ -10,7 +11,6 @@ import {
   Calendar,
   Headphones,
   LogIn,
-  LogOut,
   Globe,
   Megaphone,
   Newspaper,
@@ -202,7 +202,7 @@ export function MobileMenuBubble() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useSubscription();
-  const { user, logout, loading: authLoading } = useAuthContext();
+  const { user, loading: authLoading } = useAuthContext();
   const isSuperuser = user?.role === "superuser";
   const isAdmin = user?.role === "admin" || user?.role === "moderator";
 
@@ -606,7 +606,7 @@ export function MobileMenuBubble() {
                   )}
 
                   {/* Dashboard link */}
-                  <Link href="/dashboard">
+                  <Link href="/geo-admin/dashboard">
                     <button
                       onClick={close}
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
@@ -646,17 +646,7 @@ export function MobileMenuBubble() {
                   </button>
 
                   {/* Logout */}
-                  <button
-                    onClick={async () => {
-                      close();
-                      await logout();
-                      navigate("/");
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 touch-manipulation bg-red-600 text-white active:bg-red-700"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Disconnect
-                  </button>
+                  <LogoutDropdown variant="red-solid" label="Disconnect" />
                 </div>
               ) : (
                 <Link href="/auth/signin">

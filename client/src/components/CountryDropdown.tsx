@@ -172,6 +172,9 @@ export function CountryDropdown() {
     previousLang,
     dismissBanner,
     reloadCountdown,
+    romanized,
+    toggleRomanization,
+    isNonLatinLang,
   } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -604,6 +607,39 @@ export function CountryDropdown() {
                     </p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Romanization toggle — only visible for non-Latin scripts */}
+            {tab === "language" && isNonLatinLang && (
+              <div className="px-3 py-2 border-t border-gray-100">
+                <button
+                  onClick={toggleRomanization}
+                  className="w-full flex items-center justify-between gap-2 group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-purple-500 leading-none">
+                      Aᵃ
+                    </span>
+                    <span className="text-[11px] text-gray-600 group-hover:text-gray-900 transition-colors">
+                      Latin characters
+                    </span>
+                  </div>
+                  <div
+                    className={`relative w-8 h-[18px] rounded-full transition-colors duration-200 ${
+                      romanized ? "bg-purple-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                        romanized ? "translate-x-[16px]" : "translate-x-[2px]"
+                      }`}
+                    />
+                  </div>
+                </button>
+                <p className="text-[9px] text-gray-400 mt-1 leading-snug">
+                  Show romanized pronunciation hints below translated text
+                </p>
               </div>
             )}
 

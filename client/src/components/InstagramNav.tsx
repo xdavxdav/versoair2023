@@ -301,7 +301,7 @@ function NavDrawer({
                       </Link>
                       {(user.role === "admin" || user.role === "superuser") && (
                         <Link
-                          href="/dashboard"
+                          href="/geo-admin/dashboard"
                           onClick={onClose}
                           className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm text-gray-300 hover:bg-gray-800/60 hover:text-white"
                         >

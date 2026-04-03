@@ -6402,7 +6402,7 @@ const SmtpSection = () => {
 // Main Dashboard Component
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
+  const [dbConnected, setDbConnected] = useState<boolean | null>(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(
     new Set(),
@@ -6659,13 +6659,6 @@ export default function AdminDashboard() {
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
-  const handleLogout = () => {
-    setIsAdminGateAuthenticated(false);
-    localStorage.removeItem("adminAccessTime");
-    localStorage.removeItem("adminUsername");
-    setLocation("/geo-admin");
-  };
-
   const handleQuickAction = (action: string) => {
     switch (action) {
       case "add-business":
@@ -6776,6 +6769,24 @@ export default function AdminDashboard() {
 
   return (
     <>
+      {/* Fixed DB Status Indicator — outside scroll container */}
+      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
+        <div
+          className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
+            dbConnected
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700"
+          }`}
+        >
+          <div
+            className={`h-2 w-2 rounded-full ${
+              dbConnected ? "bg-emerald-500" : "bg-rose-500"
+            }`}
+          />
+          {dbConnected ? "✅ Connected" : "❌ Offline"}
+        </div>
+      </div>
+
       <DashboardLayout
         sections={MAIN_SECTIONS}
         activeSection={activeSection}
@@ -6783,7 +6794,6 @@ export default function AdminDashboard() {
         title="VersoAir Business Platform"
         subtitle={`Premium Admin Dashboard • Welcome, ${authenticatedAdminUsername || "Administrator"}`}
         onRefresh={handleRefresh}
-        onLogout={handleLogout}
       >
         {/* Wrap all children in a flex column that takes full height of the main content area */}
         <div className="flex flex-col min-h-full min-w-0 overflow-x-hidden">
@@ -6862,24 +6872,6 @@ export default function AdminDashboard() {
 
           {/* Content area — scroll handled by DashboardLayout */}
           <div className="flex-1 space-y-6 pb-6">
-            {/* Fixed Status Indicator (absolute positioned, but kept here for visibility) */}
-            <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
-              <div
-                className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
-                  dbConnected
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-rose-100 text-rose-700"
-                }`}
-              >
-                <div
-                  className={`h-2 w-2 rounded-full ${
-                    dbConnected ? "bg-emerald-500" : "bg-rose-500"
-                  }`}
-                />
-                {dbConnected ? "✅ Connected" : "❌ Offline"}
-              </div>
-            </div>
-
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
             {activeSection === "dashboard" && (
               <>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { BusinessForm } from "@/components/BusinessForm";
 import { EditBusinessForm } from "@/components/EditBusinessForm";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
@@ -910,6 +911,7 @@ export default function DatabaseExpert({
   tier?: string;
   role?: string | null;
 }) {
+  const { logout } = useAuthContext();
   const canManage = tier !== "free";
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -1601,12 +1603,8 @@ export default function DatabaseExpert({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem
-                    onClick={() => {
-                      localStorage.removeItem("auth_token");
-                      localStorage.removeItem("authToken");
-                      localStorage.removeItem("geoadmin_session");
-                      localStorage.removeItem("geoadmin_username");
-                      localStorage.removeItem("geoadmin_login_time");
+                    onClick={async () => {
+                      await logout();
                       window.location.href = "/geo-admin";
                     }}
                     className="cursor-pointer text-red-400 flex items-center"
