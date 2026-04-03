@@ -97,7 +97,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
 
     try {
       // Step 2: Authenticate with server (username + password)
-      const res = await fetch(`${API_BASE_URL}/auth/admin-gate`, {
+      const res = await fetch(`/auth/admin-gate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
