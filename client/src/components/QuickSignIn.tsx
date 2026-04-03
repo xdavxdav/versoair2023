@@ -98,9 +98,9 @@ export function QuickSignIn({
     {
       label: "Superadmin",
       email: "superadmin@versoair.test",
-      password: "admin123",
+      password: "JoeyD000",
     },
-    { label: "CEO", email: "ceo@versoair.test", password: "admin123" },
+    { label: "CEO", email: "ceo@versoair.test", password: "CEO2026!" },
   ];
 
   const quickLogin = async (email: string, password: string) => {

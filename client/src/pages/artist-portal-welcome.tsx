@@ -61,7 +61,9 @@ interface Particle {
 function ParticleField() {
   // Reduce particles on mobile to prevent Safari crashes
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const count = prefersReduced ? 0 : isMobile ? 6 : 20;
 
   const [particles] = useState<Particle[]>(() =>

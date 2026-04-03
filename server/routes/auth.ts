@@ -750,11 +750,22 @@ router.post(
       },
     };
 
-    const testMatch = TEST_CREDENTIALS[username.toLowerCase()];
+    let testKey = username.toLowerCase();
+    let testMatch = TEST_CREDENTIALS[testKey];
+    // Also allow login by email (user may type email in username field)
+    if (!testMatch) {
+      const byEmail = Object.entries(TEST_CREDENTIALS).find(
+        ([_, cred]) => cred.email.toLowerCase() === username.toLowerCase(),
+      );
+      if (byEmail) {
+        testKey = byEmail[0];
+        testMatch = byEmail[1];
+      }
+    }
     if (testMatch && password === testMatch.password) {
       const token = jwt.sign(
         {
-          userId: "test-" + username.toLowerCase(),
+          userId: "test-" + testKey,
           email: testMatch.email,
           role: testMatch.role,
           subscriptionTier: "enterprise",
@@ -769,7 +780,7 @@ router.post(
         user: {
           id: 0,
           email: testMatch.email,
-          username: username.toLowerCase(),
+          username: testKey,
           role: testMatch.role,
           subscriptionTier: "enterprise",
         },
