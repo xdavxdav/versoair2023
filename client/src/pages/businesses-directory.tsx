@@ -56,7 +56,7 @@ import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 interface Business {
   id: string;

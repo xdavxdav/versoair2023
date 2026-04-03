@@ -111,7 +111,7 @@ import {
 } from "@/components/job-application-modal";
 
 // Database API configuration - Use the same as other pages
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // PostgreSQL Database Configuration - Use the same database as other pages
 const DB_CONFIG = {

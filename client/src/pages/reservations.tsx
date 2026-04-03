@@ -126,7 +126,7 @@ import { PaymentLogo } from "@/components/PaymentLogos";
 import { type PaymentMethodId, PAYMENT_METHODS } from "@/lib/payment-methods";
 
 // Database API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 interface Property {
   id: string;

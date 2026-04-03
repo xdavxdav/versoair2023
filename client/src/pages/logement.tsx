@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCountry } from "@/contexts/CountryContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 interface LogementAnalytics {
   total_revenue: number;

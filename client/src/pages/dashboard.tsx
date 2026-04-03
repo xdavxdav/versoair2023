@@ -102,7 +102,7 @@ import {
 } from "@/lib/mock-stat-generator";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────────
 

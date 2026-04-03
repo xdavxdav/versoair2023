@@ -30,7 +30,7 @@ import {
   PRIMARY_LANGUAGES,
 } from "@/utils/country-language";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 const normalize = (s: string) =>
   s

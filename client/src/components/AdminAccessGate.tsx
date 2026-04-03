@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { generateAccessCode, validateAdminAccess } from "@/lib/admin-auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 interface AdminAccessGateProps {
   onAccessGranted: (username: string) => void;

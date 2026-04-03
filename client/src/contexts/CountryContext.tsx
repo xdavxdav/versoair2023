@@ -9,7 +9,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CACHE_KEY = "fsa_detected_country_v2"; // v2: removed locale fallback that mis-detected CA→US
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = "";
 
 interface CacheEntry {
   code: string;
