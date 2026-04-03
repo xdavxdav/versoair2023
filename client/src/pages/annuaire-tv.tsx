@@ -267,7 +267,7 @@ export default function AnnuaireTV() {
       className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
     >
       {/* ── Top Bar ───────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
+      <div className="sticky top-0 z-50 bg-slate-900/80 md:backdrop-blur-2xl border-b border-white/5 shadow-2xl">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           {/* Left: Title */}
           <div className="flex items-center gap-3">
@@ -448,7 +448,7 @@ export default function AnnuaireTV() {
                     <CarouselItem key={biz.id}>
                       <div className="p-2">
                         <Link href={`/business/${biz.id}`}>
-                          <Card className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl hover:bg-white/[0.07] transition-all duration-700 cursor-pointer group rounded-3xl overflow-hidden">
+                          <Card className="bg-white/5 md:backdrop-blur-2xl border border-white/10 shadow-2xl hover:bg-white/[0.07] transition-all duration-700 cursor-pointer group rounded-3xl overflow-hidden">
                             <CardContent className="p-0">
                               {/* Gradient header bar */}
                               <div

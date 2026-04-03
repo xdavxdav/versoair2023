@@ -257,8 +257,10 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         (params.length + 1) +
         " OR b.city_name ILIKE $" +
         (params.length + 1) +
+        " OR r.name ILIKE $" +
+        (params.length + 1) +
         ")";
-      params.push(`${locationFilter}%`);
+      params.push(`%${locationFilter}%`);
     }
 
     // Support both 'category' (from dashboard-admin) and 'categoryId' (legacy)
@@ -338,6 +340,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       SELECT COUNT(*) as total 
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
+      LEFT JOIN regions r ON b.region_id = r.id
       ${whereClause}
     `;
 
@@ -387,7 +390,8 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         b.id, b.name, b.category_id, b.description, 
         b.location, b.address, b.phone, b.email,
         b.rating, b.reviews, b.tags, b.latitude, b.longitude,
-        b.country_code, b.city_name,
+        b.country_code, b.city_name, b.region_id,
+        r.name as region_name,
         b.featured, b.is_active,
         b.is_verified, b.website,
         CASE WHEN b.is_verified THEN 'verified' ELSE 'unverified' END as verification_status,
@@ -397,6 +401,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
         ${extraSelectClause}
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
+      LEFT JOIN regions r ON b.region_id = r.id
       ${ownerJoin}
       ${whereClause}
       ORDER BY
@@ -505,6 +510,7 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
       longitude,
       countryCode,
       cityName,
+      regionId,
       regionName,
       businessType,
       tags = [],
@@ -521,8 +527,8 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
     const result = await pool.query(
       `
       INSERT INTO businesses 
-      (name, category_id, description, location, address, phone, email, latitude, longitude, country_code, city_name, business_type, tags, is_active, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+      (name, category_id, description, location, address, phone, email, latitude, longitude, country_code, city_name, region_id, business_type, tags, is_active, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
       RETURNING *
     `,
       [
@@ -537,6 +543,7 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
         longitude || null,
         countryCode || null,
         cityName || null,
+        regionId ? Number(regionId) : null,
         businessType || null,
         JSON.stringify(tags),
         isActive,

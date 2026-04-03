@@ -597,8 +597,8 @@ function AppContent() {
   const { user, logout } = useAuthContext();
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
-  // Show ContentNav (bottom dock) on blog/marketplace pages for ALL users (authed or not)
-  const showContentNav = isContentNavPage;
+  // Show ContentNav (bottom dock) on blog/marketplace pages only for authenticated users
+  const showContentNav = isContentNavPage && isAuthed;
   const isAuthPage = currentPath.startsWith("/auth");
   // Track when loading just finished so we can apply page-enter animation
   const [pageEnter, setPageEnter] = useState(false);
