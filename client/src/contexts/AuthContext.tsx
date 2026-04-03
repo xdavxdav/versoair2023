@@ -253,6 +253,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear user data
     localStorage.removeItem("auth_user");
 
+    // Clear geo-admin session keys
+    localStorage.removeItem("geoadmin_session");
+    localStorage.removeItem("geoadmin_username");
+    localStorage.removeItem("geoadmin_login_time");
+    localStorage.removeItem("geoadmin_session_start");
+
+    // Clear admin dashboard keys
+    localStorage.removeItem("adminAccessTime");
+    localStorage.removeItem("adminUsername");
+
+    // Clear blog community keys
+    localStorage.removeItem("blog_community_auth");
+    localStorage.removeItem("blog_community_user");
+
     setToken(null);
     setUser(null);
 

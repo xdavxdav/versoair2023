@@ -20,11 +20,20 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+import { transliterate } from "transliteration";
 import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry, isBaseLang } from "@/utils/country-language";
 
 const LANG_CACHE_KEY = "fsa_selected_language";
 const LANG_OVERRIDE_KEY = "fsa_language_override"; // true when user manually picked a language
+const ROMANIZATION_KEY = "romanization_enabled";
+
+/** Languages that use non-Latin scripts — romanization toggle is shown for these */
+export const NON_LATIN_LANGS = new Set([
+  "ja", "zh-CN", "zh-TW", "ko", "ar", "he", "hi", "bn", "th", "my",
+  "km", "lo", "ka", "hy", "am", "ne", "si", "fa", "ru", "uk", "bg",
+  "sr", "mn", "el",
+]);
 
 declare global {
   interface Window {
@@ -42,6 +51,9 @@ interface LanguageContextType {
   previousLang: string;
   dismissBanner: () => void;
   reloadCountdown: number | null;
+  romanized: boolean;
+  toggleRomanization: () => void;
+  isNonLatinLang: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -53,6 +65,9 @@ const LanguageContext = createContext<LanguageContextType>({
   previousLang: "fr",
   dismissBanner: () => {},
   reloadCountdown: null,
+  romanized: false,
+  toggleRomanization: () => {},
+  isNonLatinLang: false,
 });
 
 export function useLanguage() {
@@ -199,6 +214,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const gtLoaded = useRef(false);
   const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
   const isInitialLoad = useRef(true);
+
+  // ── Romanization state ──
+  const [romanized, setRomanized] = useState(() => {
+    try {
+      return localStorage.getItem(ROMANIZATION_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const isNonLatinLang = NON_LATIN_LANGS.has(currentLang);
+
+  const toggleRomanization = useCallback(() => {
+    setRomanized((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(ROMANIZATION_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   /** Show banner, then start a 3-2-1 countdown and reload.
    *  Pass reload=false to skip the reload (e.g. initial page load where cookie is already set). */
@@ -539,6 +574,72 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
   }, [currentLang]);
 
+  // ── Romanization: annotate GT-translated <font> wrappers with Latin text ──
+  useEffect(() => {
+    if (!romanized || !isNonLatinLang) {
+      // Remove any existing annotations
+      document.querySelectorAll(".roman-hint").forEach((el) => el.remove());
+      return;
+    }
+
+    const processedNodes = new WeakSet<Node>();
+
+    const annotate = () => {
+      // GT wraps translated text in <font> tags with style attribute
+      const fonts = document.querySelectorAll("font[style]");
+      fonts.forEach((font) => {
+        if (processedNodes.has(font)) return;
+        // Skip GT UI elements
+        if (font.closest(".skiptranslate, .goog-te-gadget, #goog-gt-tt")) return;
+        const text = font.textContent?.trim();
+        if (!text || text.length < 2) return;
+
+        // Check if text actually contains non-Latin characters
+        const hasNonLatin = /[^\u0000-\u024F\u1E00-\u1EFF\s\d.,;:!?'"()\-–—/\\@#$%&*+=<>[\]{}|~`^]/.test(text);
+        if (!hasNonLatin) return;
+
+        processedNodes.add(font);
+        try {
+          const latin = transliterate(text);
+          // Only add hint if transliteration produced different text
+          if (latin && latin !== text && latin.length > 1) {
+            const hint = document.createElement("span");
+            hint.className = "roman-hint notranslate";
+            hint.setAttribute("translate", "no");
+            hint.style.cssText =
+              "display:block;font-size:0.7em;color:#888;font-style:italic;line-height:1.2;margin-top:1px;pointer-events:none;";
+            hint.textContent = latin;
+            font.parentNode?.insertBefore(hint, font.nextSibling);
+          }
+        } catch {
+          // transliteration failed for this text — skip silently
+        }
+      });
+    };
+
+    // Initial pass
+    annotate();
+
+    // Observe DOM for GT translations (debounced 100ms)
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const observer = new MutationObserver(() => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(annotate, 100);
+    });
+
+    const root = document.getElementById("root");
+    if (root) {
+      observer.observe(root, { childList: true, subtree: true, characterData: true });
+    }
+
+    return () => {
+      observer.disconnect();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      // Clean up annotations
+      document.querySelectorAll(".roman-hint").forEach((el) => el.remove());
+    };
+  }, [romanized, isNonLatinLang]);
+
   return (
     <LanguageContext.Provider
       value={{
@@ -550,6 +651,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         previousLang,
         dismissBanner,
         reloadCountdown,
+        romanized,
+        toggleRomanization,
+        isNonLatinLang,
       }}
     >
       {/* GT mounts its widget here. Near-viewport, not clipped.
