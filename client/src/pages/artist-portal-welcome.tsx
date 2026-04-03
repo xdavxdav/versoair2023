@@ -59,8 +59,13 @@ interface Particle {
 
 // ─── Particle Field Background ──────────────────────
 function ParticleField() {
+  // Reduce particles on mobile to prevent Safari crashes
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const count = prefersReduced ? 0 : isMobile ? 6 : 20;
+
   const [particles] = useState<Particle[]>(() =>
-    Array.from({ length: 20 }, (_, i) => ({
+    Array.from({ length: count }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -72,6 +77,8 @@ function ParticleField() {
       ],
     })),
   );
+
+  if (count === 0) return null;
 
   const renderParticle = (p: Particle) => {
     const symbols: Record<string, string> = {
@@ -143,10 +150,24 @@ function AudioVisualizer({
     }
   }, [analyser]);
 
+  // Track visibility — pause rAF loop when off-screen to save mobile GPU/battery
+  const [isCanvasVisible, setIsCanvasVisible] = useState(true);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setIsCanvasVisible(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    obs.observe(canvas);
+    return () => obs.disconnect();
+  }, []);
+
   // Canvas draw loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (!isCanvasVisible) return; // ← skip entirely when off-screen
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -214,7 +235,7 @@ function AudioVisualizer({
       window.removeEventListener("resize", resize);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isLive, analyser]);
+  }, [isLive, analyser, isCanvasVisible]);
 
   return (
     <div className={`relative ${className}`}>
@@ -2428,9 +2449,11 @@ export default function ArtistPortalWelcome() {
         ref={heroSectionRef}
         className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-14"
       >
-        {/* VersaBeat Studio — floats top-right when hero is visible */}
+        {/* VersaBeat Studio — floats top-right when hero is visible.
+            Deferred on mobile: mount only after ready phase + 2s to avoid
+            Safari memory pressure during initial render. */}
         <AnimatePresence>
-          {(phase === "reveal" || phase === "ready") && (
+          {phase === "ready" && (
             <MiniStudio
               heroVisible={heroVisible}
               analyserRef={analyserNodeRef}
@@ -3492,13 +3515,30 @@ export default function ArtistPortalWelcome() {
                             }
                             className="w-full pl-11 pr-10 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white focus:outline-none focus:border-purple-500/50 transition-all text-sm appearance-none cursor-pointer"
                           >
-                            <option value="" className="bg-[#1a0a2e]">Choisissez votre spécialité</option>
-                            <option value="rapper" className="bg-[#1a0a2e]">🎤 Rapper</option>
-                            <option value="composer" className="bg-[#1a0a2e]">🎼 Composer</option>
-                            <option value="dj" className="bg-[#1a0a2e]">🎧 DJ / Disk Jockey</option>
-                            <option value="producer" className="bg-[#1a0a2e]">🎹 Producer / Beatmaker</option>
-                            <option value="singer" className="bg-[#1a0a2e]">🎙️ Singer / Vocalist</option>
-                            <option value="sound_engineer" className="bg-[#1a0a2e]">🎚️ Sound Engineer</option>
+                            <option value="" className="bg-[#1a0a2e]">
+                              Choisissez votre spécialité
+                            </option>
+                            <option value="rapper" className="bg-[#1a0a2e]">
+                              🎤 Rapper
+                            </option>
+                            <option value="composer" className="bg-[#1a0a2e]">
+                              🎼 Composer
+                            </option>
+                            <option value="dj" className="bg-[#1a0a2e]">
+                              🎧 DJ / Disk Jockey
+                            </option>
+                            <option value="producer" className="bg-[#1a0a2e]">
+                              🎹 Producer / Beatmaker
+                            </option>
+                            <option value="singer" className="bg-[#1a0a2e]">
+                              🎙️ Singer / Vocalist
+                            </option>
+                            <option
+                              value="sound_engineer"
+                              className="bg-[#1a0a2e]"
+                            >
+                              🎚️ Sound Engineer
+                            </option>
                           </select>
                           <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
                         </div>
