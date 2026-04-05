@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Business } from "@/lib/business-data";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import {
   Star,
   Building,
@@ -12,6 +13,7 @@ import {
   Heart,
   Phone,
   Sparkles,
+  Crown,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -179,10 +181,11 @@ export default function SectorBusinessCard({
                 {business.address || business.location}
               </span>
               {business.is_verified && (
-                <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
-                  <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
-                  Verified
-                </Badge>
+                <VerifiedBadge
+                  size="sm"
+                  verifiedAt={business.verified_at}
+                  createdAt={business.created_at}
+                />
               )}
             </div>
           </div>
@@ -195,9 +198,18 @@ export default function SectorBusinessCard({
                 {business.rating}
               </span>
             </div>
-            {business.status === "premium" && (
-              <Badge className="bg-green-900/30 text-green-300 border-green-500/30 text-xs">
-                <Sparkles className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
+            {(business.tier === "enterprise" ||
+              business.status === "enterprise") && (
+              <Badge className="bg-purple-900/30 text-purple-300 border-purple-500/30 text-xs">
+                <Crown className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
+                Enterprise
+              </Badge>
+            )}
+            {(business.tier === "premium" ||
+              business.status === "premium" ||
+              business.is_premium) && (
+              <Badge className="bg-amber-900/30 text-amber-300 border-amber-500/30 text-xs">
+                <Crown className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                 Premium
               </Badge>
             )}

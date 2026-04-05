@@ -374,7 +374,8 @@ export function MobileMenuBubble() {
     location.startsWith("/arcade") ||
     location.startsWith("/arena");
 
-  const isAuth = !!user || localStorage.getItem("blog_community_auth") === "true";
+  const isAuth =
+    !!user || localStorage.getItem("blog_community_auth") === "true";
   const isContentNavPage = isContentNavPath(location);
   if (isBlogPage || isMusicPage) return null;
   if (isContentNavPage && isAuth) return null;

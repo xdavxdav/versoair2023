@@ -324,6 +324,33 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       params.push(Number(userIdFilter));
     }
 
+    // Verified-only filter (used by sector pages "Vérifié" dropdown)
+    const verifiedFilter = req.query.verified || req.query.status;
+    if (verifiedFilter === "true" || verifiedFilter === "verified") {
+      whereClause += " AND b.is_verified = true";
+    }
+
+    // Minimum rating filter
+    const minRatingParam = req.query.min_rating || req.query.minRating;
+    if (minRatingParam) {
+      const minRat = parseFloat(String(minRatingParam));
+      if (!isNaN(minRat) && minRat > 0) {
+        whereClause +=
+          " AND CAST(b.rating AS numeric) >= $" + (params.length + 1);
+        params.push(minRat);
+      }
+    }
+
+    // Tier filter
+    const tierFilter = req.query.tier;
+    if (
+      tierFilter &&
+      ["free", "premium", "enterprise"].includes(String(tierFilter))
+    ) {
+      whereClause += " AND b.tier = $" + (params.length + 1);
+      params.push(String(tierFilter));
+    }
+
     // Validate sortBy to prevent SQL injection
     const allowedSortFields = [
       "created_at",
@@ -331,6 +358,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       "rating",
       "reviews",
       "category_id",
+      "verified_first",
     ];
     const sortField = allowedSortFields.includes(String(sortBy))
       ? sortBy
@@ -406,8 +434,14 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       ${whereClause}
       ORDER BY
         b.featured DESC NULLS LAST,
+        ${sortField === "verified_first" ? "b.is_verified DESC NULLS LAST," : ""}
+        CASE COALESCE(b.tier, 'free')
+          WHEN 'enterprise' THEN 0
+          WHEN 'premium' THEN 1
+          ELSE 2
+        END ASC,
         ${tierOrder}
-        b.${sortField} ${order}
+        b.${sortField === "verified_first" ? "rating" : sortField} ${order}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
 

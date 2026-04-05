@@ -23,22 +23,24 @@ export interface Credential {
   icon: string;
 }
 
-export const CREDENTIALS: Credential[] = [
-  {
-    id: "superuser-master",
-    username: "superadmin_test",
-    email: "superadmin@versoair.test",
-    password: "JoeyD000",
-    firstName: "Joel",
-    lastName: "D",
-    businessName: "Verso Air — Master Control",
-    role: "superuser",
-    description:
-      "Universal master account — connects to General, Artist Portal, Blog/Community, Geo-Admin, Vault, and all portals",
-    color: "from-red-600 to-pink-600",
-    icon: "crown",
-  },
-];
+export const CREDENTIALS: Credential[] = import.meta.env.DEV
+  ? [
+      {
+        id: "superuser-master",
+        username: "superadmin_test",
+        email: "superadmin@versoair.test",
+        password: "JoeyD000",
+        firstName: "Joel",
+        lastName: "D",
+        businessName: "Verso Air — Master Control",
+        role: "superuser",
+        description:
+          "Universal master account — connects to General, Artist Portal, Blog/Community, Geo-Admin, Vault, and all portals",
+        color: "from-red-600 to-pink-600",
+        icon: "crown",
+      },
+    ]
+  : [];
 
 export function getCredentialsByRole(role: string): Credential[] {
   return CREDENTIALS.filter((cred) => cred.role === role);

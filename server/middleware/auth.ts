@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { eq } from "drizzle-orm";
+import { db } from "../db";
+import * as schema from "@shared/schema";
 
 export interface AuthUser {
   userId: string;
@@ -33,6 +37,28 @@ function extractToken(req: Request): string | null {
   if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
   if (req.cookies?.auth_token) return req.cookies.auth_token as string;
   return null;
+}
+
+/**
+ * Check if a JWT token has been revoked in the active_sessions table.
+ * Returns true if revoked, false if not found or not revoked.
+ * Gracefully handles missing table (pre-migration).
+ */
+async function isSessionRevoked(token: string): Promise<boolean> {
+  try {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const [session] = await db
+      .select({ isRevoked: schema.activeSessions.isRevoked })
+      .from(schema.activeSessions)
+      .where(eq(schema.activeSessions.tokenHash, tokenHash))
+      .limit(1);
+    // Legacy tokens (no session record) are allowed through
+    if (!session) return false;
+    return session.isRevoked === true;
+  } catch {
+    // Table doesn't exist yet or DB error — don't block
+    return false;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -151,7 +177,7 @@ function isPublicPath(path: string, method: string): boolean {
  *  5. All other authenticated users → allowed through the gate
  *     (individual routes still enforce role-based checks via requireAuth)
  */
-export function globalAuthGate(
+export async function globalAuthGate(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -180,6 +206,21 @@ export function globalAuthGate(
     }
 
     const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
+
+    // 3b. Check if this session has been revoked (concurrent login prevention)
+    const revoked = await isSessionRevoked(token);
+    if (revoked) {
+      res.clearCookie("auth_token", { path: "/" });
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "SESSION_REVOKED",
+          message: "This session has been revoked. Please log in again.",
+        },
+      });
+    }
+
     req.user = {
       userId: decoded.userId,
       email: decoded.email,

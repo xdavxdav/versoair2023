@@ -208,6 +208,7 @@ const categoryOptions = [
 
 const statusOptions = [
   { value: "active", label: "Actif" },
+  { value: "verified", label: "Vérifié" },
   { value: "popular", label: "Populaire" },
   { value: "premium", label: "Premium" },
   { value: "inactive", label: "Inactif" },

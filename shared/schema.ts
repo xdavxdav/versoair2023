@@ -192,6 +192,27 @@ export const businesses = pgTable(
     approvalNotes: text("approval_notes"),
     pdfPath: text("pdf_path"), // path to auto-generated registration PDF
 
+    // ── Business Tier (monetization) ──
+    tier: varchar("tier").default("free"), // 'free' | 'premium' | 'enterprise'
+    tierExpiresAt: timestamp("tier_expires_at"),
+
+    // ── Verification (sector-specific) ──
+    verificationStatus: varchar("verification_status").default("unverified"), // 'unverified' | 'pending' | 'verified' | 'rejected'
+    verificationDocuments: jsonb("verification_documents")
+      .$type<
+        {
+          type: string;
+          value: string;
+          verified: boolean;
+          verifiedAt?: string;
+          verifiedBy?: string;
+        }[]
+      >()
+      .default([]),
+
+    // ── Response time tracking ──
+    avgResponseTimeHours: decimal("avg_response_time_hours"),
+
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -2873,3 +2894,59 @@ export const insertPaylistAccessLogSchema =
   createInsertSchema(paylistAccessLog);
 export type PaylistItem = typeof paylistItems.$inferSelect;
 export type PaylistAccessLog = typeof paylistAccessLog.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════
+// ACTIVE SESSIONS (Concurrent login prevention + device tracking)
+// ═══════════════════════════════════════════════════════════
+export const activeSessions = pgTable(
+  "active_sessions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(), // SHA-256 of JWT
+    device: text("device"), // parsed User-Agent (e.g. "Chrome on macOS")
+    ip: varchar("ip", { length: 45 }), // IPv4 or IPv6
+    country: varchar("country", { length: 2 }), // 2-letter ISO code
+    city: text("city"),
+    isRevoked: boolean("is_revoked").default(false),
+    revokedAt: timestamp("revoked_at"),
+    revokedReason: varchar("revoked_reason", { length: 50 }), // 'logout' | 'password_change' | 'admin_force' | 'new_login'
+    lastActive: timestamp("last_active").defaultNow(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("active_sessions_user_idx").on(t.userId),
+    tokenIdx: index("active_sessions_token_idx").on(t.tokenHash),
+    revokedIdx: index("active_sessions_revoked_idx").on(t.isRevoked),
+  }),
+);
+
+export const insertActiveSessionSchema = createInsertSchema(activeSessions);
+export type ActiveSession = typeof activeSessions.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════
+// PLATFORM SETTINGS (Admin-configurable payment & system settings)
+// ═══════════════════════════════════════════════════════════
+export const platformSettings = pgTable(
+  "platform_settings",
+  {
+    id: serial("id").primaryKey(),
+    settingKey: varchar("setting_key", { length: 100 }).notNull().unique(),
+    settingValue: jsonb("setting_value").notNull(),
+    category: varchar("category", { length: 30 }).notNull().default("general"), // 'payment' | 'session' | 'general' | 'interac' | 'crypto' | 'mobile_money'
+    description: text("description"),
+    updatedBy: integer("updated_by").references(() => users.id),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    keyIdx: index("platform_settings_key_idx").on(t.settingKey),
+    catIdx: index("platform_settings_cat_idx").on(t.category),
+  }),
+);
+
+export const insertPlatformSettingSchema = createInsertSchema(platformSettings);
+export type PlatformSetting = typeof platformSettings.$inferSelect;
