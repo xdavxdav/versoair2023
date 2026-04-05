@@ -52,6 +52,137 @@ function setAuthCookie(res: Response, token: string): void {
   });
 }
 
+// ─── Session management helpers ───────────────────────────────────────────────
+
+/**
+ * Hash a JWT to store in active_sessions (SHA-256, hex).
+ * We never store the raw token server-side.
+ */
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Parse a User-Agent string into a human-readable device label.
+ */
+function parseDevice(ua?: string): string {
+  if (!ua) return "Unknown device";
+  const browser =
+    ua.match(
+      /(Chrome|Firefox|Safari|Edge|Opera|MSIE|Trident)[\/\s]?([\d.]+)?/i,
+    )?.[0] || "Browser";
+  const os =
+    ua
+      .match(
+        /(Windows|Mac OS X|Linux|Android|iPhone|iPad|iPod)[\/\s]?([\d._]+)?/i,
+      )?.[0]
+      ?.replace(/_/g, ".") || "OS";
+  return `${browser} on ${os}`;
+}
+
+/**
+ * Create a session record after successful login.
+ * Optionally revokes all other sessions for the same user (single-session mode).
+ */
+async function createSession(
+  userId: number | string,
+  token: string,
+  req: Request,
+  opts: { revokeOthers?: boolean } = {},
+): Promise<void> {
+  try {
+    const tHash = hashToken(token);
+    const numericUserId =
+      typeof userId === "string" ? parseInt(userId, 10) : userId;
+
+    // Skip for test/gate users with id 0 or non-numeric ids
+    if (isNaN(numericUserId) || numericUserId === 0) return;
+
+    const device = parseDevice(req.headers["user-agent"]);
+    const ip =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      req.socket.remoteAddress ||
+      null;
+
+    // Decode JWT to get expiry
+    const decoded = jwt.decode(token) as { exp?: number } | null;
+    const expiresAt = decoded?.exp
+      ? new Date(decoded.exp * 1000)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // Optionally revoke all other active sessions for this user
+    if (opts.revokeOthers) {
+      await db
+        .update(schema.activeSessions)
+        .set({
+          isRevoked: true,
+          revokedAt: new Date(),
+          revokedReason: "new_login",
+        })
+        .where(
+          and(
+            eq(schema.activeSessions.userId, numericUserId),
+            eq(schema.activeSessions.isRevoked, false),
+          ),
+        );
+    }
+
+    // Insert new session
+    await db.insert(schema.activeSessions).values({
+      userId: numericUserId,
+      tokenHash: tHash,
+      device,
+      ip,
+      country: null, // Could be enriched via IP lookup later
+      city: null,
+      isRevoked: false,
+      expiresAt,
+    });
+  } catch (err) {
+    // Non-fatal — log but don't block login
+    console.warn("[SESSION] Failed to create session record:", err);
+  }
+}
+
+/**
+ * Revoke a session by token hash.
+ */
+async function revokeSessionByHash(
+  tokenHash: string,
+  reason: string,
+): Promise<void> {
+  await db
+    .update(schema.activeSessions)
+    .set({
+      isRevoked: true,
+      revokedAt: new Date(),
+      revokedReason: reason,
+    })
+    .where(eq(schema.activeSessions.tokenHash, tokenHash));
+}
+
+/**
+ * Check if a token is revoked.
+ * Returns true if the session exists AND is revoked.
+ * Returns false if not found (legacy tokens before session tracking) or not revoked.
+ */
+async function isTokenRevoked(token: string): Promise<boolean> {
+  try {
+    const tHash = hashToken(token);
+    const [session] = await db
+      .select({ isRevoked: schema.activeSessions.isRevoked })
+      .from(schema.activeSessions)
+      .where(eq(schema.activeSessions.tokenHash, tHash))
+      .limit(1);
+    // If no session record found, it's a legacy token — allow it through
+    if (!session) return false;
+    return session.isRevoked === true;
+  } catch {
+    // If active_sessions table doesn't exist yet, don't block
+    return false;
+  }
+}
+
 // ─── Validation schemas ───────────────────────────────────────────────────────
 
 const loginSchema = z.object({
@@ -191,6 +322,7 @@ router.post(
         { expiresIn: JWT_EXPIRES_IN },
       );
       setAuthCookie(res, token);
+      await createSession(newUser.id, token, req);
       res.status(201).json({
         success: true,
         token,
@@ -355,6 +487,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(user.id, token, req, { revokeOthers: true });
 
     // Compute capabilities for portal access info
     let capabilities: any = null;
@@ -386,11 +519,20 @@ router.post(
 
 /**
  * POST /auth/logout
- * Clears the auth cookie server-side
+ * Clears the auth cookie server-side and revokes the current session
  */
 router.post(
   "/logout",
-  asyncHandler(async (_req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
+    // Revoke the current session
+    const token = getTokenFromRequest(req);
+    if (token) {
+      try {
+        await revokeSessionByHash(hashToken(token), "logout");
+      } catch (e) {
+        console.warn("[SESSION] Failed to revoke session on logout:", e);
+      }
+    }
     res.clearCookie("auth_token", { path: "/" });
     res.json({ success: true });
   }),
@@ -727,34 +869,28 @@ router.post(
       });
     }
 
-    // ─── Hardcoded test credentials (bypass DB lookup) ──────────────────────────
-    // Remove this block once real credential management is in place.
-    const TEST_CREDENTIALS: Record<
+    // ─── Admin gate credentials from environment variables ──────────────────────
+    // Reads ADMIN_GATE_1_EMAIL/USERNAME/PASSWORD/ROLE through ADMIN_GATE_3_*
+    // Falls back to empty — if env vars not set, gate credentials simply won't match.
+    const GATE_CREDENTIALS: Record<
       string,
       { password: string; role: string; email: string }
-    > = {
-      joel_007: {
-        password: "JoeyD000",
-        role: "superuser",
-        email: "superadmin@versoair.test",
-      },
-      admin_025: {
-        password: "CEO2026!",
-        role: "admin",
-        email: "ceo@versoair.test",
-      },
-      manager_001: {
-        password: "Mod2026!",
-        role: "moderator",
-        email: "manager@versoair.test",
-      },
-    };
+    > = {};
+    for (let i = 1; i <= 3; i++) {
+      const email = process.env[`ADMIN_GATE_${i}_EMAIL`] || "";
+      const uname = process.env[`ADMIN_GATE_${i}_USERNAME`] || "";
+      const pass = process.env[`ADMIN_GATE_${i}_PASSWORD`] || "";
+      const role = process.env[`ADMIN_GATE_${i}_ROLE`] || "user";
+      if (uname && pass) {
+        GATE_CREDENTIALS[uname.toLowerCase()] = { password: pass, role, email };
+      }
+    }
 
     let testKey = username.toLowerCase();
-    let testMatch = TEST_CREDENTIALS[testKey];
+    let testMatch = GATE_CREDENTIALS[testKey];
     // Also allow login by email (user may type email in username field)
     if (!testMatch) {
-      const byEmail = Object.entries(TEST_CREDENTIALS).find(
+      const byEmail = Object.entries(GATE_CREDENTIALS).find(
         ([_, cred]) => cred.email.toLowerCase() === username.toLowerCase(),
       );
       if (byEmail) {
@@ -774,6 +910,8 @@ router.post(
         { expiresIn: JWT_EXPIRES_IN },
       );
       setAuthCookie(res, token);
+      // Test/gate users have id=0 — session creation skips non-numeric ids
+      await createSession(0, token, req);
       return res.json({
         success: true,
         token,
@@ -847,6 +985,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(user.id, token, req, { revokeOthers: true });
 
     // Compute capabilities for portal access
     let capabilities: any = null;
@@ -999,6 +1138,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(newUser.id, token, req);
 
     res.status(201).json({
       success: true,
@@ -1334,7 +1474,247 @@ router.post(
       .update(schema.users)
       .set({ password: hashed })
       .where(eq(schema.users.id, userId));
+
+    // Revoke ALL sessions on password change (security best practice)
+    try {
+      await db
+        .update(schema.activeSessions)
+        .set({
+          isRevoked: true,
+          revokedAt: new Date(),
+          revokedReason: "password_change",
+        })
+        .where(
+          and(
+            eq(schema.activeSessions.userId, userId),
+            eq(schema.activeSessions.isRevoked, false),
+          ),
+        );
+    } catch (e) {
+      console.warn(
+        "[SESSION] Failed to revoke sessions on password change:",
+        e,
+      );
+    }
+
     res.json({ success: true, message: "Password changed successfully" });
+  }),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔐 SESSION MANAGEMENT — View, revoke, and manage active sessions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /auth/sessions
+ * List all active sessions for the current user.
+ * Returns device info, IP, location, and timestamps.
+ */
+router.get(
+  "/sessions",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated" });
+    }
+    const numericId =
+      typeof userId === "string" ? parseInt(userId, 10) : userId;
+    if (isNaN(numericId) || numericId === 0) {
+      return res.json({ success: true, sessions: [] });
+    }
+
+    const sessions = await db
+      .select({
+        id: schema.activeSessions.id,
+        device: schema.activeSessions.device,
+        ip: schema.activeSessions.ip,
+        country: schema.activeSessions.country,
+        city: schema.activeSessions.city,
+        isRevoked: schema.activeSessions.isRevoked,
+        revokedReason: schema.activeSessions.revokedReason,
+        lastActive: schema.activeSessions.lastActive,
+        expiresAt: schema.activeSessions.expiresAt,
+        createdAt: schema.activeSessions.createdAt,
+      })
+      .from(schema.activeSessions)
+      .where(eq(schema.activeSessions.userId, numericId))
+      .orderBy(sql`created_at DESC`)
+      .limit(20);
+
+    // Mark the current session
+    const currentToken = getTokenFromRequest(req);
+    const currentHash = currentToken ? hashToken(currentToken) : null;
+
+    const enriched = await Promise.all(
+      sessions.map(async (s) => {
+        // Check if this is the current session by matching hash
+        let isCurrent = false;
+        if (currentHash) {
+          const [match] = await db
+            .select({ tokenHash: schema.activeSessions.tokenHash })
+            .from(schema.activeSessions)
+            .where(
+              and(
+                eq(schema.activeSessions.id, s.id),
+                eq(schema.activeSessions.tokenHash, currentHash),
+              ),
+            )
+            .limit(1);
+          isCurrent = !!match;
+        }
+        return { ...s, isCurrent };
+      }),
+    );
+
+    res.json({ success: true, sessions: enriched });
+  }),
+);
+
+/**
+ * POST /auth/logout-all
+ * Revokes ALL sessions for the current user (including current).
+ * Clears the auth cookie.
+ */
+router.post(
+  "/logout-all",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated" });
+    }
+    const numericId =
+      typeof userId === "string" ? parseInt(userId, 10) : userId;
+    if (!isNaN(numericId) && numericId > 0) {
+      await db
+        .update(schema.activeSessions)
+        .set({
+          isRevoked: true,
+          revokedAt: new Date(),
+          revokedReason: "logout_all",
+        })
+        .where(
+          and(
+            eq(schema.activeSessions.userId, numericId),
+            eq(schema.activeSessions.isRevoked, false),
+          ),
+        );
+
+      // Emit socket event to force-disconnect all tabs/devices
+      try {
+        const { getIO } = require("../websocket/socket-config");
+        const io = getIO();
+        if (io) {
+          io.to(`user_${numericId}`).emit("force_logout", {
+            reason: "All sessions revoked",
+          });
+        }
+      } catch (e) {
+        console.warn("[SESSION] Failed to emit force_logout:", e);
+      }
+    }
+
+    res.clearCookie("auth_token", { path: "/" });
+    res.json({ success: true, message: "All sessions revoked" });
+  }),
+);
+
+/**
+ * POST /auth/logout/:sessionId
+ * Revokes a specific session by its ID.
+ */
+router.post(
+  "/logout/:sessionId",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated" });
+    }
+    const numericId =
+      typeof userId === "string" ? parseInt(userId, 10) : userId;
+    const sessionId = parseInt(req.params.sessionId, 10);
+
+    if (isNaN(sessionId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid session ID" });
+    }
+
+    // Only allow revoking own sessions (unless admin)
+    const userRole = (req as any).user?.role;
+    const whereConditions = [eq(schema.activeSessions.id, sessionId)];
+    if (userRole !== "superuser" && userRole !== "admin") {
+      whereConditions.push(eq(schema.activeSessions.userId, numericId));
+    }
+
+    const result = await db
+      .update(schema.activeSessions)
+      .set({
+        isRevoked: true,
+        revokedAt: new Date(),
+        revokedReason: "manual_revoke",
+      })
+      .where(and(...whereConditions))
+      .returning({
+        id: schema.activeSessions.id,
+        userId: schema.activeSessions.userId,
+      });
+
+    if (result.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Session not found" });
+    }
+
+    // Force-disconnect the revoked session's user via Socket.io
+    try {
+      const { getIO } = require("../websocket/socket-config");
+      const io = getIO();
+      if (io) {
+        io.to(`user_${result[0].userId}`).emit("session_revoked", {
+          sessionId,
+          reason: "Session manually revoked",
+        });
+      }
+    } catch (e) {
+      console.warn("[SESSION] Failed to emit session_revoked:", e);
+    }
+
+    res.json({ success: true, message: "Session revoked" });
+  }),
+);
+
+/**
+ * GET /auth/admin/sessions
+ * Admin-only: list all active sessions across all users.
+ * Used for the admin session monitor panel.
+ */
+router.get(
+  "/admin/sessions",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userRole = (req as any).user?.role;
+    if (!userRole || !["superuser", "admin", "moderator"].includes(userRole)) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const sessions = await db.execute(sql`
+      SELECT 
+        s.id, s.user_id, s.device, s.ip, s.country, s.city,
+        s.is_revoked, s.revoked_reason, s.last_active, s.expires_at, s.created_at,
+        u.email, u.username, u.role
+      FROM active_sessions s
+      LEFT JOIN users u ON u.id = s.user_id
+      WHERE s.is_revoked = false AND s.expires_at > NOW()
+      ORDER BY s.last_active DESC
+      LIMIT 100
+    `);
+
+    res.json({ success: true, sessions: sessions.rows || [] });
   }),
 );
 
@@ -2078,6 +2458,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(user.id, token, req, { revokeOthers: true });
 
     let capabilities: any = null;
     try {
@@ -2303,6 +2684,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(user.id, token, req, { revokeOthers: true });
 
     // Compute capabilities for unified portal access
     let capabilitiesSub: any = null;
@@ -2522,6 +2904,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    await createSession(user.id, token, req, { revokeOthers: true });
 
     // Compute capabilities for unified portal access
     let capabilitiesComm: any = null;

@@ -4,6 +4,8 @@ import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BusinessForm } from "@/components/BusinessForm";
 import { EditBusinessForm } from "@/components/EditBusinessForm";
+import { SessionMonitorPanel } from "@/components/SessionMonitorPanel";
+import { PaymentSettingsPanel } from "@/components/PaymentSettingsPanel";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import {
   AlertDialog,
@@ -1907,7 +1909,7 @@ export default function DatabaseExpert({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-8 w-full min-h-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
+          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-10 w-full min-h-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
             <TabsTrigger
               value="dashboard"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
@@ -1965,6 +1967,20 @@ export default function DatabaseExpert({
             >
               <Layers className="h-4 w-4" />
               <span className="hidden sm:inline">Categories</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="sessions"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Sessions</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="payments"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Payments</span>
             </TabsTrigger>
           </TabsList>
 
@@ -3707,6 +3723,16 @@ export default function DatabaseExpert({
             </Card>
           </TabsContent>
 
+          {/* Sessions Monitor Tab */}
+          <TabsContent value="sessions" className="space-y-8 mt-8">
+            <SessionMonitorPanel />
+          </TabsContent>
+
+          {/* Payments & Settings Tab */}
+          <TabsContent value="payments" className="space-y-8 mt-8">
+            <PaymentSettingsPanel />
+          </TabsContent>
+
           {/* Categories Tab */}
           <TabsContent value="categories" className="space-y-8 mt-8">
             <AdminOnlyBanner message="La gestion des catégories (ajout, modification, suppression) est réservée au panneau Admin." />
@@ -3864,6 +3890,8 @@ export default function DatabaseExpert({
               { label: "Tables", tab: "tables", icon: Table2 },
               { label: "Analytics", tab: "analytics", icon: BarChart3 },
               { label: "Categories", tab: "categories", icon: Layers },
+              { label: "Sessions", tab: "sessions", icon: Shield },
+              { label: "Payments", tab: "payments", icon: Sparkles },
             ].map((item) => (
               <Button
                 key={item.tab}

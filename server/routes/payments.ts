@@ -127,10 +127,54 @@ const PAYMENT_METHODS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /methods — Available payment methods & status
+// GET /methods — Available payment methods & status (reads from platform_settings)
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get("/methods", async (_req: Request, res: Response) => {
-  res.json({ success: true, methods: PAYMENT_METHODS });
+  // Try to read dynamic status from platform_settings
+  let interacEnabled = false;
+  let cryptoEnabled = false;
+  let mobileMoneyEnabled = false;
+  try {
+    const settings = await pool.query(
+      `SELECT setting_key, setting_value FROM platform_settings
+       WHERE setting_key IN ('payment_interac_enabled', 'payment_crypto_enabled', 'payment_mobile_money_enabled')`,
+    );
+    for (const row of settings.rows) {
+      const val = row.setting_value === true || row.setting_value === "true";
+      if (row.setting_key === "payment_interac_enabled") interacEnabled = val;
+      if (row.setting_key === "payment_crypto_enabled") cryptoEnabled = val;
+      if (row.setting_key === "payment_mobile_money_enabled") mobileMoneyEnabled = val;
+    }
+  } catch {
+    // Ignore — table may not exist yet
+  }
+
+  const methods = PAYMENT_METHODS.map((m) => {
+    if (m.id === "crypto") return { ...m, status: cryptoEnabled ? "active" : "coming_soon", availableSoon: !cryptoEnabled };
+    if (m.id === "mobile_money") return { ...m, status: mobileMoneyEnabled ? "active" : "coming_soon", availableSoon: !mobileMoneyEnabled };
+    // Add Interac dynamically
+    return m;
+  });
+
+  // Inject Interac if enabled
+  if (interacEnabled) {
+    methods.splice(2, 0, {
+      id: "interac",
+      name: "Interac e-Transfer",
+      nameFr: "Virement Interac",
+      description: "Send and receive money via Interac e-Transfer — Canada's leading payment method",
+      descriptionFr: "Envoyez et recevez de l'argent via Interac — le mode de paiement #1 au Canada",
+      icon: "🍁",
+      status: "active",
+      availableSoon: false,
+      minDeposit: 5,
+      minWithdrawal: 10,
+      fees: { deposit: 0, withdrawal: 1.5 },
+      currencies: ["CAD"],
+    } as any);
+  }
+
+  res.json({ success: true, methods });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -986,6 +1030,485 @@ router.put(
       res
         .status(500)
         .json({ success: false, error: "Failed to review transfer" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTERAC e-TRANSFER (Canada) — Request-based flow
+// Users submit email-linked Interac deposit/withdrawal requests.
+// Admin reviews and confirms via the dashboard.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/payments/interac/request
+ * Submit an Interac e-Transfer request (deposit or withdrawal).
+ */
+router.post(
+  "/interac/request",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.user!.userId);
+      const { direction, amount, interacEmail, securityQuestion, securityAnswer } = req.body;
+
+      if (!direction || !["deposit", "withdrawal"].includes(direction)) {
+        return res.status(400).json({ success: false, error: "Direction must be 'deposit' or 'withdrawal'" });
+      }
+      const txnAmount = parseFloat(amount);
+      if (!txnAmount || txnAmount < 5 || txnAmount > 3000) {
+        return res.status(400).json({ success: false, error: "Amount must be between $5 and $3,000 CAD" });
+      }
+      if (!interacEmail) {
+        return res.status(400).json({ success: false, error: "Interac-linked email is required" });
+      }
+
+      // Check if Interac is enabled
+      const setting = await pool.query(
+        `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_interac_enabled'`,
+      );
+      if (setting.rows[0]?.setting_value === "false" || setting.rows[0]?.setting_value === false) {
+        return res.status(403).json({ success: false, error: "Interac e-Transfer is currently disabled" });
+      }
+
+      // Ensure wallet exists
+      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      if (wallet.rows.length === 0) {
+        wallet = await pool.query(
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+        );
+      }
+
+      const result = await pool.query(
+        `INSERT INTO bank_transfer_requests (user_id, wallet_id, direction, amount, currency, bank_reference, proof_image_url, status)
+         VALUES ($1, $2, $3, $4, 'CAD', $5, $6, 'pending')
+         RETURNING id, status, created_at`,
+        [
+          userId,
+          wallet.rows[0].id,
+          direction,
+          txnAmount,
+          `interac:${interacEmail}`,
+          securityQuestion ? JSON.stringify({ q: securityQuestion, a: securityAnswer }) : null,
+        ],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: direction === "deposit"
+          ? `Send $${txnAmount} CAD via Interac e-Transfer to our email. Admin will credit your wallet within 24h.`
+          : `Withdrawal request submitted. $${txnAmount} CAD will be sent to ${interacEmail} within 1-3 business days.`,
+        request: result.rows[0],
+      });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Interac request error:", err);
+      res.status(500).json({ success: false, error: "Failed to process Interac request" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRYPTO WALLET — Display wallet addresses for manual transfers
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/payments/crypto/addresses
+ * Returns the platform's crypto wallet addresses for deposits.
+ * Addresses are stored in platform_settings.
+ */
+router.get("/crypto/addresses", requireAuth(), async (_req: Request, res: Response) => {
+  try {
+    const enabled = await pool.query(
+      `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_crypto_enabled'`,
+    );
+    if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
+      return res.json({
+        success: true,
+        enabled: false,
+        message: "Crypto payments coming soon — Q2 2026",
+        addresses: [],
+      });
+    }
+
+    const addresses = await pool.query(
+      `SELECT setting_value FROM platform_settings WHERE setting_key = 'crypto_wallet_addresses'`,
+    );
+    const wallets = addresses.rows[0]?.setting_value || {
+      BTC: null,
+      ETH: null,
+      USDT: null,
+    };
+
+    res.json({ success: true, enabled: true, addresses: wallets });
+  } catch (err: any) {
+    console.error("[PAYMENTS] Crypto addresses error:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch crypto addresses" });
+  }
+});
+
+/**
+ * POST /api/payments/crypto/deposit
+ * Submit a crypto deposit notification (user sends crypto, then notifies platform).
+ */
+router.post(
+  "/crypto/deposit",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.user!.userId);
+      const { coin, txHash, amount } = req.body;
+
+      if (!coin || !["BTC", "ETH", "USDT"].includes(coin)) {
+        return res.status(400).json({ success: false, error: "Coin must be BTC, ETH, or USDT" });
+      }
+      if (!txHash) {
+        return res.status(400).json({ success: false, error: "Transaction hash is required" });
+      }
+      const txnAmount = parseFloat(amount);
+      if (!txnAmount || txnAmount <= 0) {
+        return res.status(400).json({ success: false, error: "Valid amount required" });
+      }
+
+      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      if (wallet.rows.length === 0) {
+        wallet = await pool.query(
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+        );
+      }
+
+      const result = await pool.query(
+        `INSERT INTO bank_transfer_requests (user_id, wallet_id, direction, amount, currency, bank_reference, status)
+         VALUES ($1, $2, 'deposit', $3, $4, $5, 'pending')
+         RETURNING id, status, created_at`,
+        [userId, wallet.rows[0].id, txnAmount, coin, `crypto:${txHash}`],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: `Crypto deposit notification received. Admin will verify the ${coin} transaction and credit your wallet.`,
+        request: result.rows[0],
+      });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Crypto deposit error:", err);
+      res.status(500).json({ success: false, error: "Failed to submit crypto deposit" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOBILE MONEY — Orange Money, MTN MoMo, Wave, M-Pesa
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/payments/mobile-money/providers
+ * Returns available Mobile Money providers and their status.
+ */
+router.get("/mobile-money/providers", async (_req: Request, res: Response) => {
+  try {
+    const enabled = await pool.query(
+      `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`,
+    );
+    if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
+      return res.json({
+        success: true,
+        enabled: false,
+        message: "Mobile Money coming soon — Q3 2026 for African markets",
+        providers: [],
+      });
+    }
+
+    const configResult = await pool.query(
+      `SELECT setting_value FROM platform_settings WHERE setting_key = 'mobile_money_config'`,
+    );
+    const config = configResult.rows[0]?.setting_value || {};
+
+    const providers = [
+      { id: "orange_money", name: "Orange Money", countries: ["CI", "SN", "ML", "CM", "BF"], enabled: config.orange_money !== false },
+      { id: "mtn_momo", name: "MTN MoMo", countries: ["GH", "UG", "CM", "CI", "RW"], enabled: config.mtn_momo !== false },
+      { id: "wave", name: "Wave", countries: ["SN", "CI", "ML", "BF", "GM"], enabled: config.wave !== false },
+      { id: "mpesa", name: "M-Pesa", countries: ["KE", "TZ", "CD", "MZ", "GH"], enabled: config.mpesa !== false },
+    ];
+
+    res.json({ success: true, enabled: true, providers });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: "Failed to fetch Mobile Money providers" });
+  }
+});
+
+/**
+ * POST /api/payments/mobile-money/request
+ * Submit a Mobile Money payment request (deposit or withdrawal).
+ */
+router.post(
+  "/mobile-money/request",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.user!.userId);
+      const { direction, amount, provider, phoneNumber, currency } = req.body;
+
+      if (!direction || !["deposit", "withdrawal"].includes(direction)) {
+        return res.status(400).json({ success: false, error: "Direction must be 'deposit' or 'withdrawal'" });
+      }
+      if (!provider || !["orange_money", "mtn_momo", "wave", "mpesa"].includes(provider)) {
+        return res.status(400).json({ success: false, error: "Invalid Mobile Money provider" });
+      }
+      if (!phoneNumber) {
+        return res.status(400).json({ success: false, error: "Phone number is required" });
+      }
+
+      const txnAmount = parseFloat(amount);
+      if (!txnAmount || txnAmount < 1) {
+        return res.status(400).json({ success: false, error: "Minimum amount is 1" });
+      }
+
+      const enabled = await pool.query(
+        `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`,
+      );
+      if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
+        return res.status(403).json({ success: false, error: "Mobile Money is not yet available" });
+      }
+
+      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      if (wallet.rows.length === 0) {
+        wallet = await pool.query(
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+        );
+      }
+
+      const result = await pool.query(
+        `INSERT INTO bank_transfer_requests (user_id, wallet_id, direction, amount, currency, bank_reference, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+         RETURNING id, status, created_at`,
+        [userId, wallet.rows[0].id, direction, txnAmount, currency || "XOF", `${provider}:${phoneNumber}`],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: direction === "deposit"
+          ? `Send ${txnAmount} ${currency || "XOF"} via ${provider.replace("_", " ")} to complete your deposit. Admin will credit your wallet.`
+          : `Withdrawal request submitted. Funds will be sent to ${phoneNumber} via ${provider.replace("_", " ")}.`,
+        request: result.rows[0],
+      });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Mobile Money error:", err);
+      res.status(500).json({ success: false, error: "Failed to process Mobile Money request" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN PAYMENT SETTINGS — Configure payment methods via platform_settings
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/payments/admin/settings
+ * Returns all payment-related platform_settings for the admin dashboard.
+ */
+router.get(
+  "/admin/settings",
+  requireAuth(["admin", "superuser"]),
+  async (req: Request, res: Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, setting_key, setting_value, category, description, updated_at
+         FROM platform_settings
+         WHERE category IN ('payment', 'session', 'crypto', 'mobile_money', 'interac', 'general')
+         ORDER BY category, setting_key`,
+      );
+      res.json({ success: true, settings: result.rows });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Admin settings fetch error:", err);
+      res.status(500).json({ success: false, error: "Failed to fetch settings" });
+    }
+  },
+);
+
+/**
+ * PUT /api/payments/admin/settings/:key
+ * Update a single platform setting.
+ */
+router.put(
+  "/admin/settings/:key",
+  requireAuth(["admin", "superuser"]),
+  async (req: Request, res: Response) => {
+    try {
+      const settingKey = req.params.key;
+      const { value, description } = req.body;
+      const adminId = parseInt(req.user!.userId);
+
+      if (value === undefined) {
+        return res.status(400).json({ success: false, error: "Value is required" });
+      }
+
+      // Upsert the setting
+      const result = await pool.query(
+        `INSERT INTO platform_settings (setting_key, setting_value, description, updated_by, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (setting_key)
+         DO UPDATE SET setting_value = $2, description = COALESCE($3, platform_settings.description), updated_by = $4, updated_at = NOW()
+         RETURNING id, setting_key, setting_value, category, description, updated_at`,
+        [settingKey, JSON.stringify(value), description || null, adminId],
+      );
+
+      res.json({ success: true, setting: result.rows[0] });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Admin settings update error:", err);
+      res.status(500).json({ success: false, error: "Failed to update setting" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUSINESS TIER UPGRADE — Pay from wallet to upgrade business tier
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TIER_PRICES: Record<string, number> = {
+  premium: 29.99,    // $29.99/month
+  enterprise: 99.99, // $99.99/month
+};
+
+const TIER_DURATION_DAYS = 30; // 30-day billing cycle
+
+/**
+ * GET /api/payments/tier/prices
+ * Returns tier pricing information.
+ */
+router.get("/tier/prices", (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    tiers: [
+      {
+        id: "free",
+        name: "Free",
+        price: 0,
+        features: [
+          "Basic listing",
+          "Category placement",
+          "Contact info display",
+        ],
+      },
+      {
+        id: "premium",
+        name: "Premium",
+        price: TIER_PRICES.premium,
+        duration: `${TIER_DURATION_DAYS} days`,
+        features: [
+          "Everything in Free",
+          "Vérifié badge",
+          "Priority in search results",
+          "Analytics dashboard",
+          "Response time tracking",
+          "Photo gallery (up to 20)",
+        ],
+      },
+      {
+        id: "enterprise",
+        name: "Enterprise",
+        price: TIER_PRICES.enterprise,
+        duration: `${TIER_DURATION_DAYS} days`,
+        features: [
+          "Everything in Premium",
+          "Top placement in all searches",
+          "Dedicated account manager",
+          "Custom branding",
+          "API access",
+          "Unlimited media uploads",
+          "Multi-location support",
+          "Priority customer support",
+        ],
+      },
+    ],
+  });
+});
+
+/**
+ * POST /api/payments/tier/upgrade
+ * Upgrade a business from wallet balance.
+ * Body: { businessId, tier: 'premium' | 'enterprise' }
+ */
+router.post(
+  "/tier/upgrade",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.user!.userId);
+      const { businessId, tier } = req.body;
+
+      if (!businessId || !tier) {
+        return res.status(400).json({ success: false, error: "businessId and tier are required" });
+      }
+      if (!TIER_PRICES[tier]) {
+        return res.status(400).json({ success: false, error: "Tier must be 'premium' or 'enterprise'" });
+      }
+
+      // Verify business belongs to user
+      const biz = await pool.query(
+        `SELECT id, name, tier as current_tier, tier_expires_at FROM businesses WHERE id = $1 AND user_id = $2`,
+        [businessId, userId],
+      );
+      if (biz.rows.length === 0) {
+        return res.status(404).json({ success: false, error: "Business not found or not owned by you" });
+      }
+
+      const price = TIER_PRICES[tier];
+
+      // Check wallet balance
+      const wallet = await pool.query(
+        `SELECT id, balance FROM platform_wallets WHERE user_id = $1`,
+        [userId],
+      );
+      if (wallet.rows.length === 0 || parseFloat(wallet.rows[0].balance) < price) {
+        return res.status(400).json({
+          success: false,
+          error: `Insufficient wallet balance. Need $${price}, have $${wallet.rows[0]?.balance || "0.00"}`,
+        });
+      }
+
+      const walletId = wallet.rows[0].id;
+      const balanceBefore = parseFloat(wallet.rows[0].balance);
+      const balanceAfter = balanceBefore - price;
+      const expiresAt = new Date(Date.now() + TIER_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+      // Transaction: debit wallet + upgrade tier
+      await pool.query("BEGIN");
+
+      await pool.query(
+        `UPDATE platform_wallets SET balance = $1, total_spent = CAST(COALESCE(total_spent, '0') AS NUMERIC) + $2, last_transaction_at = NOW() WHERE id = $3`,
+        [balanceAfter.toFixed(2), price.toFixed(2), walletId],
+      );
+
+      await pool.query(
+        `INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_before, balance_after, payment_method, description, status)
+         VALUES ($1, $2, 'purchase', $3, $4, $5, 'wallet', $6, 'completed')`,
+        [
+          walletId,
+          userId,
+          price.toFixed(2),
+          balanceBefore.toFixed(2),
+          balanceAfter.toFixed(2),
+          `Business tier upgrade to ${tier}: ${biz.rows[0].name}`,
+        ],
+      );
+
+      await pool.query(
+        `UPDATE businesses SET tier = $1, tier_expires_at = $2 WHERE id = $3`,
+        [tier, expiresAt, businessId],
+      );
+
+      await pool.query("COMMIT");
+
+      res.json({
+        success: true,
+        message: `Business "${biz.rows[0].name}" upgraded to ${tier}!`,
+        tier,
+        expiresAt: expiresAt.toISOString(),
+        walletBalance: balanceAfter,
+      });
+    } catch (err: any) {
+      await pool.query("ROLLBACK").catch(() => {});
+      console.error("[PAYMENTS] Tier upgrade error:", err);
+      res.status(500).json({ success: false, error: "Failed to upgrade tier" });
     }
   },
 );

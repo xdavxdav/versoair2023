@@ -93,15 +93,17 @@ export function QuickSignIn({
     }
   };
 
-  // Demo accounts for quick access
-  const demoAccounts = [
-    {
-      label: "Superadmin",
-      email: "superadmin@versoair.test",
-      password: "JoeyD000",
-    },
-    { label: "CEO", email: "ceo@versoair.test", password: "CEO2026!" },
-  ];
+  // Demo accounts — only available in development builds (Vite tree-shakes in production)
+  const demoAccounts = import.meta.env.DEV
+    ? [
+        {
+          label: "Superadmin",
+          email: "superadmin@versoair.test",
+          password: "JoeyD000",
+        },
+        { label: "CEO", email: "ceo@versoair.test", password: "CEO2026!" },
+      ]
+    : [];
 
   const quickLogin = async (email: string, password: string) => {
     setEmail(email);
