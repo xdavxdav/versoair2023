@@ -606,7 +606,9 @@ export default function Services() {
                   <span>Monthly data updates</span>
                 </li>
               </ul>
-              <Button className="w-full">Get Started</Button>
+              <Link href="/auth/signin?plan=starter">
+                <Button className="w-full">Get Started</Button>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -650,9 +652,11 @@ export default function Services() {
                   <span>Custom dashboard creation</span>
                 </li>
               </ul>
-              <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-                Start Free Trial
-              </Button>
+              <Link href="/auth/signin?plan=professional">
+                <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                  Start Free Trial
+                </Button>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -691,9 +695,11 @@ export default function Services() {
                   <span>White-label solutions</span>
                 </li>
               </ul>
-              <Button className="w-full" variant="outline">
-                Contact Sales
-              </Button>
+              <Link href="/contact">
+                <Button className="w-full" variant="outline">
+                  Contact Sales
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>

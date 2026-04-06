@@ -39,6 +39,7 @@ const ArtiHumanFoundation = lazy(() => import("@/pages/artihuman-foundation"));
 const Impact = lazy(() => import("@/pages/impact"));
 const HubPage = lazy(() => import("@/pages/hub"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const ImportBusiness = lazy(() => import("@/pages/import-business"));
 
 // ─────────────────────────────────────────────────────
 // 🏢 Sector Pages (lazy-loaded)
@@ -304,6 +305,7 @@ function Router() {
         {() => <Redirect to="/marketing/order-tracking" />}
       </Route>
       <Route path="/partners" component={Partners} />
+      <Route path="/import-business" component={ImportBusiness} />
       <Route path="/status" component={SystemStatus} />
       <Route path="/get-involved" component={GetInvolved} />
       <Route path="/ong-culturelle" component={OngCulturelle} />

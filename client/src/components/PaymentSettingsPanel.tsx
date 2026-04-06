@@ -38,7 +38,9 @@ const SETTING_ICONS: Record<string, React.ReactNode> = {
   payment_stripe_enabled: <CreditCard className="h-4 w-4 text-purple-400" />,
   payment_interac_enabled: <Globe className="h-4 w-4 text-emerald-400" />,
   payment_crypto_enabled: <Bitcoin className="h-4 w-4 text-amber-400" />,
-  payment_mobile_money_enabled: <Smartphone className="h-4 w-4 text-orange-400" />,
+  payment_mobile_money_enabled: (
+    <Smartphone className="h-4 w-4 text-orange-400" />
+  ),
   session_max_concurrent: <Settings className="h-4 w-4 text-slate-400" />,
   session_revoke_on_new_login: <Settings className="h-4 w-4 text-slate-400" />,
 };
@@ -60,7 +62,9 @@ export function PaymentSettingsPanel() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-payment-settings"],
     queryFn: async () => {
-      const res = await fetch("/api/payments/admin/settings", { credentials: "include" });
+      const res = await fetch("/api/payments/admin/settings", {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch settings");
       return res.json();
     },
@@ -70,7 +74,10 @@ export function PaymentSettingsPanel() {
 
   const handleToggle = async (key: string, currentValue: any) => {
     setSaving(key);
-    const isBool = currentValue === "true" || currentValue === "false" || typeof currentValue === "boolean";
+    const isBool =
+      currentValue === "true" ||
+      currentValue === "false" ||
+      typeof currentValue === "boolean";
     const newValue = isBool
       ? !(currentValue === "true" || currentValue === true)
       : currentValue;
@@ -95,7 +102,9 @@ export function PaymentSettingsPanel() {
   const isTruthy = (val: any) => val === true || val === "true";
 
   // Group settings by category
-  const paymentSettings = settings.filter((s) => ["payment", "crypto", "mobile_money", "interac"].includes(s.category));
+  const paymentSettings = settings.filter((s) =>
+    ["payment", "crypto", "mobile_money", "interac"].includes(s.category),
+  );
   const sessionSettings = settings.filter((s) => s.category === "session");
 
   return (
@@ -109,7 +118,8 @@ export function PaymentSettingsPanel() {
               Payment Methods
             </CardTitle>
             <CardDescription className="text-slate-400">
-              Enable or disable payment methods for the platform. Changes take effect immediately.
+              Enable or disable payment methods for the platform. Changes take
+              effect immediately.
             </CardDescription>
           </div>
           <Button
@@ -150,13 +160,18 @@ export function PaymentSettingsPanel() {
                   className="flex items-center justify-between p-4 rounded-lg bg-white/[0.03] border border-white/5 hover:border-white/10 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    {SETTING_ICONS[setting.setting_key] || <Settings className="h-4 w-4 text-slate-400" />}
+                    {SETTING_ICONS[setting.setting_key] || (
+                      <Settings className="h-4 w-4 text-slate-400" />
+                    )}
                     <div>
                       <p className="text-sm font-medium text-slate-200">
-                        {SETTING_LABELS[setting.setting_key] || setting.setting_key}
+                        {SETTING_LABELS[setting.setting_key] ||
+                          setting.setting_key}
                       </p>
                       {setting.description && (
-                        <p className="text-xs text-slate-500 mt-0.5">{setting.description}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {setting.description}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -177,7 +192,12 @@ export function PaymentSettingsPanel() {
                     ) : (
                       <Switch
                         checked={isTruthy(setting.setting_value)}
-                        onCheckedChange={() => handleToggle(setting.setting_key, setting.setting_value)}
+                        onCheckedChange={() =>
+                          handleToggle(
+                            setting.setting_key,
+                            setting.setting_value,
+                          )
+                        }
                       />
                     )}
                   </div>
@@ -208,13 +228,18 @@ export function PaymentSettingsPanel() {
                   className="flex items-center justify-between p-4 rounded-lg bg-white/[0.03] border border-white/5"
                 >
                   <div className="flex items-center gap-3">
-                    {SETTING_ICONS[setting.setting_key] || <Settings className="h-4 w-4 text-slate-400" />}
+                    {SETTING_ICONS[setting.setting_key] || (
+                      <Settings className="h-4 w-4 text-slate-400" />
+                    )}
                     <div>
                       <p className="text-sm font-medium text-slate-200">
-                        {SETTING_LABELS[setting.setting_key] || setting.setting_key}
+                        {SETTING_LABELS[setting.setting_key] ||
+                          setting.setting_key}
                       </p>
                       {setting.description && (
-                        <p className="text-xs text-slate-500 mt-0.5">{setting.description}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {setting.description}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -230,7 +255,12 @@ export function PaymentSettingsPanel() {
                       ) : (
                         <Switch
                           checked={isTruthy(setting.setting_value)}
-                          onCheckedChange={() => handleToggle(setting.setting_key, setting.setting_value)}
+                          onCheckedChange={() =>
+                            handleToggle(
+                              setting.setting_key,
+                              setting.setting_value,
+                            )
+                          }
                         />
                       )
                     ) : null}
@@ -250,22 +280,59 @@ export function PaymentSettingsPanel() {
             Business Tier Pricing
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Current tier pricing for business upgrades (paid from platform wallet).
+            Current tier pricing for business upgrades (paid from platform
+            wallet).
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { tier: "Free", price: "$0", color: "text-slate-300", border: "border-slate-500/20", features: ["Basic listing", "Category placement"] },
-              { tier: "Premium", price: "$29.99/mo", color: "text-amber-300", border: "border-amber-500/30", features: ["Vérifié badge", "Priority search", "Analytics", "20 photos"] },
-              { tier: "Enterprise", price: "$99.99/mo", color: "text-purple-300", border: "border-purple-500/30", features: ["Top placement", "API access", "Unlimited media", "Multi-location"] },
+              {
+                tier: "Free",
+                price: "$0",
+                color: "text-slate-300",
+                border: "border-slate-500/20",
+                features: ["Basic listing", "Category placement"],
+              },
+              {
+                tier: "Premium",
+                price: "$29.99/mo",
+                color: "text-amber-300",
+                border: "border-amber-500/30",
+                features: [
+                  "Vérifié badge",
+                  "Priority search",
+                  "Analytics",
+                  "20 photos",
+                ],
+              },
+              {
+                tier: "Enterprise",
+                price: "$99.99/mo",
+                color: "text-purple-300",
+                border: "border-purple-500/30",
+                features: [
+                  "Top placement",
+                  "API access",
+                  "Unlimited media",
+                  "Multi-location",
+                ],
+              },
             ].map((t) => (
-              <div key={t.tier} className={`p-4 rounded-lg bg-white/[0.03] border ${t.border}`}>
+              <div
+                key={t.tier}
+                className={`p-4 rounded-lg bg-white/[0.03] border ${t.border}`}
+              >
                 <p className={`text-lg font-bold ${t.color}`}>{t.tier}</p>
-                <p className="text-xl font-semibold text-slate-100 mt-1">{t.price}</p>
+                <p className="text-xl font-semibold text-slate-100 mt-1">
+                  {t.price}
+                </p>
                 <ul className="mt-3 space-y-1">
                   {t.features.map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <li
+                      key={f}
+                      className="flex items-center gap-1.5 text-xs text-slate-400"
+                    >
                       <CheckCircle className="h-3 w-3 text-emerald-500" />
                       {f}
                     </li>

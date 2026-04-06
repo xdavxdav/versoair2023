@@ -1290,6 +1290,11 @@ export default function Home() {
     null,
   );
 
+  // ═══ AI Search Mode (Shared Brain) ═══
+  const [searchMode, setSearchMode] = useState<"classic" | "ai">("classic");
+  const [aiResults, setAiResults] = useState<any>(null);
+  const [isAiSearching, setIsAiSearching] = useState(false);
+
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
@@ -1841,12 +1846,77 @@ export default function Home() {
     setHasSearched(false);
     setSearchResults([]);
     setShowAllResults(false);
+    setAiResults(null);
 
     // Reload initial data
     if (databaseConnected) {
       loadInitialData();
     }
   };
+
+  // ═══ AI Intent Search Handler (Shared Brain) ═══
+  const handleAiSearch = useCallback(async () => {
+    const query = debouncedSearchQuery.trim();
+    if (!query || searchMode !== "ai") return;
+
+    setIsAiSearching(true);
+    setSearchError("");
+    setHasSearched(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/search/intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, limit: 5 }),
+      });
+
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+      const data = await response.json();
+      if (data.success) {
+        setAiResults(data);
+        // Also populate standard search results from AI matches for consistent display
+        if (data.results?.businesses?.length > 0) {
+          const mapped = data.results.businesses.map((b: any) => ({
+            id: b.id?.toString() || "",
+            title: b.name || "",
+            description: b.description || "",
+            category: b.categoryName || "",
+            location: b.city || b.country || "",
+            address: b.address || "",
+            phone: b.phone || "",
+            email: b.email || "",
+            rating: b.rating || 0,
+            reviews: 0,
+            tags: [],
+            latitude: 0,
+            longitude: 0,
+            created_at: new Date().toISOString(),
+          }));
+          setSearchResults(mapped);
+          setTotalDatabaseCount(data.results.totalMatches || mapped.length);
+        } else {
+          setSearchResults([]);
+        }
+      } else {
+        setSearchError(data.error || "AI search failed");
+        setAiResults(null);
+      }
+    } catch (err: any) {
+      console.error("AI search error:", err);
+      setSearchError("AI search temporarily unavailable — try classic mode");
+      setAiResults(null);
+    } finally {
+      setIsAiSearching(false);
+    }
+  }, [debouncedSearchQuery, searchMode]);
+
+  // Trigger AI search when mode is AI and query changes
+  useEffect(() => {
+    if (searchMode === "ai" && debouncedSearchQuery.trim()) {
+      handleAiSearch();
+    }
+  }, [handleAiSearch, searchMode, debouncedSearchQuery]);
 
   // Annuaire Musicale — fetch genres and countries on mount
   useEffect(() => {
@@ -2074,32 +2144,160 @@ export default function Home() {
 
           <div className="max-w-[95vw] mx-auto mb-8 md:mb-12">
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl md:rounded-[2rem] shadow-2xl p-4 md:p-6 border border-white/10">
+              {/* Search Mode Toggle */}
+              <div className="flex justify-center mb-4">
+                <div className="inline-flex bg-slate-700/50 rounded-full p-1 gap-1">
+                  <button
+                    onClick={() => {
+                      setSearchMode("classic");
+                      setAiResults(null);
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      searchMode === "classic"
+                        ? "bg-emerald-500 text-white shadow-lg"
+                        : "text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    <Search className="w-4 h-4" />
+                    Classique
+                  </button>
+                  <button
+                    onClick={() => setSearchMode("ai")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      searchMode === "ai"
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25"
+                        : "text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    IA Intelligente
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                 <MagneticInput className="flex-1">
-                  <div className="relative bg-slate-800/90 rounded-2xl md:rounded-3xl border border-emerald-500/40 hover:border-emerald-400/60 transition-colors group">
-                    <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                  <div
+                    className={`relative bg-slate-800/90 rounded-2xl md:rounded-3xl border transition-colors group ${
+                      searchMode === "ai"
+                        ? "border-purple-500/40 hover:border-purple-400/60"
+                        : "border-emerald-500/40 hover:border-emerald-400/60"
+                    }`}
+                  >
+                    {searchMode === "ai" ? (
+                      <Sparkles className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                    ) : (
+                      <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                    )}
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher des communautés, programmes..."
+                      placeholder={
+                        searchMode === "ai"
+                          ? "J'ai besoin d'un plombier urgent à Montréal..."
+                          : "Rechercher des communautés, programmes..."
+                      }
                       className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                     />
+                    {isAiSearching && searchMode === "ai" && (
+                      <Loader2 className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5 animate-spin" />
+                    )}
                   </div>
                 </MagneticInput>
-                <MagneticInput className="flex-1">
-                  <div className="relative bg-slate-800/90 rounded-2xl md:rounded-3xl border border-emerald-500/40 hover:border-emerald-400/60 transition-colors group">
-                    <MapPin className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
-                    <input
-                      type="text"
-                      value={locationQuery}
-                      onChange={(e) => setLocationQuery(e.target.value)}
-                      placeholder="Entrer un lieu..."
-                      className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
-                    />
-                  </div>
-                </MagneticInput>
+                {searchMode === "classic" && (
+                  <MagneticInput className="flex-1">
+                    <div className="relative bg-slate-800/90 rounded-2xl md:rounded-3xl border border-emerald-500/40 hover:border-emerald-400/60 transition-colors group">
+                      <MapPin className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                      <input
+                        type="text"
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
+                        placeholder="Entrer un lieu..."
+                        className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
+                      />
+                    </div>
+                  </MagneticInput>
+                )}
               </div>
+
+              {/* AI Intent Banner — shows parsed intent when AI mode active */}
+              <AnimatePresence>
+                {searchMode === "ai" && aiResults?.intent && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4 p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span className="text-purple-300 font-medium">
+                        IA détecte:
+                      </span>
+                      {aiResults.intent.sectorLabel && (
+                        <span className="px-2 py-0.5 bg-purple-500/20 text-purple-200 rounded-full text-xs">
+                          {aiResults.intent.sectorLabel}
+                        </span>
+                      )}
+                      {aiResults.intent.location && (
+                        <span className="px-2 py-0.5 bg-blue-500/20 text-blue-200 rounded-full text-xs">
+                          📍 {aiResults.intent.location}
+                        </span>
+                      )}
+                      {aiResults.intent.urgency >= 7 && (
+                        <span className="px-2 py-0.5 bg-red-500/20 text-red-200 rounded-full text-xs animate-pulse">
+                          🚨 Urgent
+                        </span>
+                      )}
+                      <span className="text-slate-400 text-xs ml-auto">
+                        {aiResults.meta?.elapsed} • confiance{" "}
+                        {Math.round((aiResults.intent.confidence || 0) * 100)}%
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Emergency banner when urgency >= 8 */}
+              <AnimatePresence>
+                {searchMode === "ai" && aiResults?.emergency?.isEmergency && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="mt-3 p-4 rounded-xl bg-gradient-to-r from-red-600/90 to-orange-600/90 border border-red-400/30 shadow-lg shadow-red-500/20"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">🚨</span>
+                      <div>
+                        <p className="text-white font-bold text-sm">
+                          Situation urgente détectée
+                        </p>
+                        <p className="text-red-100 text-xs mt-1">
+                          {aiResults.emergency.message}
+                        </p>
+                        {aiResults.emergency.topVerified?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {aiResults.emergency.topVerified
+                              .slice(0, 3)
+                              .map((b: any) => (
+                                <a
+                                  key={b.id}
+                                  href={`/businesses/${b.id}`}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-white text-xs font-medium transition-colors"
+                                >
+                                  <CheckCircle className="w-3 h-3" />
+                                  {b.name}
+                                </a>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="flex justify-center mt-6 md:mt-8">
