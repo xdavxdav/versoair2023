@@ -143,15 +143,26 @@ router.get("/methods", async (_req: Request, res: Response) => {
       const val = row.setting_value === true || row.setting_value === "true";
       if (row.setting_key === "payment_interac_enabled") interacEnabled = val;
       if (row.setting_key === "payment_crypto_enabled") cryptoEnabled = val;
-      if (row.setting_key === "payment_mobile_money_enabled") mobileMoneyEnabled = val;
+      if (row.setting_key === "payment_mobile_money_enabled")
+        mobileMoneyEnabled = val;
     }
   } catch {
     // Ignore — table may not exist yet
   }
 
   const methods = PAYMENT_METHODS.map((m) => {
-    if (m.id === "crypto") return { ...m, status: cryptoEnabled ? "active" : "coming_soon", availableSoon: !cryptoEnabled };
-    if (m.id === "mobile_money") return { ...m, status: mobileMoneyEnabled ? "active" : "coming_soon", availableSoon: !mobileMoneyEnabled };
+    if (m.id === "crypto")
+      return {
+        ...m,
+        status: cryptoEnabled ? "active" : "coming_soon",
+        availableSoon: !cryptoEnabled,
+      };
+    if (m.id === "mobile_money")
+      return {
+        ...m,
+        status: mobileMoneyEnabled ? "active" : "coming_soon",
+        availableSoon: !mobileMoneyEnabled,
+      };
     // Add Interac dynamically
     return m;
   });
@@ -162,8 +173,10 @@ router.get("/methods", async (_req: Request, res: Response) => {
       id: "interac",
       name: "Interac e-Transfer",
       nameFr: "Virement Interac",
-      description: "Send and receive money via Interac e-Transfer — Canada's leading payment method",
-      descriptionFr: "Envoyez et recevez de l'argent via Interac — le mode de paiement #1 au Canada",
+      description:
+        "Send and receive money via Interac e-Transfer — Canada's leading payment method",
+      descriptionFr:
+        "Envoyez et recevez de l'argent via Interac — le mode de paiement #1 au Canada",
       icon: "🍁",
       status: "active",
       availableSoon: false,
@@ -231,13 +244,11 @@ router.post(
         [userId],
       );
       if (existing.rows.length > 0) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            error: "Wallet already exists",
-            walletId: existing.rows[0].id,
-          });
+        return res.status(409).json({
+          success: false,
+          error: "Wallet already exists",
+          walletId: existing.rows[0].id,
+        });
       }
 
       const result = await pool.query(
@@ -515,12 +526,10 @@ router.post(
 
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount <= 0 || !recipientId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Valid amount and recipientId required",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Valid amount and recipientId required",
+        });
       }
 
       const txnType = type || "transfer";
@@ -702,13 +711,11 @@ router.post(
         !method ||
         !["wallet", "paypal", "crypto", "mobile_money", "bank"].includes(method)
       ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error:
-              "Invalid method. Choose: wallet, paypal, crypto, mobile_money, bank",
-          });
+        return res.status(400).json({
+          success: false,
+          error:
+            "Invalid method. Choose: wallet, paypal, crypto, mobile_money, bank",
+        });
       }
 
       // Check if method is coming soon
@@ -843,12 +850,10 @@ router.post(
         req.body;
 
       if (!direction || !["deposit", "withdrawal"].includes(direction)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Direction must be 'deposit' or 'withdrawal'",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Direction must be 'deposit' or 'withdrawal'",
+        });
       }
 
       const txnAmount = parseFloat(amount);
@@ -931,12 +936,10 @@ router.put(
       const { action, reviewNotes } = req.body;
 
       if (!action || !["approve", "reject"].includes(action)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Action must be 'approve' or 'reject'",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Action must be 'approve' or 'reject'",
+        });
       }
 
       const request = await pool.query(
@@ -944,12 +947,10 @@ router.put(
         [requestId],
       );
       if (request.rows.length === 0) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: "Request not found or already reviewed",
-          });
+        return res.status(404).json({
+          success: false,
+          error: "Request not found or already reviewed",
+        });
       }
 
       const req_ = request.rows[0];
@@ -970,12 +971,10 @@ router.put(
           if (
             parseFloat(wallet.rows[0]?.balance || "0") < parseFloat(req_.amount)
           ) {
-            return res
-              .status(400)
-              .json({
-                success: false,
-                error: "Insufficient wallet balance for withdrawal",
-              });
+            return res.status(400).json({
+              success: false,
+              error: "Insufficient wallet balance for withdrawal",
+            });
           }
           await pool.query(
             `UPDATE platform_wallets SET balance = balance - $1, total_withdrawn = total_withdrawn + $1, last_transaction_at = NOW()
@@ -1050,32 +1049,62 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.user!.userId);
-      const { direction, amount, interacEmail, securityQuestion, securityAnswer } = req.body;
+      const {
+        direction,
+        amount,
+        interacEmail,
+        securityQuestion,
+        securityAnswer,
+      } = req.body;
 
       if (!direction || !["deposit", "withdrawal"].includes(direction)) {
-        return res.status(400).json({ success: false, error: "Direction must be 'deposit' or 'withdrawal'" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Direction must be 'deposit' or 'withdrawal'",
+          });
       }
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount < 5 || txnAmount > 3000) {
-        return res.status(400).json({ success: false, error: "Amount must be between $5 and $3,000 CAD" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Amount must be between $5 and $3,000 CAD",
+          });
       }
       if (!interacEmail) {
-        return res.status(400).json({ success: false, error: "Interac-linked email is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Interac-linked email is required" });
       }
 
       // Check if Interac is enabled
       const setting = await pool.query(
         `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_interac_enabled'`,
       );
-      if (setting.rows[0]?.setting_value === "false" || setting.rows[0]?.setting_value === false) {
-        return res.status(403).json({ success: false, error: "Interac e-Transfer is currently disabled" });
+      if (
+        setting.rows[0]?.setting_value === "false" ||
+        setting.rows[0]?.setting_value === false
+      ) {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            error: "Interac e-Transfer is currently disabled",
+          });
       }
 
       // Ensure wallet exists
-      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      let wallet = await pool.query(
+        `SELECT id FROM platform_wallets WHERE user_id = $1`,
+        [userId],
+      );
       if (wallet.rows.length === 0) {
         wallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`,
+          [userId],
         );
       }
 
@@ -1089,20 +1118,25 @@ router.post(
           direction,
           txnAmount,
           `interac:${interacEmail}`,
-          securityQuestion ? JSON.stringify({ q: securityQuestion, a: securityAnswer }) : null,
+          securityQuestion
+            ? JSON.stringify({ q: securityQuestion, a: securityAnswer })
+            : null,
         ],
       );
 
       res.status(201).json({
         success: true,
-        message: direction === "deposit"
-          ? `Send $${txnAmount} CAD via Interac e-Transfer to our email. Admin will credit your wallet within 24h.`
-          : `Withdrawal request submitted. $${txnAmount} CAD will be sent to ${interacEmail} within 1-3 business days.`,
+        message:
+          direction === "deposit"
+            ? `Send $${txnAmount} CAD via Interac e-Transfer to our email. Admin will credit your wallet within 24h.`
+            : `Withdrawal request submitted. $${txnAmount} CAD will be sent to ${interacEmail} within 1-3 business days.`,
         request: result.rows[0],
       });
     } catch (err: any) {
       console.error("[PAYMENTS] Interac request error:", err);
-      res.status(500).json({ success: false, error: "Failed to process Interac request" });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to process Interac request" });
     }
   },
 );
@@ -1116,35 +1150,44 @@ router.post(
  * Returns the platform's crypto wallet addresses for deposits.
  * Addresses are stored in platform_settings.
  */
-router.get("/crypto/addresses", requireAuth(), async (_req: Request, res: Response) => {
-  try {
-    const enabled = await pool.query(
-      `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_crypto_enabled'`,
-    );
-    if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
-      return res.json({
-        success: true,
-        enabled: false,
-        message: "Crypto payments coming soon — Q2 2026",
-        addresses: [],
-      });
+router.get(
+  "/crypto/addresses",
+  requireAuth(),
+  async (_req: Request, res: Response) => {
+    try {
+      const enabled = await pool.query(
+        `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_crypto_enabled'`,
+      );
+      if (
+        enabled.rows[0]?.setting_value === "false" ||
+        enabled.rows[0]?.setting_value === false
+      ) {
+        return res.json({
+          success: true,
+          enabled: false,
+          message: "Crypto payments coming soon — Q2 2026",
+          addresses: [],
+        });
+      }
+
+      const addresses = await pool.query(
+        `SELECT setting_value FROM platform_settings WHERE setting_key = 'crypto_wallet_addresses'`,
+      );
+      const wallets = addresses.rows[0]?.setting_value || {
+        BTC: null,
+        ETH: null,
+        USDT: null,
+      };
+
+      res.json({ success: true, enabled: true, addresses: wallets });
+    } catch (err: any) {
+      console.error("[PAYMENTS] Crypto addresses error:", err);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch crypto addresses" });
     }
-
-    const addresses = await pool.query(
-      `SELECT setting_value FROM platform_settings WHERE setting_key = 'crypto_wallet_addresses'`,
-    );
-    const wallets = addresses.rows[0]?.setting_value || {
-      BTC: null,
-      ETH: null,
-      USDT: null,
-    };
-
-    res.json({ success: true, enabled: true, addresses: wallets });
-  } catch (err: any) {
-    console.error("[PAYMENTS] Crypto addresses error:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch crypto addresses" });
-  }
-});
+  },
+);
 
 /**
  * POST /api/payments/crypto/deposit
@@ -1159,20 +1202,30 @@ router.post(
       const { coin, txHash, amount } = req.body;
 
       if (!coin || !["BTC", "ETH", "USDT"].includes(coin)) {
-        return res.status(400).json({ success: false, error: "Coin must be BTC, ETH, or USDT" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Coin must be BTC, ETH, or USDT" });
       }
       if (!txHash) {
-        return res.status(400).json({ success: false, error: "Transaction hash is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Transaction hash is required" });
       }
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount <= 0) {
-        return res.status(400).json({ success: false, error: "Valid amount required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Valid amount required" });
       }
 
-      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      let wallet = await pool.query(
+        `SELECT id FROM platform_wallets WHERE user_id = $1`,
+        [userId],
+      );
       if (wallet.rows.length === 0) {
         wallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`,
+          [userId],
         );
       }
 
@@ -1190,7 +1243,9 @@ router.post(
       });
     } catch (err: any) {
       console.error("[PAYMENTS] Crypto deposit error:", err);
-      res.status(500).json({ success: false, error: "Failed to submit crypto deposit" });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to submit crypto deposit" });
     }
   },
 );
@@ -1208,7 +1263,10 @@ router.get("/mobile-money/providers", async (_req: Request, res: Response) => {
     const enabled = await pool.query(
       `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`,
     );
-    if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
+    if (
+      enabled.rows[0]?.setting_value === "false" ||
+      enabled.rows[0]?.setting_value === false
+    ) {
       return res.json({
         success: true,
         enabled: false,
@@ -1223,15 +1281,40 @@ router.get("/mobile-money/providers", async (_req: Request, res: Response) => {
     const config = configResult.rows[0]?.setting_value || {};
 
     const providers = [
-      { id: "orange_money", name: "Orange Money", countries: ["CI", "SN", "ML", "CM", "BF"], enabled: config.orange_money !== false },
-      { id: "mtn_momo", name: "MTN MoMo", countries: ["GH", "UG", "CM", "CI", "RW"], enabled: config.mtn_momo !== false },
-      { id: "wave", name: "Wave", countries: ["SN", "CI", "ML", "BF", "GM"], enabled: config.wave !== false },
-      { id: "mpesa", name: "M-Pesa", countries: ["KE", "TZ", "CD", "MZ", "GH"], enabled: config.mpesa !== false },
+      {
+        id: "orange_money",
+        name: "Orange Money",
+        countries: ["CI", "SN", "ML", "CM", "BF"],
+        enabled: config.orange_money !== false,
+      },
+      {
+        id: "mtn_momo",
+        name: "MTN MoMo",
+        countries: ["GH", "UG", "CM", "CI", "RW"],
+        enabled: config.mtn_momo !== false,
+      },
+      {
+        id: "wave",
+        name: "Wave",
+        countries: ["SN", "CI", "ML", "BF", "GM"],
+        enabled: config.wave !== false,
+      },
+      {
+        id: "mpesa",
+        name: "M-Pesa",
+        countries: ["KE", "TZ", "CD", "MZ", "GH"],
+        enabled: config.mpesa !== false,
+      },
     ];
 
     res.json({ success: true, enabled: true, providers });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch Mobile Money providers" });
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: "Failed to fetch Mobile Money providers",
+      });
   }
 });
 
@@ -1248,31 +1331,54 @@ router.post(
       const { direction, amount, provider, phoneNumber, currency } = req.body;
 
       if (!direction || !["deposit", "withdrawal"].includes(direction)) {
-        return res.status(400).json({ success: false, error: "Direction must be 'deposit' or 'withdrawal'" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Direction must be 'deposit' or 'withdrawal'",
+          });
       }
-      if (!provider || !["orange_money", "mtn_momo", "wave", "mpesa"].includes(provider)) {
-        return res.status(400).json({ success: false, error: "Invalid Mobile Money provider" });
+      if (
+        !provider ||
+        !["orange_money", "mtn_momo", "wave", "mpesa"].includes(provider)
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid Mobile Money provider" });
       }
       if (!phoneNumber) {
-        return res.status(400).json({ success: false, error: "Phone number is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Phone number is required" });
       }
 
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount < 1) {
-        return res.status(400).json({ success: false, error: "Minimum amount is 1" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Minimum amount is 1" });
       }
 
       const enabled = await pool.query(
         `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`,
       );
-      if (enabled.rows[0]?.setting_value === "false" || enabled.rows[0]?.setting_value === false) {
-        return res.status(403).json({ success: false, error: "Mobile Money is not yet available" });
+      if (
+        enabled.rows[0]?.setting_value === "false" ||
+        enabled.rows[0]?.setting_value === false
+      ) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Mobile Money is not yet available" });
       }
 
-      let wallet = await pool.query(`SELECT id FROM platform_wallets WHERE user_id = $1`, [userId]);
+      let wallet = await pool.query(
+        `SELECT id FROM platform_wallets WHERE user_id = $1`,
+        [userId],
+      );
       if (wallet.rows.length === 0) {
         wallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`, [userId],
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id`,
+          [userId],
         );
       }
 
@@ -1280,19 +1386,32 @@ router.post(
         `INSERT INTO bank_transfer_requests (user_id, wallet_id, direction, amount, currency, bank_reference, status)
          VALUES ($1, $2, $3, $4, $5, $6, 'pending')
          RETURNING id, status, created_at`,
-        [userId, wallet.rows[0].id, direction, txnAmount, currency || "XOF", `${provider}:${phoneNumber}`],
+        [
+          userId,
+          wallet.rows[0].id,
+          direction,
+          txnAmount,
+          currency || "XOF",
+          `${provider}:${phoneNumber}`,
+        ],
       );
 
       res.status(201).json({
         success: true,
-        message: direction === "deposit"
-          ? `Send ${txnAmount} ${currency || "XOF"} via ${provider.replace("_", " ")} to complete your deposit. Admin will credit your wallet.`
-          : `Withdrawal request submitted. Funds will be sent to ${phoneNumber} via ${provider.replace("_", " ")}.`,
+        message:
+          direction === "deposit"
+            ? `Send ${txnAmount} ${currency || "XOF"} via ${provider.replace("_", " ")} to complete your deposit. Admin will credit your wallet.`
+            : `Withdrawal request submitted. Funds will be sent to ${phoneNumber} via ${provider.replace("_", " ")}.`,
         request: result.rows[0],
       });
     } catch (err: any) {
       console.error("[PAYMENTS] Mobile Money error:", err);
-      res.status(500).json({ success: false, error: "Failed to process Mobile Money request" });
+      res
+        .status(500)
+        .json({
+          success: false,
+          error: "Failed to process Mobile Money request",
+        });
     }
   },
 );
@@ -1319,7 +1438,9 @@ router.get(
       res.json({ success: true, settings: result.rows });
     } catch (err: any) {
       console.error("[PAYMENTS] Admin settings fetch error:", err);
-      res.status(500).json({ success: false, error: "Failed to fetch settings" });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch settings" });
     }
   },
 );
@@ -1338,7 +1459,9 @@ router.put(
       const adminId = parseInt(req.user!.userId);
 
       if (value === undefined) {
-        return res.status(400).json({ success: false, error: "Value is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Value is required" });
       }
 
       // Upsert the setting
@@ -1354,7 +1477,9 @@ router.put(
       res.json({ success: true, setting: result.rows[0] });
     } catch (err: any) {
       console.error("[PAYMENTS] Admin settings update error:", err);
-      res.status(500).json({ success: false, error: "Failed to update setting" });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to update setting" });
     }
   },
 );
@@ -1364,7 +1489,7 @@ router.put(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TIER_PRICES: Record<string, number> = {
-  premium: 29.99,    // $29.99/month
+  premium: 29.99, // $29.99/month
   enterprise: 99.99, // $99.99/month
 };
 
@@ -1436,10 +1561,17 @@ router.post(
       const { businessId, tier } = req.body;
 
       if (!businessId || !tier) {
-        return res.status(400).json({ success: false, error: "businessId and tier are required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "businessId and tier are required" });
       }
       if (!TIER_PRICES[tier]) {
-        return res.status(400).json({ success: false, error: "Tier must be 'premium' or 'enterprise'" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Tier must be 'premium' or 'enterprise'",
+          });
       }
 
       // Verify business belongs to user
@@ -1448,7 +1580,12 @@ router.post(
         [businessId, userId],
       );
       if (biz.rows.length === 0) {
-        return res.status(404).json({ success: false, error: "Business not found or not owned by you" });
+        return res
+          .status(404)
+          .json({
+            success: false,
+            error: "Business not found or not owned by you",
+          });
       }
 
       const price = TIER_PRICES[tier];
@@ -1458,7 +1595,10 @@ router.post(
         `SELECT id, balance FROM platform_wallets WHERE user_id = $1`,
         [userId],
       );
-      if (wallet.rows.length === 0 || parseFloat(wallet.rows[0].balance) < price) {
+      if (
+        wallet.rows.length === 0 ||
+        parseFloat(wallet.rows[0].balance) < price
+      ) {
         return res.status(400).json({
           success: false,
           error: `Insufficient wallet balance. Need $${price}, have $${wallet.rows[0]?.balance || "0.00"}`,
@@ -1468,7 +1608,9 @@ router.post(
       const walletId = wallet.rows[0].id;
       const balanceBefore = parseFloat(wallet.rows[0].balance);
       const balanceAfter = balanceBefore - price;
-      const expiresAt = new Date(Date.now() + TIER_DURATION_DAYS * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(
+        Date.now() + TIER_DURATION_DAYS * 24 * 60 * 60 * 1000,
+      );
 
       // Transaction: debit wallet + upgrade tier
       await pool.query("BEGIN");

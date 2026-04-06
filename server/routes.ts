@@ -41,6 +41,10 @@ import gamesRouter from "./routes/games";
 import paypalRouter from "./routes/paypal";
 import listenerRouter from "./routes/listener";
 import beatmakerRouter from "./routes/beatmaker";
+import intentSearchRouter from "./routes/intent-search";
+import migrateRouter from "./routes/migrate";
+import escrowRouter from "./routes/escrow";
+import geoSeoRouter from "./routes/geo-seo";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -291,6 +295,10 @@ export async function registerRoutes(app: Express) {
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
   app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
   app.use("/api/beatmaker", beatmakerRouter); // Beatmaker Studio — production requests & briefs
+  app.use("/api/search", intentSearchRouter); // Intent Search — Shared Brain AI search endpoint
+  app.use("/api/migrate", migrateRouter); // Market Raider — competitor scraping & import
+  app.use("/api/escrow", escrowRouter); // Escrow — trustless transaction engine
+  app.use("/api/seo", geoSeoRouter); // GEO SEO — JSON-LD, sitemap, robots.txt
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

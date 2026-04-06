@@ -127,7 +127,9 @@ export function requireBusinessTier(minimumTier: string) {
     try {
       const businessId = req.params.businessId || req.body.businessId;
       if (!businessId) {
-        return res.status(400).json({ success: false, error: "businessId is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "businessId is required" });
       }
 
       const result = await pool.query(
@@ -135,7 +137,9 @@ export function requireBusinessTier(minimumTier: string) {
         [businessId],
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ success: false, error: "Business not found" });
+        return res
+          .status(404)
+          .json({ success: false, error: "Business not found" });
       }
 
       const biz = result.rows[0];
@@ -145,7 +149,9 @@ export function requireBusinessTier(minimumTier: string) {
       if (biz.tier_expires_at && new Date(biz.tier_expires_at) < new Date()) {
         effectiveTier = "free";
         // Auto-downgrade expired tiers
-        await pool.query(`UPDATE businesses SET tier = 'free' WHERE id = $1`, [businessId]);
+        await pool.query(`UPDATE businesses SET tier = 'free' WHERE id = $1`, [
+          businessId,
+        ]);
       }
 
       const bizTierLevel = BUSINESS_TIER_ORDER[effectiveTier] ?? 0;

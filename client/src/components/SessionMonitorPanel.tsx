@@ -54,7 +54,11 @@ function timeAgo(dateStr: string | null): string {
 function getDeviceIcon(device: string | null) {
   if (!device) return <Monitor className="h-4 w-4" />;
   const lower = device.toLowerCase();
-  if (lower.includes("iphone") || lower.includes("android") || lower.includes("mobile"))
+  if (
+    lower.includes("iphone") ||
+    lower.includes("android") ||
+    lower.includes("mobile")
+  )
     return <Smartphone className="h-4 w-4" />;
   return <Monitor className="h-4 w-4" />;
 }
@@ -66,7 +70,9 @@ export function SessionMonitorPanel() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-sessions"],
     queryFn: async () => {
-      const res = await fetch("/auth/admin/sessions", { credentials: "include" });
+      const res = await fetch("/auth/admin/sessions", {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch sessions");
       return res.json();
     },
@@ -113,7 +119,9 @@ export function SessionMonitorPanel() {
               <Shield className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-100">{totalSessions}</p>
+              <p className="text-2xl font-bold text-slate-100">
+                {totalSessions}
+              </p>
               <p className="text-xs text-slate-400">Active Sessions</p>
             </div>
           </CardContent>
@@ -153,7 +161,8 @@ export function SessionMonitorPanel() {
               Active Sessions Monitor
             </CardTitle>
             <CardDescription className="text-slate-400">
-              Real-time view of all authenticated sessions. Revoke suspicious sessions instantly.
+              Real-time view of all authenticated sessions. Revoke suspicious
+              sessions instantly.
             </CardDescription>
           </div>
           <Button
@@ -179,7 +188,11 @@ export function SessionMonitorPanel() {
               <AlertCircle className="h-8 w-8 mx-auto mb-2" />
               <p>Failed to load sessions. Make sure the table exists.</p>
               <p className="text-xs mt-1 text-slate-500">
-                Run <code className="bg-white/5 px-1 rounded">node _push_session_tables.cjs</code> if needed.
+                Run{" "}
+                <code className="bg-white/5 px-1 rounded">
+                  node _push_session_tables.cjs
+                </code>{" "}
+                if needed.
               </p>
             </div>
           )}
@@ -188,14 +201,19 @@ export function SessionMonitorPanel() {
             <div className="text-center py-12 text-slate-400">
               <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No active sessions found.</p>
-              <p className="text-xs mt-1">Sessions will appear here after users log in.</p>
+              <p className="text-xs mt-1">
+                Sessions will appear here after users log in.
+              </p>
             </div>
           )}
 
           {!isLoading && sessions.length > 0 && (
             <div className="space-y-3">
               {Object.entries(byUser).map(([userKey, userSessions]) => (
-                <div key={userKey} className="rounded-lg border border-white/10 bg-white/[0.02] overflow-hidden">
+                <div
+                  key={userKey}
+                  className="rounded-lg border border-white/10 bg-white/[0.02] overflow-hidden"
+                >
                   {/* User header */}
                   <div className="px-4 py-2.5 bg-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -206,7 +224,8 @@ export function SessionMonitorPanel() {
                         <Badge
                           variant="outline"
                           className={
-                            userSessions[0].role === "superuser" || userSessions[0].role === "admin"
+                            userSessions[0].role === "superuser" ||
+                            userSessions[0].role === "admin"
                               ? "border-purple-500/50 text-purple-300 text-[10px]"
                               : "border-slate-500/50 text-slate-400 text-[10px]"
                           }

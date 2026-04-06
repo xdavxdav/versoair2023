@@ -6,6 +6,8 @@ import {
   getConnectorStatuses,
   runAllConnectors,
 } from "../services/data-connectors";
+import { parseUserIntent } from "../services/intent-parser";
+import { searchRelevantBusinesses } from "../services/knowledge-injector";
 
 const router = Router();
 
@@ -91,6 +93,95 @@ router.post("/ask", async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: "VersoAI grounded search is temporarily unavailable.",
+    });
+  }
+});
+
+// ─── POST /api/ai/smart-chat — Intent-enriched chat (Shared Brain) ───────────
+router.post("/smart-chat", async (req: Request, res: Response) => {
+  try {
+    const parsed = chatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request: " + parsed.error.issues[0]?.message,
+      });
+    }
+
+    const { messages } = parsed.data;
+    const userRole = req.user?.role;
+    const lastUserMsg =
+      [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+    // Parse intent from the last user message
+    const intent = await parseUserIntent(lastUserMsg);
+
+    // If intent identifies a sector or emergency, ground with DB results
+    let knowledgeContext = "";
+    let intentSources: Array<{ name: string; snippet: string }> = [];
+
+    if (intent.sector || intent.urgency >= 5 || intent.keywords.length > 0) {
+      try {
+        const knowledge = await searchRelevantBusinesses(intent, 5);
+        if (knowledge.businesses.length > 0) {
+          knowledgeContext =
+            "\n\n[INTENT-GROUNDED RESULTS — real businesses matching user intent]\n" +
+            `Detected sector: ${intent.sectorLabel || "general"} | Urgency: ${intent.urgency}/10 | Location: ${intent.location || "any"}\n` +
+            knowledge.businesses
+              .map(
+                (b) =>
+                  `• ${b.name} (${b.categoryName}) — ${b.city || b.country || "N/A"} | ★${(b.rating ?? 0).toFixed(1)} | Tier: ${b.tier || "free"}` +
+                  (b.isVerified ? " ✅ Verified" : ""),
+              )
+              .join("\n") +
+            "\n[/INTENT-GROUNDED RESULTS]";
+
+          intentSources = knowledge.businesses.map((b) => ({
+            name: b.name,
+            snippet: `${b.categoryName} | ${b.city || b.country || ""} | ★${(b.rating ?? 0).toFixed(1)}`,
+          }));
+        }
+
+        if (knowledge.isEmergency && knowledge.emergencyMessage) {
+          knowledgeContext += `\n\n🚨 EMERGENCY DETECTED: ${knowledge.emergencyMessage}`;
+        }
+      } catch (err: any) {
+        console.warn(
+          "[VersoAI] Intent knowledge injection failed:",
+          err.message,
+        );
+      }
+    }
+
+    // Inject intent context into the last user message for the LLM
+    const enrichedMessages = messages.map((m, i) => {
+      if (i === messages.length - 1 && m.role === "user" && knowledgeContext) {
+        return { ...m, content: m.content + knowledgeContext };
+      }
+      return m;
+    });
+
+    const result = await chat(enrichedMessages, userRole);
+
+    return res.json({
+      success: true,
+      reply: result.reply,
+      provider: result.provider,
+      sources: intentSources.length > 0 ? intentSources : result.sources,
+      searchMethod: result.searchMethod,
+      intent: {
+        sector: intent.sector,
+        sectorLabel: intent.sectorLabel,
+        urgency: intent.urgency,
+        location: intent.location,
+        confidence: intent.confidence,
+      },
+    });
+  } catch (err: any) {
+    console.error("[VersoAI] /api/ai/smart-chat error:", err?.message ?? err);
+    return res.status(500).json({
+      success: false,
+      error: "VersoAI smart chat is temporarily unavailable.",
     });
   }
 });

@@ -55,9 +55,11 @@ export default function News() {
               forecast an unprecedented wave of automation and smarter
               decision-making.
             </p>
-            <Button className="bg-primary text-white px-6 py-2 hover:bg-primary/90">
-              Read Full redaction
-            </Button>
+            <Link href="/services">
+              <Button className="bg-primary text-white px-6 py-2 hover:bg-primary/90">
+                Read Full redaction
+              </Button>
+            </Link>
           </motion.div>
 
           {/* Side stories */}
@@ -154,7 +156,9 @@ export default function News() {
                   network intelligence to help businesses make location-based
                   decisions.
                 </p>
-                <Button variant="outline">Read More</Button>
+                <Link href="/businesses-directory">
+                  <Button variant="outline">Read More</Button>
+                </Link>
               </div>
             </motion.div>
 
@@ -181,7 +185,9 @@ export default function News() {
                   analytics, music performance metrics, and entertainment sector
                   business intelligence tools.
                 </p>
-                <Button variant="outline">Learn More</Button>
+                <Link href="/stream">
+                  <Button variant="outline">Learn More</Button>
+                </Link>
               </div>
             </motion.div>
           </motion.div>
@@ -352,13 +358,15 @@ export default function News() {
                 E-commerce analytics show 35% growth in mobile transactions and
                 increased demand for real-time inventory tracking.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-blue-700 border-blue-300"
-              >
-                Read Report
-              </Button>
+              <Link href="/commerce">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-700 border-blue-300"
+                >
+                  Read Report
+                </Button>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -373,13 +381,15 @@ export default function News() {
                 Hotel occupancy rates reaching pre-2020 levels with focus on
                 personalized guest experiences and operational efficiency.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-green-700 border-green-300"
-              >
-                View Data
-              </Button>
+              <Link href="/hotellerie">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-700 border-green-300"
+                >
+                  View Data
+                </Button>
+              </Link>
             </motion.div>
 
             <motion.div
@@ -394,13 +404,15 @@ export default function News() {
                 Financial services adopting AI-driven risk assessment and
                 real-time fraud detection systems.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-purple-700 border-purple-300"
-              >
-                Learn More
-              </Button>
+              <Link href="/finances">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-purple-700 border-purple-300"
+                >
+                  Learn More
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>
