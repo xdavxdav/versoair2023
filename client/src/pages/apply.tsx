@@ -87,28 +87,8 @@ const PORTALS: Portal[] = [
     ],
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
-    redirectPath: "/",
+    redirectPath: "/dashboard",
     badge: "Free",
-  },
-  {
-    id: "artist",
-    name: "Artist / Music Label",
-    description:
-      "Join Verso Air™ Music Label — upload tracks, track royalties, and compete in StreamRoyale.",
-    icon: Music,
-    color: "purple",
-    gradient: "from-purple-500 to-pink-500",
-    features: [
-      "Upload unlimited tracks",
-      "Real-time streaming analytics",
-      "StreamRoyale competition",
-      "Royalty payouts",
-      "Artist profile & badges",
-    ],
-    registerEndpoint: "/auth/artist/register",
-    loginEndpoint: "/auth/artist/login",
-    redirectPath: "/artist-portal",
-    badge: "Creator",
   },
   {
     id: "subscriber",
@@ -133,7 +113,7 @@ const PORTALS: Portal[] = [
   },
   {
     id: "community",
-    name: "Community / Blog",
+    name: "Artisans / Community",
     description:
       "Join the Verso Air community — write blog posts, connect with others, and share insights.",
     icon: MessageSquare,
@@ -150,26 +130,6 @@ const PORTALS: Portal[] = [
     loginEndpoint: "/auth/community/login",
     redirectPath: "/artisans-portal",
     badge: "Community",
-  },
-  {
-    id: "streamer",
-    name: "Streamer / Listener",
-    description:
-      "Stream music, play Arcade duels, follow artists, and enjoy the full Verso Air audio experience — no business account needed.",
-    icon: Headphones,
-    color: "fuchsia",
-    gradient: "from-fuchsia-500 to-purple-600",
-    features: [
-      "Unlimited music streaming",
-      "Arcade PvP duels — free access",
-      "Follow & support artists",
-      "Playlists & listening history",
-      "Community interactions",
-    ],
-    registerEndpoint: "/auth/register",
-    loginEndpoint: "/auth/login",
-    redirectPath: "/stream",
-    badge: "Free",
   },
   {
     id: "business",
@@ -210,6 +170,50 @@ const PORTALS: Portal[] = [
     loginEndpoint: "/auth/login",
     redirectPath: "/services/contractors",
     badge: "Contractor",
+  },
+];
+
+// Musical Universe portals — Artist + Streamer grouped together
+const MUSICAL_PORTALS: Portal[] = [
+  {
+    id: "artist",
+    name: "Artist / Music Label",
+    description:
+      "Join Verso Air™ Music Label — upload tracks, track royalties, and compete in StreamRoyale.",
+    icon: Music,
+    color: "purple",
+    gradient: "from-purple-500 to-pink-500",
+    features: [
+      "Upload unlimited tracks",
+      "Real-time streaming analytics",
+      "StreamRoyale competition",
+      "Royalty payouts",
+      "Artist profile & badges",
+    ],
+    registerEndpoint: "/auth/artist/register",
+    loginEndpoint: "/auth/artist/login",
+    redirectPath: "/artist-portal",
+    badge: "Creator",
+  },
+  {
+    id: "streamer",
+    name: "Streamer / Listener",
+    description:
+      "Stream music, play Arcade duels, follow artists, and enjoy the full Verso Air audio experience.",
+    icon: Headphones,
+    color: "fuchsia",
+    gradient: "from-fuchsia-500 to-purple-600",
+    features: [
+      "Unlimited music streaming",
+      "Arcade PvP duels — free access",
+      "Follow & support artists",
+      "Playlists & listening history",
+      "Community interactions",
+    ],
+    registerEndpoint: "/auth/register",
+    loginEndpoint: "/auth/login",
+    redirectPath: "/stream",
+    badge: "Free",
   },
 ];
 
@@ -257,6 +261,7 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [musicUniverseOpen, setMusicUniverseOpen] = useState(false);
 
   // ── Auth-aware portal access ──
   const { user } = useAuthContext();
@@ -499,6 +504,14 @@ export default function ApplyPage() {
                   const accessId = PORTAL_ACCESS_MAP[p.id];
                   return accessId ? !access[accessId] : true;
                 });
+                const eligibleMusic = MUSICAL_PORTALS.filter((p) => {
+                  const accessId = PORTAL_ACCESS_MAP[p.id];
+                  return accessId ? access[accessId] : false;
+                });
+                const ineligibleMusic = MUSICAL_PORTALS.filter((p) => {
+                  const accessId = PORTAL_ACCESS_MAP[p.id];
+                  return accessId ? !access[accessId] : true;
+                });
 
                 return (
                   <>
@@ -560,6 +573,179 @@ export default function ApplyPage() {
                         </div>
                       </>
                     )}
+
+                    {/* ── Musical Universe (auth'd) ── */}
+                    <div className="max-w-[95vw] mx-auto mb-10">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <Card
+                          className={`relative overflow-hidden border-white/10 transition-all duration-500 cursor-pointer group ${
+                            musicUniverseOpen
+                              ? "bg-gradient-to-br from-purple-900/40 via-fuchsia-900/30 to-purple-900/40 border-purple-500/30"
+                              : "bg-white/5 hover:border-purple-400/40"
+                          }`}
+                          onClick={() =>
+                            !musicUniverseOpen && setMusicUniverseOpen(true)
+                          }
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-fuchsia-600 opacity-0 group-hover:opacity-10 transition-opacity" />
+
+                          <CardHeader>
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600">
+                                <Music className="h-6 w-6 text-white" />
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className="bg-purple-500/20 text-purple-300 border-purple-500/30"
+                              >
+                                🎵{" "}
+                                {eligibleMusic.length > 0
+                                  ? `${eligibleMusic.length} Accessible`
+                                  : "2 Portals"}
+                              </Badge>
+                            </div>
+                            <CardTitle className="text-white text-xl flex items-center gap-2">
+                              MUSICAL UNIVERSE
+                              <Sparkles className="h-4 w-4 text-purple-400" />
+                            </CardTitle>
+                            <CardDescription className="text-white/60">
+                              {musicUniverseOpen
+                                ? "Choose your path — create music or enjoy the experience."
+                                : "Enter the music realm — Artists & Streamers unite here."}
+                            </CardDescription>
+                          </CardHeader>
+
+                          {!musicUniverseOpen && (
+                            <CardContent>
+                              <Button className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:opacity-90 text-white">
+                                Enter Musical Universe
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                              </Button>
+                            </CardContent>
+                          )}
+
+                          {musicUniverseOpen && (
+                            <CardContent>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
+                                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                              >
+                                {MUSICAL_PORTALS.map((portal, index) => {
+                                  const accessId = PORTAL_ACCESS_MAP[portal.id];
+                                  const isEligible = accessId
+                                    ? access[accessId]
+                                    : false;
+
+                                  return (
+                                    <motion.div
+                                      key={portal.id}
+                                      initial={{ opacity: 0, scale: 0.9 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ delay: index * 0.15 + 0.2 }}
+                                    >
+                                      <Card
+                                        className={`relative overflow-hidden transition-all duration-300 h-full ${
+                                          isEligible
+                                            ? "bg-white/5 border-white/10 hover:border-white/30 cursor-pointer group"
+                                            : "bg-white/[0.02] border-white/5 opacity-60"
+                                        }`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isEligible) {
+                                            setLocation(portal.redirectPath);
+                                          }
+                                        }}
+                                      >
+                                        <div
+                                          className={`absolute inset-0 bg-gradient-to-br ${portal.gradient} opacity-0 ${isEligible ? "group-hover:opacity-10" : ""} transition-opacity`}
+                                        />
+                                        <CardHeader>
+                                          <div className="flex items-start justify-between mb-2">
+                                            <div
+                                              className={`p-3 rounded-xl bg-gradient-to-br ${isEligible ? portal.gradient : "from-white/5 to-white/10"}`}
+                                            >
+                                              <portal.icon
+                                                className={`h-6 w-6 ${isEligible ? "text-white" : "text-white/30"}`}
+                                              />
+                                            </div>
+                                            {isEligible ? (
+                                              portal.badge && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="bg-white/10 text-white/80"
+                                                >
+                                                  {portal.badge}
+                                                </Badge>
+                                              )
+                                            ) : (
+                                              <span className="flex items-center gap-1 text-[10px] font-medium text-white/30 px-2 py-0.5 rounded-full border border-white/10">
+                                                <Lock className="w-3 h-3" />
+                                                Locked
+                                              </span>
+                                            )}
+                                          </div>
+                                          <CardTitle
+                                            className={`text-lg ${isEligible ? "text-white" : "text-white/40"}`}
+                                          >
+                                            {portal.name}
+                                          </CardTitle>
+                                          <CardDescription
+                                            className={`text-sm ${isEligible ? "text-white/60" : "text-white/25"}`}
+                                          >
+                                            {portal.description}
+                                          </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                          {isEligible ? (
+                                            <Button
+                                              className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
+                                            >
+                                              Enter Portal
+                                              <ArrowRight className="h-4 w-4 ml-2" />
+                                            </Button>
+                                          ) : (
+                                            <Button
+                                              variant="outline"
+                                              className="w-full border-white/10 bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedPortal(portal);
+                                              }}
+                                            >
+                                              Apply for Access
+                                              <ArrowRight className="h-4 w-4 ml-2" />
+                                            </Button>
+                                          )}
+                                        </CardContent>
+                                      </Card>
+                                    </motion.div>
+                                  );
+                                })}
+                              </motion.div>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="mt-4 text-white/40 hover:text-white/70 w-full"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMusicUniverseOpen(false);
+                                }}
+                              >
+                                <ChevronLeft className="h-3 w-3 mr-1" />
+                                Collapse
+                              </Button>
+                            </CardContent>
+                          )}
+                        </Card>
+                      </motion.div>
+                    </div>
 
                     {/* ── Ineligible portals (greyed out) ── */}
                     {ineligible.length > 0 && (
@@ -793,6 +979,174 @@ export default function ApplyPage() {
                 </Card>
               </motion.div>
             ))}
+
+            {/* ── Musical Universe Revealing Card ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: PORTALS.length * 0.1 }}
+              className={musicUniverseOpen ? "md:col-span-2 lg:col-span-3" : ""}
+            >
+              <Card
+                className={`relative overflow-hidden border-white/10 transition-all duration-500 cursor-pointer group h-full ${
+                  musicUniverseOpen
+                    ? "bg-gradient-to-br from-purple-900/40 via-fuchsia-900/30 to-purple-900/40 border-purple-500/30"
+                    : "bg-white/5 hover:border-purple-400/40"
+                }`}
+                onClick={() => !musicUniverseOpen && setMusicUniverseOpen(true)}
+              >
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-fuchsia-600 opacity-0 group-hover:opacity-10 transition-opacity" />
+
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600">
+                      <Music className="h-6 w-6 text-white" />
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-500/20 text-purple-300 border-purple-500/30"
+                    >
+                      🎵 2 Portals
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-white text-xl flex items-center gap-2">
+                    MUSICAL UNIVERSE
+                    <Sparkles className="h-4 w-4 text-purple-400" />
+                  </CardTitle>
+                  <CardDescription className="text-white/60">
+                    {musicUniverseOpen
+                      ? "Choose your path — create music or enjoy the experience."
+                      : "Enter the music realm — Artists & Streamers unite here."}
+                  </CardDescription>
+                </CardHeader>
+
+                {!musicUniverseOpen && (
+                  <CardContent>
+                    <Button className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:opacity-90 text-white">
+                      Enter Musical Universe
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                )}
+
+                {/* Revealed sub-portals */}
+                {musicUniverseOpen && (
+                  <CardContent>
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                      {MUSICAL_PORTALS.map((portal, index) => (
+                        <motion.div
+                          key={portal.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.15 + 0.2 }}
+                        >
+                          <Card
+                            className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPortal(portal);
+                            }}
+                          >
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${portal.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
+                            />
+                            <CardHeader>
+                              <div className="flex items-start justify-between mb-2">
+                                <div
+                                  className={`p-3 rounded-xl bg-gradient-to-br ${portal.gradient}`}
+                                >
+                                  <portal.icon className="h-6 w-6 text-white" />
+                                </div>
+                                {portal.badge && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-white/10 text-white/80"
+                                  >
+                                    {portal.badge}
+                                  </Badge>
+                                )}
+                              </div>
+                              <CardTitle className="text-white text-lg">
+                                {portal.name}
+                              </CardTitle>
+                              <CardDescription className="text-white/60 text-sm">
+                                <span
+                                  dangerouslySetInnerHTML={{
+                                    __html: portal.description
+                                      .replace(
+                                        /StreamRoyale/g,
+                                        '<span class="notranslate">StreamRoyale</span>',
+                                      )
+                                      .replace(
+                                        /Verso Air™/g,
+                                        '<span class="notranslate">Verso Air™</span>',
+                                      )
+                                      .replace(
+                                        /Verso Air/g,
+                                        '<span class="notranslate">Verso Air</span>',
+                                      ),
+                                  }}
+                                />
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <ul className="space-y-1.5 mb-4">
+                                {portal.features.map((feature, i) => (
+                                  <li
+                                    key={i}
+                                    className="flex items-center gap-2 text-sm text-white/70"
+                                  >
+                                    <Check className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+                                    <span
+                                      dangerouslySetInnerHTML={{
+                                        __html: feature
+                                          .replace(
+                                            /StreamRoyale/g,
+                                            '<span class="notranslate">StreamRoyale</span>',
+                                          )
+                                          .replace(
+                                            /Verso Air/g,
+                                            '<span class="notranslate">Verso Air</span>',
+                                          ),
+                                      }}
+                                    />
+                                  </li>
+                                ))}
+                              </ul>
+                              <Button
+                                className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
+                              >
+                                Get Started
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-4 text-white/40 hover:text-white/70 w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMusicUniverseOpen(false);
+                      }}
+                    >
+                      <ChevronLeft className="h-3 w-3 mr-1" />
+                      Collapse
+                    </Button>
+                  </CardContent>
+                )}
+              </Card>
+            </motion.div>
           </div>
 
           {/* Already have an account? */}

@@ -213,6 +213,10 @@ import { AdvertisingSection } from "@/components/sections/AdvertisingSection";
 import { ArtistsSection } from "@/components/sections/ArtistsSection";
 import { UsersSection } from "@/components/sections/UsersSection";
 import { AnalyticsSection } from "@/components/sections/AnalyticsSection";
+import { TSRWhitelistSection } from "@/components/sections/TSRWhitelistSection";
+import { ContractorApplicationsSection } from "@/components/sections/ContractorApplicationsSection";
+import { GeoActionQueueSection } from "@/components/sections/GeoActionQueueSection";
+import { ContractorAssignmentSection } from "@/components/sections/ContractorAssignmentSection";
 import { useCountry } from "@/contexts/CountryContext";
 
 const API_BASE_URL = "";
@@ -434,6 +438,30 @@ const MAIN_SECTIONS = [
     label: "Email / SMTP",
     icon: Mail,
     description: "Configure email delivery",
+  },
+  {
+    id: "tsr-whitelist",
+    label: "TSR Whitelist",
+    icon: Shield,
+    description: "Technical service reps",
+  },
+  {
+    id: "contractor-apps",
+    label: "Contractor Apps",
+    icon: UserPlus,
+    description: "Review contractor applications",
+  },
+  {
+    id: "geo-queue",
+    label: "Geo-Action Queue",
+    icon: Globe,
+    description: "Geographic action requests",
+  },
+  {
+    id: "contractor-assign",
+    label: "Contracts",
+    icon: Briefcase,
+    description: "Assign & manage contracts",
   },
 ];
 
@@ -6916,6 +6944,14 @@ export default function AdminDashboard() {
             )}
             {activeSection === "security" && <SecuritySection />}
             {activeSection === "smtp" && <SmtpSection />}
+            {activeSection === "tsr-whitelist" && <TSRWhitelistSection />}
+            {activeSection === "contractor-apps" && (
+              <ContractorApplicationsSection />
+            )}
+            {activeSection === "geo-queue" && <GeoActionQueueSection />}
+            {activeSection === "contractor-assign" && (
+              <ContractorAssignmentSection />
+            )}
 
             {/* Dashboard Stats - shown at the bottom for reference */}
             {activeSection === "dashboard" && (

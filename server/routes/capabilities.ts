@@ -78,6 +78,11 @@ export async function computeUserCapabilities(userId: number) {
   ) {
     portals.add("community");
   }
+  // TSR (Technical Service Representative) always gets geo-admin
+  if (user.role === "tsr") {
+    portals.add("geo-admin");
+  }
+
   // Admin/moderator/superuser get all portals
   if (["admin", "moderator", "superuser"].includes(user.role)) {
     portals.add("artist");

@@ -23,6 +23,9 @@ import {
   Sparkles,
   Navigation,
   ArrowRight,
+  Zap,
+  Eye,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,50 +89,58 @@ interface Business {
   performance_score?: string;
   latitude?: string;
   longitude?: string;
+  logo_url?: string; // optional for future avatar
   [key: string]: any;
 }
 
-/* ─── Industry UI helpers ────────────────────────────────────────── */
+/* ─── Industry UI helpers with emoji avatars ────────────────────────── */
 
 const industryMap: Record<
   string,
-  { icon: string; gradient: string; label: string }
+  { icon: string; gradient: string; label: string; avatarEmoji: string }
 > = {
   commerce: {
     icon: "🛍️",
     gradient: "from-amber-500/70 via-orange-500/70 to-yellow-500/70",
     label: "Commerce",
+    avatarEmoji: "🛒",
   },
   hotellerie: {
     icon: "🏨",
     gradient: "from-indigo-500/70 via-blue-500/70 to-cyan-500/70",
     label: "Hospitality",
+    avatarEmoji: "🏨",
   },
   batiment: {
     icon: "🏗️",
     gradient: "from-emerald-500/70 via-green-500/70 to-teal-500/70",
     label: "Construction",
+    avatarEmoji: "🔨",
   },
   automobile: {
     icon: "🚗",
     gradient: "from-slate-500/70 via-slate-400/70 to-slate-300/70",
     label: "Automobile",
+    avatarEmoji: "🚗",
   },
   finance: {
     icon: "💰",
     gradient: "from-lime-500/70 via-emerald-500/70 to-green-500/70",
     label: "Finance",
+    avatarEmoji: "💵",
   },
   divertissement: {
     icon: "🎭",
     gradient: "from-pink-500/70 via-fuchsia-500/70 to-purple-500/70",
     label: "Entertainment",
+    avatarEmoji: "🎬",
   },
 };
 const defaultUI = {
   icon: "🏢",
   gradient: "from-slate-500/70 via-slate-400/70 to-slate-300/70",
   label: "Business",
+  avatarEmoji: "🏢",
 };
 
 function getIndustryUI(category: string) {
@@ -138,6 +149,23 @@ function getIndustryUI(category: string) {
     if (key.includes(k)) return v;
   }
   return defaultUI;
+}
+
+// Enhanced avatar emoji resolver based on category and business name
+function getBusinessAvatarEmoji(business: Business | undefined): string {
+  if (!business) return "🏢";
+  const category = business.category_name || business.categoryName || "";
+  const ui = getIndustryUI(category);
+  // if business name contains specific keywords, override
+  const name = business.name.toLowerCase();
+  if (name.includes("pizza") || name.includes("burger")) return "🍕";
+  if (name.includes("coffee") || name.includes("café")) return "☕";
+  if (name.includes("tech") || name.includes("digital")) return "💻";
+  if (name.includes("health") || name.includes("fitness")) return "💪";
+  if (name.includes("beauty") || name.includes("spa")) return "💄";
+  if (name.includes("hotel") || name.includes("inn")) return "🏨";
+  if (name.includes("auto") || name.includes("car")) return "🚗";
+  return ui.avatarEmoji;
 }
 
 function avgRating(reviews: Review[] = []) {
@@ -152,6 +180,82 @@ function formatDate(value?: string) {
     month: "short",
     day: "numeric",
   });
+}
+
+// Safe array helper to prevent JSON string errors
+function safeArray<T = string>(v: unknown): T[] {
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") {
+    try {
+      const p = JSON.parse(v);
+      if (Array.isArray(p)) return p;
+    } catch {}
+  }
+  return [];
+}
+
+/* ─── Futuristic Graffiti Background Component ──────────────────────── */
+function GraffitiBackground() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* Base dark gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+
+      {/* Grunge / spray texture */}
+      <div
+        className="absolute inset-0 opacity-30 mix-blend-overlay"
+        style={{
+          backgroundImage: `radial-gradient(circle at 20% 40%, rgba(255,255,255,0.08) 1px, transparent 1px)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      {/* Graffiti spray elements */}
+      <div className="absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono text-white">
+        ✪
+      </div>
+      <div className="absolute bottom-[20%] right-[3%] text-7xl opacity-10 -rotate-6 select-none text-amber-400">
+        ⨀
+      </div>
+      <div className="absolute top-[40%] right-[12%] text-6xl opacity-8 rotate-45 select-none text-cyan-400">
+        ⌘
+      </div>
+      <div className="absolute bottom-[30%] left-[8%] text-5xl opacity-8 -rotate-12 select-none text-purple-400">
+        ◈
+      </div>
+      <div className="absolute top-[70%] left-[20%] w-64 h-64 rounded-full bg-amber-500/5 blur-3xl animate-pulse" />
+      <div className="absolute top-[10%] right-[10%] w-96 h-96 rounded-full bg-purple-500/5 blur-3xl animate-pulse delay-1000" />
+
+      {/* Neon grid lines */}
+      <svg
+        className="absolute inset-0 w-full h-full opacity-10"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern
+            id="grid"
+            width="60"
+            height="60"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 60 0 L 0 0 0 60"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="0.5"
+              className="text-cyan-400"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+
+      {/* Graffiti tag mock */}
+      <div className="absolute bottom-8 right-8 font-mono text-xs text-white/5 tracking-widest select-none">
+        VERSO // AIR // DISCOVER
+      </div>
+    </div>
+  );
 }
 
 /* ─── Component ──────────────────────────────────────────────────── */
@@ -171,13 +275,24 @@ export default function BusinessDetailPage() {
     data: businessData,
     isLoading,
     isError,
+    error,
   } = useQuery<any>({
     queryKey: ["business", businessId],
     enabled: Boolean(businessId),
     queryFn: async () => {
+      console.log("[BusinessDetail] Fetching business:", businessId);
       const res = await fetch(`/api/businesses/${businessId}`);
-      if (!res.ok) throw new Error("Failed to load business");
-      return res.json();
+      if (!res.ok) {
+        console.error(
+          "[BusinessDetail] Fetch failed:",
+          res.status,
+          res.statusText,
+        );
+        throw new Error("Failed to load business");
+      }
+      const data = await res.json();
+      console.log("[BusinessDetail] Response:", data);
+      return data;
     },
   });
 
@@ -215,14 +330,21 @@ export default function BusinessDetailPage() {
 
   const business: Business | undefined = useMemo(() => {
     if (!businessData) return undefined;
-    return businessData?.business ?? businessData?.data ?? businessData;
+    const extracted =
+      businessData?.business ?? businessData?.data ?? businessData;
+    console.log(
+      "[BusinessDetail] Extracted business:",
+      extracted?.name || "MISSING",
+    );
+    return extracted;
   }, [businessData]);
 
   const attrs: Record<string, any> = business?.attributes || {};
+
   const tags = useMemo(() => {
     const set = new Set<string>();
-    (business?.tags || []).forEach((t: string) => set.add(t));
-    (attrs?.tags || []).forEach((t: string) => set.add(t));
+    safeArray(business?.tags).forEach((t) => set.add(t));
+    safeArray(attrs?.tags).forEach((t) => set.add(t));
     if (attrs?.specialization) set.add(attrs.specialization);
     return Array.from(set);
   }, [business?.tags, attrs]);
@@ -240,8 +362,11 @@ export default function BusinessDetailPage() {
   const isVerified = Boolean(business?.verified || business?.is_verified);
   const isActive = (business?.status || "active").toLowerCase() !== "inactive";
   const serviceCount =
-    business?.services?.length || (attrs?.services as string[])?.length || 0;
+    business?.services?.length || safeArray(attrs?.services).length || 0;
   const reviewCount = business?.reviews?.length || 0;
+
+  // Avatar emoji for the business
+  const avatarEmoji = getBusinessAvatarEmoji(business);
 
   const heroBlurb = useMemo(() => {
     const sector = catName || "local";
@@ -267,8 +392,9 @@ export default function BusinessDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-16 space-y-6">
+      <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100">
+        <GraffitiBackground />
+        <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-16 space-y-6">
           <Skeleton className="h-10 w-2/3 bg-white/5" />
           <Skeleton className="h-6 w-1/2 bg-white/5" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -288,21 +414,32 @@ export default function BusinessDetailPage() {
 
   /* ── Error state ─────────────────────────────────────────────── */
 
-  if (isError || !business) {
+  if (!isLoading && (isError || !business)) {
+    console.error("[BusinessDetail] Error state:", {
+      isError,
+      hasBusiness: !!business,
+      error,
+    });
     return (
-      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 items-center justify-center px-4">
-        <Card className="bg-white/5 border-white/10 max-w-md">
+      <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100 items-center justify-center px-4">
+        <GraffitiBackground />
+        <Card className="relative z-10 bg-white/5 backdrop-blur-xl border-white/10 max-w-md shadow-2xl">
           <CardHeader>
             <CardTitle className="text-slate-100">Business not found</CardTitle>
             <CardDescription className="text-slate-500">
               We couldn't load this business. It may have been removed or is
               temporarily unavailable.
+              {error && (
+                <div className="mt-2 text-xs text-red-400">
+                  Error: {String(error)}
+                </div>
+              )}
             </CardDescription>
           </CardHeader>
           <CardFooter>
             <Button
               variant="ghost"
-              className="gap-2 text-slate-200"
+              className="gap-2 text-slate-200 hover:text-amber-300"
               onClick={() => setLocation("/businesses-directory")}
             >
               <ArrowRight className="h-4 w-4" />
@@ -316,198 +453,228 @@ export default function BusinessDetailPage() {
 
   /* ── Main render ─────────────────────────────────────────────── */
 
-  return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
-      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
-        {/* ══════════════ HERO SECTION ══════════════ */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8 md:p-10">
-          <div className="flex flex-col md:flex-row md:items-start gap-6">
-            {/* Icon */}
-            <div
-              className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br ${ui.gradient} flex items-center justify-center text-4xl shadow-xl border border-white/20`}
-            >
-              {ui.icon}
-            </div>
+  // TypeScript narrowing: after the error guard above, business is guaranteed defined
+  const biz = business!;
 
-            {/* Info */}
-            <div className="flex-1 min-w-0 space-y-3">
-              {/* Name + badges */}
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-100 tracking-tight">
-                  {business.name}
-                </h1>
-                {isVerified && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <ShieldCheck className="h-6 w-6 text-emerald-400" />
-                      </TooltipTrigger>
-                      <TooltipContent>Verified Business</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {business.is_advertiser && (
-                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
-                    <Sparkles className="h-3 w-3 mr-1" /> Promoted
-                  </Badge>
-                )}
+  return (
+    <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100">
+      <GraffitiBackground />
+
+      <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
+        {/* ══════════════ HERO SECTION — Futuristic Avatar & Glassmorphism ══════════════ */}
+        <div className="group relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 hover:border-amber-500/30 hover:shadow-amber-500/10">
+          {/* Neon corner accents */}
+          <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-l-2 border-amber-500/30 rounded-tl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="absolute bottom-0 right-0 w-24 h-24 border-b-2 border-r-2 border-amber-500/30 rounded-br-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+          <div className="p-8 md:p-10">
+            <div className="flex flex-col md:flex-row md:items-start gap-6">
+              {/* Futuristic Avatar with neon ring and emoji */}
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 to-purple-500 blur-xl opacity-50 animate-pulse" />
+                <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-6xl shadow-2xl border-2 border-amber-500/50 transition-all duration-300 group-hover:scale-105 group-hover:border-amber-400">
+                  {biz.logo_url ? (
+                    <img
+                      src={biz.logo_url}
+                      alt={biz.name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="drop-shadow-lg">{avatarEmoji}</span>
+                  )}
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-slate-900 rounded-full p-1.5 border border-amber-500/30">
+                  <Camera className="h-3 w-3 text-amber-400" />
+                </div>
               </div>
 
-              {/* Star rating */}
-              {rating > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-5 w-5 ${i < Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-slate-600"}`}
-                      />
+              {/* Info */}
+              <div className="flex-1 min-w-0 space-y-3">
+                {/* Name + badges */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white via-white to-amber-200 bg-clip-text text-transparent tracking-tight">
+                    {biz.name}
+                  </h1>
+                  {isVerified && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <ShieldCheck className="h-6 w-6 text-emerald-400 drop-shadow-glow" />
+                        </TooltipTrigger>
+                        <TooltipContent>Verified Business</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {biz.is_advertiser && (
+                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 backdrop-blur-sm">
+                      <Sparkles className="h-3 w-3 mr-1" /> Promoted
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Star rating with glow */}
+                {rating > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${i < Math.round(rating) ? "fill-amber-400 text-amber-400 drop-shadow-glow" : "text-slate-600"}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium text-slate-300">
+                      {rating.toFixed(1)}
+                    </span>
+                    {reviewCount > 0 && (
+                      <span className="text-sm text-slate-500">
+                        ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Badges row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {catName && (
+                    <Badge className="bg-white/10 border-white/20 text-slate-200 backdrop-blur-sm">
+                      {ui.icon} {catName}
+                    </Badge>
+                  )}
+                  <Badge
+                    className={
+                      isActive
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 backdrop-blur-sm"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/30 backdrop-blur-sm"
+                    }
+                  >
+                    {isActive ? (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    ) : (
+                      <XCircle className="h-3 w-3 mr-1" />
+                    )}
+                    {isActive ? "Active" : "Inactive"}
+                  </Badge>
+                  {attrs.type && (
+                    <Badge className="bg-white/10 border-white/20 text-slate-300 backdrop-blur-sm">
+                      {attrs.type}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Tags */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="text-xs bg-white/5 border-white/10 text-slate-400"
+                      >
+                        <Tag className="h-3 w-3 mr-1" />
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
-                  <span className="text-sm font-medium text-slate-300">
-                    {rating.toFixed(1)}
-                  </span>
-                  {reviewCount > 0 && (
-                    <span className="text-sm text-slate-500">
-                      ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Badges row */}
-              <div className="flex flex-wrap items-center gap-2">
-                {catName && (
-                  <Badge className="bg-white/10 border-white/20 text-slate-200">
-                    {ui.icon} {catName}
-                  </Badge>
                 )}
-                <Badge
-                  className={
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                      : "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                  }
-                >
-                  {isActive ? (
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                  ) : (
-                    <XCircle className="h-3 w-3 mr-1" />
-                  )}
-                  {isActive ? "Active" : "Inactive"}
-                </Badge>
-                {attrs.type && (
-                  <Badge className="bg-white/10 border-white/20 text-slate-300">
-                    {attrs.type}
-                  </Badge>
-                )}
-              </div>
 
-              {/* Tags */}
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="text-xs bg-white/5 border-white/10 text-slate-400"
-                    >
-                      <Tag className="h-3 w-3 mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Hero blurb + CTA row */}
-              <div className="space-y-3">
-                <p className="text-slate-400 leading-relaxed max-w-2xl">
-                  {heroBlurb}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {business.phone && (
+                {/* Hero blurb + CTA row */}
+                <div className="space-y-3">
+                  <p className="text-slate-400 leading-relaxed max-w-2xl font-light">
+                    {heroBlurb}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {biz.phone && (
+                      <Button
+                        asChild
+                        size="sm"
+                        className="gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
+                      >
+                        <a href={`tel:${biz.phone}`}>
+                          <Phone className="h-4 w-4" /> Call Now
+                        </a>
+                      </Button>
+                    )}
+                    {biz.email && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 bg-white/5 border-white/10 text-slate-200 hover:bg-white/10 hover:border-amber-500/30 transition-all"
+                      >
+                        <a href={`mailto:${biz.email}`}>
+                          <Mail className="h-4 w-4" /> Email
+                        </a>
+                      </Button>
+                    )}
+                    {mapsLink && (
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-slate-300 hover:text-amber-300 hover:bg-white/5"
+                      >
+                        <a href={mapsLink} target="_blank" rel="noreferrer">
+                          <Navigation className="h-4 w-4" /> Directions
+                        </a>
+                      </Button>
+                    )}
                     <Button
-                      asChild
-                      size="sm"
-                      className="gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600"
-                    >
-                      <a href={`tel:${business.phone}`}>
-                        <Phone className="h-4 w-4" /> Call Now
-                      </a>
-                    </Button>
-                  )}
-                  {business.email && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 bg-white/5 border-white/10 text-slate-200 hover:bg-white/10"
-                    >
-                      <a href={`mailto:${business.email}`}>
-                        <Mail className="h-4 w-4" /> Email
-                      </a>
-                    </Button>
-                  )}
-                  {mapsLink && (
-                    <Button
-                      asChild
                       variant="ghost"
                       size="sm"
-                      className="gap-2 text-slate-300 hover:text-amber-300 hover:bg-white/5"
+                      className="gap-2 text-amber-300 hover:text-amber-200 hover:bg-white/5 border border-amber-500/20"
+                      onClick={() => setShowProfitModal(true)}
                     >
-                      <a href={mapsLink} target="_blank" rel="noreferrer">
-                        <Navigation className="h-4 w-4" /> Directions
-                      </a>
+                      <Sparkles className="h-4 w-4" /> Profit Window
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-amber-300 hover:text-amber-200 hover:bg-white/5"
-                    onClick={() => setShowProfitModal(true)}
-                  >
-                    <Sparkles className="h-4 w-4" /> Profit Window
-                  </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick highlight tiles */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase text-slate-500">Rating</p>
-                  <p className="text-lg font-semibold text-slate-100">
-                    {rating > 0 ? rating.toFixed(1) : "—"}
-                  </p>
-                </div>
-                <Star className="h-5 w-5 text-amber-400" />
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase text-slate-500">Services</p>
-                  <p className="text-lg font-semibold text-slate-100">
-                    {serviceCount}
-                  </p>
-                </div>
-                <Briefcase className="h-5 w-5 text-slate-300" />
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase text-slate-500">Reviews</p>
-                  <p className="text-lg font-semibold text-slate-100">
-                    {reviewCount}
-                  </p>
-                </div>
-                <MessageSquare className="h-5 w-5 text-slate-300" />
-              </CardContent>
-            </Card>
+            {/* Quick highlight tiles with futuristic stats */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm overflow-hidden relative group/stats">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 opacity-0 group-hover/stats:opacity-100 transition-opacity duration-700" />
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase text-slate-500 tracking-wider">
+                      Rating
+                    </p>
+                    <p className="text-2xl font-bold text-slate-100">
+                      {rating > 0 ? rating.toFixed(1) : "—"}
+                    </p>
+                  </div>
+                  <Star className="h-5 w-5 text-amber-400" />
+                </CardContent>
+              </Card>
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm relative group/stats">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase text-slate-500 tracking-wider">
+                      Services
+                    </p>
+                    <p className="text-2xl font-bold text-slate-100">
+                      {serviceCount}
+                    </p>
+                  </div>
+                  <Briefcase className="h-5 w-5 text-slate-300" />
+                </CardContent>
+              </Card>
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm relative group/stats">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase text-slate-500 tracking-wider">
+                      Reviews
+                    </p>
+                    <p className="text-2xl font-bold text-slate-100">
+                      {reviewCount}
+                    </p>
+                  </div>
+                  <MessageSquare className="h-5 w-5 text-slate-300" />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
 
@@ -516,16 +683,17 @@ export default function BusinessDetailPage() {
           {/* ── Left Column (2/3) ──────────────────────────────── */}
           <div className="lg:col-span-2 space-y-8">
             {/* About */}
-            {business.description && (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+            {biz.description && (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/50 via-purple-500/50 to-cyan-500/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
                 <CardHeader>
                   <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Building className="h-5 w-5 text-slate-400" /> About
+                    <Building className="h-5 w-5 text-amber-400" /> About
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-slate-300 leading-relaxed whitespace-pre-line">
-                    {business.description}
+                    {biz.description}
                   </p>
                 </CardContent>
               </Card>
@@ -533,11 +701,11 @@ export default function BusinessDetailPage() {
 
             {/* Contact & Location cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {business.address && (
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:bg-white/[0.07] transition-all">
+              {biz.address && (
+                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-amber-500/10 transition-all duration-500 hover:border-amber-500/30 group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                      <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform">
                         <MapPin className="h-5 w-5 text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -545,11 +713,11 @@ export default function BusinessDetailPage() {
                           Address
                         </p>
                         <p className="text-sm text-slate-200 mt-1">
-                          {business.address}
+                          {biz.address}
                         </p>
-                        {business.location && (
+                        {biz.location && (
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {business.location}
+                            {biz.location}
                           </p>
                         )}
                       </div>
@@ -558,11 +726,11 @@ export default function BusinessDetailPage() {
                 </Card>
               )}
 
-              {business.phone && (
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:bg-white/[0.07] transition-all">
+              {biz.phone && (
+                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:border-emerald-500/30 group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
                         <Phone className="h-5 w-5 text-emerald-400" />
                       </div>
                       <div>
@@ -570,10 +738,10 @@ export default function BusinessDetailPage() {
                           Phone
                         </p>
                         <a
-                          href={`tel:${business.phone}`}
+                          href={`tel:${biz.phone}`}
                           className="text-sm text-slate-200 hover:text-emerald-300 transition-colors mt-1 block"
                         >
-                          {business.phone}
+                          {biz.phone}
                         </a>
                       </div>
                     </div>
@@ -581,11 +749,11 @@ export default function BusinessDetailPage() {
                 </Card>
               )}
 
-              {business.email && (
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:bg-white/[0.07] transition-all">
+              {biz.email && (
+                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-rose-500/10 transition-all duration-500 hover:border-rose-500/30 group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                      <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 group-hover:scale-110 transition-transform">
                         <Mail className="h-5 w-5 text-rose-400" />
                       </div>
                       <div className="min-w-0">
@@ -593,10 +761,10 @@ export default function BusinessDetailPage() {
                           Email
                         </p>
                         <a
-                          href={`mailto:${business.email}`}
+                          href={`mailto:${biz.email}`}
                           className="text-sm text-slate-200 hover:text-rose-300 transition-colors mt-1 block truncate"
                         >
-                          {business.email}
+                          {biz.email}
                         </a>
                       </div>
                     </div>
@@ -604,11 +772,11 @@ export default function BusinessDetailPage() {
                 </Card>
               )}
 
-              {(business.created_at || business.createdAt) && (
-                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:bg-white/[0.07] transition-all">
+              {(biz.created_at || biz.createdAt) && (
+                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:border-purple-500/30 group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                      <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 group-hover:scale-110 transition-transform">
                         <Calendar className="h-5 w-5 text-purple-400" />
                       </div>
                       <div>
@@ -616,9 +784,7 @@ export default function BusinessDetailPage() {
                           Member Since
                         </p>
                         <p className="text-sm text-slate-200 mt-1">
-                          {formatDate(
-                            business.created_at || business.createdAt,
-                          )}
+                          {formatDate(biz.created_at || biz.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -627,12 +793,12 @@ export default function BusinessDetailPage() {
               )}
             </div>
 
-            {/* Business Details / Attributes */}
+            {/* Business Details / Attributes — FIXED safe array handling */}
             {attrs && Object.keys(attrs).length > 0 && (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
                 <CardHeader>
                   <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Package className="h-5 w-5 text-slate-400" /> Business
+                    <Package className="h-5 w-5 text-amber-400" /> Business
                     Details
                   </CardTitle>
                 </CardHeader>
@@ -688,116 +854,138 @@ export default function BusinessDetailPage() {
                     )}
                   </div>
 
-                  {attrs.products && attrs.products.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs text-slate-500 uppercase mb-2">
-                        Products
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {attrs.products.map((p: string) => (
-                          <Badge
-                            key={p}
-                            className="bg-white/10 border-white/20 text-slate-300 text-xs"
-                          >
-                            {p}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {attrs.brands && attrs.brands.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs text-slate-500 uppercase mb-2">
-                        Brands
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {attrs.brands.map((b: string) => (
-                          <Badge
-                            key={b}
-                            className="bg-white/10 border-white/20 text-slate-300 text-xs"
-                          >
-                            {b}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {attrs.services && attrs.services.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs text-slate-500 uppercase mb-2">
-                        Services
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {attrs.services.map((s: string) => (
-                          <Badge
-                            key={s}
-                            className="bg-white/10 border-white/20 text-slate-300 text-xs"
-                          >
-                            {s}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Products - safeArray */}
+                  {(() => {
+                    const products = safeArray(attrs.products);
+                    if (products.length > 0)
+                      return (
+                        <div className="mt-4">
+                          <p className="text-xs text-slate-500 uppercase mb-2">
+                            Products
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {products.map((p: string) => (
+                              <Badge
+                                key={p}
+                                className="bg-white/10 border-white/20 text-slate-300 text-xs"
+                              >
+                                {p}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    return null;
+                  })()}
+
+                  {/* Brands - safeArray */}
+                  {(() => {
+                    const brands = safeArray(attrs.brands);
+                    if (brands.length > 0)
+                      return (
+                        <div className="mt-4">
+                          <p className="text-xs text-slate-500 uppercase mb-2">
+                            Brands
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {brands.map((b: string) => (
+                              <Badge
+                                key={b}
+                                className="bg-white/10 border-white/20 text-slate-300 text-xs"
+                              >
+                                {b}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    return null;
+                  })()}
+
+                  {/* Services - safeArray */}
+                  {(() => {
+                    const services = safeArray(attrs.services);
+                    if (services.length > 0)
+                      return (
+                        <div className="mt-4">
+                          <p className="text-xs text-slate-500 uppercase mb-2">
+                            Services
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {services.map((s: string) => (
+                              <Badge
+                                key={s}
+                                className="bg-white/10 border-white/20 text-slate-300 text-xs"
+                              >
+                                {s}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    return null;
+                  })()}
                 </CardContent>
               </Card>
             )}
 
-            {/* Services (from JOIN) */}
-            {business.services && business.services.length > 0 && (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Briefcase className="h-5 w-5 text-slate-400" /> Services (
-                    {business.services.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {business.services.map((svc) => (
-                      <div
-                        key={svc.id}
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/[0.07] transition-all"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-slate-200">
-                            {svc.name}
-                          </p>
-                          {svc.category && (
-                            <p className="text-xs text-slate-500">
-                              {svc.category}
+            {/* Services (from JOIN) — fixed null check */}
+            {biz.services &&
+              Array.isArray(biz.services) &&
+              biz.services.length > 0 && (
+                <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+                  <CardHeader>
+                    <CardTitle className="text-slate-100 flex items-center gap-2">
+                      <Briefcase className="h-5 w-5 text-amber-400" /> Services
+                      ({biz.services.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {biz.services.map((svc) => (
+                        <div
+                          key={svc.id}
+                          className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/[0.07] transition-all hover:border-amber-500/30"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-slate-200">
+                              {svc.name}
                             </p>
+                            {svc.category && (
+                              <p className="text-xs text-slate-500">
+                                {svc.category}
+                              </p>
+                            )}
+                          </div>
+                          {svc.price !== undefined && svc.price !== null && (
+                            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                              ${svc.price}
+                            </Badge>
                           )}
                         </div>
-                        {svc.price !== undefined && svc.price !== null && (
-                          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-                            ${svc.price}
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
             {/* Reviews */}
-            {business.reviews && business.reviews.length > 0 && (
+            {biz.reviews && biz.reviews.length > 0 && (
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
                 <CardHeader>
                   <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-slate-400" /> Reviews
-                    ({business.reviews.length})
+                    <MessageSquare className="h-5 w-5 text-amber-400" /> Reviews
+                    ({biz.reviews.length})
                   </CardTitle>
                   <CardDescription className="text-slate-500">
-                    Average rating: {avgRating(business.reviews).toFixed(1)} / 5
+                    Average rating: {avgRating(biz.reviews).toFixed(1)} / 5
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {business.reviews.map((review) => (
+                <CardContent className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {biz.reviews.map((review) => (
                     <div
                       key={review.id}
-                      className="p-4 bg-white/5 rounded-xl border border-white/10"
+                      className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/[0.07] transition-all"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex items-center gap-0.5">
@@ -829,24 +1017,27 @@ export default function BusinessDetailPage() {
             )}
 
             {/* Map Embed */}
-            {business.latitude && business.longitude && (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+            {biz.latitude && biz.longitude && (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden group">
                 <CardHeader>
                   <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Navigation className="h-5 w-5 text-slate-400" /> Location
+                    <Navigation className="h-5 w-5 text-amber-400" /> Location
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <iframe
-                    title="Business Location"
-                    width="100%"
-                    height="300"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(business.longitude) - 0.01},${parseFloat(business.latitude) - 0.01},${parseFloat(business.longitude) + 0.01},${parseFloat(business.latitude) + 0.01}&layer=mapnik&marker=${business.latitude},${business.longitude}`}
-                    className="rounded-b-xl"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none z-10" />
+                    <iframe
+                      title="Business Location"
+                      width="100%"
+                      height="300"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(biz.longitude) - 0.01},${parseFloat(biz.latitude) - 0.01},${parseFloat(biz.longitude) + 0.01},${parseFloat(biz.latitude) + 0.01}&layer=mapnik&marker=${biz.latitude},${biz.longitude}`}
+                      className="rounded-b-xl group-hover:scale-105 transition-transform duration-700"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -855,50 +1046,50 @@ export default function BusinessDetailPage() {
           {/* ── Right Sidebar (1/3) ────────────────────────────── */}
           <div className="space-y-6">
             {/* Contact Actions */}
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden sticky top-24">
               <CardHeader>
-                <CardTitle className="text-slate-100 text-base">
-                  Contact
+                <CardTitle className="text-slate-100 text-base flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-400" /> Instant Connect
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {business.phone && (
+                {biz.phone && (
                   <Button
                     asChild
-                    className="w-full gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600 shadow-lg"
+                    className="w-full gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
                     size="lg"
                   >
-                    <a href={`tel:${business.phone}`}>
+                    <a href={`tel:${biz.phone}`}>
                       <Phone className="h-4 w-4" /> Call Now
                     </a>
                   </Button>
                 )}
-                {business.email && (
+                {biz.email && (
                   <Button
                     asChild
                     variant="outline"
-                    className="w-full gap-2 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                    className="w-full gap-2 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-amber-500/30 transition-all"
                     size="lg"
                   >
-                    <a href={`mailto:${business.email}`}>
+                    <a href={`mailto:${biz.email}`}>
                       <Mail className="h-4 w-4" /> Send Email
                     </a>
                   </Button>
                 )}
                 <Button
                   variant="outline"
-                  className="w-full gap-2 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                  className="w-full gap-2 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-amber-500/30 transition-all"
                   size="lg"
                 >
                   <MessageSquare className="h-4 w-4" /> Message
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full gap-2 text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                  className="w-full gap-2 text-slate-400 hover:text-amber-300 hover:bg-white/5"
                   size="sm"
                   onClick={() =>
                     copyToClipboard(
-                      [business.phone, business.email, business.address]
+                      [biz.phone, biz.email, biz.address]
                         .filter(Boolean)
                         .join(" • "),
                     )
@@ -913,11 +1104,11 @@ export default function BusinessDetailPage() {
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-slate-100 text-base flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-400" /> Business Info
+                  <Award className="h-5 w-5 text-amber-400" /> Business Intel
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
                   <span className="text-slate-500">Status</span>
                   <Badge
                     className={
@@ -930,7 +1121,7 @@ export default function BusinessDetailPage() {
                   </Badge>
                 </div>
                 {isVerified && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
                     <span className="text-slate-500">Verified</span>
                     <div className="flex items-center gap-1 text-emerald-400">
                       <ShieldCheck className="h-4 w-4" />
@@ -939,40 +1130,40 @@ export default function BusinessDetailPage() {
                   </div>
                 )}
                 {catName && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
                     <span className="text-slate-500">Category</span>
                     <span className="text-slate-200 font-medium">
                       {catName}
                     </span>
                   </div>
                 )}
-                {(business.created_at || business.createdAt) && (
-                  <div className="flex justify-between items-center">
+                {(biz.created_at || biz.createdAt) && (
+                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
                     <span className="text-slate-500">Member Since</span>
                     <span className="text-slate-200">
                       {new Date(
-                        business.created_at || business.createdAt || "",
+                        biz.created_at || biz.createdAt || "",
                       ).getFullYear()}
                     </span>
                   </div>
                 )}
-                {business.performance_score &&
-                  parseFloat(business.performance_score) > 0 && (
-                    <div className="pt-2 border-t border-white/10">
+                {biz.performance_score &&
+                  parseFloat(biz.performance_score) > 0 && (
+                    <div className="pt-2 border-t border-white/10 mt-2">
                       <div className="flex justify-between mb-1">
-                        <span className="text-slate-500">
+                        <span className="text-slate-500 text-xs">
                           Performance Score
                         </span>
-                        <span className="text-slate-200 font-medium">
-                          {parseFloat(business.performance_score).toFixed(1)}
+                        <span className="text-slate-200 font-medium text-xs">
+                          {parseFloat(biz.performance_score).toFixed(1)}
                         </span>
                       </div>
                       <Progress
                         value={Math.min(
-                          parseFloat(business.performance_score) * 10,
+                          parseFloat(biz.performance_score) * 10,
                           100,
                         )}
-                        className="h-2 bg-white/5"
+                        className="h-1.5 bg-white/5"
                       />
                     </div>
                   )}
@@ -985,7 +1176,7 @@ export default function BusinessDetailPage() {
                 <Link href="/businesses-directory">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-2 text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                    className="w-full justify-start gap-2 text-slate-400 hover:text-amber-300 hover:bg-white/5"
                     size="sm"
                   >
                     <Building className="h-4 w-4" /> Business Directory
@@ -994,7 +1185,7 @@ export default function BusinessDetailPage() {
                 <Link href="/geo-admin">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-2 text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                    className="w-full justify-start gap-2 text-slate-400 hover:text-amber-300 hover:bg-white/5"
                     size="sm"
                   >
                     <Globe className="h-4 w-4" /> Geo Admin Observer
@@ -1021,8 +1212,8 @@ export default function BusinessDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
-                  <Sparkles className="h-6 w-6 text-amber-400" /> You Might Also
-                  Like
+                  <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />{" "}
+                  You Might Also Like
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
                   {catName
@@ -1034,7 +1225,7 @@ export default function BusinessDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 gap-2"
+                  className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 gap-2 hover:border-amber-500/30"
                 >
                   View All <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -1048,16 +1239,16 @@ export default function BusinessDetailPage() {
                 const bizUI = getIndustryUI(bizCat);
                 return (
                   <Link key={biz.id} href={`/business/${biz.id}`}>
-                    <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-2xl hover:bg-white/[0.07] transition-all duration-500 cursor-pointer group h-full">
+                    <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl hover:shadow-2xl hover:shadow-amber-500/5 hover:bg-white/[0.07] hover:border-amber-500/30 transition-all duration-500 cursor-pointer group h-full">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${bizUI.gradient} flex items-center justify-center text-lg shadow-md border border-white/20`}
+                            className={`flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${bizUI.gradient} flex items-center justify-center text-lg shadow-md border border-white/20 group-hover:scale-110 transition-transform duration-300`}
                           >
                             {bizUI.icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-slate-100 truncate text-sm group-hover:text-white transition-colors">
+                            <h3 className="font-semibold text-slate-100 truncate text-sm group-hover:text-amber-300 transition-colors">
                               {biz.name}
                             </h3>
                             {biz.address && (
@@ -1081,7 +1272,7 @@ export default function BusinessDetailPage() {
                               )}
                             </div>
                           </div>
-                          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-slate-300 group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" />
+                          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-amber-400 group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" />
                         </div>
                       </CardContent>
                     </Card>
@@ -1104,26 +1295,35 @@ export default function BusinessDetailPage() {
         )}
       </div>
 
-      {/* ══════════════ PROFIT POPUP MODAL ══════════════ */}
+      {/* ══════════════ PROFIT POPUP MODAL — Futuristic redesign ══════════════ */}
       {showProfitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 overflow-y-auto">
-          {/* Backdrop */}
+          {/* Backdrop with blur and graffiti effect */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-md"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md"
             onClick={() => setShowProfitModal(false)}
           />
+          <div className="fixed inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-20 left-10 text-9xl opacity-10 rotate-12 text-amber-400">
+              ✪
+            </div>
+            <div className="absolute bottom-20 right-10 text-8xl opacity-10 -rotate-12 text-purple-400">
+              ⌘
+            </div>
+          </div>
 
-          <Card className="relative max-w-2xl w-full bg-slate-900/95 border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-auto">
+          <Card className="relative max-w-2xl w-full bg-slate-900/95 backdrop-blur-2xl border border-amber-500/30 shadow-2xl shadow-amber-500/10 animate-in fade-in zoom-in-95 duration-200 my-auto overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-purple-500 to-cyan-500" />
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl text-slate-100 flex items-center gap-2">
-                  <Sparkles className="h-6 w-6 text-amber-300" />
-                  Profit Window — {business.name}
+                  <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
+                  Profit Window — {biz.name}
                 </CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-slate-500 hover:text-slate-200 -mr-2"
+                  className="text-slate-500 hover:text-slate-200 -mr-2 hover:bg-white/5"
                   onClick={() => setShowProfitModal(false)}
                 >
                   <XCircle className="h-5 w-5" />
@@ -1136,12 +1336,9 @@ export default function BusinessDetailPage() {
             </CardHeader>
 
             <CardContent className="space-y-6 text-sm text-slate-300">
-              {/* Overview */}
-              <p className="leading-relaxed">
-                This profit window is the revenue hub for{" "}
-                <span className="text-white font-semibold">
-                  {business.name}
-                </span>
+              <p className="leading-relaxed bg-white/5 p-4 rounded-xl border border-white/10">
+                💎 This profit window is the revenue hub for{" "}
+                <span className="text-amber-300 font-semibold">{biz.name}</span>
                 . Use it to configure offers, track conversion funnels, and
                 manage sponsorship placements that turn page views into
                 measurable revenue.
@@ -1150,7 +1347,7 @@ export default function BusinessDetailPage() {
               {/* Two-column feature grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Promotions */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <Tag className="h-4 w-4 text-amber-400" />
                     <h4 className="font-semibold text-amber-200">Promotions</h4>
@@ -1164,7 +1361,7 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Booking & Leads */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20 hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <Calendar className="h-4 w-4 text-emerald-400" />
                     <h4 className="font-semibold text-emerald-200">
@@ -1180,7 +1377,7 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Sponsorship */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="h-4 w-4 text-purple-400" />
                     <h4 className="font-semibold text-purple-200">
@@ -1196,9 +1393,9 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Analytics */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
-                    <Star className="h-4 w-4 text-blue-400" />
+                    <Eye className="h-4 w-4 text-blue-400" />
                     <h4 className="font-semibold text-blue-200">Analytics</h4>
                   </div>
                   <ul className="space-y-1.5 text-slate-400 text-xs">
@@ -1255,7 +1452,7 @@ export default function BusinessDetailPage() {
                   Close
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white hover:from-amber-500 hover:to-orange-500 gap-2"
+                  className="bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white hover:from-amber-500 hover:to-orange-500 gap-2 shadow-lg shadow-amber-500/20"
                   onClick={() => setShowProfitModal(false)}
                 >
                   <Sparkles className="h-4 w-4" /> Got it

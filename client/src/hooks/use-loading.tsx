@@ -20,30 +20,30 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
 
-  // Dismiss the initial cold-load overlay after 300ms
+  // Dismiss the initial cold-load overlay quickly (150ms visible → 300ms gone)
   useEffect(() => {
-    const t1 = setTimeout(() => setIsFadingOut(true), 300);
+    const t1 = setTimeout(() => setIsFadingOut(true), 150);
     const t2 = setTimeout(() => {
       setIsLoading(false);
       setIsFadingOut(false);
-    }, 650);
+    }, 300);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, []);
 
-  const showEagleLoader = useCallback((duration = 300) => {
+  const showEagleLoader = useCallback((duration = 150) => {
     setIsLoading(true);
     setIsFadingOut(false);
     // After the main display duration, start the fade-out phase
     setTimeout(() => {
       setIsFadingOut(true);
-      // Wait for the CSS exit animation (400ms) before fully hiding
+      // CSS exit animation (150ms) before fully hiding
       setTimeout(() => {
         setIsLoading(false);
         setIsFadingOut(false);
-      }, 400);
+      }, 150);
     }, duration);
   }, []);
 

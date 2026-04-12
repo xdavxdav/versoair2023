@@ -126,6 +126,7 @@ const StreamRoyaleAdmin = lazy(() => import("@/pages/streamroyale-admin"));
 const ArtistContractsAdmin = lazy(
   () => import("@/pages/admin/artist-contracts"),
 );
+const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 
 // ─────────────────────────────────────────────────────
 // 🔒 Route Guards (kept eager — lightweight)
@@ -268,12 +269,7 @@ function Router() {
   // Eagle loader + state update in a regular useEffect (non-blocking)
   useEffect(() => {
     if (location !== previousLocation) {
-      const isArtistPortalNav =
-        location.startsWith("/artist-portal") ||
-        previousLocation.startsWith("/artist-portal");
-      if (!isArtistPortalNav) {
-        showEagleLoader();
-      }
+      showEagleLoader();
       setPreviousLocation(location);
     }
   }, [location, previousLocation, showEagleLoader]);
@@ -348,7 +344,9 @@ function Router() {
       <Route path="/services/news" component={News} />
       <Route path="/services/careers" component={Careers} />
       <Route path="/services/contractors" component={Contractors} />
-      <Route path="/contracts" component={Contracts} />
+      <Route path="/contracts">
+        {() => <ProtectedRoute component={Contracts} />}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           🎨 CULTURAL — Artisan & community portal
@@ -356,18 +354,23 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route
-        path="/artist-portal/welcome"
-        component={ArtistPortalWelcomePage}
-      />
+      <Route path="/artist-portal/welcome">
+        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
+      </Route>
       <Route path="/artist-portal/dashboard">
         {() => (
-          <Suspense fallback={<PageLoader />}>
-            <ArtistPortalDashboard />
-          </Suspense>
+          <ProtectedRoute
+            component={() => (
+              <Suspense fallback={<PageLoader />}>
+                <ArtistPortalDashboard />
+              </Suspense>
+            )}
+          />
         )}
       </Route>
-      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
+      <Route path="/artist-portal">
+        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
+      </Route>
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
@@ -406,21 +409,16 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdminDashboard}
-            roles={["admin", "superuser", "moderator"]}
+            roles={["admin", "superuser", "moderator", "tsr"]}
           />
         )}
       </Route>
 
       {/* ═══════════════════════════════════════════════
-          🛡️ ADMIN HQ — Internal platform management (admin/superuser only)
+          🛡️ DASHBOARD — Unified portal dashboard (all authenticated users)
           ═══════════════════════════════════════════════ */}
       <Route path="/dashboard">
-        {() => (
-          <ProtectedRoute
-            component={Dashboard}
-            roles={["admin", "superuser", "moderator"]}
-          />
-        )}
+        {() => <ProtectedRoute component={Dashboard} />}
       </Route>
       <Route path="/admin/database">
         {() => (
@@ -455,6 +453,11 @@ function Router() {
         {() => (
           <ProtectedRoute component={CredentialsVault} roles={["superuser"]} />
         )}
+      </Route>
+
+      {/* 📦 Inventory — sector-adaptive stock & product management dashboard */}
+      <Route path="/inventory">
+        {() => <ProtectedRoute component={InventoryDashboard} />}
       </Route>
 
       {/* ═══════════════════════════════════════════════
@@ -602,6 +605,12 @@ function AppContent() {
   // Show ContentNav (bottom dock) on blog/marketplace pages only for authenticated users
   const showContentNav = isContentNavPage && isAuthed;
   const isAuthPage = currentPath.startsWith("/auth");
+  // Immersive pages — hide navbar, footer (keep motto), bubble menu
+  const isImmersivePage =
+    currentPath === "/dashboard" ||
+    currentPath === "/apply" ||
+    currentPath === "/profile" ||
+    currentPath === "/inventory";
   // Track when loading just finished so we can apply page-enter animation
   const [pageEnter, setPageEnter] = useState(false);
   const wasLoading = useRef(false);
@@ -681,8 +690,8 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
-      {/* Hide on music pages (they have their own layout) */}
-      {!versoaiFullscreen && !isMusicPage && (
+      {/* Hide on music pages and immersive pages (dashboard, apply, profile) */}
+      {!versoaiFullscreen && !isMusicPage && !isImmersivePage && (
         <div
           ref={headerRef}
           className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
@@ -764,8 +773,8 @@ function AppContent() {
             !showContentNav && <BlogNavbar />}
         </div>
       )}
-      {/* Spacer for fixed header — not needed on music pages */}
-      {!versoaiFullscreen && !isMusicPage && (
+      {/* Spacer for fixed header — not needed on music pages or immersive pages */}
+      {!versoaiFullscreen && !isMusicPage && !isImmersivePage && (
         <div style={{ height: headerHeight }} />
       )}
 
@@ -780,8 +789,9 @@ function AppContent() {
 
       <PullToRefresh />
       {showContentNav && <ContentNav />}
-      {/* Main Navbar — hide on auth pages, ContentNav pages, and music pages */}
-      {!isAuthPage && !showContentNav && !isMusicPage && (
+      {/* Main Navbar — hide on auth pages, ContentNav pages, music pages, immersive pages,
+           and mobile/tablet (where MobileMenuBubble handles navigation) */}
+      {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
         <div
           className={`hidden md:block transition-opacity duration-300 ${
             isLoading && !isFadingOut
@@ -836,15 +846,29 @@ function AppContent() {
           <SponsorsSection />
         </div>
       )}
-      {/* Footer — hide on music pages (they have their own layout) */}
-      {!isMusicPage && (
+      {/* Footer — hide on music pages; show only motto on immersive pages */}
+      {!isMusicPage && !isImmersivePage && (
         <div>
           <Footer />
         </div>
       )}
+      {isImmersivePage && (
+        <div className="bg-gray-950 py-6 text-center">
+          <p
+            className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"
+            style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: "clamp(0.85rem, 2vw, 1.1rem)",
+              letterSpacing: "0.4em",
+            }}
+          >
+            STRΔΦGHT TΩ THΞ PΩΦΠT
+          </p>
+        </div>
+      )}
 
-      {/* Mobile Menu Bubble — hide on Blog & Musical Universe (they have their own navs) */}
-      <MobileMenuBubble />
+      {/* Mobile Menu Bubble — hide on Blog & Musical Universe and immersive pages */}
+      {!isImmersivePage && <MobileMenuBubble />}
 
       {/* Quick Sign In Modal — global shortcut */}
       <QuickSignIn

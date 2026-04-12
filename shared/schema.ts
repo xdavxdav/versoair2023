@@ -47,6 +47,9 @@ export const users = pgTable("users", {
   role: text("role").default("user"),
   isVerified: boolean("is_verified").default(false),
 
+  // User-chosen display name (set after email verification onboarding)
+  displayName: text("display_name"),
+
   // Premium & Subscription Tier Logic
   // 🛸 Growth Engine tiers: 'free' | 'essential' | 'verified' | 'max' | 'enterprise'
   subscriptionTier: varchar("subscription_tier").default("free"),
@@ -196,6 +199,9 @@ export const businesses = pgTable(
     tier: varchar("tier").default("free"), // 'free' | 'premium' | 'enterprise'
     tierExpiresAt: timestamp("tier_expires_at"),
 
+    // ── Logo / Branding ──
+    logoUrl: text("logo_url"), // uploaded business logo (paid tiers only)
+
     // ── Verification (sector-specific) ──
     verificationStatus: varchar("verification_status").default("unverified"), // 'unverified' | 'pending' | 'verified' | 'rejected'
     verificationDocuments: jsonb("verification_documents")
@@ -249,6 +255,74 @@ export const contractors = pgTable("contractors", {
   specialization: text("specialization"),
   hourlyRate: decimal("hourly_rate"),
   isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- TSR WHITELIST (Technical Service Representative) ---
+export const tsrWhitelist = pgTable("tsr_whitelist", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  grantedBy: integer("granted_by").references(() => users.id),
+  grantedAt: timestamp("granted_at").defaultNow(),
+  isActive: boolean("is_active").default(true).notNull(),
+});
+
+// --- CONTRACTOR APPLICATIONS ---
+export const contractorApplications = pgTable("contractor_applications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
+  name: text("name").notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 30 }),
+  specialization: text("specialization"),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
+  portfolioUrl: text("portfolio_url"),
+  coverLetter: text("cover_letter"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending | approved | rejected
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- GEO-ACTION REQUESTS (subscriber queued actions) ---
+export const geoActionRequests = pgTable("geo_action_requests", {
+  id: serial("id").primaryKey(),
+  requestedBy: integer("requested_by")
+    .references(() => users.id)
+    .notNull(),
+  actionType: varchar("action_type", { length: 50 }).notNull(), // edit_listing | delete_listing | manage_directory
+  entityType: varchar("entity_type", { length: 50 }), // business | category | listing
+  entityId: text("entity_id"),
+  requestedChange: jsonb("requested_change"), // { field: value } payload
+  delayHours: integer("delay_hours").default(24).notNull(), // 24 for edit, 72 for delete
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending | approved | rejected | expired
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  expiresAt: timestamp("expires_at"), // auto-approve if admin doesn't act
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// --- ASSIGNED CONTRACTS (admin drops contracts to verified contractors) ---
+export const assignedContracts = pgTable("assigned_contracts", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id")
+    .references(() => contractors.id)
+    .notNull(),
+  assignedBy: integer("assigned_by")
+    .references(() => users.id)
+    .notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  terms: text("terms"),
+  deadline: timestamp("deadline"),
+  paymentAmount: decimal("payment_amount", { precision: 12, scale: 2 }),
+  status: varchar("status", { length: 20 }).default("offered").notNull(), // offered | accepted | declined | in_progress | completed | cancelled
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -2950,3 +3024,114 @@ export const platformSettings = pgTable(
 
 export const insertPlatformSettingSchema = createInsertSchema(platformSettings);
 export type PlatformSetting = typeof platformSettings.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════
+// INVENTORY PRODUCTS (Sector-adaptive inventory / service management)
+// ═══════════════════════════════════════════════════════════
+export const inventoryProducts = pgTable(
+  "inventory_products",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    businessId: integer("business_id").references(() => businesses.id, {
+      onDelete: "set null",
+    }),
+    name: text("name").notNull(),
+    sku: varchar("sku", { length: 100 }).notNull(),
+    category: varchar("category", { length: 50 }).notNull().default("Other"),
+    currentStock: integer("current_stock").notNull().default(0),
+    reorderPoint: integer("reorder_point").notNull().default(10),
+    reorderQuantity: integer("reorder_quantity").default(50),
+    unitCost: decimal("unit_cost", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    unitPrice: decimal("unit_price", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    supplier: text("supplier"),
+    warehouseLocation: text("warehouse_location"),
+    dailySalesRate: decimal("daily_sales_rate", {
+      precision: 10,
+      scale: 2,
+    }).default("0"),
+    lastRestocked: date("last_restocked"),
+    status: varchar("status", { length: 20 }).notNull().default("In Stock"), // 'In Stock' | 'Low Stock' | 'Out of Stock' | 'Discontinued'
+    sector: varchar("sector", { length: 50 }), // business sector for adaptive KPIs
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("inv_products_user_idx").on(t.userId),
+    businessIdx: index("inv_products_business_idx").on(t.businessId),
+    skuIdx: index("inv_products_sku_idx").on(t.sku),
+    statusIdx: index("inv_products_status_idx").on(t.status),
+    sectorIdx: index("inv_products_sector_idx").on(t.sector),
+  }),
+);
+
+export const insertInventoryProductSchema =
+  createInsertSchema(inventoryProducts);
+export type InventoryProduct = typeof inventoryProducts.$inferSelect;
+
+// ─── Inbox: Conversations ────────────────────────────────────────────────────
+
+export const inboxConversations = pgTable(
+  "inbox_conversations",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 20 }).notNull().default("support"), // 'support' | 'business_network'
+    participantId: text("participant_id").notNull(), // 'support' | userId | businessId string
+    participantName: text("participant_name").notNull(),
+    participantAvatar: text("participant_avatar"),
+    lastMessage: text("last_message"),
+    lastMessageAt: timestamp("last_message_at"),
+    unreadCount: integer("unread_count").notNull().default(0),
+    businessId: integer("business_id").references(() => businesses.id, {
+      onDelete: "set null",
+    }),
+    priority: varchar("priority", { length: 10 }).notNull().default("normal"), // 'normal' | 'high' | 'priority'
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("inbox_conv_user_idx").on(t.userId),
+    typeIdx: index("inbox_conv_type_idx").on(t.type),
+    updatedIdx: index("inbox_conv_updated_idx").on(t.updatedAt),
+  }),
+);
+
+export const insertInboxConversationSchema =
+  createInsertSchema(inboxConversations);
+export type InboxConversation = typeof inboxConversations.$inferSelect;
+
+// ─── Inbox: Messages ─────────────────────────────────────────────────────────
+
+export const inboxMessages = pgTable(
+  "inbox_messages",
+  {
+    id: serial("id").primaryKey(),
+    conversationId: integer("conversation_id")
+      .notNull()
+      .references(() => inboxConversations.id, { onDelete: "cascade" }),
+    senderId: text("sender_id").notNull(),
+    senderName: text("sender_name").notNull(),
+    senderAvatar: text("sender_avatar"),
+    content: text("content").notNull(),
+    isRead: boolean("is_read").notNull().default(false),
+    isAi: boolean("is_ai").notNull().default(false), // true = VersoAI reply
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    convIdx: index("inbox_msg_conv_idx").on(t.conversationId),
+    createdIdx: index("inbox_msg_created_idx").on(t.createdAt),
+    readIdx: index("inbox_msg_read_idx").on(t.isRead),
+  }),
+);
+
+export const insertInboxMessageSchema = createInsertSchema(inboxMessages);
+export type InboxMessage = typeof inboxMessages.$inferSelect;

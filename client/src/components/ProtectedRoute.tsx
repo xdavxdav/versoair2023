@@ -49,7 +49,7 @@ async function tryRestoreFromGateToken(): Promise<AuthUser | null> {
       const allowedTiers = ["max", "enterprise"];
 
       // Gate users must have appropriate tier (staff roles bypass)
-      const staffRoles = ["superuser", "admin", "moderator"];
+      const staffRoles = ["superuser", "admin", "moderator", "tsr"];
       if (!staffRoles.includes(userRole) && !allowedTiers.includes(userTier)) {
         // Clear gate session — user doesn't meet tier requirements
         localStorage.removeItem("geoadmin_session");
@@ -65,7 +65,9 @@ async function tryRestoreFromGateToken(): Promise<AuthUser | null> {
         role: data.user.role || "admin",
         username: data.user.username,
         name: data.user.name,
-        isAdmin: ["admin", "superuser", "moderator"].includes(data.user.role),
+        isAdmin: ["admin", "superuser", "moderator", "tsr"].includes(
+          data.user.role,
+        ),
         subscriptionTier: data.user.subscriptionTier,
       };
     }
@@ -78,7 +80,7 @@ async function tryRestoreFromGateToken(): Promise<AuthUser | null> {
         // Same tier check for cached user (staff roles bypass)
         const userRole = (user.role || "user").toLowerCase();
         const userTier = (user.subscriptionTier || "free").toLowerCase();
-        const staffRoles = ["superuser", "admin", "moderator"];
+        const staffRoles = ["superuser", "admin", "moderator", "tsr"];
         if (
           !staffRoles.includes(userRole) &&
           !["max", "enterprise"].includes(userTier)
