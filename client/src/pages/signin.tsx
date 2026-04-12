@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Loader2,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -104,6 +105,12 @@ export default function SignIn() {
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
+
+  // Onboarding: display name prompt after first login
+  const [onboardingName, setOnboardingName] = useState("");
+  const [onboardingSaving, setOnboardingSaving] = useState(false);
+  const [onboardingError, setOnboardingError] = useState("");
+  const [pendingLoginData, setPendingLoginData] = useState<any>(null);
 
   // Recall returning user's first name from localStorage
   const returningName = (() => {
@@ -224,7 +231,21 @@ export default function SignIn() {
       }
 
       if (data.success && data.token && data.user) {
-        // Use AuthContext to persist login across page refreshes
+        // If user hasn't set their display name yet, show onboarding prompt
+        if (data.needsDisplayName) {
+          // Store token so the set-display-name call is authenticated
+          authLogin(data.token, {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.role,
+          });
+          setPendingLoginData(data);
+          setStep("set-display-name");
+          return;
+        }
+
+        // Normal login — user already has a display name
         authLogin(data.token, {
           id: data.user.id,
           email: data.user.email,
@@ -241,18 +262,25 @@ export default function SignIn() {
         if (redirectTarget && redirectTarget.startsWith("/")) {
           navigate(redirectTarget);
         } else {
-          // Role-based dashboard routing
+          // Role-based dashboard routing — full priority chain
           const role = (data.user.role || "user").toLowerCase();
+          const portals = data.user.portals || [];
           if (role === "superuser") {
             navigate("/dashboard?from=sv");
           } else if (role === "admin" || role === "moderator") {
             navigate("/geo-admin/dashboard");
+          } else if (role === "tsr") {
+            navigate("/geo-admin/dashboard");
+          } else if (role === "artist" || portals.includes("artist")) {
+            navigate("/artist-portal/dashboard");
+          } else if (portals.includes("contractor")) {
+            navigate("/contracts");
+          } else if (portals.includes("community")) {
+            navigate("/blog");
           } else {
             navigate("/dashboard");
           }
         }
-      } else {
-        setLoginError(data.message || "Invalid credentials");
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -315,10 +343,19 @@ export default function SignIn() {
           navigate(redirectTarget);
         } else {
           const role = (data.user.role || "user").toLowerCase();
+          const portals = data.user.portals || [];
           if (role === "superuser") {
             navigate("/dashboard?from=sv");
           } else if (role === "admin" || role === "moderator") {
             navigate("/geo-admin/dashboard");
+          } else if (role === "tsr") {
+            navigate("/geo-admin/dashboard");
+          } else if (role === "artist" || portals.includes("artist")) {
+            navigate("/artist-portal/dashboard");
+          } else if (portals.includes("contractor")) {
+            navigate("/contracts");
+          } else if (portals.includes("community")) {
+            navigate("/blog");
           } else {
             navigate("/dashboard");
           }
@@ -354,63 +391,391 @@ export default function SignIn() {
   // Check for verification status from URL (after clicking email link)
   const verificationStatus = getQueryParam("verification");
 
-  // Show "Check Your Email" screen
+  // Show "Check Your Email" celebration screen
   if (step === "verify-sent") {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Mail className="h-10 w-10 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Check Your Email
-              </h2>
-              <p className="text-gray-600 mb-2">
-                We sent a verification link to:
-              </p>
-              <p className="text-[#bf831c] font-semibold text-lg mb-6">
-                {verificationEmail}
-              </p>
-              <div className="bg-[#fff9e5] border border-[#bf831c]/20 rounded-lg p-4 mb-6 text-left">
-                <p className="text-sm text-gray-700 mb-2">
-                  <strong>📧 Next steps:</strong>
+      <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12 overflow-hidden relative">
+        {/* CSS confetti particles */}
+        <style>{`
+          @keyframes confetti-fall {
+            0%   { transform: translateY(-80px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+          }
+          @keyframes pulse-ring {
+            0%   { transform: scale(0.9); opacity: .7; }
+            50%  { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.9); opacity: .7; }
+          }
+          @keyframes slide-up {
+            from { transform: translateY(24px); opacity: 0; }
+            to   { transform: translateY(0);   opacity: 1; }
+          }
+          .confetti-piece {
+            position: absolute;
+            top: -20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confetti-fall linear infinite;
+          }
+          .celebrate-card { animation: slide-up .5s ease both; }
+          .pulse-icon     { animation: pulse-ring 2.5s ease-in-out infinite; }
+        `}</style>
+
+        {/* Confetti burst */}
+        {[...Array(28)].map((_, i) => {
+          const colors = [
+            "#d4a037",
+            "#bf831c",
+            "#f0c060",
+            "#e05c5c",
+            "#5ce0a8",
+            "#5ca8e0",
+            "#b05ce0",
+            "#e05cb0",
+          ];
+          const left = `${(i * 3.7) % 100}%`;
+          const delay = `${(i * 0.22) % 3}s`;
+          const duration = `${3.2 + (i % 5) * 0.4}s`;
+          const size = `${8 + (i % 4) * 4}px`;
+          return (
+            <div
+              key={i}
+              className="confetti-piece"
+              style={{
+                left,
+                background: colors[i % colors.length],
+                width: size,
+                height: size,
+                animationDelay: delay,
+                animationDuration: duration,
+                borderRadius: i % 3 === 0 ? "50%" : i % 3 === 1 ? "2px" : "0",
+              }}
+            />
+          );
+        })}
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-lg mx-auto">
+            <div className="celebrate-card bg-gradient-to-b from-[#16162a] to-[#0e0e1e] rounded-3xl shadow-2xl shadow-black/60 border border-[#bf831c]/20 overflow-hidden">
+              {/* Hero glow strip */}
+              <div className="h-1.5 bg-gradient-to-r from-[#bf831c] via-[#f0c060] to-[#bf831c]" />
+
+              <div className="p-8 text-center">
+                {/* Animated icon */}
+                <div className="pulse-icon w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#bf831c]/20 to-[#d4a037]/10 border border-[#bf831c]/30 flex items-center justify-center">
+                  <span className="text-5xl">🚀</span>
+                </div>
+
+                <div className="inline-block bg-[#bf831c]/10 border border-[#bf831c]/30 text-[#d4a037] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
+                  Account Created!
+                </div>
+
+                <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
+                  You're almost in 🎉
+                </h2>
+                <p className="text-[#9090b0] text-sm mb-2">
+                  We just fired a verification link to:
                 </p>
-                <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-                  <li>Open your email inbox</li>
-                  <li>
-                    Click the <strong>"Verify My Email"</strong> button
-                  </li>
-                  <li>Come back here and sign in</li>
-                </ol>
-              </div>
-              <p className="text-sm text-gray-500 mb-4">
-                Didn't receive the email? Check your spam folder or click below
-                to resend.
-              </p>
-              <Button
-                onClick={handleResendVerification}
-                disabled={resendLoading}
-                variant="outline"
-                className="border-[#bf831c] text-[#bf831c] hover:bg-[#bf831c] hover:text-white mb-3 w-full"
-              >
-                {resendLoading ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                <p className="text-[#f0b445] font-bold text-base mb-8 bg-[#bf831c]/10 rounded-lg px-4 py-2 inline-block border border-[#bf831c]/20">
+                  {verificationEmail}
+                </p>
+
+                {/* Step cards */}
+                <div className="space-y-3 mb-8 text-left">
+                  {[
+                    {
+                      icon: "📬",
+                      step: "1",
+                      title: "Open your inbox",
+                      desc: "Check the email we sent you right now",
+                    },
+                    {
+                      icon: "✅",
+                      step: "2",
+                      title: 'Click "Verify My Email"',
+                      desc: "The golden button in the email — it expires in 24h",
+                    },
+                    {
+                      icon: "🏆",
+                      step: "3",
+                      title: "Sign in & explore",
+                      desc: "Your full dashboard awaits",
+                    },
+                  ].map(({ icon, step, title, desc }) => (
+                    <div
+                      key={step}
+                      className="flex items-start gap-3 bg-[#12122a] rounded-xl p-3.5 border border-white/5"
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#bf831c] to-[#d4a037] flex items-center justify-center text-black font-extrabold text-sm">
+                        {step}
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold text-sm">
+                          {icon} {title}
+                        </p>
+                        <p className="text-[#6060a0] text-xs mt-0.5">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Spam note */}
+                <p className="text-[#50508a] text-xs mb-5">
+                  Can't find it? Check your{" "}
+                  <strong className="text-[#8080c0]">Spam / Promotions</strong>{" "}
+                  folder.
+                </p>
+
+                {/* Resend button */}
+                <Button
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  variant="outline"
+                  className="border-[#bf831c]/50 text-[#d4a037] hover:bg-[#bf831c]/10 hover:border-[#bf831c] mb-3 w-full bg-transparent"
+                >
+                  {resendLoading ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  {resendLoading ? "Sending..." : "Resend Verification Email"}
+                </Button>
+                {resendMessage && (
+                  <p className="text-sm text-emerald-400 mb-3">
+                    {resendMessage}
+                  </p>
                 )}
-                {resendLoading ? "Sending..." : "Resend Verification Email"}
-              </Button>
-              {resendMessage && (
-                <p className="text-sm text-green-600 mb-3">{resendMessage}</p>
-              )}
-              <Button
-                onClick={() => setStep("login")}
-                className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white"
-              >
-                Go to Sign In
-              </Button>
+
+                {/* Go to sign in */}
+                <Button
+                  onClick={() => setStep("login")}
+                  className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4a037] hover:from-[#a6701a] hover:to-[#c0841c] text-black font-bold"
+                >
+                  I've Verified — Sign In →
+                </Button>
+              </div>
+
+              {/* Footer strip */}
+              <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
+                🌍 <strong className="text-[#bf831c]">Verso Air</strong> —
+                Business Intelligence Platform
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Set Display Name (post-login onboarding) ────────────────────────────
+  if (step === "set-display-name") {
+    const handleSetDisplayName = async () => {
+      const trimmed = onboardingName.trim();
+      if (trimmed.length < 2) {
+        setOnboardingError("Your name must be at least 2 characters");
+        return;
+      }
+      if (trimmed.length > 50) {
+        setOnboardingError("Name cannot exceed 50 characters");
+        return;
+      }
+      setOnboardingSaving(true);
+      setOnboardingError("");
+      try {
+        const token =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("auth_token");
+        const res = await fetch("/auth/account/set-display-name", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify({ displayName: trimmed }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          // Update the cached user name
+          const cached = localStorage.getItem("auth_user");
+          if (cached) {
+            try {
+              const u = JSON.parse(cached);
+              u.name = trimmed;
+              localStorage.setItem("auth_user", JSON.stringify(u));
+            } catch {}
+          }
+          authLogin(pendingLoginData.token, {
+            ...pendingLoginData.user,
+            name: trimmed,
+          });
+          localStorage.setItem("signin_timestamp", new Date().toISOString());
+          toast({
+            title: "🎉 Welcome to Verso Air!",
+            description: `Great to meet you, ${trimmed}!`,
+          });
+
+          // Navigate to dashboard — full priority chain
+          const role = (pendingLoginData.user.role || "user").toLowerCase();
+          const portals = pendingLoginData.user.portals || [];
+          if (role === "superuser") {
+            navigate("/dashboard?from=sv");
+          } else if (role === "admin" || role === "moderator") {
+            navigate("/geo-admin/dashboard");
+          } else if (role === "tsr") {
+            navigate("/geo-admin/dashboard");
+          } else if (role === "artist" || portals.includes("artist")) {
+            navigate("/artist-portal/dashboard");
+          } else if (portals.includes("contractor")) {
+            navigate("/contracts");
+          } else if (portals.includes("community")) {
+            navigate("/blog");
+          } else {
+            navigate("/dashboard");
+          }
+        } else {
+          setOnboardingError(result.message || "Failed to save name");
+        }
+      } catch {
+        setOnboardingError("Something went wrong. Please try again.");
+      } finally {
+        setOnboardingSaving(false);
+      }
+    };
+
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12 overflow-hidden relative">
+        {/* Subtle floating particles */}
+        <style>{`
+          @keyframes float-up {
+            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+            20%  { opacity: 1; }
+            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+          }
+          .float-particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float-up linear infinite;
+            pointer-events: none;
+          }
+          @keyframes name-glow { 0%,100% { box-shadow: 0 0 20px rgba(191,131,28,.15); } 50% { box-shadow: 0 0 40px rgba(191,131,28,.3); } }
+          .name-card { animation: name-glow 3s ease-in-out infinite; }
+        `}</style>
+
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={i}
+            className="float-particle"
+            style={{
+              left: `${(i * 8.3) % 100}%`,
+              width: `${4 + (i % 3) * 3}px`,
+              height: `${4 + (i % 3) * 3}px`,
+              background:
+                i % 2 === 0 ? "rgba(191,131,28,0.4)" : "rgba(212,160,55,0.3)",
+              animationDuration: `${6 + (i % 4) * 2}s`,
+              animationDelay: `${(i * 0.6) % 4}s`,
+            }}
+          />
+        ))}
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-md mx-auto">
+            <div className="name-card bg-gradient-to-b from-[#16162a] to-[#0e0e1e] rounded-3xl shadow-2xl shadow-black/60 border border-[#bf831c]/20 overflow-hidden">
+              {/* Top glow strip */}
+              <div className="h-1.5 bg-gradient-to-r from-[#bf831c] via-[#f0c060] to-[#bf831c]" />
+
+              <div className="p-8 text-center">
+                {/* Icon */}
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#bf831c]/20 to-[#d4a037]/10 border border-[#bf831c]/30 flex items-center justify-center">
+                  <Sparkles className="h-10 w-10 text-[#d4a037]" />
+                </div>
+
+                <div className="inline-block bg-[#bf831c]/10 border border-[#bf831c]/30 text-[#d4a037] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
+                  One Last Thing
+                </div>
+
+                <h2 className="text-2xl font-extrabold text-white mb-2">
+                  What should we call you?
+                </h2>
+                <p className="text-[#8080b0] text-sm mb-6">
+                  This name will appear on your dashboard, messages, and
+                  profile.
+                  <br />
+                  <span className="text-[#5a5a80] text-xs">
+                    You can change it later in Settings.
+                  </span>
+                </p>
+
+                {/* Name input */}
+                <div className="relative mb-4">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#bf831c]/60" />
+                  <input
+                    type="text"
+                    value={onboardingName}
+                    onChange={(e) => setOnboardingName(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleSetDisplayName()
+                    }
+                    maxLength={50}
+                    autoFocus
+                    placeholder="e.g. Joseph, Maria K., Jean-Pierre..."
+                    className="w-full pl-10 pr-4 py-3.5 bg-[#0a0a18] border border-[#bf831c]/30 rounded-xl text-white placeholder:text-[#40406a] focus:outline-none focus:border-[#d4a037] focus:ring-1 focus:ring-[#d4a037]/50 transition-all text-base"
+                  />
+                  {onboardingName.trim().length > 0 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {onboardingName.trim().length >= 2 ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400" />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview */}
+                {onboardingName.trim().length >= 2 && (
+                  <div className="bg-[#0a0a18] rounded-lg border border-white/5 p-3 mb-4 text-left">
+                    <p className="text-[#5a5a80] text-xs mb-1">
+                      Dashboard preview
+                    </p>
+                    <p className="text-white text-sm font-semibold">
+                      Welcome back,{" "}
+                      <span className="text-[#d4a037]">
+                        {onboardingName.trim()}
+                      </span>
+                      ! 👋
+                    </p>
+                  </div>
+                )}
+
+                {onboardingError && (
+                  <p className="text-red-400 text-sm mb-3 flex items-center justify-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" /> {onboardingError}
+                  </p>
+                )}
+
+                <Button
+                  onClick={handleSetDisplayName}
+                  disabled={
+                    onboardingSaving || onboardingName.trim().length < 2
+                  }
+                  className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4a037] hover:from-[#a6701a] hover:to-[#c0841c] text-black font-bold py-3 text-base"
+                >
+                  {onboardingSaving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  {onboardingSaving ? "Saving..." : "Continue to Dashboard →"}
+                </Button>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
+                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                identity, your way
+              </div>
             </div>
           </div>
         </div>

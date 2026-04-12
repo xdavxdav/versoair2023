@@ -3,6 +3,24 @@ import { db } from "../db";
 import { auditLogs } from "@shared/schema";
 
 /**
+ * Resolves the public-facing application URL, safe to embed in emails.
+ * Priority: APP_PUBLIC_URL (set in .env / Render env) → RENDER_EXTERNAL_URL (auto from Render)
+ * → first non-localhost CORS_ORIGIN → localhost for local dev only.
+ */
+function getAppUrl(): string {
+  if (process.env.APP_PUBLIC_URL)
+    return process.env.APP_PUBLIC_URL.replace(/\/$/, "");
+  if (process.env.RENDER_EXTERNAL_URL)
+    return process.env.RENDER_EXTERNAL_URL.replace(/\/$/, "");
+  const cors = (process.env.CORS_ORIGIN || "").split(",").map((u) => u.trim());
+  const external = cors.find(
+    (u) => !u.includes("localhost") && !u.includes("127.0.0.1"),
+  );
+  if (external) return external.replace(/\/$/, "");
+  return `http://localhost:${process.env.PORT || 5003}`;
+}
+
+/**
  * Email Service
  * Sends transactional emails for notifications with error tracking in auditLogs
  */
@@ -261,62 +279,98 @@ export async function sendVerificationEmail(
   toEmail: string,
   verificationToken: string,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
   const verifyUrl = `${appUrl}/auth/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
   const htmlContent = `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Verify your Verso Air account</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #bf831c 0%, #d4a037 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; }
-          .header h1 { margin: 0; font-size: 28px; }
-          .header p { margin: 10px 0 0; opacity: 0.9; font-size: 16px; }
-          .body { background: white; padding: 40px 30px; }
-          .button { display: inline-block; background: linear-gradient(135deg, #bf831c, #d4a037); color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: bold; font-size: 18px; letter-spacing: 0.5px; }
-          .info-box { background: #fff9e5; border-left: 4px solid #bf831c; padding: 16px 20px; margin: 24px 0; font-size: 14px; color: #555; border-radius: 0 8px 8px 0; }
-          .footer { background: #1a1a2e; padding: 24px; text-align: center; font-size: 12px; color: #888; border-radius: 0 0 12px 12px; }
-          .footer a { color: #bf831c; text-decoration: none; }
-          .url { word-break: break-all; color: #bf831c; font-size: 13px; }
-          .welcome-icon { font-size: 48px; margin-bottom: 12px; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d0d1a; color: #e0e0e0; }
+          .wrapper { max-width: 620px; margin: 0 auto; padding: 32px 16px; }
+          /* ── Hero banner ── */
+          .hero { background: linear-gradient(135deg, #1a0a3c 0%, #0d1a3c 50%, #1a0a30 100%); border-radius: 20px 20px 0 0; padding: 48px 36px 40px; text-align: center; position: relative; overflow: hidden; }
+          .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(191,131,28,.4) 0%, transparent 70%); }
+          .badge { display: inline-block; background: rgba(191,131,28,.15); border: 1px solid rgba(191,131,28,.4); color: #f0b445; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 16px; border-radius: 999px; margin-bottom: 24px; position: relative; }
+          .logo-glow { font-size: 56px; margin-bottom: 16px; filter: drop-shadow(0 0 24px rgba(212,160,55,.6)); position: relative; }
+          .hero h1 { font-size: 30px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; position: relative; }
+          .hero h1 span { background: linear-gradient(90deg, #bf831c, #f0c060, #d4a037); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .hero p { font-size: 15px; color: rgba(255,255,255,.65); margin-top: 10px; position: relative; }
+          /* ── Body ── */
+          .body { background: #12121f; padding: 40px 36px; }
+          .greeting { font-size: 16px; color: #c5c5d8; line-height: 1.6; margin-bottom: 28px; }
+          /* ── Steps ── */
+          .steps { margin: 0 0 32px; }
+          .step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+          .step-num { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #bf831c, #d4a037); color: white; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+          .step-text { font-size: 14px; color: #b0b0c8; padding-top: 6px; }
+          .step-text strong { color: #e8e8f5; }
+          /* ── CTA button ── */
+          .cta-wrap { text-align: center; margin: 36px 0; }
+          .cta { display: inline-block; background: linear-gradient(135deg, #bf831c 0%, #e8a833 50%, #d4a037 100%); color: #000 !important; text-decoration: none; font-weight: 800; font-size: 17px; padding: 18px 52px; border-radius: 12px; letter-spacing: 0.3px; box-shadow: 0 0 32px rgba(212,160,55,.45), 0 4px 16px rgba(0,0,0,.3); }
+          /* ── Security note ── */
+          .security { background: rgba(191,131,28,.08); border: 1px solid rgba(191,131,28,.2); border-radius: 12px; padding: 16px 20px; margin: 28px 0 0; font-size: 13px; color: #a0a0b8; line-height: 1.5; }
+          .security strong { color: #d4a037; }
+          /* ── Fallback URL ── */
+          .fallback { margin-top: 24px; font-size: 12px; color: #5a5a78; }
+          .fallback a { color: #bf831c; word-break: break-all; }
+          /* ── Footer ── */
+          .footer { background: #0a0a14; border-radius: 0 0 20px 20px; padding: 28px 36px; text-align: center; font-size: 12px; color: #44445a; }
+          .footer strong { color: #bf831c; }
+          .divider { height: 1px; background: rgba(191,131,28,.12); margin: 0 36px; }
         </style>
       </head>
       <body>
-        <div class="container">
-          <div class="header">
-            <div class="welcome-icon">✨</div>
-            <h1>Welcome to Verso Air!</h1>
-            <p>Verify your email to get started</p>
+        <div class="wrapper">
+          <div class="hero">
+            <div class="badge">🌍 Verso Air · Business Intelligence</div>
+            <div class="logo-glow">🚀</div>
+            <h1>You're almost in,<br><span>let's verify your email.</span></h1>
+            <p>One quick step and your account is ready to go.</p>
           </div>
           <div class="body">
-            <p style="font-size: 16px; color: #333;">Thank you for creating your <strong>Verso Air</strong> account!</p>
-            <p style="font-size: 16px; color: #333;">Click the button below to verify your email address and activate your account. This link expires in <strong>24 hours</strong>.</p>
-            <div style="text-align: center;">
-              <a href="${verifyUrl}" class="button">Verify My Email</a>
+            <p class="greeting">
+              Thanks for joining <strong style="color:#d4a037">Verso Air</strong> — the business intelligence platform connecting entrepreneurs across Africa and beyond.<br><br>
+              Click the button below to verify your email and unlock your full dashboard.
+            </p>
+            <div class="steps">
+              <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Click the button below</strong> to open the verification page</div></div>
+              <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Your account is activated</strong> instantly — no waiting</div></div>
+              <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Sign in</strong> and explore your dashboard, analytics & more</div></div>
             </div>
-            <div class="info-box">
-              <strong>🔒 Security Note:</strong> If you didn't create a Verso Air account, you can safely ignore this email. No account will be activated.
+            <div class="cta-wrap">
+              <a href="${verifyUrl}" class="cta">✅ Verify My Email</a>
             </div>
-            <p style="font-size: 14px; color: #666;">If the button doesn't work, copy and paste this URL into your browser:</p>
-            <p class="url">${verifyUrl}</p>
+            <div class="security">
+              <strong>🔒 Security Note:</strong> If you didn't create a Verso Air account, you can safely ignore this email. No account will be activated without verification.
+            </div>
+            <div class="fallback">
+              <p>Button not working? Copy and paste this link into your browser:</p>
+              <a href="${verifyUrl}">${verifyUrl}</a>
+              <p style="margin-top:8px">This link expires in <strong style="color:#d4a037">24 hours</strong>.</p>
+            </div>
           </div>
+          <div class="divider"></div>
           <div class="footer">
             <p><strong>Verso Air</strong> — Business Intelligence Platform</p>
-            <p>Connecting African businesses with global opportunities</p>
-            <p>&copy; ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
+            <p style="margin-top:4px">Connecting African businesses with global opportunities</p>
+            <p style="margin-top:8px">&copy; ${new Date().getFullYear()} Verso Air. All rights reserved.</p>
           </div>
         </div>
       </body>
     </html>
   `;
 
-  return sendEmail(toEmail, "Verify your Verso Air email", htmlContent);
+  return sendEmail(
+    toEmail,
+    "🚀 One step left — verify your Verso Air account",
+    htmlContent,
+  );
 }
 
 /**
@@ -326,10 +380,7 @@ export async function sendPasswordResetEmail(
   toEmail: string,
   resetToken: string,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
   const resetUrl = `${appUrl}/auth/reset-password?token=${encodeURIComponent(resetToken)}`;
 
   const htmlContent = `
@@ -454,10 +505,7 @@ export async function sendBusinessApprovalRequestEmail(
   data: BusinessApprovalData,
   pdfPath?: string,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const subject = `📋 New Business Registration — ${data.businessName} (Approval Required)`;
 
@@ -549,10 +597,7 @@ export async function sendBusinessApprovedEmail(
   businessName: string,
   notes?: string,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const subject = `✅ Your business "${businessName}" has been approved!`;
 
@@ -606,10 +651,7 @@ export async function sendBusinessRejectedEmail(
   businessName: string,
   reason?: string,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const subject = `❌ Your business "${businessName}" registration was not approved`;
 
@@ -667,10 +709,7 @@ function wrapInBrandedTemplate(
   bodyHtml: string,
   unsubscribeUrl: string,
 ): string {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -770,10 +809,7 @@ export async function sendJobAlertEmail(
     )
     .join("");
 
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const bodyHtml = `
     <p>Hi <strong>${toName}</strong>,</p>
@@ -843,10 +879,7 @@ export async function sendContractAlertEmail(
     )
     .join("");
 
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const bodyHtml = `
     <p>Hi <strong>${toName}</strong>,</p>
@@ -916,10 +949,7 @@ export async function sendReservationUpdateEmail(
   const label = statusLabels[reservation.status] || reservation.status;
   const subject = `${emoji} Reservation ${label} — ${reservation.businessName}`;
 
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const bodyHtml = `
     <p>Hi <strong>${toName}</strong>,</p>
@@ -1031,10 +1061,7 @@ export async function sendGeoAdminReportEmail(
     </ul>`
       : "";
 
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const bodyHtml = `
     <p>Hi <strong>${toName}</strong>,</p>
@@ -1087,10 +1114,7 @@ export async function sendGeoAdminCrudNotificationEmail(
   adminEmail: string,
   data: CrudNotificationData,
 ): Promise<boolean> {
-  const appUrl =
-    process.env.VITE_API_URL ||
-    process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
+  const appUrl = getAppUrl();
 
   const actionEmoji =
     data.action === "created" ? "✅" : data.action === "updated" ? "📝" : "🗑️";

@@ -45,6 +45,11 @@ import intentSearchRouter from "./routes/intent-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
 import geoSeoRouter from "./routes/geo-seo";
+import businessLogoRouter from "./routes/business-logo";
+import inventoryRouter from "./routes/inventory";
+import inboxRouter from "./routes/inbox";
+import geoActionsRouter from "./routes/geo-actions";
+import contractorPipelineRouter from "./routes/contractor-pipeline";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -278,6 +283,9 @@ export async function registerRoutes(app: Express) {
   // Register marketing platform routes (journal, packs, print, cart, orders, newsletters)
   app.use("/api/marketing", marketingRouter);
 
+  // Business logo upload (paid tiers only)
+  app.use("/api/business-logo", businessLogoRouter);
+
   // Register user browsing history routes
   app.use("/api/user/history", userHistoryRouter);
 
@@ -299,6 +307,10 @@ export async function registerRoutes(app: Express) {
   app.use("/api/migrate", migrateRouter); // Market Raider — competitor scraping & import
   app.use("/api/escrow", escrowRouter); // Escrow — trustless transaction engine
   app.use("/api/seo", geoSeoRouter); // GEO SEO — JSON-LD, sitemap, robots.txt
+  app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
+  app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
+  app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
+  app.use("/api/contractor-pipeline", contractorPipelineRouter); // Contractor Pipeline — apply → verify → assign
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───
   app.get("/api/csrf-token", (req, res) => {

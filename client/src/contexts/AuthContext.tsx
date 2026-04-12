@@ -96,8 +96,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
+            // Normalize server fields (snake_case → camelCase)
+            const u = data.user;
+            const normalized: AuthUser = {
+              id: String(u.userId || u.id || ""),
+              email: u.email || "",
+              name: u.name || u.display_name || u.displayName || u.username,
+              username: u.username,
+              role: u.role,
+              isAdmin: ["admin", "superuser", "moderator"].includes(u.role),
+              portals: u.portals || [],
+              hasArtistProfile: u.hasArtistProfile || false,
+              isContractor: u.isContractor || false,
+              hasOAuthAccount: u.hasOAuthAccount || false,
+              canAccessBlog: u.canAccessBlog || false,
+              subscriptionTier:
+                u.subscriptionTier || u.subscription_tier || "free",
+              subscriptionStatus: u.subscriptionStatus || u.subscription_status,
+            };
             setToken(storedToken);
-            setUser(data.user);
+            setUser(normalized);
             // Sync in-memory token so authenticatedFetch sends Authorization header
             setAuthToken(storedToken);
           } else {
@@ -107,22 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setToken(null);
           }
         } else if (response.status === 401) {
-          // Token expired — try to keep session from cached user rather
-          // than logging out immediately. Only explicit logout clears tokens.
-          const cachedUser = localStorage.getItem("auth_user");
-          if (cachedUser && storedToken) {
-            try {
-              setUser(JSON.parse(cachedUser));
-              setToken(storedToken);
-              setAuthToken(storedToken);
-            } catch {
-              setUser(null);
-              setToken(null);
-            }
-          } else {
-            setUser(null);
-            setToken(null);
-          }
+          // Token expired — force full logout, no cached fallbacks
+          clearAllTokens();
+          localStorage.removeItem("auth_user");
+          setUser(null);
+          setToken(null);
         }
       } catch (error) {
         // Network error - still restore user from localStorage for offline support

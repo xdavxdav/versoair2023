@@ -7,6 +7,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { requireAuth } from "../middleware/auth";
 import {
   loginLimiter,
   registerLimiter,
@@ -25,6 +26,21 @@ const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
 const router = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Check if an email is whitelisted as TSR (Technical Service Representative).
+ * Returns true if found in tsr_whitelist with is_active = true.
+ */
+async function isTsrWhitelisted(email: string): Promise<boolean> {
+  try {
+    const result = await db.execute(
+      sql`SELECT id FROM tsr_whitelist WHERE email = ${email.toLowerCase()} AND is_active = true LIMIT 1`,
+    );
+    return (result.rows?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -302,7 +318,7 @@ router.post(
         username: derivedUsername,
         password: hashedPassword,
         role: autoVerify ? "superuser" : "user",
-        isVerified: autoVerify,
+        isVerified: autoVerify, // only superadmin is auto-verified; all others must verify email
       })
       .returning({
         id: schema.users.id,
@@ -336,7 +352,7 @@ router.post(
       return;
     }
 
-    // Generate verification token
+    // All non-superadmin accounts must verify their email before logging in
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -394,7 +410,8 @@ router.post(
 
     // Bypass Drizzle type issues with parameterized raw SQL query
     const result = await db.execute(
-      sql`SELECT id, username, email, password, role, is_verified, failed_login_attempts, locked_until,
+      sql`SELECT id, username, email, password, role, is_verified, display_name,
+                 failed_login_attempts, locked_until,
                  subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
           FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
     );
@@ -457,7 +474,7 @@ router.post(
       return;
     }
 
-    // Check email verification — block unverified users (superadmin bypasses)
+    // Check email verification — all unverified users blocked (superadmin auto-bypasses)
     if (!user.is_verified && !isSuperadmin(email)) {
       res.status(403).json({
         success: false,
@@ -475,11 +492,29 @@ router.post(
       .set({ failedLoginAttempts: 0, lockedUntil: null })
       .where(eq(schema.users.id, user.id));
 
+    // TSR whitelist check: if user is whitelisted + high-tier, upgrade role
+    let effectiveLoginRole = user.role || "user";
+    const userTier = (user.subscription_tier || "free").toLowerCase();
+    if (
+      effectiveLoginRole === "user" &&
+      ["max", "enterprise"].includes(userTier) &&
+      (await isTsrWhitelisted(user.email))
+    ) {
+      effectiveLoginRole = "tsr";
+      // Persist role upgrade on first match
+      if (user.role !== "tsr") {
+        await db
+          .update(schema.users)
+          .set({ role: "tsr" })
+          .where(eq(schema.users.id, user.id));
+      }
+    }
+
     const token = jwt.sign(
       {
         userId: String(user.id),
         email: user.email,
-        role: user.role || "user",
+        role: effectiveLoginRole,
         subscriptionTier: user.subscription_tier || "free",
       },
       getJwtSecret(),
@@ -497,14 +532,18 @@ router.post(
       console.warn("[AUTH] Could not compute capabilities on login:", e);
     }
 
+    const displayName = user.display_name || null;
+
     res.json({
       success: true,
       token,
+      needsDisplayName: !displayName, // true when the user hasn't set their name yet
       user: {
         id: String(user.id),
         email: user.email,
+        name: displayName || user.username || null,
         username: user.username || null,
-        role: user.role || "user",
+        role: effectiveLoginRole,
         subscriptionTier: user.subscription_tier || "free",
         subscriptionStatus: user.subscription_status || "active",
         trialTier: user.trial_tier || null,
@@ -550,7 +589,12 @@ router.get(
 
     if (!token || typeof token !== "string") {
       // Redirect to signin with error
-      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      const appUrl = (
+        process.env.APP_PUBLIC_URL ||
+        process.env.RENDER_EXTERNAL_URL ||
+        process.env.VERSOAIR_URL ||
+        ""
+      ).replace(/\/$/, "");
       res.redirect(`${appUrl}/signin?verification=invalid`);
       return;
     }
@@ -567,7 +611,12 @@ router.get(
     const tokenRecord = result.rows?.[0] as any;
 
     if (!tokenRecord) {
-      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      const appUrl = (
+        process.env.APP_PUBLIC_URL ||
+        process.env.RENDER_EXTERNAL_URL ||
+        process.env.VERSOAIR_URL ||
+        ""
+      ).replace(/\/$/, "");
       res.redirect(`${appUrl}/signin?verification=invalid`);
       return;
     }
@@ -578,7 +627,12 @@ router.get(
       await db.execute(
         sql`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`,
       );
-      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      const appUrl = (
+        process.env.APP_PUBLIC_URL ||
+        process.env.RENDER_EXTERNAL_URL ||
+        process.env.VERSOAIR_URL ||
+        ""
+      ).replace(/\/$/, "");
       res.redirect(`${appUrl}/signin?verification=already`);
       return;
     }
@@ -588,7 +642,12 @@ router.get(
       await db.execute(
         sql`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`,
       );
-      const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+      const appUrl = (
+        process.env.APP_PUBLIC_URL ||
+        process.env.RENDER_EXTERNAL_URL ||
+        process.env.VERSOAIR_URL ||
+        ""
+      ).replace(/\/$/, "");
       res.redirect(`${appUrl}/signin?verification=expired`);
       return;
     }
@@ -607,7 +666,12 @@ router.get(
     console.log(`[AUTH] Email verified for user ${tokenRecord.email}`);
 
     // Redirect to signin with success message
-    const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+    const appUrl = (
+      process.env.APP_PUBLIC_URL ||
+      process.env.RENDER_EXTERNAL_URL ||
+      process.env.VERSOAIR_URL ||
+      ""
+    ).replace(/\/$/, "");
     res.redirect(`${appUrl}/signin?verification=success`);
   }),
 );
@@ -1413,6 +1477,99 @@ router.put(
       .set({ username: username.trim() })
       .where(eq(schema.users.id, userId));
     res.json({ success: true, message: "Profile updated" });
+  }),
+);
+
+/**
+ * POST /auth/account/set-display-name
+ * Set or update the user's display name.
+ * First-time set (displayName is null) — no password required.
+ * Subsequent changes — requires current password for security.
+ */
+router.post(
+  "/account/set-display-name",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Not authenticated" });
+      return;
+    }
+
+    const { displayName, currentPassword } = req.body;
+
+    if (
+      !displayName ||
+      typeof displayName !== "string" ||
+      displayName.trim().length < 2
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Display name must be at least 2 characters",
+      });
+      return;
+    }
+
+    if (displayName.trim().length > 50) {
+      res.status(400).json({
+        success: false,
+        message: "Display name cannot exceed 50 characters",
+      });
+      return;
+    }
+
+    // Fetch current user
+    const [user] = await db
+      .select({
+        displayName: schema.users.displayName,
+        password: schema.users.password,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    // If display name already exists, require password verification
+    if (user.displayName) {
+      if (!currentPassword) {
+        res.status(400).json({
+          success: false,
+          requiresPassword: true,
+          message:
+            "Please enter your current password to change your display name",
+        });
+        return;
+      }
+
+      const passwordValid = await bcrypt.compare(
+        currentPassword,
+        user.password,
+      );
+      if (!passwordValid) {
+        res.status(403).json({
+          success: false,
+          message: "Current password is incorrect",
+        });
+        return;
+      }
+    }
+
+    // Update display name
+    await db
+      .update(schema.users)
+      .set({ displayName: displayName.trim() })
+      .where(eq(schema.users.id, userId));
+
+    res.json({
+      success: true,
+      message: user.displayName
+        ? "Display name updated"
+        : "Welcome aboard! Your name is set.",
+      displayName: displayName.trim(),
+    });
   }),
 );
 
@@ -2467,15 +2624,19 @@ router.post(
       console.warn("[AUTH] Could not compute capabilities on artist login:", e);
     }
 
+    const displayName = user.displayName || null;
+
     res.json({
       success: true,
       message: skipPasswordCheck
         ? "Artist code login successful"
         : "Artist login successful",
       token,
+      needsDisplayName: !displayName,
       user: {
-        id: user.id,
+        id: String(user.id),
         email: user.email,
+        name: displayName || artistProfile?.stageName || user.username || null,
         role: effectiveRole,
         stageName: artistProfile?.stageName || user.username,
         genre: artistProfile?.genre || [],
@@ -2672,11 +2833,29 @@ router.post(
       .set({ failedLoginAttempts: 0, lockedUntil: null })
       .where(eq(schema.users.id, user.id));
 
+    // --- TSR whitelist check for subscriber login ---
+    let effectiveSubRole = user.role || "user";
+    if (
+      effectiveSubRole === "user" &&
+      ["max", "enterprise"].includes(user.subscriptionTier || "")
+    ) {
+      const tsrOk = await isTsrWhitelisted(user.email);
+      if (tsrOk) {
+        effectiveSubRole = "tsr";
+        // Persist TSR role to DB
+        await db
+          .update(schema.users)
+          .set({ role: "tsr" })
+          .where(eq(schema.users.id, user.id));
+        console.log(`[AUTH] TSR role granted to subscriber ${user.email}`);
+      }
+    }
+
     const token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
-        role: user.role || "user",
+        role: effectiveSubRole,
         subscriptionTier: user.subscriptionTier || "free",
       },
       getJwtSecret(),
@@ -2697,15 +2876,18 @@ router.post(
       );
     }
 
+    const displayNameSub = user.displayName || null;
+
     res.json({
       success: true,
       message: "Subscriber login successful",
       token,
+      needsDisplayName: !displayNameSub,
       user: {
-        id: user.id,
+        id: String(user.id),
         email: user.email,
-        displayName: user.username || user.username,
-        role: user.role,
+        name: displayNameSub || user.username || null,
+        role: effectiveSubRole,
         subscriptionTier: user.subscriptionTier || "free",
         subscriptionStatus: user.subscriptionStatus || "active",
         premiumExpiresAt: user.premiumExpiresAt,
@@ -2782,6 +2964,7 @@ router.post(
         password: hashedPassword,
         role: "user",
         subscriptionTier: "free", // community members start free
+        portalAccess: ["general", "community"],
         isVerified: isSuperadmin(email),
       })
       .returning({
@@ -2917,17 +3100,148 @@ router.post(
       );
     }
 
+    const displayNameComm = user.displayName || null;
+
     res.json({
       success: true,
       message: "Community login successful",
       token,
+      needsDisplayName: !displayNameComm,
       user: {
-        id: user.id,
+        id: String(user.id),
         email: user.email,
-        displayName: user.username || user.username,
+        name: displayNameComm || user.username || null,
         role: user.role,
         portals: capabilitiesComm?.portals || ["general", "community"],
       },
+    });
+  }),
+);
+
+// ─── TSR Whitelist Management (Admin-only) ────────────────────────────────
+
+/**
+ * GET /auth/tsr/whitelist
+ * List all TSR whitelist entries (admin/superuser only)
+ */
+router.get(
+  "/tsr/whitelist",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const entries = await db.execute(
+      sql`SELECT tw.id, tw.email, tw.is_active, tw.granted_at, tw.granted_by,
+                 u.username AS granted_by_name
+          FROM tsr_whitelist tw
+          LEFT JOIN users u ON u.id = tw.granted_by
+          ORDER BY tw.granted_at DESC`,
+    );
+    res.json({ success: true, entries: entries.rows });
+  }),
+);
+
+/**
+ * POST /auth/tsr/whitelist
+ * Add an email to the TSR whitelist
+ */
+router.post(
+  "/tsr/whitelist",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ success: false, message: "Email is required" });
+      return;
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if already exists
+    const existing = await db.execute(
+      sql`SELECT id, is_active FROM tsr_whitelist WHERE email = ${normalizedEmail} LIMIT 1`,
+    );
+
+    if (existing.rows?.length) {
+      const entry = existing.rows[0] as any;
+      if (entry.is_active) {
+        res
+          .status(409)
+          .json({ success: false, message: "Email already whitelisted" });
+        return;
+      }
+      // Re-activate
+      await db.execute(
+        sql`UPDATE tsr_whitelist SET is_active = true, granted_by = ${(req as any).user.userId}, granted_at = NOW()
+            WHERE id = ${entry.id}`,
+      );
+      res.json({
+        success: true,
+        message: "TSR whitelist entry re-activated",
+        reactivated: true,
+      });
+      return;
+    }
+
+    await db.insert(schema.tsrWhitelist).values({
+      email: normalizedEmail,
+      grantedBy: (req as any).user.userId,
+    });
+
+    res.json({ success: true, message: "Email added to TSR whitelist" });
+  }),
+);
+
+/**
+ * DELETE /auth/tsr/whitelist/:email
+ * Remove an email from the TSR whitelist + revoke all their sessions + reset role
+ */
+router.delete(
+  "/tsr/whitelist/:email",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const email = req.params.email.toLowerCase().trim();
+
+    // Deactivate whitelist entry
+    await db.execute(
+      sql`UPDATE tsr_whitelist SET is_active = false WHERE email = ${email}`,
+    );
+
+    // Find the user and reset their role from "tsr" back to "user"
+    const userResult = await db.execute(
+      sql`SELECT id FROM users WHERE email = ${email} AND role = 'tsr' LIMIT 1`,
+    );
+    const targetUser = userResult.rows?.[0] as any;
+
+    if (targetUser) {
+      // Reset role
+      await db
+        .update(schema.users)
+        .set({ role: "user" })
+        .where(eq(schema.users.id, targetUser.id));
+
+      // Revoke all active sessions (instant kick)
+      await db
+        .update(schema.activeSessions)
+        .set({
+          isRevoked: true,
+          revokedAt: new Date(),
+          revokedReason: "tsr_revoked",
+        })
+        .where(
+          and(
+            eq(schema.activeSessions.userId, targetUser.id),
+            eq(schema.activeSessions.isRevoked, false),
+          ),
+        );
+
+      console.log(
+        `[TSR] Revoked TSR access for ${email} (user ${targetUser.id}) — sessions invalidated`,
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `TSR access revoked for ${email}`,
+      sessionsRevoked: !!targetUser,
     });
   }),
 );

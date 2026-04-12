@@ -384,6 +384,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       "popularity_score",
       "pdf_path",
       "approval_status",
+      "logo_url",
     ];
     const colChecks = await Promise.all(
       optionalCols.map(async (c) => ({

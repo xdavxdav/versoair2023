@@ -51,6 +51,13 @@ export default function Navbar({
   const { isAuthenticated, loading: authLoading, tier } = useSubscription();
   const { user } = useAuthContext();
 
+  // Detect if user is authenticated via ANY portal (not just general auth)
+  const hasPortalAuth =
+    !!localStorage.getItem("artist_token") ||
+    localStorage.getItem("blog_community_auth") === "true" ||
+    !!localStorage.getItem("geoadmin_session") ||
+    !!localStorage.getItem("adminAccessTime");
+
   useEffect(() => {
     const handler = (e: Event) => {
       // @ts-ignore
@@ -714,10 +721,10 @@ export default function Navbar({
             {/* User Actions - Always visible */}
             {user ? (
               <div className="flex items-center gap-1.5">
-                {location !== "/geo-admin/dashboard" && (
+                {location !== "/dashboard" && (
                   <button
                     onClick={() => {
-                      navigate("/geo-admin/dashboard");
+                      navigate("/dashboard");
                     }}
                     className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
                     title="Dashboard"
@@ -725,6 +732,24 @@ export default function Navbar({
                     <User className="h-3.5 w-3.5" />
                   </button>
                 )}
+                <LogoutDropdown variant="red-solid" />
+              </div>
+            ) : hasPortalAuth ? (
+              /* Logged in via another portal (artist, blog, etc.) but not general auth */
+              <div className="flex items-center gap-1.5">
+                <div className="relative group">
+                  <Button
+                    disabled
+                    className="bg-slate-800/50 text-slate-500 px-2 md:px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap border border-slate-700 cursor-not-allowed opacity-50"
+                  >
+                    <Lock className="h-3 w-3 mr-1" />
+                    <span className="hidden sm:inline">Connexion</span>
+                    <span className="sm:hidden">Connexion</span>
+                  </Button>
+                  <span className="absolute -bottom-8 right-0 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    Déjà connecté via un autre portail
+                  </span>
+                </div>
                 <LogoutDropdown variant="red-solid" />
               </div>
             ) : (

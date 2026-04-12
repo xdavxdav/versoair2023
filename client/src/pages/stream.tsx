@@ -387,7 +387,7 @@ export default function StreamPage() {
       <div className="md:hidden">
         <MusicMobileDock />
       </div>
-      <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden">
+      <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden md:ml-16">
         <ImmersiveBackground />
 
         {/* ========================================= */}
@@ -546,7 +546,7 @@ export default function StreamPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(180,83,9,0.12),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(109,40,217,0.08),transparent_50%)]" />
 
-          <div className="relative max-w-[95vw] mx-auto px-4 md:pl-20 pt-6 pb-10 z-10">
+          <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-10 z-10">
             {/* Back Button - positioned below top bar, above header */}
             <button
               onClick={handleBack}
@@ -651,6 +651,214 @@ export default function StreamPage() {
                 </Link>
               </div>
             </div>
+
+            {/* ═══ MY STREAMING PLAN BANNER (logged-in users) ═══ */}
+            {user &&
+              (() => {
+                const plans = plansData?.plans || [];
+                const currentPlan =
+                  plans.find((p: any) => p.tier === streamingTier) || plans[0];
+                if (!currentPlan) return null;
+
+                const tierColors: Record<
+                  string,
+                  {
+                    bg: string;
+                    border: string;
+                    text: string;
+                    badge: string;
+                    glow: string;
+                  }
+                > = {
+                  guest: {
+                    bg: "from-gray-800/60 to-gray-900/60",
+                    border: "border-gray-600/30",
+                    text: "text-gray-300",
+                    badge: "bg-gray-700 text-gray-300",
+                    glow: "",
+                  },
+                  supporter: {
+                    bg: "from-blue-900/40 to-indigo-900/40",
+                    border: "border-blue-500/30",
+                    text: "text-blue-300",
+                    badge: "bg-blue-600/30 text-blue-300",
+                    glow: "shadow-[0_0_20px_rgba(59,130,246,0.1)]",
+                  },
+                  champion: {
+                    bg: "from-amber-900/40 to-orange-900/40",
+                    border: "border-amber-500/30",
+                    text: "text-amber-300",
+                    badge: "bg-amber-600/30 text-amber-300",
+                    glow: "shadow-[0_0_20px_rgba(245,158,11,0.15)]",
+                  },
+                  patron: {
+                    bg: "from-purple-900/40 to-fuchsia-900/40",
+                    border: "border-purple-500/30",
+                    text: "text-purple-300",
+                    badge: "bg-purple-600/30 text-purple-300",
+                    glow: "shadow-[0_0_20px_rgba(168,85,247,0.15)]",
+                  },
+                };
+                const tc = tierColors[streamingTier] || tierColors.guest;
+
+                const voteWeight =
+                  streamingTier === "patron"
+                    ? "×3"
+                    : streamingTier === "champion"
+                      ? "×2"
+                      : "×1";
+                const streamsLabel =
+                  currentPlan.weeklyStreams === -1
+                    ? "∞"
+                    : currentPlan.weeklyStreams?.toLocaleString();
+
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className={`mb-8 rounded-2xl bg-gradient-to-r ${tc.bg} backdrop-blur-xl border ${tc.border} ${tc.glow} p-4 sm:p-5`}
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-2 rounded-xl ${tc.badge}`}>
+                          {streamingTier === "guest" ? (
+                            <Headphones className="w-4 h-4" />
+                          ) : (
+                            <Crown className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div>
+                          <p className={`text-sm font-bold ${tc.text}`}>
+                            {isGodTier ? "God Tier ∞" : currentPlan.name}
+                          </p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                            Mon abonnement
+                          </p>
+                        </div>
+                      </div>
+                      {streamingTier === "guest" && !isGodTier && (
+                        <button
+                          onClick={() => {
+                            const el =
+                              document.getElementById("subscription-plans");
+                            el?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 text-xs font-semibold border border-amber-500/30 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+                        >
+                          <Zap className="w-3 h-3" />
+                          Upgrade
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                      {/* Weekly streams */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Streams / sem.
+                        </p>
+                        <p className="text-lg font-bold text-white">
+                          {isGodTier ? "∞" : streamsLabel}
+                        </p>
+                      </div>
+
+                      {/* Audio quality */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Qualité audio
+                        </p>
+                        <p
+                          className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-emerald-400" : "text-white"}`}
+                        >
+                          {isGodTier ? "FLAC" : currentPlan.audioQuality}
+                        </p>
+                      </div>
+
+                      {/* Downloads */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Downloads / mois
+                        </p>
+                        <p className="text-sm font-bold text-white">
+                          {isGodTier
+                            ? "∞"
+                            : currentPlan.downloadsPerMonth === 0
+                              ? "—"
+                              : currentPlan.downloadsPerMonth === -1
+                                ? "∞"
+                                : currentPlan.downloadsPerMonth}
+                        </p>
+                      </div>
+
+                      {/* Ads */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Publicités
+                        </p>
+                        <p
+                          className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-emerald-400" : "text-orange-400"}`}
+                        >
+                          {!currentPlan.ads || isGodTier ? "Aucune ✓" : "Oui"}
+                        </p>
+                      </div>
+
+                      {/* Arcade */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Arcade PvP
+                        </p>
+                        <p
+                          className={`text-sm font-bold flex items-center gap-1 ${canAccessArcade ? "text-purple-400" : "text-gray-600"}`}
+                        >
+                          <Gamepad2 className="w-3.5 h-3.5" />
+                          {canAccessArcade ? "Accès ✓" : "Verrouillé"}
+                        </p>
+                      </div>
+
+                      {/* Vote weight */}
+                      <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          Vote Arena
+                        </p>
+                        <p
+                          className={`text-sm font-bold flex items-center gap-1 ${voteWeight !== "×1" ? "text-amber-400" : "text-white"}`}
+                        >
+                          <Trophy className="w-3.5 h-3.5" />
+                          {isGodTier ? "×∞" : voteWeight}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* XP bar (if stats available) */}
+                    {stats && (
+                      <div className="mt-3 flex items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-purple-400" />
+                          <span className="text-[10px] font-semibold text-gray-400">
+                            {levelName} · Niv.{currentLevel}
+                          </span>
+                        </div>
+                        <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${Math.min((currentPoints / nextLevelPoints) * 100, 100)}%`,
+                            }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full"
+                          />
+                        </div>
+                        <span className="text-[10px] text-gray-500">
+                          {currentPoints}/{nextLevelPoints} XP
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
 
             {/* Animated equalizer decoration */}
             <div className="flex items-end justify-center gap-[3px] h-8 mb-6 opacity-30">
@@ -1399,7 +1607,10 @@ export default function StreamPage() {
         {/* SUBSCRIPTION CTA */}
         {/* ========================================= */}
         {plansData?.plans && (
-          <section className="max-w-[95vw] mx-auto px-4 mb-16 relative z-10">
+          <section
+            id="subscription-plans"
+            className="max-w-[95vw] mx-auto px-4 mb-16 relative z-10"
+          >
             <div className="relative rounded-3xl overflow-hidden border border-white/[0.06]">
               {/* Background layers */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-gray-900/80 to-purple-900/15" />

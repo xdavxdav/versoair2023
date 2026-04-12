@@ -54,8 +54,8 @@ export default function PullToRefresh() {
         // Threshold reached — trigger the full eagle loading overlay then reload
         setTriggered(true);
         setPullDistance(0);
-        showEagleLoader(1200);
-        setTimeout(() => window.location.reload(), 1000);
+        showEagleLoader(300);
+        setTimeout(() => window.location.reload(), 250);
       } else {
         setPullDistance(0);
       }

@@ -49,6 +49,10 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/community/register",
   // Music upload — multipart/form-data with auth token; CSRF header unreliable with FormData
   "/api/music/tracks/upload",
+  // Business logo upload — multipart/form-data with auth token
+  "/api/business-logo/upload",
+  // Display name onboarding — called immediately after first login before CSRF is bootstrapped
+  "/auth/account/set-display-name",
 ];
 
 // ─── Server-side CSRF token store (Synchronizer Token Pattern) ────────────────

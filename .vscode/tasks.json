@@ -460,6 +460,246 @@
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 1; NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 &\necho \"PID=$!\"\nsleep 14\necho '--- Track list ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks?limit=2' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('tracks',[]); print(f'tracks={len(t)}, has_pochette={t[0].get(\\\"has_pochette\\\")}, artist={t[0].get(\\\"artist_name\\\")}') if t else print('EMPTY:', d)\"\necho '--- Track detail 103 ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('OK keys='+str(list(d.keys()))) if 'track' in d else print('ERR:',d)\"\necho '--- Pochette 103 ---'\ncurl -s -o /dev/null -w 'HTTP %{http_code} type=%{content_type} size=%{size_download}' 'http://localhost:5003/api/streaming/tracks/103/pochette'",
 			"group": "test"
+		},
+		{
+			"label": "Kill and Restart Server",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; pkill -9 -f 'tsx.*server' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test Verify Enforcement",
+			"type": "shell",
+			"command": "sleep 8 && curl -s -X POST http://localhost:5003/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"verify_test_xyz@example.com\",\"password\":\"Test1234!\",\"firstName\":\"Test\",\"lastName\":\"User\"}' && echo '---' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"verify_test_xyz@example.com\",\"password\":\"Test1234!\"}'",
+			"group": "test"
+		},
+		{
+			"label": "Push displayName column",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push 2>&1 | tail -20",
+			"group": "build"
+		},
+		{
+			"label": "Add displayName column directly",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT').then(r=>{console.log('✅ display_name column added');p.end()}).catch(e=>{console.error('ERR:',e.message);p.end()})\"",
+			"group": "build"
+		},
+		{
+			"label": "TypeScript check",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsc --noEmit 2>&1 | head -25",
+			"group": "build"
+		},
+		{
+			"label": "Restart Server Clean",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; pkill -9 -f 'tsx.*server' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test Onboarding Flow",
+			"type": "shell",
+			"command": "sleep 8; echo '=== Register ===' && curl -s -X POST http://localhost:5003/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"onboard_test_001@gmail.com\",\"password\":\"Test1234!\",\"firstName\":\"Test\",\"lastName\":\"User\"}' | python3 -m json.tool && echo '=== Login (should be blocked - unverified) ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"onboard_test_001@gmail.com\",\"password\":\"Test1234!\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Test superadmin login",
+			"type": "shell",
+			"command": "curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('success:', d.get('success')); print('needsDisplayName:', d.get('needsDisplayName')); print('name:', d.get('user',{}).get('name'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test set display name",
+			"type": "shell",
+			"command": "TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo \"Got token\" && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joel D.\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Restart Server v2",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Full display name test",
+			"type": "shell",
+			"command": "sleep 8 && TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo \"=== Set Display Name ===\" && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joel D.\"}' | python3 -m json.tool && echo \"=== Login Again (should show name) ===\" && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('needsDisplayName:', d.get('needsDisplayName')); print('name:', d.get('user',{}).get('name'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test name change security",
+			"type": "shell",
+			"command": "TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo '=== Without password (should fail) ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\"}' | python3 -m json.tool && echo '=== With wrong password ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\",\"currentPassword\":\"wrong\"}' | python3 -m json.tool && echo '=== With correct password ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\",\"currentPassword\":\"JoeyD000\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Restart and test all logins",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; NODE_ENV=development npx tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 12; echo '=== 1. General Login ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}')\" && echo '=== 2. Artist Login ===' && curl -s -X POST http://localhost:5003/auth/artist/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\" && echo '=== 3. Subscriber Login ===' && curl -s -X POST http://localhost:5003/auth/subscriber/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\" && echo '=== 4. Community Login ===' && curl -s -X POST http://localhost:5003/auth/community/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\"",
+			"group": "test"
+		},
+		{
+			"label": "Test all 4 logins",
+			"type": "shell",
+			"command": "sleep 5 && echo '=== General ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}')\" && echo '=== Artist ===' && curl -s -X POST http://localhost:5003/auth/artist/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\" && echo '=== Subscriber ===' && curl -s -X POST http://localhost:5003/auth/subscriber/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\" && echo '=== Community ===' && curl -s -X POST http://localhost:5003/auth/community/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\"",
+			"group": "test"
+		},
+		{
+			"label": "Health check",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/health | head -c 100",
+			"group": "test"
+		},
+		{
+			"label": "Health after wait",
+			"type": "shell",
+			"command": "sleep 10 && curl -s http://localhost:5003/api/health | head -c 100",
+			"group": "test"
+		},
+		{
+			"label": "Server logs",
+			"type": "shell",
+			"command": "tail -20 /tmp/fsa-server.log 2>/dev/null || echo 'No log file'",
+			"group": "test"
+		},
+		{
+			"label": "Test general login",
+			"type": "shell",
+			"command": "echo '=== General Login ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c 'import sys,json; d=json.load(sys.stdin); u=d.get(\"user\",{}); print(f\"needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}\")'",
+			"group": "test"
+		},
+		{
+			"label": "Test all 4 logins",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh",
+			"group": "test"
+		},
+		{
+			"label": "Start server fresh",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && NODE_ENV=development npx tsx server/index.ts &\nsleep 15\nlsof -ti :5003 && echo SERVER_ALIVE || echo SERVER_DEAD",
+			"group": "test"
+		},
+		{
+			"label": "Wait and health",
+			"type": "shell",
+			"command": "sleep 20 && curl -s http://localhost:5003/api/health && echo && echo SERVER_OK || echo SERVER_FAIL",
+			"group": "test"
+		},
+		{
+			"label": "Health now",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/health | head -1",
+			"group": "test"
+		},
+		{
+			"label": "Run login tests",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh",
+			"group": "test"
+		},
+		{
+			"label": "Run login tests full",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh > /tmp/login_test_results.txt 2>&1 && cat /tmp/login_test_results.txt",
+			"group": "test"
+		},
+		{
+			"label": "Show test results",
+			"type": "shell",
+			"command": "cat /tmp/login_test_results.txt",
+			"group": "test"
+		},
+		{
+			"label": "Copy results",
+			"type": "shell",
+			"command": "cp /tmp/login_test_results.txt /Users/joe/Downloads/FSA/_login_test_output.txt",
+			"group": "test"
+		},
+		{
+			"label": "Push new tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_new_tables.cjs",
+			"group": "test"
+		},
+		{
+			"label": "TypeCheck",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsc --noEmit 2>&1 | grep -E 'error TS|Found' | tail -30; echo '---DONE---'"
+		},
+		{
+			"label": "DB Push Schema",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push 2>&1 | tail -10"
+		},
+		{
+			"label": "Push Schema v2",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_run_push.sh"
+		},
+		{
+			"label": "Cleanup temps",
+			"type": "shell",
+			"command": "rm -f /Users/joe/Downloads/FSA/_typecheck.sh /Users/joe/Downloads/FSA/_run_push.sh && echo CLEANED"
+		},
+		{
+			"label": "Clear all artists",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _clear_artists.cjs"
+		},
+		{
+			"label": "Start Dev Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 1 && npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check startup error",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run dev 2>&1 | tail -30"
+		},
+		{
+			"label": "Check startup error detail",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run dev 2>&1 | head -20"
+		},
+		{
+			"label": "Full error trace",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsx server/index.ts 2>&1 | head -40"
+		},
+		{
+			"label": "Capture error to file",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsx server/index.ts > /tmp/fsa-err.log 2>&1; head -40 /tmp/fsa-err.log"
+		},
+		{
+			"label": "Start Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Git Commit Push All",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: pricing checkout, auth fixes, admin sections, loading speed, requireAuth fix, inventory, inbox, geo-actions' && git push origin main",
+			"group": "build"
 		}
 	]
 }

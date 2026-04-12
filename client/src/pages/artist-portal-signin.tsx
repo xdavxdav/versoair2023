@@ -28,6 +28,7 @@ import {
   passwordStrengthLevel,
   validateRegistrationForm,
 } from "@/lib/auth-validation";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ─── Floating Background Particles (lighter version) ─
 function LightParticles() {
@@ -66,12 +67,21 @@ type AuthTab = "signin" | "apply";
 
 export default function ArtistPortalSignIn() {
   const [, navigate] = useLocation();
+  const { login: authLogin } = useAuth();
   const [activeTab, setActiveTab] = useState<AuthTab>("signin");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
   const [step, setStep] = useState(1); // For multi-step apply form
+
+  // Display name onboarding state
+  const [showNameOnboarding, setShowNameOnboarding] = useState(false);
+  const [onboardingName, setOnboardingName] = useState("");
+  const [onboardingSaving, setOnboardingSaving] = useState(false);
+  const [onboardingError, setOnboardingError] = useState("");
+  const [pendingToken, setPendingToken] = useState("");
+  const [pendingUser, setPendingUser] = useState<any>(null);
 
   // Sign in form state
   const [signInForm, setSignInForm] = useState({
@@ -141,6 +151,24 @@ export default function ArtistPortalSignIn() {
       // Store artist data for portal usage
       localStorage.setItem("artist_token", data.token);
       localStorage.setItem("artist_profile", JSON.stringify(data.user));
+
+      // Sync with AuthContext so navbar/dashboard recognizes the user
+      authLogin(data.token, {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+      });
+
+      // If user hasn't set display name, show onboarding prompt
+      if (data.needsDisplayName) {
+        setPendingToken(data.token);
+        setPendingUser(data.user);
+        setShowNameOnboarding(true);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       navigate("/artist-portal/dashboard");
     } catch (err: any) {
@@ -205,6 +233,25 @@ export default function ArtistPortalSignIn() {
       // Store artist data
       localStorage.setItem("artist_token", data.token);
       localStorage.setItem("artist_profile", JSON.stringify(data.user));
+
+      // Sync with AuthContext
+      authLogin(data.token, {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name || data.user.stageName,
+        role: data.user.role,
+      });
+
+      // New artists always need display name
+      if (data.needsDisplayName) {
+        setPendingToken(data.token);
+        setPendingUser(data.user);
+        setOnboardingName(applyForm.stageName || ""); // Pre-fill with stage name
+        setShowNameOnboarding(true);
+        setIsLoading(false);
+        return;
+      }
+
       setAuthSuccess("Compte créé avec succès ! Redirection...");
       setIsLoading(false);
       setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
@@ -213,6 +260,170 @@ export default function ArtistPortalSignIn() {
       setIsLoading(false);
     }
   };
+
+  // ── Display Name Onboarding handler ──
+  const handleSetDisplayName = async () => {
+    const trimmed = onboardingName.trim();
+    if (trimmed.length < 2) {
+      setOnboardingError("Le nom doit contenir au moins 2 caractères.");
+      return;
+    }
+    setOnboardingSaving(true);
+    setOnboardingError("");
+    try {
+      const res = await fetch("/auth/account/set-display-name", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${pendingToken}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ displayName: trimmed }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        // Update AuthContext with the new name
+        authLogin(pendingToken, {
+          ...pendingUser,
+          name: trimmed,
+        });
+        // Update stored artist profile
+        const stored = JSON.parse(
+          localStorage.getItem("artist_profile") || "{}",
+        );
+        stored.name = trimmed;
+        localStorage.setItem("artist_profile", JSON.stringify(stored));
+        navigate("/artist-portal/dashboard");
+      } else {
+        setOnboardingError(result.message || "Échec de la sauvegarde.");
+      }
+    } catch {
+      setOnboardingError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setOnboardingSaving(false);
+    }
+  };
+
+  // ── Name Onboarding Screen ──
+  if (showNameOnboarding) {
+    const nameValid = onboardingName.trim().length >= 2;
+    return (
+      <div className="relative min-h-screen bg-[#06020f] text-white flex flex-col overflow-hidden">
+        <LightParticles />
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 30%, rgba(168,85,247,0.15) 0%, transparent 50%)",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
+          <motion.div
+            className="w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="text-center mb-8">
+              <motion.div
+                className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-500 items-center justify-center mb-4"
+                animate={{
+                  boxShadow: [
+                    "0 0 20px rgba(168,85,247,0.3)",
+                    "0 0 40px rgba(168,85,247,0.5)",
+                    "0 0 20px rgba(168,85,247,0.3)",
+                  ],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                <Sparkles className="w-7 h-7 text-white" />
+              </motion.div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-300 to-fuchsia-300 bg-clip-text text-transparent">
+                Comment vous appeler ?
+              </h1>
+              <p className="text-white/40 text-sm mt-2">
+                Ce nom apparaîtra sur votre profil artiste et dans le studio
+              </p>
+            </div>
+
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 backdrop-blur-sm">
+              <div className="relative mb-4">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400/60" />
+                <input
+                  type="text"
+                  value={onboardingName}
+                  onChange={(e) => {
+                    setOnboardingName(e.target.value);
+                    setOnboardingError("");
+                  }}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && nameValid && handleSetDisplayName()
+                  }
+                  placeholder="Votre nom d'artiste ou vrai nom"
+                  maxLength={50}
+                  autoFocus
+                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-xl pl-10 pr-10 py-3 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all"
+                />
+                {onboardingName.trim().length > 0 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {nameValid ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-400/60" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Live preview */}
+              {nameValid && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="mb-4 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center"
+                >
+                  <p className="text-white/40 text-xs">Aperçu du studio</p>
+                  <p className="text-purple-300 font-medium mt-1">
+                    Bienvenue, {onboardingName.trim()} 🎵
+                  </p>
+                </motion.div>
+              )}
+
+              {onboardingError && (
+                <p className="text-red-400 text-sm text-center mb-3">
+                  {onboardingError}
+                </p>
+              )}
+
+              <motion.button
+                onClick={handleSetDisplayName}
+                disabled={!nameValid || onboardingSaving}
+                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                  nameValid && !onboardingSaving
+                    ? "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white hover:from-purple-500 hover:to-fuchsia-400 shadow-lg shadow-purple-500/25"
+                    : "bg-white/[0.06] text-white/30 cursor-not-allowed"
+                }`}
+                whileHover={nameValid ? { scale: 1.02 } : {}}
+                whileTap={nameValid ? { scale: 0.98 } : {}}
+              >
+                {onboardingSaving ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Accéder au Studio
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#06020f] text-white flex flex-col overflow-hidden">
