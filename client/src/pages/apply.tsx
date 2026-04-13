@@ -1269,8 +1269,13 @@ export default function ApplyPage() {
                       value={formData.genre}
                       onValueChange={(v) => handleInputChange("genre", v)}
                     >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Select genre" />
+                      <SelectTrigger
+                        className="bg-white/10 border-white/20 text-white"
+                        translate="no"
+                      >
+                        <SelectValue placeholder="Select genre">
+                          {formData.genre || undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {[
@@ -1599,6 +1604,7 @@ export default function ApplyPage() {
             {/* Submit Button */}
             <Button
               onClick={handleRegister}
+              translate="no"
               disabled={
                 loading ||
                 !formData.email ||
@@ -1613,11 +1619,11 @@ export default function ApplyPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Account...
+                  <span className="notranslate">Creating Account...</span>
                 </>
               ) : (
                 <>
-                  Create Account
+                  <span className="notranslate">Create Account</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}

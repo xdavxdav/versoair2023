@@ -700,6 +700,126 @@
 			"type": "shell",
 			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: pricing checkout, auth fixes, admin sections, loading speed, requireAuth fix, inventory, inbox, geo-actions' && git push origin main",
 			"group": "build"
+		},
+		{
+			"label": "Neon DB Push",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push",
+			"group": "build"
+		},
+		{
+			"label": "Neon DB Push Now",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push",
+			"group": "build"
+		},
+		{
+			"label": "Neon Push Log",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push > /tmp/drizzle-push.log 2>&1 && echo 'SUCCESS' >> /tmp/drizzle-push.log || echo 'FAILED' >> /tmp/drizzle-push.log",
+			"group": "build"
+		},
+		{
+			"label": "Read Drizzle Log",
+			"type": "shell",
+			"command": "sleep 25 && cat /tmp/drizzle-push.log",
+			"group": "test"
+		},
+		{
+			"label": "Neon Push Force",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push --force > /tmp/drizzle-push2.log 2>&1 && echo 'DONE' >> /tmp/drizzle-push2.log || echo 'FAILED' >> /tmp/drizzle-push2.log",
+			"group": "build"
+		},
+		{
+			"label": "Read Force Log",
+			"type": "shell",
+			"command": "sleep 60 && tail -30 /tmp/drizzle-push2.log",
+			"group": "test"
+		},
+		{
+			"label": "Drizzle Result",
+			"type": "shell",
+			"command": "cat /tmp/drizzle-push2.log | grep -v 'Pulling schema' | tail -40",
+			"group": "test"
+		},
+		{
+			"label": "Sync New Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables v3",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables Full",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs 2>&1",
+			"group": "build"
+		},
+		{
+			"label": "Sync Full Output",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs > /tmp/sync-result.txt 2>&1 && cat /tmp/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Sync Full v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs > /Users/joe/Downloads/FSA/sync-result.txt 2>&1 && cat /Users/joe/Downloads/FSA/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Cleanup",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Clear Users",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _clear_test_users.cjs > /Users/joe/Downloads/FSA/clear-result.txt 2>&1 && cat /Users/joe/Downloads/FSA/clear-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Del result",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/clear-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs > /Users/joe/Downloads/FSA/restore-result.txt 2>&1; cat /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff v3",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs > /Users/joe/Downloads/FSA/restore-result.txt 2>&1; cat /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Cleanup",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
 		}
 	]
 }

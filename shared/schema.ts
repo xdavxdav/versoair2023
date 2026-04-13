@@ -417,7 +417,7 @@ export const musicTracks = pgTable(
     price: text("price").default("0.99"),
     downloads: integer("downloads").default(0),
     revenue: text("revenue").default("0.00"),
-    status: text("status").default("published"),
+    status: text("status").default("pending_review"), // pending_review | published | rejected | archived
     bpm: integer("bpm"),
     musicalKey: text("musical_key"),
     mood: text("mood"),
@@ -425,6 +425,11 @@ export const musicTracks = pgTable(
     wikiUrl: text("wiki_url"), // Wikipedia link for the track
     isExplicit: boolean("is_explicit").default(false),
     lyrics: text("lyrics"),
+    // Purgatoire — moderation fields
+    reviewedBy: integer("reviewed_by"), // FK to users.id (superadmin/admin who reviewed)
+    reviewedAt: timestamp("reviewed_at"),
+    moderationNotes: text("moderation_notes"), // internal notes from reviewer
+    rejectionReason: text("rejection_reason"), // shown to artist on rejection
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({

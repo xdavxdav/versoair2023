@@ -60,8 +60,13 @@ router.get("/tracks", async (req: Request, res: Response) => {
       paramIdx++;
     }
 
-    let orderBy = "ORDER BY mt.streams DESC";
-    if (sort === "newest") orderBy = "ORDER BY mt.release_date DESC NULLS LAST";
+    // Default: inverse-popularity weighted random — tracks with fewer streams get MORE visibility
+    // This ensures new artists aren't buried behind established ones
+    let orderBy =
+      "ORDER BY RANDOM() * (1.0 / GREATEST(mt.streams + 1, 1)) DESC";
+    if (sort === "popular") orderBy = "ORDER BY mt.streams DESC";
+    else if (sort === "newest")
+      orderBy = "ORDER BY mt.release_date DESC NULLS LAST";
     else if (sort === "title") orderBy = "ORDER BY mt.title ASC";
     else if (sort === "duration") orderBy = "ORDER BY mt.duration ASC";
 

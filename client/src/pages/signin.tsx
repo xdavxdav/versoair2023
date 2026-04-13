@@ -91,8 +91,9 @@ const businessTypes = [
 export default function SignIn() {
   const [step, setStep] = useState(() => {
     const mode = getQueryParam("mode");
-    return mode === "login" ? "login" : "select-type";
-  }); // 'select-type', 'login', 'register', 'forgot-password', 'reset-sent', 'mfa', 'verify-sent'
+    if (mode === "register") return "register";
+    return "login";
+  }); // 'login', 'register', 'forgot-password', 'reset-sent', 'mfa', 'verify-sent'
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
@@ -860,28 +861,25 @@ export default function SignIn() {
           <div className="max-w-md mx-auto">
             {/* Back Button */}
             <button
-              onClick={() => setStep("select-type")}
+              onClick={() => setStep("login")}
               className="flex items-center space-x-2 text-[#bf831c] hover:text-[#a6701a] mb-6 transition-colors duration-200 group"
             >
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
               <span className="text-sm font-medium">
-                Back to Business Type Selection
+                Back to Sign In
               </span>
             </button>
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">{selectedType?.icon}</span>
+                  <User className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   Create Your Account
                 </h2>
                 <p className="text-gray-600 mt-2">
-                  Registering as:{" "}
-                  <span className="font-medium text-[#bf831c]">
-                    {selectedType?.label}
-                  </span>
+                  Join Verso Air — artists, listeners & business owners welcome
                 </p>
               </div>
 
@@ -919,7 +917,7 @@ export default function SignIn() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name
+                    Business Name <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
@@ -928,7 +926,7 @@ export default function SignIn() {
                       setFormData({ ...formData, businessName: e.target.value })
                     }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
-                    placeholder="Your Business Name"
+                    placeholder="Leave blank if not a business"
                   />
                 </div>
 
@@ -1534,7 +1532,7 @@ export default function SignIn() {
                 <p className="text-gray-600">
                   Don't have an account?{" "}
                   <button
-                    onClick={() => setStep("select-type")}
+                    onClick={() => setStep("register")}
                     className="text-[#bf831c] hover:underline font-medium"
                   >
                     Create Account

@@ -50,6 +50,7 @@ import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
 import geoActionsRouter from "./routes/geo-actions";
 import contractorPipelineRouter from "./routes/contractor-pipeline";
+import purgatoireRouter from "./routes/purgatoire";
 import { requireAuth } from "./middleware/auth";
 import { notifyReservationUpdate } from "./services/notification-service";
 
@@ -295,6 +296,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/artist", artistSubscriptionsRouter); // Alias: /api/artist/tiers, /api/artist/subscribe, etc.
   app.use("/api/payments", paymentsRouter); // Wallet, payment methods, bank transfers
   app.use("/api/arena", arenaRouter); // StreamRoyale Arena battle royale
+  app.use("/api/purgatoire", purgatoireRouter); // Track moderation queue
   app.use("/api/vault", vaultRouter); // Verso Vault exclusivity engine
   app.use("/api/collab-chains", collabChainsRouter); // Collab Chains viral remix system
   app.use("/api/revenue-pulse", revenuePulseRouter); // Revenue Pulse transparency dashboard

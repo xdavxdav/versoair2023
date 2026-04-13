@@ -2100,8 +2100,8 @@ export default function ArtistPortalWelcome() {
 
   // Auto-advance intro phases
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("reveal"), 1800);
-    const t2 = setTimeout(() => setPhase("ready"), 3200);
+    const t1 = setTimeout(() => setPhase("reveal"), 900);
+    const t2 = setTimeout(() => setPhase("ready"), 1800);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);

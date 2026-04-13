@@ -123,6 +123,7 @@ const AdminTicketManagement = lazy(
   () => import("@/pages/admin/ticket-management"),
 );
 const StreamRoyaleAdmin = lazy(() => import("@/pages/streamroyale-admin"));
+const PurgatoireAdmin = lazy(() => import("@/pages/admin/purgatoire"));
 const ArtistContractsAdmin = lazy(
   () => import("@/pages/admin/artist-contracts"),
 );
@@ -442,6 +443,9 @@ function Router() {
         {() => (
           <ProtectedRoute component={StreamRoyaleAdmin} roles={["admin"]} />
         )}
+      </Route>
+      <Route path="/admin/purgatoire">
+        {() => <ProtectedRoute component={PurgatoireAdmin} roles={["admin"]} />}
       </Route>
       <Route path="/admin/contracts">
         {() => (

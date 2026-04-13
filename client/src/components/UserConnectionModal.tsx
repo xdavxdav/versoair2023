@@ -51,8 +51,8 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
     setConnectionStatus("connecting");
 
     try {
-      // Simulate connection process
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Brief connection animation
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Call the onConnect callback
       onConnect(user.id);
@@ -64,7 +64,7 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
         onClose();
         setConnectionStatus("idle");
         setIsConnecting(false);
-      }, 2000);
+      }, 1000);
     } catch (error) {
       setConnectionStatus("failed");
       setIsConnecting(false);
