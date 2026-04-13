@@ -4413,6 +4413,13 @@ export default function ArtistPortal() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            {/* Stream button — navigate to public streaming page */}
+            <Link href="/stream">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-medium transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30">
+                <Headphones className="h-4 w-4" />
+                <span className="hidden sm:inline">Streams</span>
+              </button>
+            </Link>
           </div>
         </div>
       </div>

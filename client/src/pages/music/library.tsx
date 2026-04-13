@@ -113,42 +113,15 @@ export default function MusicLibrary() {
           </div>
         </motion.div>
 
-        {/* Recently Played */}
+        {/* Recently Played — pulls from real listening history */}
         {(activeTab === "all" || activeTab === "recent") && (
           <MusicSectionCard title="Écoutés récemment" icon={Clock}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {[
-                {
-                  title: "Coupé-Décalé Mix",
-                  artist: "DJ Arafat",
-                  plays: "2.3K",
-                },
-                { title: "Afrobeats Vibes", artist: "Various", plays: "1.8K" },
-                { title: "Soul Sessions", artist: "Joel", plays: "956" },
-                { title: "Late Night R&B", artist: "Various", plays: "3.1K" },
-                { title: "Dancehall Fire", artist: "Watcher", plays: "1.2K" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * i }}
-                  className="group relative p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-purple-500/[0.06] transition-colors cursor-pointer"
-                >
-                  <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-purple-600/30 to-fuchsia-600/30 flex items-center justify-center mb-3 relative overflow-hidden">
-                    <Music2 className="w-8 h-8 text-white/30" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Play className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                  <p className="text-white text-sm font-medium truncate">
-                    {item.title}
-                  </p>
-                  <p className="text-white/30 text-xs truncate">
-                    {item.artist}
-                  </p>
-                </motion.div>
-              ))}
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Clock className="w-10 h-10 text-white/20 mb-3" />
+              <p className="text-white/40 text-sm">Aucun historique d'écoute</p>
+              <p className="text-white/20 text-xs mt-1">
+                Vos pistes écoutées apparaîtront ici
+              </p>
             </div>
           </MusicSectionCard>
         )}

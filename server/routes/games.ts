@@ -6,6 +6,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { getIO } from "../websocket/socket-config";
 
 const router = Router();
 
@@ -448,6 +449,22 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
       [userId, matchId],
     );
 
+    // Real-time: notify player1 that opponent joined
+    const io = getIO();
+    if (io) {
+      const joiner = await pool.query("SELECT username FROM users WHERE id = $1", [userId]);
+      const joinerName = joiner.rows[0]?.username || "Un joueur";
+      io.to(`user_${m.player1_id}`).emit("game_event", {
+        type: "opponent_joined",
+        matchId,
+        opponentName: joinerName,
+        message: `${joinerName} a rejoint votre duel !`,
+      });
+      // Both players join a game room for synchronized updates
+      io.to(`user_${m.player1_id}`).emit("join_game_room", { room: `game_${matchId}` });
+      io.to(`user_${userId}`).emit("join_game_room", { room: `game_${matchId}` });
+    }
+
     res.json({ success: true, message: "Joined match", matchId });
   } catch (err: any) {
     console.error("[GAMES] Join error:", err);
@@ -530,6 +547,17 @@ router.post("/:id/answer", requireAuth, async (req: Request, res: Response) => {
         [newScore, nextRound, matchId],
       );
 
+      // Real-time: broadcast round update to game room
+      const io = getIO();
+      if (io) {
+        io.to(`game_${matchId}`).emit("game_event", {
+          type: isLastRound ? "match_complete" : "round_complete",
+          matchId,
+          currentRound: nextRound,
+          totalRounds: m.round_count,
+        });
+      }
+
       // If last round, determine winner
       if (isLastRound) {
         const updatedMatch = await pool.query(
@@ -594,6 +622,20 @@ router.post("/:id/answer", requireAuth, async (req: Request, res: Response) => {
         `UPDATE game_matches SET ${scoreField} = $1 WHERE id = $2`,
         [newScore, matchId],
       );
+
+      // Real-time: tell the other player their opponent has answered
+      const io = getIO();
+      if (io) {
+        const otherPlayerId = isPlayer1 ? m.player2_id : m.player1_id;
+        if (otherPlayerId) {
+          io.to(`user_${otherPlayerId}`).emit("game_event", {
+            type: "opponent_answered",
+            matchId,
+            round: currentRound,
+            message: "Votre adversaire a répondu !",
+          });
+        }
+      }
     }
 
     res.json({
