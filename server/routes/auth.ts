@@ -2260,7 +2260,7 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const derivedUsername = `artist_${email.split("@")[0]}`;
 
-    // Create user with artist role
+    // Create user with artist role + portal access
     const [newUser] = await db
       .insert(schema.users)
       .values({
@@ -2268,6 +2268,7 @@ router.post(
         username: derivedUsername,
         password: hashedPassword,
         role: "artist",
+        portalAccess: ["artist", "general"],
         isVerified: isSuperadmin(email), // superadmin auto-verified
       })
       .returning({

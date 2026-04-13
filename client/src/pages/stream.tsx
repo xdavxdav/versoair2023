@@ -295,7 +295,7 @@ export default function StreamPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGenre, setActiveGenre] = useState("");
   const [activeMood, setActiveMood] = useState("");
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState("discover");
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [showMyStats, setShowMyStats] = useState(false);
@@ -1339,6 +1339,7 @@ export default function StreamPage() {
                       }}
                       className="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-amber-500/40 focus:outline-none backdrop-blur"
                     >
+                      <option value="discover">Découvrir</option>
                       <option value="popular">Populaire</option>
                       <option value="newest">Plus récent</option>
                       <option value="title">Titre (A-Z)</option>

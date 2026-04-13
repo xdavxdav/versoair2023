@@ -254,7 +254,7 @@ export default function ArtistPortalSignIn() {
 
       setAuthSuccess("Compte créé avec succès ! Redirection...");
       setIsLoading(false);
-      setTimeout(() => navigate("/artist-portal/dashboard"), 1500);
+      setTimeout(() => navigate("/artist-portal/dashboard"), 700);
     } catch (err: any) {
       setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsLoading(false);

@@ -172,6 +172,26 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     });
   });
 
+  // Broadcast track review result to the artist (Purgatoire)
+  notificationEmitter.on("track_reviewed", (data) => {
+    if (!io) return;
+
+    const roomName = `user_${data.userId}`;
+    const isApproved = data.status === "approved";
+    console.log(
+      `[SOCKET] Broadcasting track_reviewed (${data.status}) to ${roomName}: "${data.trackTitle}"`,
+    );
+
+    io.to(roomName).emit("notification", {
+      id: `track-review-${data.trackId}-${Date.now()}`,
+      type: "track_review",
+      title: isApproved ? "✅ Track Approved!" : "⚠️ Track Needs Revision",
+      message: data.message,
+      timestamp: new Date().toISOString(),
+      read: false,
+    });
+  });
+
   return io;
 }
 

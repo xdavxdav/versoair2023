@@ -316,10 +316,10 @@ router.post(
         // Non-critical
       }
 
-      // Set status to 'published' (in production: background job would validate + transcode first)
+      // Track enters Purgatoire — status stays 'pending_review' until superadmin/admin approves
       try {
         await pool.query(
-          `UPDATE music_tracks SET status = 'published' WHERE id = $1`,
+          `UPDATE music_tracks SET status = 'pending_review' WHERE id = $1`,
           [result.rows[0].id],
         );
       } catch (e) {

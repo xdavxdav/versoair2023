@@ -6684,7 +6684,7 @@ export default function AdminDashboard() {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleQuickAction = (action: string) => {

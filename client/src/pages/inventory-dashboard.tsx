@@ -254,7 +254,7 @@ export default function InventoryDashboard() {
   useEffect(() => {
     if (settingsData && !savedSector && !productsLoading) {
       // Delay slightly so dashboard renders first
-      const t = setTimeout(() => setShowOnboarding(true), 1500);
+      const t = setTimeout(() => setShowOnboarding(true), 500);
       return () => clearTimeout(t);
     }
   }, [settingsData, savedSector, productsLoading]);
