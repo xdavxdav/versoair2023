@@ -355,9 +355,7 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal/welcome">
-        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
-      </Route>
+      <Route path="/artist-portal/welcome" component={ArtistPortalWelcomePage} />
       <Route path="/artist-portal/dashboard">
         {() => (
           <ProtectedRoute
@@ -369,9 +367,7 @@ function Router() {
           />
         )}
       </Route>
-      <Route path="/artist-portal">
-        {() => <ProtectedRoute component={ArtistPortalWelcomePage} />}
-      </Route>
+      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />

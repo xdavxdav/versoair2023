@@ -865,9 +865,7 @@ export default function SignIn() {
               className="flex items-center space-x-2 text-[#bf831c] hover:text-[#a6701a] mb-6 transition-colors duration-200 group"
             >
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-              <span className="text-sm font-medium">
-                Back to Sign In
-              </span>
+              <span className="text-sm font-medium">Back to Sign In</span>
             </button>
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -917,7 +915,10 @@ export default function SignIn() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name <span className="text-gray-400 font-normal">(optional)</span>
+                    Business Name{" "}
+                    <span className="text-gray-400 font-normal">
+                      (optional)
+                    </span>
                   </label>
                   <input
                     type="text"

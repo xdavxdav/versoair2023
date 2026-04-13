@@ -41,6 +41,20 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       socket.emit("auth_confirmed", { userId, roomName });
     });
 
+    // Game room: player joins a match room for real-time PvP sync
+    socket.on("join_game_room", (data: { room: string }) => {
+      if (data?.room && data.room.startsWith("game_")) {
+        socket.join(data.room);
+        console.log(`[SOCKET] ${socket.id} joined game room ${data.room}`);
+      }
+    });
+
+    socket.on("leave_game_room", (data: { room: string }) => {
+      if (data?.room && data.room.startsWith("game_")) {
+        socket.leave(data.room);
+      }
+    });
+
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
 
