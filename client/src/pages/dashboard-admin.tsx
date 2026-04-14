@@ -890,7 +890,11 @@ const BusinessManagement = ({
           fetch(`${API_BASE_URL}/api/cities?countryId=${matchedCountry.id}`)
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => {
-              setCitiesList(Array.isArray(data) ? data : data.data || []);
+              const raw = Array.isArray(data) ? data : data.data || [];
+              const deduped = Array.from(
+                new Map(raw.map((c: any) => [c.name, c])).values(),
+              );
+              setCitiesList(deduped);
             })
             .catch(() => setCitiesList([]))
             .finally(() => setCitiesLoading(false));
@@ -904,7 +908,11 @@ const BusinessManagement = ({
     fetch(`${API_BASE_URL}/api/cities?regionId=${regionId}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
-        setCitiesList(Array.isArray(data) ? data : data.data || []);
+        const raw = Array.isArray(data) ? data : data.data || [];
+        const deduped = Array.from(
+          new Map(raw.map((c: any) => [c.name, c])).values(),
+        );
+        setCitiesList(deduped);
       })
       .catch(() => setCitiesList([]))
       .finally(() => setCitiesLoading(false));
@@ -970,7 +978,11 @@ const BusinessManagement = ({
           fetch(`${API_BASE_URL}/api/cities?countryId=${matchedCountry.id}`)
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => {
-              setEditCitiesList(Array.isArray(data) ? data : data.data || []);
+              const raw = Array.isArray(data) ? data : data.data || [];
+              const deduped = Array.from(
+                new Map(raw.map((c: any) => [c.name, c])).values(),
+              );
+              setEditCitiesList(deduped);
             })
             .catch(() => setEditCitiesList([]))
             .finally(() => setEditCitiesLoading(false));
@@ -984,7 +996,11 @@ const BusinessManagement = ({
     fetch(`${API_BASE_URL}/api/cities?regionId=${regionId}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
-        setEditCitiesList(Array.isArray(data) ? data : data.data || []);
+        const raw = Array.isArray(data) ? data : data.data || [];
+        const deduped = Array.from(
+          new Map(raw.map((c: any) => [c.name, c])).values(),
+        );
+        setEditCitiesList(deduped);
       })
       .catch(() => setEditCitiesList([]))
       .finally(() => setEditCitiesLoading(false));
@@ -2144,22 +2160,20 @@ const BusinessManagement = ({
                         latitude={newBusiness.latitude}
                         longitude={newBusiness.longitude}
                         onLatitudeChange={(v) =>
-                          setNewBusiness({ ...newBusiness, latitude: v })
+                          setNewBusiness((prev) => ({ ...prev, latitude: v }))
                         }
                         onLongitudeChange={(v) =>
-                          setNewBusiness({ ...newBusiness, longitude: v })
+                          setNewBusiness((prev) => ({ ...prev, longitude: v }))
                         }
                         onCountryDetected={(code) => {
-                          if (!newBusiness.countryCode) {
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              countryCode: code,
-                            }));
-                          }
+                          setNewBusiness((prev) => {
+                            if (prev.countryCode) return prev;
+                            return { ...prev, countryCode: code };
+                          });
                         }}
                         onRegionDetected={(regionName) => {
-                          if (!newBusiness.regionId) {
-                            // Try to match detected region name against loaded regions
+                          setNewBusiness((prev) => {
+                            if (prev.regionId) return prev;
                             const match = regionsList.find(
                               (r: any) =>
                                 r.name.toLowerCase() ===
@@ -2172,27 +2186,18 @@ const BusinessManagement = ({
                                   .includes(regionName.toLowerCase()),
                             );
                             if (match) {
-                              setNewBusiness((prev) => ({
-                                ...prev,
-                                regionId: String(match.id),
-                              }));
+                              return { ...prev, regionId: String(match.id) };
                             } else {
-                              // No dropdown match — store as free text
                               setAutoPopulateRegion(false);
-                              setNewBusiness((prev) => ({
-                                ...prev,
-                                regionName: regionName,
-                              }));
+                              return { ...prev, regionName: regionName };
                             }
-                          }
+                          });
                         }}
                         onCityDetected={(city) => {
-                          if (!newBusiness.cityName) {
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              cityName: city,
-                            }));
-                          }
+                          setNewBusiness((prev) => {
+                            if (prev.cityName) return prev;
+                            return { ...prev, cityName: city };
+                          });
                         }}
                       />
                     </div>
@@ -2707,34 +2712,31 @@ const BusinessManagement = ({
                           latitude={currentBusiness.latitude || ""}
                           longitude={currentBusiness.longitude || ""}
                           onLatitudeChange={(v) =>
-                            setCurrentBusiness({
-                              ...currentBusiness,
+                            setCurrentBusiness((prev: any) => ({
+                              ...prev,
                               latitude: v,
-                            })
+                            }))
                           }
                           onLongitudeChange={(v) =>
-                            setCurrentBusiness({
-                              ...currentBusiness,
+                            setCurrentBusiness((prev: any) => ({
+                              ...prev,
                               longitude: v,
-                            })
+                            }))
                           }
                           onCountryDetected={(code) => {
-                            if (
-                              !currentBusiness.countryCode &&
-                              !currentBusiness.country_code
-                            ) {
-                              setCurrentBusiness((prev: any) => ({
+                            setCurrentBusiness((prev: any) => {
+                              if (prev.countryCode || prev.country_code)
+                                return prev;
+                              return {
                                 ...prev,
                                 countryCode: code,
                                 country_code: code,
-                              }));
-                            }
+                              };
+                            });
                           }}
                           onRegionDetected={(regionName) => {
-                            if (
-                              !currentBusiness.regionId &&
-                              !currentBusiness.region_id
-                            ) {
+                            setCurrentBusiness((prev: any) => {
+                              if (prev.regionId || prev.region_id) return prev;
                               const match = editRegionsList.find(
                                 (r: any) =>
                                   r.name.toLowerCase() ===
@@ -2747,32 +2749,30 @@ const BusinessManagement = ({
                                     .includes(regionName.toLowerCase()),
                               );
                               if (match) {
-                                setCurrentBusiness((prev: any) => ({
+                                return {
                                   ...prev,
                                   regionId: String(match.id),
                                   region_id: String(match.id),
-                                }));
+                                };
                               } else {
                                 setEditAutoPopulateRegion(false);
-                                setCurrentBusiness((prev: any) => ({
+                                return {
                                   ...prev,
                                   regionName: regionName,
                                   region_name: regionName,
-                                }));
+                                };
                               }
-                            }
+                            });
                           }}
                           onCityDetected={(city) => {
-                            if (
-                              !currentBusiness.cityName &&
-                              !currentBusiness.city_name
-                            ) {
-                              setCurrentBusiness((prev: any) => ({
+                            setCurrentBusiness((prev: any) => {
+                              if (prev.cityName || prev.city_name) return prev;
+                              return {
                                 ...prev,
                                 cityName: city,
                                 city_name: city,
-                              }));
-                            }
+                              };
+                            });
                           }}
                         />
                       </div>

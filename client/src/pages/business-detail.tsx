@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { FicheTechnique } from "@/components/FicheTechnique";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -698,6 +699,9 @@ export default function BusinessDetailPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Fiche Technique (tier + sector gated) */}
+            <FicheTechnique business={biz} />
 
             {/* Contact & Location cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

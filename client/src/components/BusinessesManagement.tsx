@@ -937,10 +937,10 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
                 latitude={formData.latitude}
                 longitude={formData.longitude}
                 onLatitudeChange={(v) =>
-                  setFormData({ ...formData, latitude: v })
+                  setFormData((prev) => ({ ...prev, latitude: v }))
                 }
                 onLongitudeChange={(v) =>
-                  setFormData({ ...formData, longitude: v })
+                  setFormData((prev) => ({ ...prev, longitude: v }))
                 }
               />
 

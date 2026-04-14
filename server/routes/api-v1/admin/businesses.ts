@@ -139,6 +139,7 @@ router.post(
       address,
       countryCode,
       cityName,
+      regionId,
       latitude,
       longitude,
       website,
@@ -210,11 +211,13 @@ router.post(
         address: address || null,
         countryCode: countryCode ? countryCode.toUpperCase() : null,
         cityName: cityName || null,
+        regionId: regionId ? parseInt(regionId) : null,
         location,
         latitude: latitude ? String(latitude) : null,
         longitude: longitude ? String(longitude) : null,
         website: website || null,
         tags: parsedTags,
+        businessType: businessType || null,
         openingHours: openingHours
           ? typeof openingHours === "string"
             ? openingHours

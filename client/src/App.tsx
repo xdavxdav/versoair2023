@@ -235,7 +235,7 @@ import { TeamSection } from "@/components/ui/team-section";
 import { SponsorsSection } from "@/components/ui/sponsors-section";
 import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
 import { CountryDropdown } from "@/components/CountryDropdown";
-import { LanguageProvider } from "@/components/LanguageSwitcher";
+import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 
@@ -355,7 +355,10 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
-      <Route path="/artist-portal/welcome" component={ArtistPortalWelcomePage} />
+      <Route
+        path="/artist-portal/welcome"
+        component={ArtistPortalWelcomePage}
+      />
       <Route path="/artist-portal/dashboard">
         {() => (
           <ProtectedRoute
@@ -600,6 +603,8 @@ function AppContent() {
     currentPath.startsWith("/arcade") ||
     currentPath.startsWith("/arena");
   const { user, logout } = useAuthContext();
+  const { currentLang } = useLanguage();
+  const isFr = currentLang === "fr";
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
   // Show ContentNav (bottom dock) on blog/marketplace pages only for authenticated users
@@ -698,17 +703,30 @@ function AppContent() {
           style={{ overflow: "visible" }}
         >
           {/* Top Banner */}
-          <div
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-1 px-2 sm:px-4"
-            style={{ overflow: "visible" }}
-          >
+          <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white h-7 px-2 flex items-center">
             <div
-              className="max-w-7xl mx-auto flex items-center text-[10px] sm:text-xs gap-2"
+              className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
               style={{ overflow: "visible" }}
             >
-              {/* Left: Portal label */}
-              <span className="font-medium flex-1 min-w-0 truncate">
-                Business Intelligence Portal
+              {/* Left: Platform label */}
+              <span
+                className="font-medium flex-1 min-w-0 text-center notranslate"
+                translate="no"
+              >
+                <span className="hidden md:inline notranslate" translate="no">
+                  {isFr
+                    ? "Plateforme d'Intelligence d'Affaires"
+                    : "Business Intelligence Platform"}
+                </span>
+                <span
+                  className="hidden sm:inline md:hidden notranslate"
+                  translate="no"
+                >
+                  {isFr ? "Plateforme IA" : "BI Platform"}
+                </span>
+                <span className="sm:hidden notranslate" translate="no">
+                  {isFr ? "PIA" : "BIP"}
+                </span>
               </span>
 
               {/* Center: Country filter dropdown */}
