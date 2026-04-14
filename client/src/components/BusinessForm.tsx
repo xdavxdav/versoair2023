@@ -666,18 +666,20 @@ export function BusinessForm({
               latitude={formData.latitude}
               longitude={formData.longitude}
               onLatitudeChange={(v) =>
-                setFormData({ ...formData, latitude: v })
+                setFormData((prev) => ({ ...prev, latitude: v }))
               }
               onLongitudeChange={(v) =>
-                setFormData({ ...formData, longitude: v })
+                setFormData((prev) => ({ ...prev, longitude: v }))
               }
               onCountryDetected={(code) => {
-                if (!formData.countryCode) {
-                  setFormData((prev) => ({ ...prev, countryCode: code }));
-                }
+                setFormData((prev) => {
+                  if (prev.countryCode) return prev;
+                  return { ...prev, countryCode: code };
+                });
               }}
               onRegionDetected={(regionName) => {
-                if (!formData.regionId) {
+                setFormData((prev) => {
+                  if (prev.regionId) return prev;
                   const match = (regionsList as any[]).find(
                     (r: any) =>
                       r.name.toLowerCase() === regionName.toLowerCase() ||
@@ -685,23 +687,18 @@ export function BusinessForm({
                       r.name.toLowerCase().includes(regionName.toLowerCase()),
                   );
                   if (match) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      regionId: String(match.id),
-                    }));
+                    return { ...prev, regionId: String(match.id) };
                   } else {
                     setAutoPopulateRegion(false);
-                    setFormData((prev) => ({
-                      ...prev,
-                      regionName: regionName,
-                    }));
+                    return { ...prev, regionName: regionName };
                   }
-                }
+                });
               }}
               onCityDetected={(city) => {
-                if (!formData.cityName) {
-                  setFormData((prev) => ({ ...prev, cityName: city }));
-                }
+                setFormData((prev) => {
+                  if (prev.cityName) return prev;
+                  return { ...prev, cityName: city };
+                });
               }}
               dark
             />

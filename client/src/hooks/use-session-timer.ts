@@ -12,12 +12,16 @@ export function useSessionTimer(
   const WARNING_THRESHOLD = 60; // show warning at 1 minute remaining
   const { toast } = useToast();
 
-  // Compute initial time left from persisted start time
+  // Compute remaining time from persisted start time
   const getInitialTimeLeft = useCallback(() => {
     if (!enableTimeout) return SESSION_DURATION;
     const startStr = localStorage.getItem(STORAGE_KEY);
     if (!startStr) return SESSION_DURATION;
-    const elapsed = Math.floor((Date.now() - parseInt(startStr, 10)) / 1000);
+
+    const startMs = parseInt(startStr, 10);
+    if (!Number.isFinite(startMs)) return SESSION_DURATION;
+
+    const elapsed = Math.floor((Date.now() - startMs) / 1000);
     const remaining = SESSION_DURATION - elapsed;
     return remaining > 0 ? remaining : 0;
   }, [enableTimeout, SESSION_DURATION]);
@@ -26,6 +30,31 @@ export function useSessionTimer(
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const sessionWarningShown = useRef(false);
   const expiredCallbackFired = useRef(false);
+
+  const clearSessionStorage = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("adminAccessTime");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("authToken");
+  }, []);
+
+  const expireSession = useCallback(() => {
+    if (expiredCallbackFired.current) return;
+    expiredCallbackFired.current = true;
+
+    clearSessionStorage();
+    setSessionTimeLeft(0);
+
+    toast({
+      title: "Session Expired",
+      description: "Your 15-minute session has ended. Please log in again.",
+      variant: "destructive",
+    });
+
+    if (onSessionExpired) {
+      setTimeout(() => onSessionExpired(), 500);
+    }
+  }, [clearSessionStorage, onSessionExpired, toast]);
 
   // Persist start time when session begins
   useEffect(() => {
@@ -48,63 +77,56 @@ export function useSessionTimer(
   useEffect(() => {
     if (!isAuthenticated || !enableTimeout) {
       setSessionTimeLeft(SESSION_DURATION);
+      setShowSessionWarning(false);
       sessionWarningShown.current = false;
       expiredCallbackFired.current = false;
       return;
     }
 
-    // Sync with persisted start time on mount
-    const remaining = getInitialTimeLeft();
-    setSessionTimeLeft(remaining);
+    const syncFromTimestamp = () => {
+      const remaining = getInitialTimeLeft();
+      setSessionTimeLeft(remaining);
 
-    if (remaining <= 0) {
-      // Already expired
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem("adminAccessTime");
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("authToken");
-      if (onSessionExpired && !expiredCallbackFired.current) {
-        expiredCallbackFired.current = true;
-        setTimeout(() => onSessionExpired(), 500);
+      if (remaining <= WARNING_THRESHOLD && !sessionWarningShown.current) {
+        sessionWarningShown.current = true;
+        setShowSessionWarning(true);
       }
-      return;
-    }
+
+      if (remaining <= 0) {
+        expireSession();
+        return false;
+      }
+
+      return true;
+    };
+
+    if (!syncFromTimestamp()) return;
 
     const timer = setInterval(() => {
-      setSessionTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem("adminAccessTime");
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("authToken");
-          toast({
-            title: "Session Expired",
-            description:
-              "Your 15-minute session has ended. Please log in again.",
-            variant: "destructive",
-          });
-          if (onSessionExpired && !expiredCallbackFired.current) {
-            expiredCallbackFired.current = true;
-            setTimeout(() => onSessionExpired(), 500);
-          }
-          return 0;
-        }
-        if (prev - 1 <= WARNING_THRESHOLD && !sessionWarningShown.current) {
-          sessionWarningShown.current = true;
-          setShowSessionWarning(true);
-        }
-        return prev - 1;
-      });
+      if (!syncFromTimestamp()) {
+        clearInterval(timer);
+      }
     }, 1000);
 
-    return () => clearInterval(timer);
+    const handleVisibilityOrFocus = () => {
+      syncFromTimestamp();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
   }, [
     isAuthenticated,
     enableTimeout,
-    onSessionExpired,
-    toast,
     getInitialTimeLeft,
+    expireSession,
+    SESSION_DURATION,
+    WARNING_THRESHOLD,
   ]);
 
   const handleExtendSession = useCallback(() => {

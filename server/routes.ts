@@ -216,6 +216,67 @@ export async function registerRoutes(app: Express) {
   // Mounted at /api/manage to avoid blocking public /api/* endpoints
   app.use("/api/manage", databaseManagementRouter);
 
+  // ── Public proxy routes for regions & cities ──
+  // The database-management router is mounted at /api/manage, but frontend components
+  // (dashboard-admin, BusinessForm, geo-admin) call /api/regions and /api/cities directly.
+  // Forward these public GET endpoints so cascading Country → Region → City works.
+  app.get("/api/regions", async (req, res) => {
+    try {
+      const { countryId } = req.query;
+      if (countryId) {
+        const cid = parseInt(countryId as string);
+        const result = await db.execute(
+          sql`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`,
+        );
+        res.json(result.rows);
+      } else {
+        const result = await db.execute(
+          sql`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`,
+        );
+        res.json(result.rows);
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/cities", async (req, res) => {
+    try {
+      const { countryId, regionId } = req.query;
+      if (regionId) {
+        const rid = parseInt(regionId as string);
+        const result = await db.execute(
+          sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+              FROM cities c
+              JOIN regions r ON c.region_id = r.id
+              WHERE c.region_id = ${rid}
+              ORDER BY c.name`,
+        );
+        res.json(result.rows);
+      } else if (countryId) {
+        const cid = parseInt(countryId as string);
+        const result = await db.execute(
+          sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+              FROM cities c
+              JOIN regions r ON c.region_id = r.id
+              WHERE r.country_id = ${cid}
+              ORDER BY c.name`,
+        );
+        res.json(result.rows);
+      } else {
+        const result = await db.execute(
+          sql`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+              FROM cities c
+              LEFT JOIN regions r ON c.region_id = r.id
+              ORDER BY c.name LIMIT 500`,
+        );
+        res.json(result.rows);
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Register businesses routes
   app.use("/", businessesRouter);
 

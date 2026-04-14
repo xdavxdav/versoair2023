@@ -304,7 +304,7 @@ export function CountryDropdown() {
   // ── Detecting state ──
   if (detecting) {
     return (
-      <div className="flex items-center gap-1.5 pl-1.5 pr-2 py-[3px] rounded-full bg-white/15 text-white border border-white/20 text-[10px] sm:text-[11px] font-semibold opacity-80 notranslate">
+      <div className="flex items-center gap-1 text-white text-[11px] font-medium opacity-80 notranslate">
         <Globe className="h-3 w-3 animate-spin" />
         <span>Detecting…</span>
       </div>
@@ -369,19 +369,17 @@ export function CountryDropdown() {
         {/* ── Trigger pill: 🇨🇮 Côte d'Ivoire · FR ── */}
         <button
           onClick={() => setOpen((o) => !o)}
-          className="group flex items-center gap-1.5 pl-1.5 pr-2 py-[3px] rounded-full bg-white/15 hover:bg-white/25 active:bg-white/35 transition-all text-white border border-white/20 hover:border-white/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          className="group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
           title="Country & Language"
           aria-haspopup="true"
           aria-expanded={open}
         >
-          <span className="text-sm leading-none">{current?.flag ?? "🌍"}</span>
-          <span className="text-[10px] sm:text-[11px] font-semibold max-w-[4rem] sm:max-w-[5.5rem] truncate">
+          <span className="text-xs leading-none">{current?.flag ?? "🌍"}</span>
+          <span className="text-[11px] font-semibold max-w-[5.5rem] truncate">
             {current?.name ?? "Select"}
           </span>
           {/* Language badge */}
-          <span className="text-[8px] sm:text-[9px] font-bold bg-white/20 rounded px-1 py-[1px] leading-tight opacity-80 group-hover:opacity-100">
-            {langShort}
-          </span>
+          <span className="text-[9px] font-bold opacity-70">{langShort}</span>
           <ChevronDown
             className={`h-2.5 w-2.5 opacity-70 group-hover:opacity-100 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
@@ -402,7 +400,7 @@ export function CountryDropdown() {
 
         {/* ── Dropdown ── */}
         {open && (
-          <div className="fixed sm:absolute top-20 sm:top-full left-1/2 sm:left-0 -translate-x-1/2 sm:translate-x-0 sm:right-auto sm:mt-2 bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Header with tabs */}
             <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-1">

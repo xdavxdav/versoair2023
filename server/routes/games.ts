@@ -452,7 +452,10 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
     // Real-time: notify player1 that opponent joined
     const io = getIO();
     if (io) {
-      const joiner = await pool.query("SELECT username FROM users WHERE id = $1", [userId]);
+      const joiner = await pool.query(
+        "SELECT username FROM users WHERE id = $1",
+        [userId],
+      );
       const joinerName = joiner.rows[0]?.username || "Un joueur";
       io.to(`user_${m.player1_id}`).emit("game_event", {
         type: "opponent_joined",
@@ -461,8 +464,12 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
         message: `${joinerName} a rejoint votre duel !`,
       });
       // Both players join a game room for synchronized updates
-      io.to(`user_${m.player1_id}`).emit("join_game_room", { room: `game_${matchId}` });
-      io.to(`user_${userId}`).emit("join_game_room", { room: `game_${matchId}` });
+      io.to(`user_${m.player1_id}`).emit("join_game_room", {
+        room: `game_${matchId}`,
+      });
+      io.to(`user_${userId}`).emit("join_game_room", {
+        room: `game_${matchId}`,
+      });
     }
 
     res.json({ success: true, message: "Joined match", matchId });

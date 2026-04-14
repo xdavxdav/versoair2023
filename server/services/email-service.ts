@@ -328,7 +328,7 @@ export async function sendVerificationEmail(
       <body>
         <div class="wrapper">
           <div class="hero">
-            <div class="badge">🌍 Verso Air · Business Intelligence</div>
+            <div class="badge">🦅 Verso Air · Business Intelligence</div>
             <div class="logo-glow">🚀</div>
             <h1>You're almost in,<br><span>let's verify your email.</span></h1>
             <p>One quick step and your account is ready to go.</p>
