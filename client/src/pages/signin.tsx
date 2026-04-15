@@ -256,7 +256,9 @@ export default function SignIn() {
         localStorage.setItem("signin_timestamp", new Date().toISOString());
         toast({
           title: "✅ Signed in",
-          description: `Welcome back, ${data.user.name || data.user.email}!`,
+          description: returningName
+            ? `Welcome back, ${data.user.name || data.user.email}!`
+            : `Welcome, ${data.user.name || data.user.email}!`,
         });
 
         const redirectTarget = getQueryParam("redirect");
@@ -282,6 +284,9 @@ export default function SignIn() {
             navigate("/dashboard");
           }
         }
+      } else if (!data.requiresVerification) {
+        // Login failed — show the error message from server
+        setLoginError(data.message || "Invalid email or password. Please try again.");
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -391,6 +396,151 @@ export default function SignIn() {
 
   // Check for verification status from URL (after clicking email link)
   const verificationStatus = getQueryParam("verification");
+  const autoLogin = getQueryParam("autologin") === "1";
+  const verifiedName = getQueryParam("name") ? decodeURIComponent(getQueryParam("name")!) : "";
+  const verifiedNeedsName = getQueryParam("needsName") === "1";
+  const verifiedRole = getQueryParam("role") || "user";
+
+  // ─── Auto-login celebration: user just verified email and was auto-logged in ───
+  useEffect(() => {
+    if (verificationStatus === "success" && autoLogin && verifiedName) {
+      // The server already set the JWT cookie — sync the auth context
+      // Fetch the session info to hydrate properly
+      fetch("/auth/session", { credentials: "include" })
+        .then(r => r.json())
+        .then(data => {
+          if (data.user) {
+            authLogin(data.token || "", {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name || verifiedName,
+              role: data.user.role || verifiedRole,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── CELEBRATION SCREEN: Email verified + auto-logged in ───
+  if (verificationStatus === "success" && autoLogin) {
+    const [countdown, setCountdown] = useState(5);
+    useEffect(() => {
+      const timer = setInterval(() => setCountdown(c => c - 1), 1000);
+      const nav = setTimeout(() => {
+        if (verifiedNeedsName) {
+          // Need to set display name first
+          setStep("set-display-name");
+          // Clean URL
+          window.history.replaceState({}, "", "/signin");
+        } else {
+          // Navigate to appropriate dashboard
+          const role = verifiedRole.toLowerCase();
+          if (role === "superuser") navigate("/dashboard?from=sv");
+          else if (role === "admin" || role === "moderator") navigate("/geo-admin/dashboard");
+          else if (role === "artist") navigate("/artist-portal/dashboard");
+          else navigate("/dashboard");
+        }
+      }, 5000);
+      return () => { clearInterval(timer); clearTimeout(nav); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0d0d1a] overflow-hidden relative items-center justify-center">
+        {/* Confetti particles */}
+        <style>{`
+          @keyframes confetti-fall {
+            0%   { transform: translateY(-80px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+          }
+          @keyframes scale-in {
+            0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+            60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          }
+          @keyframes fade-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+          }
+          .confetti-piece {
+            position: absolute;
+            top: -20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confetti-fall linear infinite;
+          }
+        `}</style>
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="confetti-piece"
+            style={{
+              left: `${Math.random() * 100}%`,
+              backgroundColor: ['#bf831c','#d4a037','#22c55e','#3b82f6','#8b5cf6','#ec4899','#f59e0b'][i % 7],
+              animationDuration: `${2 + Math.random() * 3}s`,
+              animationDelay: `${Math.random() * 2}s`,
+              width: `${6 + Math.random() * 8}px`,
+              height: `${6 + Math.random() * 8}px`,
+              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            }}
+          />
+        ))}
+
+        <div className="text-center z-10 max-w-md mx-auto px-6">
+          {/* Animated checkmark */}
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30" style={{ animation: 'scale-in 0.6s ease-out forwards' }}>
+            <CheckCircle2 className="h-12 w-12 text-white" />
+          </div>
+
+          <h1 className="text-3xl font-bold text-white mb-3" style={{ animation: 'fade-up 0.5s ease-out 0.3s both' }}>
+            Email Verified! 🎉
+          </h1>
+          <p className="text-lg text-[#8080b0] mb-2" style={{ animation: 'fade-up 0.5s ease-out 0.5s both' }}>
+            Welcome to <span className="text-[#d4a037] font-semibold">Verso Air</span>, {verifiedName}!
+          </p>
+          <p className="text-[#5a5a80] mb-8" style={{ animation: 'fade-up 0.5s ease-out 0.7s both' }}>
+            Your account is now active and ready to go.
+          </p>
+
+          {/* Progress bar */}
+          <div className="w-full max-w-xs mx-auto mb-4 bg-[#1a1a2e] rounded-full h-2 overflow-hidden" style={{ animation: 'fade-up 0.5s ease-out 0.9s both' }}>
+            <div className="h-full bg-gradient-to-r from-[#bf831c] to-[#d4a037] rounded-full transition-all duration-1000" style={{ width: `${((5 - countdown) / 5) * 100}%` }} />
+          </div>
+          <p className="text-[#5a5a80] text-sm" style={{ animation: 'fade-up 0.5s ease-out 1s both' }}>
+            {verifiedNeedsName
+              ? `Setting up your profile in ${countdown}s...`
+              : `Taking you to your dashboard in ${countdown}s...`}
+          </p>
+
+          {/* Skip button */}
+          <button
+            onClick={() => {
+              if (verifiedNeedsName) {
+                setStep("set-display-name");
+                window.history.replaceState({}, "", "/signin");
+              } else {
+                const role = verifiedRole.toLowerCase();
+                if (role === "superuser") navigate("/dashboard?from=sv");
+                else if (role === "admin" || role === "moderator") navigate("/geo-admin/dashboard");
+                else if (role === "artist") navigate("/artist-portal/dashboard");
+                else navigate("/dashboard");
+              }
+            }}
+            className="mt-4 text-[#d4a037] hover:text-[#bf831c] text-sm font-medium transition-colors"
+            style={{ animation: 'fade-up 0.5s ease-out 1.2s both' }}
+          >
+            Skip → {verifiedNeedsName ? "Set up profile now" : "Go to dashboard now"}
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-6 text-center text-xs text-[#40407a]">
+          🦅 <strong className="text-[#bf831c]">Verso Air</strong> — Your business, amplified
+        </div>
+      </div>
+    );
+  }
 
   // Show "Check Your Email" celebration screen
   if (step === "verify-sent") {
@@ -1281,14 +1431,18 @@ export default function SignIn() {
                   <User className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {returningName
-                    ? `Welcome Back, ${returningName}`
-                    : "Welcome Back"}
+                  {verificationStatus === "success"
+                    ? "Welcome to Verso Air"
+                    : returningName
+                      ? `Welcome Back, ${returningName}`
+                      : "Sign In"}
                 </h2>
                 <p className="text-gray-600 mt-2">
-                  {returningName
-                    ? "Sign in to continue"
-                    : "Sign in to your account"}
+                  {verificationStatus === "success"
+                    ? "Your email is verified — sign in to get started"
+                    : returningName
+                      ? "Sign in to continue"
+                      : "Sign in to your account"}
                 </p>
               </div>
 

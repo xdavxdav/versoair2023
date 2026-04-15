@@ -665,14 +665,42 @@ router.get(
 
     console.log(`[AUTH] Email verified for user ${tokenRecord.email}`);
 
-    // Redirect to signin with success message
+    // --- Auto-login the newly verified user ---
+    // Fetch full user record for JWT payload
+    const verifiedUserResult = await db.execute(
+      sql`SELECT id, email, role, subscription_tier, display_name, username FROM users WHERE id = ${tokenRecord.user_id} LIMIT 1`,
+    );
+    const verifiedUser = verifiedUserResult.rows?.[0] as any;
+
     const appUrl = (
       process.env.APP_PUBLIC_URL ||
       process.env.RENDER_EXTERNAL_URL ||
       process.env.VERSOAIR_URL ||
       ""
     ).replace(/\/$/, "");
-    res.redirect(`${appUrl}/signin?verification=success`);
+
+    if (verifiedUser) {
+      const verifyToken = jwt.sign(
+        {
+          userId: String(verifiedUser.id),
+          email: verifiedUser.email,
+          role: verifiedUser.role || "user",
+          subscriptionTier: verifiedUser.subscription_tier || "free",
+        },
+        getJwtSecret(),
+        { expiresIn: JWT_EXPIRES_IN },
+      );
+      setAuthCookie(res, verifyToken);
+      await createSession(verifiedUser.id, verifyToken, req, { revokeOthers: true });
+
+      const displayName = verifiedUser.display_name || verifiedUser.username || "";
+      const needsName = !verifiedUser.display_name;
+      const userName = encodeURIComponent(displayName || verifiedUser.email.split("@")[0]);
+      res.redirect(`${appUrl}/signin?verification=success&autologin=1&name=${userName}&needsName=${needsName ? "1" : "0"}&role=${verifiedUser.role || "user"}`);
+    } else {
+      // Fallback: no user found (shouldn't happen) — redirect to signin
+      res.redirect(`${appUrl}/signin?verification=success`);
+    }
   }),
 );
 
