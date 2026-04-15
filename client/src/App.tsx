@@ -203,6 +203,7 @@ const StreamerPortal = lazy(() => import("@/pages/streamer-portal"));
 // ─────────────────────────────────────────────────────
 const MusicDashboard = lazy(() => import("@/pages/music/dashboard"));
 const BeatmakerStudio = lazy(() => import("@/pages/music/beatmaker-studio"));
+const VersaVidsStudio = lazy(() => import("@/pages/music/versavids-studio"));
 const MusicVault = lazy(() => import("@/pages/music/vault"));
 const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
 const MusicLibrary = lazy(() => import("@/pages/music/library"));
@@ -545,6 +546,10 @@ function Router() {
       <Route path="/music" component={MusicDashboard} />
       <Route path="/music/dashboard" component={MusicDashboard} />
       <Route path="/music/studio" component={BeatmakerStudio} />
+      <Route path="/music/versavids" component={VersaVidsStudio} />
+      <Route path="/versavids">
+        {() => <Redirect to="/music/versavids" />}
+      </Route>
       <Route path="/music/vault" component={MusicVault} />
       <Route path="/music/royalties" component={MusicRoyalties} />
       <Route path="/music/library" component={MusicLibrary} />

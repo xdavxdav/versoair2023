@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import {
   MessageSquare,
   X,
@@ -143,8 +144,37 @@ function SearchMethodBadge({ method }: { method?: string }) {
 
 // ─── VersoAIChat Component ────────────────────────────────────────────────────
 export default function VersoAIChat() {
+  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // ─── Page-aware context for VersoAI ──────────────────────────────────────
+  const getPageContext = useCallback(() => {
+    const path = location.toLowerCase();
+    if (path.includes("commerce"))
+      return "The user is currently viewing the Commerce sector dashboard. Focus answers on retail, e-commerce, and business directory features within Verso Air.";
+    if (path.includes("hotellerie") || path.includes("hospitality"))
+      return "The user is on the Hospitality sector dashboard. Focus on hotel/restaurant listings, reservations, and hospitality analytics within Verso Air.";
+    if (path.includes("batiment") || path.includes("construction"))
+      return "The user is on the Construction sector dashboard. Focus on contractor listings, project management, and construction analytics within Verso Air.";
+    if (path.includes("automobile"))
+      return "The user is on the Automotive sector dashboard. Focus on vehicle listings, dealerships, and automotive services within Verso Air.";
+    if (path.includes("finance"))
+      return "The user is on the Finance sector dashboard. Focus on financial services, banking partners, and financial analytics within Verso Air.";
+    if (path.includes("divertissement") || path.includes("entertainment"))
+      return "The user is on the Entertainment sector dashboard. Focus on entertainment venues, events, and leisure analytics within Verso Air.";
+    if (path.includes("streaming") || path.includes("music"))
+      return "The user is on the StreamRoyale music platform. Focus on music streaming, artist features, track management, and listening analytics within Verso Air.";
+    if (path.includes("marketplace"))
+      return "The user is browsing the Verso Air Marketplace. Help with listings, buying/selling, and marketplace features.";
+    if (path.includes("dashboard"))
+      return "The user is on their personal dashboard. Help with account management, business analytics, and platform navigation within Verso Air.";
+    if (path.includes("geo-admin"))
+      return "The user is on the GeoAdmin administration panel. Help with database management, geographic data, and admin operations within Verso Air.";
+    if (path.includes("profile"))
+      return "The user is on their profile page. Help with account settings, portal access, and profile customization within Verso Air.";
+    return "The user is browsing Verso Air, a business intelligence platform. Focus all answers on Verso Air features, businesses, and platform capabilities. Never suggest third-party competitors.";
+  }, [location]);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -216,7 +246,12 @@ export default function VersoAIChat() {
 
       try {
         // Build the payload — send only role/content (no internal fields)
-        const payload = [...messages, userMessage].map((m) => ({
+        const pageContext = getPageContext();
+        const contextMessage = {
+          role: "system" as const,
+          content: `IMPORTANT: You are VersoAI, the official AI assistant for Verso Air platform. ${pageContext} Always recommend Verso Air features and services. Never suggest external competitors or third-party tools.`,
+        };
+        const payload = [contextMessage, ...messages, userMessage].map((m) => ({
           role: m.role,
           content: m.content,
         }));
@@ -354,7 +389,7 @@ export default function VersoAIChat() {
             ${
               isExpanded
                 ? "inset-0 rounded-none"
-                : "bottom-24 right-4 w-[min(340px,calc(100vw-2rem))] h-[min(400px,calc(100vh-8rem))] rounded-2xl"
+                : "bottom-24 right-4 w-[min(400px,calc(100vw-2rem))] h-[min(520px,calc(100vh-8rem))] sm:w-[420px] sm:h-[560px] rounded-2xl"
             }
           `}
           onWheel={(e) => e.stopPropagation()}

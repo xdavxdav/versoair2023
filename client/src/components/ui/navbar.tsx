@@ -9,16 +9,74 @@ import {
   Lock,
   ShoppingBag,
   User,
+  LayoutDashboard,
+  Mic2,
+  Radio,
+  Shield,
+  Users,
+  Wrench,
+  Zap,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Logo from "../attached_assets/logo.png";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LogoutDropdown } from "@/components/ui/logout-dropdown";
+import { usePortalAccess } from "@/hooks/usePortalAccess";
+import type { PortalId } from "@/lib/portal-access";
 import styles from "./versoair-logo.module.css";
 import SearchModal from "@/components/SearchModal";
+
+// Portal metadata for the switcher dropdown
+const PORTAL_META: Record<
+  PortalId,
+  { label: string; icon: React.ReactNode; path: string; color: string }
+> = {
+  general: {
+    label: "Dashboard",
+    icon: <LayoutDashboard className="w-3.5 h-3.5" />,
+    path: "/dashboard",
+    color: "text-blue-400",
+  },
+  streamer: {
+    label: "Streamer",
+    icon: <Radio className="w-3.5 h-3.5" />,
+    path: "/streamer-portal",
+    color: "text-purple-400",
+  },
+  artist: {
+    label: "Artist",
+    icon: <Mic2 className="w-3.5 h-3.5" />,
+    path: "/artist-portal/welcome",
+    color: "text-pink-400",
+  },
+  "geo-admin": {
+    label: "GeoAdmin",
+    icon: <Globe className="w-3.5 h-3.5" />,
+    path: "/geo-admin",
+    color: "text-emerald-400",
+  },
+  community: {
+    label: "Community",
+    icon: <Users className="w-3.5 h-3.5" />,
+    path: "/blog",
+    color: "text-amber-400",
+  },
+  contractor: {
+    label: "Contractor",
+    icon: <Wrench className="w-3.5 h-3.5" />,
+    path: "/contractor",
+    color: "text-cyan-400",
+  },
+  admin: {
+    label: "Admin",
+    icon: <Shield className="w-3.5 h-3.5" />,
+    path: "/admin",
+    color: "text-red-400",
+  },
+};
 
 interface NavbarProps {
   onMusicPortalToggle: () => void;
@@ -721,17 +779,7 @@ export default function Navbar({
             {/* User Actions - Always visible */}
             {user ? (
               <div className="flex items-center gap-1.5">
-                {location !== "/dashboard" && (
-                  <button
-                    onClick={() => {
-                      navigate("/dashboard");
-                    }}
-                    className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
-                    title="Dashboard"
-                  >
-                    <User className="h-3.5 w-3.5" />
-                  </button>
-                )}
+                <PortalSwitcher currentPath={location} navigate={navigate} />
                 <LogoutDropdown variant="red-solid" />
               </div>
             ) : hasPortalAuth ? (
@@ -770,5 +818,93 @@ export default function Navbar({
         onClose={() => setIsSearchOpen(false)}
       />
     </nav>
+  );
+}
+
+// ─── Portal Switcher Dropdown ───
+function PortalSwitcher({
+  currentPath,
+  navigate,
+}: {
+  currentPath: string;
+  navigate: (to: string) => void;
+}) {
+  const { accessiblePortals } = usePortalAccess();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // If only general + streamer, just show dashboard button
+  if (accessiblePortals.length <= 2) {
+    if (currentPath === "/dashboard") return null;
+    return (
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
+        title="Dashboard"
+      >
+        <User className="h-3.5 w-3.5" />
+      </button>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
+        title="Switch Portal"
+      >
+        <Zap className="h-3.5 w-3.5 text-amber-400" />
+        <ChevronDown
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-xl shadow-black/40 z-[9999] overflow-hidden">
+          <div className="px-3 py-2 border-b border-slate-700">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+              Switch Portal
+            </p>
+          </div>
+          {accessiblePortals.map((pid) => {
+            const meta = PORTAL_META[pid];
+            if (!meta) return null;
+            const isActive = currentPath.startsWith(
+              meta.path.split("/").slice(0, 2).join("/"),
+            );
+            return (
+              <button
+                key={pid}
+                onClick={() => {
+                  navigate(meta.path);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors ${
+                  isActive
+                    ? "bg-slate-700/70 text-white"
+                    : "text-slate-300 hover:bg-slate-700/40 hover:text-white"
+                }`}
+              >
+                <span className={meta.color}>{meta.icon}</span>
+                <span className="font-medium">{meta.label}</span>
+                {isActive && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

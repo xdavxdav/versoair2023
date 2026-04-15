@@ -829,7 +829,8 @@ router.get(
       // Query DB for up-to-date subscription fields
       const dbResult = await db.execute(
         sql`SELECT id, username, email, role, subscription_tier, subscription_status,
-                   trial_tier, trial_started_at, trial_expires_at
+                   trial_tier, trial_started_at, trial_expires_at,
+                   display_name, created_at
             FROM users WHERE id = ${Number(userId)} LIMIT 1`,
       );
       const dbUser = dbResult.rows?.[0] as any;
@@ -847,19 +848,30 @@ router.get(
         console.warn("[AUTH] Could not compute capabilities:", e);
       }
 
+      // Determine if this is a first-time login (account created within last 5 minutes of first session check)
+      const createdAt = dbUser?.created_at ? new Date(dbUser.created_at) : null;
+      const isNewAccount = createdAt
+        ? Date.now() - createdAt.getTime() < 5 * 60 * 1000
+        : false;
+      const userDisplayName = dbUser?.display_name || null;
+
       res.json({
         success: true,
         user: {
           id: userId,
           email: dbUser?.email || decoded.email || "",
           username: dbUser?.username || null,
+          displayName: userDisplayName,
           name:
+            userDisplayName ||
             dbUser?.username ||
             decoded.name ||
             decoded.email?.split("@")[0] ||
             "User",
           isAdmin,
           role: dbUser?.role || decoded.role || "user",
+          isFirstLogin: isNewAccount && !userDisplayName,
+          needsDisplayName: !userDisplayName,
           subscriptionTier: dbUser?.subscription_tier || "free",
           subscriptionStatus: dbUser?.subscription_status || "active",
           trialTier: dbUser?.trial_tier || null,
@@ -3278,6 +3290,126 @@ router.delete(
       success: true,
       message: `TSR access revoked for ${email}`,
       sessionsRevoked: !!targetUser,
+    });
+  }),
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// STEP-UP VERIFICATION — Email code for sensitive portal linking
+// ─────────────────────────────────────────────────────────────────────────
+
+// In-memory code store (TTL-based) — replace with Redis in production
+const stepUpCodes = new Map<
+  number,
+  { code: string; expiresAt: number; purpose: string }
+>();
+
+/**
+ * POST /auth/step-up/request
+ * Sends a 6-digit verification code to the user's email
+ */
+router.post(
+  "/step-up/request",
+  requireAuth(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    const { purpose } = req.body; // e.g. "link-contractor", "link-business"
+
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    // Get user email
+    const userResult = await db.execute(
+      sql`SELECT email, display_name FROM users WHERE id = ${userId}`,
+    );
+    const user = userResult.rows?.[0] as any;
+    if (!user?.email)
+      return res.status(400).json({ error: "No email on file" });
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    // Store (overwrite previous)
+    stepUpCodes.set(userId, {
+      code,
+      expiresAt,
+      purpose: purpose || "verification",
+    });
+
+    // Send email
+    try {
+      const { sendEmail } = await import("../services/email-service");
+      await sendEmail({
+        to: user.email,
+        subject: "Verso Air — Verification Code",
+        html: `
+          <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #1a1a2e;">Verification Code</h2>
+            <p>Hi ${user.display_name || "there"},</p>
+            <p>Your verification code for <strong>${purpose || "portal access"}</strong>:</p>
+            <div style="background: #f0f0f5; padding: 16px; border-radius: 12px; text-align: center; margin: 16px 0;">
+              <span style="font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #1a1a2e;">${code}</span>
+            </div>
+            <p style="color: #666; font-size: 13px;">This code expires in 10 minutes. Do not share it.</p>
+            <p style="color: #999; font-size: 11px;">— Verso Air Security</p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.warn("[StepUp] Email send failed:", emailErr);
+      // In dev, log the code so testing still works
+      if (process.env.NODE_ENV === "development") {
+        console.log(`[StepUp] DEV CODE for user ${userId}: ${code}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Verification code sent to your email",
+    });
+  }),
+);
+
+/**
+ * POST /auth/step-up/verify
+ * Verify the 6-digit code
+ */
+router.post(
+  "/step-up/verify",
+  requireAuth(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId;
+    const { code } = req.body;
+
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+    if (!code) return res.status(400).json({ error: "Code is required" });
+
+    const stored = stepUpCodes.get(userId);
+    if (!stored) {
+      return res
+        .status(400)
+        .json({ error: "No verification pending. Request a new code." });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      stepUpCodes.delete(userId);
+      return res
+        .status(400)
+        .json({ error: "Code expired. Request a new one." });
+    }
+
+    if (stored.code !== code.toString().trim()) {
+      return res.status(400).json({ error: "Invalid code" });
+    }
+
+    // Code is valid — clean up
+    stepUpCodes.delete(userId);
+
+    res.json({
+      success: true,
+      verified: true,
+      purpose: stored.purpose,
+      message: "Step-up verification successful",
     });
   }),
 );
