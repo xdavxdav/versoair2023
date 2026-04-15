@@ -691,12 +691,19 @@ router.get(
         { expiresIn: JWT_EXPIRES_IN },
       );
       setAuthCookie(res, verifyToken);
-      await createSession(verifiedUser.id, verifyToken, req, { revokeOthers: true });
+      await createSession(verifiedUser.id, verifyToken, req, {
+        revokeOthers: true,
+      });
 
-      const displayName = verifiedUser.display_name || verifiedUser.username || "";
+      const displayName =
+        verifiedUser.display_name || verifiedUser.username || "";
       const needsName = !verifiedUser.display_name;
-      const userName = encodeURIComponent(displayName || verifiedUser.email.split("@")[0]);
-      res.redirect(`${appUrl}/signin?verification=success&autologin=1&name=${userName}&needsName=${needsName ? "1" : "0"}&role=${verifiedUser.role || "user"}`);
+      const userName = encodeURIComponent(
+        displayName || verifiedUser.email.split("@")[0],
+      );
+      res.redirect(
+        `${appUrl}/signin?verification=success&autologin=1&name=${userName}&needsName=${needsName ? "1" : "0"}&role=${verifiedUser.role || "user"}`,
+      );
     } else {
       // Fallback: no user found (shouldn't happen) — redirect to signin
       res.redirect(`${appUrl}/signin?verification=success`);

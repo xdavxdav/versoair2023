@@ -7488,6 +7488,7 @@ export default function AdminDashboard() {
                 </span>
               </div>
             )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
