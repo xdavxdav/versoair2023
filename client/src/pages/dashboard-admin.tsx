@@ -7464,7 +7464,6 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-              </div>
             ) : queryResult ? (
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
