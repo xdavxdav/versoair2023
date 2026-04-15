@@ -41,6 +41,7 @@ import gamesRouter from "./routes/games";
 import paypalRouter from "./routes/paypal";
 import listenerRouter from "./routes/listener";
 import beatmakerRouter from "./routes/beatmaker";
+import versavidsRouter from "./routes/versavids";
 import intentSearchRouter from "./routes/intent-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
@@ -366,6 +367,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
   app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
   app.use("/api/beatmaker", beatmakerRouter); // Beatmaker Studio — production requests & briefs
+  app.use("/api/versavids", versavidsRouter); // VersaVids — video production marketplace & briefs
   app.use("/api/search", intentSearchRouter); // Intent Search — Shared Brain AI search endpoint
   app.use("/api/migrate", migrateRouter); // Market Raider — competitor scraping & import
   app.use("/api/escrow", escrowRouter); // Escrow — trustless transaction engine

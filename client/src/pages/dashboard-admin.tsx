@@ -6571,6 +6571,18 @@ export default function AdminDashboard() {
   const [showSqlEditor, setShowSqlEditor] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showHealthPanel, setShowHealthPanel] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showPerformancePanel, setShowPerformancePanel] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "json" | "sql">(
+    "csv",
+  );
+  const [exportTable, setExportTable] = useState("businesses");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [performanceData, setPerformanceData] = useState<any>(null);
+  const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
   const [sqlQuery, setSqlQuery] = useState("SELECT * FROM users LIMIT 10");
   const [queryResult, setQueryResult] = useState<any>(null);
   const [isExecutingQuery, setIsExecutingQuery] = useState(false);
@@ -6687,6 +6699,217 @@ export default function AdminDashboard() {
     const interval = setInterval(fetchDatabaseHealth, 30000);
     return () => clearInterval(interval);
   }, [fetchDatabaseHealth, isAdminGateAuthenticated]);
+
+  // ─── Performance Data Fetch ────────────────────────────────────────────────
+  const fetchPerformanceData = useCallback(async () => {
+    setIsLoadingPerformance(true);
+    try {
+      const [healthRes, adminRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/health`),
+        fetch(`${API_BASE_URL}/api/admin/health`).catch(() => null),
+      ]);
+      const healthData = healthRes.ok ? await healthRes.json() : null;
+      const adminData = adminRes?.ok
+        ? await adminRes.json().catch(() => null)
+        : null;
+
+      // Query DB for connection stats + table sizes
+      let dbStats: any = null;
+      try {
+        const token =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("auth_token");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const csrfToken = getCsrfToken();
+        if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+        const statsRes = await fetch(`${API_BASE_URL}/api/admin/sql`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            query: `SELECT 
+              (SELECT count(*) FROM pg_stat_activity WHERE state = 'active') as active_connections,
+              (SELECT count(*) FROM pg_stat_activity) as total_connections,
+              (SELECT pg_database_size(current_database())) as db_size_bytes,
+              (SELECT count(*) FROM pg_stat_user_tables) as table_count`,
+          }),
+        });
+        if (statsRes.ok) dbStats = await statsRes.json();
+      } catch (e) {
+        console.warn("Could not fetch DB stats:", e);
+      }
+
+      setPerformanceData({
+        uptime: healthData?.uptime || "N/A",
+        status: healthData?.status || "unknown",
+        cpu: adminData?.cpu || null,
+        memory: adminData?.memory || null,
+        disk: adminData?.disk || null,
+        connections: dbStats?.rows?.[0] || null,
+        dbSizeBytes: dbStats?.rows?.[0]?.db_size_bytes || 0,
+        tableCount: dbStats?.rows?.[0]?.table_count || 0,
+      });
+    } catch (error) {
+      console.error("Performance fetch failed:", error);
+      setPerformanceData({ error: true });
+    } finally {
+      setIsLoadingPerformance(false);
+    }
+  }, []);
+
+  // ─── Export Handler ───────────────────────────────────────────────────────────
+  const handleExportData = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const token =
+        localStorage.getItem("authToken") || localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const csrfToken = getCsrfToken();
+      if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+
+      const query =
+        exportFormat === "sql"
+          ? `SELECT * FROM ${exportTable} LIMIT 10000`
+          : `SELECT * FROM ${exportTable} LIMIT 10000`;
+
+      const res = await fetch(`${API_BASE_URL}/api/admin/sql`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query }),
+      });
+
+      if (!res.ok) throw new Error("Export query failed");
+      const data = await res.json();
+      const rows = data.rows || [];
+
+      let content: string;
+      let mimeType: string;
+      let extension: string;
+
+      if (exportFormat === "csv") {
+        const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
+        const csvRows = [
+          cols.join(","),
+          ...rows.map((r: any) =>
+            cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
+          ),
+        ];
+        content = csvRows.join("\n");
+        mimeType = "text/csv";
+        extension = "csv";
+      } else if (exportFormat === "json") {
+        content = JSON.stringify(rows, null, 2);
+        mimeType = "application/json";
+        extension = "json";
+      } else {
+        const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
+        const inserts = rows.map((r: any) => {
+          const vals = cols.map((c) =>
+            typeof r[c] === "string"
+              ? `'${r[c].replace(/'/g, "''")}'`
+              : (r[c] ?? "NULL"),
+          );
+          return `INSERT INTO ${exportTable} (${cols.join(", ")}) VALUES (${vals.join(", ")});`;
+        });
+        content = inserts.join("\n");
+        mimeType = "text/sql";
+        extension = "sql";
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${exportTable}_export_${new Date().toISOString().split("T")[0]}.${extension}`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Complete",
+        description: `${rows.length} rows exported as ${exportFormat.toUpperCase()}`,
+      });
+      setShowExportModal(false);
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [exportFormat, exportTable]);
+
+  // ─── Import Handler ───────────────────────────────────────────────────────────
+  const handleImportData = useCallback(async () => {
+    if (!importFile) return;
+    setIsImporting(true);
+    try {
+      const text = await importFile.text();
+      let queries: string[] = [];
+
+      if (importFile.name.endsWith(".sql")) {
+        queries = text
+          .split(";")
+          .map((q) => q.trim())
+          .filter(Boolean);
+      } else if (importFile.name.endsWith(".json")) {
+        const rows = JSON.parse(text);
+        if (!Array.isArray(rows) || rows.length === 0)
+          throw new Error("JSON must be an array of objects");
+        const cols = Object.keys(rows[0]);
+        queries = rows.map((r: any) => {
+          const vals = cols.map((c) =>
+            typeof r[c] === "string"
+              ? `'${r[c].replace(/'/g, "''")}'`
+              : (r[c] ?? "NULL"),
+          );
+          return `INSERT INTO ${exportTable} (${cols.join(", ")}) VALUES (${vals.join(", ")})`;
+        });
+      } else {
+        throw new Error("Unsupported file format. Use .sql or .json");
+      }
+
+      const token =
+        localStorage.getItem("authToken") || localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const csrfToken = getCsrfToken();
+      if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+
+      let successCount = 0;
+      for (const q of queries.slice(0, 100)) {
+        const res = await fetch(`${API_BASE_URL}/api/admin/sql`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ query: q }),
+        });
+        if (res.ok) successCount++;
+      }
+
+      toast({
+        title: "Import Complete",
+        description: `${successCount}/${Math.min(queries.length, 100)} statements executed successfully`,
+      });
+      setShowImportModal(false);
+      setImportFile(null);
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  }, [importFile, exportTable]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -7026,7 +7249,12 @@ export default function AdminDashboard() {
                           else if (op.id === "backup") setShowBackupModal(true);
                           else if (op.id === "health")
                             setShowHealthPanel(!showHealthPanel);
-                          else setActiveSection(op.id);
+                          else if (op.id === "export") setShowExportModal(true);
+                          else if (op.id === "import") setShowImportModal(true);
+                          else if (op.id === "performance") {
+                            setShowPerformancePanel(true);
+                            fetchPerformanceData();
+                          } else setActiveSection(op.id);
                         }}
                         variant="outline"
                         className={`h-20 flex-col gap-2 hover:shadow-md transition-shadow ${op.bgColor}`}
@@ -7096,12 +7324,18 @@ export default function AdminDashboard() {
       >
         <DialogContent className="max-w-5xl w-[calc(100vw-16px)] sm:w-auto p-0 overflow-hidden rounded-xl bg-[#0d1117] border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.15)] max-h-[95dvh] sm:max-h-[90vh] flex flex-col">
           {/* macOS-style title bar */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-[#161b22] border-b border-white/10 select-none flex-shrink-0">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-2.5 bg-[#161b22] border-b border-white/10 select-none flex-shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="flex gap-1.5 flex-shrink-0">
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f56] shadow-[0_0_4px_#ff5f56]" />
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_4px_#ffbd2e]" />
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#27c93f] shadow-[0_0_4px_#27c93f]" />
+              {/* Window controls - functional on mobile */}
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setShowSqlEditor(false)}
+                  className="w-4 h-4 sm:w-3 sm:h-3 rounded-full bg-[#ff5f56] shadow-[0_0_4px_#ff5f56] hover:bg-[#ff3b30] active:scale-95 transition-all cursor-pointer"
+                  aria-label="Close SQL Console"
+                  title="Close"
+                />
+                <span className="w-4 h-4 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_4px_#ffbd2e] opacity-50" />
+                <span className="w-4 h-4 sm:w-3 sm:h-3 rounded-full bg-[#27c93f] shadow-[0_0_4px_#27c93f] opacity-50" />
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-mono min-w-0">
                 <Terminal className="h-3 w-3 text-purple-400 flex-shrink-0" />
@@ -7114,6 +7348,14 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              {/* Mobile close button - highly visible */}
+              <button
+                onClick={() => setShowSqlEditor(false)}
+                className="sm:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 active:bg-red-500/30 border border-red-500/30 transition-all"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4 text-red-400" />
+              </button>
               {sqlExecTime !== null && (
                 <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">
                   <Clock className="h-2.5 w-2.5" />
@@ -7164,7 +7406,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
-            
+
             {/* Mobile: Select dropdown */}
             <div className="sm:hidden px-3 py-2">
               <select
@@ -7179,7 +7421,9 @@ export default function AdminDashboard() {
                 className="w-full text-xs font-mono px-3 py-2 rounded-md bg-white/5 text-slate-300 border border-white/10 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50"
                 defaultValue=""
               >
-                <option value="" disabled>📋 Load SQL Template...</option>
+                <option value="" disabled>
+                  📋 Load SQL Template...
+                </option>
                 {SQL_SNIPPETS.map((s, i) => (
                   <option key={i} value={i}>
                     {s.label}
@@ -7190,7 +7434,10 @@ export default function AdminDashboard() {
           </div>
 
           {/* Editor area */}
-          <div className="flex flex-1 min-h-0 border-b border-white/5" style={{ minHeight: 160 }}>
+          <div
+            className="flex flex-1 min-h-0 border-b border-white/5"
+            style={{ minHeight: 160 }}
+          >
             {/* Gutter: line numbers — hidden on mobile */}
             <div className="select-none hidden sm:flex flex-col items-end pt-3 pb-3 pr-2 pl-3 bg-[#0d1117] border-r border-white/5 min-w-[42px]">
               {(sqlQuery || " ").split("\n").map((_, i) => (
@@ -7322,7 +7569,7 @@ export default function AdminDashboard() {
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>
                     {Array.isArray(queryResult?.rows)
-                      ? `${queryResult.rows.length} row${queryResult.rows.length !== 1 ? 's' : ''}`
+                      ? `${queryResult.rows.length} row${queryResult.rows.length !== 1 ? "s" : ""}`
                       : "OK"}
                   </span>
                 </span>
@@ -7362,80 +7609,82 @@ export default function AdminDashboard() {
               <span className="text-xs font-mono text-slate-400 flex items-center gap-2">
                 <span className="text-slate-600">▼</span> Results
               </span>
-              {queryResult && Array.isArray(queryResult?.rows) && queryResult.rows.length > 0 && (
-                <button
-                  onClick={() => {
-                    const cols = Object.keys(queryResult.rows[0]);
-                    const csv = [
-                      cols.join(","),
-                      ...queryResult.rows.map((r: any) =>
-                        cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
-                      ),
-                    ].join("\n");
-                    navigator.clipboard.writeText(csv);
-                  }}
-                  className="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 border border-white/5 transition-all"
-                >
-                  📋 CSV
-                </button>
-              )}
+              {queryResult &&
+                Array.isArray(queryResult?.rows) &&
+                queryResult.rows.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const cols = Object.keys(queryResult.rows[0]);
+                      const csv = [
+                        cols.join(","),
+                        ...queryResult.rows.map((r: any) =>
+                          cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
+                        ),
+                      ].join("\n");
+                      navigator.clipboard.writeText(csv);
+                    }}
+                    className="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 border border-white/5 transition-all"
+                  >
+                    📋 CSV
+                  </button>
+                )}
             </div>
             <div className="max-h-48 sm:max-h-64 overflow-auto">
-            {isExecutingQuery ? (
-              <div className="flex items-center gap-3 p-5 text-slate-400 text-xs font-mono">
-                <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
-                <span className="text-slate-500">Executing query</span>
-                <span className="animate-pulse text-purple-400">▋</span>
-              </div>
-            ) : queryResult?.error ? (
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider">
-                    Query Error
-                  </span>
+              {isExecutingQuery ? (
+                <div className="flex items-center gap-3 p-5 text-slate-400 text-xs font-mono">
+                  <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
+                  <span className="text-slate-500">Executing query</span>
+                  <span className="animate-pulse text-purple-400">▋</span>
                 </div>
-                <pre className="text-xs font-mono text-red-300 bg-red-950/30 border border-red-800/30 rounded p-3 whitespace-pre-wrap">
-                  {queryResult.error}
-                </pre>
-              </div>
-            ) : queryResult &&
-              Array.isArray(queryResult?.rows) &&
-              queryResult.rows.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs font-mono">
-                  <thead className="sticky top-0 bg-[#0d1117] z-10">
-                    <tr>
-                      <th className="px-2 sm:px-3 py-1.5 text-center text-slate-700 border-b border-white/5 w-8 sm:w-10">
-                        #
-                      </th>
-                      {Object.keys(queryResult.rows[0]).map((col) => (
-                        <th
-                          key={col}
-                          className="text-left px-3 sm:px-4 py-1.5 text-slate-400 font-semibold border-b border-white/5 whitespace-nowrap"
-                        >
-                          <span className="text-slate-600 mr-1">⬡</span>
-                          {col}
+              ) : queryResult?.error ? (
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider">
+                      Query Error
+                    </span>
+                  </div>
+                  <pre className="text-xs font-mono text-red-300 bg-red-950/30 border border-red-800/30 rounded p-3 whitespace-pre-wrap">
+                    {queryResult.error}
+                  </pre>
+                </div>
+              ) : queryResult &&
+                Array.isArray(queryResult?.rows) &&
+                queryResult.rows.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs font-mono">
+                    <thead className="sticky top-0 bg-[#0d1117] z-10">
+                      <tr>
+                        <th className="px-2 sm:px-3 py-1.5 text-center text-slate-700 border-b border-white/5 w-8 sm:w-10">
+                          #
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {queryResult.rows.map((row: any, i: number) => (
-                      <tr
-                        key={i}
-                        className={`border-b border-white/[0.03] transition-colors ${
-                          i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"
-                        } hover:bg-purple-500/5 active:bg-purple-500/10`}
-                      >
-                        <td className="px-2 sm:px-3 py-1.5 text-center text-slate-700 text-[10px]">
-                          {i + 1}
-                        </td>
-                        {Object.values(row).map((val: any, j: number) => (
-                          <td
-                            key={j}
-                            className="px-3 sm:px-4 py-1.5 whitespace-nowrap max-w-[180px] sm:max-w-[220px] truncate"
+                        {Object.keys(queryResult.rows[0]).map((col) => (
+                          <th
+                            key={col}
+                            className="text-left px-3 sm:px-4 py-1.5 text-slate-400 font-semibold border-b border-white/5 whitespace-nowrap"
                           >
+                            <span className="text-slate-600 mr-1">⬡</span>
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {queryResult.rows.map((row: any, i: number) => (
+                        <tr
+                          key={i}
+                          className={`border-b border-white/[0.03] transition-colors ${
+                            i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"
+                          } hover:bg-purple-500/5 active:bg-purple-500/10`}
+                        >
+                          <td className="px-2 sm:px-3 py-1.5 text-center text-slate-700 text-[10px]">
+                            {i + 1}
+                          </td>
+                          {Object.values(row).map((val: any, j: number) => (
+                            <td
+                              key={j}
+                              className="px-3 sm:px-4 py-1.5 whitespace-nowrap max-w-[180px] sm:max-w-[220px] truncate"
+                            >
                               {val === null ? (
                                 <span className="text-slate-700 italic text-[10px]">
                                   NULL
@@ -7464,30 +7713,30 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
-            ) : queryResult ? (
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-[10px] font-mono text-emerald-400">
-                    Query OK — {queryResult.rowCount ?? 0} row(s) affected
+              ) : queryResult ? (
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-[10px] font-mono text-emerald-400">
+                      Query OK — {queryResult.rowCount ?? 0} row(s) affected
+                    </span>
+                  </div>
+                  <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                    {JSON.stringify(queryResult, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-5 sm:py-8 text-slate-700 gap-2">
+                  <Terminal className="h-6 w-6 sm:h-8 sm:w-8 opacity-20" />
+                  <span className="text-xs font-mono">
+                    Run a query to see results
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-800">
+                    <span className="hidden sm:inline">⌘ Return · or </span>Tap
+                    Run Query
                   </span>
                 </div>
-                <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap">
-                  {JSON.stringify(queryResult, null, 2)}
-                </pre>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-5 sm:py-8 text-slate-700 gap-2">
-                <Terminal className="h-6 w-6 sm:h-8 sm:w-8 opacity-20" />
-                <span className="text-xs font-mono">
-                  Run a query to see results
-                </span>
-                <span className="text-[10px] font-mono text-slate-800">
-                  <span className="hidden sm:inline">⌘ Return · or </span>Tap
-                  Run Query
-                </span>
-              </div>
-            )}
+              )}
             </div>
           </div>
         </DialogContent>
@@ -7539,6 +7788,290 @@ export default function AdminDashboard() {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-blue-600" />
+              Export Data
+            </DialogTitle>
+            <DialogDescription>
+              Export table data as CSV, JSON, or SQL
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Table</Label>
+              <Select value={exportTable} onValueChange={setExportTable}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "businesses",
+                    "users",
+                    "business_categories",
+                    "countries",
+                    "cities",
+                    "regions",
+                    "tracks",
+                    "artists",
+                    "reservations",
+                    "job_listings",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Format</Label>
+              <Select
+                value={exportFormat}
+                onValueChange={(v: any) => setExportFormat(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="sql">SQL Inserts</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleExportData}
+              disabled={isExporting}
+              className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" /> Export {exportTable}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-amber-600" />
+              Import Data
+            </DialogTitle>
+            <DialogDescription>
+              Import data from .sql or .json files
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Target Table</Label>
+              <Select value={exportTable} onValueChange={setExportTable}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "businesses",
+                    "users",
+                    "business_categories",
+                    "countries",
+                    "cities",
+                    "regions",
+                    "tracks",
+                    "artists",
+                  ].map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>File (.sql or .json)</Label>
+              <Input
+                type="file"
+                accept=".sql,.json"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="mt-1"
+              />
+              {importFile && (
+                <p className="text-xs text-slate-500 mt-1">
+                  {importFile.name} — {(importFile.size / 1024).toFixed(1)} KB
+                </p>
+              )}
+            </div>
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Import is limited to 100 statements per batch. SQL files must
+                use semicolon delimiters.
+              </AlertDescription>
+            </Alert>
+            <Button
+              onClick={handleImportData}
+              disabled={isImporting || !importFile}
+              className="w-full gap-2 bg-amber-600 hover:bg-amber-700"
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" /> Import Data
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Performance Panel Modal */}
+      <Dialog
+        open={showPerformancePanel}
+        onOpenChange={setShowPerformancePanel}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-600" />
+              Database Performance
+            </DialogTitle>
+            <DialogDescription>
+              Live server and database performance metrics
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingPerformance ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+              <span className="ml-2 text-sm text-slate-500">
+                Loading metrics...
+              </span>
+            </div>
+          ) : performanceData?.error ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Failed to load performance data
+              </AlertDescription>
+            </Alert>
+          ) : performanceData ? (
+            <div className="space-y-4">
+              {/* Server Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-xs font-medium text-green-700">Status</p>
+                  <p className="text-lg font-bold text-green-800">
+                    {performanceData.status === "ok"
+                      ? "✅ Healthy"
+                      : "⚠️ " + performanceData.status}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                  <p className="text-xs font-medium text-blue-700">Uptime</p>
+                  <p className="text-lg font-bold text-blue-800">
+                    {typeof performanceData.uptime === "number"
+                      ? `${Math.floor(performanceData.uptime / 3600)}h ${Math.floor((performanceData.uptime % 3600) / 60)}m`
+                      : performanceData.uptime}
+                  </p>
+                </div>
+              </div>
+
+              {/* Database Metrics */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+                  <p className="text-xs font-medium text-purple-700">DB Size</p>
+                  <p className="text-lg font-bold text-purple-800">
+                    {performanceData.dbSizeBytes
+                      ? `${(Number(performanceData.dbSizeBytes) / (1024 * 1024)).toFixed(1)} MB`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+                  <p className="text-xs font-medium text-indigo-700">Tables</p>
+                  <p className="text-lg font-bold text-indigo-800">
+                    {performanceData.tableCount || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Connection Stats */}
+              {performanceData.connections && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                    <p className="text-xs font-medium text-amber-700">
+                      Active Connections
+                    </p>
+                    <p className="text-lg font-bold text-amber-800">
+                      {performanceData.connections.active_connections}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200">
+                    <p className="text-xs font-medium text-rose-700">
+                      Total Connections
+                    </p>
+                    <p className="text-lg font-bold text-rose-800">
+                      {performanceData.connections.total_connections}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* CPU / Memory from admin health */}
+              {performanceData.cpu && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">CPU Usage</span>
+                    <span className="font-semibold">
+                      {performanceData.cpu}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={Number(performanceData.cpu)}
+                    className="h-2"
+                  />
+                </div>
+              )}
+              {performanceData.memory && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Memory Usage</span>
+                    <span className="font-semibold">
+                      {performanceData.memory}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={Number(performanceData.memory)}
+                    className="h-2"
+                  />
+                </div>
+              )}
+
+              <Button
+                onClick={() => fetchPerformanceData()}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <RefreshCw className="h-4 w-4" /> Refresh Metrics
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </>

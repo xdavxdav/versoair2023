@@ -138,8 +138,11 @@ interface CurrentUser {
   id: string;
   email: string;
   name: string;
+  displayName?: string | null;
   isAdmin: boolean;
   role?: string;
+  isFirstLogin?: boolean;
+  needsDisplayName?: boolean;
   subscriptionTier?: TierKey;
   subscriptionStatus?: string;
   premiumExpiresAt?: string;
@@ -2412,9 +2415,11 @@ export default function UserDashboard() {
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-                    Welcome back
-                    {userSession!.user.name
-                      ? `, ${userSession!.user.name}`
+                    {userSession!.user.isFirstLogin
+                      ? "Welcome to Verso Air"
+                      : "Welcome back"}
+                    {userSession!.user.displayName || userSession!.user.name
+                      ? `, ${userSession!.user.displayName || userSession!.user.name}`
                       : ""}
                     !
                   </h1>

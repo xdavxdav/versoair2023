@@ -12,6 +12,13 @@ import {
   Shield,
   Crown,
   Settings,
+  Edit3,
+  Check,
+  X,
+  Loader2,
+  Globe,
+  Music,
+  Camera,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import PortalSelector from "@/components/PortalSelector";
@@ -25,6 +32,9 @@ export default function ProfilePage() {
   const { user, logout } = useAuthContext();
   const { capabilities } = useCapabilities();
   const [location, navigate] = useLocation();
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
 
   // Track referrer for proper back navigation
   useEffect(() => {
@@ -59,6 +69,33 @@ export default function ProfilePage() {
       .join("")
       .toUpperCase()
       .slice(0, 2) || "VA";
+
+  const handleSaveDisplayName = async () => {
+    if (!editName.trim() || editName.trim().length < 2) return;
+    setIsSavingName(true);
+    try {
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+      const res = await fetch("/auth/display-name", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ displayName: editName.trim() }),
+      });
+      if (res.ok) {
+        // Refresh page to pick up new name
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Failed to update display name:", err);
+    } finally {
+      setIsSavingName(false);
+      setIsEditingName(false);
+    }
+  };
 
   const tierLabel =
     displayTier === "free"
@@ -282,6 +319,53 @@ export default function ProfilePage() {
                 Account Details
               </h3>
               <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">Display Name</span>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-sm w-32 focus:outline-none focus:border-cyan-500"
+                        placeholder="Your name"
+                        autoFocus
+                        maxLength={50}
+                      />
+                      <button
+                        onClick={handleSaveDisplayName}
+                        disabled={isSavingName || editName.trim().length < 2}
+                        className="p-1 text-emerald-400 hover:text-emerald-300 disabled:opacity-40"
+                      >
+                        {isSavingName ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setIsEditingName(false)}
+                        className="p-1 text-slate-400 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-white">{displayName}</span>
+                      <button
+                        onClick={() => {
+                          setEditName(displayName);
+                          setIsEditingName(true);
+                        }}
+                        className="p-1 text-slate-500 hover:text-cyan-400 transition-colors"
+                        title="Edit display name"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Username</span>
                   <span className="text-white">
@@ -369,6 +453,45 @@ export default function ProfilePage() {
 
             {/* Quick Actions */}
             <div className="md:col-span-2 bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-cyan-400" />
+                Connected Accounts & Portals
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                {capabilities?.portals?.map((portal: string) => (
+                  <div
+                    key={portal}
+                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                      {portal === "artist" ? (
+                        <Music className="w-4 h-4 text-emerald-400" />
+                      ) : portal === "streamer" ? (
+                        <Camera className="w-4 h-4 text-emerald-400" />
+                      ) : portal === "geo-admin" ? (
+                        <Shield className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Globe className="w-4 h-4 text-emerald-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white capitalize">
+                        {portal.replace("-", " ")}
+                      </p>
+                      <p className="text-[10px] text-emerald-400">
+                        ✓ Connected
+                      </p>
+                    </div>
+                  </div>
+                )) || (
+                  <div className="bg-white/[0.03] border border-white/10 rounded-xl p-3 col-span-2">
+                    <p className="text-slate-400 text-sm">
+                      General portal active
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-cyan-400" />
                 Quick Actions

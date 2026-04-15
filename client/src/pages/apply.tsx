@@ -530,9 +530,16 @@ export default function ApplyPage() {
                               transition={{ delay: index * 0.08 }}
                             >
                               <Card
-                                className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full"
+                                className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ring-amber-500/30"
                                 onClick={() => setLocation(portal.redirectPath)}
                               >
+                                {/* Gold connected indicator */}
+                                <div className="absolute top-3 right-3 z-10">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 shadow-lg shadow-amber-500/20">
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Connected
+                                  </span>
+                                </div>
                                 <div
                                   className={`absolute inset-0 bg-gradient-to-br ${portal.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
                                 />
@@ -543,14 +550,7 @@ export default function ApplyPage() {
                                     >
                                       <portal.icon className="h-6 w-6 text-white" />
                                     </div>
-                                    {portal.badge && (
-                                      <Badge
-                                        variant="secondary"
-                                        className="bg-white/10 text-white/80"
-                                      >
-                                        {portal.badge}
-                                      </Badge>
-                                    )}
+                                    {/* Badge already replaced by gold Connected indicator above */}
                                   </div>
                                   <CardTitle className="text-white text-xl">
                                     {portal.name}

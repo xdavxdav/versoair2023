@@ -3140,3 +3140,191 @@ export const inboxMessages = pgTable(
 
 export const insertInboxMessageSchema = createInsertSchema(inboxMessages);
 export type InboxMessage = typeof inboxMessages.$inferSelect;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── VersaVids: Video Production Services Platform ───────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Video Projects (client-initiated briefs) ────────────────────────────────
+export const videoProjects = pgTable(
+  "video_projects",
+  {
+    id: serial("id").primaryKey(),
+    clientId: integer("client_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    projectType: varchar("project_type", { length: 50 })
+      .notNull()
+      .default("music_video"),
+    // 'music_video' | 'commercial' | 'documentary' | 'animation' | 'social_media' | 'live_event' | 'corporate' | 'lyric_video'
+    genre: varchar("genre", { length: 50 }),
+    budget: decimal("budget", { precision: 10, scale: 2 }),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    deadline: timestamp("deadline"),
+    status: varchar("status", { length: 30 }).notNull().default("open"),
+    // 'open' | 'claimed' | 'in_progress' | 'review' | 'revision' | 'completed' | 'cancelled'
+    claimedBy: integer("claimed_by").references(() => users.id),
+    claimedAt: timestamp("claimed_at"),
+    priority: varchar("priority", { length: 10 }).default("normal"),
+    // 'low' | 'normal' | 'high' | 'urgent'
+    tags: jsonb("tags").$type<string[]>().default([]),
+    referenceUrls: jsonb("reference_urls").$type<string[]>().default([]),
+    mood: varchar("mood", { length: 100 }),
+    targetAudience: text("target_audience"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    clientIdx: index("video_proj_client_idx").on(t.clientId),
+    statusIdx: index("video_proj_status_idx").on(t.status),
+    claimedIdx: index("video_proj_claimed_idx").on(t.claimedBy),
+    typeIdx: index("video_proj_type_idx").on(t.projectType),
+  }),
+);
+
+export const insertVideoProjectSchema = createInsertSchema(videoProjects);
+export type VideoProject = typeof videoProjects.$inferSelect;
+
+// ─── Video Briefs (detailed specs from client → videaste) ────────────────────
+export const videoBriefs = pgTable(
+  "video_briefs",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => videoProjects.id, { onDelete: "cascade" }),
+    // Creative direction
+    visualStyle: text("visual_style"), // e.g. "cinematic dark moody"
+    colorPalette: text("color_palette"),
+    editingPace: varchar("editing_pace", { length: 30 }), // 'slow' | 'medium' | 'fast' | 'dynamic'
+    duration: varchar("duration", { length: 30 }), // e.g. "3:30" or "30s"
+    aspectRatio: varchar("aspect_ratio", { length: 20 }).default("16:9"),
+    // '16:9' | '9:16' | '1:1' | '4:3' | '21:9'
+    resolution: varchar("resolution", { length: 10 }).default("4K"),
+    // Audio
+    hasMusicTrack: boolean("has_music_track").default(false),
+    musicTrackUrl: text("music_track_url"),
+    needsSoundDesign: boolean("needs_sound_design").default(false),
+    needsVoiceover: boolean("needs_voiceover").default(false),
+    // Deliverables
+    deliverableFormats: jsonb("deliverable_formats")
+      .$type<string[]>()
+      .default(["mp4"]),
+    includesRawFootage: boolean("includes_raw_footage").default(false),
+    includesProjectFiles: boolean("includes_project_files").default(false),
+    // References / Inspiration
+    referenceLinks: jsonb("reference_links").$type<string[]>().default([]),
+    moodboardUrl: text("moodboard_url"),
+    storyboardUrl: text("storyboard_url"),
+    scriptText: text("script_text"),
+    additionalNotes: text("additional_notes"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    projectIdx: index("video_brief_project_idx").on(t.projectId),
+  }),
+);
+
+export const insertVideoBriefSchema = createInsertSchema(videoBriefs);
+export type VideoBrief = typeof videoBriefs.$inferSelect;
+
+// ─── Video Deliverables (uploads from videaste → client) ─────────────────────
+export const videoDeliverables = pgTable(
+  "video_deliverables",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => videoProjects.id, { onDelete: "cascade" }),
+    videasteId: integer("videaste_id")
+      .notNull()
+      .references(() => users.id),
+    title: text("title").notNull(),
+    description: text("description"),
+    fileUrl: text("file_url").notNull(),
+    thumbnailUrl: text("thumbnail_url"),
+    fileSize: integer("file_size"), // bytes
+    duration: integer("duration"), // seconds
+    format: varchar("format", { length: 20 }).default("mp4"),
+    resolution: varchar("resolution", { length: 10 }),
+    version: integer("version").notNull().default(1),
+    status: varchar("status", { length: 20 }).notNull().default("submitted"),
+    // 'submitted' | 'approved' | 'revision_requested' | 'final'
+    clientFeedback: text("client_feedback"),
+    approvedAt: timestamp("approved_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    projectIdx: index("video_deliv_project_idx").on(t.projectId),
+    videasteIdx: index("video_deliv_videaste_idx").on(t.videasteId),
+    statusIdx: index("video_deliv_status_idx").on(t.status),
+  }),
+);
+
+export const insertVideoDeliverableSchema =
+  createInsertSchema(videoDeliverables);
+export type VideoDeliverable = typeof videoDeliverables.$inferSelect;
+
+// ─── Video Revisions (revision cycle tracking) ──────────────────────────────
+export const videoRevisions = pgTable(
+  "video_revisions",
+  {
+    id: serial("id").primaryKey(),
+    deliverableId: integer("deliverable_id")
+      .notNull()
+      .references(() => videoDeliverables.id, { onDelete: "cascade" }),
+    requestedBy: integer("requested_by")
+      .notNull()
+      .references(() => users.id),
+    revisionNotes: text("revision_notes").notNull(),
+    priority: varchar("priority", { length: 10 }).default("normal"),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    // 'pending' | 'in_progress' | 'completed' | 'declined'
+    revisedFileUrl: text("revised_file_url"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    deliverableIdx: index("video_rev_deliv_idx").on(t.deliverableId),
+    requestedByIdx: index("video_rev_requester_idx").on(t.requestedBy),
+  }),
+);
+
+export const insertVideoRevisionSchema = createInsertSchema(videoRevisions);
+export type VideoRevision = typeof videoRevisions.$inferSelect;
+
+// ─── Video Licenses (licensing terms for deliverables) ──────────────────────
+export const videoLicenses = pgTable(
+  "video_licenses",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => videoProjects.id, { onDelete: "cascade" }),
+    licenseType: varchar("license_type", { length: 30 })
+      .notNull()
+      .default("standard"),
+    // 'standard' | 'exclusive' | 'unlimited' | 'commercial' | 'personal'
+    usageRights: text("usage_rights"),
+    territory: varchar("territory", { length: 50 }).default("worldwide"),
+    duration: varchar("duration", { length: 50 }).default("perpetual"),
+    // 'perpetual' | '1_year' | '2_years' | '5_years'
+    price: decimal("price", { precision: 10, scale: 2 }),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    acceptedByClient: boolean("accepted_by_client").default(false),
+    acceptedByVideaste: boolean("accepted_by_videaste").default(false),
+    signedAt: timestamp("signed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    projectIdx: index("video_lic_project_idx").on(t.projectId),
+    typeIdx: index("video_lic_type_idx").on(t.licenseType),
+  }),
+);
+
+export const insertVideoLicenseSchema = createInsertSchema(videoLicenses);
+export type VideoLicense = typeof videoLicenses.$inferSelect;

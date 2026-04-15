@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
 import AuthModal from "@/components/AuthModal";
@@ -43,6 +44,9 @@ import {
   SlidersHorizontal,
   BadgeCheck,
   CheckCircle,
+  ClipboardList,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
@@ -293,7 +297,8 @@ export default function MarketplacePage() {
       formData.append("category", listingForm.category || "other");
       formData.append("description", listingForm.description);
       if (listingForm.price) formData.append("price", listingForm.price);
-      if (listingForm.guestName) formData.append("contact_email", listingForm.guestContact);
+      if (listingForm.guestName)
+        formData.append("contact_email", listingForm.guestContact);
       // Attach image files
       listingImages.forEach((file) => formData.append("images", file));
       // Attach video files
@@ -309,6 +314,7 @@ export default function MarketplacePage() {
         throw new Error(err.error || "Failed to publish listing");
       }
       setListingSubmitState("submitted");
+      refetchMyListings();
     } catch (err: any) {
       console.error("Publish listing error:", err);
       // Still show submitted for UX — the listing goes to pending review
@@ -322,7 +328,10 @@ export default function MarketplacePage() {
     const remaining = 10 - listingImages.length;
     const toAdd = files.slice(0, remaining);
     setListingImages((prev) => [...prev, ...toAdd]);
-    setImagePreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    setImagePreviews((prev) => [
+      ...prev,
+      ...toAdd.map((f) => URL.createObjectURL(f)),
+    ]);
     e.target.value = "";
   };
 
@@ -332,7 +341,10 @@ export default function MarketplacePage() {
     const remaining = 3 - listingVideos.length;
     const toAdd = files.slice(0, remaining);
     setListingVideos((prev) => [...prev, ...toAdd]);
-    setVideoPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    setVideoPreviews((prev) => [
+      ...prev,
+      ...toAdd.map((f) => URL.createObjectURL(f)),
+    ]);
     e.target.value = "";
   };
 
@@ -351,6 +363,37 @@ export default function MarketplacePage() {
   };
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [marketplaceView, setMarketplaceView] = useState<
+    "browse" | "my-listings"
+  >("browse");
+
+  // Fetch user's own listings
+  const {
+    data: myListings,
+    isLoading: myListingsLoading,
+    refetch: refetchMyListings,
+  } = useQuery<any[]>({
+    queryKey: ["my-marketplace-listings"],
+    queryFn: async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("authToken");
+        if (!token) return [];
+        const res = await fetch("/api/marketing/journal/my-listings", {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.data || data.listings || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  });
   useScrollLock(showCreateListing || showMobileSidebar);
 
   // Open create-listing modal when dock Sell button fires marketplace:sell
@@ -473,7 +516,7 @@ export default function MarketplacePage() {
             LEFT SIDEBAR — Categories + Filters
             ═══════════════════════════════════════ */}
         <aside
-          className={`hidden lg:block w-[360px] flex-shrink-0 h-screen sticky top-0 overflow-y-auto ${t.bgSidebar} border-r ${t.border}`}
+          className={`hidden lg:block w-[360px] flex-shrink-0 h-[calc(100vh-64px)] sticky top-16 overflow-y-auto ${t.bgSidebar} border-r ${t.border}`}
         >
           <div className="p-4">
             {/* Header */}
@@ -679,7 +722,9 @@ export default function MarketplacePage() {
             ═══════════════════════════════════════ */}
         <main className="flex-1 min-w-0">
           {/* Top Bar */}
-          <div className={`sticky top-0 z-30 ${t.bgCard} border-b ${t.border}`}>
+          <div
+            className={`sticky top-16 z-30 ${t.bgCard} border-b ${t.border}`}
+          >
             <div className="px-4 lg:px-6 py-3">
               <div className="flex items-center gap-3">
                 {/* Mobile menu toggle */}
@@ -690,6 +735,42 @@ export default function MarketplacePage() {
                 >
                   <SlidersHorizontal className="w-5 h-5" />
                 </motion.button>
+
+                {/* Browse / My Listings tabs */}
+                <div
+                  className={`flex items-center gap-1 ${t.bgInput} rounded-xl p-0.5`}
+                >
+                  <button
+                    onClick={() => setMarketplaceView("browse")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      marketplaceView === "browse"
+                        ? `${t.accentBg} text-white`
+                        : `${t.textSecondary} hover:${t.text}`
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Browse</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMarketplaceView("my-listings");
+                      refetchMyListings();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      marketplaceView === "my-listings"
+                        ? `${t.accentBg} text-white`
+                        : `${t.textSecondary} hover:${t.text}`
+                    }`}
+                  >
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">My Listings</span>
+                    {myListings && myListings.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-400">
+                        {myListings.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
                 {/* Mobile search */}
                 <div className="lg:hidden flex-1 relative">
@@ -818,9 +899,151 @@ export default function MarketplacePage() {
             </div>
           </div>
 
-          {/* ═══ LISTINGS GRID ═══ */}
+          {/* ═══ LISTINGS GRID / MY LISTINGS ═══ */}
           <div className="px-4 lg:px-6 py-6">
-            {filtered.length > 0 ? (
+            {marketplaceView === "my-listings" ? (
+              /* ═══ MY LISTINGS VIEW ═══ */
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className={`text-xl font-bold ${t.text}`}>My Listings</h2>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowCreateListing(true)}
+                    className={`flex items-center gap-2 px-4 py-2 ${t.accentBg} text-white rounded-xl text-sm font-medium ${t.accentHover} transition-all`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Listing
+                  </motion.button>
+                </div>
+
+                {myListingsLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className={`w-6 h-6 animate-spin ${t.accent}`} />
+                    <span className={`ml-2 text-sm ${t.textSecondary}`}>
+                      Loading your listings...
+                    </span>
+                  </div>
+                ) : !myListings || myListings.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center py-16 text-center"
+                  >
+                    <div
+                      className={`w-16 h-16 rounded-full ${t.bgInput} flex items-center justify-center mb-4`}
+                    >
+                      <ClipboardList className={`w-7 h-7 ${t.textMuted}`} />
+                    </div>
+                    <p className={`text-lg font-semibold ${t.text} mb-1`}>
+                      No listings yet
+                    </p>
+                    <p className={`text-sm ${t.textMuted} mb-4`}>
+                      Create your first listing to start selling on the
+                      marketplace.
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowCreateListing(true)}
+                      className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
+                    >
+                      Create First Listing
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-3">
+                    {myListings.map((listing: any) => {
+                      const statusColors: Record<string, string> = {
+                        pending:
+                          "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        approved:
+                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                        rejected:
+                          "bg-red-500/20 text-red-400 border-red-500/30",
+                        active:
+                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                        draft:
+                          "bg-slate-500/20 text-slate-400 border-slate-500/30",
+                      };
+                      const status =
+                        listing.approval_status || listing.status || "pending";
+                      const statusLabel =
+                        status.charAt(0).toUpperCase() + status.slice(1);
+                      const createdAt = listing.created_at
+                        ? new Date(listing.created_at)
+                        : null;
+                      const daysAgo = createdAt
+                        ? Math.floor(
+                            (Date.now() - createdAt.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          )
+                        : null;
+
+                      return (
+                        <motion.div
+                          key={listing.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`${t.bgCard} rounded-xl border ${t.border} p-4 flex items-center gap-4 hover:border-cyan-500/30 transition-all`}
+                        >
+                          {/* Thumbnail */}
+                          <div
+                            className={`w-16 h-16 rounded-lg ${t.bgInput} flex-shrink-0 overflow-hidden flex items-center justify-center`}
+                          >
+                            {listing.image_url || listing.images?.[0] ? (
+                              <img
+                                src={listing.image_url || listing.images[0]}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className={`w-6 h-6 ${t.textMuted}`} />
+                            )}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`font-semibold ${t.text} truncate`}>
+                              {listing.title || "Untitled"}
+                            </h3>
+                            <div
+                              className={`flex items-center gap-3 mt-1 text-xs ${t.textMuted}`}
+                            >
+                              {listing.price && (
+                                <span className="font-medium text-cyan-400">
+                                  ${listing.price}
+                                </span>
+                              )}
+                              {listing.category && (
+                                <span>{listing.category}</span>
+                              )}
+                              {daysAgo !== null && (
+                                <span>
+                                  {daysAgo === 0 ? "Today" : `${daysAgo}d ago`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          <div
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[status] || statusColors.pending}`}
+                          >
+                            {status === "pending" && "⏳ "}
+                            {status === "approved" || status === "active"
+                              ? "✅ "
+                              : ""}
+                            {status === "rejected" && "❌ "}
+                            {statusLabel}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : filtered.length > 0 ? (
               <motion.div
                 layout
                 className={
@@ -1613,8 +1836,15 @@ export default function MarketplacePage() {
                       {imagePreviews.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
                           {imagePreviews.map((src, i) => (
-                            <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden group">
-                              <img src={src} alt="" className="w-full h-full object-cover" />
+                            <div
+                              key={i}
+                              className="relative w-16 h-16 rounded-lg overflow-hidden group"
+                            >
+                              <img
+                                src={src}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                               <button
                                 onClick={() => removeImage(i)}
                                 className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1639,7 +1869,9 @@ export default function MarketplacePage() {
                           <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
                             <Camera className="w-4 h-4 text-cyan-500" />
                           </div>
-                          <p className={`text-xs font-medium ${t.textSecondary}`}>
+                          <p
+                            className={`text-xs font-medium ${t.textSecondary}`}
+                          >
                             Tap to add photos
                           </p>
                           <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
@@ -1660,8 +1892,15 @@ export default function MarketplacePage() {
                       {videoPreviews.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
                           {videoPreviews.map((src, i) => (
-                            <div key={i} className="relative w-24 h-16 rounded-lg overflow-hidden group bg-black">
-                              <video src={src} className="w-full h-full object-cover" muted />
+                            <div
+                              key={i}
+                              className="relative w-24 h-16 rounded-lg overflow-hidden group bg-black"
+                            >
+                              <video
+                                src={src}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <Video className="w-5 h-5 text-white/70" />
                               </div>
@@ -1671,7 +1910,9 @@ export default function MarketplacePage() {
                               >
                                 <Trash2 className="w-3 h-3 text-red-400" />
                               </button>
-                              <span className={`absolute bottom-0.5 left-1 text-[9px] ${t.textMuted} truncate max-w-[80px]`}>
+                              <span
+                                className={`absolute bottom-0.5 left-1 text-[9px] ${t.textMuted} truncate max-w-[80px]`}
+                              >
                                 {listingVideos[i]?.name}
                               </span>
                             </div>
@@ -1692,7 +1933,9 @@ export default function MarketplacePage() {
                           <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
                             <Video className="w-4 h-4 text-purple-500" />
                           </div>
-                          <p className={`text-xs font-medium ${t.textSecondary}`}>
+                          <p
+                            className={`text-xs font-medium ${t.textSecondary}`}
+                          >
                             Tap to add videos
                           </p>
                           <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
