@@ -3204,14 +3204,18 @@ const CategoryManagement = ({
         ) : (
           <div className="space-y-1">
             {/* Search filter */}
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-3">
               <Input
                 placeholder="Search categories…"
                 value={catSearch}
                 onChange={(e) => setCatSearch(e.target.value)}
                 className="max-w-sm"
               />
+              <span className="text-xs text-gray-400 whitespace-nowrap">
+                {categories.filter((c: any) => !c.parentId).length} categories
+              </span>
             </div>
+            <div className="max-h-[420px] overflow-y-auto space-y-1 pr-1">
 
             {categories
               .filter((c: any) => !c.parentId)
@@ -3347,6 +3351,7 @@ const CategoryManagement = ({
                   </div>
                 );
               })}
+            </div>
           </div>
         )}
       </CardContent>
@@ -7088,42 +7093,41 @@ export default function AdminDashboard() {
           }
         }}
       >
-        <DialogContent className="max-w-5xl p-0 overflow-hidden rounded-xl bg-[#0d1117] border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.15)]">
+        <DialogContent className="max-w-5xl w-[calc(100vw-16px)] sm:w-auto p-0 overflow-hidden rounded-xl bg-[#0d1117] border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.15)] max-h-[95dvh] sm:max-h-[90vh] flex flex-col">
           {/* macOS-style title bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#161b22] border-b border-white/10 select-none">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-[0_0_4px_#ff5f56]" />
-                <span className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_4px_#ffbd2e]" />
-                <span className="w-3 h-3 rounded-full bg-[#27c93f] shadow-[0_0_4px_#27c93f]" />
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-[#161b22] border-b border-white/10 select-none flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex gap-1.5 flex-shrink-0">
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f56] shadow-[0_0_4px_#ff5f56]" />
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_4px_#ffbd2e]" />
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#27c93f] shadow-[0_0_4px_#27c93f]" />
               </div>
-              <div className="flex items-center gap-2 text-xs font-mono">
-                <Terminal className="h-3 w-3 text-purple-400" />
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-mono min-w-0">
+                <Terminal className="h-3 w-3 text-purple-400 flex-shrink-0" />
                 <span className="text-purple-300 font-semibold tracking-wide">
                   SQL Console
                 </span>
-                <span className="text-slate-600">·</span>
-                <span className="text-slate-500">
-                  versoair_business_intelligence
+                <span className="text-slate-500 truncate hidden sm:inline">
+                  · versoair_business_intelligence
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {sqlExecTime !== null && (
-                <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">
+                <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">
                   <Clock className="h-2.5 w-2.5" />
                   {sqlExecTime}ms
                 </span>
               )}
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-700/30">
+              <span className="text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-700/30 hidden sm:inline-flex">
                 PostgreSQL 16
               </span>
             </div>
           </div>
 
           {/* Snippet picker bar */}
-          <div className="flex items-center gap-1.5 px-3 py-2 bg-[#0d1117] border-b border-white/5 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1">
+          <div className="flex items-center gap-1.5 px-2 sm:px-3 py-2 bg-[#0d1117] border-b border-white/5 overflow-x-auto no-scrollbar flex-shrink-0">
+            <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1 hidden sm:inline">
               Quick load:
             </span>
             {SQL_SNIPPETS.map((s) => (
@@ -7134,7 +7138,7 @@ export default function AdminDashboard() {
                   setQueryResult(null);
                   setSqlExecTime(null);
                 }}
-                className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 hover:text-purple-300 text-slate-400 border border-white/5 hover:border-purple-500/30 transition-all whitespace-nowrap"
+                className="text-[10px] font-mono px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-md bg-white/5 hover:bg-purple-500/20 active:bg-purple-500/30 hover:text-purple-300 text-slate-400 border border-white/5 hover:border-purple-500/30 transition-all whitespace-nowrap"
               >
                 {s.label}
               </button>
@@ -7151,7 +7155,7 @@ export default function AdminDashboard() {
                   setSqlExecTime(null);
                 }}
                 title="Load random snippet"
-                className="text-[10px] font-mono px-2 py-1 rounded-md bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-600/30 transition-all flex items-center gap-1"
+                className="text-[10px] font-mono px-2 py-1.5 sm:py-1 rounded-md bg-purple-600/20 hover:bg-purple-600/40 active:bg-purple-600/50 text-purple-300 border border-purple-600/30 transition-all flex items-center gap-1"
               >
                 <Zap className="h-2.5 w-2.5" /> Random
               </button>
@@ -7159,9 +7163,9 @@ export default function AdminDashboard() {
           </div>
 
           {/* Editor area */}
-          <div className="flex" style={{ minHeight: 200 }}>
-            {/* Gutter: line numbers */}
-            <div className="select-none flex flex-col items-end pt-3 pb-3 pr-2 pl-3 bg-[#0d1117] border-r border-white/5 min-w-[42px]">
+          <div className="flex flex-1 min-h-0" style={{ minHeight: 120 }}>
+            {/* Gutter: line numbers — hidden on mobile */}
+            <div className="select-none hidden sm:flex flex-col items-end pt-3 pb-3 pr-2 pl-3 bg-[#0d1117] border-r border-white/5 min-w-[42px]">
               {(sqlQuery || " ").split("\n").map((_, i) => (
                 <span
                   key={i}
@@ -7181,17 +7185,19 @@ export default function AdminDashboard() {
                   handleExecuteQuery();
                 }
               }}
-              className="flex-1 font-mono text-[13px] leading-6 resize-none rounded-none border-0 bg-transparent text-slate-100 placeholder:text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 pt-3 pb-3"
+              className="flex-1 font-mono text-[13px] sm:text-[13px] text-sm leading-6 resize-none rounded-none border-0 bg-transparent text-slate-100 placeholder:text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 sm:px-4 pt-3 pb-3"
               placeholder={
                 "-- Write your SQL here\nSELECT * FROM users LIMIT 10;"
               }
               spellCheck={false}
-              style={{ minHeight: 200 }}
+              autoCapitalize="off"
+              autoCorrect="off"
+              style={{ minHeight: 120 }}
             />
           </div>
 
-          {/* Keyword color hints + action bar */}
-          <div className="flex items-center gap-3 px-4 py-1.5 bg-[#0a0e14] border-t border-white/5 text-[10px] font-mono">
+          {/* Keyword color hints + action bar — hidden on very small screens */}
+          <div className="hidden sm:flex items-center gap-3 px-4 py-1.5 bg-[#0a0e14] border-t border-white/5 text-[10px] font-mono flex-shrink-0">
             {[
               { kw: "SELECT", c: "text-[#79c0ff]" },
               { kw: "FROM", c: "text-[#ffa657]" },
@@ -7209,7 +7215,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Action toolbar */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161b22] border-t border-white/10">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-[#161b22] border-t border-white/10 flex-shrink-0">
             <Button
               onClick={() => {
                 setSqlHistory((h) =>
@@ -7226,7 +7232,7 @@ export default function AdminDashboard() {
                 }, 50);
               }}
               disabled={isExecutingQuery}
-              className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs h-8 px-4 shadow-[0_0_12px_rgba(139,92,246,0.4)] border-0"
+              className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs h-9 sm:h-8 px-4 shadow-[0_0_12px_rgba(139,92,246,0.4)] border-0"
             >
               {isExecutingQuery ? (
                 <>
@@ -7248,7 +7254,7 @@ export default function AdminDashboard() {
                 setTimeout(() => setSqlCopied(false), 1800);
               }}
               title="Copy query"
-              className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-8"
+              className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 active:bg-white/20 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-9 sm:h-8"
             >
               {sqlCopied ? (
                 <>
@@ -7267,7 +7273,7 @@ export default function AdminDashboard() {
                 setQueryResult(null);
                 setSqlExecTime(null);
               }}
-              className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-red-900/20 text-slate-400 hover:text-red-400 border border-white/5 hover:border-red-800/40 transition-all h-8"
+              className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-red-900/20 active:bg-red-900/30 text-slate-400 hover:text-red-400 border border-white/5 hover:border-red-800/40 transition-all h-9 sm:h-8"
             >
               Clear
             </button>
@@ -7275,14 +7281,14 @@ export default function AdminDashboard() {
             {sqlHistory.length > 0 && (
               <button
                 onClick={() => setShowSqlHistory((v) => !v)}
-                className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-8"
+                className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 active:bg-white/20 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-9 sm:h-8"
               >
                 <Clock className="h-3 w-3" />
-                History ({sqlHistory.length})
+                <span className="hidden sm:inline">History</span> ({sqlHistory.length})
               </button>
             )}
 
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
               {queryResult && !queryResult.error && (
                 <span className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -7319,7 +7325,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Results panel */}
-          <div className="bg-[#0d1117] max-h-64 overflow-auto border-t border-white/10">
+          <div className="bg-[#0d1117] max-h-48 sm:max-h-64 overflow-auto border-t border-white/10 flex-shrink-0">
             {isExecutingQuery ? (
               <div className="flex items-center gap-3 p-5 text-slate-400 text-xs font-mono">
                 <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
@@ -7443,13 +7449,13 @@ export default function AdminDashboard() {
                 </pre>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-700 gap-2">
-                <Terminal className="h-8 w-8 opacity-20" />
+              <div className="flex flex-col items-center justify-center py-5 sm:py-8 text-slate-700 gap-2">
+                <Terminal className="h-6 w-6 sm:h-8 sm:w-8 opacity-20" />
                 <span className="text-xs font-mono">
                   Run a query to see results
                 </span>
                 <span className="text-[10px] font-mono text-slate-800">
-                  ⌘ Return · or click Run Query
+                  <span className="hidden sm:inline">⌘ Return · or </span>Tap Run Query
                 </span>
               </div>
             )}
