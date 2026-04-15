@@ -73,8 +73,11 @@ export default function InactivityGuard() {
   const lastActivityTs = useRef<number>(Date.now());
   const tickInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Use a ref for mode to avoid stale-closure issues in timers/listeners
+  const modeRef = useRef<"idle" | "warning" | "challenge" | "success" | "none">("none");
+
   // UI state
-  const [mode, setMode] = useState<
+  const [mode, setModeState] = useState<
     "idle" | "warning" | "challenge" | "success" | "none"
   >("none");
   const [countdown, setCountdown] = useState(30);
@@ -82,12 +85,11 @@ export default function InactivityGuard() {
   const [challengeCountdown, setChallengeCountdown] = useState(60);
   const [wrongPick, setWrongPick] = useState(false);
 
-  // ── Logout helper ─────────────────────────────────
-  const doLogout = useCallback(() => {
-    clearAllTimers();
-    setMode("none");
-    logout();
-  }, [logout]);
+  // Sync setter: always update both the ref and the state
+  const setMode = useCallback((m: "idle" | "warning" | "challenge" | "success" | "none") => {
+    modeRef.current = m;
+    setModeState(m);
+  }, []);
 
   // ── Timer cleanup ─────────────────────────────────
   const clearAllTimers = useCallback(() => {
@@ -101,10 +103,18 @@ export default function InactivityGuard() {
     tickInterval.current = null;
   }, []);
 
+  // ── Logout helper ─────────────────────────────────
+  const doLogout = useCallback(() => {
+    clearAllTimers();
+    setMode("none");
+    logout();
+  }, [logout, clearAllTimers, setMode]);
+
   // ── Start the idle countdown (from scratch) ───────
   const resetIdleTimer = useCallback(() => {
-    // Don't reset if we're showing a challenge or warning
-    if (mode === "challenge" || mode === "warning") return;
+    // Read from ref (always current) instead of stale state closure
+    const currentMode = modeRef.current;
+    if (currentMode === "challenge" || currentMode === "warning") return;
 
     clearAllTimers();
     lastActivityTs.current = Date.now();
@@ -126,29 +136,7 @@ export default function InactivityGuard() {
         });
       }, 1000);
     }, IDLE_TIMEOUT_MS - WARNING_BEFORE_MS);
-  }, [clearAllTimers, doLogout, mode]);
-
-  // ── Track accumulated activity for the captcha trigger ──
-  const trackActivity = useCallback(() => {
-    const now = Date.now();
-    const delta = now - lastActivityTs.current;
-    lastActivityTs.current = now;
-
-    // Only count small deltas (< 2s gap = still active)
-    if (delta < 2000) {
-      activityAccum.current += delta;
-    }
-
-    // If continuous activity exceeds threshold → challenge
-    if (activityAccum.current >= CHALLENGE_INTERVAL_MS && mode === "none") {
-      activityAccum.current = 0;
-      showCaptchaChallenge();
-      return;
-    }
-
-    // Reset idle timer on any activity
-    resetIdleTimer();
-  }, [resetIdleTimer, mode]);
+  }, [clearAllTimers, doLogout, setMode]);
 
   // ── Show captcha challenge ────────────────────────
   const showCaptchaChallenge = useCallback(() => {
@@ -173,7 +161,32 @@ export default function InactivityGuard() {
     challengeTimer.current = setTimeout(() => {
       doLogout();
     }, CHALLENGE_DEADLINE_MS);
-  }, [clearAllTimers, doLogout]);
+  }, [clearAllTimers, doLogout, setMode]);
+
+  // ── Track accumulated activity for the captcha trigger ──
+  // Use a ref-based callback so the event listeners always call
+  // the latest version without needing to re-attach.
+  const trackActivityRef = useRef<() => void>(() => {});
+  trackActivityRef.current = () => {
+    const now = Date.now();
+    const delta = now - lastActivityTs.current;
+    lastActivityTs.current = now;
+
+    // Only count small deltas (< 2s gap = still active)
+    if (delta < 2000) {
+      activityAccum.current += delta;
+    }
+
+    // If continuous activity exceeds threshold → challenge
+    if (activityAccum.current >= CHALLENGE_INTERVAL_MS && modeRef.current === "none") {
+      activityAccum.current = 0;
+      showCaptchaChallenge();
+      return;
+    }
+
+    // Reset idle timer on any activity
+    resetIdleTimer();
+  };
 
   // ── Handle captcha pick ───────────────────────────
   const handlePick = (emoji: string) => {
@@ -184,7 +197,22 @@ export default function InactivityGuard() {
       activityAccum.current = 0;
       setTimeout(() => {
         setMode("none");
-        resetIdleTimer();
+        // Directly start a fresh idle timer after success flash
+        clearAllTimers();
+        lastActivityTs.current = Date.now();
+        warningTimer.current = setTimeout(() => {
+          setMode("warning");
+          setCountdown(WARNING_BEFORE_MS / 1000);
+          tickInterval.current = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                doLogout();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }, IDLE_TIMEOUT_MS - WARNING_BEFORE_MS);
       }, 1200);
     } else {
       // Wrong pick — show feedback, then logout
@@ -196,12 +224,33 @@ export default function InactivityGuard() {
   };
 
   // ── Dismiss the idle warning (user clicked "I'm here") ─
-  const dismissWarning = () => {
+  const dismissWarning = useCallback(() => {
+    // 1. Stop all running timers (countdown interval, etc.)
     clearAllTimers();
-    setMode("none");
+
+    // 2. Mark mode as "none" via ref FIRST so resetIdleTimer won't bail out
+    modeRef.current = "none";
+    setModeState("none");
+
+    // 3. Reset activity accumulator
     activityAccum.current = 0;
-    resetIdleTimer();
-  };
+
+    // 4. Restart idle monitoring — ref is already "none" so this will proceed
+    lastActivityTs.current = Date.now();
+    warningTimer.current = setTimeout(() => {
+      setMode("warning");
+      setCountdown(WARNING_BEFORE_MS / 1000);
+      tickInterval.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            doLogout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }, IDLE_TIMEOUT_MS - WARNING_BEFORE_MS);
+  }, [clearAllTimers, doLogout, setMode]);
 
   // ── Attach global activity listeners ──────────────
   useEffect(() => {
@@ -223,12 +272,14 @@ export default function InactivityGuard() {
       const now = Date.now();
       if (now - lastFired < 2000) return;
       lastFired = now;
-      trackActivity();
+      // Call through ref so we always use the latest closure
+      trackActivityRef.current();
     };
 
     events.forEach((evt) => window.addEventListener(evt, handler, true));
 
     // Kick off the initial idle timer
+    modeRef.current = "none";
     resetIdleTimer();
 
     return () => {
