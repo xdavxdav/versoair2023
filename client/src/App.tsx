@@ -699,9 +699,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Fixed Header Block: amber top bar + scrolling ticker ── */}
-      {/* Hide on music pages and immersive pages (dashboard, apply, profile) */}
-      {!versoaiFullscreen && !isMusicPage && !isImmersivePage && (
+      {/* ── Fixed Header Block: amber top bar (always) + scrolling ticker (conditional) ── */}
         <div
           ref={headerRef}
           className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
@@ -760,8 +758,9 @@ function AppContent() {
             </div>
           </div>
 
-          {/* Scrolling ticker — always visible while sticky block is on screen */}
-          {currentPath !== "/blog" &&
+          {/* Scrolling ticker — visible on standard pages only (not music, immersive, blog, marketplace) */}
+          {!isMusicPage && !isImmersivePage && !versoaiFullscreen &&
+            currentPath !== "/blog" &&
             currentPath !== "/marketplace" &&
             !isContentNavPage && (
               <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
@@ -789,25 +788,22 @@ function AppContent() {
               </div>
             )}
 
-          {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active.
-              Now visible on mobile too (no md:block restriction). */}
-          {(currentPath === "/blog" || currentPath === "/marketplace") &&
+          {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active. */}
+          {!isMusicPage && !isImmersivePage &&
+            (currentPath === "/blog" || currentPath === "/marketplace") &&
             !marketplaceModalOpen &&
             !showContentNav && <BlogNavbar />}
         </div>
-      )}
-      {/* Spacer for fixed header — not needed on music pages or immersive pages */}
-      {!versoaiFullscreen && !isMusicPage && !isImmersivePage && (
-        <div style={{ height: headerHeight }} />
-      )}
+      {/* Spacer for fixed header — always present, height auto-measured */}
+      <div style={{ height: headerHeight }} />
 
-      {/* ── Music Universe Navbar — the proper MusicNavbar from artist portal ── */}
+      {/* ── Music Universe Navbar — sits below the amber bar ── */}
       {isMusicPage && (
-        <div className="fixed top-0 left-0 right-0 z-[60]">
+        <div className="fixed top-7 left-0 right-0 z-[59]">
           <MusicNavbar />
         </div>
       )}
-      {/* Spacer for music navbar */}
+      {/* Spacer for music navbar (amber bar spacer already above) */}
       {isMusicPage && <div className="h-16" />}
 
       <PullToRefresh />
