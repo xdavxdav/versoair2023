@@ -3216,141 +3216,142 @@ const CategoryManagement = ({
               </span>
             </div>
             <div className="max-h-[420px] overflow-y-auto space-y-1 pr-1">
+              {categories
+                .filter((c: any) => !c.parentId)
+                .filter((c: any) => {
+                  if (!catSearch.trim()) return true;
+                  const q = catSearch.toLowerCase();
+                  const subs = categories.filter(
+                    (s: any) => s.parentId === c.id,
+                  );
+                  return (
+                    c.name.toLowerCase().includes(q) ||
+                    subs.some((s: any) => s.name.toLowerCase().includes(q))
+                  );
+                })
+                .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                .map((mainCat: any) => {
+                  const subs = categories
+                    .filter((c: any) => c.parentId === mainCat.id)
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name));
+                  const fallback = BUSINESS_CATEGORIES.find(
+                    (c) => c.id === mainCat.id,
+                  );
+                  const Icon = fallback?.icon || Tag;
+                  const color = fallback?.color || "text-gray-600";
+                  const bgColor = fallback?.bgColor || "bg-gray-50";
+                  const isExpanded = expandedCats.has(mainCat.id);
 
-            {categories
-              .filter((c: any) => !c.parentId)
-              .filter((c: any) => {
-                if (!catSearch.trim()) return true;
-                const q = catSearch.toLowerCase();
-                const subs = categories.filter((s: any) => s.parentId === c.id);
-                return (
-                  c.name.toLowerCase().includes(q) ||
-                  subs.some((s: any) => s.name.toLowerCase().includes(q))
-                );
-              })
-              .sort((a: any, b: any) => a.name.localeCompare(b.name))
-              .map((mainCat: any) => {
-                const subs = categories
-                  .filter((c: any) => c.parentId === mainCat.id)
-                  .sort((a: any, b: any) => a.name.localeCompare(b.name));
-                const fallback = BUSINESS_CATEGORIES.find(
-                  (c) => c.id === mainCat.id,
-                );
-                const Icon = fallback?.icon || Tag;
-                const color = fallback?.color || "text-gray-600";
-                const bgColor = fallback?.bgColor || "bg-gray-50";
-                const isExpanded = expandedCats.has(mainCat.id);
-
-                return (
-                  <div
-                    key={mainCat.id}
-                    className="border rounded-lg overflow-hidden"
-                  >
-                    {/* Collapsed header row */}
+                  return (
                     <div
-                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => {
-                        setExpandedCats((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(mainCat.id)) next.delete(mainCat.id);
-                          else next.add(mainCat.id);
-                          return next;
-                        });
-                      }}
+                      key={mainCat.id}
+                      className="border rounded-lg overflow-hidden"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <ChevronRight
-                          className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
-                        />
-                        <div className={`p-1.5 rounded-md ${bgColor}`}>
-                          <Icon className={`h-4 w-4 ${color}`} />
-                        </div>
-                        <span className="font-medium text-sm truncate">
-                          {mainCat.name}
-                        </span>
-                        <Badge
-                          variant="default"
-                          className="text-[10px] px-1.5 py-0 flex-shrink-0"
-                        >
-                          Main
-                        </Badge>
-                        {subs.length > 0 && (
+                      {/* Collapsed header row */}
+                      <div
+                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => {
+                          setExpandedCats((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(mainCat.id)) next.delete(mainCat.id);
+                            else next.add(mainCat.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <ChevronRight
+                            className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`}
+                          />
+                          <div className={`p-1.5 rounded-md ${bgColor}`}>
+                            <Icon className={`h-4 w-4 ${color}`} />
+                          </div>
+                          <span className="font-medium text-sm truncate">
+                            {mainCat.name}
+                          </span>
                           <Badge
-                            variant="secondary"
+                            variant="default"
                             className="text-[10px] px-1.5 py-0 flex-shrink-0"
                           >
-                            {subs.length} sub{subs.length !== 1 ? "s" : ""}
+                            Main
                           </Badge>
-                        )}
-                      </div>
-                      <div
-                        className="flex items-center gap-1 flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2"
-                          onClick={() => {
-                            setCurrentCategory(mainCat);
-                            setShowEditDialog(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-red-500 hover:text-red-700"
-                          onClick={() => {
-                            setCurrentCategory(mainCat);
-                            setShowDeleteDialog(true);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Expanded subcategories */}
-                    {isExpanded && subs.length > 0 && (
-                      <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t">
-                        <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
-                          {subs.map((sub: any) => (
-                            <div
-                              key={sub.id}
-                              className="flex items-center justify-between p-2 rounded-md bg-white border border-gray-100 hover:bg-gray-50 transition-colors group text-sm"
+                          {subs.length > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0 flex-shrink-0"
                             >
-                              <span className="truncate">{sub.name}</span>
-                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                              {subs.length} sub{subs.length !== 1 ? "s" : ""}
+                            </Badge>
+                          )}
+                        </div>
+                        <div
+                          className="flex items-center gap-1 flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2"
+                            onClick={() => {
+                              setCurrentCategory(mainCat);
+                              setShowEditDialog(true);
+                            }}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-red-500 hover:text-red-700"
+                            onClick={() => {
+                              setCurrentCategory(mainCat);
+                              setShowDeleteDialog(true);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
-                    )}
-                    {isExpanded && subs.length === 0 && (
-                      <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t text-xs text-gray-400 ml-12">
-                        No subcategories
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Expanded subcategories */}
+                      {isExpanded && subs.length > 0 && (
+                        <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t">
+                          <div className="ml-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
+                            {subs.map((sub: any) => (
+                              <div
+                                key={sub.id}
+                                className="flex items-center justify-between p-2 rounded-md bg-white border border-gray-100 hover:bg-gray-50 transition-colors group text-sm"
+                              >
+                                <span className="truncate">{sub.name}</span>
+                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {isExpanded && subs.length === 0 && (
+                        <div className="px-4 pb-3 pt-1 bg-gray-50/50 border-t text-xs text-gray-400 ml-12">
+                          No subcategories
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -7125,45 +7126,71 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Snippet picker bar */}
-          <div className="flex items-center gap-1.5 px-2 sm:px-3 py-2 bg-[#0d1117] border-b border-white/5 overflow-x-auto no-scrollbar flex-shrink-0">
-            <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1 hidden sm:inline">
-              Quick load:
-            </span>
-            {SQL_SNIPPETS.map((s) => (
-              <button
-                key={s.label}
-                onClick={() => {
-                  setSqlQuery(s.q);
-                  setQueryResult(null);
-                  setSqlExecTime(null);
+          {/* Snippet picker — Desktop: horizontal bar, Mobile: dropdown menu */}
+          <div className="bg-[#0d1117] border-b border-white/5 flex-shrink-0">
+            {/* Desktop snippet bar */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap mr-1">
+                Quick load:
+              </span>
+              {SQL_SNIPPETS.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => {
+                    setSqlQuery(s.q);
+                    setQueryResult(null);
+                    setSqlExecTime(null);
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white/5 hover:bg-purple-500/20 active:bg-purple-500/30 hover:text-purple-300 text-slate-400 border border-white/5 hover:border-purple-500/30 transition-all whitespace-nowrap"
+                >
+                  {s.label}
+                </button>
+              ))}
+              <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => {
+                    const pick =
+                      SQL_SNIPPETS[
+                        Math.floor(Math.random() * SQL_SNIPPETS.length)
+                      ];
+                    setSqlQuery(pick.q);
+                    setQueryResult(null);
+                    setSqlExecTime(null);
+                  }}
+                  title="Load random snippet"
+                  className="text-[10px] font-mono px-2 py-1 rounded-md bg-purple-600/20 hover:bg-purple-600/40 active:bg-purple-600/50 text-purple-300 border border-purple-600/30 transition-all flex items-center gap-1"
+                >
+                  <Zap className="h-2.5 w-2.5" /> Random
+                </button>
+              </div>
+            </div>
+            
+            {/* Mobile: Select dropdown */}
+            <div className="sm:hidden px-3 py-2">
+              <select
+                onChange={(e) => {
+                  const snippet = SQL_SNIPPETS[Number(e.target.value)];
+                  if (snippet) {
+                    setSqlQuery(snippet.q);
+                    setQueryResult(null);
+                    setSqlExecTime(null);
+                  }
                 }}
-                className="text-[10px] font-mono px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-md bg-white/5 hover:bg-purple-500/20 active:bg-purple-500/30 hover:text-purple-300 text-slate-400 border border-white/5 hover:border-purple-500/30 transition-all whitespace-nowrap"
+                className="w-full text-xs font-mono px-3 py-2 rounded-md bg-white/5 text-slate-300 border border-white/10 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50"
+                defaultValue=""
               >
-                {s.label}
-              </button>
-            ))}
-            <div className="ml-auto flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => {
-                  const pick =
-                    SQL_SNIPPETS[
-                      Math.floor(Math.random() * SQL_SNIPPETS.length)
-                    ];
-                  setSqlQuery(pick.q);
-                  setQueryResult(null);
-                  setSqlExecTime(null);
-                }}
-                title="Load random snippet"
-                className="text-[10px] font-mono px-2 py-1.5 sm:py-1 rounded-md bg-purple-600/20 hover:bg-purple-600/40 active:bg-purple-600/50 text-purple-300 border border-purple-600/30 transition-all flex items-center gap-1"
-              >
-                <Zap className="h-2.5 w-2.5" /> Random
-              </button>
+                <option value="" disabled>📋 Load SQL Template...</option>
+                {SQL_SNIPPETS.map((s, i) => (
+                  <option key={i} value={i}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {/* Editor area */}
-          <div className="flex flex-1 min-h-0" style={{ minHeight: 120 }}>
+          <div className="flex flex-1 min-h-0 border-b border-white/5" style={{ minHeight: 160 }}>
             {/* Gutter: line numbers — hidden on mobile */}
             <div className="select-none hidden sm:flex flex-col items-end pt-3 pb-3 pr-2 pl-3 bg-[#0d1117] border-r border-white/5 min-w-[42px]">
               {(sqlQuery || " ").split("\n").map((_, i) => (
@@ -7185,14 +7212,14 @@ export default function AdminDashboard() {
                   handleExecuteQuery();
                 }
               }}
-              className="flex-1 font-mono text-[13px] sm:text-[13px] text-sm leading-6 resize-none rounded-none border-0 bg-transparent text-slate-100 placeholder:text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 sm:px-4 pt-3 pb-3"
+              className="flex-1 font-mono text-sm sm:text-[13px] leading-6 resize-none rounded-none border-0 bg-transparent text-slate-100 placeholder:text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 sm:px-4 pt-3 pb-3"
               placeholder={
                 "-- Write your SQL here\nSELECT * FROM users LIMIT 10;"
               }
               spellCheck={false}
               autoCapitalize="off"
               autoCorrect="off"
-              style={{ minHeight: 120 }}
+              style={{ minHeight: 160 }}
             />
           </div>
 
@@ -7215,7 +7242,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Action toolbar */}
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-[#161b22] border-t border-white/10 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-2.5 bg-[#161b22] border-t border-white/10 flex-shrink-0">
             <Button
               onClick={() => {
                 setSqlHistory((h) =>
@@ -7232,7 +7259,7 @@ export default function AdminDashboard() {
                 }, 50);
               }}
               disabled={isExecutingQuery}
-              className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs h-9 sm:h-8 px-4 shadow-[0_0_12px_rgba(139,92,246,0.4)] border-0"
+              className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm sm:text-xs h-10 sm:h-8 px-5 sm:px-4 shadow-[0_0_12px_rgba(139,92,246,0.4)] border-0 font-semibold"
             >
               {isExecutingQuery ? (
                 <>
@@ -7284,22 +7311,26 @@ export default function AdminDashboard() {
                 className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-1.5 rounded bg-white/5 hover:bg-white/10 active:bg-white/20 text-slate-400 hover:text-slate-200 border border-white/5 transition-all h-9 sm:h-8"
               >
                 <Clock className="h-3 w-3" />
-                <span className="hidden sm:inline">History</span> ({sqlHistory.length})
+                <span className="hidden sm:inline">History</span> (
+                {sqlHistory.length})
               </button>
             )}
 
-            <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+            <div className="ml-auto flex items-center gap-2 flex-shrink-0">
               {queryResult && !queryResult.error && (
-                <span className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {Array.isArray(queryResult?.rows)
-                    ? `${queryResult.rows.length} rows`
-                    : "OK"}
+                <span className="flex items-center gap-1.5 text-xs sm:text-[10px] font-mono text-slate-400 bg-emerald-900/20 px-2.5 py-1.5 rounded border border-emerald-700/30">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>
+                    {Array.isArray(queryResult?.rows)
+                      ? `${queryResult.rows.length} row${queryResult.rows.length !== 1 ? 's' : ''}`
+                      : "OK"}
+                  </span>
                 </span>
               )}
               {queryResult?.error && (
-                <span className="text-[10px] font-mono text-red-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Error
+                <span className="text-xs sm:text-[10px] font-mono text-red-400 flex items-center gap-1.5 bg-red-900/20 px-2.5 py-1.5 rounded border border-red-700/30">
+                  <span className="w-2 h-2 rounded-full bg-red-400" />
+                  <span>Error</span>
                 </span>
               )}
             </div>
@@ -7325,7 +7356,31 @@ export default function AdminDashboard() {
           )}
 
           {/* Results panel */}
-          <div className="bg-[#0d1117] max-h-48 sm:max-h-64 overflow-auto border-t border-white/10 flex-shrink-0">
+          <div className="bg-[#0d1117] flex flex-col flex-shrink-0">
+            {/* Results header — mobile-friendly */}
+            <div className="px-3 sm:px-4 py-2 bg-[#161b22] border-b border-white/5 flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-400 flex items-center gap-2">
+                <span className="text-slate-600">▼</span> Results
+              </span>
+              {queryResult && Array.isArray(queryResult?.rows) && queryResult.rows.length > 0 && (
+                <button
+                  onClick={() => {
+                    const cols = Object.keys(queryResult.rows[0]);
+                    const csv = [
+                      cols.join(","),
+                      ...queryResult.rows.map((r: any) =>
+                        cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
+                      ),
+                    ].join("\n");
+                    navigator.clipboard.writeText(csv);
+                  }}
+                  className="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 border border-white/5 transition-all"
+                >
+                  📋 CSV
+                </button>
+              )}
+            </div>
+            <div className="max-h-48 sm:max-h-64 overflow-auto">
             {isExecutingQuery ? (
               <div className="flex items-center gap-3 p-5 text-slate-400 text-xs font-mono">
                 <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
@@ -7347,66 +7402,40 @@ export default function AdminDashboard() {
             ) : queryResult &&
               Array.isArray(queryResult?.rows) &&
               queryResult.rows.length > 0 ? (
-              <div>
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-[#161b22] border-b border-white/5 text-[10px] font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-emerald-400">
-                    {queryResult.rows.length} row
-                    {queryResult.rows.length !== 1 ? "s" : ""} returned
-                  </span>
-                  {sqlExecTime && (
-                    <span className="text-slate-600 ml-1">
-                      in {sqlExecTime}ms
-                    </span>
-                  )}
-                  <button
-                    onClick={() => {
-                      const cols = Object.keys(queryResult.rows[0]);
-                      const csv = [
-                        cols.join(","),
-                        ...queryResult.rows.map((r: any) =>
-                          cols.map((c) => JSON.stringify(r[c] ?? "")).join(","),
-                        ),
-                      ].join("\n");
-                      navigator.clipboard.writeText(csv);
-                    }}
-                    className="ml-auto text-[9px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 border border-white/5 transition-all"
-                  >
-                    Copy CSV
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs font-mono">
-                    <thead>
-                      <tr>
-                        <th className="px-3 py-1.5 text-center text-slate-700 bg-[#0d1117] border-b border-white/5 w-8">
-                          #
-                        </th>
-                        {Object.keys(queryResult.rows[0]).map((col) => (
-                          <th
-                            key={col}
-                            className="text-left px-4 py-1.5 text-slate-400 font-semibold bg-[#0d1117] border-b border-white/5 whitespace-nowrap"
-                          >
-                            <span className="text-slate-600 mr-1">⬡</span>
-                            {col}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {queryResult.rows.map((row: any, i: number) => (
-                        <tr
-                          key={i}
-                          className={`border-b border-white/[0.03] transition-colors ${i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"} hover:bg-purple-500/5`}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-mono">
+                  <thead className="sticky top-0 bg-[#0d1117] z-10">
+                    <tr>
+                      <th className="px-2 sm:px-3 py-1.5 text-center text-slate-700 border-b border-white/5 w-8 sm:w-10">
+                        #
+                      </th>
+                      {Object.keys(queryResult.rows[0]).map((col) => (
+                        <th
+                          key={col}
+                          className="text-left px-3 sm:px-4 py-1.5 text-slate-400 font-semibold border-b border-white/5 whitespace-nowrap"
                         >
-                          <td className="px-3 py-1.5 text-center text-slate-700 text-[10px]">
-                            {i + 1}
-                          </td>
-                          {Object.values(row).map((val: any, j: number) => (
-                            <td
-                              key={j}
-                              className="px-4 py-1.5 whitespace-nowrap max-w-[220px] truncate"
-                            >
+                          <span className="text-slate-600 mr-1">⬡</span>
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {queryResult.rows.map((row: any, i: number) => (
+                      <tr
+                        key={i}
+                        className={`border-b border-white/[0.03] transition-colors ${
+                          i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"
+                        } hover:bg-purple-500/5 active:bg-purple-500/10`}
+                      >
+                        <td className="px-2 sm:px-3 py-1.5 text-center text-slate-700 text-[10px]">
+                          {i + 1}
+                        </td>
+                        {Object.values(row).map((val: any, j: number) => (
+                          <td
+                            key={j}
+                            className="px-3 sm:px-4 py-1.5 whitespace-nowrap max-w-[180px] sm:max-w-[220px] truncate"
+                          >
                               {val === null ? (
                                 <span className="text-slate-700 italic text-[10px]">
                                   NULL
@@ -7455,7 +7484,8 @@ export default function AdminDashboard() {
                   Run a query to see results
                 </span>
                 <span className="text-[10px] font-mono text-slate-800">
-                  <span className="hidden sm:inline">⌘ Return · or </span>Tap Run Query
+                  <span className="hidden sm:inline">⌘ Return · or </span>Tap
+                  Run Query
                 </span>
               </div>
             )}
