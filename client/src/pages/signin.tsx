@@ -113,6 +113,9 @@ export default function SignIn() {
   const [onboardingError, setOnboardingError] = useState("");
   const [pendingLoginData, setPendingLoginData] = useState<any>(null);
 
+  // Celebration countdown for post-verification auto-login
+  const [countdown, setCountdown] = useState(5);
+
   // Recall returning user's first name from localStorage
   const returningName = (() => {
     if (authUser?.name) return authUser.name.split(" ")[0];
@@ -422,28 +425,27 @@ export default function SignIn() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Countdown timer for celebration screen (runs only when auto-login verification is active)
+  useEffect(() => {
+    if (!(verificationStatus === "success" && autoLogin)) return;
+    const timer = setInterval(() => setCountdown(c => c - 1), 1000);
+    const nav = setTimeout(() => {
+      if (verifiedNeedsName) {
+        setStep("set-display-name");
+        window.history.replaceState({}, "", "/signin");
+      } else {
+        const role = verifiedRole.toLowerCase();
+        if (role === "superuser") navigate("/dashboard?from=sv");
+        else if (role === "admin" || role === "moderator") navigate("/geo-admin/dashboard");
+        else if (role === "artist") navigate("/artist-portal/dashboard");
+        else navigate("/dashboard");
+      }
+    }, 5000);
+    return () => { clearInterval(timer); clearTimeout(nav); };
+  }, [verificationStatus, autoLogin]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── CELEBRATION SCREEN: Email verified + auto-logged in ───
   if (verificationStatus === "success" && autoLogin) {
-    const [countdown, setCountdown] = useState(5);
-    useEffect(() => {
-      const timer = setInterval(() => setCountdown(c => c - 1), 1000);
-      const nav = setTimeout(() => {
-        if (verifiedNeedsName) {
-          // Need to set display name first
-          setStep("set-display-name");
-          // Clean URL
-          window.history.replaceState({}, "", "/signin");
-        } else {
-          // Navigate to appropriate dashboard
-          const role = verifiedRole.toLowerCase();
-          if (role === "superuser") navigate("/dashboard?from=sv");
-          else if (role === "admin" || role === "moderator") navigate("/geo-admin/dashboard");
-          else if (role === "artist") navigate("/artist-portal/dashboard");
-          else navigate("/dashboard");
-        }
-      }, 5000);
-      return () => { clearInterval(timer); clearTimeout(nav); };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
       <div className="flex flex-col min-h-screen bg-[#0d0d1a] overflow-hidden relative items-center justify-center">
