@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { Link } from "wouter";
+import { toast } from "@/hooks/use-toast";
 import {
   Globe,
   Lock,
@@ -272,6 +273,7 @@ export default function GeoAdminAuthGate({
       localStorage.removeItem("geoadmin_username");
       localStorage.removeItem("geoadmin_login_time");
       localStorage.removeItem("geoadmin_session_start");
+      toast({ title: "Successfully logged out", description: "You've been disconnected from GeoAdmin." });
       setIsSuccess(false);
       setMode("gate");
       setUsername("");

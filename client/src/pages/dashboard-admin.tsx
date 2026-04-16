@@ -6500,7 +6500,8 @@ export default function AdminDashboard() {
               setIsAdminGateAuthenticated(false);
               localStorage.removeItem("adminAccessTime");
               localStorage.removeItem("adminUsername");
-              setLocation("/");
+              // Stay on admin portal — re-show the auth gate
+              setLocation("/dashboard-admin");
             } else {
               // Refresh session time
               localStorage.setItem(

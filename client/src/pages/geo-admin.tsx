@@ -89,6 +89,10 @@ export default function GeoAdminPage() {
     localStorage.removeItem("geoadmin_session_start");
     localStorage.removeItem("auth_token");
     localStorage.removeItem("authToken");
+    toast({
+      title: "Session disconnected",
+      description: "Your GeoAdmin session has ended. Please sign in again.",
+    });
   }, []);
 
   const {

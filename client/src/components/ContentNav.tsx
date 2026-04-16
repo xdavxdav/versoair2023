@@ -10,6 +10,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import QuickSignIn from "@/components/QuickSignIn";
 import {
   Home,
@@ -484,7 +485,12 @@ export default function ContentNav() {
     logout();
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
-    setLocation("/");
+    toast({
+      title: "Successfully logged out",
+      description: "You've been disconnected.",
+    });
+    // Stay on the current portal page
+    setLocation("/marketplace");
   };
 
   // Hold 3 seconds → navigate to home with full-screen darkening effect

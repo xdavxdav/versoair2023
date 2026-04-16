@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -72,7 +73,12 @@ export default function BlogNavbar({
     }
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
-    setLocation("/");
+    toast({
+      title: "Successfully logged out",
+      description: "You've been disconnected from the marketplace.",
+    });
+    // Stay on the marketplace portal
+    setLocation("/marketplace");
   };
   const [currentPath] = useLocation();
 
@@ -124,7 +130,11 @@ export default function BlogNavbar({
       logout();
       localStorage.removeItem("blog_community_auth");
       localStorage.removeItem("blog_community_user");
-      setLocation("/");
+      toast({
+        title: "Successfully logged out",
+        description: "You've been disconnected from the marketplace.",
+      });
+      setLocation("/marketplace");
     }, 2000);
   }, [isAuthenticated, logout]);
 

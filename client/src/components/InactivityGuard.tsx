@@ -74,7 +74,9 @@ export default function InactivityGuard() {
   const tickInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Use a ref for mode to avoid stale-closure issues in timers/listeners
-  const modeRef = useRef<"idle" | "warning" | "challenge" | "success" | "none">("none");
+  const modeRef = useRef<"idle" | "warning" | "challenge" | "success" | "none">(
+    "none",
+  );
 
   // UI state
   const [mode, setModeState] = useState<
@@ -86,10 +88,13 @@ export default function InactivityGuard() {
   const [wrongPick, setWrongPick] = useState(false);
 
   // Sync setter: always update both the ref and the state
-  const setMode = useCallback((m: "idle" | "warning" | "challenge" | "success" | "none") => {
-    modeRef.current = m;
-    setModeState(m);
-  }, []);
+  const setMode = useCallback(
+    (m: "idle" | "warning" | "challenge" | "success" | "none") => {
+      modeRef.current = m;
+      setModeState(m);
+    },
+    [],
+  );
 
   // ── Timer cleanup ─────────────────────────────────
   const clearAllTimers = useCallback(() => {
@@ -178,7 +183,10 @@ export default function InactivityGuard() {
     }
 
     // If continuous activity exceeds threshold → challenge
-    if (activityAccum.current >= CHALLENGE_INTERVAL_MS && modeRef.current === "none") {
+    if (
+      activityAccum.current >= CHALLENGE_INTERVAL_MS &&
+      modeRef.current === "none"
+    ) {
       activityAccum.current = 0;
       showCaptchaChallenge();
       return;
