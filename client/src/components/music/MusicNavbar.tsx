@@ -6,6 +6,7 @@
  */
 import { Link, useLocation } from "wouter";
 import { useState, useRef, useCallback } from "react";
+import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -302,6 +303,11 @@ export function MusicNavbar() {
                         className="hover:bg-white/5 cursor-pointer text-pink-400"
                         onClick={() => {
                           logout();
+                          toast({
+                            title: "Successfully logged out",
+                            description:
+                              "You've been disconnected from the music portal.",
+                          });
                           navigate("/artist-portal");
                         }}
                       >
@@ -505,6 +511,11 @@ export function MusicNavbar() {
                         className="hover:bg-white/5 cursor-pointer text-pink-400"
                         onClick={() => {
                           logout();
+                          toast({
+                            title: "Successfully logged out",
+                            description:
+                              "You've been disconnected from the music portal.",
+                          });
                           navigate("/artist-portal");
                         }}
                       >

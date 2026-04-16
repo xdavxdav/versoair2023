@@ -258,6 +258,7 @@ import {
   logout as authLogout,
 } from "@/lib/auth";
 import { useAudio } from "@/lib/audio-context";
+import { toast } from "@/hooks/use-toast";
 import {
   useArtistStats,
   useLeaderboard,
@@ -681,6 +682,7 @@ export default function ArtistPortal() {
     await authLogout();
     localStorage.removeItem("artist_token");
     localStorage.removeItem("artist_profile");
+    toast({ title: "Successfully logged out", description: "You've been disconnected from the artist portal." });
     navigate("/artist-portal");
   }, [navigate]);
 

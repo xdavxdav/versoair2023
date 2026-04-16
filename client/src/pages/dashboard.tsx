@@ -1868,7 +1868,8 @@ export default function UserDashboard() {
     localStorage.removeItem("geoadmin_session");
     localStorage.removeItem("geoadmin_username");
     localStorage.removeItem("geoadmin_login_time");
-    window.location.href = "/";
+    // Stay on the dashboard portal — show the login gate again
+    window.location.href = "/dashboard";
   };
 
   const handleBackToGeoAdmin = () => {

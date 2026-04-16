@@ -700,100 +700,103 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── Fixed Header Block: amber top bar (always) + scrolling ticker (conditional) ── */}
-        <div
-          ref={headerRef}
-          className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
-          style={{ overflow: "visible" }}
-        >
-          {/* Top Banner */}
-          <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white h-7 px-2 flex items-center">
-            <div
-              className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
-              style={{ overflow: "visible" }}
+      <div
+        ref={headerRef}
+        className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
+        style={{ overflow: "visible" }}
+      >
+        {/* Top Banner */}
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white h-7 px-2 flex items-center">
+          <div
+            className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
+            style={{ overflow: "visible" }}
+          >
+            {/* Left: Platform label */}
+            <span
+              className="font-medium flex-1 min-w-0 text-center notranslate"
+              translate="no"
             >
-              {/* Left: Platform label */}
+              <span className="hidden md:inline notranslate" translate="no">
+                {isFr
+                  ? "Plateforme d'Intelligence d'Affaires"
+                  : "Business Intelligence Platform"}
+              </span>
               <span
-                className="font-medium flex-1 min-w-0 text-center notranslate"
+                className="hidden sm:inline md:hidden notranslate"
                 translate="no"
               >
-                <span className="hidden md:inline notranslate" translate="no">
-                  {isFr
-                    ? "Plateforme d'Intelligence d'Affaires"
-                    : "Business Intelligence Platform"}
-                </span>
-                <span
-                  className="hidden sm:inline md:hidden notranslate"
-                  translate="no"
-                >
-                  {isFr ? "Plateforme IA" : "BI Platform"}
-                </span>
-                <span className="sm:hidden notranslate" translate="no">
-                  {isFr ? "PIA" : "BIP"}
-                </span>
+                {isFr ? "Plateforme IA" : "BI Platform"}
               </span>
+              <span className="sm:hidden notranslate" translate="no">
+                {isFr ? "PIA" : "BIP"}
+              </span>
+            </span>
 
-              {/* Center: Country filter dropdown */}
-              <div className="flex-shrink-0" style={{ overflow: "visible" }}>
-                <CountryDropdown />
-              </div>
+            {/* Center: Country filter dropdown */}
+            <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+              <CountryDropdown />
+            </div>
 
-              {/* Right: Action buttons */}
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
-                <button
-                  onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
-                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-                >
-                  <span>🎵</span>
-                  <span className="hidden sm:inline">Verso Air</span>
-                  <span className="sm:hidden">VA</span>
-                </button>
-                <button
-                  onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-                  className="hover:text-amber-200 transition-colors flex items-center space-x-1"
-                >
-                  <span>📍</span>
-                  <span className="hidden sm:inline">GPS Services</span>
-                </button>
-              </div>
+            {/* Right: Action buttons */}
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+              <button
+                onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
+                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+              >
+                <span>🎵</span>
+                <span className="hidden sm:inline">Verso Air</span>
+                <span className="sm:hidden">VA</span>
+              </button>
+              <button
+                onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+              >
+                <span>📍</span>
+                <span className="hidden sm:inline">GPS Services</span>
+              </button>
             </div>
           </div>
-
-          {/* Scrolling ticker — visible on standard pages only (not music, immersive, blog, marketplace) */}
-          {!isMusicPage && !isImmersivePage && !versoaiFullscreen &&
-            currentPath !== "/blog" &&
-            currentPath !== "/marketplace" &&
-            !isContentNavPage && (
-              <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
-                <div className="animate-scroll-continuous flex">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="flex flex-shrink-0">
-                      <span className="flex-shrink-0 px-4 md:px-8">
-                        Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence
-                        d'Affaires
-                      </span>
-                      <span className="flex-shrink-0 px-4 md:px-8">
-                        Analyser • Optimiser • Visualiser • Croître
-                      </span>
-                      <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                        24 Secteurs d'Industrie • Analytique en Direct •
-                        Couverture Mondiale
-                      </span>
-                      <span className="hidden md:inline-flex flex-shrink-0 px-8">
-                        Commerce • Hôtellerie • Construction • Automobile •
-                        Finance • Divertissement
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active. */}
-          {!isMusicPage && !isImmersivePage &&
-            (currentPath === "/blog" || currentPath === "/marketplace") &&
-            !marketplaceModalOpen &&
-            !showContentNav && <BlogNavbar />}
         </div>
+
+        {/* Scrolling ticker — visible on standard pages only (not music, immersive, blog, marketplace) */}
+        {!isMusicPage &&
+          !isImmersivePage &&
+          !versoaiFullscreen &&
+          currentPath !== "/blog" &&
+          currentPath !== "/marketplace" &&
+          !isContentNavPage && (
+            <div className="bg-primary text-white py-1.5 md:py-2 text-xs md:text-sm overflow-hidden transition-all duration-300 ease-in-out">
+              <div className="animate-scroll-continuous flex">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex flex-shrink-0">
+                    <span className="flex-shrink-0 px-4 md:px-8">
+                      Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence
+                      d'Affaires
+                    </span>
+                    <span className="flex-shrink-0 px-4 md:px-8">
+                      Analyser • Optimiser • Visualiser • Croître
+                    </span>
+                    <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
+                      24 Secteurs d'Industrie • Analytique en Direct •
+                      Couverture Mondiale
+                    </span>
+                    <span className="hidden md:inline-flex flex-shrink-0 px-8">
+                      Commerce • Hôtellerie • Construction • Automobile •
+                      Finance • Divertissement
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active. */}
+        {!isMusicPage &&
+          !isImmersivePage &&
+          (currentPath === "/blog" || currentPath === "/marketplace") &&
+          !marketplaceModalOpen &&
+          !showContentNav && <BlogNavbar />}
+      </div>
       {/* Spacer for fixed header — always present, height auto-measured */}
       <div style={{ height: headerHeight }} />
 
@@ -844,7 +847,7 @@ function AppContent() {
 
       {/* Main Router */}
       <main
-        className={`flex-1 overflow-x-hidden transition-opacity duration-300 ${
+        className={`flex-1 min-h-screen overflow-x-hidden transition-opacity duration-300 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"

@@ -475,7 +475,7 @@ export default function InstagramNav({
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      setLocation("/");
+      setLocation("/marketplace");
     }, 5000);
   }, [setLocation]);
 
