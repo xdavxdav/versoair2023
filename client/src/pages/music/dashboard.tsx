@@ -462,7 +462,7 @@ export default function MusicDashboard() {
           {/* Analytics + Royalties (2-col span) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Analytics */}
-            {canAccessAnalytics ? (
+            {canAccessAnalytics && isArtist ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -529,45 +529,47 @@ export default function MusicDashboard() {
               />
             )}
 
-            {/* Royalties preview */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-violet-900/20 to-purple-900/10 backdrop-blur-md p-6"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-white" />
+            {/* Royalties preview — Artists only */}
+            {isArtist && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-violet-900/20 to-purple-900/10 backdrop-blur-md p-6"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">Royalties</h3>
+                      <p className="text-sm text-white/50">Earnings overview</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Royalties</h3>
-                    <p className="text-sm text-white/50">Earnings overview</p>
-                  </div>
+                  <Link href="/music/royalties">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                    >
+                      Details
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
                 </div>
-                <Link href="/music/royalties">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
-                  >
-                    Details
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <StatChip
-                  icon={DollarSign}
-                  label="Total Earned"
-                  value={`$${stats.earnings || 0}`}
-                  trend="+15%"
-                />
-                <StatChip icon={TrendingUp} label="This Month" value="$0" />
-                <StatChip icon={Star} label="Pending" value="$0" />
-              </div>
-            </motion.div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <StatChip
+                    icon={DollarSign}
+                    label="Total Earned"
+                    value={`$${stats.earnings || 0}`}
+                    trend="+15%"
+                  />
+                  <StatChip icon={TrendingUp} label="This Month" value="$0" />
+                  <StatChip icon={Star} label="Pending" value="$0" />
+                </div>
+              </motion.div>
+            )}
           </div>
 
           {/* Recent Activity (right column) */}
@@ -662,8 +664,8 @@ export default function MusicDashboard() {
           </section>
         )}
 
-        {/* ━━━ Upcoming Releases ━━━ */}
-        <motion.div
+        {/* ━━━ Upcoming Releases — Artists only ━━━ */}
+        {isArtist && <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
@@ -707,9 +709,10 @@ export default function MusicDashboard() {
               </Link>
             </div>
           </div>
-        </motion.div>
+        </motion.div>}
 
-        {/* ━━━ Top Artists ━━━ */}
+        {/* ━━━ Top Artists — Artists only ━━━ */}
+        {isArtist &&
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -772,10 +775,10 @@ export default function MusicDashboard() {
               </div>
             )}
           </div>
-        </motion.div>
+        </motion.div>}
 
-        {/* ━━━ Subscription Tiers & Payments ━━━ */}
-        <ArtistSubscriptionTiers />
+        {/* ━━━ Subscription Tiers & Payments — Artists only ━━━ */}
+        {isArtist && <ArtistSubscriptionTiers />}
 
         {/* ━━━ Announcements ━━━ */}
         <section>
