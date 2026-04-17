@@ -245,7 +245,6 @@ import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 // Main loader — shown while lazy chunks download and on every navigation.
 function Router() {
   const [location] = useLocation();
-  const { showEagleLoader } = useLoading();
   const [previousLocation, setPreviousLocation] = useState(location);
   const isInitialRender = useRef(true);
 
@@ -269,13 +268,12 @@ function Router() {
     }
   }, [location, previousLocation]);
 
-  // Eagle loader + state update in a regular useEffect (non-blocking)
+  // Update previous location for scroll-to-top tracking
   useEffect(() => {
     if (location !== previousLocation) {
-      showEagleLoader();
       setPreviousLocation(location);
     }
-  }, [location, previousLocation, showEagleLoader]);
+  }, [location, previousLocation]);
 
   // Re-trigger GT translation after every route change so new page content
   // gets translated (GT only translates on init — misses React-rendered pages)
