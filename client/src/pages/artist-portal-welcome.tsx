@@ -257,7 +257,7 @@ function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-// ─── VersaBeat Studio Controller ─────────────────────────
+// ─── VersaBeats Studio Controller ─────────────────────────
 function MiniStudio({
   heroVisible,
   analyserRef,
@@ -353,7 +353,7 @@ function MiniStudio({
       lastScrollY.current = scrollY;
 
       // If scrolling down past 400px and not recording, trigger vanish
-      // This gives user time to see full VersaBeat content before it vanishes
+      // This gives user time to see full VersaBeats content before it vanishes
       if (
         scrollingDown &&
         scrollY > 400 &&
@@ -1034,7 +1034,7 @@ function MiniStudio({
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
-    if (!heroVisible) return; // Only active when VersaBeat studio is visible
+    if (!heroVisible) return; // Only active when VersaBeats studio is visible
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in input/textarea
@@ -1135,7 +1135,7 @@ function MiniStudio({
                 </div>
                 <div className="hidden xs:flex flex-col items-start">
                   <span className="text-[10px] sm:text-xs font-black tracking-wide bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
-                    VersaBeat
+                    VersaBeats
                   </span>
                   <span className="text-fuchsia-400/50 text-[7px] sm:text-[8px] tracking-widest uppercase">
                     Pro Studio
@@ -1953,7 +1953,7 @@ function MiniStudio({
                         className="group flex items-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-r from-violet-600/30 to-fuchsia-600/30 border border-violet-500/30 hover:border-fuchsia-400/50 hover:from-violet-600/40 hover:to-fuchsia-600/40 transition-all duration-300 shadow-lg shadow-purple-500/10"
                       >
                         <span className="text-xs font-semibold text-violet-200 group-hover:text-fuchsia-100">
-                          VersaBeat Full Studio
+                          VersaBeats Full Studio
                         </span>
                         <span className="px-2 py-0.5 text-[8px] font-black tracking-wider rounded bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white uppercase">
                           PRO
@@ -2451,7 +2451,7 @@ export default function ArtistPortalWelcome() {
         ref={heroSectionRef}
         className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-14"
       >
-        {/* VersaBeat Studio — floats top-right when hero is visible.
+        {/* VersaBeats Studio — floats top-right when hero is visible.
             Deferred on mobile: mount only after ready phase + 2s to avoid
             Safari memory pressure during initial render. */}
         <AnimatePresence>
