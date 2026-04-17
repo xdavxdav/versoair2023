@@ -765,30 +765,30 @@ export default function ArcadePage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="bg-black/40 border border-purple-500/20 p-1 flex flex-wrap h-auto w-full gap-1">
+          <TabsList className="bg-black/40 border border-purple-500/20 p-1 flex w-full overflow-x-auto scrollbar-hide h-auto">
             <TabsTrigger
               value="play"
-              className="flex-1 min-w-[calc(50%-4px)] sm:min-w-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
+              className="shrink-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
             >
-              <Swords className="w-4 h-4 mr-1 sm:mr-2" /> Jouer
+              <Swords className="w-4 h-4 mr-1.5" /> Jouer
             </TabsTrigger>
             <TabsTrigger
               value="lobby"
-              className="flex-1 min-w-[calc(50%-4px)] sm:min-w-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
+              className="shrink-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
             >
-              <Users className="w-4 h-4 mr-1 sm:mr-2" /> Lobby
+              <Users className="w-4 h-4 mr-1.5" /> Lobby
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="flex-1 min-w-[calc(50%-4px)] sm:min-w-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
+              className="shrink-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
             >
-              <Clock className="w-4 h-4 mr-1 sm:mr-2" /> Historique
+              <Clock className="w-4 h-4 mr-1.5" /> Historique
             </TabsTrigger>
             <TabsTrigger
               value="leaderboard"
-              className="flex-1 min-w-[calc(50%-4px)] sm:min-w-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
+              className="shrink-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
             >
-              <Trophy className="w-4 h-4 mr-1 sm:mr-2" /> Classement
+              <Trophy className="w-4 h-4 mr-1.5" /> Classement
             </TabsTrigger>
           </TabsList>
 
