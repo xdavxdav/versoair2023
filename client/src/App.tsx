@@ -134,6 +134,7 @@ const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 // ─────────────────────────────────────────────────────
 import ProtectedRoute from "@/components/ProtectedRoute";
 import MusicProtectedRoute from "@/components/music/MusicProtectedRoute";
+import { MusicArtistRoute } from "@/components/music/MusicProtectedRoute";
 
 // ─────────────────────────────────────────────────────
 // ❓ Help & Support (lazy-loaded)
@@ -549,19 +550,19 @@ function Router() {
         {() => <MusicProtectedRoute component={MusicDashboard} />}
       </Route>
       <Route path="/music/studio">
-        {() => <MusicProtectedRoute component={BeatmakerStudio} />}
+        {() => <MusicArtistRoute component={BeatmakerStudio} />}
       </Route>
       <Route path="/music/versavids">
-        {() => <MusicProtectedRoute component={VersaVidsStudio} />}
+        {() => <MusicArtistRoute component={VersaVidsStudio} />}
       </Route>
       <Route path="/versavids">
         {() => <Redirect to="/music/versavids" />}
       </Route>
       <Route path="/music/vault">
-        {() => <MusicProtectedRoute component={MusicVault} />}
+        {() => <MusicArtistRoute component={MusicVault} />}
       </Route>
       <Route path="/music/royalties">
-        {() => <MusicProtectedRoute component={MusicRoyalties} />}
+        {() => <MusicArtistRoute component={MusicRoyalties} />}
       </Route>
       <Route path="/music/library">
         {() => <MusicProtectedRoute component={MusicLibrary} />}
