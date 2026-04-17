@@ -543,16 +543,30 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🎹 MUSICAL UNIVERSE — Creator ecosystem
           ═══════════════════════════════════════════════ */}
-      <Route path="/music" component={MusicDashboard} />
-      <Route path="/music/dashboard" component={MusicDashboard} />
-      <Route path="/music/studio" component={BeatmakerStudio} />
-      <Route path="/music/versavids" component={VersaVidsStudio} />
+      <Route path="/music">
+        {() => <ProtectedRoute component={MusicDashboard} />}
+      </Route>
+      <Route path="/music/dashboard">
+        {() => <ProtectedRoute component={MusicDashboard} />}
+      </Route>
+      <Route path="/music/studio">
+        {() => <ProtectedRoute component={BeatmakerStudio} />}
+      </Route>
+      <Route path="/music/versavids">
+        {() => <ProtectedRoute component={VersaVidsStudio} />}
+      </Route>
       <Route path="/versavids">
         {() => <Redirect to="/music/versavids" />}
       </Route>
-      <Route path="/music/vault" component={MusicVault} />
-      <Route path="/music/royalties" component={MusicRoyalties} />
-      <Route path="/music/library" component={MusicLibrary} />
+      <Route path="/music/vault">
+        {() => <ProtectedRoute component={MusicVault} />}
+      </Route>
+      <Route path="/music/royalties">
+        {() => <ProtectedRoute component={MusicRoyalties} />}
+      </Route>
+      <Route path="/music/library">
+        {() => <ProtectedRoute component={MusicLibrary} />}
+      </Route>
       <Route path="/music/favorites">
         {() => <Redirect to="/music/library" />}
       </Route>
