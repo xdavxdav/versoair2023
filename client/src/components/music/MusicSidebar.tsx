@@ -65,8 +65,14 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
   const didHold = useRef(false);
 
   const clearHold = useCallback(() => {
-    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
-    if (fadeInterval.current) { clearInterval(fadeInterval.current); fadeInterval.current = null; }
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+    if (fadeInterval.current) {
+      clearInterval(fadeInterval.current);
+      fadeInterval.current = null;
+    }
     if (!didHold.current) setFadeProgress(0);
   }, []);
 
@@ -82,7 +88,10 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
     // After 3s, go home
     holdTimer.current = setTimeout(() => {
       didHold.current = true;
-      if (fadeInterval.current) { clearInterval(fadeInterval.current); fadeInterval.current = null; }
+      if (fadeInterval.current) {
+        clearInterval(fadeInterval.current);
+        fadeInterval.current = null;
+      }
       setFadeProgress(1);
       // Brief pause at full black then navigate
       setTimeout(() => {
@@ -110,11 +119,22 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
       <div
         className="h-14 flex items-center justify-center cursor-pointer group relative overflow-hidden select-none"
         onMouseDown={startHold}
-        onMouseUp={() => { clearHold(); handleTap(); }}
+        onMouseUp={() => {
+          clearHold();
+          handleTap();
+        }}
         onMouseLeave={clearHold}
-        onTouchStart={startHold}
-        onTouchEnd={(e) => { e.preventDefault(); clearHold(); handleTap(); }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          startHold();
+        }}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          clearHold();
+          handleTap();
+        }}
         onTouchCancel={clearHold}
+        onContextMenu={(e) => e.preventDefault()}
         title="Tap=Dashboard · Hold 3s=Home"
       >
         {/* Ambient glow behind logo on hover */}
@@ -127,7 +147,8 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
             alt="VersoAir"
             className="relative w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-200"
             style={{
-              filter: "brightness(1.3) saturate(1.2) drop-shadow(0 0 10px rgba(168,85,247,0.8))",
+              filter:
+                "brightness(1.3) saturate(1.2) drop-shadow(0 0 10px rgba(168,85,247,0.8))",
             }}
           />
         </div>

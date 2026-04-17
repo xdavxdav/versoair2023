@@ -1,6 +1,6 @@
 /**
  * MusicProtectedRoute — Auth gate for Musical Universe pages
- * Redirects unauthed users to /artist-portal (the welcome/auth page)
+ * Shows purple spinner during auth check, redirects to /artist-portal if unauthed
  */
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect } from "react";
@@ -23,7 +23,14 @@ export default function MusicProtectedRoute({
   }, [loading, user, setLocation]);
 
   if (loading) {
-    return null; // Let the global PageLoader handle this
+    return (
+      <div className="min-h-screen bg-[#06020f] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+          <p className="text-white/30 text-xs tracking-widest uppercase">Musical Universe</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
