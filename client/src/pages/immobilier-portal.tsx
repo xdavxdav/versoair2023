@@ -413,7 +413,7 @@ export default function ImmobilierPortal() {
 
       {/* ─── Tab Navigation ────────────────────────────────────────────────── */}
       <div className="max-w-[95vw] mx-auto px-4 mt-4">
-        <div className="flex flex-wrap gap-2 pb-2 border-b border-white/10">
+        <div className="flex gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-hide">
           {[
             {
               key: "dashboard" as PortalTab,
@@ -437,7 +437,7 @@ export default function ImmobilierPortal() {
               variant={activeTab === tab.key ? "default" : "ghost"}
               onClick={() => setActiveTab(tab.key)}
               size="sm"
-              className={`gap-1.5 text-xs sm:text-sm ${
+              className={`gap-1.5 whitespace-nowrap shrink-0 text-xs sm:text-sm ${
                 activeTab === tab.key
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
