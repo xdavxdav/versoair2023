@@ -1773,7 +1773,8 @@ export default function StreamPage() {
                             if (!isFree) {
                               toast({
                                 title: "💳 Paiements bientôt disponibles",
-                                description: "Stripe, Interac, Apple Pay et plus — disponible très bientôt!",
+                                description:
+                                  "Stripe, Interac, Apple Pay et plus — disponible très bientôt!",
                               });
                             }
                           }}
