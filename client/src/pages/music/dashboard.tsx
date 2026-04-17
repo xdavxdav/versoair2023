@@ -665,117 +665,122 @@ export default function MusicDashboard() {
         )}
 
         {/* ━━━ Upcoming Releases — Artists only ━━━ */}
-        {isArtist && <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md overflow-hidden"
-        >
-          <div className="flex items-center justify-between px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 flex items-center justify-center">
-                <CalendarDays className="w-4 h-4 text-white" />
+        {isArtist && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md overflow-hidden"
+          >
+            <div className="flex items-center justify-between px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 flex items-center justify-center">
+                  <CalendarDays className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Upcoming Releases
+                </h3>
               </div>
-              <h3 className="text-lg font-semibold text-white">
-                Upcoming Releases
-              </h3>
-            </div>
-            <Link href="/music/planner">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/50 hover:text-white hover:bg-white/5 gap-2"
-              >
-                View Calendar
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="px-6 pb-6">
-            <div className="text-center py-10">
-              <CalendarDays className="w-10 h-10 text-white/10 mx-auto mb-3" />
-              <p className="text-sm text-white/30">
-                No upcoming releases scheduled
-              </p>
               <Link href="/music/planner">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                  className="text-white/50 hover:text-white hover:bg-white/5 gap-2"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Schedule Release
+                  View Calendar
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
             </div>
-          </div>
-        </motion.div>}
-
-        {/* ━━━ Top Artists — Artists only ━━━ */}
-        {isArtist &&
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md overflow-hidden"
-        >
-          <div className="flex items-center justify-between px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center">
-                <Users className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Top Artists</h3>
-            </div>
-            <Link href="/music/artists">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/50 hover:text-white hover:bg-white/5 gap-2"
-              >
-                View All
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="px-6 pb-6">
-            {stats.followers > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] hover:bg-purple-500/[0.06] transition-colors cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center">
-                      <Headphones className="w-5 h-5 text-pink-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        Artist {i}
-                      </p>
-                      <p className="text-xs text-white/40">0 streams</p>
-                    </div>
-                    <Star className="w-4 h-4 text-purple-400/30" />
-                  </div>
-                ))}
-              </div>
-            ) : (
+            <div className="px-6 pb-6">
               <div className="text-center py-10">
-                <Users className="w-10 h-10 text-white/10 mx-auto mb-3" />
-                <p className="text-sm text-white/30">No signed artists yet</p>
-                <Link href="/music/a-and-r">
+                <CalendarDays className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                <p className="text-sm text-white/30">
+                  No upcoming releases scheduled
+                </p>
+                <Link href="/music/planner">
                   <Button
                     variant="ghost"
                     size="sm"
                     className="mt-3 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Discover Artists
+                    Schedule Release
                   </Button>
                 </Link>
               </div>
-            )}
-          </div>
-        </motion.div>}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ━━━ Top Artists — Artists only ━━━ */}
+        {isArtist && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md overflow-hidden"
+          >
+            <div className="flex items-center justify-between px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Top Artists
+                </h3>
+              </div>
+              <Link href="/music/artists">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/50 hover:text-white hover:bg-white/5 gap-2"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="px-6 pb-6">
+              {stats.followers > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] hover:bg-purple-500/[0.06] transition-colors cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center">
+                        <Headphones className="w-5 h-5 text-pink-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          Artist {i}
+                        </p>
+                        <p className="text-xs text-white/40">0 streams</p>
+                      </div>
+                      <Star className="w-4 h-4 text-purple-400/30" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <Users className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                  <p className="text-sm text-white/30">No signed artists yet</p>
+                  <Link href="/music/a-and-r">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Discover Artists
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* ━━━ Subscription Tiers & Payments — Artists only ━━━ */}
         {isArtist && <ArtistSubscriptionTiers />}
