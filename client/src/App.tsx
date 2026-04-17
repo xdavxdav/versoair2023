@@ -404,7 +404,7 @@ function Router() {
         {() => <ProtectedRoute component={BusinessVerification} />}
       </Route>
       <Route path="/geo-admin/immobilier">
-        {() => <ProtectedRoute component={ImmobilierPortal} />}
+        {() => <ImmobilierPortal />}
       </Route>
       <Route path="/geo-admin/dashboard">
         {() => (

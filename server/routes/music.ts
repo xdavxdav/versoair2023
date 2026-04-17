@@ -288,7 +288,9 @@ router.get("/my-artist", requireAuth(), async (req, res) => {
     );
     if (!result.rows.length) {
       // No artist profile — do NOT auto-create
-      return res.status(404).json({ success: false, error: "No artist profile found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "No artist profile found" });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (error: any) {
