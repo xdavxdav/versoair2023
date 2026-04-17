@@ -133,6 +133,7 @@ const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 // 🔒 Route Guards (kept eager — lightweight)
 // ─────────────────────────────────────────────────────
 import ProtectedRoute from "@/components/ProtectedRoute";
+import MusicProtectedRoute from "@/components/music/MusicProtectedRoute";
 
 // ─────────────────────────────────────────────────────
 // ❓ Help & Support (lazy-loaded)
@@ -544,28 +545,28 @@ function Router() {
           🎹 MUSICAL UNIVERSE — Creator ecosystem
           ═══════════════════════════════════════════════ */}
       <Route path="/music">
-        {() => <ProtectedRoute component={MusicDashboard} />}
+        {() => <MusicProtectedRoute component={MusicDashboard} />}
       </Route>
       <Route path="/music/dashboard">
-        {() => <ProtectedRoute component={MusicDashboard} />}
+        {() => <MusicProtectedRoute component={MusicDashboard} />}
       </Route>
       <Route path="/music/studio">
-        {() => <ProtectedRoute component={BeatmakerStudio} />}
+        {() => <MusicProtectedRoute component={BeatmakerStudio} />}
       </Route>
       <Route path="/music/versavids">
-        {() => <ProtectedRoute component={VersaVidsStudio} />}
+        {() => <MusicProtectedRoute component={VersaVidsStudio} />}
       </Route>
       <Route path="/versavids">
         {() => <Redirect to="/music/versavids" />}
       </Route>
       <Route path="/music/vault">
-        {() => <ProtectedRoute component={MusicVault} />}
+        {() => <MusicProtectedRoute component={MusicVault} />}
       </Route>
       <Route path="/music/royalties">
-        {() => <ProtectedRoute component={MusicRoyalties} />}
+        {() => <MusicProtectedRoute component={MusicRoyalties} />}
       </Route>
       <Route path="/music/library">
-        {() => <ProtectedRoute component={MusicLibrary} />}
+        {() => <MusicProtectedRoute component={MusicLibrary} />}
       </Route>
       <Route path="/music/favorites">
         {() => <Redirect to="/music/library" />}
