@@ -765,7 +765,7 @@ export default function ArcadePage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="bg-black/40 border border-purple-500/20 p-1">
+          <TabsList className="bg-black/40 border border-purple-500/20 p-1 flex w-full overflow-x-auto scrollbar-hide">
             <TabsTrigger
               value="play"
               className="data-[state=active]:bg-purple-600/40 data-[state=active]:text-white"

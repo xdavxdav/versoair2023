@@ -287,23 +287,8 @@ router.get("/my-artist", requireAuth(), async (req, res) => {
       [parseInt(userId)],
     );
     if (!result.rows.length) {
-      // Auto-create an artist entry for this user so they can upload immediately
-      const userResult = await pool.query(
-        `SELECT username, email FROM users WHERE id = $1`,
-        [parseInt(userId)],
-      );
-      const username =
-        userResult.rows[0]?.username ||
-        userResult.rows[0]?.email?.split("@")[0] ||
-        "Artist";
-      const inserted = await pool.query(
-        `INSERT INTO artists (stage_name, user_id, label_status) VALUES ($1, $2, 'signed') RETURNING id, stage_name AS "stageName", genre, user_id`,
-        [username, parseInt(userId)],
-      );
-      console.log(
-        `🎤 [MUSIC] Auto-created artist profile for user #${userId}: "${username}"`,
-      );
-      return res.json({ success: true, data: inserted.rows[0] });
+      // No artist profile — do NOT auto-create
+      return res.status(404).json({ success: false, error: "No artist profile found" });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (error: any) {
@@ -354,23 +339,11 @@ router.post(
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
         } else {
-          // Auto-create an artist profile so the FK constraint is satisfied
-          const userRow = await pool.query(
-            `SELECT username, email FROM users WHERE id = $1`,
-            [parseInt(req.user.userId)],
-          );
-          const stageName =
-            userRow.rows[0]?.username ||
-            userRow.rows[0]?.email?.split("@")[0] ||
-            "Artist";
-          const newArtist = await pool.query(
-            `INSERT INTO artists (stage_name, user_id, label_status) VALUES ($1, $2, 'signed') RETURNING id`,
-            [stageName, parseInt(req.user.userId)],
-          );
-          artistId = newArtist.rows[0].id;
-          console.log(
-            `🎤 [MUSIC] Auto-created artist "${stageName}" for user #${req.user.userId} during upload`,
-          );
+          // No artist profile — reject upload
+          return res.status(403).json({
+            success: false,
+            error: "You must register as an artist before uploading tracks",
+          });
         }
       }
 

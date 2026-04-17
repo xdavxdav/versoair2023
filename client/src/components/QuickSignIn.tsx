@@ -4,6 +4,7 @@
  * Use anywhere: <QuickSignIn open={open} onClose={() => setOpen(false)} />
  */
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -138,7 +139,7 @@ export function QuickSignIn({
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -275,7 +276,8 @@ export function QuickSignIn({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

@@ -42,12 +42,8 @@ function formatCurrency(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function getFlag(code: string): string {
-  if (!code || code.length !== 2) return "🌍";
-  return String.fromCodePoint(
-    ...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
-}
+// getFlag moved to @/utils/get-flag
+import { getFlag } from "@/utils/get-flag";
 
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useStreamingAnalytics();

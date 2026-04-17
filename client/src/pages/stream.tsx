@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAudio } from "@/lib/audio-context";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MusicSidebar } from "@/components/music/MusicSidebar";
@@ -75,12 +76,8 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function getFlag(code: string): string {
-  if (!code || code.length !== 2) return "🌍";
-  return String.fromCodePoint(
-    ...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
-}
+// getFlag moved to @/utils/get-flag
+import { getFlag } from "@/utils/get-flag";
 
 /** Resolve cover art URL — prefers cover_art URL, then pochette endpoint, then album_cover */
 function getCover(t: any): string | null {
@@ -289,6 +286,7 @@ const LEVEL_THRESHOLDS = [
 export default function StreamPage() {
   const audio = useAudio();
   const { user } = useAuthContext();
+  const { toast } = useToast();
   const [location, navigate] = useLocation();
   const fromPage =
     new URLSearchParams(window.location.search).get("from") || "";
@@ -919,7 +917,7 @@ export default function StreamPage() {
                     initial={{ opacity: 0, y: -10, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50 max-h-96 overflow-y-auto"
+                    className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-[100] max-h-[70vh] overflow-y-auto"
                   >
                     {searchResults.artists?.length > 0 && (
                       <div className="p-4">
@@ -1771,6 +1769,14 @@ export default function StreamPage() {
                           )}
                         </ul>
                         <button
+                          onClick={() => {
+                            if (!isFree) {
+                              toast({
+                                title: "💳 Paiements bientôt disponibles",
+                                description: "Stripe, Interac, Apple Pay et plus — disponible très bientôt!",
+                              });
+                            }
+                          }}
                           className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${colors.btn}`}
                         >
                           {isFree ? "Plan actuel" : "S'abonner"}
