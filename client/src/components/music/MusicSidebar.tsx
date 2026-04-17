@@ -6,6 +6,7 @@
  */
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { useRef, useState, useCallback } from "react";
 import {
   Home,
   Disc3,
@@ -33,7 +34,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_SIDEBAR_ITEMS } from "@/lib/music-routes";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
 
 const sidebarIconMap: Record<
@@ -55,6 +56,85 @@ const sidebarIconMap: Record<
   Radio,
   Heart,
 };
+
+/* ─── Logo with hold-to-go-home gesture ─── */
+function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [fadeProgress, setFadeProgress] = useState(0); // 0=none, 1=fading, 2=black
+  const fadeInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const didHold = useRef(false);
+
+  const clearHold = useCallback(() => {
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+    if (fadeInterval.current) { clearInterval(fadeInterval.current); fadeInterval.current = null; }
+    if (!didHold.current) setFadeProgress(0);
+  }, []);
+
+  const startHold = useCallback(() => {
+    didHold.current = false;
+    // Start fade animation over 3s
+    const start = Date.now();
+    fadeInterval.current = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / 3000, 1);
+      setFadeProgress(progress);
+    }, 30);
+    // After 3s, go home
+    holdTimer.current = setTimeout(() => {
+      didHold.current = true;
+      if (fadeInterval.current) { clearInterval(fadeInterval.current); fadeInterval.current = null; }
+      setFadeProgress(1);
+      // Brief pause at full black then navigate
+      setTimeout(() => {
+        navigate("/");
+        // Reset fade after navigation
+        setTimeout(() => setFadeProgress(0), 300);
+      }, 400);
+    }, 3000);
+  }, [navigate]);
+
+  const handleTap = useCallback(() => {
+    if (didHold.current) return; // Was a hold, ignore
+    navigate("/music/dashboard");
+  }, [navigate]);
+
+  return (
+    <>
+      {/* Full-screen black fade overlay */}
+      {fadeProgress > 0 && (
+        <div
+          className="fixed inset-0 bg-black z-[9998] pointer-events-none transition-none"
+          style={{ opacity: fadeProgress }}
+        />
+      )}
+      <div
+        className="h-14 flex items-center justify-center cursor-pointer group relative overflow-hidden select-none"
+        onMouseDown={startHold}
+        onMouseUp={() => { clearHold(); handleTap(); }}
+        onMouseLeave={clearHold}
+        onTouchStart={startHold}
+        onTouchEnd={(e) => { e.preventDefault(); clearHold(); handleTap(); }}
+        onTouchCancel={clearHold}
+        title="Tap=Dashboard · Hold 3s=Home"
+      >
+        {/* Ambient glow behind logo on hover */}
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 via-fuchsia-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* Logo container with purple glow */}
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-[-4px] rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 opacity-40 group-hover:opacity-70 blur-lg transition-opacity" />
+          <img
+            src="https://i.ibb.co/8DL5vH7M/v-logo-extracted.png"
+            alt="VersoAir"
+            className="relative w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-200"
+            style={{
+              filter: "brightness(1.3) saturate(1.2) drop-shadow(0 0 10px rgba(168,85,247,0.8))",
+            }}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
 
 export function MusicSidebar() {
   const [pathname, navigate] = useLocation();
@@ -146,28 +226,8 @@ export function MusicSidebar() {
 
       {/* Content */}
       <div className="relative flex flex-col h-full">
-        {/* Purple Eagle Logo with glow */}
-        <Link href="/">
-          <div className="h-14 flex items-center justify-center cursor-pointer group relative overflow-hidden">
-            {/* Ambient glow behind logo on hover */}
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 via-fuchsia-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            {/* Logo container with purple glow */}
-            <div className="relative w-10 h-10">
-              {/* Glow effect behind - always visible, stronger on hover */}
-              <div className="absolute inset-[-4px] rounded-xl bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 opacity-40 group-hover:opacity-70 blur-lg transition-opacity" />
-              {/* Eagle logo image with purple tint */}
-              <img
-                src="https://i.ibb.co/8DL5vH7M/v-logo-extracted.png"
-                alt="VersoAir"
-                className="relative w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-200"
-                style={{
-                  filter:
-                    "brightness(1.3) saturate(1.2) drop-shadow(0 0 10px rgba(168,85,247,0.8))",
-                }}
-              />
-            </div>
-          </div>
-        </Link>
+        {/* Purple Eagle Logo — tap=dashboard, hold 3s=fade-to-black then home */}
+        <LogoWithHoldToHome navigate={navigate} />
 
         {/* ─── Core section ─── */}
         <nav className="px-2 space-y-1 pt-3">
