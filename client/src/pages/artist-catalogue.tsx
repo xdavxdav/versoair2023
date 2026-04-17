@@ -52,12 +52,8 @@ function formatDuration(sec: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function getFlag(code: string): string {
-  if (!code || code.length !== 2) return "🌍";
-  return String.fromCodePoint(
-    ...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
-}
+// getFlag moved to @/utils/get-flag
+import { getFlag } from "@/utils/get-flag";
 
 export default function ArtistCataloguePage() {
   const [, params] = useRoute("/artist-catalogue/:id");

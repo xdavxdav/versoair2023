@@ -623,6 +623,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           );
         if (!hasNonLatin) return;
 
+        // Skip if a hint already follows this node
+        if (font.nextElementSibling?.classList.contains("roman-hint")) return;
         processedNodes.add(font);
         try {
           const latin = transliterate(text);

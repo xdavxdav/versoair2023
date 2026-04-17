@@ -51,12 +51,8 @@ interface PaymentCountryState {
 const FALLBACK_COUNTRY = "US";
 const FALLBACK_CURRENCY: CurrencyCode = "USD";
 
-function getFlag(code: string): string {
-  if (!code || code.length !== 2) return "🌍";
-  return String.fromCodePoint(
-    ...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
-}
+// getFlag moved to @/utils/get-flag
+import { getFlag } from "@/utils/get-flag";
 
 export function usePaymentCountry(): PaymentCountryState {
   const { selectedCountry, detecting } = useCountry();
