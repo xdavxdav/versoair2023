@@ -9,6 +9,10 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
+import {
+  sendArtistApplicationConfirmation,
+  sendArtistApplicationAdminNotification,
+} from "../services/email-service";
 
 const router = Router();
 
@@ -296,11 +300,38 @@ router.post("/apply", async (req: Request, res: Response) => {
       ],
     );
 
+    const newApp = result.rows[0];
+
+    // ── Emails (non-blocking) ──────────────────────────────────────────────────
+    const adminEmail =
+      process.env.SMTP_FROM || process.env.SMTP_USER || "luqjoey@gmail.com";
+    Promise.allSettled([
+      sendArtistApplicationConfirmation({
+        toEmail: email,
+        stageName,
+        applicationId: newApp.id,
+      }),
+      sendArtistApplicationAdminNotification({
+        adminEmail,
+        stageName,
+        applicantEmail: email,
+        applicationId: newApp.id,
+        genre,
+        country,
+      }),
+    ]).then((results) => {
+      results.forEach((r, i) => {
+        if (r.status === "rejected")
+          console.warn(`[CONTRACT EMAIL ${i}] Failed:`, r.reason);
+        else console.log(`[CONTRACT EMAIL ${i}] Sent OK`);
+      });
+    });
+
     res.status(201).json({
       success: true,
       message:
         "Candidature soumise avec succès. Notre équipe l'examinera sous 5 à 7 jours ouvrables.",
-      contract: result.rows[0],
+      contract: newApp,
     });
   } catch (err: any) {
     console.error("Contract application error:", err);

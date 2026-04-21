@@ -82,7 +82,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Try to verify token with backend
+      // ── Fast path: restore from cache immediately so the UI renders right
+      //    away while we verify in the background (critical for slow mobile).
+      const cachedUserRaw = localStorage.getItem("auth_user");
+      if (cachedUserRaw) {
+        try {
+          setUser(JSON.parse(cachedUserRaw));
+          setToken(storedToken);
+          setAuthToken(storedToken);
+          setLoading(false); // unblock UI immediately
+        } catch {
+          /* ignore bad cache */
+        }
+      }
+
+      // Try to verify token with backend — abort after 3s so mobile users
+      // aren't blocked waiting on a slow server response.
+      const abortCtrl = new AbortController();
+      const abortTimer = setTimeout(() => abortCtrl.abort(), 3000);
       try {
         const response = await fetch("/auth/verify", {
           method: "GET",
@@ -91,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             "Content-Type": "application/json",
           },
           credentials: "include",
+          signal: abortCtrl.signal,
         });
+        clearTimeout(abortTimer);
 
         if (response.ok) {
           const data = await response.json();

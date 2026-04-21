@@ -1190,3 +1190,82 @@ export async function sendGeoAdminCrudNotificationEmail(
 
   return sendEmail(adminEmail, subject, html);
 }
+
+/**
+ * Send artist application confirmation to the applicant
+ */
+export async function sendArtistApplicationConfirmation({
+  toEmail,
+  stageName,
+  applicationId,
+}: {
+  toEmail: string;
+  stageName: string;
+  applicationId: number;
+}) {
+  const appUrl = getAppUrl();
+  const subject = `✅ Candidature reçue — ${stageName} | Verso Air`;
+  const html = wrapInBrandedTemplate(
+    "🎤",
+    "Candidature Artiste Reçue",
+    "from-purple-600 to-fuchsia-600",
+    "#a855f7",
+    `
+      <p style="color:#cbd5e1;font-size:15px;line-height:1.7">Bonjour <strong style="color:#fff">${stageName}</strong>,</p>
+      <p style="color:#cbd5e1;font-size:15px;line-height:1.7">
+        Nous avons bien reçu ta candidature artiste (<strong style="color:#a855f7">#${applicationId}</strong>) sur <strong>Verso Air</strong>.
+        Notre équipe l'examinera dans un délai de <strong>5 à 7 jours ouvrables</strong>.
+      </p>
+      <p style="color:#cbd5e1;font-size:15px;line-height:1.7">Tu recevras un email dès qu'une décision est prise.</p>
+      <div style="margin:28px 0">
+        <a href="${appUrl}/apply" style="background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;padding:13px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Voir ma candidature →</a>
+      </div>
+      <p style="color:#64748b;font-size:13px">Réf. candidature : #${applicationId}</p>
+    `,
+    `${appUrl}/apply`,
+  );
+  return sendEmail(toEmail, subject, html);
+}
+
+/**
+ * Notify the admin that a new artist application was submitted
+ */
+export async function sendArtistApplicationAdminNotification({
+  adminEmail,
+  stageName,
+  applicantEmail,
+  applicationId,
+  genre,
+  country,
+}: {
+  adminEmail: string;
+  stageName: string;
+  applicantEmail: string;
+  applicationId: number;
+  genre?: string;
+  country?: string;
+}) {
+  const appUrl = getAppUrl();
+  const subject = `🎤 Nouvelle candidature artiste — ${stageName}`;
+  const html = wrapInBrandedTemplate(
+    "🎤",
+    "Nouvelle Candidature Artiste",
+    "from-amber-500 to-orange-600",
+    "#f59e0b",
+    `
+      <p style="color:#cbd5e1;font-size:15px">Une nouvelle candidature artiste a été soumise.</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <tr><td style="color:#94a3b8;padding:6px 0;font-size:13px">Nom de scène</td><td style="color:#fff;font-weight:600">${stageName}</td></tr>
+        <tr><td style="color:#94a3b8;padding:6px 0;font-size:13px">Email</td><td style="color:#fff">${applicantEmail}</td></tr>
+        <tr><td style="color:#94a3b8;padding:6px 0;font-size:13px">Genre</td><td style="color:#fff">${genre || "—"}</td></tr>
+        <tr><td style="color:#94a3b8;padding:6px 0;font-size:13px">Pays</td><td style="color:#fff">${country || "—"}</td></tr>
+        <tr><td style="color:#94a3b8;padding:6px 0;font-size:13px">Réf.</td><td style="color:#f59e0b;font-weight:700">#${applicationId}</td></tr>
+      </table>
+      <div style="margin:28px 0">
+        <a href="${appUrl}/admin/contracts" style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;padding:13px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Examiner la candidature →</a>
+      </div>
+    `,
+    `${appUrl}/admin/contracts`,
+  );
+  return sendEmail(adminEmail, subject, html);
+}
