@@ -627,10 +627,23 @@
 .eagle-pierce {
   position: relative;
   animation:
-    eagle-pierce 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-    eagle-peer 2.4s ease-in-out 1.2s infinite;
+    eagle-pierce 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    eagle-peer 3s ease-in-out 0.8s infinite;
   transform-style: preserve-3d;
-  will-change: transform, opacity;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eagle-pierce {
+    animation: none;
+  }
+  .eagle-glow-ring {
+    animation: none !important;
+  }
+  .loading-dots .dot {
+    animation: none !important;
+    opacity: 0.6;
+  }
 }
 
 .animate-wing-left {
@@ -667,7 +680,7 @@
 }
 
 .page-loading-overlay.fade-out {
-  animation: overlay-exit 0.4s ease-in forwards;
+  animation: overlay-exit 0.2s ease-in forwards;
   pointer-events: none;
 }
 

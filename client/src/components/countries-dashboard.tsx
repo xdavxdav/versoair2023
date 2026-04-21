@@ -957,6 +957,7 @@ export default function DatabaseExpert({
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   // ── Add Artist dialog state ──
+  const [contractPendingCount, setContractPendingCount] = useState(0);
   const [showAddArtist, setShowAddArtist] = useState(false);
   const [isSubmittingArtist, setIsSubmittingArtist] = useState(false);
   const [newArtist, setNewArtist] = useState({
@@ -1286,6 +1287,21 @@ export default function DatabaseExpert({
       setLastFetchTime(new Date());
     }
   }, [healthData]);
+
+  // Load pending contract applications count for badge
+  useEffect(() => {
+    const fetchContractCount = () => {
+      fetch("/api/contracts/admin/applications?status=pending&limit=1")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.total !== undefined) setContractPendingCount(d.total);
+        })
+        .catch(() => {});
+    };
+    fetchContractCount();
+    const interval = setInterval(fetchContractCount, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Filter tables based on search and category
   const filteredTables = useMemo(() => {
@@ -1981,6 +1997,18 @@ export default function DatabaseExpert({
             >
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">Payments</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="contracts"
+              className="gap-1.5 data-[state=active]:bg-purple-600/40 data-[state=active]:text-purple-200 text-slate-400 text-xs sm:text-sm relative"
+            >
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">Candidatures</span>
+              {contractPendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                  {contractPendingCount > 9 ? "9+" : contractPendingCount}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -3136,6 +3164,11 @@ export default function DatabaseExpert({
             </Card>
           </TabsContent>
 
+          {/* Artist Contracts / Applications Tab */}
+          <TabsContent value="contracts" className="space-y-6 mt-8">
+            <ArtistContractsPanel />
+          </TabsContent>
+
           {/* Jobs Tab */}
           <TabsContent value="jobs" className="space-y-8 mt-8">
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
@@ -3892,6 +3925,7 @@ export default function DatabaseExpert({
               { label: "Categories", tab: "categories", icon: Layers },
               { label: "Sessions", tab: "sessions", icon: Shield },
               { label: "Payments", tab: "payments", icon: Sparkles },
+              { label: "Candidatures", tab: "contracts", icon: Music },
             ].map((item) => (
               <Button
                 key={item.tab}
@@ -5265,6 +5299,277 @@ export default function DatabaseExpert({
         onOpenChange={setShowAccountSettings}
         defaultTab={accountSettingsTab}
       />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ARTIST CONTRACTS PANEL — GeoAdmin inline component
+   ═══════════════════════════════════════════════════════════ */
+type ContractApp = {
+  id: number;
+  stage_name: string;
+  legal_name?: string;
+  email: string;
+  genre?: string;
+  country?: string;
+  status: "pending" | "under_review" | "approved" | "rejected";
+  grade?: string;
+  applied_at: string;
+  biography?: string;
+  monthly_listeners?: number;
+};
+
+function ArtistContractsPanel() {
+  const [apps, setApps] = useState<ContractApp[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const limit = 10;
+
+  const fetchApps = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+    });
+    fetch(`/api/contracts/admin/applications?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setApps(d.applications || []);
+        setTotal(d.total || 0);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [page, statusFilter]);
+
+  useEffect(() => {
+    fetchApps();
+  }, [fetchApps]);
+
+  const handleAction = async (id: number, action: "approve" | "reject") => {
+    setActionLoading(id);
+    try {
+      const r = await fetch(`/api/contracts/admin/review/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, note: "" }),
+      });
+      if (r.ok) fetchApps();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const statusBadge = (s: string) => {
+    const cfg: Record<string, string> = {
+      pending: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+      under_review: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      approved: "bg-green-500/20 text-green-300 border-green-500/30",
+      rejected: "bg-red-500/20 text-red-300 border-red-500/30",
+    };
+    const label: Record<string, string> = {
+      pending: "En attente",
+      under_review: "En revue",
+      approved: "Approuvée",
+      rejected: "Rejetée",
+    };
+    return (
+      <span
+        className={`px-2 py-0.5 text-xs rounded border font-medium ${cfg[s] || "bg-slate-500/20 text-slate-300 border-slate-500/30"}`}
+      >
+        {label[s] || s}
+      </span>
+    );
+  };
+
+  const pendingCount = apps.filter((a) => a.status === "pending").length;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Music className="h-6 w-6 text-purple-400" />
+            Candidatures Artistes
+            {pendingCount > 0 && (
+              <span className="px-2 py-0.5 bg-red-500/20 text-red-300 border border-red-500/30 text-sm rounded-full font-semibold">
+                {pendingCount} en attente
+              </span>
+            )}
+          </h2>
+          <p className="text-slate-400 text-sm mt-1">
+            {total} candidature{total !== 1 ? "s" : ""} au total
+          </p>
+        </div>
+        <button
+          onClick={fetchApps}
+          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 text-sm transition-colors"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Actualiser
+        </button>
+      </div>
+
+      {/* Status filter */}
+      <div className="flex flex-wrap gap-2">
+        {["all", "pending", "under_review", "approved", "rejected"].map((s) => (
+          <button
+            key={s}
+            onClick={() => {
+              setStatusFilter(s);
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              statusFilter === s
+                ? "bg-purple-600/40 text-purple-200 border-purple-500/50"
+                : "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
+            }`}
+          >
+            {s === "all"
+              ? "Toutes"
+              : s === "pending"
+                ? "En attente"
+                : s === "under_review"
+                  ? "En revue"
+                  : s === "approved"
+                    ? "Approuvées"
+                    : "Rejetées"}
+          </button>
+        ))}
+      </div>
+
+      {/* Applications list */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+        </div>
+      ) : apps.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <Music className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p>Aucune candidature trouvée</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {apps.map((app) => (
+            <div
+              key={app.id}
+              className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/[0.07] transition-colors"
+            >
+              {/* Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-white">
+                      {app.stage_name}
+                    </span>
+                    {statusBadge(app.status)}
+                    {app.grade && (
+                      <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded border border-amber-500/30">
+                        Grade {app.grade.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-slate-400">
+                    <span>✉️ {app.email}</span>
+                    {app.genre && <span>🎵 {app.genre}</span>}
+                    {app.country && <span>🌍 {app.country}</span>}
+                    <span>
+                      📅 {new Date(app.applied_at).toLocaleDateString("fr-FR")}
+                    </span>
+                    <span className="text-slate-600">#{app.id}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() =>
+                      setExpandedId(expandedId === app.id ? null : app.id)
+                    }
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 text-xs transition-colors"
+                  >
+                    {expandedId === app.id ? "Moins" : "Détails"}
+                  </button>
+                  {(app.status === "pending" ||
+                    app.status === "under_review") && (
+                    <>
+                      <button
+                        disabled={actionLoading === app.id}
+                        onClick={() => handleAction(app.id, "approve")}
+                        className="px-3 py-1.5 bg-green-600/30 hover:bg-green-600/50 border border-green-500/30 rounded-lg text-green-300 text-xs font-medium transition-colors disabled:opacity-50"
+                      >
+                        {actionLoading === app.id ? "…" : "✓ Approuver"}
+                      </button>
+                      <button
+                        disabled={actionLoading === app.id}
+                        onClick={() => handleAction(app.id, "reject")}
+                        className="px-3 py-1.5 bg-red-600/30 hover:bg-red-600/50 border border-red-500/30 rounded-lg text-red-300 text-xs font-medium transition-colors disabled:opacity-50"
+                      >
+                        {actionLoading === app.id ? "…" : "✗ Rejeter"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Expanded details */}
+              {expandedId === app.id && (
+                <div className="border-t border-white/10 px-4 py-3 bg-black/20 text-sm text-slate-300 space-y-2">
+                  {app.legal_name && (
+                    <p>
+                      <span className="text-slate-500">Nom légal : </span>
+                      {app.legal_name}
+                    </p>
+                  )}
+                  {app.biography && (
+                    <p>
+                      <span className="text-slate-500">Bio : </span>
+                      {app.biography}
+                    </p>
+                  )}
+                  {app.monthly_listeners !== undefined && (
+                    <p>
+                      <span className="text-slate-500">
+                        Écoutes mensuelles :{" "}
+                      </span>
+                      {app.monthly_listeners?.toLocaleString("fr-FR")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {total > limit && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-300 disabled:opacity-40 hover:bg-white/10 transition-colors"
+          >
+            ← Précédent
+          </button>
+          <span className="text-slate-400 text-sm">
+            Page {page} / {Math.ceil(total / limit)}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= Math.ceil(total / limit)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-300 disabled:opacity-40 hover:bg-white/10 transition-colors"
+          >
+            Suivant →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
