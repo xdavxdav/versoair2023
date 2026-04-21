@@ -26,21 +26,21 @@ function EagleContent() {
 
 // ─── PageLoader ──────────────────────────────────────────────────────────────
 // Used as <Suspense fallback={<PageLoader />}>.
-// Intentionally LIGHTWEIGHT — no eagle SVG, no heavy gradient — so slow-network
-// mobile users see a near-instant skeleton bar rather than a frozen black screen.
+// Golden background + static logo — branded but zero animation cost so
+// slow-network / low-RAM mobile users aren't blocked by a heavy SVG animation.
 
 export function PageLoader() {
   return (
-    <div className="fixed inset-0 z-[9990] flex flex-col items-center justify-center bg-[#0e0c08]">
-      {/* Slim shimmer bar at top */}
+    <div
+      className="fixed inset-0 z-[9990] flex flex-col items-center justify-center"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 40%, rgba(191,131,28,0.95) 0%, rgba(120,70,10,0.97) 60%, rgba(30,20,5,0.98) 100%)",
+      }}
+    >
       <div className="loading-shimmer-bar" />
-      {/* Minimal brand mark */}
-      <div className="flex flex-col items-center gap-3 mt-6">
-        <div className="w-10 h-10 rounded-full border-2 border-amber-500/40 border-t-amber-400 animate-spin" />
-        <p className="text-amber-400/70 text-xs tracking-[0.3em] uppercase font-light">
-          Verso Air
-        </p>
-      </div>
+      {/* Static logo — always present, never animates (Suspense must be fast) */}
+      <LoadingEagle className="w-40 h-40" static />
     </div>
   );
 }

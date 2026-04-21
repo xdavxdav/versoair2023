@@ -781,6 +781,12 @@
   animation-delay: 0.15s;
 }
 
+/* Static dots variant — no animation on low-end devices */
+.loading-dots--static .dot {
+  animation: none !important;
+  opacity: 0.5;
+}
+
 .loading-dots .dot:nth-child(3) {
   animation-delay: 0.3s;
 }
