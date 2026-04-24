@@ -9,7 +9,8 @@ interface LoadingEagleProps {
 /** Returns true when the device is likely low-end or prefers reduced motion */
 function isLowEndDevice(): boolean {
   // Respect the OS-level accessibility setting first
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return true;
   // Low CPU core count is a reliable proxy for cheap/old hardware
   const cores = navigator.hardwareConcurrency ?? 4;
   if (cores <= 2) return true;
@@ -17,7 +18,8 @@ function isLowEndDevice(): boolean {
   const conn = (navigator as any).connection;
   if (conn) {
     if (conn.saveData) return true;
-    if (conn.effectiveType === "2g" || conn.effectiveType === "slow-2g") return true;
+    if (conn.effectiveType === "2g" || conn.effectiveType === "slow-2g")
+      return true;
   }
   return false;
 }
@@ -64,7 +66,9 @@ export default function LoadingEagle({
           />
         </div>
       )}
-      <div className={`loading-dots mt-4 ${isStatic ? "loading-dots--static" : ""}`}>
+      <div
+        className={`loading-dots mt-4 ${isStatic ? "loading-dots--static" : ""}`}
+      >
         <span className="dot" />
         <span className="dot" />
         <span className="dot" />
