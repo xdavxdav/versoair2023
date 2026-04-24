@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>𝕍𝕖𝕣𝕤𝕠𝔸𝕚𝕣™️|𝕆ℕ𝕃𝕀ℕ𝔼</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://i.ibb.co/gL34XNP5/Logo-page.png"
+      alt="Logo-page"
+    />
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#d97706" />
+    <!-- iOS PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="VersoAir" />
+    <link
+      rel="apple-touch-icon"
+      href="https://i.ibb.co/gL34XNP5/Logo-page.png"
+    />
+    <!-- Ensure Tailwind CSS is loaded via the app entry -->
+    <!-- Google Fonts: Caveat (handstyle font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Chart.js for analytics visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-V74QCY3MYD"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-V74QCY3MYD");
+    </script>
+    <script type="module" crossorigin src="/assets/music-BTWdv2pC.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-tiptap-DSRBTjjf.js">
+    <link rel="stylesheet" crossorigin href="/assets/music-Ds5GpWMs.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Klaviyo Onsite Tracking -->
+    <script
+      async
+      type="text/javascript"
+      src="https://static.klaviyo.com/onsite/js/Ygrd6h/klaviyo.js?company_id=Ygrd6h"
+    ></script>
+    <script type="text/javascript">
+      !(function () {
+        if (!window.klaviyo) {
+          window._klOnsite = window._klOnsite || [];
+          try {
+            window.klaviyo = new Proxy(
+              {},
+              {
+                get: function (n, i) {
+                  return "push" === i
+                    ? function () {
+                        var n;
+                        (n = window._klOnsite).push.apply(n, arguments);
+                      }
+                    : function () {
+                        for (
+                          var n = arguments.length, o = new Array(n), w = 0;
+                          w < n;
+                          w++
+                        )
+                          o[w] = arguments[w];
+                        var t =
+                            "function" == typeof o[o.length - 1]
+                              ? o.pop()
+                              : void 0,
+                          e = new Promise(function (n) {
+                            window._klOnsite.push(
+                              [i].concat(o, [
+                                function (i) {
+                                  (t && t(i), n(i));
+                                },
+                              ]),
+                            );
+                          });
+                        return e;
+                      };
+                },
+              },
+            );
+          } catch (n) {
+            ((window.klaviyo = window.klaviyo || []),
+              (window.klaviyo.push = function () {
+                var n;
+                (n = window._klOnsite).push.apply(n, arguments);
+              }));
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

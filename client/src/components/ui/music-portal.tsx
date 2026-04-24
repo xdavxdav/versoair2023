@@ -245,15 +245,20 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
               </div>
             </div>
 
-            <Link href="/artist-portal">
-              <Button
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mt-4"
-                onClick={onClose}
-              >
-                <Music className="mr-2 h-4 w-4" />
-                Artist Portal - Full Stats
-              </Button>
-            </Link>
+            <Button
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mt-4"
+              onClick={() => {
+                onClose();
+                const musicUrl =
+                  (window as any).__APP_CONFIG__?.siblingUrl ||
+                  import.meta.env.VITE_MUSIC_URL ||
+                  "http://localhost:5004";
+                window.location.href = musicUrl + "/artist-portal";
+              }}
+            >
+              <Music className="mr-2 h-4 w-4" />
+              Artist Portal - Full Stats
+            </Button>
           </div>
         </div>
       </div>

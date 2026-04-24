@@ -16,7 +16,8 @@ import {
   Suspense,
 } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
-import ContentNav, { isContentNavPath } from "@/components/ContentNav";
+import { isContentNavPath } from "@/components/ContentNav";
+const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
 
 // ─────────────────────────────────────────────────────
@@ -133,8 +134,6 @@ const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 // 🔒 Route Guards (kept eager — lightweight)
 // ─────────────────────────────────────────────────────
 import ProtectedRoute from "@/components/ProtectedRoute";
-import MusicProtectedRoute from "@/components/music/MusicProtectedRoute";
-import { MusicArtistRoute } from "@/components/music/MusicProtectedRoute";
 
 // ─────────────────────────────────────────────────────
 // ❓ Help & Support (lazy-loaded)
@@ -180,35 +179,14 @@ const TeamMember = lazy(() => import("@/pages/team-member"));
 const Sponsor = lazy(() => import("@/pages/sponsor"));
 const SponsorsDirectory = lazy(() => import("@/pages/sponsors-directory"));
 const Sponsorship = lazy(() => import("@/pages/sponsorship"));
-import MusicPortal from "@/components/ui/music-portal";
 
 // ─────────────────────────────────────────────────────
 // 🎧 Streaming Platform (lazy-loaded)
 // ─────────────────────────────────────────────────────
-import { AudioProvider } from "@/lib/audio-context";
-import AudioPlayer from "@/components/audio/AudioPlayer";
-const StreamPage = lazy(() => import("@/pages/stream"));
-const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
-const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
-const LibraryPage = lazy(() => import("@/pages/library"));
-const AnalyticsStreamingPage = lazy(
-  () => import("@/pages/analytics-streaming"),
-);
-const ArenaContestPage = lazy(() => import("@/pages/arena-contest"));
-const RevenuePulsePage = lazy(() => import("@/pages/revenue-pulse"));
-const ArcadePage = lazy(() => import("@/pages/arcade"));
-const ListenerPortal = lazy(() => import("@/pages/listener-portal"));
-const StreamerPortal = lazy(() => import("@/pages/streamer-portal"));
 
 // ─────────────────────────────────────────────────────
 // 🎹 Musical Universe (lazy-loaded)
 // ─────────────────────────────────────────────────────
-const MusicDashboard = lazy(() => import("@/pages/music/dashboard"));
-const BeatmakerStudio = lazy(() => import("@/pages/music/beatmaker-studio"));
-const VersaVidsStudio = lazy(() => import("@/pages/music/versavids-studio"));
-const MusicVault = lazy(() => import("@/pages/music/vault"));
-const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
-const MusicLibrary = lazy(() => import("@/pages/music/library"));
 
 // ─────────────────────────────────────────────────────
 // 📢 Marketing Platform (lazy-loaded)
@@ -227,16 +205,30 @@ const AdminPrintshop = lazy(() => import("@/pages/admin-printshop"));
 // ─────────────────────────────────────────────────────
 import Footer from "@/components/ui/footer";
 import Navbar from "@/components/ui/navbar";
-import BlogNavbar from "@/components/BlogNavbar";
-import { MusicNavbar } from "@/components/music/MusicNavbar";
-import LocationPanel from "@/components/ui/location-panel";
+const BlogNavbar = lazy(() => import("@/components/BlogNavbar"));
+const LocationPanel = lazy(() => import("@/components/ui/location-panel"));
+const MusicPortal = lazy(() => import("@/components/ui/music-portal"));
 import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
 import NavigationProgress from "@/components/ui/NavigationProgress";
-import PullToRefresh from "@/components/PullToRefresh";
-import TestimonialsFloating from "@/components/ui/testimonials-floating";
-import { TeamSection } from "@/components/ui/team-section";
-import { SponsorsSection } from "@/components/ui/sponsors-section";
-import { MobileMenuBubble } from "@/components/ui/mobile-menu-bubble";
+const PullToRefresh = lazy(() => import("@/components/PullToRefresh"));
+const TestimonialsFloating = lazy(
+  () => import("@/components/ui/testimonials-floating"),
+);
+const TeamSection = lazy(() =>
+  import("@/components/ui/team-section").then((m) => ({
+    default: m.TeamSection,
+  })),
+);
+const SponsorsSection = lazy(() =>
+  import("@/components/ui/sponsors-section").then((m) => ({
+    default: m.SponsorsSection,
+  })),
+);
+const MobileMenuBubble = lazy(() =>
+  import("@/components/ui/mobile-menu-bubble").then((m) => ({
+    default: m.MobileMenuBubble,
+  })),
+);
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
@@ -360,18 +352,7 @@ function Router() {
         path="/artist-portal/welcome"
         component={ArtistPortalWelcomePage}
       />
-      <Route path="/artist-portal/dashboard">
-        {() => (
-          <ProtectedRoute
-            component={() => (
-              <Suspense fallback={<PageLoader />}>
-                <ArtistPortalDashboard />
-              </Suspense>
-            )}
-          />
-        )}
-      </Route>
-      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
+
       <Route path="/programs" component={CulturalPrograms} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
@@ -526,76 +507,15 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🎧 STREAMING — Verso Air Stream platform
           ═══════════════════════════════════════════════ */}
-      <Route path="/stream" component={StreamPage} />
-      <Route path="/track/:id" component={TrackDetailPage} />
-      <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
-      <Route path="/library" component={LibraryPage} />
-      <Route path="/analytics" component={AnalyticsStreamingPage} />
-      <Route path="/arena" component={ArenaContestPage} />
-      <Route path="/arena/:id" component={ArenaContestPage} />
-      <Route path="/revenue-pulse" component={RevenuePulsePage} />
-      <Route path="/arcade" component={ArcadePage} />
-      <Route path="/listener-portal" component={ListenerPortal} />
-      <Route path="/streamer-portal" component={StreamerPortal} />
 
       {/* ═══════════════════════════════════════════════
           🎹 MUSICAL UNIVERSE — Creator ecosystem
           ═══════════════════════════════════════════════ */}
-      <Route path="/music">
-        {() => <MusicProtectedRoute component={MusicDashboard} />}
-      </Route>
-      <Route path="/music/dashboard">
-        {() => <MusicProtectedRoute component={MusicDashboard} />}
-      </Route>
-      <Route path="/music/studio">
-        {() => <MusicArtistRoute component={BeatmakerStudio} />}
-      </Route>
-      <Route path="/music/versavids">
-        {() => <MusicArtistRoute component={VersaVidsStudio} />}
-      </Route>
-      <Route path="/versavids">
-        {() => <Redirect to="/music/versavids" />}
-      </Route>
-      <Route path="/music/vault">
-        {() => <MusicArtistRoute component={MusicVault} />}
-      </Route>
-      <Route path="/music/royalties">
-        {() => <MusicArtistRoute component={MusicRoyalties} />}
-      </Route>
-      <Route path="/music/library">
-        {() => <MusicProtectedRoute component={MusicLibrary} />}
-      </Route>
-      <Route path="/music/favorites">
-        {() => <Redirect to="/music/library" />}
-      </Route>
       {/* Analytics/Insights — redirect to main analytics for now */}
-      <Route path="/music/insights">{() => <Redirect to="/analytics" />}</Route>
       {/* Live/Royale — redirect to arena/stream */}
-      <Route path="/music/live">{() => <Redirect to="/stream" />}</Route>
       {/* Management routes — redirect to dashboard until dedicated pages */}
-      <Route path="/music/projects">
-        {() => <Redirect to="/music/dashboard" />}
-      </Route>
-      <Route path="/music/releases">
-        {() => <Redirect to="/music/dashboard" />}
-      </Route>
-      <Route path="/music/planner">
-        {() => <Redirect to="/music/dashboard" />}
-      </Route>
-      <Route path="/music/marketing">
-        {() => <Redirect to="/music/dashboard" />}
-      </Route>
-      <Route path="/music/artists">{() => <Redirect to="/artistes" />}</Route>
-      <Route path="/music/a-and-r">
-        {() => <Redirect to="/music/dashboard" />}
-      </Route>
-      <Route path="/music/settings">{() => <Redirect to="/profile" />}</Route>
-      <Route path="/music/upgrade">{() => <Redirect to="/apply" />}</Route>
       {/* StreamRoyale public access */}
-      <Route path="/streamroyale">{() => <Redirect to="/arena" />}</Route>
-      <Route path="/royale">{() => <Redirect to="/arena" />}</Route>
       {/* Redirects for legacy/alternate paths */}
-      <Route path="/beatmaker">{() => <Redirect to="/music/studio" />}</Route>
 
       {/* 404 Fallback */}
       <Route component={NotFound} />
@@ -604,21 +524,14 @@ function Router() {
 }
 
 function AppContent() {
-  const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
+  const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
   const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
   const isContentNavPage = isContentNavPath(currentPath);
-  const isMusicPage =
-    currentPath.startsWith("/music") ||
-    currentPath.startsWith("/artist-portal") ||
-    currentPath.startsWith("/stream") ||
-    currentPath.startsWith("/streamer-portal") ||
-    currentPath.startsWith("/listener-portal") ||
-    currentPath.startsWith("/arcade") ||
-    currentPath.startsWith("/arena");
+  const isMusicPage = false;
   const { user, logout } = useAuthContext();
   const { currentLang } = useLanguage();
   const isFr = currentLang === "fr";
@@ -807,22 +720,25 @@ function AppContent() {
           !isImmersivePage &&
           (currentPath === "/blog" || currentPath === "/marketplace") &&
           !marketplaceModalOpen &&
-          !showContentNav && <BlogNavbar />}
+          !showContentNav && (
+            <Suspense fallback={null}>
+              <BlogNavbar />
+            </Suspense>
+          )}
       </div>
       {/* Spacer for fixed header — always present, height auto-measured */}
       <div style={{ height: headerHeight }} />
 
       {/* ── Music Universe Navbar — sits below the amber bar ── */}
-      {isMusicPage && (
-        <div className="fixed top-7 left-0 right-0 z-[59]">
-          <MusicNavbar />
-        </div>
-      )}
-      {/* Spacer for music navbar (amber bar spacer already above) */}
-      {isMusicPage && <div className="h-16" />}
 
-      <PullToRefresh />
-      {showContentNav && <ContentNav />}
+      <Suspense fallback={null}>
+        <PullToRefresh />
+      </Suspense>
+      {showContentNav && (
+        <Suspense fallback={null}>
+          <ContentNav />
+        </Suspense>
+      )}
       {/* Main Navbar — hide on auth pages, ContentNav pages, music pages, immersive pages,
            and mobile/tablet (where MobileMenuBubble handles navigation) */}
       {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
@@ -834,25 +750,27 @@ function AppContent() {
           }`}
         >
           <Navbar
-            onMusicPortalToggle={() => setIsMusicPortalOpen((prev) => !prev)}
             onLocationPanelToggle={() =>
               setIsLocationPanelOpen((prev) => !prev)
             }
-            isMusicPortalOpen={isMusicPortalOpen}
             isLocationPanelOpen={isLocationPanelOpen}
           />
         </div>
       )}
 
       {/* Side Panels */}
-      <LocationPanel
-        isOpen={isLocationPanelOpen}
-        onClose={() => setIsLocationPanelOpen(false)}
-      />
-      <MusicPortal
-        isOpen={isMusicPortalOpen}
-        onClose={() => setIsMusicPortalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <LocationPanel
+          isOpen={isLocationPanelOpen}
+          onClose={() => setIsLocationPanelOpen(false)}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MusicPortal
+          isOpen={isMusicPortalOpen}
+          onClose={() => setIsMusicPortalOpen(false)}
+        />
+      </Suspense>
 
       {/* Loading */}
       <LoadingOverlay />
@@ -874,11 +792,13 @@ function AppContent() {
 
       {/* Bottom Sections — home page only */}
       {isHomePage && (
-        <div>
-          <TestimonialsFloating />
-          <TeamSection />
-          <SponsorsSection />
-        </div>
+        <Suspense fallback={null}>
+          <div>
+            <TestimonialsFloating />
+            <TeamSection />
+            <SponsorsSection />
+          </div>
+        </Suspense>
       )}
       {/* Footer — hide on music pages; show only motto on immersive pages */}
       {!isMusicPage && !isImmersivePage && (
@@ -902,7 +822,11 @@ function AppContent() {
       )}
 
       {/* Mobile Menu Bubble — hide on Blog & Musical Universe and immersive pages */}
-      {!isImmersivePage && <MobileMenuBubble />}
+      {!isImmersivePage && (
+        <Suspense fallback={null}>
+          <MobileMenuBubble />
+        </Suspense>
+      )}
 
       {/* Quick Sign In Modal — global shortcut */}
       <QuickSignIn
@@ -928,11 +852,8 @@ function App() {
             <AuthProvider>
               <TooltipProvider>
                 <LoadingProvider>
-                  <AudioProvider>
-                    <NavigationProgress />
-                    <AppContent />
-                    <AudioPlayer />
-                  </AudioProvider>
+                  <NavigationProgress />
+                  <AppContent />
                   <InactivityGuard />
                   <Toaster />
                 </LoadingProvider>

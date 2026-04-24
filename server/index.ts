@@ -1,6 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// ─── Set sibling URL for runtime injection into HTML ─────────────────────────
+// On Render: set MUSIC_APP_URL=https://your-music-service.onrender.com in dashboard
+// Locally defaults to localhost:5004
+if (!process.env.SIBLING_URL) {
+  process.env.SIBLING_URL = process.env.MUSIC_APP_URL || "http://localhost:5004";
+}
+
 // ─── Startup security checks (must run before anything else) ──────────────────
 if (!process.env.JWT_SECRET) {
   console.error(
