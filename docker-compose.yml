@@ -1,0 +1,62 @@
+services:
+  app:
+    build: .
+    container_name: verso_app
+    ports:
+      - "5002:5002" # Maps container port 5002 to host port 5002
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://versoair:versoair2025@db:5432/versoair_business_intelligence
+      - SESSION_SECRET=762d2b34a56d43f2d3c322689a8d73c2
+      - PORT=5002
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: npm run start
+    networks:
+      - verso-network
+
+  db:
+    image: postgres:15
+    container_name: my_postgres_db
+    environment:
+      - POSTGRES_USER=versoair
+      - POSTGRES_PASSWORD=versoair2025
+      - POSTGRES_DB=versoair_business_intelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U versoair"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - verso-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: verso_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@versoair.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - verso-network
+
+volumes:
+  pgdata:
+
+networks:
+  verso-network:
+    driver: bridge

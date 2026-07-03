@@ -1,0 +1,365 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Printer,
+  Upload,
+  ShoppingCart,
+  FileCheck,
+  AlertCircle,
+  CheckCircle2,
+  Package,
+  Clock,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+
+export default function PrintServicesPage() {
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  const token =
+    localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+  const isLoggedIn = !!token;
+
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [advancedCheck, setAdvancedCheck] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
+
+  // Print products catalog
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["marketing", "print", "products"],
+    queryFn: async () => {
+      const res = await fetch("/api/marketing/print/products");
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  // My print jobs
+  const { data: myJobs } = useQuery({
+    queryKey: ["marketing", "print", "jobs"],
+    queryFn: async () => {
+      const res = await fetch("/api/marketing/print/jobs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    enabled: isLoggedIn,
+  });
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fileInput = form.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    if (!fileInput?.files?.[0]) {
+      toast({ title: "No file selected", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    if (selectedProduct) formData.append("product_id", selectedProduct);
+    if (advancedCheck) formData.append("advanced_check", "true");
+
+    try {
+      const res = await fetch("/api/marketing/print/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      setUploadResult(json);
+      toast({
+        title: "File uploaded!",
+        description: "Your print file has been validated and submitted.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Upload failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAddToCart = async (product: any) => {
+    try {
+      await addItem({
+        item_type: "print_product",
+        item_id: product.id,
+        item_name: product.name,
+        price_cents: product.price_cents,
+      });
+      toast({ title: "Added to cart!", description: `${product.name} added` });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to add to cart",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const statusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "bg-yellow-500/20 text-yellow-400",
+      approved: "bg-blue-500/20 text-blue-400",
+      in_production: "bg-purple-500/20 text-purple-400",
+      printing: "bg-indigo-500/20 text-indigo-400",
+      quality_check: "bg-cyan-500/20 text-cyan-400",
+      shipped: "bg-green-500/20 text-green-400",
+      completed: "bg-emerald-500/20 text-emerald-400",
+      cancelled: "bg-red-500/20 text-red-400",
+    };
+    return (
+      <Badge className={colors[status] || "bg-gray-500/20 text-gray-400"}>
+        {status.replace(/_/g, " ")}
+      </Badge>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+      <div className="max-w-[95vw] mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-green-500/10 text-green-400 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <Printer className="h-4 w-4" />
+            Print Services
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Professional Print Services
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Business cards, flyers, brochures, posters, banners — high-quality
+            printing with fast turnaround and delivery.
+          </p>
+        </div>
+
+        {/* Product Catalog */}
+        <h2 className="text-xl font-bold text-white mb-4">Print Catalog</h2>
+        {isLoading ? (
+          <div className="text-gray-400 text-center py-8">
+            Loading products...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
+            {(products || []).map((product: any) => (
+              <Card key={product.id} className="bg-gray-800/50 border-gray-700">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white text-base">
+                      {product.name}
+                    </CardTitle>
+                    <span className="text-amber-400 font-bold">
+                      ${(product.price_cents / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-400 text-sm mb-3">
+                    {product.description}
+                  </p>
+                  {product.specs && (
+                    <div className="text-xs text-gray-500 mb-3">
+                      {typeof product.specs === "object" ? (
+                        Object.entries(product.specs).map(([k, v]) => (
+                          <span key={k} className="inline-block mr-3">
+                            <span className="text-gray-400">{k}:</span>{" "}
+                            {String(v)}
+                          </span>
+                        ))
+                      ) : (
+                        <span>{String(product.specs)}</span>
+                      )}
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-1" />
+                    Add to Cart
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* File Upload Section */}
+        {isLoggedIn && (
+          <Card className="bg-gray-800/50 border-gray-700 mb-12">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Upload className="h-5 w-5 text-amber-400" />
+                Upload Print-Ready File
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpload} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-300">
+                      Print File (PDF, JPEG, PNG, TIFF)
+                    </Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif,.svg,.ai,.eps"
+                      className="bg-gray-900 border-gray-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">Product (optional)</Label>
+                    <Select
+                      value={selectedProduct}
+                      onValueChange={setSelectedProduct}
+                    >
+                      <SelectTrigger className="bg-gray-900 border-gray-600 text-white">
+                        <SelectValue placeholder="Select product" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-600">
+                        {(products || []).map((p: any) => (
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={advancedCheck}
+                    onCheckedChange={setAdvancedCheck}
+                  />
+                  <Label className="text-gray-300">
+                    Advanced validation (DPI, color space, dimensions)
+                  </Label>
+                </div>
+                <Button
+                  type="submit"
+                  className="bg-amber-500 hover:bg-amber-600 text-black"
+                  disabled={uploading}
+                >
+                  {uploading
+                    ? "Uploading & Validating..."
+                    : "Upload & Validate"}
+                </Button>
+              </form>
+
+              {/* Upload result */}
+              {uploadResult && (
+                <div className="mt-4 p-4 rounded-lg bg-gray-900 border border-gray-700">
+                  <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-green-400" />
+                    Validation Result
+                  </h4>
+                  {uploadResult.validation?.basic && (
+                    <div className="flex items-center gap-2 text-sm mb-1">
+                      {uploadResult.validation.basic.valid ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-400" />
+                      )}
+                      <span
+                        className={
+                          uploadResult.validation.basic.valid
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }
+                      >
+                        Basic:{" "}
+                        {uploadResult.validation.basic.valid
+                          ? "Passed"
+                          : "Failed"}
+                      </span>
+                    </div>
+                  )}
+                  {uploadResult.validation?.advanced && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      <p>
+                        DPI: {uploadResult.validation.advanced.dpi || "N/A"}
+                      </p>
+                      <p>
+                        Dimensions: {uploadResult.validation.advanced.width}×
+                        {uploadResult.validation.advanced.height}
+                      </p>
+                      <p>
+                        Color Space:{" "}
+                        {uploadResult.validation.advanced.colorSpace || "N/A"}
+                      </p>
+                      {uploadResult.validation.advanced.warnings?.map(
+                        (w: string, i: number) => (
+                          <p key={i} className="text-yellow-400">
+                            ⚠️ {w}
+                          </p>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* My Print Jobs */}
+        {myJobs && myJobs.length > 0 && (
+          <div>
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Package className="h-5 w-5 text-amber-400" />
+              My Print Jobs
+            </h2>
+            <div className="space-y-3">
+              {myJobs.map((job: any) => (
+                <Card key={job.id} className="bg-gray-800/50 border-gray-700">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        {job.file_name || `Job #${job.id}`}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {job.product_name || "Custom print"}
+                      </p>
+                      <p className="text-gray-500 text-xs flex items-center gap-1 mt-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(job.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {statusBadge(job.status)}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

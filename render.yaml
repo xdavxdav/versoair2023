@@ -1,0 +1,30 @@
+databases:
+  - name: versoair-db
+    plan: free
+    databaseName: versoair_business_intelligence
+    user: versoair
+
+services:
+  - type: web
+    name: versoair
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build && (npm run db:push || echo 'db:push skipped') && npm run seed
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: versoair-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: VITE_API_URL
+        sync: false

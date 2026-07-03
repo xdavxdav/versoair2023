@@ -1,0 +1,1851 @@
+/* Load custom fonts */
+@import "./styles/fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(43, 83%, 48%);
+  --primary: hsl(36, 82%, 43%);
+  --primary-foreground: hsl(60, 9.1%, 97.8%);
+  --secondary: hsl(48, 96%, 89%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(36, 82%, 43%);
+  --primary-foreground: hsl(60, 9.1%, 97.8%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Prevent scroll chaining: inner scrollable areas (modals, dialogs, sidebars,
+     dropdowns, pinned sections) must not leak scroll events to the outer page
+     when they hit their scroll boundary. The topmost visible scroll always
+     takes priority. */
+  [role="dialog"],
+  [data-radix-scroll-area-viewport],
+  [data-state="open"][role="dialog"],
+  aside,
+  .pin-spacer,
+  .panels-wrapper {
+    overscroll-behavior: contain;
+  }
+
+  /* GSAP pinned panel sections: prevent touch scroll bleed on mobile */
+  .panel {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Enhanced scrolling for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(60, 4.8%, 95.9%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(36, 82%, 43%);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(36, 82%, 33%);
+  }
+
+  /* scroll-behavior is set on html only — not on all elements */
+
+  /* Enhanced smooth scrolling for location panel */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Z-index hierarchy for proper layering */
+  .side-panels {
+    z-index: 10001 !important; /* Highest - Music portal & location panel */
+  }
+
+  .panel-overlay {
+    z-index: 10000 !important; /* Panel background overlays */
+  }
+
+  .navbar-dropdown {
+    z-index: 9999 !important; /* Navbar dropdown menus */
+  }
+
+  .navbar-main {
+    z-index: 9998 !important; /* Navbar itself */
+  }
+
+  .page-header {
+    z-index: 9997 !important; /* Page headers below navbar */
+  }
+
+  .sticky-content {
+    z-index: 9996 !important; /* Sticky page content */
+  }
+
+  /* Dropdown enhancements */
+  .dropdown-menu {
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  .dropdown-item:hover {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    transition: all 0.15s ease-in-out;
+  }
+
+  @keyframes slideInFromRight {
+    0% {
+      transform: translateX(100%) translateY(-50%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0) translateY(-50%);
+      opacity: 1;
+    }
+  }
+
+  .boxe.anime,
+  .boxe.anime.right,
+  .boxe.anime.left,
+  .boxe.anime.in-view {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Fullscreen Video Container */
+  .video-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Mobile-specific fixes */
+  @media (max-width: 768px) {
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    .video-container {
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    /* Mobile navbar hide/show animation */
+    .navbar-mobile-hidden {
+      transform: translateY(-100%);
+    }
+
+    .navbar-mobile-visible {
+      transform: translateY(0);
+    }
+
+    /* Ensure mobile panels are properly sized */
+    .side-panels {
+      left: 8px !important;
+      right: 8px !important;
+      width: auto !important;
+    }
+
+    /* Mobile testimonials positioning */
+    .testimonials-mobile {
+      left: 16px !important;
+      right: 16px !important;
+      width: auto !important;
+      bottom: 80px !important;
+    }
+  }
+
+  /* Testimonials animation */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .testimonials-enter {
+    animation: slideInUp 0.5s ease-out;
+  }
+
+  /* Smooth scrolling for music portal */
+  .music-portal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+
+  .music-portal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .music-portal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .music-portal-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  .music-portal-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .video-container video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  /* Animated Boxes Container */
+  .containeur {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0;
+  }
+
+  .boxes {
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .boxe {
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 400px;
+  }
+
+  .boxe.anime.right {
+    transform: translateX(100px);
+  }
+
+  .boxe.anime.left {
+    transform: translateX(-100px);
+  }
+
+  .boxe.anime.in-view {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .boxe > div {
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .boxe a > div:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .boxe a {
+    display: block;
+    text-decoration: none;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .giant-text {
+      font-size: 4rem;
+      letter-spacing: 0.1em;
+    }
+
+    .boxes {
+      gap: 1rem;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .boxe {
+      width: 280px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .giant-text {
+      font-size: 2.5rem;
+    }
+
+    .boxe {
+      width: 250px;
+    }
+
+    .boxe > div img {
+      height: 160px;
+    }
+  }
+
+  /* Smooth transitions for all interactive elements */
+  a,
+  button,
+  .custom-card-inner {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Enhanced hover states */
+  .custom-card-inner:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Custom styles for Plan V4 */
+.gradient-bg {
+  background: linear-gradient(
+    to top right,
+    hsl(36, 82%, 43%),
+    hsl(48, 96%, 89%)
+  );
+}
+
+.video-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.slide-panel {
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.slide-panel.active {
+  transform: translateX(0);
+}
+
+.slide-panel.right {
+  transform: translateX(100%);
+}
+
+.slide-panel.right.active {
+  transform: translateX(0);
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+
+.portal-toggle {
+  transform: scale(0.9);
+  transition: all 0.3s ease;
+}
+
+.portal-toggle:hover {
+  transform: scale(1);
+}
+
+.navbar-logo {
+  height: 74px;
+  width: 96px;
+}
+
+.custom-container {
+  margin: 20px auto;
+  max-width: 1200px;
+  background-color: hsl(60, 4.8%, 95.9%);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.custom-card {
+  border: none;
+  background: hsl(48, 96%, 89%);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.custom-search {
+  width: 100%;
+  margin-top: 20px;
+  background-color: hsl(0, 0%, 100%);
+  padding: 10px 15px;
+  border-radius: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+.custom-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  padding: 0 10px;
+}
+
+.custom-search-icon {
+  background-color: hsl(48, 96%, 89%);
+  color: hsl(0, 0%, 100%);
+  padding: 10px;
+  border-radius: 50%;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: hsl(0, 0%, 100%);
+  border-radius: 8px;
+  padding: 11px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.custom-card-inner:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.custom-mg-text {
+  font-size: 14px;
+  color: hsl(0, 0%, 20%);
+  text-align: center;
+}
+
+.custom-card-inner img {
+  margin-bottom: 10px;
+  transition: transform 0.3s ease;
+}
+
+.custom-card-inner:hover img {
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .slide-panel {
+    width: 100% !important;
+  }
+}
+
+/* Eagle flying animations */
+@keyframes wing-flap-left {
+  0%,
+  100% {
+    transform: rotate(-5deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(-25deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(-35deg) translateY(-5px);
+  }
+  75% {
+    transform: rotate(-20deg) translateY(-2px);
+  }
+}
+
+@keyframes wing-flap-right {
+  0%,
+  100% {
+    transform: rotate(5deg) translateY(0px);
+  }
+  25% {
+    transform: rotate(25deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(35deg) translateY(-5px);
+  }
+  75% {
+    transform: rotate(20deg) translateY(-2px);
+  }
+}
+
+@keyframes eagle-soar {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-8px) translateX(2px);
+  }
+  50% {
+    transform: translateY(-15px) translateX(0px);
+  }
+  75% {
+    transform: translateY(-8px) translateX(-2px);
+  }
+}
+
+@keyframes eagle-glide {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(1deg);
+  }
+}
+
+/* Eagle piercing-the-screen animation */
+@keyframes eagle-pierce {
+  0% {
+    transform: translateZ(-400px) scale(0.2) rotateX(20deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  40% {
+    transform: translateZ(-30px) scale(0.9) rotateX(5deg);
+  }
+  60% {
+    transform: translateZ(50px) scale(1.15) rotateX(-5deg);
+  }
+  75% {
+    transform: translateZ(20px) scale(1) rotateX(-2deg);
+  }
+  100% {
+    transform: translateZ(30px) scale(1.05) rotateX(-2deg) rotateY(0deg);
+  }
+}
+
+@keyframes eagle-peer {
+  0%,
+  100% {
+    transform: translateZ(30px) scale(1.05) rotateY(0deg) translateY(0px);
+  }
+  25% {
+    transform: translateZ(50px) scale(1.1) rotateY(8deg) translateY(-8px);
+  }
+  50% {
+    transform: translateZ(35px) scale(1.07) rotateY(0deg) translateY(-12px);
+  }
+  75% {
+    transform: translateZ(50px) scale(1.1) rotateY(-8deg) translateY(-6px);
+  }
+}
+
+.eagle-pierce {
+  position: relative;
+  animation:
+    eagle-pierce 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    eagle-peer 3s ease-in-out 0.8s infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eagle-pierce {
+    animation: none;
+  }
+  .eagle-glow-ring {
+    animation: none !important;
+  }
+  .loading-dots .dot {
+    animation: none !important;
+    opacity: 0.6;
+  }
+}
+
+.animate-wing-left {
+  animation: wing-flap-left 1.2s ease-in-out infinite;
+  transform-origin: 120px 130px;
+}
+
+.animate-wing-right {
+  animation: wing-flap-right 1.2s ease-in-out infinite;
+  transform-origin: 120px 130px;
+}
+
+.eagle-flying {
+  animation:
+    eagle-soar 3s ease-in-out infinite,
+    eagle-glide 4s ease-in-out infinite;
+}
+
+/* ─── Page-transition loading overlay ─── */
+.page-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(191, 131, 28, 0.95) 0%,
+    rgba(120, 70, 10, 0.97) 60%,
+    rgba(30, 20, 5, 0.98) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlay-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.page-loading-overlay.fade-out {
+  animation: overlay-exit 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes overlay-enter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-exit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ─── Panel icon CSS animations (replace Framer Motion infinite loops) ─── */
+@keyframes panelIconFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes panelIconWiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+@keyframes panelIconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ─── Pulsing glow ring behind the eagle ─── */
+.eagle-glow-ring {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 200, 50, 0.35) 0%,
+    rgba(191, 131, 28, 0.15) 45%,
+    transparent 70%
+  );
+  animation: glow-pulse 1.8s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+/* ─── Animated loading dots ─── */
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+/* Static dots variant — no animation on low-end devices */
+.loading-dots--static .dot {
+  animation: none !important;
+  opacity: 0.5;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* ─── Shimmer progress bar at overlay top ─── */
+.loading-shimmer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.loading-shimmer-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.7),
+    transparent
+  );
+  animation: shimmer-slide 1s ease-in-out infinite;
+}
+
+@keyframes shimmer-slide {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ─── Navigation progress bar shimmer ─── */
+@keyframes nav-shimmer {
+  0% {
+    left: -60%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ─── Page content entrance after loading ─── */
+.page-enter {
+  animation: page-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes page-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sliding text animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes scroll-continuous {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-25%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 20s linear infinite;
+}
+
+.animate-scroll-continuous {
+  animation: scroll-continuous 40s linear infinite;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — Mobile & Tablet professional overhaul
+   Breakpoints: 480 (phone) · 640 (sm) · 768 (md/tablet) · 1024 (lg/desktop)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── GLOBAL: Responsive typography clamp ──
+   Automatically scale headings on all pages without touching JSX */
+@media (max-width: 640px) {
+  .text-5xl {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+  .text-4xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  .text-3xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+  .text-2xl {
+    font-size: 1.125rem !important;
+    line-height: 1.5rem !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .text-5xl {
+    font-size: 2.25rem !important;
+    line-height: 2.5rem !important;
+  }
+  .text-4xl {
+    font-size: 1.875rem !important;
+    line-height: 2.25rem !important;
+  }
+}
+
+/* ── GLOBAL: Section padding reduction ──
+   py-20, py-16 → smaller on mobile */
+@media (max-width: 640px) {
+  .py-20 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+  .py-16 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+  .py-12 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  .gap-8 {
+    gap: 1rem !important;
+  }
+  .gap-6 {
+    gap: 0.75rem !important;
+  }
+  .mb-12 {
+    margin-bottom: 1.5rem !important;
+  }
+  .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .py-20 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+  }
+  .py-16 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+}
+
+/* ── GLOBAL: Tab grids — prevent crush on mobile ── */
+@media (max-width: 640px) {
+  /* Any 4+ col tab grid becomes scrollable horizontal row on phone */
+  [role="tablist"].grid-cols-4,
+  [role="tablist"].grid-cols-5,
+  [role="tablist"].grid-cols-6 {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 0.25rem !important;
+    padding-bottom: 0.25rem;
+  }
+  [role="tablist"].grid-cols-4 > *,
+  [role="tablist"].grid-cols-5 > *,
+  [role="tablist"].grid-cols-6 > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    min-width: max-content;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.75rem !important;
+  }
+  /* Hide tab badge on phones to save space */
+  [role="tablist"] .badge,
+  [role="tablist"] [class*="Badge"] {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  [role="tablist"].grid-cols-5 {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+  [role="tablist"].grid-cols-5 > * {
+    font-size: 0.75rem !important;
+    padding: 0.375rem 0.25rem !important;
+  }
+}
+
+/* ── GLOBAL: Fixed-position elements — safe insets ── */
+@media (max-width: 640px) {
+  /* Prevent fixed elements from overlapping mobile browser chrome */
+  .fixed.bottom-8 {
+    bottom: 1rem !important;
+  }
+  .fixed.right-8 {
+    right: 1rem !important;
+  }
+  /* DB status badges top-right — push below mobile menu bubble */
+  .fixed.top-20 {
+    top: 3.5rem !important;
+  }
+  .fixed.top-4.right-4 {
+    top: 3.5rem !important;
+    right: 0.5rem !important;
+  }
+}
+
+/* ── GLOBAL: Fixed-width elements — flex on mobile ── */
+@media (max-width: 640px) {
+  /* SelectTrigger with fixed width → full-width */
+  .w-48 {
+    width: 100% !important;
+  }
+  /* Buttons with min-width that overflow */
+  [class*="min-w-\[230px\]"],
+  [class*="min-w-\[220px\]"] {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* ── GLOBAL: Hero search bars — stack button below on phone ── */
+@media (max-width: 480px) {
+  /* Search input with absolutely-positioned button → stack vertically */
+  .relative:has(> input + .absolute) {
+    display: flex;
+    flex-direction: column;
+  }
+  .relative:has(> input + .absolute) > .absolute {
+    position: static !important;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  .relative:has(> input + .absolute) > input {
+    padding-right: 1rem !important;
+  }
+}
+
+/* ── GLOBAL: Card grids — single column on phones ── */
+@media (max-width: 480px) {
+  .grid-cols-2:not([role="tablist"]) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── GLOBAL: Header bars — wrap on mobile ── */
+@media (max-width: 768px) {
+  /* Sticky page headers with flex justify-between → allow wrapping */
+  .sticky .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+/* ── GLOBAL: Sidebar layouts — stack on tablet ── */
+@media (max-width: 1023px) {
+  /* lg:flex-row sidebars become full-width stacked */
+  .lg\:w-1\/4 {
+    width: 100% !important;
+  }
+}
+
+/* ── Phone (≤480px) ── */
+@media (max-width: 480px) {
+  /* Charts: constrained height */
+  .chart-container {
+    height: 200px !important;
+  }
+
+  /* Marquee: faster on small screens so text doesn't feel frozen */
+  .animate-scroll-continuous {
+    animation-duration: 20s;
+  }
+
+  /* Tighten card padding globally */
+  .p-5 {
+    padding: 0.75rem !important;
+  }
+  .p-6:not([role="dialog"] *) {
+    padding: 1rem !important;
+  }
+}
+
+/* ── Small screens (≤640px) ── */
+@media (max-width: 640px) {
+  .navbar-logo {
+    height: 32px !important;
+  }
+
+  .custom-container {
+    margin: 10px auto !important;
+    padding: 12px !important;
+  }
+
+  /* Code blocks: wrap and shrink */
+  code {
+    font-size: 0.625rem !important;
+    word-break: break-all;
+  }
+}
+
+/* ── Tablet & below (≤768px) ── */
+@media (max-width: 768px) {
+  /* Touch-friendly tap targets (Apple HIG: 44pt minimum) */
+  button:not(.mobile-compact-btn),
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Disable hover scale effects — they cause jank on touch */
+  .hover\:scale-105:hover {
+    transform: none !important;
+  }
+
+  .custom-card-inner:hover {
+    transform: none !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Reduce motion on mobile for perf */
+  .animate-scroll-continuous {
+    animation-duration: 25s;
+  }
+
+  /* Scrollbar: thinner on touch devices */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* ── Mobile filter panel collapse utility ── */
+.mobile-filters-collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.2s ease;
+}
+
+.mobile-filters-expanded {
+  max-height: 2000px;
+  overflow: visible;
+  opacity: 1;
+  transition:
+    max-height 0.4s ease,
+    opacity 0.3s ease;
+}
+
+/* ===================== */
+/* PANELS FIX SECTION */
+/* ===================== */
+
+/* Panel container - centered and properly sized */
+.panels-wrapper {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: clip;
+}
+
+.panels-wrapper > div {
+  width: 100%;
+  height: 100%;
+  overflow: clip;
+}
+
+/* Main panels container */
+.panels-container {
+  display: flex;
+  height: 100vh;
+  width: 400vw; /* 4 panels * 100vw each */
+  position: relative;
+}
+
+/* Individual panel styling */
+.panel {
+  width: 100vw;
+  height: 100dvh; /* match inline Tailwind h-[100dvh] — accounts for mobile browser chrome */
+  min-height: 100dvh;
+  flex-shrink: 0;
+  position: relative;
+  overflow: clip;
+}
+
+/* Panel content wrapper - centers content properly */
+.panel-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Panel 1: ArtiHuman Foundation - Emerald Gradient */
+.panel:nth-child(1) {
+  background: linear-gradient(
+    135deg,
+    hsl(142, 76%, 36%) 0%,
+    hsl(142, 76%, 40%) 25%,
+    hsl(142, 76%, 44%) 50%,
+    hsl(142, 76%, 36%) 75%,
+    hsl(142, 76%, 32%) 100%
+  );
+}
+
+/* Panel 2: Artisan Marketplace - Amber Gradient */
+.panel:nth-child(2) {
+  background: linear-gradient(
+    135deg,
+    hsl(45, 93%, 47%) 0%,
+    hsl(45, 93%, 51%) 25%,
+    hsl(45, 93%, 55%) 50%,
+    hsl(45, 93%, 47%) 75%,
+    hsl(45, 93%, 43%) 100%
+  );
+}
+
+/* Panel 3: Impact Dashboard - Teal Gradient */
+.panel:nth-child(3) {
+  background: linear-gradient(
+    135deg,
+    hsl(173, 80%, 40%) 0%,
+    hsl(173, 80%, 44%) 25%,
+    hsl(173, 80%, 48%) 50%,
+    hsl(173, 80%, 40%) 75%,
+    hsl(173, 80%, 36%) 100%
+  );
+}
+
+/* Panel 4: Get Involved - Blue Gradient */
+.panel:nth-child(4) {
+  background: linear-gradient(
+    135deg,
+    hsl(199, 89%, 48%) 0%,
+    hsl(199, 89%, 52%) 25%,
+    hsl(199, 89%, 56%) 50%,
+    hsl(199, 89%, 48%) 75%,
+    hsl(199, 89%, 44%) 100%
+  );
+}
+
+/* Panel overlays for better text readability */
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+/* Ensure panel content is above overlay — only target the content wrapper,
+   NOT the absolute-positioned background/blur layers */
+.panel > .relative.z-10 {
+  position: relative;
+  z-index: 2;
+}
+
+/* Scroll hint for panels */
+.panels-scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  color: white;
+  opacity: 0.8;
+  animation: bounce 2s infinite;
+  text-align: center;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  40% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+  60% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* ===================== */
+/* RESPONSIVE PANELS */
+/* ===================== */
+
+/* Scale down panel content to fit viewport on tablets */
+@media (max-width: 1024px) and (max-height: 1200px) {
+  .panel > .relative {
+    transform: scale(0.92);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-content {
+    padding: 1rem;
+    max-width: 90%;
+  }
+  .panels-scroll-hint {
+    bottom: 1rem;
+    font-size: 0.875rem;
+  }
+  /* Shrink panel content to fit mobile viewport */
+  .panel > .relative {
+    transform: scale(0.82);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-content {
+    padding: 0.75rem;
+    max-width: 95%;
+  }
+  .panels-container {
+    width: 400vw;
+  }
+  /* Further shrink for very small phones */
+  .panel > .relative {
+    transform: scale(0.7);
+    transform-origin: center center;
+  }
+}
+
+/* Very short viewports (landscape phones) */
+@media (max-height: 700px) {
+  .panel > .relative {
+    transform: scale(0.65);
+    transform-origin: center center;
+  }
+}
+
+/* Short tablets in landscape */
+@media (max-height: 850px) and (min-width: 769px) {
+  .panel > .relative {
+    transform: scale(0.8);
+    transform-origin: center center;
+  }
+}
+
+/* ===================== */
+/* ADDITIONAL UTILITIES */
+/* ===================== */
+
+/* Center utilities */
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-centered {
+  text-align: center;
+}
+
+/* Full viewport utilities */
+.vh-100 {
+  height: 100vh;
+}
+
+.vw-100 {
+  width: 100vw;
+}
+
+/* Overflow control */
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* Smooth transitions */
+.transition-all-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===================== */
+/* CLEANUP OLD STYLES */
+/* ===================== */
+
+/* Remove conflicting old styles */
+#slideContainer {
+  display: none; /* Use the new panels-container instead */
+}
+
+.blue,
+.turqoise,
+.green,
+.bordeaux {
+  /* These will be handled by the new panel gradients */
+  display: none;
+}
+
+/* Body and html base styles — no height:100% to avoid nested scroll */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Remove old intro/outro styles if not used */
+.intro,
+.outro {
+  display: none;
+}
+
+/* Progress bar for category distribution */
+/* ===================== */
+/* KEYBOARD PRESS ANIMATIONS */
+/* ===================== */
+
+@keyframes pressDown1 {
+  30%,
+  40%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown2 {
+  70%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown3 {
+  30%,
+  40%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown4 {
+  40%,
+  50%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown5 {
+  20%,
+  30%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown6 {
+  60%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown7 {
+  10%,
+  20%,
+  100% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressDown8 {
+  35%,
+  45%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pressSlow1 {
+  35%,
+  45%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow2 {
+  55%,
+  65%,
+  100% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow3 {
+  25%,
+  35%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow4 {
+  45%,
+  55%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow5 {
+  15%,
+  25%,
+  100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow6 {
+  65%,
+  75%,
+  100% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow7 {
+  5%,
+  15%,
+  100% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressSlow8 {
+  40%,
+  50%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pressFast1 {
+  25%,
+  35%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast2 {
+  60%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast3 {
+  35%,
+  45%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast4 {
+  50%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  55% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast5 {
+  10%,
+  20%,
+  100% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast6 {
+  70%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast7 {
+  15%,
+  25%,
+  100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressFast8 {
+  45%,
+  55%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressUnified {
+  0%,
+  10%,
+  100% {
+    transform: translateY(0);
+  }
+  5% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pressGlow1 {
+  30%,
+  40%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  35% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow2 {
+  70%,
+  80%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  75% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow3 {
+  30%,
+  40%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  35% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow4 {
+  40%,
+  50%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  45% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow5 {
+  20%,
+  30%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  25% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow6 {
+  60%,
+  70%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  65% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow7 {
+  10%,
+  20%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  15% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@keyframes pressGlow8 {
+  35%,
+  45%,
+  100% {
+    transform: translateY(0);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  40% {
+    transform: translateY(10px);
+    text-shadow:
+      0 0 20px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.5);
+  }
+}

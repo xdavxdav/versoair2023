@@ -1,0 +1,63 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# Documentation & personal files (not needed for deployment)
+*.md
+!README.md
+!LICENSE.md
+!GEOADMIN_BUSINESS_MANAGEMENT.md
+!GEOADMIN_IMPLEMENTATION_COMPLETE.md
+*.sql
+*.txt
+*.bak
+pwds*
+
+# Scripts & utilities (not needed for deployment)
+# EXCEPTION: Keep scripts/migrations/ and scripts/run-migrations.sh for DB management
+*.py
+*.cjs
+server.cjs
+skills-lock.json
+check_*.js
+verify_*.js
+generate_*.js
+generate_*.ts
+get_db_report.js
+query_businesses.ts
+cleanup_and_check.ts
+seed_businesses.js
+ADMIN_CLEANUP_ENDPOINTS.ts
+
+# Non-essential folders
+db/
+docs/
+attached_assets/
+.claude/
+.hintrc
+.replit
+nodemon.json
+
+# Ignore most scripts but keep migrations
+scripts/*
+!scripts/migrations/
+!scripts/run-migrations.sh
+!scripts/seed-production.cjs
+
+# Backup & duplicate configs
+client/postcss.config.cjs
+client/postcss.config.js
+client/vite.config.ts
+client/package.json
+client/package-lock.json
+client/pages/
+tailwind.config.cjs
+postcss.config.cjs

@@ -1,0 +1,694 @@
+import { motion } from "framer-motion";
+import {
+  Handshake,
+  Globe,
+  TrendingUp,
+  Shield,
+  Zap,
+  Star,
+  ArrowRight,
+  CheckCircle,
+  Users,
+  Building2,
+  Award,
+  Heart,
+  Music,
+  Palette,
+  MapPin,
+  Mail,
+  Phone,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import ScrollToTop from "@/components/ScrollToTop";
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
+const viewport = { once: true, margin: "-80px" };
+
+const TIERS = [
+  {
+    tier: "Platinum",
+    color: "from-slate-300 to-slate-100",
+    ring: "border-slate-300/60",
+    badge: "bg-gradient-to-r from-slate-400 to-slate-200 text-slate-900",
+    glow: "shadow-slate-400/20",
+    partners: [
+      {
+        name: "UNESCO",
+        desc: "United Nations cultural heritage preservation & artisan empowerment",
+        icon: Globe,
+        country: "Paris, France",
+      },
+      {
+        name: "World Bank Group",
+        desc: "Financing sustainable community development across West Africa",
+        icon: Building2,
+        country: "Washington DC, USA",
+      },
+    ],
+  },
+  {
+    tier: "Gold",
+    color: "from-yellow-400 to-amber-300",
+    ring: "border-amber-400/60",
+    badge: "bg-gradient-to-r from-yellow-500 to-amber-400 text-amber-900",
+    glow: "shadow-amber-400/20",
+    partners: [
+      {
+        name: "African Union",
+        desc: "Pan-African solidarity and economic integration framework",
+        icon: Users,
+        country: "Addis Ababa, Ethiopia",
+      },
+      {
+        name: "Cultural Heritage Fund",
+        desc: "Preservation of traditional Ivorian crafts and cultural identity",
+        icon: Award,
+        country: "Abidjan, Côte d'Ivoire",
+      },
+      {
+        name: "Artisan Alliance",
+        desc: "Global cooperative network for traditional craftspeople",
+        icon: Handshake,
+        country: "Geneva, Switzerland",
+      },
+    ],
+  },
+  {
+    tier: "Silver",
+    color: "from-emerald-400 to-teal-300",
+    ring: "border-emerald-400/60",
+    badge: "bg-gradient-to-r from-emerald-500 to-teal-400 text-emerald-900",
+    glow: "shadow-emerald-400/20",
+    partners: [
+      {
+        name: "Global Crafts Network",
+        desc: "Connecting artisan markets worldwide to Ivorian craftspeople",
+        icon: Globe,
+        country: "Amsterdam, Netherlands",
+      },
+      {
+        name: "Verso Air Music Label",
+        desc: "Amplifying Ivorian musical talent on the international stage",
+        icon: Music,
+        country: "Abidjan, Côte d'Ivoire",
+      },
+      {
+        name: "West Africa Arts Council",
+        desc: "Promoting visual arts and cultural exchange across the region",
+        icon: Palette,
+        country: "Dakar, Senegal",
+      },
+      {
+        name: "Community Impact Fund",
+        desc: "Micro-grants and seed funding for grassroots initiatives",
+        icon: Heart,
+        country: "Lagos, Nigeria",
+      },
+    ],
+  },
+];
+
+const BENEFITS = [
+  {
+    icon: TrendingUp,
+    title: "Co-branded Visibility",
+    desc: "Logo placement across all ArtiHuman platforms, events and publications — reaching 50,000+ community members.",
+    color: "from-indigo-500 to-purple-600",
+  },
+  {
+    icon: Users,
+    title: "Network Access",
+    desc: "Direct introductions to 800+ artisan communities, NGOs and cultural organisations across Côte d'Ivoire.",
+    color: "from-emerald-500 to-teal-600",
+  },
+  {
+    icon: Zap,
+    title: "Program Integration",
+    desc: "Co-develop training programs, workshops and cultural exchanges that carry your brand's mission forward.",
+    color: "from-amber-500 to-orange-600",
+  },
+  {
+    icon: Shield,
+    title: "Impact Reporting",
+    desc: "Quarterly impact reports with verified metrics — transparency you can share with your stakeholders.",
+    color: "from-rose-500 to-pink-600",
+  },
+  {
+    icon: Globe,
+    title: "International Reach",
+    desc: "Participate in cultural delegations and cross-border programs linking Africa to European and global markets.",
+    color: "from-cyan-500 to-blue-600",
+  },
+  {
+    icon: Award,
+    title: "Recognition & Awards",
+    desc: "Annual Partner Excellence Awards ceremony, featuring media coverage and public recognition.",
+    color: "from-violet-500 to-fuchsia-600",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Partnering with ArtiHuman has been transformative. We've seen authentic cultural impact that aligns perfectly with our heritage mission.",
+    author: "Dr. Aminata Diallo",
+    role: "Regional Director",
+    org: "UNESCO West Africa",
+    avatar: "AD",
+    color: "from-indigo-500 to-purple-600",
+  },
+  {
+    quote:
+      "The artisan network they've built is extraordinary. Our investment reaches real families in real communities — exactly what we look for.",
+    author: "James Osei",
+    role: "Development Officer",
+    org: "World Bank Group",
+    avatar: "JO",
+    color: "from-amber-500 to-orange-500",
+  },
+  {
+    quote:
+      "Through this partnership, our artists gained international exposure while staying rooted in Ivorian tradition. C'est magnifique.",
+    author: "Kouadio Yves",
+    role: "CEO",
+    org: "Verso Air Music Label",
+    avatar: "KY",
+    color: "from-emerald-500 to-teal-600",
+  },
+];
+
+const PARTNER_TIERS_INFO = [
+  {
+    name: "Platinum",
+    price: "From $50,000 / yr",
+    color: "from-slate-700 to-slate-600",
+    border: "border-slate-400/40",
+    highlight: false,
+    perks: [
+      "Premier logo placement (all channels)",
+      "Dedicated partnership manager",
+      "Speaking slots at all events",
+      "Exclusive impact report access",
+      "Co-branded program development",
+      "Annual gala invitation (VIP table)",
+    ],
+  },
+  {
+    name: "Gold",
+    price: "From $20,000 / yr",
+    color: "from-amber-600 to-yellow-500",
+    border: "border-amber-400/60",
+    highlight: true,
+    perks: [
+      "Logo placement (website + events)",
+      "Quarterly partnership reviews",
+      "Workshop co-branding",
+      "Impact report (semi-annual)",
+      "3 event invitations per year",
+      "Social media features",
+    ],
+  },
+  {
+    name: "Silver",
+    price: "From $8,000 / yr",
+    color: "from-emerald-600 to-teal-500",
+    border: "border-emerald-400/40",
+    highlight: false,
+    perks: [
+      "Website logo listing",
+      "Annual partnership review",
+      "Event mentions & recognition",
+      "Annual impact summary",
+      "2 event invitations per year",
+      "Newsletter feature",
+    ],
+  },
+];
+
+const STATS = [
+  { value: "50+", label: "Active Partners", icon: Handshake },
+  { value: "18", label: "Countries Reached", icon: Globe },
+  { value: "800+", label: "Artisans Supported", icon: Users },
+  { value: "$2M+", label: "Co-invested Funds", icon: TrendingUp },
+];
+
+export default function Partners() {
+  return (
+    <div className="flex flex-col min-h-screen bg-white overflow-x-hidden">
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900">
+        {/* animated grid background */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(16,185,129,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.4) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+          }}
+        />
+        {/* glow orbs */}
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl" />
+
+        <div className="relative z-10 max-w-[95vw] mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-semibold mb-6"
+          >
+            <Handshake className="w-4 h-4" />
+            Partnership Program
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 leading-tight"
+          >
+            Build Africa's Future{" "}
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              Together
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25 }}
+            className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
+          >
+            <span className="notranslate">ArtiHuman Foundation</span> unites
+            world-class organisations, NGOs, and businesses around a single
+            mission — empowering artisan communities across Côte d'Ivoire and
+            beyond.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <a href="#become-partner">
+              <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-emerald-500/30 hover:scale-105 transition-all">
+                Become a Partner
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </a>
+            <Link to="/contact">
+              <Button
+                variant="outline"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 rounded-2xl text-lg"
+              >
+                Contact Us
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent" />
+      </section>
+
+      {/* ── STATS BAR ─────────────────────────────────────────── */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-[95vw] mx-auto px-6">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          >
+            {STATS.map((s, i) => (
+              <motion.div key={i} variants={fadeInUp} className="text-center">
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <s.icon className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="text-3xl font-black text-slate-900">
+                  {s.value}
+                </div>
+                <div className="text-sm text-slate-500 mt-1">{s.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── CURRENT PARTNERS ──────────────────────────────────── */}
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
+        <div className="max-w-[95vw] mx-auto px-6">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="text-center mb-16"
+          >
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+              Our Ecosystem
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
+              Trusted by World Leaders
+            </h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+              From global institutions to local innovators — our partners share
+              one vision.
+            </p>
+          </motion.div>
+
+          <div className="space-y-16">
+            {TIERS.map((tier, ti) => (
+              <motion.div
+                key={ti}
+                variants={fadeInUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={viewport}
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${tier.badge}`}
+                  >
+                    ★ {tier.tier} Partners
+                  </span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={viewport}
+                  className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                >
+                  {tier.partners.map((p, pi) => (
+                    <motion.div
+                      key={pi}
+                      variants={fadeInUp}
+                      whileHover={{ y: -6, scale: 1.02 }}
+                      className={`bg-white rounded-2xl p-6 border-2 ${tier.ring} shadow-lg ${tier.glow} hover:shadow-xl transition-all group cursor-default`}
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center mb-4 shadow-md group-hover:scale-110 transition-transform`}
+                      >
+                        <p.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-base font-black text-slate-900 mb-1">
+                        {p.name}
+                      </h3>
+                      <div className="flex items-center gap-1 text-slate-400 text-xs mb-3">
+                        <MapPin className="w-3 h-3" />
+                        {p.country}
+                      </div>
+                      <p className="text-slate-500 text-sm leading-relaxed">
+                        {p.desc}
+                      </p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ──────────────────────────────────────── */}
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(16,185,129,0.6) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div className="max-w-[95vw] mx-auto px-6 relative z-10">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="text-center mb-14"
+          >
+            <span className="text-emerald-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
+              Partner Voices
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              What Our Partners Say
+            </h2>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="grid md:grid-cols-3 gap-6"
+          >
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                whileHover={{ y: -6 }}
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-emerald-500/30 transition-all"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star
+                      key={j}
+                      className="w-4 h-4 fill-amber-400 text-amber-400"
+                    />
+                  ))}
+                </div>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6 italic">
+                  "{t.quote}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-black flex-shrink-0`}
+                  >
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <div className="font-bold text-white text-sm">
+                      {t.author}
+                    </div>
+                    <div className="text-emerald-400 text-xs">
+                      {t.role} · {t.org}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── BENEFITS ──────────────────────────────────────────── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[95vw] mx-auto px-6">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="text-center mb-14"
+          >
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+              Why Partner With Us
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
+              Partnership Benefits
+            </h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+              Every partnership is built for mutual impact — tangible results
+              for your brand and real change for communities.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {BENEFITS.map((b, i) => (
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-emerald-200 transition-all group"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${b.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
+                >
+                  <b.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-base font-black text-slate-900 mb-2">
+                  {b.title}
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  {b.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── PARTNERSHIP TIERS ─────────────────────────────────── */}
+      <section
+        id="become-partner"
+        className="py-20 bg-gradient-to-br from-slate-50 to-emerald-50"
+      >
+        <div className="max-w-[95vw] mx-auto px-6">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="text-center mb-14"
+          >
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+              Tiers & Pricing
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
+              Choose Your Partnership Level
+            </h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+              Flexible tiers designed for organisations of all sizes, from local
+              businesses to global institutions.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            className="grid md:grid-cols-3 gap-6"
+          >
+            {PARTNER_TIERS_INFO.map((tier, i) => (
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                whileHover={{ y: -6 }}
+                className={`relative bg-white rounded-3xl overflow-hidden border-2 ${tier.border} shadow-xl transition-all ${tier.highlight ? "ring-2 ring-amber-400/50 shadow-amber-400/20" : ""}`}
+              >
+                {tier.highlight && (
+                  <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900 text-xs font-black px-3 py-1 rounded-full">
+                    Most Popular
+                  </div>
+                )}
+                <div
+                  className={`bg-gradient-to-r ${tier.color} p-6 text-white`}
+                >
+                  <h3 className="text-xl font-black mb-1">{tier.name}</h3>
+                  <p className="text-white/80 text-sm font-semibold">
+                    {tier.price}
+                  </p>
+                </div>
+                <div className="p-6">
+                  <ul className="space-y-3 mb-6">
+                    {tier.perks.map((perk, j) => (
+                      <li
+                        key={j}
+                        className="flex items-start gap-2 text-sm text-slate-600"
+                      >
+                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        {perk}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/contact">
+                    <Button
+                      className={`w-full font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"}`}
+                    >
+                      Apply for {tier.name}
+                      <ChevronRight className="ml-1 w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── CONTACT CTA ───────────────────────────────────────── */}
+      <section className="py-20 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Handshake className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              Ready to Make an Impact?
+            </h2>
+            <p className="text-white/85 text-lg mb-8 max-w-2xl mx-auto">
+              Let's build something extraordinary together. Our partnership team
+              is ready to craft a program that aligns with your organisation's
+              values and goals.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/contact">
+                <Button className="bg-white text-emerald-700 hover:bg-emerald-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
+                  Start the Conversation
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/sponsorship">
+                <Button
+                  variant="outline"
+                  className="border-white/40 bg-white/10 text-white hover:bg-white/20 font-black px-8 py-6 rounded-2xl text-lg"
+                >
+                  Interested in Sponsorship?
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 text-white/80 text-sm">
+                <span className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  partners@artihuman.ci
+                </span>
+                <span className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  +225 27 20 21 22 23
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <ScrollToTop />
+    </div>
+  );
+}
