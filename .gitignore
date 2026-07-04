@@ -62,3 +62,5 @@ client/package-lock.json
 client/pages/
 tailwind.config.cjs
 postcss.config.cjs
+uploads/
+dist/
