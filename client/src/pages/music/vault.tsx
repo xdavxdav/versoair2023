@@ -229,7 +229,9 @@ export default function MusicVault() {
             return { tracks: data.tracks, total: data.tracks.length };
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn("[Vault] /api/upload/my-tracks request failed:", e);
+      }
 
       // Then try /api/music/artists/:id/tracks (Drizzle system)
       if (myArtist?.id) {
@@ -246,7 +248,9 @@ export default function MusicVault() {
               };
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn("[Vault] /api/music/artists request failed:", e);
+        }
       }
 
       // Fallback: try streaming tracks for this artist
@@ -265,7 +269,9 @@ export default function MusicVault() {
               };
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn("[Vault] /api/streaming/tracks request failed:", e);
+        }
       }
 
       return { tracks: [], total: 0 };

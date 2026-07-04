@@ -53,7 +53,7 @@ async function auditLog(
 // ═══════════════════════════════════════════════
 const categorySchema = z.object({
   name: z.string().min(1).max(200),
-  slug: z.string().min(1).max(200).optional(),
+  slug: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
 });
 const countrySchema = z.object({
@@ -99,7 +99,7 @@ router.post("/categories", async (req, res) => {
     const { name, slug, description } = parsed.data;
     const result = await db
       .insert(businessCategories)
-      .values({ name, slug, description })
+      .values({ name, slug, description, mainCategory: false })
       .returning();
     await auditLog(req, "CREATE", "categories", result[0].id, { name });
     res.status(201).json(result[0]);

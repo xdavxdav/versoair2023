@@ -8,6 +8,7 @@ vite.config.ts.*
 # Environment variables — NEVER commit secrets
 .env
 .env.*
+.env.cody
 !.env.example
 
 # Documentation & personal files (not needed for deployment)

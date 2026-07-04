@@ -1,0 +1,536 @@
+[
+  {
+    "main_category": "admin",
+    "cats": [
+      "Administrations",
+      "Associations & NGOs",
+      "Embassies & Consulates",
+      "Government Institutions",
+      "Ministries & Agencies",
+      "Public Authorities"
+    ]
+  },
+  {
+    "main_category": "advisory",
+    "cats": [
+      "Audit & Consulting",
+      "Business Advisory",
+      "Chartered Accountants",
+      "Law Firms",
+      "Tax Advisory"
+    ]
+  },
+  {
+    "main_category": "agribusiness",
+    "cats": [
+      "Agri-Food & Agribusiness",
+      "Agricultural Equipment",
+      "Agrochemicals",
+      "Farming & Agriculture",
+      "Food Processing Industries",
+      "Slaughterhouses & Meat Processing"
+    ]
+  },
+  {
+    "main_category": "animals",
+    "cats": [
+      "Animal Breeding",
+      "Animal Feed & Nutrition",
+      "Animals",
+      "Pet Shops",
+      "Veterinarians",
+      "Veterinary Pharmacies"
+    ]
+  },
+  {
+    "main_category": "artisans",
+    "cats": [
+      "Artisans",
+      "Carpenters",
+      "Electricians",
+      "Glass & Glazing",
+      "Painters",
+      "Plumbers",
+      "Welders"
+    ]
+  },
+  {
+    "main_category": "associations",
+    "cats": [
+      "Chambers of Commerce",
+      "Confederations",
+      "Professional Associations",
+      "Professional Regulatory Bodies",
+      "Trade Associations"
+    ]
+  },
+  {
+    "main_category": "automotive",
+    "cats": [
+      "Auto Repair & Garages",
+      "Car Sales & Dealerships",
+      "Motorcycle & Scooter Sales",
+      "Spare Parts & Accessories",
+      "Vehicle Inspection & Testing"
+    ]
+  },
+  {
+    "main_category": "building",
+    "cats": [
+      "Aluminum & Metal Structures",
+      "Civil Engineering & Public Works",
+      "Construction Companies",
+      "Construction Materials",
+      "Heavy Machinery & Equipment",
+      "Roads & Infrastructure",
+      "Water Supply Systems"
+    ]
+  },
+  {
+    "main_category": "commerce",
+    "cats": [
+      "Convenience Stores",
+      "E-commerce & Online Shops",
+      "Hardware Stores",
+      "Retail",
+      "Supermarkets & Grocery Stores",
+      "Wholesale & Distribution"
+    ]
+  },
+  {
+    "main_category": "communication",
+    "cats": [
+      "Advertising Agencies",
+      "Communication Agencies",
+      "Event & Promotion Companies",
+      "Media & Broadcasting",
+      "Printing Companies",
+      "Promotional Items & Corporate Gifts",
+      "Publishing Houses",
+      "Radio Stations",
+      "Television Channels"
+    ]
+  },
+  {
+    "main_category": "education",
+    "cats": [
+      "Education & Training",
+      "Primary Schools",
+      "Secondary Schools",
+      "Technical & Vocational Schools",
+      "Training Centers",
+      "Universities & Colleges"
+    ]
+  },
+  {
+    "main_category": "emergency",
+    "cats": [
+      "Ambulance Services",
+      "Civil Protection",
+      "Emergency Services",
+      "Fire Services",
+      "Police"
+    ]
+  },
+  {
+    "main_category": "employment",
+    "cats": [
+      "Career Training Centers",
+      "Employment",
+      "HR Consulting",
+      "Recruitment Agencies",
+      "Temporary Employment Agencies"
+    ]
+  },
+  {
+    "main_category": "energy",
+    "cats": [
+      "Electrical Engineering",
+      "Electromechanical Engineering",
+      "Energy",
+      "Energy Production",
+      "Power Equipment",
+      "Renewable Energy"
+    ]
+  },
+  {
+    "main_category": "false",
+    "cats": [
+      "Accessories & Jewelry",
+      "Accounting & Auditing",
+      "Advertising & Marketing",
+      "Agences Immobilières",
+      "Agricultural Cooperatives",
+      "Agricultural Suppliers",
+      "Airlines & Air Transport",
+      "Appraisers & Valuers",
+      "Audit & Consulting",
+      "Auto Parts & Accessories",
+      "Barbers",
+      "Bars & Nightclubs",
+      "Beauty Salons & Spas",
+      "Business Consulting",
+      "Car Dealerships",
+      "Car Repair & Maintenance",
+      "Carpenters & Woodworkers",
+      "Casual Dining",
+      "Catering Services",
+      "Chemical Manufacturing",
+      "Cinemas & Theaters",
+      "Civil Engineering",
+      "Cleaning & Maintenance",
+      "Clothing Retailers",
+      "Composting",
+      "Cosmetics & Beauty Products",
+      "Crop Production",
+      "Customs & Trade Services",
+      "Cybersecurity & Compliance",
+      "Dentists",
+      "Department Stores",
+      "E-Commerce Platforms",
+      "Education - Government",
+      "Electrical Installation",
+      "Electricity Providers",
+      "Electronics Wholesalers",
+      "Events & Conferences",
+      "Export Companies",
+      "Fabric & Textile Shops",
+      "Fashion Designers",
+      "Fast Food & Quick Service",
+      "Fine Dining Restaurants",
+      "Fire Safety",
+      "Fitness & Wellness",
+      "Flooring Services",
+      "Food Shops & Butcheries",
+      "Food Wholesalers",
+      "Garages & Réparation",
+      "Gas Providers",
+      "General Wholesalers",
+      "Government Agencies",
+      "Graphic Design",
+      "Gyms & Fitness Centers",
+      "HVAC & Climate Control",
+      "Hair Salons",
+      "Hazardous Waste",
+      "Heavy Equipment & Machinery",
+      "Heavy Industry",
+      "Home Decor & Accessories",
+      "Human Resources",
+      "IT Services & Support",
+      "Import Companies",
+      "Insurance & Risk",
+      "Insurance Claims",
+      "Interior Design Services",
+      "Internet Providers",
+      "Kitchen & Bath",
+      "Landlord & Tenant Services",
+      "Language Schools",
+      "Law Firms & Legal Services",
+      "Lighting & Electrical Fixtures",
+      "Livestock & Farm Services",
+      "Livestock Farming",
+      "Logistics & Warehousing",
+      "Media & Publishing",
+      "Mental Health Services",
+      "Money Transfers & Remittances",
+      "Motorcycle Dealers & Services",
+      "Municipal Services",
+      "Music & Live Entertainment",
+      "Music & Recording",
+      "Médecins Spécialistes",
+      "Network Equipment",
+      "Newspapers & Magazines",
+      "Notaries & Legal Document Services",
+      "Online Courses & E-Learning",
+      "Painters & Decorators",
+      "Personal Training",
+      "Pet Grooming & Boarding",
+      "Pet Shops & Supplies",
+      "Pharmaceutical Distributors",
+      "Photography & Video",
+      "Plastics Manufacturing",
+      "Plumbing Services",
+      "Port Services",
+      "Primary & Secondary Schools",
+      "Printing Services",
+      "Public Safety",
+      "Real Estate Brokerage",
+      "Recruitment & Staffing",
+      "Recycling Services",
+      "Rental Services",
+      "Repair Services",
+      "Restaurants & Cafes",
+      "Roofing Services",
+      "SEO & Digital Marketing",
+      "Security Companies",
+      "Shipping & Courier",
+      "Shoe Stores",
+      "Shopping Centers & Malls",
+      "Social Services",
+      "Sports & Recreation",
+      "Sports Equipment",
+      "Storage Services",
+      "Supermarkets & Hypermarkets",
+      "Surveillance & Alarms",
+      "Tax Consulting",
+      "Taxi & Ride Services",
+      "Telecommunications Support",
+      "Television Networks",
+      "Textiles Manufacturing",
+      "Tire & Wheel Services",
+      "Translation & Interpretation",
+      "Veterinary Services",
+      "Vocational Training",
+      "Waste Collection",
+      "Water Services",
+      "Web Design & Development",
+      "Welders & Metal Workers",
+      "Zoo & Wildlife Parks"
+    ]
+  },
+  {
+    "main_category": "fashion",
+    "cats": [
+      "Fabrics & Textiles",
+      "Fashion Accessories",
+      "Fashion, Clothing & Textiles",
+      "Ready-to-Wear Clothing",
+      "Tailoring & Sewing",
+      "Uniforms & Workwear"
+    ]
+  },
+  {
+    "main_category": "finance",
+    "cats": [
+      "Banks & Financial Institutions",
+      "Insurance Brokers",
+      "Insurance Providers",
+      "Investment & Asset Management",
+      "Microfinance Institutions",
+      "Payment & Fintech Services"
+    ]
+  },
+  {
+    "main_category": "food",
+    "cats": [
+      "Bakeries & Pastry Shops",
+      "Beverage Production",
+      "Caterers",
+      "Fishmongers",
+      "Food & Beverage",
+      "Food Processing",
+      "Restaurants"
+    ]
+  },
+  {
+    "main_category": "health",
+    "cats": [
+      "Dental Clinics",
+      "Doctors & Specialists",
+      "Health",
+      "Hospitals & Clinics",
+      "Imaging Centers",
+      "Medical Laboratories",
+      "Pharmacies",
+      "Veterinary Clinics"
+    ]
+  },
+  {
+    "main_category": "home",
+    "cats": [
+      "Art Galleries",
+      "Furniture Stores",
+      "Home & Interior Design",
+      "Home Decoration",
+      "Interior Designers",
+      "Lighting & Fixtures"
+    ]
+  },
+  {
+    "main_category": "hygiene",
+    "cats": [
+      "Cleaning Products",
+      "Hygiene",
+      "Industrial Cleaning Supplies",
+      "Personal Hygiene Products"
+    ]
+  },
+  {
+    "main_category": "import-export",
+    "cats": [
+      "Exporters",
+      "Import & Export",
+      "Importers",
+      "Logistics & Customs Services",
+      "Purchasing Groups",
+      "Trading Companies"
+    ]
+  },
+  {
+    "main_category": "industries",
+    "cats": [
+      "Brewery",
+      "Cardboard Manufacturing",
+      "Industrial Processing",
+      "Industries",
+      "Manufacturing",
+      "Mining"
+    ]
+  },
+  {
+    "main_category": "it",
+    "cats": [
+      "Cloud Hosting & Data Centers",
+      "Cybersecurity Services",
+      "Digital Marketing Services",
+      "IT Services & Consulting",
+      "Internet Cafés",
+      "Software Development",
+      "Technology"
+    ]
+  },
+  {
+    "main_category": "others",
+    "cats": [
+      "Marine Engines",
+      "Others",
+      "Religious Institutions & Places of Worship",
+      "Specialized Niche Services"
+    ]
+  },
+  {
+    "main_category": "real-estate",
+    "cats": [
+      "Property Management",
+      "Real Estate Agencies",
+      "Real Estate Developers",
+      "Real Estate Promotion",
+      "Real Estate Valuation"
+    ]
+  },
+  {
+    "main_category": "security",
+    "cats": [
+      "Access Control Systems",
+      "Alarm & Surveillance Systems",
+      "Cybersecurity",
+      "Security",
+      "Security Guarding"
+    ]
+  },
+  {
+    "main_category": "services",
+    "cats": [
+      "Express Courier Services",
+      "Industrial Cleaning",
+      "Maintenance Services",
+      "Outsourcing Services",
+      "Services (General)"
+    ]
+  },
+  {
+    "main_category": "sport",
+    "cats": [
+      "Fitness Facilities",
+      "Sport",
+      "Sporting Goods Stores",
+      "Sports Clubs",
+      "Sports Complexes & Stadiums"
+    ]
+  },
+  {
+    "main_category": "telecom",
+    "cats": [
+      "Internet Service Providers",
+      "Network Installation",
+      "Telecommunications",
+      "Telecommunications Equipment",
+      "Telephone Operators",
+      "VoIP Services"
+    ]
+  },
+  {
+    "main_category": "tourism",
+    "cats": [
+      "Event & Leisure Activities",
+      "Hostels & Guesthouses",
+      "Hotels",
+      "Tour Operators",
+      "Travel Agencies"
+    ]
+  },
+  {
+    "main_category": "transport",
+    "cats": [
+      "Air Transport",
+      "Airports",
+      "Logistics & Freight",
+      "Maritime Transport",
+      "Road Transport",
+      "Transport & Logistics"
+    ]
+  },
+  {
+    "main_category": "true",
+    "cats": [
+      "Administration & Government",
+      "Agri-Food & Agriculture",
+      "Alimentation & Commerce",
+      "Animals & Pets",
+      "Artisans & Trades",
+      "Automobile & Transport",
+      "Beauty & Personal Care",
+      "Construction & Immobilier",
+      "Divertissement & Loisirs",
+      "Entertainment & Sports",
+      "Fashion & Textiles",
+      "Finance & Conseil",
+      "Hébergement & Logement",
+      "Manufacturing & Industry",
+      "Media & Entertainment",
+      "Miscellaneous Services",
+      "Professional Services",
+      "Santé & Bien-être",
+      "Security & Safety",
+      "Services Publics & Divers",
+      "Sports & Fitness",
+      "Technologie & Communication",
+      "Transportation & Logistics",
+      "Utilities & Energy",
+      "Waste Management"
+    ]
+  },
+  {
+    "main_category": "wellness",
+    "cats": [
+      "Beauty & Aesthetic Salons",
+      "Fitness & Yoga Centers",
+      "Massage & Relaxation",
+      "Spas & Saunas",
+      "Wellness"
+    ]
+  },
+  {
+    "main_category": null,
+    "cats": [
+      "Abattoirs",
+      "Agences Immobilières",
+      "Agences de Recrutement",
+      "Ambassades & Consulats",
+      "Bars & Lounges",
+      "Cinemas & Theatres",
+      "Cybercafés",
+      "Event Venues & Party Halls",
+      "Karaoke & Bowling",
+      "Meubles",
+      "Médecins Spécialistes",
+      "Nightclubs & Discothèques",
+      "Opérateurs Téléphoniques",
+      "Pharmacies & Vétérinaires",
+      "Plombiers",
+      "Poissonneries",
+      "Salons de Beauté",
+      "Tissus & Textile"
+    ]
+  }
+]

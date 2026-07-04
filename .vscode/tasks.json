@@ -1,0 +1,825 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Development",
+			"type": "shell",
+			"command": "npm run dev",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Production",
+			"type": "shell",
+			"command": "npm run build",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Database Push",
+			"type": "shell",
+			"command": "npm run db:push",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Database Studio",
+			"type": "shell",
+			"command": "npm run db:studio",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Type Check",
+			"type": "shell",
+			"command": "npx tsc --noEmit",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": "$tsc"
+		},
+		{
+			"label": "Test Vault",
+			"type": "shell",
+			"command": "node /Users/joe/Downloads/FSA/_test_vault.mjs"
+		},
+		{
+			"label": "Cleanup",
+			"type": "shell",
+			"command": "rm -f /Users/joe/Downloads/FSA/_test_vault.sh /Users/joe/Downloads/FSA/_test_vault.mjs /Users/joe/Downloads/FSA/_test_creds.mjs"
+		},
+		{
+			"label": "Test Server",
+			"type": "shell",
+			"command": "lsof -ti:5003 | xargs kill -9 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Endpoints",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/countries | head -c 500 && echo '' && echo '---STATUS---' && curl -s http://localhost:5003/api/status | head -c 300 && echo '' && echo '---ARTISTS---' && curl -s http://localhost:5003/api/artists/genres | head -c 300"
+		},
+		{
+			"label": "Test Countries",
+			"type": "shell",
+			"command": "echo 'COUNTRIES:' && curl -s http://localhost:5003/api/countries | python3 -c 'import sys,json; d=json.load(sys.stdin); print(type(d).__name__, len(d) if isinstance(d,list) else d.keys() if isinstance(d,dict) else d)' 2>&1"
+		},
+		{
+			"label": "Git & Render Status",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git log --oneline -5 && echo '---' && git status --short && echo '---RENDER TEST---' && curl -s https://verso-air-online.onrender.com/api/countries | head -c 300"
+		},
+		{
+			"label": "Git Log",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -5"
+		},
+		{
+			"label": "Full Git Status",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -8 && echo '---DIFF---' && git diff --stat HEAD"
+		},
+		{
+			"label": "Full Log",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -10"
+		},
+		{
+			"label": "Sync Neon DB",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_neon.cjs"
+		},
+		{
+			"label": "Sync Neon Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_neon.cjs"
+		},
+		{
+			"label": "Verify All APIs",
+			"type": "shell",
+			"command": "echo '=== ARTISTS ===' && curl -s http://localhost:5003/api/artists | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"Artists:\", len(d.get(\"data\",d)) if isinstance(d,dict) else len(d), \"items\")' 2>&1 && echo '=== GENRES ===' && curl -s http://localhost:5003/api/artists/genres | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"Genres:\", len(d.get(\"data\",d)) if isinstance(d,dict) else len(d))' 2>&1 && echo '=== COUNTRIES ===' && curl -s http://localhost:5003/api/countries | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"Countries:\", len(d))' 2>&1 && echo '=== BUSINESSES ===' && curl -s 'http://localhost:5003/api/businesses?limit=5' | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"Businesses:\", len(d.get(\"businesses\",d.get(\"data\",[]))))' 2>&1 && echo '=== HEALTH ===' && curl -s http://localhost:5003/api/health | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"DB Connected:\", d.get(\"database\",{}).get(\"connected\",\"?\"))' 2>&1 && echo '=== STATUS ===' && curl -s http://localhost:5003/api/status | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"Status:\", d.get(\"status\"), \"| DB:\", d.get(\"database\",{}).get(\"connected\",\"?\"))' 2>&1"
+		},
+		{
+			"label": "Check Artists",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/artists | python3 -c 'import sys,json; d=json.load(sys.stdin); items=d.get(\"data\",d) if isinstance(d,dict) else d; print(\"Artists total:\", len(items)); [print(f\"  - {a.get(\\\"name\\\",a.get(\\\"artist_name\\\",\\\"?\\\"))} ({a.get(\\\"genre\\\",\\\"?\\\")})\" ) for a in (items[:10] if isinstance(items,list) else [])]' 2>&1"
+		},
+		{
+			"label": "Artists Count",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/artists | python3 -c 'import sys,json; d=json.load(sys.stdin); print(type(d).__name__, len(d) if isinstance(d,list) else \"keys:\", list(d.keys()) if isinstance(d,dict) else \"\")' 2>&1 || echo 'Artists endpoint failed'"
+		},
+		{
+			"label": "Artists Raw",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/artists | head -c 500"
+		},
+		{
+			"label": "Artists Genres",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/artists/genres | head -c 500"
+		},
+		{
+			"label": "Full API Check",
+			"type": "shell",
+			"command": "echo '=== GENRES ===' && curl -s http://localhost:5003/api/artists/genres | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d[\"data\"]),\"genres:\",d[\"data\"])' && echo '' && echo '=== COUNTRIES ===' && curl -s http://localhost:5003/api/countries | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d),\"countries\")' && echo '' && echo '=== BUSINESSES ===' && curl -s http://localhost:5003/api/businesses | python3 -c 'import sys,json; d=json.load(sys.stdin); print(len(d.get(\"data\",d)) if isinstance(d,dict) else len(d),\"businesses\")' && echo '' && echo '=== STATUS ===' && curl -s http://localhost:5003/api/status | head -c 200 && echo '' && echo '=== HEALTH ===' && curl -s http://localhost:5003/api/health | head -c 200"
+		},
+		{
+			"label": "Render Check",
+			"type": "shell",
+			"command": "echo '=== RENDER CHECK ===' && curl -s --max-time 15 https://verso-air-online.onrender.com/api/health | head -c 300 && echo '' && echo '=== RENDER GENRES ===' && curl -s --max-time 15 https://verso-air-online.onrender.com/api/artists/genres | head -c 300"
+		},
+		{
+			"label": "Git Commit and Push",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && echo '=== STATUS ===' && git status --short && echo '=== ADD ===' && git add -A && echo '=== COMMIT ===' && git commit -m 'feat: 2FA admin gate, clipboard fixes, analytics dark theme, geo auth simplification' -m '- AdminAccessGate: 2FA with generated 6-digit code + CODE/username validation' -m '- Clipboard: execCommand copy/paste fallback for blocked Clipboard API' -m '- AnalyticsSection: full dark theme overhaul for DashboardLayout compatibility' -m '- GeoAdminAuthGate: simplified to single-field access gate' -m '- countries-dashboard: AdminOnlyBanner read-only message update' -m '- navbar: geo-admin routing fix, tablet nav pointer-events fix' && echo '=== PUSH ===' && git push origin main 2>&1 && echo '=== DONE ==='"
+		},
+		{
+			"label": "Verify Commit",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager log --oneline -5"
+		},
+		{
+			"label": "Git Commit Push",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: superadmin tier bypass, tablet scroll/dropdown, geolocation accuracy' -m '- navbar: superadmin/admin bypass tier gate for Geo Admin link (desktop+tablet)' -m '- navbar: tablet nav padding 22rem→18rem with pointerEvents pattern for Android' -m '- geo-admin: gate-authenticated users bypass all tier checks (hasGateAccess)' -m '- geo-admin: ADMIN_USERS lookup from localStorage geoadmin_username' -m '- dashboard: sticky nav z-50→z-30 to prevent overlapping navbar dropdowns' -m '- CountryContext: removed locale fallback (en-US≠in USA), bumped cache to v2' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git Push Android Fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet nav strip blocking vertical scroll' -m '- Added touchAction: pan-y to tablet nav inner div' -m '- Allows vertical page scroll when touching the nav strip on Android' -m '- Fixes Lenovo Tab M10 scroll issue (iOS was unaffected)' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git Push Panels Fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet cant scroll past GSAP panels in home.tsx' -m '- Removed overscrollBehavior:contain from panels wrapper and inner div' -m '- Removed touchAction:pan-y pinch-zoom from inner div (was trapping scroll on Android)' -m '- Removed overscroll-contain class from all 4 panel elements' -m '- These CSS properties created a scroll trap on Android where touch events' -m '  were swallowed instead of reaching the document scroll GSAP listens to' && git push origin main 2>&1"
+		},
+		{
+			"label": "Check Diff",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager diff 300a3d6^..300a3d6 -- client/src/pages/home.tsx"
+		},
+		{
+			"label": "Check Diff 2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git --no-pager diff e655ff3..300a3d6 -- client/src/pages/home.tsx"
+		},
+		{
+			"label": "Git Push Restore",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: restore overscrollBehavior on panels wrapper for scroll chaining' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git Push Panels Unified",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: unify all 4 home panels with identical layout structure' -m '- All panels: same outer padding p-[clamp(0.75rem,2vw,2.5rem)] lg:p-8' -m '- All panels: same icon size w-5..lg:w-16, same gold-text heading, same subtitle sizing' -m '- All panels: same 2-col card grid with identical card classes and spacing' -m '- All panels: same bottom CTA with 2-button layout (primary + secondary)' -m '- Panel 2 (Marketplace): restructured from 3-col product cards to 2-col info layout' -m '- Panel 3 (Impact): merged 4-col stats + 2-col charts into unified 2-col cards' -m '- Panel 4 (Get Involved): restructured from 3-col vertical cards to 2-col layout' && git push origin main 2>&1"
+		},
+		{
+			"label": "Git commit and push GSAP scroll fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: Android tablet GSAP ScrollTrigger panels scroll blocked — enable normalizeScroll + touchAction pan-y' && git push"
+		},
+		{
+			"label": "Test geo APIs",
+			"type": "shell",
+			"command": "curl -s https://verso-air-online.onrender.com/api/location/country && echo '' && echo '---' && curl -s https://ipwho.is/?fields=success,country_code && echo '' && echo '---' && curl -s https://api.country.is && echo ''"
+		},
+		{
+			"label": "Test geo APIs 2",
+			"type": "shell",
+			"command": "curl -s 'https://ipwho.is/?fields=success,country_code' && echo '' && echo '---' && curl -s 'https://ipapi.co/json/' | head -c 200"
+		},
+		{
+			"label": "Git push autodetect fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: country auto-detection broken — /api/location/country was blocked by auth gate (401), reorder detection strategies, add api.country.is fallback' && git push"
+		},
+		{
+			"label": "Git push artist portal fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: artist portal page reloads itself — inline component functions caused React to remount on every re-render, whitelist /auth/verify and /auth/session in auth gate' && git push"
+		},
+		{
+			"label": "Git push artist portal auth fix",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove ProtectedRoute from artist portal — artists have their own auth flow on the welcome page, no business account needed' && git push"
+		},
+		{
+			"label": "Git push artist gate bypass",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: bypass artist portal gate for users who already have artist access — no 13s countdown for existing artists' && git push"
+		},
+		{
+			"label": "Git push remove gate from welcome",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove gate from artist portal welcome page — it IS the sign-in page, gate only on dashboard' && git push"
+		},
+		{
+			"label": "Git push contracts restyle",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'style: contracts page — match Artist Portal dark theme (bg-[#06020f], purple/fuchsia gradients, ambient radials, glass cards)' && git push"
+		},
+		{
+			"label": "Git push GeoAdmin restore",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: restore Subscriber + GeoAdmin auth tabs on Geo Admin gate' && git push"
+		},
+		{
+			"label": "Git push hint removal",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'fix: remove admin username hint from GeoAdmin auth gate' && git push"
+		},
+		{
+			"label": "Git push collapsible tiers",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: collapse tier cards behind toggle on GeoAdmin gate — less scrolling' && git push"
+		},
+		{
+			"label": "Git push tier dropdown",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: replace tier cards grid with compact dropdown selector on GeoAdmin gate' && git push"
+		},
+		{
+			"label": "Git push categories accordion",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: collapse admin categories into accordion rows with search filter' && git push"
+		},
+		{
+			"label": "Git push panel titles",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'ui: larger Alegreya serif font on all 4 panel card titles' && git push"
+		},
+		{
+			"label": "Git commit and push browsing history",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: user browsing history — DB table, API endpoints (GET/POST/DELETE /api/user/history), useRecordVisit hook, batiment.tsx History tab with login gate + clear' && git push && npm run db:push"
+		},
+		{
+			"label": "Git push loading speed",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'perf: reduce loading overlay — initial cold-load 5s→300ms, page nav 900ms→300ms' && git push"
+		},
+		{
+			"label": "Create Streaming Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _create_streaming_tables.cjs"
+		},
+		{
+			"label": "Verify Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config(); const pg=require('pg'); const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}}); pool.query(\\\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('contest_votes','artist_subscriptions','arena_contests','arena_brackets','arena_votes','vault_rules','collab_requests','platform_wallets','wallet_transactions','user_payment_methods','bank_transfer_requests') ORDER BY table_name\\\").then(r=>{console.log(r.rows.length+'/11 tables found:'); r.rows.forEach(x=>console.log('  ✓ '+x.table_name)); pool.end()}).catch(e=>{console.error(e.message);pool.end()})\""
+		},
+		{
+			"label": "Count Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT count(*) as n FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('contest_votes','artist_subscriptions','arena_contests','arena_brackets','arena_votes','vault_rules','collab_requests','platform_wallets','wallet_transactions','user_payment_methods','bank_transfer_requests')\\\").then(r=>{console.log(r.rows[0].n+'/11 OK');c.end()})\""
+		},
+		{
+			"label": "Push videos column + verify DB",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_videos_column.cjs"
+		},
+		{
+			"label": "Verify DB sync",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_videos_column.cjs 2>&1 | tail -30"
+		},
+		{
+			"label": "Check videos col",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='ad_journal_listings' AND column_name='videos'\\\").then(r=>{console.log('videos col exists:',r.rows.length>0);c.end()})\""
+		},
+		{
+			"label": "Git stage and check",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git status --short | head -40"
+		},
+		{
+			"label": "Git status count",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git status --short | wc -l && echo '---' && git status --short | head -60"
+		},
+		{
+			"label": "Test streaming API",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks?limit=1' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['tracks'][0]; print('title:', t.get('title')); print('artist_name:', t.get('artist_name')); print('has_pochette:', t.get('has_pochette')); print('payload bytes:', len(sys.stdin.read()) if False else len(json.dumps(d)))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test search and pochette",
+			"type": "shell",
+			"command": "echo '=== Search admin_001 ===' && curl -s 'http://localhost:5003/api/streaming/search?q=admin_001' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('tracks:', len(d.get('tracks',[])), [(t['title'], t.get('artist_name')) for t in d.get('tracks',[])])\" && echo '=== Pochette image ===' && curl -s -o /dev/null -w 'HTTP %{http_code} | %{content_type} | %{size_download} bytes' 'http://localhost:5003/api/streaming/tracks/103/pochette'",
+			"group": "test"
+		},
+		{
+			"label": "Git stage changes",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && rm -f _check_artist_tables.cjs && git add -A && git status --short",
+			"group": "build"
+		},
+		{
+			"label": "Git commit and push streaming fixes",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git commit -m 'fix: public streaming browse + pochette optimization + artist name fallback\\n\\n- auth.ts: add /api/streaming/* to PUBLIC_PATH_PREFIXES (was returning 401 for all guests)\\n- streaming.ts MT_COLS: replace raw pochette BYTEA with (IS NOT NULL) AS has_pochette\\n- streaming.ts: add GET /tracks/:id/pochette endpoint to serve image (24h cache)\\n- streaming.ts: all 14 track queries now LEFT JOIN artists for COALESCE(ma.name, art.stage_name)\\n- stream.tsx + AudioPlayer.tsx: getCover() helper using /pochette URL when has_pochette=true\\n\\nPayload: 255KB → 891 bytes per track (290x reduction). Artist name now resolves for portal-uploaded tracks.' && git push",
+			"group": "build"
+		},
+		{
+			"label": "Check track 103 fields",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['track']; print('cover_art:', repr(t.get('cover_art'))[:80]); print('has_pochette:', t.get('has_pochette')); print('artist_name:', t.get('artist_name')); print('title:', t.get('title')); print('status:', t.get('status'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track response shape",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(list(d.keys()))\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track 103 auth",
+			"type": "shell",
+			"command": "curl -sv 'http://localhost:5003/api/streaming/tracks/103' 2>&1 | grep -E 'HTTP|error|{' | head -5",
+			"group": "test"
+		},
+		{
+			"label": "Check server error log",
+			"type": "shell",
+			"command": "tail -30 /tmp/fsa-server.log",
+			"group": "test"
+		},
+		{
+			"label": "Test track SQL",
+			"type": "shell",
+			"command": "node /Users/joe/Downloads/FSA/_test_track_query.cjs",
+			"group": "test"
+		},
+		{
+			"label": "Check tables exist",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('track_comments','listening_history','track_likes')\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Check track_comments columns",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='track_comments' ORDER BY ordinal_position\\\").then(r=>{console.log(r.rows.map(x=>x.column_name));c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Restart and test track detail error",
+			"type": "shell",
+			"command": "lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2 && cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 8 && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('error'), d.get('detail'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test track detail error msg",
+			"type": "shell",
+			"command": "curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('error'), '|', d.get('detail'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test track detail v2",
+			"type": "shell",
+			"command": "sleep 5 && curl -s 'http://localhost:5003/api/health' | head -c 50 && echo '' && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('error:', d.get('detail','track' in d))\"",
+			"group": "test"
+		},
+		{
+			"label": "Wait and test track 103",
+			"type": "shell",
+			"command": "sleep 10 && tail -5 /tmp/fsa-server.log && echo '---' && curl -s http://localhost:5003/api/streaming/tracks/103",
+			"group": "test"
+		},
+		{
+			"label": "Check port 5003",
+			"type": "shell",
+			"command": "lsof -ti :5003 && echo 'running' || echo 'not running'",
+			"group": "test"
+		},
+		{
+			"label": "Check why server died",
+			"type": "shell",
+			"command": "tail -20 /tmp/fsa-server.log | grep -E 'ERROR|error|crash|EADDR|listen'",
+			"group": "test"
+		},
+		{
+			"label": "Test track 103 detail",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/streaming/tracks/103",
+			"group": "test"
+		},
+		{
+			"label": "Check users name columns",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name LIKE '%name%' OR table_name='users' AND column_name LIKE '%display%'\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Check pochette column type",
+			"type": "shell",
+			"command": "node -e \"require('dotenv').config();const p=require('pg');const c=new p.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});c.query(\\\"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='music_tracks' AND column_name IN ('pochette','cover_art','audio_data')\\\").then(r=>{console.log(r.rows);c.end()})\"",
+			"group": "test"
+		},
+		{
+			"label": "Full streaming verification",
+			"type": "shell",
+			"command": "lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2 && cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 12 && echo '=== track list ===' && curl -s 'http://localhost:5003/api/streaming/tracks?limit=1' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d['tracks'][0]; print('title:', t['title'],'| artist:', t.get('artist_name'),'| has_pochette:', t.get('has_pochette'))\" && echo '=== track detail ===' && curl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('keys:', list(d.keys())) if 'error' not in d else print('ERROR:', d)\" && echo '=== pochette image ===' && curl -s -o /dev/null -w 'HTTP %{http_code} | %{content_type} | %{size_download} bytes' 'http://localhost:5003/api/streaming/tracks/103/pochette' && echo '' && echo '=== search ===' && curl -s 'http://localhost:5003/api/streaming/search?q=Fantome' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('found:', len(d.get('tracks',[])), [t['title'] for t in d.get('tracks',[])])\"",
+			"group": "test"
+		},
+		{
+			"label": "Track 103 quick test",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/streaming/tracks/103 | python3 -c \"import sys,json; d=json.load(sys.stdin); print('OK' if 'track' in d else 'ERR: '+str(d))\"",
+			"group": "test"
+		},
+		{
+			"label": "Restart + full verify",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 1; NODE_ENV=development node --import tsx server/index.ts > /tmp/fsa-server.log 2>&1 &\necho \"PID=$!\"\nsleep 14\necho '--- Track list ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks?limit=2' | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('tracks',[]); print(f'tracks={len(t)}, has_pochette={t[0].get(\\\"has_pochette\\\")}, artist={t[0].get(\\\"artist_name\\\")}') if t else print('EMPTY:', d)\"\necho '--- Track detail 103 ---'\ncurl -s 'http://localhost:5003/api/streaming/tracks/103' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('OK keys='+str(list(d.keys()))) if 'track' in d else print('ERR:',d)\"\necho '--- Pochette 103 ---'\ncurl -s -o /dev/null -w 'HTTP %{http_code} type=%{content_type} size=%{size_download}' 'http://localhost:5003/api/streaming/tracks/103/pochette'",
+			"group": "test"
+		},
+		{
+			"label": "Kill and Restart Server",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; pkill -9 -f 'tsx.*server' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test Verify Enforcement",
+			"type": "shell",
+			"command": "sleep 8 && curl -s -X POST http://localhost:5003/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"verify_test_xyz@example.com\",\"password\":\"Test1234!\",\"firstName\":\"Test\",\"lastName\":\"User\"}' && echo '---' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"verify_test_xyz@example.com\",\"password\":\"Test1234!\"}'",
+			"group": "test"
+		},
+		{
+			"label": "Push displayName column",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push 2>&1 | tail -20",
+			"group": "build"
+		},
+		{
+			"label": "Add displayName column directly",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node -e \"const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT').then(r=>{console.log('✅ display_name column added');p.end()}).catch(e=>{console.error('ERR:',e.message);p.end()})\"",
+			"group": "build"
+		},
+		{
+			"label": "TypeScript check",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsc --noEmit 2>&1 | head -25",
+			"group": "build"
+		},
+		{
+			"label": "Restart Server Clean",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; pkill -9 -f 'tsx.*server' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test Onboarding Flow",
+			"type": "shell",
+			"command": "sleep 8; echo '=== Register ===' && curl -s -X POST http://localhost:5003/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"onboard_test_001@gmail.com\",\"password\":\"Test1234!\",\"firstName\":\"Test\",\"lastName\":\"User\"}' | python3 -m json.tool && echo '=== Login (should be blocked - unverified) ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"onboard_test_001@gmail.com\",\"password\":\"Test1234!\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Test superadmin login",
+			"type": "shell",
+			"command": "curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('success:', d.get('success')); print('needsDisplayName:', d.get('needsDisplayName')); print('name:', d.get('user',{}).get('name'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test set display name",
+			"type": "shell",
+			"command": "TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo \"Got token\" && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joel D.\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Restart Server v2",
+			"type": "shell",
+			"command": "pkill -9 -f 'node.*server/index' 2>/dev/null; sleep 2; cd /Users/joe/Downloads/FSA && NODE_ENV=development node --import tsx server/index.ts",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Full display name test",
+			"type": "shell",
+			"command": "sleep 8 && TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo \"=== Set Display Name ===\" && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joel D.\"}' | python3 -m json.tool && echo \"=== Login Again (should show name) ===\" && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print('needsDisplayName:', d.get('needsDisplayName')); print('name:', d.get('user',{}).get('name'))\"",
+			"group": "test"
+		},
+		{
+			"label": "Test name change security",
+			"type": "shell",
+			"command": "TOKEN=$(curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\") && echo '=== Without password (should fail) ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\"}' | python3 -m json.tool && echo '=== With wrong password ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\",\"currentPassword\":\"wrong\"}' | python3 -m json.tool && echo '=== With correct password ===' && curl -s -X POST http://localhost:5003/auth/account/set-display-name -H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\" -d '{\"displayName\":\"Joe New\",\"currentPassword\":\"JoeyD000\"}' | python3 -m json.tool",
+			"group": "test"
+		},
+		{
+			"label": "Restart and test all logins",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; NODE_ENV=development npx tsx server/index.ts > /tmp/fsa-server.log 2>&1 & sleep 12; echo '=== 1. General Login ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}')\" && echo '=== 2. Artist Login ===' && curl -s -X POST http://localhost:5003/auth/artist/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\" && echo '=== 3. Subscriber Login ===' && curl -s -X POST http://localhost:5003/auth/subscriber/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\" && echo '=== 4. Community Login ===' && curl -s -X POST http://localhost:5003/auth/community/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); print(f'needsDisplayName={d.get(\\\"needsDisplayName\\\")}, name={d.get(\\\"user\\\",{}).get(\\\"name\\\")}, role={d.get(\\\"user\\\",{}).get(\\\"role\\\")}, id_type={type(d.get(\\\"user\\\",{}).get(\\\"id\\\")).__name__}')\"",
+			"group": "test"
+		},
+		{
+			"label": "Test all 4 logins",
+			"type": "shell",
+			"command": "sleep 5 && echo '=== General ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}')\" && echo '=== Artist ===' && curl -s -X POST http://localhost:5003/auth/artist/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\" && echo '=== Subscriber ===' && curl -s -X POST http://localhost:5003/auth/subscriber/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\" && echo '=== Community ===' && curl -s -X POST http://localhost:5003/auth/community/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c \"import sys,json; d=json.load(sys.stdin); u=d.get('user',{}); print(f'OK needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}, id={type(u.get(\\\"id\\\")).__name__}')\"",
+			"group": "test"
+		},
+		{
+			"label": "Health check",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/health | head -c 100",
+			"group": "test"
+		},
+		{
+			"label": "Health after wait",
+			"type": "shell",
+			"command": "sleep 10 && curl -s http://localhost:5003/api/health | head -c 100",
+			"group": "test"
+		},
+		{
+			"label": "Server logs",
+			"type": "shell",
+			"command": "tail -20 /tmp/fsa-server.log 2>/dev/null || echo 'No log file'",
+			"group": "test"
+		},
+		{
+			"label": "Test general login",
+			"type": "shell",
+			"command": "echo '=== General Login ===' && curl -s -X POST http://localhost:5003/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"superadmin@versoair.test\",\"password\":\"JoeyD000\"}' | python3 -c 'import sys,json; d=json.load(sys.stdin); u=d.get(\"user\",{}); print(f\"needsDN={d.get(\\\"needsDisplayName\\\")}, name={u.get(\\\"name\\\")}, role={u.get(\\\"role\\\")}\")'",
+			"group": "test"
+		},
+		{
+			"label": "Test all 4 logins",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh",
+			"group": "test"
+		},
+		{
+			"label": "Start server fresh",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && NODE_ENV=development npx tsx server/index.ts &\nsleep 15\nlsof -ti :5003 && echo SERVER_ALIVE || echo SERVER_DEAD",
+			"group": "test"
+		},
+		{
+			"label": "Wait and health",
+			"type": "shell",
+			"command": "sleep 20 && curl -s http://localhost:5003/api/health && echo && echo SERVER_OK || echo SERVER_FAIL",
+			"group": "test"
+		},
+		{
+			"label": "Health now",
+			"type": "shell",
+			"command": "curl -s http://localhost:5003/api/health | head -1",
+			"group": "test"
+		},
+		{
+			"label": "Run login tests",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh",
+			"group": "test"
+		},
+		{
+			"label": "Run login tests full",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_test_all_logins.sh > /tmp/login_test_results.txt 2>&1 && cat /tmp/login_test_results.txt",
+			"group": "test"
+		},
+		{
+			"label": "Show test results",
+			"type": "shell",
+			"command": "cat /tmp/login_test_results.txt",
+			"group": "test"
+		},
+		{
+			"label": "Copy results",
+			"type": "shell",
+			"command": "cp /tmp/login_test_results.txt /Users/joe/Downloads/FSA/_login_test_output.txt",
+			"group": "test"
+		},
+		{
+			"label": "Push new tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _push_new_tables.cjs",
+			"group": "test"
+		},
+		{
+			"label": "TypeCheck",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsc --noEmit 2>&1 | grep -E 'error TS|Found' | tail -30; echo '---DONE---'"
+		},
+		{
+			"label": "DB Push Schema",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push 2>&1 | tail -10"
+		},
+		{
+			"label": "Push Schema v2",
+			"type": "shell",
+			"command": "bash /Users/joe/Downloads/FSA/_run_push.sh"
+		},
+		{
+			"label": "Cleanup temps",
+			"type": "shell",
+			"command": "rm -f /Users/joe/Downloads/FSA/_typecheck.sh /Users/joe/Downloads/FSA/_run_push.sh && echo CLEANED"
+		},
+		{
+			"label": "Clear all artists",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _clear_artists.cjs"
+		},
+		{
+			"label": "Start Dev Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 1 && npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check startup error",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run dev 2>&1 | tail -30"
+		},
+		{
+			"label": "Check startup error detail",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run dev 2>&1 | head -20"
+		},
+		{
+			"label": "Full error trace",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsx server/index.ts 2>&1 | head -40"
+		},
+		{
+			"label": "Capture error to file",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx tsx server/index.ts > /tmp/fsa-err.log 2>&1; head -40 /tmp/fsa-err.log"
+		},
+		{
+			"label": "Start Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart Server",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && lsof -ti :5003 | xargs kill -9 2>/dev/null; sleep 2; npm run dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Git Commit Push All",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && git add -A && git commit -m 'feat: pricing checkout, auth fixes, admin sections, loading speed, requireAuth fix, inventory, inbox, geo-actions' && git push origin main",
+			"group": "build"
+		},
+		{
+			"label": "Neon DB Push",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push",
+			"group": "build"
+		},
+		{
+			"label": "Neon DB Push Now",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push",
+			"group": "build"
+		},
+		{
+			"label": "Neon Push Log",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npm run db:push > /tmp/drizzle-push.log 2>&1 && echo 'SUCCESS' >> /tmp/drizzle-push.log || echo 'FAILED' >> /tmp/drizzle-push.log",
+			"group": "build"
+		},
+		{
+			"label": "Read Drizzle Log",
+			"type": "shell",
+			"command": "sleep 25 && cat /tmp/drizzle-push.log",
+			"group": "test"
+		},
+		{
+			"label": "Neon Push Force",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && npx drizzle-kit push --force > /tmp/drizzle-push2.log 2>&1 && echo 'DONE' >> /tmp/drizzle-push2.log || echo 'FAILED' >> /tmp/drizzle-push2.log",
+			"group": "build"
+		},
+		{
+			"label": "Read Force Log",
+			"type": "shell",
+			"command": "sleep 60 && tail -30 /tmp/drizzle-push2.log",
+			"group": "test"
+		},
+		{
+			"label": "Drizzle Result",
+			"type": "shell",
+			"command": "cat /tmp/drizzle-push2.log | grep -v 'Pulling schema' | tail -40",
+			"group": "test"
+		},
+		{
+			"label": "Sync New Tables",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables v3",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Sync Tables Full",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs 2>&1",
+			"group": "build"
+		},
+		{
+			"label": "Sync Full Output",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs > /tmp/sync-result.txt 2>&1 && cat /tmp/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Sync Full v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _sync_new_tables.cjs > /Users/joe/Downloads/FSA/sync-result.txt 2>&1 && cat /Users/joe/Downloads/FSA/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Cleanup",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/sync-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Clear Users",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _clear_test_users.cjs > /Users/joe/Downloads/FSA/clear-result.txt 2>&1 && cat /Users/joe/Downloads/FSA/clear-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Del result",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/clear-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff v2",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs > /Users/joe/Downloads/FSA/restore-result.txt 2>&1; cat /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Restore Staff v3",
+			"type": "shell",
+			"command": "cd /Users/joe/Downloads/FSA && node _restore_staff.cjs > /Users/joe/Downloads/FSA/restore-result.txt 2>&1; cat /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
+		},
+		{
+			"label": "Cleanup",
+			"type": "shell",
+			"command": "rm /Users/joe/Downloads/FSA/restore-result.txt",
+			"group": "build"
+		}
+	]
+}

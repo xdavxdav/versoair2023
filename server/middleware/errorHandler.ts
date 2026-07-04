@@ -1,4 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+import { createLogger } from "../utils/logger";
+
+const log = createLogger("errorHandler");
 
 /**
  * Global error handling middleware
@@ -10,7 +13,7 @@ export function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
-  console.error("[Error]", err);
+  log.error("Unhandled request error:", err);
 
   // Database errors
   if (err.code?.startsWith("42")) {

@@ -24,7 +24,9 @@ export function serveStatic(app: Express) {
     try {
       const assets = fs.readdirSync(distPath);
       console.log(`[STATIC] Contents: ${assets.join(", ")}`);
-    } catch (_) {}
+    } catch (err) {
+      console.warn("[STATIC] Could not list dist contents:", err);
+    }
   }
 
   if (!fs.existsSync(distPath)) {

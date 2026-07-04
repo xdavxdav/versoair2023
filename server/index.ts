@@ -48,6 +48,9 @@ import { setupCategoryIntegrityCheck } from "./services/category-integrity-check
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { ensureAllTables } from "./services/ensure-tables";
+import { createLogger } from "./utils/logger";
+
+const serverLog = createLogger("server");
 import { startDigestWorker } from "./services/digest-worker";
 import { setupSubscriptionExpiryCron } from "./services/subscription-expiry";
 import { setupRoyaltyEngine } from "./services/royalty-engine";
@@ -189,54 +192,52 @@ app.use((req, res, next) => {
 
 // ---------- MAIN SERVER BOOTSTRAP ----------
 (async () => {
-  console.log("🔧 [SERVER] Starting server initialization...");
+  serverLog.info("Starting server initialization...");
 
   // Initialize email transporter for notifications
   initializeEmailTransporter();
-  console.log("✅ [SERVER] Email service initialized");
+  serverLog.info("Email service initialized");
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
   await ensureAllTables();
-  console.log("✅ [SERVER] Database tables verified");
+  serverLog.info("Database tables verified");
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
-  console.log("✅ [SERVER] Routes registered successfully");
+  serverLog.info("Routes registered successfully");
 
   // Setup category integrity check (runs daily + on startup)
   setupCategoryIntegrityCheck();
-  console.log("✅ [SERVER] Category integrity check scheduled");
+  serverLog.info("Category integrity check scheduled");
 
   // Start digest worker for batched email delivery
   startDigestWorker();
-  console.log(
-    "✅ [SERVER] Digest worker started (hourly email queue processor)",
-  );
+  serverLog.info("Digest worker started (hourly email queue processor)");
 
   // Setup subscription expiry check (runs daily)
   setupSubscriptionExpiryCron();
-  console.log("✅ [SERVER] Subscription expiry cron scheduled");
+  serverLog.info("Subscription expiry cron scheduled");
 
   // Setup StreamRoyale royalty distribution engine (weekly Monday 06:00 UTC)
   setupRoyaltyEngine();
-  console.log("✅ [SERVER] StreamRoyale royalty engine started");
+  serverLog.info("StreamRoyale royalty engine started");
 
   // Setup marketing cron jobs (journal generation + newsletter dispatch)
   setupJournalCron();
-  console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
+  serverLog.info("Journal cron scheduled (weekly + monthly)");
 
   setupNewsletterCron();
-  console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
+  serverLog.info("Newsletter cron scheduled (hourly)");
 
   // Setup marketplace auto-approve (approves pending listings after 24h)
   setupMarketplaceAutoApprove();
-  console.log("✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)");
+  serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    console.error("❌ [SERVER] Unhandled error:", err.message || err);
+    serverLog.error("Unhandled error:", err.message || err);
     res.status(status).json({ message });
   });
 
@@ -246,7 +247,7 @@ app.use((req, res, next) => {
 
   // Initialize Socket.io for real-time notifications
   initializeSocket(server);
-  console.log("✅ [SERVER] Socket.io initialized for real-time notifications");
+  serverLog.info("Socket.io initialized for real-time notifications");
 
   // Setup Vite/static LAST — SPA fallback catches unmatched GET routes
   // (like /auth/signin, /dashboard, etc.) and serves index.html
@@ -266,17 +267,13 @@ app.use((req, res, next) => {
       host: "0.0.0.0",
     },
     () => {
-      console.log("🚀 [SERVER] Server running on port", port);
-      console.log("🔗 [SERVER] Test endpoints:");
-      console.log("   - http://localhost:" + port + "/api/simple-test");
-      console.log("   - http://localhost:" + port + "/api/status");
-      console.log("   - http://localhost:" + port + "/api/countries");
-      console.log("🔒 [SERVER] CORS enabled for:", allowedOrigins);
-      console.log("🌍 [SERVER] NODE_ENV:", process.env.NODE_ENV);
+      serverLog.info(`Server running on port ${port}`);
+      serverLog.info(`CORS enabled for: ${allowedOrigins}`);
+      serverLog.info(`NODE_ENV: ${process.env.NODE_ENV}`);
       log(`serving on port ${port}`);
     },
   );
 })().catch((err) => {
-  console.error("❌ [FATAL] Server failed to start:", err);
+  serverLog.error("FATAL: Server failed to start:", err);
   process.exit(1);
 });

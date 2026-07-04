@@ -138,7 +138,7 @@ router.post("/smart-chat", async (req: Request, res: Response) => {
             knowledge.businesses
               .map(
                 (b) =>
-                  `• ${b.name} (${b.categoryName}) — ${b.city || b.country || "N/A"} | ★${(b.rating ?? 0).toFixed(1)} | Tier: ${b.tier || "free"}` +
+                  `• ${b.name} (${b.category}) — ${b.location || b.country || "N/A"} | ★${(b.rating ?? 0).toFixed(1)} | Tier: ${b.tier || "free"}` +
                   (b.isVerified ? " ✅ Verified" : ""),
               )
               .join("\n") +
@@ -146,7 +146,7 @@ router.post("/smart-chat", async (req: Request, res: Response) => {
 
           intentSources = knowledge.businesses.map((b) => ({
             name: b.name,
-            snippet: `${b.categoryName} | ${b.city || b.country || ""} | ★${(b.rating ?? 0).toFixed(1)}`,
+            snippet: `${b.category} | ${b.location || b.country || ""} | ★${(b.rating ?? 0).toFixed(1)}`,
           }));
         }
 

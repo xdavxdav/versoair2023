@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
 import { eq } from "drizzle-orm";
 import * as schema from "@shared/schema";
@@ -580,7 +580,7 @@ const PLAY_DEBOUNCE_MS = 30_000; // 30 seconds between increments per IP+track
 // 💳 TRACK PURCHASE — POST /api/music/tracks/:id/purchase
 // Debits buyer wallet, credits artist wallet (70/30 split)
 // ═════════════════════════════════════════════════════════════════════
-router.post("/tracks/:id/purchase", requireAuth, async (req, res) => {
+router.post("/tracks/:id/purchase", requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const trackId = parseInt(req.params.id);

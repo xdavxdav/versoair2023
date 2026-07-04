@@ -892,7 +892,7 @@ const BusinessManagement = ({
             .then((data) => {
               const raw = Array.isArray(data) ? data : data.data || [];
               const deduped = Array.from(
-                new Map(raw.map((c: any) => [c.name, c])).values(),
+                ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
               );
               setCitiesList(deduped);
             })
@@ -910,7 +910,7 @@ const BusinessManagement = ({
       .then((data) => {
         const raw = Array.isArray(data) ? data : data.data || [];
         const deduped = Array.from(
-          new Map(raw.map((c: any) => [c.name, c])).values(),
+          ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
         );
         setCitiesList(deduped);
       })
@@ -980,7 +980,7 @@ const BusinessManagement = ({
             .then((data) => {
               const raw = Array.isArray(data) ? data : data.data || [];
               const deduped = Array.from(
-                new Map(raw.map((c: any) => [c.name, c])).values(),
+                ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
               );
               setEditCitiesList(deduped);
             })
@@ -998,7 +998,7 @@ const BusinessManagement = ({
       .then((data) => {
         const raw = Array.isArray(data) ? data : data.data || [];
         const deduped = Array.from(
-          new Map(raw.map((c: any) => [c.name, c])).values(),
+          ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
         );
         setEditCitiesList(deduped);
       })

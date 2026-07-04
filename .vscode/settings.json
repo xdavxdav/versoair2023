@@ -1,0 +1,40 @@
+{
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescript": "typescriptreact"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.eol": "\n",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true
+  },
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  "files.readonlyInclude": {
+    "{**/.c4z/.extsrcs/*.PROTSYM.cbl,**/.c4z/.extsrcs/*.PROTSYM.listing}": true
+  }
+}

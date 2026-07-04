@@ -23,6 +23,7 @@ export interface AuthUser {
   subscriptionTier?: string;
   subscription_tier?: string;
   subscriptionStatus?: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -212,3 +213,6 @@ export function useAuthContext() {
   }
   return context;
 }
+
+/** Alias for useAuthContext — for compatibility with code using useAuth. */
+export const useAuth = useAuthContext;
