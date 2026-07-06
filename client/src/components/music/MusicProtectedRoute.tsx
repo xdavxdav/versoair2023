@@ -10,7 +10,8 @@ import { useLocation } from "wouter";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
 
 interface MusicProtectedRouteProps {
-  component: React.ComponentType;
+  component?: React.ComponentType;
+  children?: React.ReactNode;
 }
 
 function MusicSpinner() {
@@ -28,6 +29,7 @@ function MusicSpinner() {
 
 export default function MusicProtectedRoute({
   component: Component,
+  children,
 }: MusicProtectedRouteProps) {
   const { user, loading } = useAuthContext();
   const [, setLocation] = useLocation();
@@ -40,7 +42,7 @@ export default function MusicProtectedRoute({
 
   if (loading) return <MusicSpinner />;
   if (!user) return null;
-  return <Component />;
+  return Component ? <Component /> : <>{children}</>;
 }
 
 /**
@@ -48,6 +50,7 @@ export default function MusicProtectedRoute({
  */
 export function MusicArtistRoute({
   component: Component,
+  children,
 }: MusicProtectedRouteProps) {
   const { user, loading } = useAuthContext();
   const { isArtist, isLoading } = useMusicAccess();
@@ -65,5 +68,5 @@ export function MusicArtistRoute({
 
   if (loading || isLoading) return <MusicSpinner />;
   if (!user || !isArtist) return null;
-  return <Component />;
+  return Component ? <Component /> : <>{children}</>;
 }

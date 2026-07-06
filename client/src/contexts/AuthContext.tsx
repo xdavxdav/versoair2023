@@ -15,6 +15,7 @@ export interface AuthUser {
   username?: string;
   role?: string;
   isAdmin?: boolean;
+  avatar?: string;
   // Portal capabilities
   portals?: string[];
   hasArtistProfile?: boolean;
