@@ -97,9 +97,16 @@ router.post("/categories", async (req, res) => {
     if (!parsed.success)
       return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, slug, description } = parsed.data;
+    const finalSlug =
+      slug ||
+      name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
     const result = await db
       .insert(businessCategories)
-      .values({ name, slug, description })
+      .values({ name, slug: finalSlug, description })
       .returning();
     await auditLog(req, "CREATE", "categories", result[0].id, { name });
     res.status(201).json(result[0]);

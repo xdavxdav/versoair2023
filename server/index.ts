@@ -1,4 +1,9 @@
 import dotenv from "dotenv";
+// Load env from the standard local files in priority order. dotenv does NOT
+// override variables already present in process.env, so platform-provided
+// environment variables (Render/production) always take precedence.
+dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 dotenv.config();
 
 // ─── Set sibling URL for runtime injection into HTML ─────────────────────────

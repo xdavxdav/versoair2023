@@ -40,6 +40,7 @@ import {
   UserPlus,
   UserMinus,
   ExternalLink,
+  CreditCard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useAudio } from "@/lib/audio-context";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { PaymentTopBanner } from "@/components/PaymentTopBanner";
+import { PaymentLogo } from "@/components/PaymentLogos";
 import { PAYMENT_METHODS, type PaymentMethodId } from "@/lib/payment-methods";
 
 // ── Reaction emoji mapping ──

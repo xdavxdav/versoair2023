@@ -3339,10 +3339,10 @@ router.post(
     // Send email
     try {
       const { sendEmail } = await import("../services/email-service");
-      await sendEmail({
-        to: user.email,
-        subject: "Verso Air — Verification Code",
-        html: `
+      await sendEmail(
+        user.email,
+        "Verso Air — Verification Code",
+        `
           <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 24px;">
             <h2 style="color: #1a1a2e;">Verification Code</h2>
             <p>Hi ${user.display_name || "there"},</p>
@@ -3354,7 +3354,7 @@ router.post(
             <p style="color: #999; font-size: 11px;">— Verso Air Security</p>
           </div>
         `,
-      });
+      );
     } catch (emailErr) {
       console.warn("[StepUp] Email send failed:", emailErr);
       // In dev, log the code so testing still works

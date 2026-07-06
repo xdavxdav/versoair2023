@@ -18,7 +18,9 @@ import { useEffect, useState, useRef } from "react";
 
 interface ProtectedRouteProps {
   /** The page component to render when authorized */
-  component: React.ComponentType;
+  component?: React.ComponentType;
+  /** Alternatively, render children when authorized */
+  children?: React.ReactNode;
   /** Required roles (any match grants access). Leave empty for "any authenticated user". */
   roles?: string[];
 }
@@ -98,6 +100,7 @@ async function tryRestoreFromGateToken(): Promise<AuthUser | null> {
 
 export default function ProtectedRoute({
   component: Component,
+  children,
   roles,
 }: ProtectedRouteProps) {
   const { user, loading, login } = useAuthContext();
@@ -173,5 +176,5 @@ export default function ProtectedRoute({
   }
 
   // Authorized — render the protected page
-  return <Component />;
+  return Component ? <Component /> : <>{children}</>;
 }

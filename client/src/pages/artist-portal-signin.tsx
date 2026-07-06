@@ -28,7 +28,7 @@ import {
   passwordStrengthLevel,
   validateRegistrationForm,
 } from "@/lib/auth-validation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthContext as useAuth } from "@/contexts/AuthContext";
 
 // ─── Floating Background Particles (lighter version) ─
 function LightParticles() {

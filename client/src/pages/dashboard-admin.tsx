@@ -112,7 +112,6 @@ import {
   Truck,
   Package2,
   Globe2,
-  Map,
   Navigation,
   Compass,
   Pin,
