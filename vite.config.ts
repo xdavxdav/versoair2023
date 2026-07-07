@@ -19,9 +19,11 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks: {
+          // Heavy editor deps
           "vendor-tiptap": [
             "@tiptap/react",
             "@tiptap/starter-kit",
@@ -31,7 +33,25 @@ export default defineConfig({
             "@tiptap/extension-color",
             "@tiptap/extension-text-style",
           ],
-          "vendor-quill": ["react-quill"],
+          // Core UI libs
+          "vendor-ui": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+          ],
+          // Animation/motion
+          "vendor-motion": ["framer-motion"],
+          // Charts
+          "vendor-charts": ["recharts"],
+          // React core
+          "vendor-react": ["react", "react-dom"],
+          // Data fetching
+          "vendor-query": ["@tanstack/react-query"],
         },
       },
     },

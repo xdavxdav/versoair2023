@@ -1280,6 +1280,7 @@ export default function Home() {
   useScrollLock(isCulturalModalOpen);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
+  const [showTopRatedOnly, setShowTopRatedOnly] = useState(false);
 
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -1846,6 +1847,7 @@ export default function Home() {
     setHasSearched(false);
     setSearchResults([]);
     setShowAllResults(false);
+    setShowTopRatedOnly(false);
     setAiResults(null);
 
     // Reload initial data
@@ -1853,6 +1855,20 @@ export default function Home() {
       loadInitialData();
     }
   };
+
+  const rankedSearchResults = showTopRatedOnly
+    ? [...searchResults].sort(
+        (a, b) => Number(b.rating || 0) - Number(a.rating || 0),
+      )
+    : searchResults;
+
+  const databaseResultsHref = (() => {
+    const params = new URLSearchParams();
+    if (selectedCountry) params.set("countryCode", selectedCountry);
+    if (showTopRatedOnly) params.set("sortBy", "rating");
+    const qs = params.toString();
+    return qs ? `/database-results?${qs}` : "/database-results";
+  })();
 
   // ═══ AI Intent Search Handler (Shared Brain) ═══
   const handleAiSearch = useCallback(async () => {
@@ -2514,6 +2530,11 @@ export default function Home() {
                         • Triés par distance
                       </span>
                     )}
+                    {showTopRatedOnly && (
+                      <span className="text-amber-600 font-semibold ml-2 md:ml-3">
+                        • Top notés
+                      </span>
+                    )}
                     {databaseConnected && (
                       <span className="text-blue-600 font-semibold ml-2 md:ml-3">
                         • Depuis la base PostgreSQL
@@ -2532,12 +2553,12 @@ export default function Home() {
                     style={{ WebkitOverflowScrolling: "touch" }}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                      {searchResults
+                      {rankedSearchResults
                         .slice(
                           0,
                           showAllResults
-                            ? searchResults.length
-                            : Math.min(5, searchResults.length),
+                            ? rankedSearchResults.length
+                            : Math.min(5, rankedSearchResults.length),
                         )
                         .map((business, index) => (
                           <motion.div
@@ -2624,26 +2645,44 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <Link to="/database-results">
-                      <motion.button
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0 20px 40px rgba(16, 185, 129, 0.4)",
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        className="group relative px-10 md:px-14 py-5 md:py-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 text-lg md:text-xl flex items-center justify-center gap-4 mx-auto overflow-hidden"
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowTopRatedOnly((v) => !v)}
+                        className={`px-6 py-4 rounded-full font-semibold text-sm md:text-base border transition-all ${
+                          showTopRatedOnly
+                            ? "bg-amber-500 text-white border-amber-500 shadow-lg"
+                            : "bg-white text-amber-700 border-amber-300 hover:bg-amber-50"
+                        }`}
+                        title="Afficher les mieux notés dans le maximum de cartes affichées"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10 flex items-center gap-3 md:gap-4">
-                          <Database className="w-6 h-6 md:w-7 md:h-7" />
-                          <span className="text-lg md:text-xl font-bold">
-                            Voir toutes les communautés artisanales
-                          </span>
-                          <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform duration-300" />
-                        </div>
-                        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full blur-md opacity-30 group-hover:opacity-70 transition-opacity duration-300"></div>
-                      </motion.button>
-                    </Link>
+                        <span className="inline-flex items-center gap-2">
+                          <Star className="w-4 h-4" />
+                          {showTopRatedOnly ? "Top notés: ON" : "Top notés: OFF"}
+                        </span>
+                      </button>
+
+                      <Link to={databaseResultsHref}>
+                        <motion.button
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0 20px 40px rgba(16, 185, 129, 0.4)",
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          className="group relative px-10 md:px-14 py-5 md:py-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 text-lg md:text-xl flex items-center justify-center gap-4 mx-auto overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="relative z-10 flex items-center gap-3 md:gap-4">
+                            <Database className="w-6 h-6 md:w-7 md:h-7" />
+                            <span className="text-lg md:text-xl font-bold">
+                              Voir toutes les communautés artisanales
+                            </span>
+                            <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform duration-300" />
+                          </div>
+                          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full blur-md opacity-30 group-hover:opacity-70 transition-opacity duration-300"></div>
+                        </motion.button>
+                      </Link>
+                    </div>
 
                     <p className="text-gray-600 mt-4 text-sm md:text-base">
                       Explorez notre base de données complète de{" "}
