@@ -123,6 +123,24 @@ export const apiLimiter = rateLimit({
   },
 });
 
+// AI endpoint rate limiter: max 30 requests per 5 minutes per IP
+// Prevents prompt-abuse, server hammering, and LLM cost runaway
+export const aiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+  handler: (req: Request, res: Response) => {
+    console.warn(`[RATE_LIMIT] AI rate limit exceeded for: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      error: "Too many AI requests. Please wait a moment and try again.",
+      retryAfter: "5 minutes",
+    });
+  },
+});
+
 /**
  * For serverless deployments (Vercel, AWS Lambda, etc.),
  * use Upstash Redis for rate limiting persistence:

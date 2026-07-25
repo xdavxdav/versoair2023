@@ -430,6 +430,14 @@ export default function InstagramNav({
   const toggleDrawer = useCallback(() => setDrawerOpen((p) => !p), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
+  useEffect(() => {
+    return () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+    };
+  }, []);
+
   // Home button gestures:
   // - Single tap → /marketplace
   // - Double tap → /blog
@@ -458,7 +466,9 @@ export default function InstagramNav({
     }, 300);
   }, [currentPath, setLocation]);
 
-  const handleHomePressStart = useCallback(() => {
+  const handleHomePressStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
     holdCompletedRef.current = false;
     holdStartRef.current = Date.now();
     setIsHolding(true);
@@ -475,16 +485,22 @@ export default function InstagramNav({
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      setLocation("/marketplace");
+      setLocation("/");
     }, 5000);
-  }, [setLocation]);
+    },
+    [setLocation],
+  );
 
-  const handleHomePressEnd = useCallback(() => {
+  const handleHomePressEnd = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
     if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
     setIsHolding(false);
     setHoldProgress(0);
-  }, []);
+    },
+    [],
+  );
 
   // Close drawer on route change
   useEffect(() => {

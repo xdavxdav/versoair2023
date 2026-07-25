@@ -67,6 +67,21 @@ const SECTOR_ALIASES: Record<string, string> = {
   doctor: "sante",
 };
 
+function normalizeForSearch(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function extractMeaningfulKeywords(
+  normalizedMessage: string,
+  stopWords: Set<string>,
+): string[] {
+  const rawWords = normalizedMessage.match(/\p{L}{3,}/gu) ?? [];
+  return rawWords.filter((word) => !stopWords.has(word) && word.length > 2);
+}
+
 /**
  * Builds real-time database context to inject into the AI's prompt.
  * Analyzes the user message to decide what data is relevant.
@@ -77,7 +92,7 @@ export async function buildAIContext(
   userMessage: string,
   userRole?: string,
 ): Promise<AIContext> {
-  const msg = userMessage.toLowerCase();
+  const msg = normalizeForSearch(userMessage);
   const allowedSectors = getAllowedSectors(userRole);
 
   // Always fetch platform-wide stats + categories + countries in parallel
@@ -143,8 +158,8 @@ export async function buildAIContext(
     // Detect country mentions
     const mentionedCountry = context.countries.find(
       (c) =>
-        msg.includes(c.name.toLowerCase()) ||
-        msg.includes(c.code.toLowerCase()),
+        msg.includes(normalizeForSearch(c.name)) ||
+        msg.includes(normalizeForSearch(c.code)),
     );
     if (mentionedCountry) {
       params.push(mentionedCountry.code);
@@ -153,7 +168,7 @@ export async function buildAIContext(
 
     // Detect category / sector mentions
     const mentionedCategory = context.categories.find((cat) =>
-      msg.includes(cat.name.toLowerCase()),
+      msg.includes(normalizeForSearch(cat.name)),
     );
 
     let targetSlug =
@@ -168,7 +183,7 @@ export async function buildAIContext(
     }
 
     // ── Full-Text Search with PostgreSQL tsvector (replaces ILIKE) ──
-    const keywords = msg.match(/\b[a-z]{4,}\b/g) ?? [];
+    const keywords = msg.match(/\p{L}{3,}/gu) ?? [];
     const stopWords = new Set([
       "find",
       "show",
@@ -197,12 +212,31 @@ export async function buildAIContext(
       "les",
       "des",
       "une",
+      "como",
+      "donde",
+      "cual",
+      "quien",
+      "para",
+      "con",
+      "los",
+      "las",
+      "und",
+      "die",
+      "das",
+      "mit",
+      "bei",
+      "che",
+      "dove",
+      "con",
     ]);
+    const normalizedCountryName = mentionedCountry
+      ? normalizeForSearch(mentionedCountry.name)
+      : "";
     const meaningfulKeywords = keywords.filter(
       (k) =>
         !stopWords.has(k) &&
-        k.length > 3 &&
-        !mentionedCountry?.name.toLowerCase().includes(k) &&
+        k.length > 2 &&
+        !normalizedCountryName.includes(k) &&
         !Object.keys(SECTOR_ALIASES).includes(k),
     );
 
@@ -317,11 +351,10 @@ export async function groundedSearch(
   sources: { id: number; name: string; snippet: string }[];
   searchMethod: string;
 }> {
-  const msg = question.toLowerCase();
+  const msg = normalizeForSearch(question);
   const allowedSectors = getAllowedSectors(userRole);
 
   // Extract meaningful search terms
-  const keywords = msg.match(/\b[a-z]{4,}\b/g) ?? [];
   const stopWords = new Set([
     "what",
     "which",
@@ -361,10 +394,23 @@ export async function groundedSearch(
     "les",
     "des",
     "une",
+    "como",
+    "donde",
+    "cual",
+    "quien",
+    "para",
+    "con",
+    "los",
+    "las",
+    "und",
+    "die",
+    "das",
+    "mit",
+    "bei",
+    "che",
+    "dove",
   ]);
-  const meaningfulKeywords = keywords.filter(
-    (k) => !stopWords.has(k) && k.length > 3,
-  );
+  const meaningfulKeywords = extractMeaningfulKeywords(msg, stopWords);
 
   const params: any[] = [];
   let whereClause = "WHERE b.is_active = true";

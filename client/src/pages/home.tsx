@@ -1424,160 +1424,37 @@ export default function Home() {
       }
     });
 
-    // Skip expensive 3D transforms & zoom tweens on tablets/phones (≤1024px)
-    const isMobile = window.matchMedia("(max-width: 1024px)").matches;
-
     const ctx = gsap.context(() => {
-      // Set initial state — skip preserve-3d & perspective on mobile (GPU-heavy)
+      // Set initial state
       gsap.set(panelsContainerRef.current, {
         x: 0,
-        scale: 1,
-        ...(isMobile
-          ? {}
-          : { transformStyle: "preserve-3d" as const, perspective: 1200 }),
+        force3D: true,
       });
 
-      // Get all panel elements
-      const panels = gsap.utils.toArray<HTMLElement>(".panel");
-
-      // Set initial states for all panels
-      gsap.set(panels, {
-        scale: 1,
-        transformOrigin: "center center",
-      });
-
-      // Calculate animation stats
-      const ZOOM_OUT_SCALE = 0.85; // Consistent zoom-out scale
-      const ZOOM_IN_SCALE = 1; // Normal scale
-      const ZOOM_DURATION = isMobile ? 0 : 0.8; // Skip zoom on mobile
-      const SLIDE_DURATION = 1.4; // Duration for slide animations
-      const TOTAL_TRANSITION = ZOOM_DURATION * 2 + SLIDE_DURATION; // Total time per transition
-      // Use percentage of container width for slides (container is NUM_PANELS * 100% wide)
-      const SLIDE_STEP = `${-100 / NUM_PANELS}%`;
-
-      // Create master timeline
-      const masterTimeline = gsap.timeline({
+      // SIMPLIFIED: one continuous linear slide, driven 1:1 by scroll.
+      // The previous version layered separate zoom-out/slide/zoom-in tweens
+      // on manually-guessed time offsets ("start+=X-0.2") — at variable
+      // scroll speed or when reversing direction those overlapping tweens
+      // fell out of sync with each other and with the scrub lag, which is
+      // what caused the "fighting"/shifting feel. A single tween can't
+      // fight itself, so this is inherently smooth in both directions.
+      gsap.to(panelsContainerRef.current, {
+        x: `-${((NUM_PANELS - 1) * 100) / NUM_PANELS}%`,
+        ease: "none",
+        force3D: true,
         scrollTrigger: {
           id: "panels-scroll",
           trigger: panelsWrapperRef.current,
           pin: true,
           pinSpacing: true,
-          scrub: 1.2, // Smoother scrubbing
+          scrub: 2.5, // Higher = more inertia — panels "catch up" slowly like a bike chain
           start: "top top",
-          end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * 1.2}`, // Adjusted for better timing
+          end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * 1.0}`, // Longer scroll = slower, more deliberate transitions
           invalidateOnRefresh: true,
           anticipatePin: 1,
           markers: false,
         },
       });
-
-      // Panel 1 → Panel 2 transition
-      // Zoom out current panel (Panel 1) — desktop only
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[0],
-          {
-            scale: ZOOM_OUT_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          "start",
-        );
-      }
-      // Slide to next panel
-      masterTimeline.to(
-        panelsContainerRef.current,
-        {
-          x: SLIDE_STEP,
-          duration: SLIDE_DURATION,
-          ease: "power2.inOut",
-        },
-        isMobile ? "start" : `start+=${ZOOM_DURATION}`,
-      );
-      // Zoom in next panel (Panel 2) — desktop only
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[1],
-          {
-            scale: ZOOM_IN_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${ZOOM_DURATION + SLIDE_DURATION - 0.2}`,
-        );
-      }
-
-      // Panel 2 → Panel 3 transition
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[1],
-          {
-            scale: ZOOM_OUT_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${TOTAL_TRANSITION}`,
-        );
-      }
-      masterTimeline.to(
-        panelsContainerRef.current,
-        {
-          x: `${(-2 * 100) / NUM_PANELS}%`,
-          duration: SLIDE_DURATION,
-          ease: "power2.inOut",
-        },
-        isMobile
-          ? `start+=${SLIDE_DURATION}`
-          : `start+=${TOTAL_TRANSITION + ZOOM_DURATION}`,
-      );
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[2],
-          {
-            scale: ZOOM_IN_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${TOTAL_TRANSITION + ZOOM_DURATION + SLIDE_DURATION - 0.2}`,
-        );
-      }
-
-      // Panel 3 → Panel 4 transition
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[2],
-          {
-            scale: ZOOM_OUT_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${TOTAL_TRANSITION * 2}`,
-        );
-      }
-      masterTimeline.to(
-        panelsContainerRef.current,
-        {
-          x: `${(-3 * 100) / NUM_PANELS}%`,
-          duration: SLIDE_DURATION,
-          ease: "power2.inOut",
-        },
-        isMobile
-          ? `start+=${SLIDE_DURATION * 2}`
-          : `start+=${TOTAL_TRANSITION * 2 + ZOOM_DURATION}`,
-      );
-      if (!isMobile) {
-        masterTimeline.to(
-          panels[3],
-          {
-            scale: ZOOM_IN_SCALE,
-            duration: ZOOM_DURATION,
-            ease: "power2.inOut",
-          },
-          `start+=${
-            TOTAL_TRANSITION * 2 + ZOOM_DURATION + SLIDE_DURATION - 0.2
-          }`,
-        );
-      }
     });
 
     // Refresh ScrollTrigger
@@ -2649,7 +2526,8 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setShowTopRatedOnly((v) => !v)}
-                        className={`px-6 py-4 rounded-full font-semibold text-sm md:text-base border transition-all ${
+                        translate="no"
+                        className={`notranslate px-6 py-4 rounded-full font-semibold text-sm md:text-base border transition-all ${
                           showTopRatedOnly
                             ? "bg-amber-500 text-white border-amber-500 shadow-lg"
                             : "bg-white text-amber-700 border-amber-300 hover:bg-amber-50"
@@ -2657,8 +2535,19 @@ export default function Home() {
                         title="Afficher les mieux notés dans le maximum de cartes affichées"
                       >
                         <span className="inline-flex items-center gap-2">
-                          <Star className="w-4 h-4" />
-                          {showTopRatedOnly ? "Top notés: ON" : "Top notés: OFF"}
+                          <Star
+                            className={`w-4 h-4 ${showTopRatedOnly ? "fill-current" : ""}`}
+                          />
+                          <span
+                            className={showTopRatedOnly ? "hidden" : "inline"}
+                          >
+                            Top notés: OFF
+                          </span>
+                          <span
+                            className={showTopRatedOnly ? "inline" : "hidden"}
+                          >
+                            Top notés: ON
+                          </span>
                         </span>
                       </button>
 

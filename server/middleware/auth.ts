@@ -120,6 +120,8 @@ const PUBLIC_PATHS: string[] = [
   "/api/ai/ask",
   "/api/ai/smart-chat",
   "/api/ai/connectors",
+  // FAQ read endpoints — public so anyone can browse (writes require auth)
+  "/api/faq/categories",
 ];
 
 /**
@@ -128,6 +130,7 @@ const PUBLIC_PATHS: string[] = [
  */
 const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/home/", // Home page stats
+  "/api/faq", // FAQ browsing — GET only (list/search/detail)
   "/api/artists/", // Artist directory (search, genres, countries)
   "/api/music/", // Music artists, tracks, analytics (home page carousel)
   "/api/businesses", // Business listing & search (home page, directory)

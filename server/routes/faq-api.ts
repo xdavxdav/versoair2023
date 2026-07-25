@@ -329,25 +329,28 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/faq - Create a new FAQ topic
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const {
-      authorId,
-      title,
-      content,
-      faqCategory = "general",
-      tags,
-    } = req.body;
+    // Use authenticated user from JWT — never trust client-supplied authorId
+    const authorId = req.user?.userId;
+    const { title, content, faqCategory = "general", tags } = req.body;
 
-    if (!authorId || !title || !content) {
+    if (!authorId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to post a FAQ topic",
+      });
+    }
+
+    if (!title || !content) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, title, content",
+        error: "Missing required fields: title, content",
       });
     }
 
     const newPost = await db
       .insert(socialPosts)
       .values({
-        authorId,
+        authorId: Number(authorId),
         title,
         content,
         postType: "faq",
@@ -375,12 +378,21 @@ router.post("/:id/reply", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
-    const { authorId, content, parentCommentId } = req.body;
+    // Use authenticated user from JWT — never trust client-supplied authorId
+    const authorId = req.user?.userId;
+    const { content, parentCommentId } = req.body;
 
-    if (!authorId || !content) {
+    if (!authorId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to reply",
+      });
+    }
+
+    if (!content) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, content",
+        error: "Missing required field: content",
       });
     }
 
@@ -401,7 +413,7 @@ router.post("/:id/reply", async (req: Request, res: Response) => {
       .insert(socialComments)
       .values({
         postId,
-        authorId,
+        authorId: Number(authorId),
         content,
         parentCommentId: parentCommentId || null,
       })

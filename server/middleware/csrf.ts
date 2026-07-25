@@ -35,6 +35,7 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/verify-email", // email verification link from inbox — GET, no CSRF needed
   "/auth/resend-verification", // resend verification email — must be exempt for unverified users
   "/api/ai/chat", // VersoAI chat — same-origin, uses credentials:include
+  "/api/ai/ask", // VersoAI grounded ask — same-origin, uses credentials:include
   "/api/ai/status", // VersoAI status check
   // GeoAdmin submission requests — email-only, no DB writes
   "/api/request/business",

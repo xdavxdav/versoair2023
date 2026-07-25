@@ -36,6 +36,7 @@ import { PaymentTopBanner } from "@/components/PaymentTopBanner";
 import { PaymentLogo, PayPalLogo } from "@/components/PaymentLogos";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { type PaymentMethodId, PAYMENT_METHODS } from "@/lib/payment-methods";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface Transaction {
   id: number;
@@ -62,6 +63,7 @@ export default function BillingPage() {
   const [methodsOpen, setMethodsOpen] = useState(true);
   const [, navigate] = useLocation();
   const { countryCode, format, sortedMethods } = usePaymentCountry();
+  const { user } = useAuthContext();
 
   // ALL 6 methods — ensure every method appears in the grid
   const allMethods = Object.values(PAYMENT_METHODS).sort(
@@ -109,10 +111,16 @@ export default function BillingPage() {
   async function openCustomerPortal() {
     try {
       setPortalLoading(true);
+      setError(null);
+
+      if (!user?.id) {
+        throw new Error("Session missing. Please sign in again.");
+      }
+
       const res = await authenticatedFetch("/api/v1/payments/create-portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: 1 }), // TODO: use real userId from auth context
+        body: JSON.stringify({ userId: Number(user.id) }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => null);

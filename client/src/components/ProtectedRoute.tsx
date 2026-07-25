@@ -23,6 +23,8 @@ interface ProtectedRouteProps {
   children?: React.ReactNode;
   /** Required roles (any match grants access). Leave empty for "any authenticated user". */
   roles?: string[];
+  /** Route to send authenticated-but-unauthorized users to. */
+  unauthorizedRedirect?: string;
 }
 
 /**
@@ -102,6 +104,7 @@ export default function ProtectedRoute({
   component: Component,
   children,
   roles,
+  unauthorizedRedirect = "/",
 }: ProtectedRouteProps) {
   const { user, loading, login } = useAuthContext();
   const [, setLocation] = useLocation();
@@ -148,10 +151,10 @@ export default function ProtectedRoute({
       const userRole = effectiveUser.role || "";
       // Superuser always has access
       if (userRole !== "superuser" && !roles.includes(userRole)) {
-        setLocation("/");
+        setLocation(unauthorizedRedirect);
       }
     }
-  }, [effectiveUser, isLoading, roles, setLocation]);
+  }, [effectiveUser, isLoading, roles, setLocation, unauthorizedRedirect]);
 
   // Still loading auth state
   if (isLoading) {

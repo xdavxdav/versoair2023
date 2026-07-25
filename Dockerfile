@@ -51,17 +51,17 @@ COPY --from=builder --chown=verso:nodejs /app/shared ./shared
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5003
 
 # Switch to non-root user
 USER verso
 
 # Expose port
-EXPOSE 5000
+EXPOSE 5003
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node dist/healthcheck.js || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 5003) + '/api/status').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 # Start application
 CMD ["node", "dist/index.js"]

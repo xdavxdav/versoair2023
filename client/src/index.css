@@ -1200,6 +1200,10 @@
   height: 100vh;
   width: 400vw; /* 4 panels * 100vw each */
   position: relative;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* Individual panel styling */
@@ -1210,6 +1214,9 @@
   flex-shrink: 0;
   position: relative;
   overflow: clip;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Panel content wrapper - centers content properly */

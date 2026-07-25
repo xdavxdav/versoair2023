@@ -164,10 +164,10 @@ router.get("/posts/:postId", async (req: Request, res: Response) => {
 router.post("/posts/:postId/like", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
+    const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(400).json({ success: false, error: "Missing userId" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
     // Check if already liked
@@ -176,7 +176,7 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
       .from(socialLikes)
       .where(
         and(
-          eq(socialLikes.userId, userId),
+          eq(socialLikes.userId, Number(userId)),
           eq(socialLikes.postId, parseInt(postId)),
         ),
       )
@@ -190,7 +190,7 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
 
     // Add like
     await db.insert(socialLikes).values({
-      userId,
+      userId: Number(userId),
       postId: parseInt(postId),
       likeType: "post",
     });
@@ -230,17 +230,17 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
 router.delete("/posts/:postId/like", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
+    const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(400).json({ success: false, error: "Missing userId" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
     await db
       .delete(socialLikes)
       .where(
         and(
-          eq(socialLikes.userId, userId),
+          eq(socialLikes.userId, Number(userId)),
           eq(socialLikes.postId, parseInt(postId)),
         ),
       );
@@ -283,12 +283,17 @@ router.delete("/posts/:postId/like", async (req: Request, res: Response) => {
 router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const { authorId, content, parentCommentId } = req.body;
+    const authorId = req.user?.userId;
+    const { content, parentCommentId } = req.body;
 
-    if (!authorId || !content) {
+    if (!authorId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    if (!content) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, content",
+        error: "Missing required field: content",
       });
     }
 
@@ -296,7 +301,7 @@ router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
       .insert(socialComments)
       .values({
         postId: parseInt(postId),
-        authorId,
+        authorId: Number(authorId),
         content,
         parentCommentId,
       })

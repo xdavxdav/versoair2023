@@ -24,6 +24,7 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { pool } from "../../db";
+import { requireAuth } from "../../middleware/auth";
 
 const router = Router();
 
@@ -74,13 +75,22 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const { userId, targetTier, billingCycle = "monthly" } = req.body;
+    const authenticatedUserId = req.user?.userId;
+    const { targetTier, billingCycle = "monthly" } = req.body;
 
-    if (!userId || !targetTier) {
+    if (!authenticatedUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+
+    if (!targetTier) {
       return res
         .status(400)
-        .json({ success: false, error: "userId and targetTier are required" });
+        .json({ success: false, error: "targetTier is required" });
     }
+
+    const userId = authenticatedUserId;
 
     const pricing = TIER_PRICING[targetTier];
     if (!pricing) {
@@ -105,7 +115,7 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
 
     // Get or create Stripe customer so card is attached to their account
     const customerId = await getOrCreateStripeCustomer(
-      userId,
+      Number(userId),
       user.email,
       user.username,
     );
@@ -418,16 +428,29 @@ router.post("/webhook", async (req: Request, res: Response) => {
  */
 router.get("/billing-history", async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId || req.query.userId;
+    const authenticatedUserId = req.user?.userId;
+    const requestedUserId = req.query.userId as string | undefined;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = (page - 1) * limit;
 
-    if (!userId) {
+    if (!authenticatedUserId) {
       return res
         .status(401)
         .json({ success: false, error: "Authentication required" });
     }
+
+    if (
+      requestedUserId !== undefined &&
+      Number(requestedUserId) !== Number(authenticatedUserId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot access another user's billing history",
+      });
+    }
+
+    const userId = Number(authenticatedUserId);
 
     // Check if transactions table exists before querying
     const tableCheck = await pool.query(
@@ -485,13 +508,26 @@ router.post("/create-portal", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const { userId } = req.body;
+    const authenticatedUserId = req.user?.userId;
+    const requestedUserId = req.body?.userId;
 
-    if (!userId) {
+    if (!authenticatedUserId) {
       return res
-        .status(400)
-        .json({ success: false, error: "userId is required" });
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
+
+    if (
+      requestedUserId !== undefined &&
+      Number(requestedUserId) !== Number(authenticatedUserId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot create portal for another user",
+      });
+    }
+
+    const userId = Number(authenticatedUserId);
 
     const userResult = await pool.query(
       `SELECT email FROM users WHERE id = $1`,
@@ -1016,10 +1052,28 @@ router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
 /**
  * GET /api/v1/payments/cards/:userId
  * Lists all saved payment methods for a user.
+ * Only returns cards belonging to the authenticated user (or admin).
  */
 router.get("/cards/:userId", async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
+    const authenticatedUserId = req.user?.userId;
+    const authenticatedRole = req.user?.role;
+
+    if (!authenticatedUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+
+    // Only allow users to see their own cards (admins/superusers may see any)
+    const isAdmin = authenticatedRole === "admin" || authenticatedRole === "superuser";
+    if (!isAdmin && String(userId) !== String(authenticatedUserId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot access another user's payment methods",
+      });
+    }
 
     const result = await pool.query(
       `SELECT spm.*, u.username, u.email
@@ -1349,7 +1403,7 @@ router.post("/refund", async (req: Request, res: Response) => {
  * Admin-only: list all users who have saved payment methods.
  * Query: ?search=&page=1&limit=20
  */
-router.get("/customers", async (req: Request, res: Response) => {
+router.get("/customers", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
   try {
     const search = req.query.search as string;
     const page = parseInt(req.query.page as string) || 1;
@@ -1434,7 +1488,7 @@ router.get("/customers", async (req: Request, res: Response) => {
  * Lists all NGO POS charges with filters.
  * Query: ?status=succeeded&category=donation&page=1&limit=50&userId=
  */
-router.get("/ngo-charges", async (req: Request, res: Response) => {
+router.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
   try {
     const status = req.query.status as string;
     const category = req.query.category as string;
@@ -1499,9 +1553,9 @@ router.get("/ngo-charges", async (req: Request, res: Response) => {
 
 /**
  * GET /api/v1/payments/pos-stats
- * Summary stats for the POS terminal dashboard.
+ * Summary stats for the POS terminal dashboard. Admin-only.
  */
-router.get("/pos-stats", async (req: Request, res: Response) => {
+router.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
   try {
     const result = await pool.query(`
       SELECT

@@ -26,5 +26,7 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
+      - key: PRODUCTION_URL
+        sync: false
       - key: VITE_API_URL
         sync: false

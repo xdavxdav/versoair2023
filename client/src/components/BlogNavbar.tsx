@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   LogOut,
   Store,
@@ -85,6 +85,14 @@ export default function BlogNavbar({
   const open = (key: string) => setOpenMenu(key);
   const close = () => setOpenMenu(null);
 
+  useEffect(() => {
+    return () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+    };
+  }, []);
+
   // ─── Home button gestures: tap=marketplace, double-tap=home, hold 2s=logout ───
   const handleHomeTap = useCallback(() => {
     if (holdCompletedRef.current) {
@@ -111,7 +119,8 @@ export default function BlogNavbar({
     }, 300);
   }, [currentPath, setLocation]);
 
-  const handlePressStart = useCallback(() => {
+  const handlePressStart = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary) return;
     if (!isAuthenticated) return;
     holdCompletedRef.current = false;
     holdStartRef.current = Date.now();
@@ -138,7 +147,8 @@ export default function BlogNavbar({
     }, 2000);
   }, [isAuthenticated, logout]);
 
-  const handlePressEnd = useCallback(() => {
+  const handlePressEnd = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary) return;
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
     if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
     setIsHolding(false);
@@ -148,8 +158,8 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative"
-        style={{ overflow: "visible" }}
+        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative overflow-x-hidden"
+        style={{ overflowX: "hidden", overflowY: "visible" }}
       >
         <div className="max-w-full mx-auto px-3 md:px-5">
           <div className="flex items-center justify-between h-14 md:h-16 gap-2 md:gap-3">
@@ -205,7 +215,7 @@ export default function BlogNavbar({
             </div>
 
             {/* ── Mobile quick nav pills ── */}
-            <div className="flex md:hidden items-center gap-1 flex-1 justify-center overflow-x-auto scrollbar-hide">
+            <div className="flex md:hidden items-center gap-1 flex-1 min-w-0 justify-start overflow-x-auto scrollbar-hide px-1">
               <Link href="/blog">
                 <a
                   className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${

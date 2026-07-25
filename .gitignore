@@ -1,5 +1,4 @@
 node_modules
-dist
 .DS_Store
 server/public
 vite.config.ts.*
@@ -52,6 +51,7 @@ scripts/*
 !scripts/migrations/
 !scripts/run-migrations.sh
 !scripts/seed-production.cjs
+!scripts/seed-launch-businesses.cjs
 
 # Backup & duplicate configs
 client/postcss.config.cjs
@@ -63,4 +63,3 @@ client/pages/
 tailwind.config.cjs
 postcss.config.cjs
 uploads/
-dist/

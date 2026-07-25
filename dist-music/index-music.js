@@ -53,7 +53,7 @@ import {
   userSettings,
   users,
   verificationTokens
-} from "./chunk-VTHNGG2R.js";
+} from "./chunk-X7LCIHAQ.js";
 import {
   CATEGORY_SEED_DATA
 } from "./chunk-72G26RMG.js";
@@ -608,11 +608,7 @@ import cookieParser from "cookie-parser";
 
 // server/routes.ts
 init_db();
-init_schema();
-import jwt7 from "jsonwebtoken";
-import * as os from "os";
-import { execSync } from "child_process";
-import { sql as sql20, eq as eq33, ilike as ilike9, and as and21, or as or6, desc as desc19, count as count11 } from "drizzle-orm";
+import { sql as sql28 } from "drizzle-orm";
 
 // server/routes/database-management.ts
 init_db();
@@ -872,7 +868,7 @@ async function auditLog(req, action, entityType, entityId, changes) {
 }
 var categorySchema = z.object({
   name: z.string().min(1).max(200),
-  slug: z.string().min(1).max(200).optional(),
+  slug: z.string().min(1).max(200),
   description: z.string().max(1e3).optional()
 });
 var countrySchema = z.object({
@@ -908,7 +904,7 @@ router.post("/categories", async (req, res) => {
     if (!parsed.success)
       return res.status(400).json({ error: parsed.error.errors[0].message });
     const { name, slug, description } = parsed.data;
-    const result = await db.insert(businessCategories).values({ name, slug, description }).returning();
+    const result = await db.insert(businessCategories).values({ name, slug, description, mainCategory: false }).returning();
     await auditLog(req, "CREATE", "categories", result[0].id, { name });
     res.status(201).json(result[0]);
   } catch (error) {
@@ -5064,7 +5060,7 @@ function getEventStats(hoursBack = 24) {
     ([_, duration]) => duration === 0
   ).length;
   const bounceRate = sessionMap.size > 0 ? Math.round(bouncedSessions / sessionMap.size * 100) : 0;
-  const topEvents = Object.entries(eventsByType).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, count12]) => ({ name, count: count12 }));
+  const topEvents = Object.entries(eventsByType).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, count11]) => ({ name, count: count11 }));
   return {
     totalEvents: recentEvents.length,
     eventsByType,
@@ -5100,9 +5096,9 @@ function getEventTimeline(hoursBack = 24) {
     const key = hour.toISOString();
     timeline[key] = (timeline[key] || 0) + 1;
   });
-  return Object.entries(timeline).sort(([a], [b]) => a.localeCompare(b)).map(([hour, count12]) => ({
+  return Object.entries(timeline).sort(([a], [b]) => a.localeCompare(b)).map(([hour, count11]) => ({
     hour,
-    count: count12
+    count: count11
   }));
 }
 setInterval(
@@ -5679,7 +5675,7 @@ router11.post(
     process.env.SMTP_USER = user;
     if (pass !== "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022") process.env.SMTP_PASS = pass;
     if (from) process.env.SMTP_FROM = from;
-    const { initializeEmailTransporter: initializeEmailTransporter2 } = await import("./email-service-AG6L2NPT.js");
+    const { initializeEmailTransporter: initializeEmailTransporter2 } = await import("./email-service-X4PAGBYB.js");
     initializeEmailTransporter2();
     res.json({
       success: true,
@@ -10241,43 +10237,17 @@ router23.post(
     }
     const hashedPassword = await bcrypt2.hash(password, SALT_ROUNDS);
     const derivedUsername = username || email.split("@")[0];
-    const autoVerify = isSuperadmin(email);
     const [newUser] = await db.insert(users).values({
       email: email.toLowerCase(),
       username: derivedUsername,
       password: hashedPassword,
-      role: autoVerify ? "superuser" : "user",
-      isVerified: autoVerify
-      // only superadmin is auto-verified; all others must verify email
+      role: "user",
+      isVerified: false
     }).returning({
       id: users.id,
       email: users.email,
       role: users.role
     });
-    if (autoVerify) {
-      const token = jwt3.sign(
-        {
-          userId: String(newUser.id),
-          email: newUser.email,
-          role: newUser.role || "superuser"
-        },
-        getJwtSecret2(),
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-      setAuthCookie(res, token);
-      await createSession(newUser.id, token, req);
-      res.status(201).json({
-        success: true,
-        token,
-        user: {
-          id: String(newUser.id),
-          email: newUser.email,
-          name: derivedUsername,
-          role: newUser.role
-        }
-      });
-      return;
-    }
     const verificationToken = crypto3.randomBytes(32).toString("hex");
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1e3);
     await db.insert(verificationTokens).values({
@@ -10687,52 +10657,6 @@ router23.post(
       return res.status(403).json({
         success: false,
         message: "Password is required."
-      });
-    }
-    const GATE_CREDENTIALS = {};
-    for (let i = 1; i <= 3; i++) {
-      const email = process.env[`ADMIN_GATE_${i}_EMAIL`] || "";
-      const uname = process.env[`ADMIN_GATE_${i}_USERNAME`] || "";
-      const pass = process.env[`ADMIN_GATE_${i}_PASSWORD`] || "";
-      const role = process.env[`ADMIN_GATE_${i}_ROLE`] || "user";
-      if (uname && pass) {
-        GATE_CREDENTIALS[uname.toLowerCase()] = { password: pass, role, email };
-      }
-    }
-    let testKey = username.toLowerCase();
-    let testMatch = GATE_CREDENTIALS[testKey];
-    if (!testMatch) {
-      const byEmail = Object.entries(GATE_CREDENTIALS).find(
-        ([_, cred]) => cred.email.toLowerCase() === username.toLowerCase()
-      );
-      if (byEmail) {
-        testKey = byEmail[0];
-        testMatch = byEmail[1];
-      }
-    }
-    if (testMatch && password === testMatch.password) {
-      const token2 = jwt3.sign(
-        {
-          userId: "test-" + testKey,
-          email: testMatch.email,
-          role: testMatch.role,
-          subscriptionTier: "enterprise"
-        },
-        getJwtSecret2(),
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-      setAuthCookie(res, token2);
-      await createSession(0, token2, req);
-      return res.json({
-        success: true,
-        token: token2,
-        user: {
-          id: 0,
-          email: testMatch.email,
-          username: testKey,
-          role: testMatch.role,
-          subscriptionTier: "enterprise"
-        }
       });
     }
     const [user] = await db.select({
@@ -11600,8 +11524,7 @@ router23.post(
       password: hashedPassword,
       role: "artist",
       portalAccess: ["artist", "general"],
-      isVerified: isSuperadmin(email)
-      // superadmin auto-verified
+      isVerified: false
     }).returning({
       id: users.id,
       email: users.email,
@@ -11934,7 +11857,7 @@ router23.post(
       // subscribers start as users with premium tiers
       subscriptionTier: tier,
       subscriptionStatus: "active",
-      isVerified: isSuperadmin(email)
+      isVerified: false
     }).returning({
       id: users.id,
       email: users.email,
@@ -12098,7 +12021,7 @@ router23.post(
       subscriptionTier: "free",
       // community members start free
       portalAccess: ["general", "community"],
-      isVerified: isSuperadmin(email)
+      isVerified: false
     }).returning({
       id: users.id,
       email: users.email,
@@ -12316,11 +12239,11 @@ router23.post(
       purpose: purpose || "verification"
     });
     try {
-      const { sendEmail: sendEmail2 } = await import("./email-service-AG6L2NPT.js");
-      await sendEmail2({
-        to: user.email,
-        subject: "Verso Air \u2014 Verification Code",
-        html: `
+      const { sendEmail: sendEmail2 } = await import("./email-service-X4PAGBYB.js");
+      await sendEmail2(
+        user.email,
+        "Verso Air \u2014 Verification Code",
+        `
           <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 24px;">
             <h2 style="color: #1a1a2e;">Verification Code</h2>
             <p>Hi ${user.display_name || "there"},</p>
@@ -12332,7 +12255,7 @@ router23.post(
             <p style="color: #999; font-size: 11px;">\u2014 Verso Air Security</p>
           </div>
         `
-      });
+      );
     } catch (emailErr) {
       console.warn("[StepUp] Email send failed:", emailErr);
       if (process.env.NODE_ENV === "development") {
@@ -15492,8 +15415,8 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
       return res.status(400).json({ success: false, error: "No fields to update" });
     }
     values.push(trackId);
-    const sql22 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
-    const result = await pool.query(sql22, values);
+    const sql30 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
+    const result = await pool.query(sql30, values);
     console.log(
       "[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)"
     );
@@ -22636,11 +22559,11 @@ router37.post("/smart-chat", async (req, res) => {
 [INTENT-GROUNDED RESULTS \u2014 real businesses matching user intent]
 Detected sector: ${intent.sectorLabel || "general"} | Urgency: ${intent.urgency}/10 | Location: ${intent.location || "any"}
 ` + knowledge.businesses.map(
-            (b) => `\u2022 ${b.name} (${b.categoryName}) \u2014 ${b.city || b.country || "N/A"} | \u2605${(b.rating ?? 0).toFixed(1)} | Tier: ${b.tier || "free"}` + (b.isVerified ? " \u2705 Verified" : "")
+            (b) => `\u2022 ${b.name} (${b.category}) \u2014 ${b.location || b.country || "N/A"} | \u2605${(b.rating ?? 0).toFixed(1)} | Tier: ${b.tier || "free"}` + (b.isVerified ? " \u2705 Verified" : "")
           ).join("\n") + "\n[/INTENT-GROUNDED RESULTS]";
           intentSources = knowledge.businesses.map((b) => ({
             name: b.name,
-            snippet: `${b.categoryName} | ${b.city || b.country || ""} | \u2605${(b.rating ?? 0).toFixed(1)}`
+            snippet: `${b.category} | ${b.location || b.country || ""} | \u2605${(b.rating ?? 0).toFixed(1)}`
           }));
         }
         if (knowledge.isEmergency && knowledge.emergencyMessage) {
@@ -26949,7 +26872,7 @@ router44.get(
         where += ` AND wt.type = $2`;
         params.push(type);
       }
-      const count12 = await pool.query(
+      const count11 = await pool.query(
         `SELECT COUNT(*) FROM wallet_transactions wt ${where}`,
         params
       );
@@ -26963,9 +26886,9 @@ router44.get(
       res.json({
         success: true,
         transactions: result.rows,
-        total: parseInt(count12.rows[0].count),
+        total: parseInt(count11.rows[0].count),
         page: pageNum,
-        totalPages: Math.ceil(parseInt(count12.rows[0].count) / limitNum)
+        totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
       });
     } catch (err) {
       console.error("[PAYMENTS] Transactions error:", err);
@@ -28334,15 +28257,15 @@ router45.get("/history", async (req, res) => {
        LIMIT $1 OFFSET $2`,
       [limitNum, offset]
     );
-    const count12 = await pool.query(
+    const count11 = await pool.query(
       `SELECT COUNT(*) FROM arena_contests WHERE status = 'completed'`
     );
     res.json({
       success: true,
       contests: result.rows,
-      total: parseInt(count12.rows[0].count),
+      total: parseInt(count11.rows[0].count),
       page: pageNum,
-      totalPages: Math.ceil(parseInt(count12.rows[0].count) / limitNum)
+      totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
     });
   } catch (err) {
     res.status(500).json({ success: false, error: "Failed to fetch arena history" });
@@ -29036,7 +28959,7 @@ router47.get("/open", optionalAuth, async (req, res) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    const count12 = await pool.query(
+    const count11 = await pool.query(
       `SELECT COUNT(*) FROM collab_requests cr ${where}`,
       params.slice(0, params.length - 2)
       // remove limit/offset
@@ -29044,9 +28967,9 @@ router47.get("/open", optionalAuth, async (req, res) => {
     res.json({
       success: true,
       requests: result.rows,
-      total: parseInt(count12.rows[0].count),
+      total: parseInt(count11.rows[0].count),
       page: pageNum,
-      totalPages: Math.ceil(parseInt(count12.rows[0].count) / limitNum)
+      totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
     });
   } catch (err) {
     console.error("[COLLAB] Open browse error:", err);
@@ -29914,9 +29837,9 @@ var TRIVIA_QUESTIONS = [
     answer: 1
   }
 ];
-function pickRandomQuestions(count12) {
+function pickRandomQuestions(count11) {
   const shuffled = [...TRIVIA_QUESTIONS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count12, shuffled.length));
+  return shuffled.slice(0, Math.min(count11, shuffled.length));
 }
 async function getOrCreateWallet(userId) {
   let w = await pool.query(
@@ -34780,7 +34703,58 @@ router64.post(
 );
 var purgatoire_default = router64;
 
-// server/routes.ts
+// server/routes/ad-campaigns.ts
+init_db();
+import { Router as Router65 } from "express";
+import { sql as sql20 } from "drizzle-orm";
+var router65 = Router65();
+router65.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const { countryCode, limit = "50" } = req.query;
+    const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
+    const result = countryCode && String(countryCode) !== "all" ? await db.execute(
+      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+                FROM ad_campaigns ac
+                INNER JOIN businesses b ON b.id = ac.business_id
+                  AND UPPER(b.country_code) = UPPER(${String(countryCode)})
+                ORDER BY ac.created_at DESC NULLS LAST
+                LIMIT ${limitNum}`
+    ) : await db.execute(
+      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+                FROM ad_campaigns ac
+                LEFT JOIN businesses b ON b.id = ac.business_id
+                ORDER BY ac.created_at DESC NULLS LAST
+                LIMIT ${limitNum}`
+    );
+    const campaigns = (result.rows || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      daily_budget: r.budget || r.daily_budget || "0",
+      objective: r.description || r.name || "Campaign",
+      status: r.status || "active",
+      start_date: r.start_date,
+      end_date: r.end_date,
+      impressions: r.impressions || 0,
+      clicks: r.clicks || 0,
+      conversions: r.conversions || 0,
+      business_id: r.business_id,
+      business_name: r.business_name,
+      country_code: r.country_code,
+      created_at: r.created_at
+    }));
+    res.json({ success: true, data: campaigns });
+  })
+);
+var ad_campaigns_default = router65;
+
+// server/routes/admin.ts
+init_db();
+init_schema();
+import { Router as Router66 } from "express";
+import { sql as sql21, eq as eq33, ilike as ilike9 } from "drizzle-orm";
+import * as os from "os";
+import { execSync } from "child_process";
 init_notification_service();
 var TABLE_NAME_MAP = {
   users: "users",
@@ -34819,6 +34793,2413 @@ var TABLE_NAME_MAP = {
   contractors: "contractors",
   payment_card_types: "paymentCardTypes"
 };
+var router66 = Router66();
+router66.get(
+  "/database-stats",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const tables = [
+        "users",
+        "businesses",
+        "business_categories",
+        "business_hours",
+        "business_services",
+        "business_reviews",
+        "analytics",
+        "reservations",
+        "ad_campaigns",
+        "ad_audiences",
+        "ad_creatives",
+        "ad_performance",
+        "billing_history",
+        "music_artists",
+        "music_tracks",
+        "music_analytics",
+        "countries",
+        "regions",
+        "cities",
+        "target_regions",
+        "jobs",
+        "job_applications",
+        "saved_jobs",
+        "commerce_categories",
+        "payment_methods",
+        "transactions",
+        "content_categories",
+        "content_pages",
+        "page_categories",
+        "notifications",
+        "user_favorites"
+      ];
+      let totalRecords = 0;
+      const tableCounts = {};
+      for (const tableName of tables) {
+        try {
+          const countResult = await db.execute(
+            sql21.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
+          );
+          const count11 = parseInt(
+            String(countResult.rows[0]?.count) || "0"
+          );
+          tableCounts[tableName] = count11;
+          totalRecords += count11;
+        } catch (error) {
+          console.error(`Failed to count ${tableName}:`, error);
+          tableCounts[tableName] = 0;
+        }
+      }
+      res.json({
+        success: true,
+        totalRecords,
+        activeTables: tables.length,
+        tableCounts,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    } catch (error) {
+      console.error("\u274C Failed to get database stats:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+);
+router66.get(
+  "/table/:tableName",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      const { search } = req.query;
+      const validTables = Object.keys(TABLE_NAME_MAP);
+      if (!validTables.includes(tableName)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid table name"
+        });
+      }
+      const schemaName = TABLE_NAME_MAP[tableName];
+      console.log(`\u{1F50D} Looking up table: ${tableName} -> ${schemaName}`);
+      console.log(`\u{1F4E6} Schema has key "${schemaName}":`, schemaName in schema_exports);
+      const table = schemaName ? schema_exports[schemaName] : null;
+      console.log(`\u2705 Found table:`, !!table);
+      if (!table) {
+        return res.status(400).json({
+          success: false,
+          error: "Table not found in schema"
+        });
+      }
+      const page = parseInt(String(req.query.page || "1"), 10);
+      const limit = Math.min(
+        200,
+        parseInt(String(req.query.limit || "100"), 10)
+      );
+      const offset = (page - 1) * limit;
+      let query = db.select().from(table);
+      if (search && typeof search === "string") {
+        const nameField = table.name;
+        if (nameField) {
+          query = query.where(ilike9(nameField, `${search}%`));
+        }
+      }
+      const countResult = await db.select({ count: sql21`count(*)` }).from(table);
+      const total = countResult[0]?.count || 0;
+      const data = await query.limit(limit).offset(offset);
+      res.json({
+        success: true,
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(Number(total) / limit)
+        }
+      });
+    } catch (error) {
+      console.error(`\u274C Failed to fetch ${req.params.tableName}:`, error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+);
+router66.post(
+  "/table/:tableName",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      const data = req.body;
+      const validTables = Object.keys(TABLE_NAME_MAP);
+      if (!validTables.includes(tableName)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid table name"
+        });
+      }
+      const schemaName = TABLE_NAME_MAP[tableName];
+      const table = schemaName ? schema_exports[schemaName] : null;
+      if (!table) {
+        return res.status(400).json({
+          success: false,
+          error: "Table not found in schema"
+        });
+      }
+      const result = await db.insert(table).values(data).returning();
+      res.json({
+        success: true,
+        data: result[0]
+      });
+    } catch (error) {
+      console.error(`\u274C Failed to create in ${req.params.tableName}:`, error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+);
+router66.put(
+  "/table/:tableName/:id",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { tableName, id } = req.params;
+      const data = req.body;
+      const validTables = Object.keys(TABLE_NAME_MAP);
+      if (!validTables.includes(tableName)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid table name"
+        });
+      }
+      const schemaName = TABLE_NAME_MAP[tableName];
+      const table = schemaName ? schema_exports[schemaName] : null;
+      if (!table) {
+        return res.status(400).json({
+          success: false,
+          error: "Table not found in schema"
+        });
+      }
+      const { id: _, ...updateData } = data;
+      const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
+      const result = await db.update(table).set(updateData).where(eq33(table.id, idValue)).returning();
+      if (result.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Record not found"
+        });
+      }
+      if (tableName === "reservations" && updateData.status) {
+        const updated = result[0];
+        const resUserId = updated.userId ?? updated.user_id;
+        if (resUserId) {
+          try {
+            const bizResult = await pool.query(
+              `SELECT b.name FROM businesses b WHERE b.id = $1`,
+              [updated.businessId ?? updated.business_id]
+            );
+            const businessName = bizResult.rows[0]?.name || "Business";
+            const price = updated.totalPrice ?? updated.total_price;
+            notifyReservationUpdate({
+              id: updated.id,
+              userId: resUserId,
+              businessName,
+              date: (updated.startDate ?? updated.start_date)?.toLocaleDateString?.() || (/* @__PURE__ */ new Date()).toLocaleDateString(),
+              time: (updated.startDate ?? updated.start_date)?.toLocaleTimeString?.([], {
+                hour: "2-digit",
+                minute: "2-digit"
+              }),
+              status: updated.status,
+              totalPrice: price ? `$${price}` : void 0
+            }).catch(
+              (err) => console.error("[RESERVATION] Notification error:", err)
+            );
+          } catch (notifyErr) {
+            console.error(
+              "[RESERVATION] Notification lookup error:",
+              notifyErr
+            );
+          }
+        } else {
+          console.log(
+            "[RESERVATION] Skipped notification \u2014 no userId on reservation",
+            updated.id
+          );
+        }
+      }
+      res.json({
+        success: true,
+        data: result[0]
+      });
+    } catch (error) {
+      console.error(`\u274C Failed to update in ${req.params.tableName}:`, error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+);
+router66.delete(
+  "/table/:tableName/:id",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { tableName, id } = req.params;
+      const validTables = Object.keys(TABLE_NAME_MAP);
+      if (!validTables.includes(tableName)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid table name"
+        });
+      }
+      const schemaName = TABLE_NAME_MAP[tableName];
+      const table = schemaName ? schema_exports[schemaName] : null;
+      if (!table) {
+        return res.status(400).json({
+          success: false,
+          error: "Table not found in schema"
+        });
+      }
+      const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
+      const result = await db.delete(table).where(eq33(table.id, idValue)).returning();
+      if (result.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Record not found"
+        });
+      }
+      res.json({
+        success: true,
+        message: "Record deleted successfully"
+      });
+    } catch (error) {
+      console.error(
+        `\u274C Failed to delete from ${req.params.tableName}:`,
+        error
+      );
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+);
+router66.post(
+  "/execute-query",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { query: sqlQuery } = req.body;
+      if (!sqlQuery || typeof sqlQuery !== "string") {
+        return res.status(400).json({
+          success: false,
+          error: "Query is required"
+        });
+      }
+      const normalized = sqlQuery.trim().toUpperCase();
+      const destructivePatterns = [
+        /^\s*DROP\s/i,
+        /^\s*TRUNCATE\s/i,
+        /^\s*ALTER\s/i,
+        /GRANT\s/i,
+        /REVOKE\s/i
+      ];
+      if (destructivePatterns.some((pattern) => pattern.test(sqlQuery))) {
+        console.warn(
+          `\u{1F6AB} BLOCKED destructive query from ${req.user?.email}: ${sqlQuery.substring(0, 100)}`
+        );
+        return res.status(403).json({
+          success: false,
+          error: "Destructive DDL statements (DROP, TRUNCATE, ALTER, GRANT, REVOKE) are not allowed. Use Drizzle migrations instead."
+        });
+      }
+      console.log(
+        `\u{1F50D} [${req.user?.email}] Executing query:`,
+        sqlQuery.substring(0, 100) + "..."
+      );
+      const startTime = Date.now();
+      const result = await db.execute(sql21.raw(sqlQuery));
+      const duration = Date.now() - startTime;
+      const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
+      res.json({
+        success: true,
+        data: result.rows,
+        columns,
+        rowCount: result.rows.length,
+        duration
+      });
+    } catch (error) {
+      console.error("\u274C Query execution failed:", error);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Query execution failed",
+        data: [],
+        columns: [],
+        rowCount: 0,
+        duration: 0
+      });
+    }
+  }
+);
+router66.get("/health", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const connResult = await db.execute(
+      sql21.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
+    );
+    const connectionsCount = parseInt(
+      String(connResult.rows[0]?.connections || 0),
+      10
+    );
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memPercent = Math.round((totalMem - freeMem) / totalMem * 100);
+    const loadAvg1m = os.loadavg()[0];
+    const cpuCount = os.cpus().length;
+    const cpuPercent = Math.min(
+      100,
+      Math.round(loadAvg1m / cpuCount * 100)
+    );
+    let diskPercent = 0;
+    try {
+      const dfOut = execSync("df -k /").toString();
+      const line = dfOut.trim().split("\n").pop() || "";
+      const match = line.match(/(\d+)%/);
+      if (match) diskPercent = parseInt(match[1], 10);
+    } catch {
+      diskPercent = 0;
+    }
+    res.json({
+      success: true,
+      cpu: cpuPercent,
+      memory: memPercent,
+      disk: diskPercent,
+      connections: connectionsCount,
+      totalMemGB: Math.round(totalMem / 1024 / 1024 / 1024 * 10) / 10,
+      freeMemGB: Math.round(freeMem / 1024 / 1024 / 1024 * 10) / 10,
+      cpuCores: cpuCount,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      database: {
+        connected: true,
+        status: "healthy"
+      }
+    });
+  } catch (error) {
+    console.error("\u274C Health check failed:", error);
+    res.status(500).json({
+      success: false,
+      cpu: 0,
+      memory: 0,
+      disk: 0,
+      connections: 0,
+      database: {
+        connected: false,
+        status: "error",
+        error: error.message
+      }
+    });
+  }
+});
+router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { type = "full" } = req.body;
+    if (!["full", "partial"].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        error: "Backup type must be 'full' or 'partial'"
+      });
+    }
+    const timestamp2 = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+    const backupName = `verso_air_${type}_backup_${timestamp2}`;
+    let dbSize = "unknown";
+    let tableCount = 0;
+    try {
+      const sizeResult = await db.execute(
+        sql21`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
+      );
+      dbSize = sizeResult.rows[0]?.size || "unknown";
+      const tableResult = await db.execute(
+        sql21`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
+      );
+      tableCount = parseInt(
+        String(tableResult.rows[0]?.cnt || "0"),
+        10
+      );
+    } catch (e) {
+      console.warn("Could not fetch DB size:", e);
+    }
+    res.json({
+      success: true,
+      backupName,
+      type,
+      size: dbSize,
+      tables: tableCount,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      retention: "30 days",
+      message: `${type} backup created successfully`
+    });
+  } catch (error) {
+    console.error("\u274C Backup failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Backup failed"
+    });
+  }
+});
+router66.get(
+  "/category-stats",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const result = await db.execute(
+        sql21.raw(`
+      SELECT c.id, c.name, c.slug, c.parent_id, c.main_category, COUNT(b.id) AS businesses_count
+      FROM business_categories c
+      LEFT JOIN businesses b ON b.category_id = c.id
+      GROUP BY c.id, c.name, c.slug, c.parent_id, c.main_category
+      ORDER BY businesses_count DESC, c.name
+    `)
+      );
+      res.json({ success: true, data: result.rows });
+    } catch (error) {
+      console.error("\u274C Failed to fetch category stats:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router66.post(
+  "/preview-category-mapping",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const result = await db.execute(
+        sql21.raw(`
+      SELECT b.id AS business_id, b.name AS business_name, b.business_type,
+             c.id AS category_id, c.name AS category_name
+      FROM businesses b
+      JOIN business_categories c ON lower(c.name) = lower(b.business_type)
+      WHERE b.category_id IS NULL
+      AND c.parent_id IS NULL
+      LIMIT 200
+    `)
+      );
+      res.json({
+        success: true,
+        samples: result.rows,
+        count: result.rows.length
+      });
+    } catch (error) {
+      console.error("\u274C Preview mapping failed:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router66.post(
+  "/apply-category-mapping",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      await db.execute(sql21.raw(`BEGIN`));
+      const result = await db.execute(
+        sql21.raw(`
+      UPDATE businesses b
+      SET category_id = c.id
+      FROM business_categories c
+      WHERE b.category_id IS NULL
+        AND lower(c.name) = lower(b.business_type)
+        AND c.parent_id IS NULL
+      RETURNING b.id
+    `)
+      );
+      await db.execute(sql21.raw(`COMMIT`));
+      const affected = Array.isArray(result.rows) ? result.rows.length : 0;
+      res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
+    } catch (error) {
+      console.error("\u274C Apply mapping failed, rolling back:", error);
+      try {
+        await db.execute(sql21.raw(`ROLLBACK`));
+      } catch (rbErr) {
+        console.error("\u274C Rollback failed:", rbErr);
+      }
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router66.get("/categories", requireAuth(["admin"]), async (req, res) => {
+  try {
+    console.log("\u{1F50D} Fetching admin categories (no slug)");
+    const result = await db.execute(
+      sql21.raw(`
+        SELECT id, name, slug, description, parent_id, main_category
+        FROM business_categories
+        ORDER BY main_category DESC, name
+      `)
+    );
+    res.json({ success: true, categories: result.rows });
+  } catch (error) {
+    console.error("\u274C Failed to fetch admin categories:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router66.post(
+  "/categories",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { name, description, parent_id, slug } = req.body;
+      if (!name)
+        return res.status(400).json({ success: false, error: "name is required" });
+      const autoSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const insert = await db.execute(
+        sql21`INSERT INTO business_categories (name, slug, description, parent_id)
+        VALUES (${name}, ${autoSlug}, ${description ?? null}, ${parent_id ?? null}) RETURNING *`
+      );
+      res.json({ success: true, category: insert.rows[0] });
+    } catch (error) {
+      console.error("\u274C Create category failed:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router66.put(
+  "/categories/:id",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, parent_id, slug } = req.body;
+      const update = await db.execute(
+        sql21`UPDATE business_categories
+        SET name = ${name}, description = ${description ?? null}, parent_id = ${parent_id ?? null}, slug = COALESCE(${slug ?? null}, slug)
+        WHERE id = ${id}
+        RETURNING *`
+      );
+      res.json({ success: true, category: update.rows[0] });
+    } catch (error) {
+      console.error("\u274C Update category failed:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router66.delete(
+  "/categories/:id",
+  requireAuth(["admin"]),
+  async (req, res) => {
+    try {
+      const { id: idStr } = req.params;
+      const { force } = req.query;
+      const id = parseInt(idStr, 10);
+      const countResult = await db.execute(
+        sql21`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
+      );
+      const cnt = parseInt(
+        String(countResult.rows[0]?.cnt ?? "0"),
+        10
+      );
+      if (cnt > 0 && String(force) !== "true") {
+        return res.status(400).json({
+          success: false,
+          error: "Category in use; pass ?force=true to unset references and delete."
+        });
+      }
+      if (cnt > 0 && String(force) === "true") {
+        await db.execute(
+          sql21`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
+        );
+      }
+      await db.execute(sql21`DELETE FROM business_categories WHERE id = ${id}`);
+      res.json({ success: true, deleted: true, unmapped: cnt });
+    } catch (error) {
+      console.error("\u274C Delete category failed:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+var admin_default2 = router66;
+
+// server/routes/astrology.ts
+import { Router as Router67 } from "express";
+var router67 = Router67();
+var astroCache = /* @__PURE__ */ new Map();
+var ASTRO_TTL = 10 * 60 * 1e3;
+var ASTRO_FETCH_TIMEOUT = 5e3;
+var ASTRO_MAX_RETRIES = 3;
+var ASTRO_BACKOFF_BASE = 300;
+var delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function fetchAstroWithRetries(sign) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= ASTRO_MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ASTRO_FETCH_TIMEOUT);
+    try {
+      const upstream = await fetch(
+        `https://aztro.sameerkumar.website/?sign=${encodeURIComponent(sign)}&day=today`,
+        { method: "POST", signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if (!upstream.ok) {
+        const bodyText = await upstream.text().catch(() => "<no body>");
+        const msg = `upstream status ${upstream.status} - ${bodyText}`;
+        console.error(`\u274C Aztro attempt ${attempt} failed for sign: ${sign} -> ${msg}`);
+        if (upstream.status >= 500 && attempt < ASTRO_MAX_RETRIES) {
+          const backoff = ASTRO_BACKOFF_BASE * Math.pow(2, attempt - 1);
+          await delay(backoff + Math.floor(Math.random() * 100));
+          continue;
+        }
+        throw new Error(msg);
+      }
+      return await upstream.json();
+    } catch (err) {
+      clearTimeout(timeout);
+      lastErr = err;
+      const isAbort = err?.name === "AbortError";
+      console.error(
+        `\u274C Aztro fetch error (attempt ${attempt}) for sign: ${sign}:`,
+        err?.message || err
+      );
+      if ((isAbort || err?.code === "ECONNRESET" || err?.code === "ECONNREFUSED") && attempt < ASTRO_MAX_RETRIES) {
+        const backoff = ASTRO_BACKOFF_BASE * Math.pow(2, attempt - 1);
+        await delay(backoff + Math.floor(Math.random() * 100));
+        continue;
+      }
+      break;
+    }
+  }
+  throw lastErr || new Error("Unknown upstream error");
+}
+router67.post(
+  "/astrology",
+  asyncHandler(async (req, res) => {
+    const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
+    if (!sign) {
+      return res.status(400).json({ error: "sign query param or body required" });
+    }
+    const now = Date.now();
+    const cached = astroCache.get(sign);
+    if (cached && now - cached.ts < ASTRO_TTL) {
+      res.setHeader("X-Cache", "HIT");
+      return res.json(cached.data);
+    }
+    if (cached) {
+      res.setHeader("X-Cache", "HIT-STALE");
+      void (async () => {
+        try {
+          const fresh = await fetchAstroWithRetries(sign);
+          astroCache.set(sign, { ts: Date.now(), data: fresh });
+          console.log(`\u{1F501} Refreshed stale astrology cache for sign: ${sign}`);
+        } catch (err) {
+          console.warn(
+            `\u26A0\uFE0F Failed to refresh astrology cache for sign ${sign}:`,
+            err?.message || err
+          );
+        }
+      })();
+      return res.json(cached.data);
+    }
+    try {
+      const data = await fetchAstroWithRetries(sign);
+      astroCache.set(sign, { ts: Date.now(), data });
+      res.setHeader("X-Cache", "MISS");
+      return res.json(data);
+    } catch (err) {
+      console.error("\u274C Astrology proxy error:", err?.message || err);
+      const cachedFallback = astroCache.get(sign);
+      if (cachedFallback) {
+        res.setHeader("X-Cache", "HIT-STALE-FALLBACK");
+        return res.json(cachedFallback.data);
+      }
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      const fallbacks = {
+        aries: { date_range: "Mar 21 - Apr 19", current_date: today, description: "General guidance: take the lead today and pursue something important \u2014 small steps add up.", compatibility: "Leo", mood: "Energetic", color: "Red", lucky_number: "9", lucky_time: "2pm" },
+        taurus: { date_range: "Apr 20 - May 20", current_date: today, description: "General guidance: focus on comfort and slow, steady progress. Practical choices pay off.", compatibility: "Virgo", mood: "Grounded", color: "Green", lucky_number: "6", lucky_time: "10am" },
+        gemini: { date_range: "May 21 - Jun 20", current_date: today, description: "General guidance: communicate clearly and be open to new ideas \u2014 conversations matter.", compatibility: "Libra", mood: "Curious", color: "Yellow", lucky_number: "5", lucky_time: "11am" },
+        cancer: { date_range: "Jun 21 - Jul 22", current_date: today, description: "General guidance: tend to your circle \u2014 a small act of care can deepen bonds.", compatibility: "Pisces", mood: "Nurturing", color: "Silver", lucky_number: "2", lucky_time: "7pm" },
+        leo: { date_range: "Jul 23 - Aug 22", current_date: today, description: "General guidance: your confidence shines \u2014 step into the spotlight for something meaningful.", compatibility: "Aries", mood: "Bold", color: "Gold", lucky_number: "1", lucky_time: "6pm" },
+        virgo: { date_range: "Aug 23 - Sep 22", current_date: today, description: "General guidance: organize an important task \u2014 refining details leads to wins.", compatibility: "Taurus", mood: "Focused", color: "Brown", lucky_number: "3", lucky_time: "9am" },
+        libra: { date_range: "Sep 23 - Oct 22", current_date: today, description: "General guidance: seek balance and make fair choices \u2014 diplomacy helps progress.", compatibility: "Gemini", mood: "Balanced", color: "Blue", lucky_number: "7", lucky_time: "4pm" },
+        scorpio: { date_range: "Oct 23 - Nov 21", current_date: today, description: "General guidance: focus your intensity on something that matters \u2014 transformation is possible.", compatibility: "Cancer", mood: "Intense", color: "Black", lucky_number: "8", lucky_time: "11pm" },
+        sagittarius: { date_range: "Nov 22 - Dec 21", current_date: today, description: "General guidance: explore a fresh perspective or idea \u2014 growth comes from adventure.", compatibility: "Aries", mood: "Optimistic", color: "Purple", lucky_number: "4", lucky_time: "3pm" },
+        capricorn: { date_range: "Dec 22 - Jan 19", current_date: today, description: "General guidance: steady work pays off \u2014 set a clear, practical goal and move steadily toward it.", compatibility: "Taurus", mood: "Determined", color: "Gray", lucky_number: "10", lucky_time: "8am" },
+        aquarius: { date_range: "Jan 20 - Feb 18", current_date: today, description: "General guidance: embrace inventive thinking and connect with a community to amplify an idea.", compatibility: "Gemini", mood: "Innovative", color: "Turquoise", lucky_number: "11", lucky_time: "5pm" },
+        pisces: { date_range: "Feb 19 - Mar 20", current_date: today, description: "General guidance: trust your instincts and allow creative expression to guide a decision.", compatibility: "Cancer", mood: "Dreamy", color: "Sea green", lucky_number: "12", lucky_time: "9pm" }
+      };
+      const fallback = fallbacks[sign];
+      if (fallback) {
+        console.warn(`\u26A0\uFE0F Returning fallback astrology data for sign ${sign}`);
+        astroCache.set(sign, { ts: Date.now(), data: fallback });
+        res.setHeader("X-Cache", "FALLBACK");
+        return res.json(fallback);
+      }
+      return res.status(502).json({ error: "Upstream astrology API error" });
+    }
+  })
+);
+var astrology_default = router67;
+
+// server/routes/business-search.ts
+init_schema();
+init_db();
+import { Router as Router68 } from "express";
+import { and as and22, eq as eq34, ilike as ilike10, or as or7, sql as sql22 } from "drizzle-orm";
+var router68 = Router68();
+router68.get(
+  "/business/search",
+  asyncHandler(async (req, res) => {
+    const { query, category, location, page = "1", limit = "10" } = req.query;
+    console.log("\u{1F50D} [BUSINESS] Search:", { query, category, location });
+    const conditions = [];
+    if (query && typeof query === "string") {
+      const searchCondition = or7(
+        ilike10(businesses.name, `${query}%`),
+        ilike10(businesses.description, `${query}%`)
+      );
+      if (searchCondition) conditions.push(searchCondition);
+    }
+    if (category && typeof category === "string") {
+      const categoryRecord = await db.select().from(businessCategories).where(eq34(businessCategories.slug, category)).limit(1);
+      if (categoryRecord.length > 0) {
+        conditions.push(eq34(businesses.categoryId, categoryRecord[0].id));
+      }
+    }
+    const whereCondition = conditions.length > 0 ? and22(...conditions) : void 0;
+    const countResult = await db.select({ count: sql22`count(*)` }).from(businesses).where(whereCondition);
+    const totalCount = countResult[0]?.count || 0;
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offset = (pageNum - 1) * limitNum;
+    const businessResults = await db.select({
+      id: businesses.id,
+      name: businesses.name,
+      description: businesses.description,
+      categoryId: businesses.categoryId,
+      categoryName: businessCategories.name,
+      createdAt: businesses.createdAt,
+      location: businesses.location,
+      address: businesses.address,
+      phone: businesses.phone,
+      email: businesses.email,
+      website: businesses.website
+    }).from(businesses).leftJoin(
+      businessCategories,
+      eq34(businesses.categoryId, businessCategories.id)
+    ).where(whereCondition).orderBy(businesses.name).limit(limitNum).offset(offset);
+    const formattedResults = businessResults.map((business) => ({
+      id: business.id.toString(),
+      name: business.name,
+      title: business.name,
+      description: business.description || "",
+      category: business.categoryName || "Unknown",
+      location: business.location || "",
+      address: business.address || "",
+      phone: business.phone || "",
+      email: business.email || "",
+      rating: 4.5,
+      reviews: 0,
+      tags: [],
+      latitude: 0,
+      longitude: 0,
+      created_at: business.createdAt?.toISOString(),
+      website: business.website || ""
+    }));
+    res.json({
+      success: true,
+      data: formattedResults,
+      total: formattedResults.length,
+      totalInDatabase: totalCount,
+      query: query?.toString() || "",
+      category: category?.toString() || "",
+      location: location?.toString() || "",
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(totalCount / limitNum)
+    });
+  })
+);
+router68.get(
+  "/category/:slug/search",
+  asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+    const {
+      page = "1",
+      limit = "10",
+      query,
+      location,
+      min_rating
+    } = req.query;
+    const categoryResult = await pool.query(
+      `SELECT id, name, slug FROM business_categories WHERE slug = $1 LIMIT 1`,
+      [slug]
+    );
+    if (!categoryResult.rows || categoryResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+    const category = categoryResult.rows[0];
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+    const offset = (pageNum - 1) * limitNum;
+    const whereConditions = ["b.category_id = $1"];
+    const params = [category.id];
+    let paramIndex = 2;
+    if (query && typeof query === "string") {
+      whereConditions.push(
+        `(b.name ILIKE $${paramIndex} OR b.description ILIKE $${paramIndex + 1})`
+      );
+      params.push(`${query}%`, `${query}%`);
+      paramIndex += 2;
+    }
+    if (location && typeof location === "string") {
+      whereConditions.push(
+        `(b.location ILIKE $${paramIndex} OR b.address ILIKE $${paramIndex} OR b.city_name ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`
+      );
+      params.push(`%${location}%`);
+      paramIndex += 1;
+    }
+    if (min_rating) {
+      whereConditions.push(`b.rating >= $${paramIndex}`);
+      params.push(parseFloat(min_rating));
+      paramIndex += 1;
+    }
+    const whereClause = whereConditions.join(" AND ");
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as count FROM businesses b LEFT JOIN regions r ON b.region_id = r.id WHERE ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0]?.count || "0", 10);
+    const businessesResult = await pool.query(
+      `SELECT b.*, r.name as region_name,
+         COALESCE(u.subscription_tier, 'free') as owner_tier
+       FROM businesses b
+       LEFT JOIN users u ON b.owner_id = u.id
+       LEFT JOIN regions r ON b.region_id = r.id
+       WHERE ${whereClause}
+       ORDER BY
+         CASE COALESCE(u.subscription_tier, 'free')
+           WHEN 'enterprise' THEN 1
+           WHEN 'max'        THEN 2
+           WHEN 'verified'   THEN 3
+           WHEN 'essential'  THEN 4
+           WHEN 'free'       THEN 5
+           ELSE 5
+         END ASC,
+         b.rating DESC NULLS LAST
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...params, limitNum, offset]
+    );
+    res.json({
+      success: true,
+      data: businessesResult.rows,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      category: {
+        id: category.id,
+        name: category.name,
+        slug: category.slug
+      }
+    });
+  })
+);
+router68.get(
+  "/business/categories",
+  asyncHandler(async (_req, res) => {
+    try {
+      const categoriesResult = await db.select({
+        id: businessCategories.id,
+        name: businessCategories.name,
+        slug: businessCategories.slug
+      }).from(businessCategories).orderBy(businessCategories.name);
+      return res.json({
+        success: true,
+        categories: categoriesResult.map((c) => c.name),
+        categoryData: categoriesResult,
+        count: categoriesResult.length
+      });
+    } catch (error) {
+      console.error("\u274C Failed to fetch categories:", error);
+      return res.json({
+        success: true,
+        categories: ["technology", "agriculture", "real-estate", "logistics"],
+        count: 4
+      });
+    }
+  })
+);
+router68.get(
+  "/businesses/pool/:categoryName",
+  asyncHandler(async (req, res) => {
+    const { categoryName } = req.params;
+    const { page = "1", limit = "20" } = req.query;
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offset = (pageNum - 1) * limitNum;
+    const poolMapping = {
+      restaurants: {
+        tableName: "restaurants_businesses",
+        schemaKey: "restaurantsBusinesses",
+        categoryId: 258,
+        categoryName: "Food & Beverage"
+      },
+      hotellerie: {
+        tableName: "hotellerie_businesses",
+        schemaKey: "hotellerieBusinesses",
+        categoryId: 242,
+        categoryName: "Tourism & Leisure"
+      },
+      technology: {
+        tableName: "technology_businesses",
+        schemaKey: "technologyBusinesses",
+        categoryId: 227,
+        categoryName: "IT & Internet"
+      },
+      healthcare: {
+        tableName: "healthcare_businesses",
+        schemaKey: "healthcareBusinesses",
+        categoryId: 246,
+        categoryName: "Health"
+      },
+      commerce: {
+        tableName: "commerce_businesses",
+        schemaKey: "commerceBusinesses",
+        categoryId: 290,
+        categoryName: "Commerce"
+      },
+      retail: {
+        tableName: "retail_businesses",
+        schemaKey: "retailBusinesses",
+        categoryId: 218,
+        categoryName: "Retail"
+      },
+      automobile: {
+        tableName: "automobile_businesses",
+        schemaKey: "automobileBusinesses",
+        categoryId: 343,
+        categoryName: "Automotive"
+      },
+      advertising: {
+        tableName: "advertising_businesses",
+        schemaKey: "advertisingBusinesses",
+        categoryId: 229,
+        categoryName: "Digital Marketing & Advertising"
+      }
+    };
+    const selectedPool = poolMapping[categoryName.toLowerCase()];
+    if (!selectedPool) {
+      return res.status(400).json({
+        success: false,
+        error: `Unknown category pool: ${categoryName}`,
+        availablePools: Object.keys(poolMapping)
+      });
+    }
+    const result = await db.execute(
+      sql22`
+        SELECT
+          id,
+          business_name,
+          created_at,
+          is_active
+        FROM ${sql22.identifier(selectedPool.tableName)}
+        WHERE is_active = true
+        ORDER BY created_at DESC
+        LIMIT ${limitNum} OFFSET ${offset}
+      `
+    );
+    const countResult = await db.execute(
+      sql22`SELECT COUNT(*) as count FROM ${sql22.identifier(selectedPool.tableName)} WHERE is_active = true`
+    );
+    const businesses2 = result.rows.map((row) => ({
+      id: row.id,
+      name: row.business_name,
+      pool: selectedPool.categoryName,
+      categoryId: selectedPool.categoryId,
+      createdAt: row.created_at
+    }));
+    res.json({
+      success: true,
+      data: businesses2,
+      pool: selectedPool.categoryName,
+      total: businesses2.length,
+      totalInPool: countResult.rows[0]?.count || 0,
+      page: pageNum,
+      limit: limitNum
+    });
+  })
+);
+router68.get(
+  "/business/locations",
+  asyncHandler(async (_req, res) => {
+    try {
+      const locResult = await db.execute(
+        sql22`SELECT DISTINCT location FROM businesses
+            WHERE location IS NOT NULL AND TRIM(location) != ''
+            ORDER BY location LIMIT 100`
+      );
+      let locations = locResult.rows.map((r) => r.location).filter(Boolean);
+      if (locations.length === 0) {
+        const cityResult = await db.execute(
+          sql22`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
+        );
+        locations = cityResult.rows.map((r) => r.name).filter(Boolean);
+      }
+      if (locations.length === 0) {
+        locations = ["Abidjan", "Yamoussoukro", "Bouak\xE9", "Daloa", "San-P\xE9dro"];
+      }
+      return res.json({ success: true, locations, count: locations.length });
+    } catch (error) {
+      console.error("\u274C Failed to fetch locations:", error);
+      return res.json({
+        success: true,
+        locations: ["Abidjan", "Yamoussoukro", "Bouak\xE9"],
+        count: 3
+      });
+    }
+  })
+);
+router68.get(
+  "/business/test-connection",
+  asyncHandler(async (_req, res) => {
+    try {
+      const testResult = await db.execute(sql22`
+        SELECT
+          NOW() as time,
+          current_database() as database,
+          version() as version,
+          (SELECT COUNT(*) FROM businesses) as business_count,
+          (SELECT COUNT(*) FROM business_categories) as category_count
+      `);
+      const row = testResult.rows[0];
+      return res.json({
+        success: true,
+        database: {
+          connected: true,
+          name: row?.database,
+          version: row?.version,
+          time: row?.time,
+          businessCount: row?.business_count,
+          categoryCount: row?.category_count
+        },
+        server: {
+          status: "running",
+          environment: process.env.NODE_ENV || "development"
+        }
+      });
+    } catch (error) {
+      console.error("\u274C Database test failed:", error);
+      return res.json({
+        success: false,
+        database: {
+          connected: false,
+          error: error.message
+        },
+        server: {
+          status: "running",
+          environment: process.env.NODE_ENV || "development"
+        }
+      });
+    }
+  })
+);
+var business_search_default = router68;
+
+// server/routes/categories.ts
+init_schema();
+init_db();
+import { Router as Router69 } from "express";
+import { sql as sql23 } from "drizzle-orm";
+var router69 = Router69();
+router69.get(
+  "/business-categories",
+  asyncHandler(async (req, res) => {
+    const { countryCode } = req.query;
+    const result = countryCode && String(countryCode) !== "all" ? await db.execute(
+      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+                COUNT(b.id)::int AS business_count
+              FROM business_categories bc
+              LEFT JOIN businesses b ON b.category_id = bc.id
+                AND UPPER(b.country_code) = UPPER(${String(countryCode)})
+              GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
+              ORDER BY bc.name`
+    ) : await db.execute(
+      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+                COUNT(b.id)::int AS business_count
+              FROM business_categories bc
+              LEFT JOIN businesses b ON b.category_id = bc.id
+              GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
+              ORDER BY bc.name`
+    );
+    res.json(result.rows);
+  })
+);
+router69.get(
+  "/categories",
+  asyncHandler(async (_req, res) => {
+    const result = await db.select({
+      id: businessCategories.id,
+      name: businessCategories.name,
+      slug: businessCategories.slug,
+      description: businessCategories.description,
+      parentId: businessCategories.parentId,
+      mainCategory: businessCategories.mainCategory
+    }).from(businessCategories).orderBy(businessCategories.name);
+    res.json(result);
+  })
+);
+var categories_default2 = router69;
+
+// server/routes/commerce-ads.ts
+init_schema();
+init_db();
+import { Router as Router70 } from "express";
+import { and as and23, eq as eq35, ilike as ilike11, or as or8, sql as sql24 } from "drizzle-orm";
+var router70 = Router70();
+router70.get(
+  "/ads/search",
+  asyncHandler(async (req, res) => {
+    const {
+      query,
+      category,
+      page = "1",
+      limit = "9",
+      sort_by = "rating_desc"
+    } = req.query;
+    console.log("\u{1F50D} [COMMERCE] Ads search:", {
+      query,
+      category,
+      page,
+      limit,
+      sort_by
+    });
+    const conditions = [];
+    if (query && typeof query === "string") {
+      const searchCondition = or8(
+        ilike11(businesses.name, `${query}%`),
+        ilike11(businesses.description, `${query}%`)
+      );
+      if (searchCondition) conditions.push(searchCondition);
+    }
+    if (category && typeof category === "string") {
+      const categoryRecord = await db.select().from(businessCategories).where(eq35(businessCategories.slug, category)).limit(1);
+      if (categoryRecord.length > 0) {
+        conditions.push(eq35(businesses.categoryId, categoryRecord[0].id));
+      }
+    }
+    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
+    let baseQuery = db.select({
+      id: businesses.id,
+      name: businesses.name,
+      description: businesses.description,
+      categoryId: businesses.categoryId,
+      categoryName: businessCategories.name,
+      createdAt: businesses.createdAt,
+      email: businesses.email,
+      phone: businesses.phone,
+      rating: businesses.rating,
+      reviewsCount: businesses.reviewsCount,
+      location: businesses.location,
+      featured: businesses.featured,
+      isAdvertiser: businesses.isAdvertiser,
+      adBalance: businesses.adBalance,
+      website: businesses.website
+    }).from(businesses).leftJoin(
+      businessCategories,
+      eq35(businesses.categoryId, businessCategories.id)
+    ).where(whereCondition);
+    const countResult = await db.select({ count: sql24`count(*)` }).from(businesses).where(whereCondition);
+    const totalCount = countResult[0]?.count || 0;
+    const sortMap = {
+      rating_desc: businesses.createdAt,
+      newest: businesses.createdAt,
+      oldest: businesses.createdAt,
+      name_asc: businesses.name,
+      name_desc: businesses.name
+    };
+    const orderBy = sortMap[sort_by] || businesses.createdAt;
+    baseQuery = baseQuery.orderBy(orderBy);
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offset = (pageNum - 1) * limitNum;
+    baseQuery = baseQuery.limit(limitNum).offset(offset);
+    const businessResults = await baseQuery;
+    const formattedAds = businessResults.map((business) => {
+      const businessName = business.name || "Unknown Business";
+      const realRating = parseFloat(business.rating) || 4;
+      const realReviews = business.reviewsCount || 0;
+      const isFeatured = business.featured || false;
+      const adBudget = parseFloat(business.adBalance) || 500;
+      return {
+        id: business.id.toString(),
+        title: businessName,
+        description: business.description || `Premium ${business.categoryName || "business"} advertisement`,
+        image: `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id}`,
+        images: [
+          `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id}`,
+          `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id + 1}`
+        ],
+        business_type: business.categoryName?.toLowerCase() || "retail",
+        category: business.categoryName || "General",
+        location: business.location || "Abidjan, C\xF4te d'Ivoire",
+        price: Math.max(100, Math.round(adBudget / 10)),
+        discount_price: isFeatured ? Math.round(adBudget / 12) : null,
+        rating: realRating,
+        reviews: realReviews,
+        impressions: realReviews * 200 + business.id * 10,
+        clicks: realReviews * 30 + business.id * 2,
+        conversions: realReviews * 5 + Math.round(business.id / 3),
+        ctr: realReviews > 0 ? parseFloat(
+          (realReviews * 30 / (realReviews * 200 + 1) * 100).toFixed(
+            2
+          )
+        ) : 5,
+        roi: realRating > 3 ? parseFloat((realRating * 0.9).toFixed(1)) : 2.5,
+        target_audience: [
+          "General Audience",
+          "Local Customers",
+          "Business Professionals"
+        ],
+        ad_type: business.isAdvertiser ? "sponsored" : "organic",
+        status: "active",
+        budget: Math.round(adBudget),
+        spent: Math.round(adBudget * 0.6),
+        duration: 30,
+        tags: [
+          ...isFeatured ? ["Featured"] : [],
+          ...business.isAdvertiser ? ["Promoted"] : [],
+          "Verified"
+        ],
+        verified: true,
+        featured: isFeatured,
+        promoted: business.isAdvertiser || false,
+        created_at: business.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
+        updated_at: business.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
+        business: {
+          name: businessName,
+          logo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${businessName}`,
+          verified: true,
+          rating: realRating,
+          total_ads: business.isAdvertiser ? Math.max(1, Math.round(adBudget / 100)) : 0,
+          member_since: business.createdAt?.toISOString()?.slice(0, 10) || "2024-01-01"
+        },
+        platforms: ["facebook", "instagram", "google", "linkedin"],
+        payment_methods: ["credit_card", "paypal", "bank_transfer"],
+        delivery_available: true,
+        contact_methods: [
+          ...business.email ? ["email"] : [],
+          ...business.phone ? ["phone"] : [],
+          "message"
+        ],
+        metrics: {
+          views: realReviews * 200 + business.id * 10,
+          engagements: realReviews * 50 + business.id * 3,
+          shares: realReviews * 8,
+          saves: realReviews * 4,
+          comments: realReviews
+        }
+      };
+    });
+    console.log(`\u2705 [COMMERCE] Search completed: ${formattedAds.length} ads`);
+    res.json({
+      success: true,
+      data: formattedAds,
+      total: totalCount,
+      page: pageNum,
+      limit: limitNum,
+      total_pages: Math.ceil(totalCount / limitNum),
+      sort_by,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  })
+);
+router70.get(
+  "/analytics",
+  asyncHandler(async (_req, res) => {
+    console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
+    const totalAdsResult = await db.select({ count: sql24`count(*)` }).from(businesses);
+    const totalAds = totalAdsResult[0]?.count || 1250;
+    const businesses2 = await db.select({
+      id: businesses.id,
+      name: businesses.name,
+      categoryId: businesses.categoryId,
+      createdAt: businesses.createdAt
+    }).from(businesses).limit(100);
+    let totalRevenue = 0;
+    let totalSpend = 0;
+    let ratingSum = 0;
+    let ratingCount = 0;
+    try {
+      const campaignStats = await db.execute(
+        sql24`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
+                   COALESCE(SUM(impressions), 0) AS total_impressions,
+                   COALESCE(SUM(clicks), 0) AS total_clicks,
+                   COALESCE(SUM(conversions), 0) AS total_conversions
+            FROM ad_campaigns`
+      );
+      const stats = campaignStats.rows[0];
+      totalSpend = parseFloat(stats?.total_budget || "0");
+      totalRevenue = totalSpend * 3.2;
+    } catch {
+      console.warn("Ad campaign stats unavailable, using estimates");
+    }
+    try {
+      const ratingResult = await db.execute(
+        sql24`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
+                   COUNT(*) FILTER (WHERE CAST(rating AS numeric) > 0) AS rated_count
+            FROM businesses WHERE is_active = true`
+      );
+      const rRow = ratingResult.rows[0];
+      ratingSum = parseFloat(rRow?.avg_rating || "0");
+      ratingCount = parseInt(rRow?.rated_count || "0", 10);
+    } catch {
+      console.warn("Rating stats unavailable");
+    }
+    businesses2.forEach(() => {
+      if (totalSpend === 0) {
+        totalRevenue += 3e3;
+        totalSpend += 1500;
+      }
+    });
+    const avgRating = ratingCount > 0 ? ratingSum : 4.7;
+    const avgROI = totalSpend > 0 ? totalRevenue / totalSpend : 4.2;
+    const categoryResult = await db.select({
+      name: businessCategories.name,
+      slug: businessCategories.slug,
+      count: sql24`count(*)`
+    }).from(businesses).leftJoin(
+      businessCategories,
+      eq35(businesses.categoryId, businessCategories.id)
+    ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql24`count(*) DESC`).limit(10);
+    const totalCatCount = categoryResult.reduce(
+      (sum, cat) => sum + (cat.count || 0),
+      0
+    );
+    const topCategories = categoryResult.map((cat) => ({
+      category: cat.name || "Other",
+      ads_count: cat.count || 0,
+      percentage: totalCatCount > 0 ? Math.round((cat.count || 0) / totalCatCount * 100) : 0
+    }));
+    const topLocations = [];
+    const months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const growthFactors = [0.82, 0.88, 0.95, 1.02, 1.08, 1.15];
+    const monthlyTrends = months.map((month, index2) => ({
+      month,
+      ads_published: Math.floor(totalAds / 6 * growthFactors[index2]),
+      revenue: Math.floor(totalRevenue / 6 * growthFactors[index2])
+    }));
+    const platformStats = [
+      { platform: "Facebook", ads_count: Math.floor(totalAds * 0.35), avg_ctr: 5.4 },
+      { platform: "Instagram", ads_count: Math.floor(totalAds * 0.28), avg_ctr: 7.1 },
+      { platform: "Google", ads_count: Math.floor(totalAds * 0.22), avg_ctr: 4.5 },
+      { platform: "LinkedIn", ads_count: Math.floor(totalAds * 0.1), avg_ctr: 3.9 },
+      { platform: "TikTok", ads_count: Math.floor(totalAds * 0.05), avg_ctr: 7.5 }
+    ];
+    res.json({
+      success: true,
+      total_ads: totalAds,
+      total_businesses: Math.floor(totalAds * 0.8),
+      average_rating: parseFloat(avgRating.toFixed(1)),
+      total_spend: Math.floor(totalSpend),
+      total_revenue: Math.floor(totalRevenue),
+      average_roi: parseFloat(avgROI.toFixed(1)),
+      monthly_trends: monthlyTrends,
+      top_categories: topCategories,
+      top_locations: topLocations,
+      platform_stats: platformStats,
+      property_stats: categoryResult.map((cat, idx) => ({
+        type: cat.name || "Other",
+        count: cat.count || 0,
+        avg_price: Math.floor(150 + idx * 35)
+      })),
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      database_connected: true
+    });
+  })
+);
+var commerce_ads_default = router70;
+
+// server/routes/contact.ts
+init_schema();
+init_db();
+import { Router as Router71 } from "express";
+var router71 = Router71();
+router71.post(
+  "/",
+  asyncHandler(async (req, res) => {
+    const { name, email, phone, subject, message } = req.body;
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, subject, and message are required."
+      });
+    }
+    try {
+      await db.insert(auditLogs).values({
+        action: "contact_form_submission",
+        changes: {
+          name,
+          email,
+          phone,
+          subject,
+          message,
+          submittedAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      });
+    } catch {
+    }
+    try {
+      const nodemailer2 = await import("nodemailer");
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+      if (smtpUser && smtpPass) {
+        const transporter = nodemailer2.default.createTransport({
+          host: process.env.SMTP_HOST || "smtp.gmail.com",
+          port: parseInt(process.env.SMTP_PORT || "587", 10),
+          secure: false,
+          auth: { user: smtpUser, pass: smtpPass }
+        });
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || '"Verso Air Contact" <noreply@versoair.com>',
+          to: smtpUser,
+          replyTo: email,
+          subject: `[Contact Form] ${subject}`,
+          html: `<h3>New Contact Form Submission</h3>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone || "N/A"}</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Message:</strong></p><p>${String(message).replace(/\n/g, "<br>")}</p>`
+        });
+      }
+    } catch (emailErr) {
+      console.warn("[CONTACT] Email send failed (non-blocking):", emailErr);
+    }
+    res.json({
+      success: true,
+      message: "Your message has been sent. We'll get back to you soon!"
+    });
+  })
+);
+var contact_default = router71;
+
+// server/routes/geo.ts
+init_schema();
+init_db();
+import { Router as Router72 } from "express";
+import { sql as sql25 } from "drizzle-orm";
+var router72 = Router72();
+router72.get(
+  "/regions",
+  asyncHandler(async (req, res) => {
+    const { countryId } = req.query;
+    if (countryId) {
+      const cid = parseInt(countryId, 10);
+      const result2 = await db.execute(
+        sql25`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
+      );
+      return res.json(result2.rows);
+    }
+    const result = await db.execute(
+      sql25`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
+    );
+    res.json(result.rows);
+  })
+);
+router72.get(
+  "/cities",
+  asyncHandler(async (req, res) => {
+    const { countryId, regionId } = req.query;
+    if (regionId) {
+      const rid = parseInt(regionId, 10);
+      const result2 = await db.execute(
+        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+            FROM cities c
+            JOIN regions r ON c.region_id = r.id
+            WHERE c.region_id = ${rid}
+            ORDER BY c.name`
+      );
+      return res.json(result2.rows);
+    }
+    if (countryId) {
+      const cid = parseInt(countryId, 10);
+      const result2 = await db.execute(
+        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+            FROM cities c
+            JOIN regions r ON c.region_id = r.id
+            WHERE r.country_id = ${cid}
+            ORDER BY c.name`
+      );
+      return res.json(result2.rows);
+    }
+    const result = await db.execute(
+      sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+          FROM cities c
+          LEFT JOIN regions r ON c.region_id = r.id
+          ORDER BY c.name LIMIT 500`
+    );
+    res.json(result.rows);
+  })
+);
+router72.get(
+  "/countries",
+  asyncHandler(async (_req, res) => {
+    try {
+      const countriesResult = await db.select().from(countries).orderBy(countries.name);
+      const formattedCountries = countriesResult.map((country, index2) => ({
+        id: country.id?.toString() || (index2 + 1).toString(),
+        name: country.name || `Country ${index2 + 1}`,
+        code: country.code || country.name?.substring(0, 3).toUpperCase() || `CT${index2 + 1}`,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      }));
+      res.json(formattedCountries);
+    } catch (error) {
+      console.error("\u274C Failed to fetch countries:", error);
+      res.json([
+        {
+          id: "1",
+          name: "Ivory Coast",
+          code: "CIV",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "2",
+          name: "Ghana",
+          code: "GHA",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "3",
+          name: "Nigeria",
+          code: "NGA",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "4",
+          name: "South Africa",
+          code: "ZAF",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ]);
+    }
+  })
+);
+var geo_default = router72;
+
+// server/routes/public-stats.ts
+init_db();
+import { Router as Router73 } from "express";
+import { sql as sql26 } from "drizzle-orm";
+var router73 = Router73();
+router73.get(
+  "/dashboard-stats",
+  asyncHandler(async (req, res) => {
+    const { category, businessId } = req.query;
+    if (businessId) {
+      const businessData = await db.execute(
+        sql26`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
+      );
+      const business = businessData.rows[0];
+      if (!business) {
+        return res.status(404).json({ success: false, error: "Business not found" });
+      }
+      const categoryData = await db.execute(
+        sql26`SELECT name FROM business_categories WHERE id = ${business.category_id}`
+      );
+      const categoryName = categoryData.rows[0]?.name || "General";
+      return res.json({
+        success: true,
+        type: "business-specific",
+        businessId: business.id,
+        businessName: business.name,
+        category: categoryName,
+        relevantMetrics: getIndustryRelevantMetrics(categoryName),
+        mockStats: generateBusinessStats(
+          categoryName,
+          business.rating || 4,
+          business.review_count || 0
+        ),
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
+    if (category) {
+      const categoryData = await db.execute(
+        sql26`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
+      );
+      const categoryIds = categoryData.rows.map((row) => row.id);
+      if (categoryIds.length > 0) {
+        const businessCount2 = await db.execute(
+          sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
+        );
+        const totalBusinesses2 = parseInt(
+          String(businessCount2.rows[0]?.count || 0),
+          10
+        );
+        return res.json({
+          success: true,
+          type: "category-filtered",
+          category,
+          totalBusinessesByCategory: totalBusinesses2,
+          relevantMetrics: getIndustryRelevantMetrics(category),
+          timestamp: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      }
+    }
+    const [businessCount, categoryCount, jobCount, countryData, countryMapData, topCategories, recentListings] = await Promise.all([
+      db.execute(sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(sql26`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(sql26`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(
+        sql26`SELECT COUNT(DISTINCT c.id) as count
+              FROM countries c
+              INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true`
+      ),
+      db.execute(
+        sql26`SELECT c.name, COUNT(b.id)::int as count
+              FROM countries c
+              INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true
+              GROUP BY c.id, c.name
+              ORDER BY count DESC`
+      ),
+      db.execute(sql26`
+          SELECT bc.name, COUNT(b.id) as count
+          FROM business_categories bc
+          LEFT JOIN businesses b ON b.category_id = bc.id AND b.is_active = true
+          WHERE bc.parent_id IS NOT NULL
+          GROUP BY bc.id, bc.name
+          ORDER BY count DESC
+          LIMIT 10
+        `),
+      db.execute(sql26`
+          SELECT id, name, location, created_at
+          FROM businesses
+          WHERE is_active = true
+          ORDER BY created_at DESC
+          LIMIT 5
+        `)
+    ]);
+    const totalBusinesses = parseInt(
+      String(businessCount.rows[0]?.count || 0),
+      10
+    );
+    const categoriesCount = parseInt(
+      String(categoryCount.rows[0]?.count || 0),
+      10
+    );
+    const jobListings = parseInt(String(jobCount.rows[0]?.count || 0), 10);
+    const countriesCount = parseInt(
+      String(countryData.rows[0]?.count || 0),
+      10
+    );
+    const countryMap = {};
+    countryMapData.rows.forEach((row) => {
+      if (row.name) countryMap[row.name] = parseInt(String(row.count || 0), 10);
+    });
+    const topCats = topCategories.rows.map((row) => ({
+      name: row.name || "Unknown",
+      count: parseInt(String(row.count || 0), 10)
+    }));
+    const recent = recentListings.rows.map((row) => ({
+      id: String(row.id),
+      name: row.name || "Unknown",
+      location: row.location || "N/A"
+    }));
+    res.json({
+      success: true,
+      type: "platform-wide",
+      totalBusinesses,
+      categoriesCount,
+      jobListings,
+      countriesCount,
+      businessesByCountry: countryMap,
+      topCategories: topCats,
+      recentListings: recent,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  })
+);
+function getIndustryRelevantMetrics(category) {
+  const categoryLower = category.toLowerCase();
+  if (categoryLower.includes("commerce") || categoryLower.includes("retail") || categoryLower.includes("shop") || categoryLower.includes("store") || categoryLower.includes("supermarket") || categoryLower.includes("department") || categoryLower.includes("shopping") || categoryLower.includes("mall")) {
+    return {
+      primary: ["Product Views", "Sales Revenue", "Foot Traffic", "Customer Reviews"],
+      secondary: [
+        "Inventory Turnover",
+        "Average Transaction Value",
+        "Product Categories"
+      ],
+      tertiary: ["Conversion Rate", "Customer Retention", "Peak Shopping Hours"],
+      metrics: {
+        "Foot Traffic": "Daily store visitors",
+        "Sales Revenue": "Daily/weekly sales",
+        "Product Views": "Online product page views",
+        "Customer Reviews": "Average rating",
+        "Inventory Turnover": "Stock movement",
+        "Conversion Rate": "Visitor to buyer %"
+      }
+    };
+  }
+  if (categoryLower.includes("hotel") || categoryLower.includes("tourism") || categoryLower.includes("leisure") || categoryLower.includes("lodging") || categoryLower.includes("accommodation") || categoryLower.includes("hostel") || categoryLower.includes("guesthouse") || categoryLower.includes("resort") || categoryLower.includes("travel")) {
+    return {
+      primary: ["Room Occupancy Rate", "Reservations", "Guest Reviews", "Average Daily Rate"],
+      secondary: ["Booking Channels", "Length of Stay", "Cancellation Rate"],
+      tertiary: ["Repeat Visitors", "Staff Satisfaction", "Events Hosted"],
+      metrics: {
+        "Room Occupancy Rate": "% rooms booked daily",
+        Reservations: "Bookings per week",
+        "Guest Reviews": "Average satisfaction",
+        "Average Daily Rate": "\u20AC per night",
+        "Booking Channels": "Direct vs OTA",
+        "Repeat Visitors": "% returning guests"
+      }
+    };
+  }
+  if (categoryLower.includes("construction") || categoryLower.includes("building") || categoryLower.includes("batiment") || categoryLower.includes("civil engineering") || categoryLower.includes("contractor") || categoryLower.includes("electrical") || categoryLower.includes("plumbing") || categoryLower.includes("hvac")) {
+    return {
+      primary: ["Projects Completed", "Active Projects", "Client Reviews", "Safety Record"],
+      secondary: ["Project Value", "License Status", "Insurance Coverage"],
+      tertiary: ["Repeat Clients", "On-Time Completion", "Cost Efficiency"],
+      metrics: {
+        "Projects Completed": "Completed this month",
+        "Active Projects": "Ongoing projects",
+        "Client Reviews": "Average rating",
+        "Safety Record": "Incidents/incidents-free days",
+        "License Status": "Current certifications",
+        "Project Value": "Average project cost"
+      }
+    };
+  }
+  if (categoryLower.includes("automobile") || categoryLower.includes("automotive") || categoryLower.includes("motorbike") || categoryLower.includes("motorcycle") || categoryLower.includes("car") || categoryLower.includes("dealer") || categoryLower.includes("mechanic") || categoryLower.includes("garage") || categoryLower.includes("auto service")) {
+    return {
+      primary: ["Service Appointments", "Test Drive Requests", "Customer Reviews", "Vehicles Sold"],
+      secondary: ["Inventory Status", "Average Service Cost", "Repair Completion Time"],
+      tertiary: ["Parts Availability", "Warranty Claims", "Customer Retention"],
+      metrics: {
+        "Service Appointments": "Bookings per week",
+        "Test Drive Requests": "Requests per week",
+        "Vehicles Sold": "Sales this month",
+        "Customer Reviews": "Average rating",
+        "Inventory Status": "Available vehicles",
+        "Repair Completion": "Average days"
+      }
+    };
+  }
+  if (categoryLower.includes("finance") || categoryLower.includes("bank") || categoryLower.includes("insurance") || categoryLower.includes("loan") || categoryLower.includes("investment") || categoryLower.includes("microfinance")) {
+    return {
+      primary: ["Accounts Opened", "Loan Applications", "Assets Under Management", "Client Trust Score"],
+      secondary: ["Interest Rates Offered", "Approval Rate", "Average Loan Size"],
+      tertiary: ["Customer Lifetime Value", "Regulatory Compliance", "Referral Rate"],
+      metrics: {
+        "Accounts Opened": "This month",
+        "Loan Applications": "Processing",
+        "Assets Under Management": "Total AUM",
+        "Client Trust Score": "Rating/reviews",
+        "Approval Rate": "% approved applications",
+        "Average Loan Size": "\u20AC per loan"
+      }
+    };
+  }
+  if (categoryLower.includes("entertainment") || categoryLower.includes("divertissement") || categoryLower.includes("event") || categoryLower.includes("music") || categoryLower.includes("cinema") || categoryLower.includes("nightlife") || categoryLower.includes("nightclub") || categoryLower.includes("concert")) {
+    return {
+      primary: ["Events Hosted", "Attendance/Tickets", "Customer Ratings", "Venue Capacity Used"],
+      secondary: ["Ticket Sales Revenue", "Artist/Performer Lineup", "Event Frequency"],
+      tertiary: ["Repeat Visitors", "Social Media Reach", "Partnership Opportunities"],
+      metrics: {
+        "Events Hosted": "Events this month",
+        Attendance: "Total visitors/ticket sales",
+        "Customer Ratings": "Average event rating",
+        "Ticket Sales": "\u20AC revenue",
+        "Venue Utilization": "% capacity used",
+        "Repeat Visitors": "% returning"
+      }
+    };
+  }
+  if (categoryLower.includes("health") || categoryLower.includes("medical") || categoryLower.includes("doctor") || categoryLower.includes("clinic") || categoryLower.includes("hospital") || categoryLower.includes("pharmacy") || categoryLower.includes("dental")) {
+    return {
+      primary: ["Patient Appointments", "Patient Reviews", "Services Offered"],
+      secondary: ["Insurance Accepted", "Specialist Credentials", "Treatment Options"],
+      tertiary: ["Patient Retention", "Consultation Time", "Outcomes"],
+      metrics: {
+        "Patient Appointments": "Bookings per week",
+        "Patient Reviews": "Average rating",
+        "Services Offered": "Number of specialties",
+        "Insurance Accepted": "Providers",
+        "Specialist Rating": "Credentials/certifications",
+        "Patient Retention": "% returning patients"
+      }
+    };
+  }
+  if (categoryLower.includes("restaurant") || categoryLower.includes("cafe") || categoryLower.includes("bar") || categoryLower.includes("food") || categoryLower.includes("beverage") || categoryLower.includes("pizzeria") || categoryLower.includes("bistro")) {
+    return {
+      primary: ["Table Bookings", "Menu Clicks", "Food Orders", "Customer Reviews"],
+      secondary: ["Delivery Orders", "Average Order Value", "Peak Hours Traffic"],
+      tertiary: ["Staff Efficiency", "Food Waste Rate", "Customer Loyalty"],
+      metrics: {
+        "Table Bookings": "Reservations per day",
+        "Menu Clicks": "Online menu views",
+        "Food Orders": "Orders per day",
+        "Delivery Orders": "3rd party platforms",
+        "Average Order Value": "\u20AC per order",
+        "Customer Satisfaction": "Average rating"
+      }
+    };
+  }
+  if (categoryLower.includes("law") || categoryLower.includes("legal") || categoryLower.includes("consultant") || categoryLower.includes("accountant") || categoryLower.includes("auditor")) {
+    return {
+      primary: ["Client Enquiries", "Cases/Projects", "Client Reviews", "Consultation Rate"],
+      secondary: ["Service Specializations", "Success Rate", "Industry Expertise"],
+      tertiary: ["Referral Rate", "Client Retention", "Professional Rating"],
+      metrics: {
+        "Client Enquiries": "Inquiries per week",
+        "Cases/Projects": "Active matters",
+        "Client Reviews": "Average rating",
+        Specializations: "Service areas",
+        "Success Rate": "Case/project success %",
+        "Referral Rate": "% new clients from referrals"
+      }
+    };
+  }
+  if (categoryLower.includes("sport") || categoryLower.includes("fitness") || categoryLower.includes("gym") || categoryLower.includes("club") || categoryLower.includes("athletic") || categoryLower.includes("training") || categoryLower.includes("yoga")) {
+    return {
+      primary: ["Active Members", "Classes/Events", "Member Reviews", "Facilities Utilization"],
+      secondary: ["Membership Revenue", "Class Attendance", "Personal Training Sessions"],
+      tertiary: ["Member Retention", "Community Engagement", "Coach/Trainer Rating"],
+      metrics: {
+        "Active Members": "Current memberships",
+        "Classes/Events": "Per week",
+        "Member Reviews": "Average rating",
+        "Facilities Utilization": "% capacity used",
+        "Membership Revenue": "Monthly recurring",
+        "Class Attendance": "Avg per class",
+        "Retention Rate": "% members staying",
+        "Coach Rating": "Average rating by members"
+      }
+    };
+  }
+  return {
+    primary: ["Customer Reviews", "Active Listings", "Engagement"],
+    secondary: ["Customer Satisfaction", "Response Time"],
+    tertiary: ["Market Reach", "Growth Rate"],
+    metrics: {
+      "Customer Reviews": "Average rating",
+      "Active Listings": "Current offerings",
+      Engagement: "Customer interactions",
+      "Response Time": "Average reply time",
+      "Customer Satisfaction": "Overall rating"
+    }
+  };
+}
+function generateBusinessStats(category, rating, reviewCount) {
+  const engagementMultiplier = rating / 5 * (Math.log(reviewCount + 1) / 4 + 1);
+  const categoryLower = category.toLowerCase();
+  if (categoryLower.includes("commerce") || categoryLower.includes("retail") || categoryLower.includes("shop") || categoryLower.includes("store") || categoryLower.includes("supermarket")) {
+    return {
+      productViews: Math.round(1200 * engagementMultiplier),
+      salesRevenue: Math.round(4500 * engagementMultiplier),
+      footTraffic: Math.round(350 * engagementMultiplier),
+      customerReviews: reviewCount,
+      inventoryTurnover: (rating * 18).toFixed(1),
+      conversionRate: (rating * 3.5).toFixed(1),
+      averageTransaction: Math.round(45 * engagementMultiplier),
+      customerRetention: (rating * 16).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("hotel") || categoryLower.includes("tourism") || categoryLower.includes("lodging") || categoryLower.includes("accommodation")) {
+    return {
+      roomOccupancy: (rating * 16).toFixed(1),
+      reservations: Math.round(50 * engagementMultiplier),
+      guestReviews: reviewCount,
+      averageDailyRate: Math.round(125 * engagementMultiplier),
+      bookingChannels: Math.round(5 * engagementMultiplier),
+      lengthOfStay: (3.5 * (rating / 5)).toFixed(1),
+      cancellationRate: (100 - rating * 15).toFixed(1),
+      repeatVisitors: (rating * 18).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("construction") || categoryLower.includes("building") || categoryLower.includes("batiment") || categoryLower.includes("contractor")) {
+    return {
+      projectsCompleted: Math.round(8 * engagementMultiplier),
+      activeProjects: Math.round(5 * engagementMultiplier),
+      clientReviews: reviewCount,
+      safetyRecord: (rating * 19).toFixed(1),
+      licenseStatus: "Current",
+      projectValue: Math.round(75e3 * engagementMultiplier),
+      repeatClients: (rating * 20).toFixed(1),
+      onTimeCompletion: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("automobile") || categoryLower.includes("automotive") || categoryLower.includes("motorbike") || categoryLower.includes("mechanic") || categoryLower.includes("garage")) {
+    return {
+      serviceAppointments: Math.round(35 * engagementMultiplier),
+      testDriveRequests: Math.round(12 * engagementMultiplier),
+      vehiclesSold: Math.round(8 * engagementMultiplier),
+      customerReviews: reviewCount,
+      inventoryStatus: Math.round(25 * engagementMultiplier),
+      averageServiceCost: Math.round(350 * engagementMultiplier),
+      repairCompletionDays: Math.max(1, Math.round(5 - rating)),
+      customerRetention: (rating * 17).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("finance") || categoryLower.includes("bank") || categoryLower.includes("insurance") || categoryLower.includes("loan")) {
+    return {
+      accountsOpened: Math.round(45 * engagementMultiplier),
+      loanApplications: Math.round(28 * engagementMultiplier),
+      assetsUnderManagement: Math.round(25e5 * engagementMultiplier),
+      clientTrustScore: (rating * 20).toFixed(1),
+      interestRates: (4.5 * (rating / 5)).toFixed(2),
+      approvalRate: (70 + rating * 4).toFixed(1),
+      averageLoanSize: Math.round(45e3 * engagementMultiplier),
+      referralRate: (rating * 12).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("entertainment") || categoryLower.includes("divertissement") || categoryLower.includes("event") || categoryLower.includes("music") || categoryLower.includes("cinema")) {
+    return {
+      eventsHosted: Math.round(12 * engagementMultiplier),
+      attendance: Math.round(450 * engagementMultiplier),
+      customerRatings: reviewCount,
+      ticketSalesRevenue: Math.round(8500 * engagementMultiplier),
+      venueCapacityUsed: (rating * 17).toFixed(1),
+      artistLineup: Math.round(4 * engagementMultiplier),
+      eventFrequency: "Weekly",
+      repeatVisitors: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("health") || categoryLower.includes("medical") || categoryLower.includes("doctor") || categoryLower.includes("clinic")) {
+    return {
+      patientAppointments: Math.round(85 * engagementMultiplier),
+      patientReviews: reviewCount,
+      servicesOffered: Math.round(12 * engagementMultiplier),
+      insuranceAccepted: Math.round(8 * engagementMultiplier),
+      specialistRating: (rating * 20).toFixed(1),
+      patientRetention: (rating * 18).toFixed(1),
+      consultationTime: "30-45 min",
+      treatmentSuccess: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("restaurant") || categoryLower.includes("cafe") || categoryLower.includes("bar") || categoryLower.includes("food")) {
+    return {
+      tableBookings: Math.round(50 * engagementMultiplier),
+      menuClicks: Math.round(900 * engagementMultiplier),
+      foodOrders: Math.round(75 * engagementMultiplier),
+      customerReviews: reviewCount,
+      deliveryOrders: Math.round(35 * engagementMultiplier),
+      averageOrderValue: Math.round(38 * engagementMultiplier),
+      peakHourTraffic: (rating * 22).toFixed(1),
+      staffEfficiency: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("law") || categoryLower.includes("legal") || categoryLower.includes("consultant") || categoryLower.includes("accountant")) {
+    return {
+      clientEnquiries: Math.round(35 * engagementMultiplier),
+      casesProjects: Math.round(15 * engagementMultiplier),
+      clientReviews: reviewCount,
+      consultationRate: Math.round(85 * engagementMultiplier),
+      specializations: Math.round(5 * engagementMultiplier),
+      successRate: (rating * 19).toFixed(1),
+      referralRate: (rating * 14).toFixed(1),
+      clientRetention: (rating * 20).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("sport") || categoryLower.includes("fitness") || categoryLower.includes("gym") || categoryLower.includes("recreation") || categoryLower.includes("wellness") || categoryLower.includes("athletic") || categoryLower.includes("training") || categoryLower.includes("yoga")) {
+    return {
+      activeMembers: Math.round(85 * engagementMultiplier),
+      classesEvents: Math.round(18 * engagementMultiplier),
+      memberReviews: reviewCount,
+      facilitiesUtilization: (rating * 17).toFixed(1),
+      membershipRevenue: Math.round(8500 * engagementMultiplier),
+      classAttendance: Math.round(28 * engagementMultiplier),
+      personalTraining: Math.round(12 * engagementMultiplier),
+      memberRetention: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("real estate") || categoryLower.includes("property") || categoryLower.includes("realtor") || categoryLower.includes("developer")) {
+    return {
+      activeListings: Math.round(45 * engagementMultiplier),
+      propertySales: Math.round(8 * engagementMultiplier),
+      prospectEnquiries: Math.round(65 * engagementMultiplier),
+      averagePropertyValue: Math.round(25e4 * engagementMultiplier),
+      clientReviews: reviewCount,
+      leaseNegotiations: Math.round(15 * engagementMultiplier),
+      marketOccupancy: (rating * 16).toFixed(1),
+      clientRetention: (rating * 18).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("software") || categoryLower.includes("it") || categoryLower.includes("internet") || categoryLower.includes("hosting") || categoryLower.includes("cloud") || categoryLower.includes("cybersecurity") || categoryLower.includes("ecommerce") || categoryLower.includes("web design")) {
+    return {
+      activeProjects: Math.round(12 * engagementMultiplier),
+      clientCount: Math.round(45 * engagementMultiplier),
+      serviceTickets: Math.round(85 * engagementMultiplier),
+      systemUptime: (98 + rating * 0.8).toFixed(2),
+      clientReviews: reviewCount,
+      averageProjectValue: Math.round(15e3 * engagementMultiplier),
+      technicalSupport: Math.round(95 * engagementMultiplier),
+      clientSatisfaction: (rating * 20).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("communication") || categoryLower.includes("advertising") || categoryLower.includes("marketing") || categoryLower.includes("event") || categoryLower.includes("media") || categoryLower.includes("design") || categoryLower.includes("photography")) {
+    return {
+      activeCampaigns: Math.round(8 * engagementMultiplier),
+      clientProjects: Math.round(20 * engagementMultiplier),
+      eventAttendance: Math.round(450 * engagementMultiplier),
+      campaignReach: Math.round(25e3 * engagementMultiplier),
+      clientReviews: reviewCount,
+      averageProjectBudget: Math.round(8500 * engagementMultiplier),
+      campaignROI: (85 + rating * 5).toFixed(1),
+      clientRetention: (rating * 19).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("food") || categoryLower.includes("beverage") || categoryLower.includes("producer") || categoryLower.includes("distributor")) {
+    return {
+      productsSold: Math.round(250 * engagementMultiplier),
+      customerOrders: Math.round(85 * engagementMultiplier),
+      supplierNetwork: Math.round(35 * engagementMultiplier),
+      averageOrderValue: Math.round(120 * engagementMultiplier),
+      customerReviews: reviewCount,
+      inventoryTurnover: (rating * 18).toFixed(1),
+      qualityRating: (rating * 20).toFixed(1),
+      deliveryOnTime: (95 + rating * 2).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("education") || categoryLower.includes("training") || categoryLower.includes("school") || categoryLower.includes("course") || categoryLower.includes("university")) {
+    return {
+      totalStudents: Math.round(150 * engagementMultiplier),
+      activeEnrollments: Math.round(45 * engagementMultiplier),
+      courseOfferings: Math.round(25 * engagementMultiplier),
+      graduationRate: (80 + rating * 5).toFixed(1),
+      studentReviews: reviewCount,
+      instructorRating: (rating * 20).toFixed(1),
+      placementRate: (70 + rating * 8).toFixed(1),
+      studentRetention: (rating * 18).toFixed(1)
+    };
+  }
+  if (categoryLower.includes("transport") || categoryLower.includes("shipping") || categoryLower.includes("taxi") || categoryLower.includes("delivery") || categoryLower.includes("logistics")) {
+    return {
+      activeDeliveries: Math.round(125 * engagementMultiplier),
+      vehicleFleet: Math.round(35 * engagementMultiplier),
+      customerRatings: reviewCount,
+      deliverySuccessRate: (95 + rating * 2).toFixed(1),
+      averageDeliveryTime: Math.max(30, Math.round(90 - rating * 15)),
+      routesOperating: Math.round(12 * engagementMultiplier),
+      onTimePercentage: (90 + rating * 5).toFixed(1),
+      customerSatisfaction: (rating * 20).toFixed(1)
+    };
+  }
+  return {
+    customerReviews: reviewCount,
+    activeListings: Math.round(8 * engagementMultiplier),
+    engagement: Math.round(100 * engagementMultiplier),
+    customerSatisfaction: (rating * 20).toFixed(1),
+    responseTime: "< 2 hours",
+    marketReach: (rating * 15).toFixed(1),
+    growthRate: (Math.random() * 15 + 5).toFixed(1)
+  };
+}
+var public_stats_default = router73;
+
+// server/routes/seed.ts
+init_schema();
+init_db();
+import { Router as Router74 } from "express";
+import { eq as eq36 } from "drizzle-orm";
+var router74 = Router74();
+router74.post(
+  "/seed-categories",
+  asyncHandler(async (_req, res) => {
+    if (process.env.NODE_ENV !== "development") {
+      return res.status(403).json({
+        success: false,
+        error: "Seed endpoint only available in development mode"
+      });
+    }
+    const { CATEGORY_SEED_DATA: CATEGORY_SEED_DATA2 } = await import("./category-seed-data-O4KRJSIS.js");
+    const createdCategories = [];
+    const categorySlugMap = /* @__PURE__ */ new Map();
+    for (const catData of CATEGORY_SEED_DATA2) {
+      try {
+        const result = await db.insert(businessCategories).values({
+          name: catData.name,
+          slug: catData.slug,
+          description: catData.description,
+          mainCategory: catData.mainCategory || false
+        }).returning({
+          id: businessCategories.id,
+          slug: businessCategories.slug
+        });
+        if (result.length > 0) {
+          categorySlugMap.set(catData.slug, result[0].id);
+          createdCategories.push(result[0]);
+        }
+      } catch {
+        const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq36(businessCategories.slug, catData.slug)).limit(1);
+        if (existing.length > 0) {
+          categorySlugMap.set(catData.slug, existing[0].id);
+        }
+      }
+    }
+    for (const catData of CATEGORY_SEED_DATA2) {
+      if (catData.parentSlug && categorySlugMap.has(catData.parentSlug)) {
+        const catId = categorySlugMap.get(catData.slug);
+        const parentId = categorySlugMap.get(catData.parentSlug);
+        if (catId && parentId) {
+          await db.update(businessCategories).set({ parentId }).where(eq36(businessCategories.id, catId));
+        }
+      }
+    }
+    res.json({
+      success: true,
+      message: "Categories seeded successfully",
+      count: createdCategories.length,
+      environment: process.env.NODE_ENV
+    });
+  })
+);
+var seed_default = router74;
+
+// server/routes/system.ts
+init_db();
+import { Router as Router75 } from "express";
+import { sql as sql27 } from "drizzle-orm";
+var router75 = Router75();
+router75.get(
+  "/status",
+  asyncHandler(async (_req, res) => {
+    try {
+      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
+      return res.json({
+        status: "ok",
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        message: "Server is running",
+        environment: process.env.NODE_ENV || "development",
+        database: {
+          connected: true,
+          time: dbTest.rows[0]?.time
+        }
+      });
+    } catch (error) {
+      return res.json({
+        status: "warning",
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        message: "Server is running but database connection failed",
+        environment: process.env.NODE_ENV || "development",
+        database: {
+          connected: false,
+          error: error.message
+        }
+      });
+    }
+  })
+);
+router75.get(
+  "/health",
+  asyncHandler(async (_req, res) => {
+    try {
+      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
+      return res.json({
+        success: true,
+        status: "ok",
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        message: "Server is running",
+        environment: process.env.NODE_ENV || "development",
+        database: {
+          connected: true,
+          time: dbTest.rows[0]?.time
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        status: "error",
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        message: "Server is running but database connection failed",
+        environment: process.env.NODE_ENV || "development",
+        database: {
+          connected: false,
+          error: error.message
+        }
+      });
+    }
+  })
+);
+router75.get(
+  "/verify-db-counts",
+  asyncHandler(async (_req, res) => {
+    const [
+      allBusinesses,
+      activeBusinesses,
+      allCategories,
+      mainCategories,
+      subCategories,
+      allJobs,
+      activeJobs,
+      distinctCountries,
+      allUsers,
+      allReviews,
+      allReservations
+    ] = await Promise.all([
+      db.execute(sql27`SELECT COUNT(*) as count FROM businesses`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM jobs`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(
+        sql27`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
+      ),
+      db.execute(sql27`SELECT COUNT(*) as count FROM users`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_reviews`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM reservations`)
+    ]);
+    res.json({
+      success: true,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      counts: {
+        businesses: {
+          total: parseInt(String(allBusinesses.rows[0]?.count || 0), 10),
+          active: parseInt(
+            String(activeBusinesses.rows[0]?.count || 0),
+            10
+          )
+        },
+        categories: {
+          total: parseInt(String(allCategories.rows[0]?.count || 0), 10),
+          mainCategories: parseInt(
+            String(mainCategories.rows[0]?.count || 0),
+            10
+          ),
+          subCategories: parseInt(
+            String(subCategories.rows[0]?.count || 0),
+            10
+          )
+        },
+        jobs: {
+          total: parseInt(String(allJobs.rows[0]?.count || 0), 10),
+          active: parseInt(String(activeJobs.rows[0]?.count || 0), 10)
+        },
+        countries: parseInt(
+          String(distinctCountries.rows[0]?.count || 0),
+          10
+        ),
+        users: parseInt(String(allUsers.rows[0]?.count || 0), 10),
+        reviews: parseInt(String(allReviews.rows[0]?.count || 0), 10),
+        reservations: parseInt(
+          String(allReservations.rows[0]?.count || 0),
+          10
+        )
+      },
+      notes: {
+        businesses_dashboard_shows: "activeBusinesses (is_active = true)",
+        categories_dashboard_shows: "allCategories (main + sub)",
+        jobs_dashboard_shows: "activeJobs (status = 'active')",
+        countries_dashboard_shows: "distinctCountries from active businesses"
+      }
+    });
+  })
+);
+router75.get("/simple-test", (_req, res) => {
+  res.json({
+    message: "Server is working!",
+    success: true,
+    endpoints: [
+      "/api/status",
+      "/api/simple-test",
+      "/api/countries",
+      "/api/businesses",
+      "/api/business/search",
+      "/api/business/categories",
+      "/api/business/locations",
+      "/api/business/test-connection",
+      "/api/commerce/analytics",
+      "/api/commerce/ads/search",
+      "/api/properties/analytics",
+      "/api/properties/search"
+    ]
+  });
+});
+var system_default = router75;
+
+// server/routes/users.ts
+import { Router as Router76 } from "express";
+import jwt7 from "jsonwebtoken";
+var router76 = Router76();
+var activeUsers = /* @__PURE__ */ new Map();
+var INACTIVE_THRESHOLD = 5 * 60 * 1e3;
+setInterval(() => {
+  const now = Date.now();
+  const entriesToDelete = [];
+  activeUsers.forEach((lastSeen, sessionId) => {
+    if (now - lastSeen > INACTIVE_THRESHOLD) {
+      entriesToDelete.push(sessionId);
+    }
+  });
+  entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
+}, 6e4);
+router76.post("/users/heartbeat", (req, res) => {
+  const sessionId = req.body.sessionId || req.ip;
+  activeUsers.set(sessionId, Date.now());
+  res.json({
+    success: true,
+    activeUsers: activeUsers.size,
+    sessionId
+  });
+});
+router76.get("/users/active-count", (_req, res) => {
+  const now = Date.now();
+  const entriesToDelete = [];
+  activeUsers.forEach((lastSeen, sessionId) => {
+    if (now - lastSeen > INACTIVE_THRESHOLD) {
+      entriesToDelete.push(sessionId);
+    }
+  });
+  entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
+  res.json({
+    success: true,
+    activeUsers: activeUsers.size,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  });
+});
+router76.get("/user", (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        user: null,
+        message: "No token provided"
+      });
+    }
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) throw new Error("JWT_SECRET not set");
+      const decoded = jwt7.verify(token, jwtSecret);
+      const isAdmin = decoded.role === "admin" || decoded.role === "superuser";
+      return res.json({
+        success: true,
+        user: {
+          id: decoded.userId || "user",
+          email: decoded.email || "",
+          name: decoded.name || decoded.email?.split("@")[0] || "User",
+          isAdmin,
+          role: decoded.role || "user"
+        }
+      });
+    } catch {
+      return res.status(401).json({
+        success: false,
+        user: null,
+        message: "Invalid or expired token"
+      });
+    }
+  } catch {
+    res.status(500).json({
+      success: false,
+      user: null,
+      message: "Server error"
+    });
+  }
+});
+var users_default2 = router76;
+
+// server/routes.ts
 async function registerRoutes(app2) {
   app2.use("/auth", auth_default);
   app2.use("/auth", oauth_default);
@@ -34847,124 +37228,9 @@ async function registerRoutes(app2) {
   app2.use("/api/social", social_api_default);
   app2.use("/api/faq", faq_api_default);
   app2.use("/api/ai", ai_chat_default);
-  app2.post("/api/contact", async (req, res) => {
-    try {
-      const { name, email, phone, subject, message } = req.body;
-      if (!name || !email || !subject || !message) {
-        return res.status(400).json({
-          success: false,
-          message: "Name, email, subject, and message are required."
-        });
-      }
-      try {
-        await db.insert(auditLogs).values({
-          action: "contact_form_submission",
-          changes: {
-            name,
-            email,
-            phone,
-            subject,
-            message,
-            submittedAt: (/* @__PURE__ */ new Date()).toISOString()
-          }
-        });
-      } catch {
-      }
-      try {
-        const nodemailer2 = await import("nodemailer");
-        const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
-        if (smtpUser && smtpPass) {
-          const transporter = nodemailer2.default.createTransport({
-            host: process.env.SMTP_HOST || "smtp.gmail.com",
-            port: parseInt(process.env.SMTP_PORT || "587", 10),
-            secure: false,
-            auth: { user: smtpUser, pass: smtpPass }
-          });
-          await transporter.sendMail({
-            from: process.env.SMTP_FROM || `"Verso Air Contact" <noreply@versoair.com>`,
-            to: smtpUser,
-            // send to admin
-            replyTo: email,
-            subject: `[Contact Form] ${subject}`,
-            html: `<h3>New Contact Form Submission</h3>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Phone:</strong> ${phone || "N/A"}</p>
-              <p><strong>Subject:</strong> ${subject}</p>
-              <p><strong>Message:</strong></p><p>${message.replace(/\n/g, "<br>")}</p>`
-          });
-        }
-      } catch (emailErr) {
-        console.warn("[CONTACT] Email send failed (non-blocking):", emailErr);
-      }
-      res.json({
-        success: true,
-        message: "Your message has been sent. We'll get back to you soon!"
-      });
-    } catch (err) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to send message. Please try again later."
-      });
-    }
-  });
+  app2.use("/api/contact", contact_default);
   app2.use("/api/manage", database_management_default);
-  app2.get("/api/regions", async (req, res) => {
-    try {
-      const { countryId } = req.query;
-      if (countryId) {
-        const cid = parseInt(countryId);
-        const result = await db.execute(
-          sql20`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
-        );
-        res.json(result.rows);
-      } else {
-        const result = await db.execute(
-          sql20`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
-        );
-        res.json(result.rows);
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-  app2.get("/api/cities", async (req, res) => {
-    try {
-      const { countryId, regionId } = req.query;
-      if (regionId) {
-        const rid = parseInt(regionId);
-        const result = await db.execute(
-          sql20`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
-              FROM cities c
-              JOIN regions r ON c.region_id = r.id
-              WHERE c.region_id = ${rid}
-              ORDER BY c.name`
-        );
-        res.json(result.rows);
-      } else if (countryId) {
-        const cid = parseInt(countryId);
-        const result = await db.execute(
-          sql20`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
-              FROM cities c
-              JOIN regions r ON c.region_id = r.id
-              WHERE r.country_id = ${cid}
-              ORDER BY c.name`
-        );
-        res.json(result.rows);
-      } else {
-        const result = await db.execute(
-          sql20`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
-              FROM cities c
-              LEFT JOIN regions r ON c.region_id = r.id
-              ORDER BY c.name LIMIT 500`
-        );
-        res.json(result.rows);
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  app2.use("/api", geo_default);
   app2.use("/", businesses_default);
   app2.use("/", properties_default);
   app2.use("/api/tickets", tickets_default);
@@ -35049,542 +37315,11 @@ async function registerRoutes(app2) {
       res.status(500).json({ success: false, message: "CSRF token not generated" });
     }
   });
-  app2.get("/api/business-categories", async (req, res) => {
-    try {
-      const { countryCode } = req.query;
-      let result;
-      if (countryCode && String(countryCode) !== "all") {
-        result = await db.execute(
-          sql20`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
-              COUNT(b.id)::int AS business_count
-            FROM business_categories bc
-            LEFT JOIN businesses b ON b.category_id = bc.id
-              AND UPPER(b.country_code) = UPPER(${String(countryCode)})
-            GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
-            ORDER BY bc.name`
-        );
-      } else {
-        result = await db.execute(
-          sql20`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
-              COUNT(b.id)::int AS business_count
-            FROM business_categories bc
-            LEFT JOIN businesses b ON b.category_id = bc.id
-            GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
-            ORDER BY bc.name`
-        );
-      }
-      res.json(result.rows);
-    } catch (error) {
-      console.error("Error fetching business categories:", error);
-      res.status(500).json({ error: "Failed to fetch business categories" });
-    }
-  });
-  app2.get("/api/categories", async (req, res) => {
-    try {
-      const result = await db.select({
-        id: businessCategories.id,
-        name: businessCategories.name,
-        slug: businessCategories.slug,
-        description: businessCategories.description,
-        parentId: businessCategories.parentId,
-        mainCategory: businessCategories.mainCategory
-      }).from(businessCategories).orderBy(businessCategories.name);
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
-    }
-  });
-  app2.get("/api/ad-campaigns", async (req, res) => {
-    try {
-      const { countryCode, limit = "50" } = req.query;
-      const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
-      let result;
-      if (countryCode && String(countryCode) !== "all") {
-        result = await db.execute(
-          sql20`SELECT ac.*, b.name AS business_name, b.country_code
-              FROM ad_campaigns ac
-              INNER JOIN businesses b ON b.id = ac.business_id
-                AND UPPER(b.country_code) = UPPER(${String(countryCode)})
-              ORDER BY ac.created_at DESC NULLS LAST
-              LIMIT ${limitNum}`
-        );
-      } else {
-        result = await db.execute(
-          sql20`SELECT ac.*, b.name AS business_name, b.country_code
-              FROM ad_campaigns ac
-              LEFT JOIN businesses b ON b.id = ac.business_id
-              ORDER BY ac.created_at DESC NULLS LAST
-              LIMIT ${limitNum}`
-        );
-      }
-      const campaigns = (result.rows || []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        daily_budget: r.budget || r.daily_budget || "0",
-        objective: r.description || r.name || "Campaign",
-        status: r.status || "active",
-        start_date: r.start_date,
-        end_date: r.end_date,
-        impressions: r.impressions || 0,
-        clicks: r.clicks || 0,
-        conversions: r.conversions || 0,
-        business_id: r.business_id,
-        business_name: r.business_name,
-        country_code: r.country_code,
-        created_at: r.created_at
-      }));
-      res.json({ success: true, data: campaigns });
-    } catch (error) {
-      console.error("\u274C Ad campaigns fetch failed:", error);
-      res.status(500).json({ success: false, data: [], error: error.message });
-    }
-  });
-  console.log("\u{1F4CB} Available schema exports:", Object.keys(schema_exports));
-  console.log("\u{1F5FA}\uFE0F  TABLE_NAME_MAP:", TABLE_NAME_MAP);
-  const activeUsers = /* @__PURE__ */ new Map();
-  const INACTIVE_THRESHOLD = 5 * 60 * 1e3;
-  setInterval(() => {
-    const now = Date.now();
-    const entriesToDelete = [];
-    activeUsers.forEach((lastSeen, sessionId) => {
-      if (now - lastSeen > INACTIVE_THRESHOLD) {
-        entriesToDelete.push(sessionId);
-      }
-    });
-    entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
-  }, 6e4);
-  app2.get("/api/status", async (req, res) => {
-    try {
-      const dbTest = await db.execute(sql20`SELECT NOW() as time`);
-      res.json({
-        status: "ok",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: true,
-          time: dbTest.rows[0]?.time
-        }
-      });
-    } catch (error) {
-      res.json({
-        status: "warning",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: false,
-          error: error.message
-        }
-      });
-    }
-  });
-  app2.get("/api/health", async (req, res) => {
-    try {
-      const dbTest = await db.execute(sql20`SELECT NOW() as time`);
-      res.json({
-        success: true,
-        status: "ok",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: true,
-          time: dbTest.rows[0]?.time
-        }
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        status: "error",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: false,
-          error: error.message
-        }
-      });
-    }
-  });
-  app2.get("/api/verify-db-counts", async (req, res) => {
-    try {
-      const allBusinesses = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM businesses`
-      );
-      const activeBusinesses = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`
-      );
-      const allCategories = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM business_categories`
-      );
-      const mainCategories = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`
-      );
-      const subCategories = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`
-      );
-      const allJobs = await db.execute(sql20`SELECT COUNT(*) as count FROM jobs`);
-      const activeJobs = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`
-      );
-      const distinctCountries = await db.execute(
-        sql20`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
-      );
-      const allUsers = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM users`
-      );
-      const allReviews = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM business_reviews`
-      );
-      const allReservations = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM reservations`
-      );
-      res.json({
-        success: true,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        counts: {
-          businesses: {
-            total: parseInt(String(allBusinesses.rows[0]?.count || 0)),
-            active: parseInt(
-              String(activeBusinesses.rows[0]?.count || 0)
-            )
-          },
-          categories: {
-            total: parseInt(String(allCategories.rows[0]?.count || 0)),
-            mainCategories: parseInt(
-              String(mainCategories.rows[0]?.count || 0)
-            ),
-            subCategories: parseInt(
-              String(subCategories.rows[0]?.count || 0)
-            )
-          },
-          jobs: {
-            total: parseInt(String(allJobs.rows[0]?.count || 0)),
-            active: parseInt(String(activeJobs.rows[0]?.count || 0))
-          },
-          countries: parseInt(
-            String(distinctCountries.rows[0]?.count || 0)
-          ),
-          users: parseInt(String(allUsers.rows[0]?.count || 0)),
-          reviews: parseInt(String(allReviews.rows[0]?.count || 0)),
-          reservations: parseInt(
-            String(allReservations.rows[0]?.count || 0)
-          )
-        },
-        notes: {
-          businesses_dashboard_shows: "activeBusinesses (is_active = true)",
-          categories_dashboard_shows: "allCategories (main + sub)",
-          jobs_dashboard_shows: "activeJobs (status = 'active')",
-          countries_dashboard_shows: "distinctCountries from active businesses"
-        }
-      });
-    } catch (error) {
-      console.error("\u274C Database verification failed:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    }
-  });
-  app2.get("/api/jobs/search", async (req, res) => {
-    try {
-      const {
-        search,
-        type,
-        department,
-        experience_level,
-        is_remote,
-        sector,
-        countryCode,
-        status: jobStatus,
-        page = "1",
-        limit = "50"
-      } = req.query;
-      const pageNum = Math.max(1, parseInt(page, 10) || 1);
-      const limitNum = Math.min(100, parseInt(limit, 10) || 50);
-      const offset = (pageNum - 1) * limitNum;
-      const conditions = [];
-      if (jobStatus && typeof jobStatus === "string") {
-        conditions.push(eq33(jobs.status, jobStatus));
-      } else {
-        conditions.push(eq33(jobs.status, "active"));
-      }
-      if (search && typeof search === "string") {
-        const searchCond = or6(
-          ilike9(jobs.title, `${search}%`),
-          ilike9(jobs.company, `${search}%`)
-        );
-        if (searchCond) conditions.push(searchCond);
-      }
-      if (type && typeof type === "string") {
-        conditions.push(eq33(jobs.type, type));
-      }
-      if (sector && typeof sector === "string" && sector !== "all") {
-        conditions.push(eq33(jobs.sector, sector));
-      }
-      if (department && typeof department === "string") {
-        conditions.push(ilike9(jobs.department, `${department}%`));
-      }
-      if (experience_level && typeof experience_level === "string") {
-        conditions.push(eq33(jobs.experienceLevel, experience_level));
-      }
-      if (is_remote === "true") {
-        conditions.push(eq33(jobs.isRemote, true));
-      }
-      if (countryCode && typeof countryCode === "string" && countryCode !== "all") {
-        conditions.push(eq33(jobs.countryCode, countryCode.toUpperCase()));
-      }
-      const where = conditions.length > 0 ? and21(...conditions) : void 0;
-      const [{ value: total }] = await db.select({ value: count11() }).from(jobs).where(where);
-      const rows = await db.select().from(jobs).where(where).orderBy(desc19(jobs.createdAt)).limit(limitNum).offset(offset);
-      const mapped = rows.map((r) => {
-        const parseField = (val) => {
-          if (!val) return [];
-          if (Array.isArray(val)) return val;
-          try {
-            return JSON.parse(val);
-          } catch {
-            return val.split(",").map((s) => s.trim()).filter(Boolean);
-          }
-        };
-        return {
-          id: r.id,
-          title: r.title,
-          company: r.company,
-          location: r.location || "Remote",
-          type: r.type || "full-time",
-          sector: r.sector || "general",
-          salary_min: r.salaryMin || 0,
-          salary_max: r.salaryMax || 0,
-          currency: r.currency || "USD",
-          description: r.description || "",
-          requirements: parseField(r.requirements),
-          benefits: parseField(r.benefits),
-          skills: parseField(r.skills),
-          experience_level: r.experienceLevel || "entry",
-          education_level: r.educationLevel || "bachelor",
-          department: r.department || "General",
-          posted_date: r.postedDate || r.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
-          application_deadline: r.applicationDeadline || null,
-          is_featured: r.isFeatured || false,
-          is_remote: r.isRemote || false,
-          application_count: r.applicationCount || 0,
-          view_count: r.viewCount || 0,
-          status: r.status || "active",
-          company_logo: r.companyLogo || null,
-          company_description: r.companyDescription || null,
-          apply_url: r.applyUrl || null,
-          created_at: r.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
-          updated_at: r.updatedAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
-          business_id: r.businessId || null,
-          country_code: r.countryCode || null
-        };
-      });
-      const businessIds = [
-        ...new Set(rows.filter((r) => r.businessId).map((r) => r.businessId))
-      ];
-      let reviewMap = {};
-      if (businessIds.length > 0) {
-        try {
-          const reviewData = await db.execute(
-            sql20`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
-             FROM business_reviews
-             WHERE business_id = ANY(${businessIds})
-             GROUP BY business_id`
-          );
-          for (const row of reviewData.rows) {
-            reviewMap[row.business_id] = {
-              avg_rating: parseFloat(row.avg_rating) || 0,
-              review_count: parseInt(row.review_count) || 0
-            };
-          }
-        } catch (e) {
-          console.error("Reviews lookup skipped:", e);
-        }
-      }
-      const result = mapped.map((job) => ({
-        ...job,
-        company_rating: job.business_id && reviewMap[job.business_id] ? reviewMap[job.business_id].avg_rating : null,
-        company_review_count: job.business_id && reviewMap[job.business_id] ? reviewMap[job.business_id].review_count : 0
-      }));
-      console.log(`\u2705 Public jobs search: ${result.length} jobs returned`);
-      res.json({
-        success: true,
-        data: result,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          pages: Math.ceil(Number(total) / limitNum)
-        }
-      });
-    } catch (error) {
-      console.error("\u{1F534} Public jobs search error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch jobs",
-        data: []
-      });
-    }
-  });
-  app2.get("/api/public/dashboard-stats", async (req, res) => {
-    try {
-      const { category, businessId } = req.query;
-      if (businessId) {
-        const businessData = await db.execute(
-          sql20`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
-        );
-        const business = businessData.rows[0];
-        if (!business) {
-          return res.status(404).json({
-            success: false,
-            error: "Business not found"
-          });
-        }
-        const categoryData = await db.execute(
-          sql20`SELECT name FROM business_categories WHERE id = ${business.category_id}`
-        );
-        const categoryName = categoryData.rows[0]?.name || "General";
-        return res.json({
-          success: true,
-          type: "business-specific",
-          businessId: business.id,
-          businessName: business.name,
-          category: categoryName,
-          relevantMetrics: getIndustryRelevantMetrics(categoryName),
-          mockStats: generateBusinessStats(
-            categoryName,
-            business.rating || 4,
-            business.review_count || 0
-          ),
-          timestamp: (/* @__PURE__ */ new Date()).toISOString()
-        });
-      }
-      if (category) {
-        const categoryData = await db.execute(
-          sql20`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
-        );
-        const categoryIds = categoryData.rows.map((r) => r.id);
-        if (categoryIds.length > 0) {
-          const businessCount2 = await db.execute(
-            sql20`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
-          );
-          const totalBusinesses2 = parseInt(
-            String(businessCount2.rows[0]?.count || 0)
-          );
-          return res.json({
-            success: true,
-            type: "category-filtered",
-            category,
-            totalBusinessesByCategory: totalBusinesses2,
-            relevantMetrics: getIndustryRelevantMetrics(category),
-            timestamp: (/* @__PURE__ */ new Date()).toISOString()
-          });
-        }
-      }
-      const businessCount = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`
-      );
-      const totalBusinesses = parseInt(
-        String(businessCount.rows[0]?.count || 0)
-      );
-      const categoryCount = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM business_categories`
-      );
-      const categoriesCount = parseInt(
-        String(categoryCount.rows[0]?.count || 0)
-      );
-      const jobCount = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`
-      );
-      const jobListings = parseInt(
-        String(jobCount.rows[0]?.count || 0)
-      );
-      const countryData = await db.execute(
-        sql20`SELECT COUNT(DISTINCT c.id) as count
-            FROM countries c
-            INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true`
-      );
-      const countriesCount = parseInt(
-        String(countryData.rows[0]?.count || 0)
-      );
-      const countryMapData = await db.execute(
-        sql20`SELECT c.name, COUNT(b.id)::int as count
-            FROM countries c
-            INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true
-            GROUP BY c.id, c.name
-            ORDER BY count DESC`
-      );
-      const countryMap = {};
-      countryMapData.rows.forEach((row) => {
-        if (row.name) countryMap[row.name] = parseInt(String(row.count || 0));
-      });
-      const topCategories = await db.execute(
-        sql20`
-          SELECT bc.name, COUNT(b.id) as count 
-          FROM business_categories bc 
-          LEFT JOIN businesses b ON b.category_id = bc.id AND b.is_active = true 
-          WHERE bc.parent_id IS NOT NULL 
-          GROUP BY bc.id, bc.name 
-          ORDER BY count DESC 
-          LIMIT 10
-        `
-      );
-      const topCats = [];
-      topCategories.rows.forEach((row) => {
-        topCats.push({
-          name: row.name || "Unknown",
-          count: parseInt(String(row.count || 0))
-        });
-      });
-      const recentListings = await db.execute(
-        sql20`
-          SELECT id, name, location, created_at 
-          FROM businesses 
-          WHERE is_active = true 
-          ORDER BY created_at DESC 
-          LIMIT 5
-        `
-      );
-      const recent = [];
-      recentListings.rows.forEach((row) => {
-        recent.push({
-          id: String(row.id),
-          name: row.name || "Unknown",
-          location: row.location || "N/A"
-        });
-      });
-      res.json({
-        success: true,
-        type: "platform-wide",
-        totalBusinesses,
-        categoriesCount,
-        jobListings,
-        countriesCount,
-        businessesByCountry: countryMap,
-        topCategories: topCats,
-        recentListings: recent,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    } catch (error) {
-      console.error("\u274C Failed to get public dashboard stats:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-        totalBusinesses: 0,
-        categoriesCount: 0,
-        jobListings: 0,
-        countriesCount: 0,
-        businessesByCountry: {},
-        topCategories: [],
-        recentListings: []
-      });
-    }
-  });
-  function getIndustryRelevantMetrics(category) {
+  app2.use("/api", categories_default2);
+  app2.use("/api/ad-campaigns", ad_campaigns_default);
+  app2.use("/api", system_default);
+  app2.use("/api/public", public_stats_default);
+  function getIndustryRelevantMetrics2(category) {
     const categoryLower = category.toLowerCase();
     if (categoryLower.includes("commerce") || categoryLower.includes("retail") || categoryLower.includes("shop") || categoryLower.includes("store") || categoryLower.includes("supermarket") || categoryLower.includes("department") || categoryLower.includes("shopping") || categoryLower.includes("mall")) {
       return {
@@ -35852,7 +37587,7 @@ async function registerRoutes(app2) {
       }
     };
   }
-  function generateBusinessStats(category, rating, reviewCount) {
+  function generateBusinessStats2(category, rating, reviewCount) {
     const engagementMultiplier = rating / 5 * (Math.log(reviewCount + 1) / 4 + 1);
     const categoryLower = category.toLowerCase();
     if (categoryLower.includes("commerce") || categoryLower.includes("retail") || categoryLower.includes("shop") || categoryLower.includes("store") || categoryLower.includes("supermarket")) {
@@ -36057,1859 +37792,15 @@ async function registerRoutes(app2) {
       growthRate: (Math.random() * 15 + 5).toFixed(1)
     };
   }
-  app2.post("/api/seed-categories", async (req, res) => {
-    if (process.env.NODE_ENV !== "development") {
-      return res.status(403).json({
-        success: false,
-        error: "Seed endpoint only available in development mode"
-      });
-    }
-    try {
-      const { CATEGORY_SEED_DATA: CATEGORY_SEED_DATA2 } = await import("./category-seed-data-O4KRJSIS.js");
-      const createdCategories = [];
-      const categorySlugMap = /* @__PURE__ */ new Map();
-      for (const catData of CATEGORY_SEED_DATA2) {
-        try {
-          const result = await db.insert(businessCategories).values({
-            name: catData.name,
-            slug: catData.slug,
-            description: catData.description,
-            mainCategory: catData.mainCategory || false
-          }).returning({
-            id: businessCategories.id,
-            slug: businessCategories.slug
-          });
-          if (result.length > 0) {
-            categorySlugMap.set(catData.slug, result[0].id);
-            createdCategories.push(result[0]);
-          }
-        } catch (err) {
-          const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq33(businessCategories.slug, catData.slug)).limit(1);
-          if (existing.length > 0) {
-            categorySlugMap.set(catData.slug, existing[0].id);
-          }
-        }
-      }
-      for (const catData of CATEGORY_SEED_DATA2) {
-        if (catData.parentSlug && categorySlugMap.has(catData.parentSlug)) {
-          const catId = categorySlugMap.get(catData.slug);
-          const parentId = categorySlugMap.get(catData.parentSlug);
-          if (catId && parentId) {
-            await db.update(businessCategories).set({ parentId }).where(eq33(businessCategories.id, catId));
-          }
-        }
-      }
-      res.json({
-        success: true,
-        message: "Categories seeded successfully",
-        count: createdCategories.length,
-        environment: process.env.NODE_ENV
-      });
-    } catch (error) {
-      console.error("[SEED] Error seeding categories:", error);
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-  app2.post("/api/users/heartbeat", (req, res) => {
-    const sessionId = req.body.sessionId || req.ip;
-    activeUsers.set(sessionId, Date.now());
-    res.json({
-      success: true,
-      activeUsers: activeUsers.size,
-      sessionId
-    });
-  });
-  app2.get("/api/users/active-count", (req, res) => {
-    const now = Date.now();
-    const entriesToDelete = [];
-    activeUsers.forEach((lastSeen, sessionId) => {
-      if (now - lastSeen > INACTIVE_THRESHOLD) {
-        entriesToDelete.push(sessionId);
-      }
-    });
-    entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
-    res.json({
-      success: true,
-      activeUsers: activeUsers.size,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
-    });
-  });
-  app2.get("/api/user", (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.split(" ")[1];
-      if (!token) {
-        return res.status(401).json({
-          success: false,
-          user: null,
-          message: "No token provided"
-        });
-      }
-      try {
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) throw new Error("JWT_SECRET not set");
-        const decoded = jwt7.verify(token, jwtSecret);
-        const isAdmin = decoded.role === "admin" || decoded.role === "superuser";
-        return res.json({
-          success: true,
-          user: {
-            id: decoded.userId || "user",
-            email: decoded.email || "",
-            name: decoded.name || decoded.email?.split("@")[0] || "User",
-            isAdmin,
-            role: decoded.role || "user"
-          }
-        });
-      } catch (verifyError) {
-        return res.status(401).json({
-          success: false,
-          user: null,
-          message: "Invalid or expired token"
-        });
-      }
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        user: null,
-        message: "Server error"
-      });
-    }
-  });
-  app2.get(
-    "/api/admin/database-stats",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const tables = [
-          "users",
-          "businesses",
-          "business_categories",
-          "business_hours",
-          "business_services",
-          "business_reviews",
-          "analytics",
-          "reservations",
-          "ad_campaigns",
-          "ad_audiences",
-          "ad_creatives",
-          "ad_performance",
-          "billing_history",
-          "music_artists",
-          "music_tracks",
-          "music_analytics",
-          "countries",
-          "regions",
-          "cities",
-          "target_regions",
-          "jobs",
-          "job_applications",
-          "saved_jobs",
-          "commerce_categories",
-          "payment_methods",
-          "transactions",
-          "content_categories",
-          "content_pages",
-          "page_categories",
-          "notifications",
-          "user_favorites"
-        ];
-        let totalRecords = 0;
-        const tableCounts = {};
-        for (const tableName of tables) {
-          try {
-            const countResult = await db.execute(
-              sql20.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
-            );
-            const count12 = parseInt(
-              String(countResult.rows[0]?.count) || "0"
-            );
-            tableCounts[tableName] = count12;
-            totalRecords += count12;
-          } catch (error) {
-            console.error(`Failed to count ${tableName}:`, error);
-            tableCounts[tableName] = 0;
-          }
-        }
-        res.json({
-          success: true,
-          totalRecords,
-          activeTables: tables.length,
-          tableCounts,
-          timestamp: (/* @__PURE__ */ new Date()).toISOString()
-        });
-      } catch (error) {
-        console.error("\u274C Failed to get database stats:", error);
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.get(
-    "/api/admin/table/:tableName",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { tableName } = req.params;
-        const { search } = req.query;
-        const validTables = Object.keys(TABLE_NAME_MAP);
-        if (!validTables.includes(tableName)) {
-          return res.status(400).json({
-            success: false,
-            error: "Invalid table name"
-          });
-        }
-        const schemaName = TABLE_NAME_MAP[tableName];
-        console.log(`\u{1F50D} Looking up table: ${tableName} -> ${schemaName}`);
-        console.log(`\u{1F4E6} Schema has key "${schemaName}":`, schemaName in schema_exports);
-        const table = schemaName ? schema_exports[schemaName] : null;
-        console.log(`\u2705 Found table:`, !!table);
-        if (!table) {
-          return res.status(400).json({
-            success: false,
-            error: "Table not found in schema"
-          });
-        }
-        const page = parseInt(String(req.query.page || "1"), 10);
-        const limit = Math.min(
-          200,
-          parseInt(String(req.query.limit || "100"), 10)
-        );
-        const offset = (page - 1) * limit;
-        let query = db.select().from(table);
-        if (search && typeof search === "string") {
-          const nameField = table.name;
-          if (nameField) {
-            query = query.where(ilike9(nameField, `${search}%`));
-          }
-        }
-        const countResult = await db.select({ count: sql20`count(*)` }).from(table);
-        const total = countResult[0]?.count || 0;
-        const data = await query.limit(limit).offset(offset);
-        res.json({
-          success: true,
-          data,
-          pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(Number(total) / limit)
-          }
-        });
-      } catch (error) {
-        console.error(`\u274C Failed to fetch ${req.params.tableName}:`, error);
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.post(
-    "/api/admin/table/:tableName",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { tableName } = req.params;
-        const data = req.body;
-        const validTables = Object.keys(TABLE_NAME_MAP);
-        if (!validTables.includes(tableName)) {
-          return res.status(400).json({
-            success: false,
-            error: "Invalid table name"
-          });
-        }
-        const schemaName = TABLE_NAME_MAP[tableName];
-        const table = schemaName ? schema_exports[schemaName] : null;
-        if (!table) {
-          return res.status(400).json({
-            success: false,
-            error: "Table not found in schema"
-          });
-        }
-        const result = await db.insert(table).values(data).returning();
-        res.json({
-          success: true,
-          data: result[0]
-        });
-      } catch (error) {
-        console.error(`\u274C Failed to create in ${req.params.tableName}:`, error);
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.put(
-    "/api/admin/table/:tableName/:id",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { tableName, id } = req.params;
-        const data = req.body;
-        const validTables = Object.keys(TABLE_NAME_MAP);
-        if (!validTables.includes(tableName)) {
-          return res.status(400).json({
-            success: false,
-            error: "Invalid table name"
-          });
-        }
-        const schemaName = TABLE_NAME_MAP[tableName];
-        const table = schemaName ? schema_exports[schemaName] : null;
-        if (!table) {
-          return res.status(400).json({
-            success: false,
-            error: "Table not found in schema"
-          });
-        }
-        const { id: _, ...updateData } = data;
-        const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
-        const result = await db.update(table).set(updateData).where(eq33(table.id, idValue)).returning();
-        if (result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            error: "Record not found"
-          });
-        }
-        if (tableName === "reservations" && updateData.status) {
-          const updated = result[0];
-          const resUserId = updated.userId ?? updated.user_id;
-          if (resUserId) {
-            try {
-              const bizResult = await pool.query(
-                `SELECT b.name FROM businesses b WHERE b.id = $1`,
-                [updated.businessId ?? updated.business_id]
-              );
-              const businessName = bizResult.rows[0]?.name || "Business";
-              const price = updated.totalPrice ?? updated.total_price;
-              notifyReservationUpdate({
-                id: updated.id,
-                userId: resUserId,
-                businessName,
-                date: (updated.startDate ?? updated.start_date)?.toLocaleDateString?.() || (/* @__PURE__ */ new Date()).toLocaleDateString(),
-                time: (updated.startDate ?? updated.start_date)?.toLocaleTimeString?.([], {
-                  hour: "2-digit",
-                  minute: "2-digit"
-                }),
-                status: updated.status,
-                totalPrice: price ? `$${price}` : void 0
-              }).catch(
-                (err) => console.error("[RESERVATION] Notification error:", err)
-              );
-            } catch (notifyErr) {
-              console.error(
-                "[RESERVATION] Notification lookup error:",
-                notifyErr
-              );
-            }
-          } else {
-            console.log(
-              "[RESERVATION] Skipped notification \u2014 no userId on reservation",
-              updated.id
-            );
-          }
-        }
-        res.json({
-          success: true,
-          data: result[0]
-        });
-      } catch (error) {
-        console.error(`\u274C Failed to update in ${req.params.tableName}:`, error);
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.delete(
-    "/api/admin/table/:tableName/:id",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { tableName, id } = req.params;
-        const validTables = Object.keys(TABLE_NAME_MAP);
-        if (!validTables.includes(tableName)) {
-          return res.status(400).json({
-            success: false,
-            error: "Invalid table name"
-          });
-        }
-        const schemaName = TABLE_NAME_MAP[tableName];
-        const table = schemaName ? schema_exports[schemaName] : null;
-        if (!table) {
-          return res.status(400).json({
-            success: false,
-            error: "Table not found in schema"
-          });
-        }
-        const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
-        const result = await db.delete(table).where(eq33(table.id, idValue)).returning();
-        if (result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            error: "Record not found"
-          });
-        }
-        res.json({
-          success: true,
-          message: "Record deleted successfully"
-        });
-      } catch (error) {
-        console.error(
-          `\u274C Failed to delete from ${req.params.tableName}:`,
-          error
-        );
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.post(
-    "/api/admin/execute-query",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { query: sqlQuery } = req.body;
-        if (!sqlQuery || typeof sqlQuery !== "string") {
-          return res.status(400).json({
-            success: false,
-            error: "Query is required"
-          });
-        }
-        const normalized = sqlQuery.trim().toUpperCase();
-        const destructivePatterns = [
-          /^\s*DROP\s/i,
-          /^\s*TRUNCATE\s/i,
-          /^\s*ALTER\s/i,
-          /GRANT\s/i,
-          /REVOKE\s/i
-        ];
-        if (destructivePatterns.some((pattern) => pattern.test(sqlQuery))) {
-          console.warn(
-            `\u{1F6AB} BLOCKED destructive query from ${req.user?.email}: ${sqlQuery.substring(0, 100)}`
-          );
-          return res.status(403).json({
-            success: false,
-            error: "Destructive DDL statements (DROP, TRUNCATE, ALTER, GRANT, REVOKE) are not allowed. Use Drizzle migrations instead."
-          });
-        }
-        console.log(
-          `\u{1F50D} [${req.user?.email}] Executing query:`,
-          sqlQuery.substring(0, 100) + "..."
-        );
-        const startTime = Date.now();
-        const result = await db.execute(sql20.raw(sqlQuery));
-        const duration = Date.now() - startTime;
-        const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
-        res.json({
-          success: true,
-          data: result.rows,
-          columns,
-          rowCount: result.rows.length,
-          duration
-        });
-      } catch (error) {
-        console.error("\u274C Query execution failed:", error);
-        res.status(500).json({
-          success: false,
-          error: error.message || "Query execution failed",
-          data: [],
-          columns: [],
-          rowCount: 0,
-          duration: 0
-        });
-      }
-    }
-  );
-  app2.get("/api/admin/health", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const connResult = await db.execute(
-        sql20.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
-      );
-      const connectionsCount = parseInt(
-        String(connResult.rows[0]?.connections || 0),
-        10
-      );
-      const totalMem = os.totalmem();
-      const freeMem = os.freemem();
-      const memPercent = Math.round((totalMem - freeMem) / totalMem * 100);
-      const loadAvg1m = os.loadavg()[0];
-      const cpuCount = os.cpus().length;
-      const cpuPercent = Math.min(
-        100,
-        Math.round(loadAvg1m / cpuCount * 100)
-      );
-      let diskPercent = 0;
-      try {
-        const dfOut = execSync("df -k /").toString();
-        const line = dfOut.trim().split("\n").pop() || "";
-        const match = line.match(/(\d+)%/);
-        if (match) diskPercent = parseInt(match[1], 10);
-      } catch {
-        diskPercent = 0;
-      }
-      res.json({
-        success: true,
-        cpu: cpuPercent,
-        memory: memPercent,
-        disk: diskPercent,
-        connections: connectionsCount,
-        totalMemGB: Math.round(totalMem / 1024 / 1024 / 1024 * 10) / 10,
-        freeMemGB: Math.round(freeMem / 1024 / 1024 / 1024 * 10) / 10,
-        cpuCores: cpuCount,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        database: {
-          connected: true,
-          status: "healthy"
-        }
-      });
-    } catch (error) {
-      console.error("\u274C Health check failed:", error);
-      res.status(500).json({
-        success: false,
-        cpu: 0,
-        memory: 0,
-        disk: 0,
-        connections: 0,
-        database: {
-          connected: false,
-          status: "error",
-          error: error.message
-        }
-      });
-    }
-  });
-  app2.post("/api/admin/backup", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const { type = "full" } = req.body;
-      if (!["full", "partial"].includes(type)) {
-        return res.status(400).json({
-          success: false,
-          error: "Backup type must be 'full' or 'partial'"
-        });
-      }
-      const timestamp2 = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
-      const backupName = `verso_air_${type}_backup_${timestamp2}`;
-      let dbSize = "unknown";
-      let tableCount = 0;
-      try {
-        const sizeResult = await db.execute(
-          sql20`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
-        );
-        dbSize = sizeResult.rows[0]?.size || "unknown";
-        const tableResult = await db.execute(
-          sql20`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
-        );
-        tableCount = parseInt(
-          String(tableResult.rows[0]?.cnt || "0"),
-          10
-        );
-      } catch (e) {
-        console.warn("Could not fetch DB size:", e);
-      }
-      res.json({
-        success: true,
-        backupName,
-        type,
-        size: dbSize,
-        tables: tableCount,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-        retention: "30 days",
-        message: `${type} backup created successfully`
-      });
-    } catch (error) {
-      console.error("\u274C Backup failed:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message || "Backup failed"
-      });
-    }
-  });
-  app2.get(
-    "/api/admin/category-stats",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const result = await db.execute(
-          sql20.raw(`
-        SELECT c.id, c.name, c.slug, c.parent_id, c.main_category, COUNT(b.id) AS businesses_count
-        FROM business_categories c
-        LEFT JOIN businesses b ON b.category_id = c.id
-        GROUP BY c.id, c.name, c.slug, c.parent_id, c.main_category
-        ORDER BY businesses_count DESC, c.name
-      `)
-        );
-        res.json({ success: true, data: result.rows });
-      } catch (error) {
-        console.error("\u274C Failed to fetch category stats:", error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.post(
-    "/api/admin/preview-category-mapping",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const result = await db.execute(
-          sql20.raw(`
-        SELECT b.id AS business_id, b.name AS business_name, b.business_type,
-               c.id AS category_id, c.name AS category_name
-        FROM businesses b
-        JOIN business_categories c ON lower(c.name) = lower(b.business_type)
-        WHERE b.category_id IS NULL
-        AND c.parent_id IS NULL
-        LIMIT 200
-      `)
-        );
-        res.json({
-          success: true,
-          samples: result.rows,
-          count: result.rows.length
-        });
-      } catch (error) {
-        console.error("\u274C Preview mapping failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.post(
-    "/api/admin/apply-category-mapping",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        await db.execute(sql20.raw(`BEGIN`));
-        const result = await db.execute(
-          sql20.raw(`
-        UPDATE businesses b
-        SET category_id = c.id
-        FROM business_categories c
-        WHERE b.category_id IS NULL
-          AND lower(c.name) = lower(b.business_type)
-          AND c.parent_id IS NULL
-        RETURNING b.id
-      `)
-        );
-        await db.execute(sql20.raw(`COMMIT`));
-        const affected = Array.isArray(result.rows) ? result.rows.length : 0;
-        res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
-      } catch (error) {
-        console.error("\u274C Apply mapping failed, rolling back:", error);
-        try {
-          await db.execute(sql20.raw(`ROLLBACK`));
-        } catch (rbErr) {
-          console.error("\u274C Rollback failed:", rbErr);
-        }
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.get("/api/admin/categories", requireAuth(["admin"]), async (req, res) => {
-    try {
-      console.log("\u{1F50D} Fetching admin categories (no slug)");
-      const result = await db.execute(
-        sql20.raw(`
-          SELECT id, name, slug, description, parent_id, main_category
-          FROM business_categories
-          ORDER BY main_category DESC, name
-        `)
-      );
-      res.json({ success: true, categories: result.rows });
-    } catch (error) {
-      console.error("\u274C Failed to fetch admin categories:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-  app2.post(
-    "/api/admin/categories",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { name, description, parent_id, slug } = req.body;
-        if (!name)
-          return res.status(400).json({ success: false, error: "name is required" });
-        const autoSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-        const insert = await db.execute(
-          sql20`INSERT INTO business_categories (name, slug, description, parent_id)
-          VALUES (${name}, ${autoSlug}, ${description ?? null}, ${parent_id ?? null}) RETURNING *`
-        );
-        res.json({ success: true, category: insert.rows[0] });
-      } catch (error) {
-        console.error("\u274C Create category failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.put(
-    "/api/admin/categories/:id",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { id } = req.params;
-        const { name, description, parent_id, slug } = req.body;
-        const update = await db.execute(
-          sql20`UPDATE business_categories
-          SET name = ${name}, description = ${description ?? null}, parent_id = ${parent_id ?? null}, slug = COALESCE(${slug ?? null}, slug)
-          WHERE id = ${id}
-          RETURNING *`
-        );
-        res.json({ success: true, category: update.rows[0] });
-      } catch (error) {
-        console.error("\u274C Update category failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.delete(
-    "/api/admin/categories/:id",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const { id: idStr } = req.params;
-        const { force } = req.query;
-        const id = parseInt(idStr, 10);
-        const countResult = await db.execute(
-          sql20`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
-        );
-        const cnt = parseInt(
-          String(countResult.rows[0]?.cnt ?? "0"),
-          10
-        );
-        if (cnt > 0 && String(force) !== "true") {
-          return res.status(400).json({
-            success: false,
-            error: "Category in use; pass ?force=true to unset references and delete."
-          });
-        }
-        if (cnt > 0 && String(force) === "true") {
-          await db.execute(
-            sql20`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
-          );
-        }
-        await db.execute(sql20`DELETE FROM business_categories WHERE id = ${id}`);
-        res.json({ success: true, deleted: true, unmapped: cnt });
-      } catch (error) {
-        console.error("\u274C Delete category failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
-  app2.get("/api/commerce/ads/search", async (req, res) => {
-    try {
-      const {
-        query,
-        business_type,
-        category,
-        location,
-        min_rating,
-        min_price,
-        max_price,
-        ad_type,
-        status,
-        platforms,
-        page = "1",
-        limit = "9",
-        sort_by = "rating_desc"
-      } = req.query;
-      console.log("\u{1F50D} [COMMERCE] Ads search:", {
-        query,
-        category,
-        location,
-        min_rating,
-        page,
-        limit,
-        sort_by
-      });
-      const conditions = [];
-      if (query && typeof query === "string") {
-        const searchCondition = or6(
-          ilike9(businesses.name, `${query}%`),
-          ilike9(businesses.description, `${query}%`)
-        );
-        if (searchCondition) {
-          conditions.push(searchCondition);
-        }
-      }
-      if (category && typeof category === "string") {
-        const categoryRecord = await db.select().from(businessCategories).where(eq33(businessCategories.slug, category)).limit(1);
-        if (categoryRecord.length > 0) {
-          conditions.push(
-            eq33(businesses.categoryId, categoryRecord[0].id)
-          );
-        }
-      }
-      let baseQuery = db.select({
-        id: businesses.id,
-        name: businesses.name,
-        description: businesses.description,
-        categoryId: businesses.categoryId,
-        categoryName: businessCategories.name,
-        createdAt: businesses.createdAt,
-        email: businesses.email,
-        phone: businesses.phone,
-        rating: businesses.rating,
-        reviewsCount: businesses.reviewsCount,
-        location: businesses.location,
-        featured: businesses.featured,
-        isAdvertiser: businesses.isAdvertiser,
-        adBalance: businesses.adBalance,
-        website: businesses.website
-      }).from(businesses).leftJoin(
-        businessCategories,
-        eq33(businesses.categoryId, businessCategories.id)
-      ).where(and21(...conditions));
-      const countResult = await db.select({ count: sql20`count(*)` }).from(businesses).where(and21(...conditions));
-      const totalCount = countResult[0]?.count || 0;
-      const sortMap = {
-        rating_desc: businesses.createdAt,
-        // Default sort
-        newest: businesses.createdAt,
-        oldest: businesses.createdAt,
-        name_asc: businesses.name,
-        name_desc: businesses.name
-      };
-      const orderBy = sortMap[sort_by] || businesses.createdAt;
-      baseQuery = baseQuery.orderBy(orderBy);
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-      const offset = (pageNum - 1) * limitNum;
-      baseQuery = baseQuery.limit(limitNum).offset(offset);
-      const businessResults = await baseQuery;
-      const formattedAds = businessResults.map((business) => {
-        const businessName = business.name || "Unknown Business";
-        const realRating = parseFloat(business.rating) || 4;
-        const realReviews = business.reviewsCount || 0;
-        const isFeatured = business.featured || false;
-        const adBudget = parseFloat(business.adBalance) || 500;
-        return {
-          id: business.id.toString(),
-          title: businessName,
-          description: business.description || `Premium ${business.categoryName || "business"} advertisement`,
-          image: `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id}`,
-          images: [
-            `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id}`,
-            `https://api.dicebear.com/7.x/shapes/svg?seed=${business.id + 1}`
-          ],
-          business_type: business.categoryName?.toLowerCase() || "retail",
-          category: business.categoryName || "General",
-          location: business.location || "Abidjan, C\xF4te d'Ivoire",
-          price: Math.max(100, Math.round(adBudget / 10)),
-          discount_price: isFeatured ? Math.round(adBudget / 12) : null,
-          rating: realRating,
-          reviews: realReviews,
-          impressions: realReviews * 200 + business.id * 10,
-          clicks: realReviews * 30 + business.id * 2,
-          conversions: realReviews * 5 + Math.round(business.id / 3),
-          ctr: realReviews > 0 ? parseFloat(
-            (realReviews * 30 / (realReviews * 200 + 1) * 100).toFixed(2)
-          ) : 5,
-          roi: realRating > 3 ? parseFloat((realRating * 0.9).toFixed(1)) : 2.5,
-          target_audience: [
-            "General Audience",
-            "Local Customers",
-            "Business Professionals"
-          ],
-          ad_type: business.isAdvertiser ? "sponsored" : "organic",
-          status: "active",
-          budget: Math.round(adBudget),
-          spent: Math.round(adBudget * 0.6),
-          duration: 30,
-          tags: [
-            ...isFeatured ? ["Featured"] : [],
-            ...business.isAdvertiser ? ["Promoted"] : [],
-            "Verified"
-          ],
-          verified: true,
-          featured: isFeatured,
-          promoted: business.isAdvertiser || false,
-          created_at: business.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
-          updated_at: business.createdAt?.toISOString() || (/* @__PURE__ */ new Date()).toISOString(),
-          business: {
-            name: businessName,
-            logo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${businessName}`,
-            verified: true,
-            rating: realRating,
-            total_ads: business.isAdvertiser ? Math.max(1, Math.round(adBudget / 100)) : 0,
-            member_since: business.createdAt?.toISOString()?.slice(0, 10) || "2024-01-01"
-          },
-          platforms: ["facebook", "instagram", "google", "linkedin"],
-          payment_methods: ["credit_card", "paypal", "bank_transfer"],
-          delivery_available: true,
-          contact_methods: [
-            ...business.email ? ["email"] : [],
-            ...business.phone ? ["phone"] : [],
-            "message"
-          ],
-          metrics: {
-            views: realReviews * 200 + business.id * 10,
-            engagements: realReviews * 50 + business.id * 3,
-            shares: realReviews * 8,
-            saves: realReviews * 4,
-            comments: realReviews
-          }
-        };
-      });
-      console.log(`\u2705 [COMMERCE] Search completed: ${formattedAds.length} ads`);
-      res.json({
-        success: true,
-        data: formattedAds,
-        total: totalCount,
-        page: pageNum,
-        limit: limitNum,
-        total_pages: Math.ceil(totalCount / limitNum),
-        sort_by,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    } catch (error) {
-      console.error("\u274C Commerce ads search error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Search failed",
-        details: error.message,
-        data: [],
-        total: 0
-      });
-    }
-  });
-  app2.get("/api/commerce/analytics", async (req, res) => {
-    try {
-      console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
-      const totalAdsResult = await db.select({ count: sql20`count(*)` }).from(businesses);
-      const totalAds = totalAdsResult[0]?.count || 1250;
-      const businesses2 = await db.select({
-        id: businesses.id,
-        name: businesses.name,
-        categoryId: businesses.categoryId,
-        createdAt: businesses.createdAt
-      }).from(businesses).limit(100);
-      let totalRevenue = 0;
-      let totalSpend = 0;
-      let ratingSum = 0;
-      let ratingCount = 0;
-      try {
-        const campaignStats = await db.execute(
-          sql20`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
-                     COALESCE(SUM(impressions), 0) AS total_impressions,
-                     COALESCE(SUM(clicks), 0) AS total_clicks,
-                     COALESCE(SUM(conversions), 0) AS total_conversions
-              FROM ad_campaigns`
-        );
-        const stats = campaignStats.rows[0];
-        totalSpend = parseFloat(stats?.total_budget || "0");
-        totalRevenue = totalSpend * 3.2;
-      } catch (e) {
-        console.warn("Ad campaign stats unavailable, using estimates");
-      }
-      try {
-        const ratingResult = await db.execute(
-          sql20`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
-                     COUNT(*) FILTER (WHERE CAST(rating AS numeric) > 0) AS rated_count
-              FROM businesses WHERE is_active = true`
-        );
-        const rRow = ratingResult.rows[0];
-        ratingSum = parseFloat(rRow?.avg_rating || "0");
-        ratingCount = parseInt(rRow?.rated_count || "0");
-      } catch (e) {
-        console.warn("Rating stats unavailable");
-      }
-      businesses2.forEach((business) => {
-        if (totalSpend === 0) {
-          totalRevenue += 3e3;
-          totalSpend += 1500;
-        }
-      });
-      const avgRating = ratingCount > 0 ? ratingSum : 4.7;
-      const avgROI = totalSpend > 0 ? totalRevenue / totalSpend : 4.2;
-      const categoryResult = await db.select({
-        name: businessCategories.name,
-        slug: businessCategories.slug,
-        count: sql20`count(*)`
-      }).from(businesses).leftJoin(
-        businessCategories,
-        eq33(businesses.categoryId, businessCategories.id)
-      ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql20`count(*) DESC`).limit(10);
-      const totalCatCount = categoryResult.reduce(
-        (sum, cat) => sum + (cat.count || 0),
-        0
-      );
-      const topCategories = categoryResult.map((cat) => ({
-        category: cat.name || "Other",
-        ads_count: cat.count || 0,
-        percentage: totalCatCount > 0 ? Math.round((cat.count || 0) / totalCatCount * 100) : 0
-      }));
-      const locationResult = [];
-      const totalLocCount = locationResult.reduce(
-        (sum, loc) => sum + (loc.count || 0),
-        0
-      );
-      const topLocations = locationResult.map((loc) => ({
-        location: loc.location || "Unknown",
-        properties: loc.count || 0,
-        percentage: totalLocCount > 0 ? Math.round((loc.count || 0) / totalLocCount * 100) : 0
-      }));
-      const months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const growthFactors = [0.82, 0.88, 0.95, 1.02, 1.08, 1.15];
-      const monthlyTrends = months.map((month, index2) => ({
-        month,
-        ads_published: Math.floor(totalAds / 6 * growthFactors[index2]),
-        revenue: Math.floor(totalRevenue / 6 * growthFactors[index2])
-      }));
-      const platformStats = [
-        {
-          platform: "Facebook",
-          ads_count: Math.floor(totalAds * 0.35),
-          avg_ctr: 5.4
-        },
-        {
-          platform: "Instagram",
-          ads_count: Math.floor(totalAds * 0.28),
-          avg_ctr: 7.1
-        },
-        {
-          platform: "Google",
-          ads_count: Math.floor(totalAds * 0.22),
-          avg_ctr: 4.5
-        },
-        {
-          platform: "LinkedIn",
-          ads_count: Math.floor(totalAds * 0.1),
-          avg_ctr: 3.9
-        },
-        {
-          platform: "TikTok",
-          ads_count: Math.floor(totalAds * 0.05),
-          avg_ctr: 7.5
-        }
-      ];
-      const analytics = {
-        success: true,
-        total_ads: totalAds,
-        total_businesses: Math.floor(totalAds * 0.8),
-        // Slightly less than ads
-        average_rating: parseFloat(avgRating.toFixed(1)),
-        total_spend: Math.floor(totalSpend),
-        total_revenue: Math.floor(totalRevenue),
-        average_roi: parseFloat(avgROI.toFixed(1)),
-        monthly_trends: monthlyTrends,
-        top_categories: topCategories,
-        top_locations: topLocations,
-        platform_stats: platformStats,
-        property_stats: categoryResult.map((cat, idx) => ({
-          type: cat.name || "Other",
-          count: cat.count || 0,
-          avg_price: Math.floor(150 + idx * 35)
-        })),
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        database_connected: true
-      };
-      console.log("\u2705 [COMMERCE] Analytics generated successfully");
-      res.json(analytics);
-    } catch (error) {
-      console.error("\u274C Commerce analytics error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch commerce analytics",
-        details: error.message,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    }
-  });
-  app2.get("/api/properties/analytics", async (req, res) => {
-    try {
-      console.log("\u{1F3D8}\uFE0F [PROPERTIES] Fetching analytics...");
-      const response = await fetch(
-        `http://localhost:${process.env.PORT || 5003}/api/commerce/analytics`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        res.json(data);
-      } else {
-        throw new Error("Failed to get commerce analytics");
-      }
-    } catch (error) {
-      console.error("\u274C Properties analytics error:", error);
-      res.json({
-        total_properties: 2850,
-        average_price: 245,
-        average_rating: 4.7,
-        occupancy_rate: 85,
-        total_guests: 8500,
-        monthly_trends: [
-          { month: "Jan", bookings: 420, revenue: 125e3 },
-          { month: "Feb", bookings: 380, revenue: 112e3 },
-          { month: "Mar", bookings: 450, revenue: 135e3 },
-          { month: "Apr", bookings: 520, revenue: 156e3 },
-          { month: "May", bookings: 490, revenue: 147e3 },
-          { month: "Jun", bookings: 580, revenue: 174e3 }
-        ],
-        top_locations: [
-          { location: "Abidjan", properties: 420, percentage: 33.6 },
-          { location: "Grand-Bassam", properties: 185, percentage: 14.8 },
-          { location: "Yamoussoukro", properties: 132, percentage: 10.6 },
-          { location: "Man", properties: 98, percentage: 7.8 },
-          { location: "San-P\xE9dro", properties: 85, percentage: 6.8 }
-        ],
-        property_stats: [
-          { type: "Villas", count: 180, avg_price: 320 },
-          { type: "Apartments", count: 420, avg_price: 95 },
-          { type: "Hotels", count: 85, avg_price: 210 },
-          { type: "Cabins", count: 65, avg_price: 120 },
-          { type: "Eco-Lodges", count: 42, avg_price: 150 }
-        ]
-      });
-    }
-  });
-  app2.get("/api/properties/search", async (req, res) => {
-    try {
-      console.log("\u{1F3E0} [PROPERTIES] Searching properties...");
-      const queryParams = new URLSearchParams(req.query).toString();
-      const response = await fetch(
-        `http://localhost:${process.env.PORT || 5003}/api/commerce/ads/search?${queryParams}`
-      );
-      const result = await response.json();
-      if (result.success && result.data) {
-        const properties2 = result.data.map((ad) => {
-          const seed = parseInt(ad.id) || 1;
-          return {
-            id: ad.id,
-            name: ad.title,
-            description: ad.description,
-            image: ad.image,
-            images: ad.images,
-            type: ad.category === "Real Estate" ? "Villa" : "Apartment",
-            category: (ad.category ?? "").toLowerCase(),
-            location: ad.location,
-            price: ad.price,
-            rating: ad.rating,
-            reviews: ad.reviews,
-            bedrooms: seed % 5 + 1,
-            bathrooms: seed % 3 + 1,
-            area: 50 + seed % 10 * 25,
-            guests: seed % 6 + 2,
-            amenities: ["WiFi", "AC", "Pool", "Parking", "Kitchen"].slice(
-              0,
-              seed % 5 + 1
-            ),
-            host: {
-              name: ad.business.name,
-              avatar: ad.business.logo,
-              superhost: true,
-              verified: true,
-              responseRate: 98,
-              responseTime: "Within an hour"
-            },
-            verified: true,
-            instantBook: true,
-            freeCancellation: true,
-            discount: ad.featured ? 15 : 0,
-            featured: ad.featured,
-            tags: ad.tags,
-            availability: 85,
-            checkIn: "14:00",
-            checkOut: "11:00",
-            minimumStay: 2,
-            maximumStay: 30
-          };
-        });
-        res.json({
-          success: true,
-          data: properties2,
-          total: result.total || properties2.length,
-          page: result.page || 1,
-          limit: result.limit || 9,
-          total_pages: result.total_pages || Math.ceil(properties2.length / 9)
-        });
-      } else {
-        throw new Error("No data from commerce search");
-      }
-    } catch (error) {
-      console.error("\u274C Properties search error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to search properties",
-        details: error.message,
-        data: [],
-        total: 0
-      });
-    }
-  });
-  app2.get("/api/simple-test", (req, res) => {
-    res.json({
-      message: "Server is working!",
-      success: true,
-      endpoints: [
-        "/api/status",
-        "/api/simple-test",
-        "/api/countries",
-        "/api/businesses",
-        "/api/business/search",
-        "/api/business/categories",
-        "/api/business/locations",
-        "/api/business/test-connection",
-        "/api/commerce/analytics",
-        "/api/commerce/ads/search",
-        "/api/properties/analytics",
-        "/api/properties/search"
-      ]
-    });
-  });
-  const astroCache = /* @__PURE__ */ new Map();
-  const ASTRO_TTL = 10 * 60 * 1e3;
-  const ASTRO_FETCH_TIMEOUT = 5e3;
-  const ASTRO_MAX_RETRIES = 3;
-  const ASTRO_BACKOFF_BASE = 300;
-  const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-  async function fetchAstroWithRetries(sign) {
-    let lastErr = null;
-    for (let attempt = 1; attempt <= ASTRO_MAX_RETRIES; attempt++) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), ASTRO_FETCH_TIMEOUT);
-      try {
-        const upstream = await fetch(
-          `https://aztro.sameerkumar.website/?sign=${encodeURIComponent(
-            sign
-          )}&day=today`,
-          { method: "POST", signal: controller.signal }
-        );
-        clearTimeout(timeout);
-        if (!upstream.ok) {
-          const bodyText = await upstream.text().catch(() => "<no body>");
-          const msg = `upstream status ${upstream.status} - ${bodyText}`;
-          console.error(
-            `\u274C Aztro attempt ${attempt} failed for sign: ${sign} -> ${msg}`
-          );
-          if (upstream.status >= 500 && attempt < ASTRO_MAX_RETRIES) {
-            const backoff = ASTRO_BACKOFF_BASE * Math.pow(2, attempt - 1);
-            await delay(backoff + Math.floor(Math.random() * 100));
-            continue;
-          }
-          throw new Error(msg);
-        }
-        const data = await upstream.json();
-        return data;
-      } catch (err) {
-        clearTimeout(timeout);
-        lastErr = err;
-        const isAbort = err?.name === "AbortError";
-        console.error(
-          `\u274C Aztro fetch error (attempt ${attempt}) for sign: ${sign}:`,
-          err?.message || err
-        );
-        if ((isAbort || err?.code === "ECONNRESET" || err?.code === "ECONNREFUSED") && attempt < ASTRO_MAX_RETRIES) {
-          const backoff = ASTRO_BACKOFF_BASE * Math.pow(2, attempt - 1);
-          await delay(backoff + Math.floor(Math.random() * 100));
-          continue;
-        }
-        break;
-      }
-    }
-    throw lastErr || new Error("Unknown upstream error");
-  }
-  app2.post("/api/astrology", async (req, res) => {
-    const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
-    if (!sign)
-      return res.status(400).json({ error: "sign query param or body required" });
-    const now = Date.now();
-    const cached = astroCache.get(sign);
-    if (cached && now - cached.ts < ASTRO_TTL) {
-      res.setHeader("X-Cache", "HIT");
-      return res.json(cached.data);
-    }
-    if (cached) {
-      res.setHeader("X-Cache", "HIT-STALE");
-      (async () => {
-        try {
-          const fresh = await fetchAstroWithRetries(sign);
-          astroCache.set(sign, { ts: Date.now(), data: fresh });
-          console.log(`\u{1F501} Refreshed stale astrology cache for sign: ${sign}`);
-        } catch (err) {
-          console.warn(
-            `\u26A0\uFE0F Failed to refresh astrology cache for sign ${sign}:`,
-            err?.message || err
-          );
-        }
-      })();
-      return res.json(cached.data);
-    }
-    try {
-      const data = await fetchAstroWithRetries(sign);
-      astroCache.set(sign, { ts: Date.now(), data });
-      res.setHeader("X-Cache", "MISS");
-      return res.json(data);
-    } catch (err) {
-      console.error("\u274C Astrology proxy error:", err?.message || err);
-      if (cached) {
-        res.setHeader("X-Cache", "HIT-STALE-FALLBACK");
-        return res.json(cached.data);
-      }
-      const ASTRO_FALLBACKS = {
-        aries: {
-          date_range: "Mar 21 - Apr 19",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: take the lead today and pursue something important \u2014 small steps add up.",
-          compatibility: "Leo",
-          mood: "Energetic",
-          color: "Red",
-          lucky_number: "9",
-          lucky_time: "2pm"
-        },
-        taurus: {
-          date_range: "Apr 20 - May 20",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: focus on comfort and slow, steady progress. Practical choices pay off.",
-          compatibility: "Virgo",
-          mood: "Grounded",
-          color: "Green",
-          lucky_number: "6",
-          lucky_time: "10am"
-        },
-        gemini: {
-          date_range: "May 21 - Jun 20",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: communicate clearly and be open to new ideas \u2014 conversations matter.",
-          compatibility: "Libra",
-          mood: "Curious",
-          color: "Yellow",
-          lucky_number: "5",
-          lucky_time: "11am"
-        },
-        cancer: {
-          date_range: "Jun 21 - Jul 22",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: tend to your circle \u2014 a small act of care can deepen bonds.",
-          compatibility: "Pisces",
-          mood: "Nurturing",
-          color: "Silver",
-          lucky_number: "2",
-          lucky_time: "7pm"
-        },
-        leo: {
-          date_range: "Jul 23 - Aug 22",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: your confidence shines \u2014 step into the spotlight for something meaningful.",
-          compatibility: "Aries",
-          mood: "Bold",
-          color: "Gold",
-          lucky_number: "1",
-          lucky_time: "6pm"
-        },
-        virgo: {
-          date_range: "Aug 23 - Sep 22",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: organize an important task \u2014 refining details leads to wins.",
-          compatibility: "Taurus",
-          mood: "Focused",
-          color: "Brown",
-          lucky_number: "3",
-          lucky_time: "9am"
-        },
-        libra: {
-          date_range: "Sep 23 - Oct 22",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: seek balance and make fair choices \u2014 diplomacy helps progress.",
-          compatibility: "Gemini",
-          mood: "Balanced",
-          color: "Blue",
-          lucky_number: "7",
-          lucky_time: "4pm"
-        },
-        scorpio: {
-          date_range: "Oct 23 - Nov 21",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: focus your intensity on something that matters \u2014 transformation is possible.",
-          compatibility: "Cancer",
-          mood: "Intense",
-          color: "Black",
-          lucky_number: "8",
-          lucky_time: "11pm"
-        },
-        sagittarius: {
-          date_range: "Nov 22 - Dec 21",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: explore a fresh perspective or idea \u2014 growth comes from adventure.",
-          compatibility: "Aries",
-          mood: "Optimistic",
-          color: "Purple",
-          lucky_number: "4",
-          lucky_time: "3pm"
-        },
-        capricorn: {
-          date_range: "Dec 22 - Jan 19",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: steady work pays off \u2014 set a clear, practical goal and move steadily toward it.",
-          compatibility: "Taurus",
-          mood: "Determined",
-          color: "Gray",
-          lucky_number: "10",
-          lucky_time: "8am"
-        },
-        aquarius: {
-          date_range: "Jan 20 - Feb 18",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: embrace inventive thinking and connect with a community to amplify an idea.",
-          compatibility: "Gemini",
-          mood: "Innovative",
-          color: "Turquoise",
-          lucky_number: "11",
-          lucky_time: "5pm"
-        },
-        pisces: {
-          date_range: "Feb 19 - Mar 20",
-          current_date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          description: "General guidance: trust your instincts and allow creative expression to guide a decision.",
-          compatibility: "Cancer",
-          mood: "Dreamy",
-          color: "Sea green",
-          lucky_number: "12",
-          lucky_time: "9pm"
-        }
-      };
-      const fallback = ASTRO_FALLBACKS[sign];
-      if (fallback) {
-        console.warn(`\u26A0\uFE0F Returning fallback astrology data for sign ${sign}`);
-        astroCache.set(sign, { ts: Date.now(), data: fallback });
-        res.setHeader("X-Cache", "FALLBACK");
-        return res.json(fallback);
-      }
-      res.status(502).json({ error: "Upstream astrology API error" });
-    }
-  });
-  app2.get("/api/tables", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const result = await db.execute(
-        sql20.raw(`
-        SELECT 
-          t.table_name as name,
-          t.table_schema as schema,
-          'TABLE' as table_type,
-          (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name) as columns,
-          COALESCE(pg_total_relation_size(t.table_schema||'.'||t.table_name), 0) as size_bytes,
-          (SELECT COUNT(*) FROM pg_indexes WHERE tablename = t.table_name AND schemaname = t.table_schema) as indexes,
-          (SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_name = t.table_name AND table_schema = t.table_schema) as constraints
-        FROM information_schema.tables t
-        WHERE t.table_schema = 'public'
-        AND t.table_type = 'BASE TABLE'
-        ORDER BY t.table_name
-      `)
-      );
-      const tables = result.rows.map((row, index2) => {
-        const sizeBytes = parseInt(String(row.size_bytes)) || 0;
-        const columns = parseInt(String(row.columns)) || 0;
-        let importance = "medium";
-        const constraints = parseInt(String(row.constraints)) || 0;
-        const indexes = parseInt(String(row.indexes)) || 0;
-        if (columns >= 15 || constraints > 3 || indexes > 2) {
-          importance = "critical";
-        } else if (columns >= 10 || constraints > 1 || indexes > 0) {
-          importance = "high";
-        }
-        return {
-          id: index2 + 1,
-          name: row.name,
-          schema: row.schema || "public",
-          table_type: row.table_type || "TABLE",
-          columns,
-          size_bytes: sizeBytes,
-          size_mb: sizeBytes / (1024 * 1024),
-          indexes: parseInt(String(row.indexes)) || 0,
-          constraints: parseInt(String(row.constraints)) || 0,
-          row_count: 0,
-          // Would require additional queries per table
-          last_vacuum: null,
-          last_analyze: null,
-          is_view: false,
-          has_foreign_keys: false,
-          importance,
-          displayName: row.name,
-          icon: "\u{1F4CA}",
-          description: `Table with ${columns} columns`,
-          category: "database"
-        };
-      });
-      res.json(tables);
-    } catch (error) {
-      console.error("\u274C Failed to fetch tables:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  });
-  app2.get("/api/countries", async (req, res) => {
-    try {
-      const countriesResult = await db.select().from(countries).orderBy(countries.name);
-      const formattedCountries = countriesResult.map((country, index2) => ({
-        id: country.id?.toString() || (index2 + 1).toString(),
-        name: country.name || `Country ${index2 + 1}`,
-        code: country.code || country.name?.substring(0, 3).toUpperCase() || `CT${index2 + 1}`,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      }));
-      res.json(formattedCountries);
-    } catch (error) {
-      console.error("\u274C Failed to fetch countries:", error);
-      const fallbackCountries = [
-        {
-          id: "1",
-          name: "Ivory Coast",
-          code: "CIV",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        },
-        {
-          id: "2",
-          name: "Ghana",
-          code: "GHA",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        },
-        {
-          id: "3",
-          name: "Nigeria",
-          code: "NGA",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        },
-        {
-          id: "4",
-          name: "South Africa",
-          code: "ZAF",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      ];
-      res.json(fallbackCountries);
-    }
-  });
-  app2.get("/api/business/search", async (req, res) => {
-    try {
-      const { query, category, location, page = "1", limit = "10" } = req.query;
-      console.log("\u{1F50D} [BUSINESS] Search:", { query, category, location });
-      const conditions = [];
-      if (query && typeof query === "string") {
-        conditions.push(
-          or6(
-            ilike9(businesses.name, `${query}%`),
-            ilike9(businesses.description, `${query}%`)
-          )
-        );
-      }
-      if (category && typeof category === "string") {
-        const categoryRecord = await db.select().from(businessCategories).where(eq33(businessCategories.slug, category)).limit(1);
-        if (categoryRecord.length > 0) {
-          conditions.push(
-            eq33(businesses.categoryId, categoryRecord[0].id)
-          );
-        }
-      }
-      const whereCondition = conditions.length > 0 ? and21(...conditions) : void 0;
-      const countResult = await db.select({ count: sql20`count(*)` }).from(businesses).where(whereCondition);
-      const totalCount = countResult[0]?.count || 0;
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-      const offset = (pageNum - 1) * limitNum;
-      const businessResults = await db.select({
-        id: businesses.id,
-        name: businesses.name,
-        description: businesses.description,
-        categoryId: businesses.categoryId,
-        categoryName: businessCategories.name,
-        createdAt: businesses.createdAt
-      }).from(businesses).leftJoin(
-        businessCategories,
-        eq33(businesses.categoryId, businessCategories.id)
-      ).where(whereCondition).orderBy(businesses.name).limit(limitNum).offset(offset);
-      const formattedResults = businessResults.map((business) => ({
-        id: business.id.toString(),
-        name: business.name,
-        title: business.name,
-        description: business.description || "",
-        category: business.categoryName || "Unknown",
-        location: business.location || "",
-        address: business.contactInfo?.address || "",
-        phone: business.contactInfo?.phone || "",
-        email: business.contactInfo?.email || "",
-        rating: 4.5,
-        reviews: 0,
-        tags: business.contactInfo?.tags || [],
-        latitude: business.contactInfo?.latitude || 0,
-        longitude: business.contactInfo?.longitude || 0,
-        created_at: business.createdAt?.toISOString(),
-        website: business.contactInfo?.website || ""
-      }));
-      res.json({
-        success: true,
-        data: formattedResults,
-        total: formattedResults.length,
-        totalInDatabase: totalCount,
-        query: query?.toString() || "",
-        category: category?.toString() || "",
-        location: location?.toString() || "",
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(totalCount / limitNum)
-      });
-    } catch (error) {
-      console.error("\u274C Business search error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Search failed",
-        details: error.message
-      });
-    }
-  });
-  app2.get("/api/category/:slug/search", async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const {
-        page = "1",
-        limit = "10",
-        query,
-        location,
-        min_rating
-      } = req.query;
-      const categoryResult = await pool.query(
-        `SELECT id, name, slug FROM business_categories WHERE slug = $1 LIMIT 1`,
-        [slug]
-      );
-      if (!categoryResult.rows || categoryResult.rows.length === 0) {
-        return res.status(404).json({ success: false, error: "Category not found" });
-      }
-      const category = categoryResult.rows[0];
-      const pageNum = Math.max(1, parseInt(page) || 1);
-      const limitNum = Math.max(1, parseInt(limit) || 10);
-      const offset = (pageNum - 1) * limitNum;
-      let whereConditions = ["b.category_id = $1"];
-      const params = [category.id];
-      let paramIndex = 2;
-      if (query && typeof query === "string") {
-        whereConditions.push(
-          `(b.name ILIKE $${paramIndex} OR b.description ILIKE $${paramIndex + 1})`
-        );
-        params.push(`${query}%`, `${query}%`);
-        paramIndex += 2;
-      }
-      if (location && typeof location === "string") {
-        whereConditions.push(
-          `(b.location ILIKE $${paramIndex} OR b.address ILIKE $${paramIndex} OR b.city_name ILIKE $${paramIndex} OR r.name ILIKE $${paramIndex})`
-        );
-        params.push(`%${location}%`);
-        paramIndex += 1;
-      }
-      if (min_rating) {
-        whereConditions.push(`b.rating >= $${paramIndex}`);
-        params.push(parseFloat(min_rating));
-        paramIndex += 1;
-      }
-      const whereClause = whereConditions.join(" AND ");
-      const countResult = await pool.query(
-        `SELECT COUNT(*) as count FROM businesses b LEFT JOIN regions r ON b.region_id = r.id WHERE ${whereClause}`,
-        params
-      );
-      const total = parseInt(countResult.rows[0]?.count || "0");
-      const businessesResult = await pool.query(
-        `SELECT b.*, r.name as region_name,
-           COALESCE(u.subscription_tier, 'free') as owner_tier
-         FROM businesses b
-         LEFT JOIN users u ON b.owner_id = u.id
-         LEFT JOIN regions r ON b.region_id = r.id
-         WHERE ${whereClause}
-         ORDER BY
-           CASE COALESCE(u.subscription_tier, 'free')
-             WHEN 'enterprise' THEN 1
-             WHEN 'max'        THEN 2
-             WHEN 'verified'   THEN 3
-             WHEN 'essential'  THEN 4
-             WHEN 'free'       THEN 5
-             ELSE 5
-           END ASC,
-           b.rating DESC NULLS LAST
-         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-        [...params, limitNum, offset]
-      );
-      res.json({
-        success: true,
-        data: businessesResult.rows,
-        total,
-        page: pageNum,
-        limit: limitNum,
-        category: {
-          id: category.id,
-          name: category.name,
-          slug: category.slug
-        }
-      });
-    } catch (error) {
-      console.error("\u274C Category search error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-  app2.get("/api/business/categories", async (req, res) => {
-    try {
-      const categoriesResult = await db.select({
-        id: businessCategories.id,
-        name: businessCategories.name,
-        slug: businessCategories.slug
-      }).from(businessCategories).orderBy(businessCategories.name);
-      res.json({
-        success: true,
-        categories: categoriesResult.map((c) => c.name),
-        categoryData: categoriesResult,
-        count: categoriesResult.length
-      });
-    } catch (error) {
-      console.error("\u274C Failed to fetch categories:", error);
-      res.json({
-        success: true,
-        categories: ["technology", "agriculture", "real-estate", "logistics"],
-        count: 4
-      });
-    }
-  });
-  app2.get("/api/businesses/pool/:categoryName", async (req, res) => {
-    try {
-      const { categoryName } = req.params;
-      const { page = "1", limit = "20" } = req.query;
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-      const offset = (pageNum - 1) * limitNum;
-      const poolMapping = {
-        restaurants: {
-          tableName: "restaurants_businesses",
-          schemaKey: "restaurantsBusinesses",
-          categoryId: 258,
-          categoryName: "Food & Beverage"
-        },
-        hotellerie: {
-          tableName: "hotellerie_businesses",
-          schemaKey: "hotellerieBusinesses",
-          categoryId: 242,
-          categoryName: "Tourism & Leisure"
-        },
-        technology: {
-          tableName: "technology_businesses",
-          schemaKey: "technologyBusinesses",
-          categoryId: 227,
-          categoryName: "IT & Internet"
-        },
-        healthcare: {
-          tableName: "healthcare_businesses",
-          schemaKey: "healthcareBusinesses",
-          categoryId: 246,
-          categoryName: "Health"
-        },
-        commerce: {
-          tableName: "commerce_businesses",
-          schemaKey: "commerceBusinesses",
-          categoryId: 290,
-          categoryName: "Commerce"
-        },
-        retail: {
-          tableName: "retail_businesses",
-          schemaKey: "retailBusinesses",
-          categoryId: 218,
-          categoryName: "Retail"
-        },
-        automobile: {
-          tableName: "automobile_businesses",
-          schemaKey: "automobileBusinesses",
-          categoryId: 343,
-          categoryName: "Automotive"
-        },
-        advertising: {
-          tableName: "advertising_businesses",
-          schemaKey: "advertisingBusinesses",
-          categoryId: 229,
-          categoryName: "Digital Marketing & Advertising"
-        }
-      };
-      const pool2 = poolMapping[categoryName.toLowerCase()];
-      if (!pool2) {
-        return res.status(400).json({
-          success: false,
-          error: `Unknown category pool: ${categoryName}`,
-          availablePools: Object.keys(poolMapping)
-        });
-      }
-      const result = await db.execute(
-        sql20`
-          SELECT 
-            id,
-            business_name,
-            created_at,
-            is_active
-          FROM ${sql20.identifier(pool2.tableName)}
-          WHERE is_active = true
-          ORDER BY created_at DESC
-          LIMIT ${limitNum} OFFSET ${offset}
-        `
-      );
-      const countResult = await db.execute(
-        sql20`SELECT COUNT(*) as count FROM ${sql20.identifier(pool2.tableName)} WHERE is_active = true`
-      );
-      const businesses2 = result.rows.map((row) => ({
-        id: row.id,
-        name: row.business_name,
-        pool: pool2.categoryName,
-        categoryId: pool2.categoryId,
-        createdAt: row.created_at
-      }));
-      res.json({
-        success: true,
-        data: businesses2,
-        pool: pool2.categoryName,
-        total: businesses2.length,
-        totalInPool: countResult.rows[0]?.count || 0,
-        page: pageNum,
-        limit: limitNum
-      });
-    } catch (error) {
-      console.error("\u274C Get pool businesses error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch pool businesses",
-        details: error.message,
-        data: []
-      });
-    }
-  });
-  app2.get("/api/business/locations", async (req, res) => {
-    try {
-      const locResult = await db.execute(
-        sql20`SELECT DISTINCT location FROM businesses
-            WHERE location IS NOT NULL AND TRIM(location) != ''
-            ORDER BY location LIMIT 100`
-      );
-      let locations = locResult.rows.map((r) => r.location).filter(Boolean);
-      if (locations.length === 0) {
-        const cityResult = await db.execute(
-          sql20`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
-        );
-        locations = cityResult.rows.map((r) => r.name).filter(Boolean);
-      }
-      if (locations.length === 0) {
-        locations = ["Abidjan", "Yamoussoukro", "Bouak\xE9", "Daloa", "San-P\xE9dro"];
-      }
-      res.json({
-        success: true,
-        locations,
-        count: locations.length
-      });
-    } catch (error) {
-      console.error("\u274C Failed to fetch locations:", error);
-      res.json({
-        success: true,
-        locations: ["Abidjan", "Yamoussoukro", "Bouak\xE9"],
-        count: 3
-      });
-    }
-  });
+  app2.use("/api", seed_default);
+  app2.use("/api", users_default2);
+  app2.use("/api/admin", admin_default2);
+  app2.use("/api/commerce", commerce_ads_default);
+  app2.use("/api", business_search_default);
+  app2.use("/api", astrology_default);
   app2.get("/api/business/test-connection", async (req, res) => {
     try {
-      const testResult = await db.execute(sql20`
+      const testResult = await db.execute(sql28`
         SELECT 
           NOW() as time,
           current_database() as database,
@@ -37945,56 +37836,6 @@ async function registerRoutes(app2) {
           status: "running",
           environment: process.env.NODE_ENV || "development"
         }
-      });
-    }
-  });
-  app2.get(
-    "/api/debug/businesses-structure",
-    requireAuth(["admin"]),
-    async (req, res) => {
-      try {
-        const sampleResult = await db.select({
-          business: businesses,
-          category: businessCategories
-        }).from(businesses).leftJoin(
-          businessCategories,
-          eq33(businesses.categoryId, businessCategories.id)
-        ).limit(5);
-        const businessCount = await db.select({ count: sql20`count(*)` }).from(businesses);
-        const categoryCount = await db.select({ count: sql20`count(*)` }).from(businessCategories);
-        res.json({
-          success: true,
-          sampleData: sampleResult,
-          businessCount: businessCount[0]?.count || 0,
-          categoryCount: categoryCount[0]?.count || 0,
-          schemaInfo: {
-            businesses: Object.keys(businesses),
-            businessCategories: Object.keys(businessCategories)
-          }
-        });
-      } catch (error) {
-        console.error("\u274C Debug failed:", error);
-        res.status(500).json({
-          success: false,
-          error: error.message
-        });
-      }
-    }
-  );
-  app2.get("/api/debug/countries", requireAuth(["admin"]), async (req, res) => {
-    try {
-      const rawData = await db.select().from(countries).orderBy(countries.name);
-      res.json({
-        success: true,
-        rawDatabaseData: rawData,
-        apiResponseType: "array",
-        apiResponseLength: rawData.length
-      });
-    } catch (error) {
-      console.error("\u274C Debug countries failed:", error);
-      res.status(500).json({
-        success: false,
-        error: error.message
       });
     }
   });
@@ -38081,7 +37922,8 @@ function serveStatic(app2) {
     try {
       const assets = fs7.readdirSync(distPath);
       console.log(`[STATIC] Contents: ${assets.join(", ")}`);
-    } catch (_) {
+    } catch (err) {
+      console.warn("[STATIC] Could not list dist contents:", err);
     }
   }
   if (!fs7.existsSync(distPath)) {
@@ -39574,7 +39416,7 @@ var INDEX_STATEMENTS = [
 init_db();
 init_schema();
 init_email_service();
-import { eq as eq34, and as and22, sql as sql21, inArray as inArray2 } from "drizzle-orm";
+import { eq as eq38, and as and24, sql as sql29, inArray as inArray2 } from "drizzle-orm";
 var DIGEST_CHECK_INTERVAL_MS = 60 * 60 * 1e3;
 var MAX_RETRIES = 3;
 var BATCH_SIZE = 50;
@@ -39623,12 +39465,12 @@ async function processDailyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq34(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq34(emailQueue.recipientUserId, users.id)).where(
-      and22(
-        eq34(emailQueue.status, "pending"),
-        eq34(emailSubscriptions.frequency, "daily_digest"),
-        eq34(emailSubscriptions.isActive, true)
+      eq38(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq38(emailQueue.recipientUserId, users.id)).where(
+      and24(
+        eq38(emailQueue.status, "pending"),
+        eq38(emailSubscriptions.frequency, "daily_digest"),
+        eq38(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE);
     if (pendingItems.length === 0) {
@@ -39672,12 +39514,12 @@ async function processWeeklyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq34(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq34(emailQueue.recipientUserId, users.id)).where(
-      and22(
-        eq34(emailQueue.status, "pending"),
-        eq34(emailSubscriptions.frequency, "weekly_digest"),
-        eq34(emailSubscriptions.isActive, true)
+      eq38(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq38(emailQueue.recipientUserId, users.id)).where(
+      and24(
+        eq38(emailQueue.status, "pending"),
+        eq38(emailSubscriptions.frequency, "weekly_digest"),
+        eq38(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE * 2);
     if (pendingItems.length === 0) {
@@ -39719,10 +39561,10 @@ async function processGeoAdminReports() {
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
-    }).from(emailSubscriptions).innerJoin(users, eq34(emailSubscriptions.userId, users.id)).where(
-      and22(
-        eq34(emailSubscriptions.type, "geoadmin_reports"),
-        eq34(emailSubscriptions.isActive, true)
+    }).from(emailSubscriptions).innerJoin(users, eq38(emailSubscriptions.userId, users.id)).where(
+      and24(
+        eq38(emailSubscriptions.type, "geoadmin_reports"),
+        eq38(emailSubscriptions.isActive, true)
       )
     );
     if (subscribers.length === 0) {
@@ -39752,7 +39594,7 @@ async function processGeoAdminReports() {
       );
       if (success) {
         sent++;
-        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq34(emailSubscriptions.id, sub.subscription.id));
+        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq38(emailSubscriptions.id, sub.subscription.id));
       }
     }
     console.log(
@@ -39823,9 +39665,9 @@ async function sendDigestEmail(recipientEmail, items, digestType) {
 async function retryFailedItems() {
   try {
     const failedItems = await db.select().from(emailQueue).where(
-      and22(
-        eq34(emailQueue.status, "failed"),
-        sql21`${emailQueue.retryCount} < ${MAX_RETRIES}`
+      and24(
+        eq38(emailQueue.status, "failed"),
+        sql29`${emailQueue.retryCount} < ${MAX_RETRIES}`
       )
     ).limit(20);
     if (failedItems.length === 0) return;
@@ -39842,12 +39684,12 @@ async function retryFailedItems() {
           sentAt: sent ? /* @__PURE__ */ new Date() : void 0,
           retryCount: (item.retryCount || 0) + 1,
           error: sent ? void 0 : `Retry ${(item.retryCount || 0) + 1} failed`
-        }).where(eq34(emailQueue.id, item.id));
+        }).where(eq38(emailQueue.id, item.id));
       } catch (err) {
         await db.update(emailQueue).set({
           retryCount: (item.retryCount || 0) + 1,
           error: `Retry error: ${err instanceof Error ? err.message : String(err)}`
-        }).where(eq34(emailQueue.id, item.id));
+        }).where(eq38(emailQueue.id, item.id));
       }
     }
   } catch (error) {
@@ -40326,10 +40168,10 @@ async function autoApproveStalePendingListings() {
   }
 }
 function setupMarketplaceAutoApprove() {
-  autoApproveStalePendingListings().then((count12) => {
-    if (count12 > 0) {
+  autoApproveStalePendingListings().then((count11) => {
+    if (count11 > 0) {
       console.log(
-        `[MARKETPLACE-CRON] Startup: Auto-approved ${count12} stale listings`
+        `[MARKETPLACE-CRON] Startup: Auto-approved ${count11} stale listings`
       );
     }
   });
@@ -40466,6 +40308,9 @@ function csrfProtect(req, res, next) {
 
 // server/index-music.ts
 dotenv.config();
+if (!process.env.SIBLING_URL) {
+  process.env.SIBLING_URL = process.env.MAIN_APP_URL || "http://localhost:5003";
+}
 if (!process.env.JWT_SECRET) {
   console.error(
     "\u274C [FATAL] JWT_SECRET environment variable is not set. Refusing to start."
@@ -40536,12 +40381,12 @@ if (!isDev) {
   );
 }
 var allowedOrigins = process.env.NODE_ENV === "production" ? (process.env.CORS_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean) : [
-  "http://localhost:5003",
+  "http://localhost:5004",
   "http://localhost:3000",
   "http://localhost:8080",
   "http://localhost:5173",
   // Vite dev server default port
-  "http://10.0.0.93:5003"
+  "http://10.0.0.93:5004"
   // Local network access
 ];
 app.use(
@@ -40621,7 +40466,7 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-  const port = parseInt(process.env.PORT || "5003", 10);
+  const port = parseInt(process.env.MUSIC_PORT || process.env.PORT || "5004", 10);
   server.listen(
     {
       port,

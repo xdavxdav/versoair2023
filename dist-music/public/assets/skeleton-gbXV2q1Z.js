@@ -1,1 +1,0 @@
-import{j as n,b5 as o}from"./music-BTWdv2pC.js";function m({className:e,...s}){return n.jsxDEV("div",{className:o("animate-pulse rounded-md bg-muted",e),...s},void 0,!1,{fileName:"/Users/joe/Downloads/FSA/client/src/components/ui/skeleton.tsx",lineNumber:8,columnNumber:5},this)}export{m as S};

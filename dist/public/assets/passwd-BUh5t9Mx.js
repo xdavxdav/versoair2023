@@ -1,0 +1,1 @@
+const t=[];function a(o){return t.filter(e=>e.role===o)}function n(o){const e=o.toLowerCase();return t.filter(s=>s.username.toLowerCase().includes(e)||s.email.toLowerCase().includes(e)||s.businessName.toLowerCase().includes(e)||s.firstName.toLowerCase().includes(e)||s.lastName.toLowerCase().includes(e)||s.description.toLowerCase().includes(e))}export{t as C,a as g,n as s};

@@ -215,7 +215,7 @@ router.post("/subscribe", async (req: Request, res: Response) => {
  */
 router.get("/my", async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res
         .status(401)
@@ -259,7 +259,8 @@ router.get("/my", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId, frequency, filters, isActive } = req.body;
+    const userId = req.user?.userId;
+    const { frequency, filters, isActive } = req.body;
 
     if (!userId) {
       return res
@@ -274,7 +275,7 @@ router.put("/:id", async (req: Request, res: Response) => {
       .where(
         and(
           eq(emailSubscriptions.id, id),
-          eq(emailSubscriptions.userId, userId),
+          eq(emailSubscriptions.userId, Number(userId)),
         ),
       );
 
@@ -286,7 +287,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     // Validate frequency against tier if changing
     if (frequency) {
-      const tier = await getUserTier(userId);
+      const tier = await getUserTier(Number(userId));
       const allowedFrequencies =
         TIER_FREQUENCIES[tier] || TIER_FREQUENCIES.free;
       if (!allowedFrequencies.includes(frequency as Frequency)) {
@@ -328,7 +329,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.userId || req.body.userId || req.query.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res

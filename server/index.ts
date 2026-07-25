@@ -62,6 +62,14 @@ import { globalAuthGate } from "./middleware/auth";
 
 const app = express();
 
+process.on("unhandledRejection", (reason) => {
+  serverLog.error("Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  serverLog.error("Uncaught exception:", error);
+});
+
 // ─── Security headers (helmet) ────────────────────────────────────────────────
 const isDev = process.env.NODE_ENV !== "production";
 

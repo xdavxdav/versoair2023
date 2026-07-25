@@ -76,6 +76,38 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    // ── Protected account: joel_007 must never be deletable ──
+    // Enforced at the DATABASE level via a trigger so it can't be bypassed
+    // by any code path (admin panel, raw SQL executor, ORM, cascades, etc.).
+    try {
+      await client.query(`
+        CREATE OR REPLACE FUNCTION protect_joel_007()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          IF OLD.username = 'joel_007' OR OLD.gate_username = 'joel_007' THEN
+            RAISE EXCEPTION 'The joel_007 account cannot be deleted';
+          END IF;
+          RETURN OLD;
+        END;
+        $$ LANGUAGE plpgsql;
+      `);
+      await client.query(`
+        DROP TRIGGER IF EXISTS trg_protect_joel_007 ON users;
+      `);
+      await client.query(`
+        CREATE TRIGGER trg_protect_joel_007
+        BEFORE DELETE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION protect_joel_007();
+      `);
+      console.log("🔒 [MIGRATE] joel_007 deletion protection trigger active");
+    } catch (err: any) {
+      console.error(
+        "  ❌ Failed to install joel_007 protection trigger:",
+        err.message,
+      );
+    }
+
     const duration = Date.now() - startTime;
     console.log(
       `🏗️  [MIGRATE] Done in ${duration}ms — ${created} created, ${existed} already existed, ${failed} failed`,

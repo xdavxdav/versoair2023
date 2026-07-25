@@ -423,7 +423,9 @@ export default function TrackDetailPage() {
                     {timeAgo(c.created_at)}
                   </span>
                 </div>
-                <p className="text-gray-300 text-sm">{c.content}</p>
+                <p className="text-gray-300 text-sm break-words whitespace-pre-wrap">
+                  {c.content}
+                </p>
               </div>
             </motion.div>
           ))}

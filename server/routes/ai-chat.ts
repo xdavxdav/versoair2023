@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { chat, groundedChat } from "../services/ai-service";
 import { optionalAuth } from "../middleware/auth";
+import { aiLimiter } from "../middleware/rate-limiter";
 import {
   getConnectorStatuses,
   runAllConnectors,
@@ -21,6 +22,8 @@ const router = Router();
 
 // Apply optional auth to all AI routes — attaches user if logged in
 router.use(optionalAuth);
+// Apply rate limiting to all AI routes to prevent abuse and cost runaway
+router.use(aiLimiter);
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const chatSchema = z.object({

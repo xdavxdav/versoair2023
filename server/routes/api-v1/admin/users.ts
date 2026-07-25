@@ -528,6 +528,20 @@ router.delete(
       });
     }
 
+    if (
+      user[0].username === "joel_007" ||
+      (user[0] as any).gateUsername === "joel_007"
+    ) {
+      return res.status(403).json({
+        success: false,
+        status: 403,
+        error: {
+          code: "FORBIDDEN",
+          message: "The joel_007 account cannot be deleted",
+        },
+      });
+    }
+
     await db.delete(users).where(eq(users.id, userId));
 
     // Audit log (skip if fails)

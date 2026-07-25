@@ -319,68 +319,60 @@ export default function FaqPage() {
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim() || !selectedTopic) return;
+    if (!faqUser) {
+      alert("Please sign in to reply.");
+      return;
+    }
 
     try {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("authToken");
       const res = await fetch(`/api/faq/${selectedTopic.id}/reply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
         body: JSON.stringify({
-          authorId: faqUser?.id ? parseInt(faqUser.id) : 1,
           content: replyContent,
           parentCommentId: replyingTo,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        // Refresh topic
         fetchTopicDetail(selectedTopic.id);
         setReplyContent("");
         setReplyingTo(null);
         return;
       }
+      // Show server error to user
+      alert(data.error || "Failed to post reply. Please try again.");
     } catch {
-      // fallback
+      alert("Network error. Please check your connection and try again.");
     }
-    // Mock: add reply locally
-    const newReply: FaqReply = {
-      id: Date.now(),
-      content: replyContent,
-      authorId: 1,
-      likeCount: 0,
-      replyCount: 0,
-      createdAt: new Date().toISOString(),
-      parentCommentId: replyingTo,
-      author: { displayName: "You", verifiedBadge: false },
-      replies: [],
-    };
-    setSelectedTopic((prev) =>
-      prev
-        ? {
-            ...prev,
-            replies: replyingTo
-              ? prev.replies.map((r) =>
-                  r.id === replyingTo
-                    ? { ...r, replies: [...(r.replies || []), newReply] }
-                    : r,
-                )
-              : [...prev.replies, newReply],
-            totalReplies: prev.totalReplies + 1,
-          }
-        : prev,
-    );
-    setReplyContent("");
-    setReplyingTo(null);
   };
 
   const handleCreateTopic = async () => {
     if (!newTitle.trim() || !newContent.trim()) return;
+    if (!faqUser) {
+      alert("Please sign in to create a topic.");
+      return;
+    }
 
     try {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("authToken");
       const res = await fetch("/api/faq", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
         body: JSON.stringify({
-          authorId: faqUser?.id ? parseInt(faqUser.id) : 1,
           title: newTitle,
           content: newContent,
           faqCategory: newCategory,
@@ -395,27 +387,11 @@ export default function FaqPage() {
         fetchPosts();
         return;
       }
+      // Show server error
+      alert(data.error || "Failed to create topic. Please try again.");
     } catch {
-      // fallback
+      alert("Network error. Please check your connection and try again.");
     }
-    // Mock: add locally
-    const mockNew: FaqPost = {
-      id: Date.now(),
-      title: newTitle,
-      content: newContent,
-      faqCategory: newCategory,
-      authorId: 1,
-      commentCount: 0,
-      viewCount: 0,
-      isResolved: false,
-      createdAt: new Date().toISOString(),
-      author: { displayName: "You", verifiedBadge: false },
-    };
-    setPosts((prev) => [mockNew, ...prev]);
-    setIsCreateOpen(false);
-    setNewTitle("");
-    setNewContent("");
-    setNewCategory("general");
   };
 
   // ═══════════════════════════════════════════════════════
@@ -538,7 +514,7 @@ export default function FaqPage() {
                           {timeAgo(reply.createdAt)}
                         </span>
                       </div>
-                      <p className="text-slate-300 text-sm leading-relaxed">
+                      <p className="text-slate-300 text-sm leading-relaxed break-words whitespace-pre-wrap">
                         {reply.content}
                       </p>
                       <div className="flex items-center gap-3 mt-2">
@@ -565,7 +541,7 @@ export default function FaqPage() {
 
                   {/* Nested Replies */}
                   {reply.replies && reply.replies.length > 0 && (
-                    <div className="ml-11 mt-3 space-y-2 border-l-2 border-white/5 pl-4">
+                    <div className="ml-6 sm:ml-11 mt-3 space-y-2 border-l-2 border-white/5 pl-3 sm:pl-4">
                       {reply.replies.map((nested) => (
                         <div key={nested.id} className="py-2">
                           <div className="flex items-start gap-2">
@@ -581,7 +557,7 @@ export default function FaqPage() {
                                   {timeAgo(nested.createdAt)}
                                 </span>
                               </div>
-                              <p className="text-slate-300 text-xs leading-relaxed">
+                              <p className="text-slate-300 text-xs leading-relaxed break-words whitespace-pre-wrap">
                                 {nested.content}
                               </p>
                               <button className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-cyan-400 transition-colors mt-1">
@@ -602,9 +578,9 @@ export default function FaqPage() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="ml-11 mt-3"
+                        className="ml-6 sm:ml-11 mt-3"
                       >
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={replyContent}
@@ -618,7 +594,7 @@ export default function FaqPage() {
                           <button
                             onClick={handleSubmitReply}
                             disabled={!replyContent.trim()}
-                            className="px-3 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
+                            className="w-full sm:w-auto px-3 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
                           >
                             <Send className="w-4 h-4" />
                           </button>
@@ -643,7 +619,7 @@ export default function FaqPage() {
           {/* Main Reply Box */}
           {!replyingTo && (
             <div className="sticky bottom-4 bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-xl p-4">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={replyContent}
@@ -655,7 +631,7 @@ export default function FaqPage() {
                 <button
                   onClick={handleSubmitReply}
                   disabled={!replyContent.trim()}
-                  className="px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-lg transition-all font-medium flex items-center gap-2"
+                  className="w-full sm:w-auto px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2"
                 >
                   <Send className="w-4 h-4" />
                   Reply

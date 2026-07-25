@@ -298,11 +298,11 @@ router.post("/issue", async (req: Request, res: Response) => {
  */
 router.get("/my-cards", async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res
-        .status(400)
-        .json({ success: false, error: "userId query param required" });
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     const result = await pool.query(
@@ -336,7 +336,13 @@ router.get("/:cardId/details", async (req: Request, res: Response) => {
 
   try {
     const { cardId } = req.params;
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
 
     // Verify ownership
     const cardResult = await pool.query(
@@ -393,7 +399,14 @@ router.post("/:cardId/freeze", async (req: Request, res: Response) => {
 
   try {
     const { cardId } = req.params;
-    const { userId, freeze } = req.body;
+    const userId = req.user?.userId;
+    const { freeze } = req.body;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
 
     const cardResult = await pool.query(
       `SELECT * FROM issued_cards WHERE id = $1 AND user_id = $2`,
@@ -435,7 +448,13 @@ router.post("/:cardId/cancel", async (req: Request, res: Response) => {
 
   try {
     const { cardId } = req.params;
-    const { userId } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
 
     const cardResult = await pool.query(
       `SELECT * FROM issued_cards WHERE id = $1 AND user_id = $2`,
@@ -477,9 +496,9 @@ router.post("/:cardId/cancel", async (req: Request, res: Response) => {
  */
 router.get("/points/balance", async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
-      return res.status(400).json({ success: false, error: "userId required" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
     // Get user tier
@@ -567,14 +586,14 @@ function getNextTierMultiplier(
  */
 router.get("/points/history", async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const type = req.query.type as string; // filter by type
     const offset = (page - 1) * limit;
 
     if (!userId) {
-      return res.status(400).json({ success: false, error: "userId required" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
     let whereClause = "WHERE pl.user_id = $1";

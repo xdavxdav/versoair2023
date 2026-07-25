@@ -503,7 +503,7 @@ function ThreadModal({
                         {timeAgo(comment.created_at)}
                       </span>
                     </div>
-                    <p className="text-gray-300 text-sm mt-1 whitespace-pre-wrap">
+                    <p className="text-gray-300 text-sm mt-1 whitespace-pre-wrap break-words">
                       {comment.content}
                     </p>
 
@@ -527,7 +527,7 @@ function ThreadModal({
 
                     {/* Reply input */}
                     {replyingTo === comment.id && user && (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex flex-col sm:flex-row gap-2">
                         <Input
                           value={replyContent}
                           onChange={(e) => setReplyContent(e.target.value)}
@@ -544,7 +544,7 @@ function ThreadModal({
                             })
                           }
                           disabled={!replyContent.trim()}
-                          className="bg-purple-600 hover:bg-purple-700"
+                          className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700"
                         >
                           <Send className="w-3 h-3" />
                         </Button>
@@ -573,7 +573,7 @@ function ThreadModal({
                                   {timeAgo(reply.created_at)}
                                 </span>
                               </div>
-                              <p className="text-gray-400 text-xs mt-0.5">
+                              <p className="text-gray-400 text-xs mt-0.5 break-words whitespace-pre-wrap">
                                 {reply.content}
                               </p>
                             </div>

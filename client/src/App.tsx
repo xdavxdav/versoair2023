@@ -23,7 +23,11 @@ import QuickSignIn from "@/components/QuickSignIn";
 // ─────────────────────────────────────────────────────
 // 🏠 Public Pages (lazy-loaded — only fetched when navigated to)
 // ─────────────────────────────────────────────────────
-const Home = lazy(() => import("@/pages/home"));
+// Home is loaded eagerly (not lazy) — it's the landing page almost every
+// cold visit hits first, so lazy-loading it just adds an extra network
+// round-trip behind the Suspense fallback, making the initial load feel
+// much longer than it needs to be.
+import Home from "@/pages/home";
 const About = lazy(() => import("@/pages/about"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Demo = lazy(() => import("@/pages/demo"));

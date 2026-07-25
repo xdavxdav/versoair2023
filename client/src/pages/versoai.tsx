@@ -808,7 +808,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20"></div>
         </div>
 
-        <div className="relative max-w-[95vw] mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 bg-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
@@ -915,8 +915,8 @@ export default function Home() {
             </div>
 
             {/* Visualization - Solar System */}
-            <div className="relative lg:flex justify-center">
-              <div className="relative w-full h-[600px] flex items-center justify-center">
+            <div className="relative lg:flex justify-center min-w-0">
+              <div className="relative w-full h-[420px] sm:h-[520px] md:h-[600px] flex items-center justify-center min-w-0 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
 
                 {/* Solar System Container */}
@@ -927,8 +927,8 @@ export default function Home() {
                     position: "relative",
                     width: "100%",
                     height: "100%",
-                    minWidth: "400px",
-                    minHeight: "400px",
+                    minWidth: "0",
+                    minHeight: "320px",
                     maxWidth: "900px",
                     maxHeight: "900px",
                     margin: "0 auto",
@@ -1161,8 +1161,8 @@ export default function Home() {
                             }
                           }}
                           style={{
-                            width: "4cm",
-                            height: "4cm",
+                            width: "clamp(44px, 12vw, 64px)",
+                            height: "clamp(44px, 12vw, 64px)",
                             position: "absolute",
                             top: "50%",
                             left: "50%",
@@ -1195,7 +1195,8 @@ export default function Home() {
                             padding: "14px 18px",
                             borderRadius: "14px",
                             fontSize: "12px",
-                            width: "220px",
+                            width: "clamp(160px, 48vw, 220px)",
+                            maxWidth: "calc(100vw - 2rem)",
                             transition: "all 0.3s ease",
                             boxShadow:
                               "0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)",
@@ -1572,7 +1573,7 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950"></div>
-        <div className="relative max-w-[95vw] mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-6">
               Enterprise-Grade Features
@@ -1615,7 +1616,7 @@ export default function Home() {
       {/* Industries Section */}
       <section id="industries" className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/30 to-slate-950/50"></div>
-        <div className="relative max-w-[95vw] mx-auto px-6">
+        <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-6">
               Serving All Major Industries
@@ -1674,7 +1675,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-blue-500/20 pt-12 pb-8 relative">
-        <div className="max-w-[95vw] mx-auto px-6">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-6">
@@ -1976,7 +1977,14 @@ export default function Home() {
         }
 
         /* Responsive adjustments */
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
+          .solar-system {
+            min-width: 0 !important;
+            min-height: 300px !important;
+            max-width: 100% !important;
+            overflow: hidden;
+          }
+
           .planet-info {
             width: 160px;
             padding: 12px 14px;
