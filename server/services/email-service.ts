@@ -31,7 +31,7 @@ let smtpCache: any = null;
 let cacheExpires = 0;
 
 /**
- * Load SMTP config from database (with caching)
+ * Load SMTP config from database (with caching and timeout)
  */
 async function loadSmtpConfigFromDb() {
   const now = Date.now();
@@ -40,11 +40,17 @@ async function loadSmtpConfigFromDb() {
   }
 
   try {
-    const result = await db
-      .select()
-      .from(systemSettings)
-      .where(eq(systemSettings.key, "smtp_config"))
-      .limit(1);
+    // Add 5 second timeout to prevent server startup hangs
+    const result = (await Promise.race([
+      db
+        .select()
+        .from(systemSettings)
+        .where(eq(systemSettings.key, "smtp_config"))
+        .limit(1),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("DB query timeout")), 5000),
+      ),
+    ])) as any[];
 
     if (result[0]?.value) {
       smtpCache = result[0].value;
