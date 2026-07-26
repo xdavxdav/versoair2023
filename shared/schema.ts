@@ -69,6 +69,10 @@ export const users = pgTable("users", {
   passwordResetToken: text("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
 
+  // Security — forces the "set a new password" screen on next login
+  // (used for seeded/admin-created accounts with a shared temporary password)
+  mustChangePassword: boolean("must_change_password").default(false),
+
   // Email verification
   verifiedAt: timestamp("verified_at"),
 
@@ -3328,3 +3332,18 @@ export const videoLicenses = pgTable(
 
 export const insertVideoLicenseSchema = createInsertSchema(videoLicenses);
 export type VideoLicense = typeof videoLicenses.$inferSelect;
+
+// ─── System Configuration (SMTP, etc.) ──────────────────────────────────────
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(), // 'smtp_config'
+  value: jsonb("value"), // encrypted in DB, decrypted at fetch
+  encryptedAt: timestamp("encrypted_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: integer("updated_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+});
+
+export const insertSystemSettingsSchema = createInsertSchema(systemSettings);
+export type SystemSettings = typeof systemSettings.$inferSelect;

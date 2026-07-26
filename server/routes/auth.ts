@@ -16,6 +16,7 @@ import {
 import {
   sendPasswordResetEmail,
   sendVerificationEmail,
+  sendEmail,
 } from "../services/email-service";
 import { computeUserCapabilities } from "./capabilities";
 import { generateArtistCode } from "../utils/artist-code";
@@ -262,6 +263,72 @@ function isSuperadmin(email: string): boolean {
   return email.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
 }
 
+// ─── Login OTP (2FA for staff accounts) ───────────────────────────────────────
+// Required for admin/moderator roles. Superadmin (superuser) is exempt — it's
+// the owner's own recovery account and must never be lockable out via email.
+const OTP_REQUIRED_ROLES = ["admin", "moderator"];
+const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+function generateOtpCode(): string {
+  return String(crypto.randomInt(100000, 1000000)); // 6 digits, no leading-zero ambiguity
+}
+
+/**
+ * Finish a successful authentication: issue the real session JWT, cookie,
+ * session record, and the standard login response payload. Shared by the
+ * normal password login path and the post-OTP-verification path.
+ */
+async function finishLogin(
+  user: any,
+  effectiveLoginRole: string,
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const token = jwt.sign(
+    {
+      userId: String(user.id),
+      email: user.email,
+      role: effectiveLoginRole,
+      subscriptionTier: user.subscription_tier || "free",
+    },
+    getJwtSecret(),
+    { expiresIn: JWT_EXPIRES_IN },
+  );
+
+  setAuthCookie(res, token);
+  await createSession(user.id, token, req, { revokeOthers: true });
+
+  let capabilities: any = null;
+  try {
+    capabilities = await computeUserCapabilities(user.id);
+  } catch (e) {
+    console.warn("[AUTH] Could not compute capabilities on login:", e);
+  }
+
+  const displayName = user.display_name || null;
+
+  res.json({
+    success: true,
+    token,
+    needsDisplayName: !displayName,
+    needsPasswordChange: !!user.must_change_password,
+    user: {
+      id: String(user.id),
+      email: user.email,
+      name: displayName || user.username || null,
+      username: user.username || null,
+      role: effectiveLoginRole,
+      subscriptionTier: user.subscription_tier || "free",
+      subscriptionStatus: user.subscription_status || "active",
+      trialTier: user.trial_tier || null,
+      trialExpiresAt: user.trial_expires_at || null,
+      portals: capabilities?.portals || ["general"],
+      hasArtistProfile: capabilities?.hasArtistProfile || false,
+      isContractor: capabilities?.isContractor || false,
+    },
+  });
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
@@ -384,7 +451,7 @@ router.post(
     // Bypass Drizzle type issues with parameterized raw SQL query
     const result = await db.execute(
       sql`SELECT id, username, email, password, role, is_verified, display_name,
-                 failed_login_attempts, locked_until,
+                 failed_login_attempts, locked_until, must_change_password,
                  subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
           FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
     );
@@ -483,49 +550,121 @@ router.post(
       }
     }
 
-    const token = jwt.sign(
-      {
-        userId: String(user.id),
+    // Staff 2FA gate — admin/moderator must verify a one-time email code
+    // before a session is issued. Superuser (superadmin) is exempt — it's
+    // the owner's own recovery account and must never be lockable via email.
+    if (OTP_REQUIRED_ROLES.includes(effectiveLoginRole)) {
+      const code = generateOtpCode();
+      const codeHash = await bcrypt.hash(code, 10);
+
+      // Clear any previous pending OTPs for this user, then store the new one
+      await db.execute(
+        sql`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'login_otp'`,
+      );
+      await db.insert(schema.verificationTokens).values({
+        userId: user.id,
+        token: codeHash,
+        type: "login_otp",
+        expiresAt: new Date(Date.now() + OTP_EXPIRY_MS),
+      });
+
+      sendEmail(
+        user.email,
+        "Your Verso Air sign-in code",
+        `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes. If you didn't try to sign in, ignore this email.</p>`,
+      ).catch((e) => console.warn("[AUTH] Failed to send OTP email:", e));
+
+      const otpToken = jwt.sign(
+        { userId: String(user.id), purpose: "login_otp" },
+        getJwtSecret(),
+        { expiresIn: "10m" },
+      );
+
+      res.json({
+        success: true,
+        requiresOtp: true,
+        otpToken,
         email: user.email,
-        role: effectiveLoginRole,
-        subscriptionTier: user.subscription_tier || "free",
-      },
-      getJwtSecret(),
-      { expiresIn: JWT_EXPIRES_IN },
-    );
-
-    setAuthCookie(res, token);
-    await createSession(user.id, token, req, { revokeOthers: true });
-
-    // Compute capabilities for portal access info
-    let capabilities: any = null;
-    try {
-      capabilities = await computeUserCapabilities(user.id);
-    } catch (e) {
-      console.warn("[AUTH] Could not compute capabilities on login:", e);
+      });
+      return;
     }
 
-    const displayName = user.display_name || null;
+    await finishLogin(user, effectiveLoginRole, req, res);
+  }),
+);
 
-    res.json({
-      success: true,
-      token,
-      needsDisplayName: !displayName, // true when the user hasn't set their name yet
-      user: {
-        id: String(user.id),
-        email: user.email,
-        name: displayName || user.username || null,
-        username: user.username || null,
-        role: effectiveLoginRole,
-        subscriptionTier: user.subscription_tier || "free",
-        subscriptionStatus: user.subscription_status || "active",
-        trialTier: user.trial_tier || null,
-        trialExpiresAt: user.trial_expires_at || null,
-        portals: capabilities?.portals || ["general"],
-        hasArtistProfile: capabilities?.hasArtistProfile || false,
-        isContractor: capabilities?.isContractor || false,
-      },
-    });
+/**
+ * POST /auth/verify-login-otp
+ * Completes login for staff accounts (admin/moderator) after they submit
+ * the 6-digit code emailed to them by /auth/login.
+ */
+router.post(
+  "/verify-login-otp",
+  loginLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { otpToken, code } = req.body || {};
+    if (!otpToken || !code) {
+      res
+        .status(400)
+        .json({ success: false, message: "Missing code or token" });
+      return;
+    }
+
+    let payload: any;
+    try {
+      payload = jwt.verify(otpToken, getJwtSecret());
+    } catch {
+      res.status(401).json({
+        success: false,
+        message: "Verification session expired. Please sign in again.",
+      });
+      return;
+    }
+    if (payload.purpose !== "login_otp" || !payload.userId) {
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    const userId = parseInt(payload.userId, 10);
+
+    const tokenRows = await db.execute(
+      sql`SELECT id, token, expires_at FROM verification_tokens
+          WHERE user_id = ${userId} AND type = 'login_otp'
+          ORDER BY id DESC LIMIT 1`,
+    );
+    const tokenRecord = tokenRows.rows?.[0] as any;
+
+    if (!tokenRecord || new Date(tokenRecord.expires_at) < new Date()) {
+      res.status(401).json({
+        success: false,
+        message: "Code expired. Please sign in again to get a new one.",
+      });
+      return;
+    }
+
+    const codeValid = await bcrypt.compare(String(code), tokenRecord.token);
+    if (!codeValid) {
+      res.status(401).json({ success: false, message: "Incorrect code" });
+      return;
+    }
+
+    // One-time use — delete immediately
+    await db.execute(
+      sql`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`,
+    );
+
+    const result = await db.execute(
+      sql`SELECT id, username, email, role, is_verified, display_name, must_change_password,
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
+          FROM users WHERE id = ${userId} LIMIT 1`,
+    );
+    const user = result.rows?.[0] as any;
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    await finishLogin(user, user.role || "user", req, res);
   }),
 );
 
@@ -1592,7 +1731,7 @@ router.post(
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db
       .update(schema.users)
-      .set({ password: hashed })
+      .set({ password: hashed, mustChangePassword: false })
       .where(eq(schema.users.id, userId));
 
     // Revoke ALL sessions on password change (security best practice)

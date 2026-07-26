@@ -781,4 +781,146 @@ router.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   }
 });
 
+// ========== SYSTEM SETTINGS (SMTP CONFIG) ==========
+
+// Get SMTP configuration
+router.get(
+  "/settings/smtp",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const setting = await db
+      .select()
+      .from(schema.systemSettings)
+      .where(eq(schema.systemSettings.key, "smtp_config"))
+      .limit(1);
+
+    const smtpConfig = setting[0]?.value || {
+      host: "",
+      port: 587,
+      user: "",
+      pass: "",
+      from: "",
+      secure: false,
+    };
+
+    res.json({
+      success: true,
+      config: smtpConfig,
+      hasConfig: !!setting[0],
+    });
+  }),
+);
+
+// Update SMTP configuration (superuser/admin only)
+router.post(
+  "/settings/smtp",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const { host, port, user, pass, from, secure } = req.body;
+
+    if (!host || !user || !pass || !from) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Missing required SMTP fields: host, user, pass, from are required",
+      });
+    }
+
+    const existing = await db
+      .select()
+      .from(schema.systemSettings)
+      .where(eq(schema.systemSettings.key, "smtp_config"))
+      .limit(1);
+
+    const configData = {
+      host,
+      port: parseInt(String(port)) || 587,
+      user,
+      pass,
+      from,
+      secure: Boolean(secure),
+    };
+
+    if (existing[0]) {
+      await db
+        .update(schema.systemSettings)
+        .set({
+          value: configData,
+          updatedAt: new Date(),
+          updatedBy: (req as any).user?.id,
+        })
+        .where(eq(schema.systemSettings.key, "smtp_config"));
+    } else {
+      await db.insert(schema.systemSettings).values({
+        key: "smtp_config",
+        value: configData,
+        updatedBy: (req as any).user?.id,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "SMTP configuration updated",
+      config: configData,
+    });
+  }),
+);
+
+// Test SMTP configuration
+router.post(
+  "/settings/smtp/test",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const { host, port, user, pass, from } = req.body;
+
+    if (!host || !user || !pass || !from) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Missing required SMTP fields: host, user, pass, from are required",
+      });
+    }
+
+    try {
+      const nodemailer = require("nodemailer");
+      const transporter = nodemailer.createTransport({
+        host,
+        port: parseInt(String(port)) || 587,
+        secure: Boolean(req.body.secure),
+        auth: {
+          user,
+          pass,
+        },
+      });
+
+      // Test connection
+      await transporter.verify();
+
+      // Send test email
+      await transporter.sendMail({
+        from,
+        to: (req as any).user?.email || from,
+        subject: "SMTP Configuration Test - Verso Air",
+        html: `
+          <h2>SMTP Configuration Successful</h2>
+          <p>Your SMTP settings are working correctly.</p>
+          <p style="color: #666; font-size: 12px;">
+            Timestamp: ${new Date().toISOString()}
+          </p>
+        `,
+      });
+
+      res.json({
+        success: true,
+        message: "SMTP test successful! Configuration is working correctly.",
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: `SMTP test failed: ${error.message}`,
+      });
+    }
+  }),
+);
+
 export default router;

@@ -24,8 +24,13 @@ COPY client/ ./client/
 COPY server/ ./server/
 COPY shared/ ./shared/
 
-# Build application
-RUN npm run build
+# Build application - make sure dist/index.js gets created
+RUN npm run build && \
+    if [ ! -f dist/index.js ]; then \
+      echo "❌ ERROR: dist/index.js not created after build"; \
+      exit 1; \
+    fi && \
+    ls -lh dist/index.js && echo "✅ Build successful"
 
 # Stage 2: Production
 FROM node:18-alpine AS production

@@ -5,7 +5,8 @@ dotenv.config();
 // On Render: set MUSIC_APP_URL=https://your-music-service.onrender.com in dashboard
 // Locally defaults to localhost:5004
 if (!process.env.SIBLING_URL) {
-  process.env.SIBLING_URL = process.env.MUSIC_APP_URL || "http://localhost:5004";
+  process.env.SIBLING_URL =
+    process.env.MUSIC_APP_URL || "http://localhost:5004";
 }
 
 // ─── Startup security checks (must run before anything else) ──────────────────
@@ -14,17 +15,23 @@ const isProd = process.env.NODE_ENV === "production";
 const requiredEnvVars = ["JWT_SECRET", "SESSION_SECRET", "DATABASE_URL"];
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
-    console.error(`[FATAL] ${key} environment variable is not set. Refusing to start.`);
+    console.error(
+      `[FATAL] ${key} environment variable is not set. Refusing to start.`,
+    );
     process.exit(1);
   }
 }
 
 if (isProd && process.env.JWT_SECRET!.includes("dev_secret")) {
-  console.error("[FATAL] Default dev JWT_SECRET detected in production. Refusing to start.");
+  console.error(
+    "[FATAL] Default dev JWT_SECRET detected in production. Refusing to start.",
+  );
   process.exit(1);
 }
 if (isProd && process.env.JWT_SECRET!.length < 32) {
-  console.error("[FATAL] JWT_SECRET is too short. Must be at least 32 characters.");
+  console.error(
+    "[FATAL] JWT_SECRET is too short. Must be at least 32 characters.",
+  );
   process.exit(1);
 }
 if (isProd && !process.env.CORS_ORIGIN) {
@@ -203,7 +210,7 @@ app.use((req, res, next) => {
   serverLog.info("Starting server initialization...");
 
   // Initialize email transporter for notifications
-  initializeEmailTransporter();
+  await initializeEmailTransporter();
   serverLog.info("Email service initialized");
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)

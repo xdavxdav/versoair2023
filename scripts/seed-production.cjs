@@ -16,6 +16,7 @@
 
 const pg = require("pg");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -28,7 +29,14 @@ const pool = new pg.Pool({
 // ════════════════════════════════════════════════════════════════════════════
 // 1. TEST USERS
 // ════════════════════════════════════════════════════════════════════════════
-const PASSWORD = "JoeyD000";
+// Random per run — never hardcoded/committed. The account is forced to set
+// its own permanent password on first login (must_change_password below),
+// so this value is only ever usable once.
+const PASSWORD =
+  process.env.SEED_SUPERADMIN_PASSWORD ||
+  crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
+    "!" +
+    Math.floor(Math.random() * 90 + 10);
 
 const TEST_USERS = [
   {
@@ -455,6 +463,7 @@ const PAYMENT_CARD_TYPES = [
     const hasTier = cols.includes("subscription_tier");
     const hasStatus = cols.includes("subscription_status");
     const hasGateUsername = cols.includes("gate_username");
+    const hasMustChangePassword = cols.includes("must_change_password");
 
     // ════════════════════════════════════════════════════════════════════
     // SEED 1: SUPERADMIN USER
@@ -488,11 +497,20 @@ const PAYMENT_CARD_TYPES = [
           insertVals += `, $${idx++}`;
           params.push(u.gateUsername);
         }
+        if (hasMustChangePassword) {
+          insertCols += ", must_change_password";
+          insertVals += `, $${idx++}`;
+          params.push(true);
+        }
 
+        // NOTE: password/role are intentionally NOT in the ON CONFLICT
+        // update — this script runs on every deploy (render.yaml build
+        // step), and must never clobber a password the account owner
+        // has already changed. Only a brand-new row gets the seed value.
         const result = await pool.query(
           `INSERT INTO users (${insertCols}) VALUES (${insertVals})
            ON CONFLICT (email) DO UPDATE SET
-             password = EXCLUDED.password, role = EXCLUDED.role
+             email = EXCLUDED.email
              ${hasTier ? ", subscription_tier = EXCLUDED.subscription_tier" : ""}
              ${hasStatus ? ", subscription_status = EXCLUDED.subscription_status" : ""}
              ${hasVerified ? ", is_verified = EXCLUDED.is_verified" : ""}
@@ -656,7 +674,9 @@ const PAYMENT_CARD_TYPES = [
   ℹ️  All business data (listings, artists, jobs, properties,
      reviews, etc.) will be populated by real users.
 `);
-    console.log("📋 SUPERADMIN CREDENTIALS:");
+    console.log(
+      "📋 SUPERADMIN CREDENTIALS (first run only — forced to change on login):",
+    );
     console.log(`   Password: ${PASSWORD}`);
     console.log("─".repeat(60));
     for (const u of TEST_USERS) {

@@ -1,6 +1,7 @@
 import nodemailer, { Transporter } from "nodemailer";
 import { db } from "../db";
-import { auditLogs } from "@shared/schema";
+import { auditLogs, systemSettings } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Resolves the public-facing application URL, safe to embed in emails.
@@ -26,19 +27,58 @@ function getAppUrl(): string {
  */
 
 let transporter: Transporter | null = null;
+let smtpCache: any = null;
+let cacheExpires = 0;
+
+/**
+ * Load SMTP config from database (with caching)
+ */
+async function loadSmtpConfigFromDb() {
+  const now = Date.now();
+  if (smtpCache && cacheExpires > now) {
+    return smtpCache;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(systemSettings)
+      .where(eq(systemSettings.key, "smtp_config"))
+      .limit(1);
+
+    if (result[0]?.value) {
+      smtpCache = result[0].value;
+      cacheExpires = now + 5 * 60 * 1000; // Cache for 5 minutes
+      return smtpCache;
+    }
+  } catch (e) {
+    console.warn(
+      "[EMAIL] Failed to load SMTP config from DB:",
+      (e as Error).message,
+    );
+  }
+
+  return null;
+}
 
 /**
  * Initialize the email transporter with SMTP configuration
- * Uses environment variables: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+ * First tries to load from database, then falls back to environment variables
  */
-export function initializeEmailTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || "noreply@versoair.com";
+export async function initializeEmailTransporter() {
+  // Try to load from database first
+  const dbConfig = await loadSmtpConfigFromDb();
 
-  if (!user || !pass) {
+  const config = dbConfig || {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.SMTP_FROM || "noreply@versoair.com",
+    secure: (process.env.SMTP_SECURE || "false").toLowerCase() === "true",
+  };
+
+  if (!config.user || !config.pass) {
     console.warn(
       "[EMAIL] SMTP credentials not configured. Email notifications disabled.",
     );
@@ -46,16 +86,16 @@ export function initializeEmailTransporter() {
   }
 
   transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465, // true for 465, false for other ports
+    host: config.host,
+    port: parseInt(String(config.port)) || 587,
+    secure: config.secure || parseInt(String(config.port)) === 465,
     auth: {
-      user,
-      pass,
+      user: config.user,
+      pass: config.pass,
     },
-    from,
   });
 
+  const from = config.from || "noreply@versoair.com";
   console.log(`[EMAIL] Transporter initialized. Sending from: ${from}`);
   return transporter;
 }

@@ -113,6 +113,18 @@ export default function SignIn() {
   const [onboardingError, setOnboardingError] = useState("");
   const [pendingLoginData, setPendingLoginData] = useState<any>(null);
 
+  // Forced password change (accounts on a temporary/shared password)
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [passwordChangeSaving, setPasswordChangeSaving] = useState(false);
+  const [passwordChangeError, setPasswordChangeError] = useState("");
+
+  // Staff 2FA (admin/moderator) — one-time email code after password check
+  const [otpToken, setOtpToken] = useState("");
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpResending, setOtpResending] = useState(false);
+
   // Celebration countdown for post-verification auto-login
   const [countdown, setCountdown] = useState(5);
 
@@ -234,7 +246,29 @@ export default function SignIn() {
         return;
       }
 
+      // Staff 2FA — password was correct, code was emailed
+      if (data.requiresOtp) {
+        setOtpToken(data.otpToken);
+        setMfaCode(["", "", "", "", "", ""]);
+        setOtpError("");
+        setStep("login-otp");
+        return;
+      }
+
       if (data.success && data.token && data.user) {
+        // Forced password change takes priority (temporary/shared password)
+        if (data.needsPasswordChange) {
+          authLogin(data.token, {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.role,
+          });
+          setPendingLoginData(data);
+          setStep("change-password");
+          return;
+        }
+
         // If user hasn't set their display name yet, show onboarding prompt
         if (data.needsDisplayName) {
           // Store token so the set-display-name call is authenticated
@@ -970,6 +1004,349 @@ export default function SignIn() {
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
                 🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
                 identity, your way
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Forced Password Change (accounts on a temporary/shared password) ────
+  if (step === "change-password") {
+    const navigateAfterPasswordChange = () => {
+      const role = (pendingLoginData?.user?.role || "user").toLowerCase();
+      const portals = pendingLoginData?.user?.portals || [];
+      if (role === "superuser") {
+        navigate("/dashboard?from=sv");
+      } else if (role === "admin" || role === "moderator") {
+        navigate("/geo-admin/dashboard");
+      } else if (role === "tsr") {
+        navigate("/geo-admin/dashboard");
+      } else if (role === "artist" || portals.includes("artist")) {
+        navigate("/artist-portal/dashboard");
+      } else if (portals.includes("contractor")) {
+        navigate("/contracts");
+      } else if (portals.includes("community")) {
+        navigate("/blog");
+      } else {
+        navigate("/dashboard");
+      }
+    };
+
+    const handleChangePassword = async () => {
+      setPasswordChangeError("");
+      if (newPasswordValue.length < 8) {
+        setPasswordChangeError("New password must be at least 8 characters");
+        return;
+      }
+      if (newPasswordValue !== newPasswordConfirm) {
+        setPasswordChangeError("Passwords do not match");
+        return;
+      }
+      if (newPasswordValue === formData.password) {
+        setPasswordChangeError(
+          "Please choose a password different from the temporary one",
+        );
+        return;
+      }
+      setPasswordChangeSaving(true);
+      try {
+        const token =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("auth_token");
+        const res = await fetch("/auth/account/change-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            currentPassword: formData.password,
+            newPassword: newPasswordValue,
+          }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast({
+            title: "🔒 Password updated",
+            description: "Your new password is now active.",
+          });
+          localStorage.setItem("signin_timestamp", new Date().toISOString());
+          if (pendingLoginData?.needsDisplayName) {
+            setStep("set-display-name");
+          } else {
+            navigateAfterPasswordChange();
+          }
+        } else {
+          setPasswordChangeError(result.message || "Failed to change password");
+        }
+      } catch {
+        setPasswordChangeError("Something went wrong. Please try again.");
+      } finally {
+        setPasswordChangeSaving(false);
+      }
+    };
+
+    return (
+      <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto">
+            <div className="bg-[#12121f] rounded-2xl border border-white/10 overflow-hidden">
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <Shield className="h-10 w-10 mx-auto mb-3 text-[#bf831c]" />
+                  <h1 className="text-2xl font-bold text-white mb-2">
+                    Set a new password
+                  </h1>
+                  <p className="text-sm text-[#8a8ab0]">
+                    This account is using a temporary password. Choose a new one
+                    to continue — you'll only need to do this once.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-[#8a8ab0] mb-1 block">
+                      New password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPasswordValue}
+                      onChange={(e) => setNewPasswordValue(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-[#5a5a80] focus:outline-none focus:border-[#bf831c]"
+                      placeholder="At least 8 characters"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#8a8ab0] mb-1 block">
+                      Confirm new password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPasswordConfirm}
+                      onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-[#5a5a80] focus:outline-none focus:border-[#bf831c]"
+                      placeholder="Re-enter new password"
+                    />
+                  </div>
+
+                  {passwordChangeError && (
+                    <div className="flex items-center gap-2 text-red-400 text-sm">
+                      <AlertCircle className="h-3.5 w-3.5" />{" "}
+                      {passwordChangeError}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={
+                      passwordChangeSaving ||
+                      newPasswordValue.length < 8 ||
+                      !newPasswordConfirm
+                    }
+                    className="w-full bg-[#bf831c] hover:bg-[#a8721a] text-white"
+                  >
+                    {passwordChangeSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Shield className="h-4 w-4 mr-2" />
+                    )}
+                    {passwordChangeSaving
+                      ? "Updating..."
+                      : "Set password & continue"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
+                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                identity, your way
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Staff 2FA: email one-time code (admin / moderator) ──────────────────
+  if (step === "login-otp") {
+    const handleVerifyOtp = async () => {
+      const code = mfaCode.join("");
+      if (code.length !== 6) {
+        setOtpError("Enter the full 6-digit code");
+        return;
+      }
+      setOtpVerifying(true);
+      setOtpError("");
+      try {
+        const res = await fetch("/auth/verify-login-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ otpToken, code }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          setOtpError(data.message || "Incorrect or expired code");
+          return;
+        }
+
+        if (data.needsPasswordChange) {
+          authLogin(data.token, {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.role,
+          });
+          setPendingLoginData(data);
+          setStep("change-password");
+          return;
+        }
+        if (data.needsDisplayName) {
+          authLogin(data.token, {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.role,
+          });
+          setPendingLoginData(data);
+          setStep("set-display-name");
+          return;
+        }
+
+        authLogin(data.token, {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        });
+        localStorage.setItem("signin_timestamp", new Date().toISOString());
+        toast({
+          title: "✅ Signed in",
+          description: `Welcome back, ${data.user.name || data.user.email}!`,
+        });
+        const role = (data.user.role || "user").toLowerCase();
+        if (role === "admin" || role === "moderator") {
+          navigate("/geo-admin/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      } catch {
+        setOtpError("Something went wrong. Please try again.");
+      } finally {
+        setOtpVerifying(false);
+      }
+    };
+
+    const handleResendOtp = async () => {
+      setOtpResending(true);
+      setOtpError("");
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+        const data = await res.json();
+        if (data.requiresOtp) {
+          setOtpToken(data.otpToken);
+          setMfaCode(["", "", "", "", "", ""]);
+          toast({ title: "📧 New code sent", description: data.email });
+        } else {
+          setOtpError("Couldn't resend — please sign in again");
+        }
+      } catch {
+        setOtpError("Couldn't resend — please sign in again");
+      } finally {
+        setOtpResending(false);
+      }
+    };
+
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Enter Verification Code
+                </h2>
+                <p className="text-gray-600 mt-2">
+                  We've emailed a 6-digit code to
+                  <br />
+                  <span className="font-medium">{formData.email}</span>
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-center space-x-3">
+                    {mfaCode.map((digit, index) => (
+                      <input
+                        key={index}
+                        id={`mfa-${index}`}
+                        type="text"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) =>
+                          handleMfaCodeChange(index, e.target.value)
+                        }
+                        className="w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-[#bf831c]"
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace" && !digit && index > 0) {
+                            const prevInput = document.getElementById(
+                              `mfa-${index - 1}`,
+                            );
+                            prevInput?.focus();
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {otpError && (
+                  <div className="flex items-center justify-center gap-2 text-red-500 text-sm">
+                    <AlertCircle className="h-3.5 w-3.5" /> {otpError}
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={otpVerifying || mfaCode.join("").length !== 6}
+                  className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"
+                >
+                  {otpVerifying ? "Verifying..." : "Verify & Continue"}
+                </Button>
+
+                <div className="text-center space-y-3">
+                  <p className="text-gray-600 text-sm">
+                    Didn't receive the code?{" "}
+                    <button
+                      onClick={handleResendOtp}
+                      disabled={otpResending}
+                      className="text-[#bf831c] hover:underline font-medium"
+                    >
+                      {otpResending ? "Sending..." : "Resend Code"}
+                    </button>
+                  </p>
+                  <button
+                    onClick={() => setStep("login")}
+                    className="text-[#bf831c] hover:underline font-medium"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
               </div>
             </div>
           </div>
