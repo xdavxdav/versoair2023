@@ -361,6 +361,8 @@ export default function AudioPlayer() {
                     <img
                       src={getCover(track)!}
                       alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full rounded object-cover"
                     />
                   ) : (

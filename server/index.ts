@@ -268,12 +268,18 @@ app.use((req, res, next) => {
   // (like /auth/signin, /dashboard, etc.) and serves index.html
   // Explicitly gate on NODE_ENV so bundled production build never tries to
   // resolve the vite dev module (which is excluded from the bundle).
-  if (process.env.NODE_ENV !== "production" && app.get("env") === "development") {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    app.get("env") === "development"
+  ) {
     try {
       const { setupVite } = await import("./vite");
       await setupVite(app, server);
     } catch (err) {
-      serverLog.warn("Vite dev middleware unavailable, falling back to static", { err: (err as Error).message });
+      serverLog.warn(
+        "Vite dev middleware unavailable, falling back to static",
+        { err: (err as Error).message },
+      );
       serveStatic(app);
     }
   } else {
