@@ -5905,220 +5905,9 @@ var init_socket_config = __esm({
   }
 });
 
-// vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path8 from "path";
-import { fileURLToPath } from "url";
-var __dirname, vite_config_default;
-var init_vite_config = __esm({
-  "vite.config.ts"() {
-    "use strict";
-    __dirname = path8.dirname(fileURLToPath(import.meta.url));
-    vite_config_default = defineConfig({
-      plugins: [react()],
-      resolve: {
-        alias: {
-          "@": path8.resolve(__dirname, "client", "src"),
-          "@db": path8.resolve(__dirname, "db"),
-          "@shared": path8.resolve(__dirname, "shared"),
-          "@server": path8.resolve(__dirname, "server")
-        }
-      },
-      root: path8.resolve(__dirname, "client"),
-      build: {
-        outDir: path8.resolve(__dirname, "dist/public"),
-        emptyOutDir: false,
-        // Don't delete dist folder - esbuild needs dist/index.js
-        chunkSizeWarningLimit: 700,
-        rollupOptions: {
-          output: {
-            manualChunks: {
-              // Heavy editor deps
-              "vendor-tiptap": [
-                "@tiptap/react",
-                "@tiptap/starter-kit",
-                "@tiptap/extension-image",
-                "@tiptap/extension-link",
-                "@tiptap/extension-text-align",
-                "@tiptap/extension-color",
-                "@tiptap/extension-text-style"
-              ],
-              // Core UI libs
-              "vendor-ui": [
-                "@radix-ui/react-dialog",
-                "@radix-ui/react-dropdown-menu",
-                "@radix-ui/react-select",
-                "@radix-ui/react-tabs",
-                "@radix-ui/react-tooltip",
-                "@radix-ui/react-popover",
-                "@radix-ui/react-accordion",
-                "@radix-ui/react-alert-dialog"
-              ],
-              // Animation/motion
-              "vendor-motion": ["framer-motion"],
-              // Charts
-              "vendor-charts": ["recharts"],
-              // React core
-              "vendor-react": ["react", "react-dom"],
-              // Data fetching
-              "vendor-query": ["@tanstack/react-query"]
-            }
-          }
-        }
-      },
-      // ✅ SERVER CONFIG - Single port 5003 for frontend + backend
-      server: {
-        port: 5003,
-        host: "0.0.0.0",
-        strictPort: false,
-        open: false,
-        // ✅ HMR connects to port 5003 (no separate dev server)
-        hmr: {
-          host: "10.0.0.93",
-          port: 5003,
-          protocol: "ws",
-          clientPort: 5003
-        },
-        // ✅ Proxy API requests to Express server (same port)
-        proxy: {
-          "/api": {
-            target: "http://localhost:5003",
-            changeOrigin: true,
-            secure: false,
-            rewrite: (path10) => path10
-          }
-        },
-        fs: {
-          strict: true,
-          deny: ["**/.*"]
-        }
-      },
-      // ✅ Fix global variable issues + production API URL override.
-      // In production, force VITE_API_URL to "" so all fetch() calls use relative
-      // paths (same-origin). This prevents stale localhost:5003 URLs being baked
-      // into the bundle when the env var isn't set correctly on Render/Vercel.
-      define: {
-        "process.env": {},
-        global: "window",
-        ...process.env.NODE_ENV === "production" ? { "import.meta.env.VITE_API_URL": JSON.stringify("") } : {}
-      }
-    });
-  }
-});
-
-// server/vite.ts
-var vite_exports = {};
-__export(vite_exports, {
-  log: () => log2,
-  serveStatic: () => serveStatic2,
-  setupVite: () => setupVite
-});
-import express2 from "express";
-import fs8 from "fs";
-import path9 from "path";
-import {
-  createServer as createViteServer,
-  createLogger as createLogger2,
-  loadConfigFromFile
-} from "vite";
-import { nanoid } from "nanoid";
-function log2(message, source = "express") {
-  const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true
-  });
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
-async function setupVite(app2, server, configFile) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true
-  };
-  let resolvedConfig = vite_config_default;
-  if (configFile) {
-    const loaded = await loadConfigFromFile(
-      { command: "serve", mode: "development" },
-      path9.resolve(import.meta.dirname, "..", configFile)
-    );
-    if (loaded) resolvedConfig = loaded.config;
-  }
-  const vite = await createViteServer({
-    ...resolvedConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        console.error("[VITE ERROR]", msg);
-      }
-    },
-    server: serverOptions,
-    appType: "custom"
-  });
-  const htmlEntry = configFile?.includes("music") ? "music.html" : "index.html";
-  app2.use(vite.middlewares);
-  app2.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
-    if (url.startsWith("/api")) {
-      return next();
-    }
-    try {
-      const clientTemplate = path9.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        htmlEntry
-      );
-      let template = await fs8.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
-      );
-      const siblingUrl = process.env.SIBLING_URL || "";
-      const runtimeScript = `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>`;
-      template = template.replace("</head>", `${runtimeScript}
-  </head>`);
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e);
-      next(e);
-    }
-  });
-}
-function serveStatic2(app2) {
-  const distPath = path9.resolve(import.meta.dirname, "..", "dist", "public");
-  if (!fs8.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
-    );
-  }
-  app2.use(express2.static(distPath));
-  app2.use("*", (_req, res) => {
-    const htmlPath = path9.resolve(distPath, "index.html");
-    let html = fs8.readFileSync(htmlPath, "utf-8");
-    const siblingUrl = process.env.SIBLING_URL || "";
-    html = html.replace("</head>", `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>
-  </head>`);
-    res.set("Content-Type", "text/html").send(html);
-  });
-}
-var viteLogger;
-var init_vite = __esm({
-  "server/vite.ts"() {
-    "use strict";
-    init_vite_config();
-    viteLogger = createLogger2();
-  }
-});
-
 // server/index.ts
 import dotenv2 from "dotenv";
-import express3 from "express";
+import express2 from "express";
 import http from "http";
 import cors from "cors";
 import helmet from "helmet";
@@ -6258,22 +6047,22 @@ var PUBLIC_PATH_PREFIXES = [
   "/api/streaming/subscription/plans"
   // Subscription plan listing (public)
 ];
-function isPublicPath(path10, method) {
-  if (PUBLIC_PATHS.includes(path10)) return true;
-  if (path10.startsWith("/auth/oauth/")) return true;
-  if (path10.startsWith("/auth/google/") || path10.startsWith("/auth/facebook/"))
+function isPublicPath(path8, method) {
+  if (PUBLIC_PATHS.includes(path8)) return true;
+  if (path8.startsWith("/auth/oauth/")) return true;
+  if (path8.startsWith("/auth/google/") || path8.startsWith("/auth/facebook/"))
     return true;
   if (method === "GET") {
     for (const prefix of PUBLIC_PATH_PREFIXES) {
-      if (path10.startsWith(prefix)) return true;
+      if (path8.startsWith(prefix)) return true;
     }
   }
   return false;
 }
 async function globalAuthGate(req, res, next) {
-  const path10 = req.path;
-  if (isPublicPath(path10, req.method.toUpperCase())) return next();
-  if (!path10.startsWith("/api/") && !path10.startsWith("/auth/")) return next();
+  const path8 = req.path;
+  if (isPublicPath(path8, req.method.toUpperCase())) return next();
+  if (!path8.startsWith("/api/") && !path8.startsWith("/auth/")) return next();
   try {
     const token = extractToken(req);
     if (!token) {
@@ -8266,8 +8055,8 @@ router2.get("/api/businesses/:id/pdf", async (req, res) => {
       });
     }
     const { pdf_path, name } = result.rows[0];
-    const fs9 = await import("fs");
-    if (!fs9.existsSync(pdf_path)) {
+    const fs8 = await import("fs");
+    if (!fs8.existsSync(pdf_path)) {
       return res.status(404).json({
         success: false,
         error: "PDF file not found on server"
@@ -30018,10 +29807,10 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
   }
   if (mimetype === "application/pdf") {
     try {
-      const fs9 = await import("fs");
+      const fs8 = await import("fs");
       const pdfParseModule = await import("pdf-parse");
       const pdfParse = pdfParseModule.default || pdfParseModule;
-      const buffer = fs9.readFileSync(filePath);
+      const buffer = fs8.readFileSync(filePath);
       const pdfData = await pdfParse(buffer);
       checks.push({
         name: "PDF pages",
@@ -46222,7 +46011,7 @@ if (isProd && !process.env.PRODUCTION_URL) {
   process.exit(1);
 }
 var serverLog = createLogger("server");
-var app = express3();
+var app = express2();
 process.on("unhandledRejection", (reason) => {
   serverLog.error("Unhandled promise rejection:", reason);
 });
@@ -46297,14 +46086,14 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express3.json({ limit: "2mb" }));
-app.use(express3.urlencoded({ extended: false }));
+app.use(express2.json({ limit: "2mb" }));
+app.use(express2.urlencoded({ extended: false }));
 app.use(csrfSetCookie);
 app.use(csrfProtect);
 app.use(globalAuthGate);
 app.use((req, res, next) => {
   const start = Date.now();
-  const path10 = req.path;
+  const path8 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -46313,8 +46102,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path10.startsWith("/api")) {
-      let line = `${req.method} ${path10} ${res.statusCode} in ${duration}ms`;
+    if (path8.startsWith("/api")) {
+      let line = `${req.method} ${path8} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -46358,8 +46147,8 @@ app.use((req, res, next) => {
   initializeSocket(server);
   serverLog.info("Socket.io initialized for real-time notifications");
   if (app.get("env") === "development") {
-    const { setupVite: setupVite2 } = await Promise.resolve().then(() => (init_vite(), vite_exports));
-    await setupVite2(app, server);
+    const { setupVite } = await import("../server/vite");
+    await setupVite(app, server);
   } else {
     serveStatic(app);
   }
