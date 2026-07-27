@@ -31,9 +31,15 @@ const pool = new pg.Pool({
 // ════════════════════════════════════════════════════════════════════════════
 // Random per run — never hardcoded/committed. The account is forced to set
 // its own permanent password on first login (must_change_password below),
-// so this value is only ever usable once.
+// EXCEPT for exempt users (skipMustChange=true) who can self-create & own password.
 const PASSWORD =
   process.env.SEED_SUPERADMIN_PASSWORD ||
+  crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
+    "!" +
+    Math.floor(Math.random() * 90 + 10);
+
+const CEO_PASSWORD =
+  process.env.SEED_CEO_PASSWORD ||
   crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
     "!" +
     Math.floor(Math.random() * 90 + 10);
@@ -45,6 +51,16 @@ const TEST_USERS = [
     role: "superuser",
     tier: "enterprise",
     gateUsername: "joel_007",
+    skipMustChange: true, // Exempt: self-creates password
+  },
+  {
+    username: "ceo_test",
+    email: "ceo@versoair.test",
+    role: "superuser",
+    tier: "enterprise",
+    gateUsername: "ceo_master",
+    skipMustChange: true, // Exempt: self-creates password
+    password: CEO_PASSWORD, // CEO gets custom password env var
   },
 ];
 
@@ -473,6 +489,10 @@ const PAYMENT_CARD_TYPES = [
 
     for (const u of TEST_USERS) {
       try {
+        // Use custom password if provided (e.g., CEO account), otherwise use global PASSWORD
+        const userPassword = u.password || PASSWORD;
+        const hash = bcrypt.hashSync(userPassword, 12);
+
         let insertCols = "username, email, password, role, created_at";
         let insertVals = "$1, $2, $3, $4, NOW()";
         let params = [u.username, u.email, hash, u.role];
@@ -497,7 +517,8 @@ const PAYMENT_CARD_TYPES = [
           insertVals += `, $${idx++}`;
           params.push(u.gateUsername);
         }
-        if (hasMustChangePassword) {
+        // Only force password change if NOT exempt (skipMustChange=false/undefined)
+        if (hasMustChangePassword && !u.skipMustChange) {
           insertCols += ", must_change_password";
           insertVals += `, $${idx++}`;
           params.push(true);
@@ -664,7 +685,7 @@ const PAYMENT_CARD_TYPES = [
     console.log("🎉 PRODUCTION SEED COMPLETE!");
     console.log("═".repeat(60));
     console.log(`
-  👤 Superadmin:       ${TEST_USERS.length}
+  👤 Admin Accounts:   ${TEST_USERS.length}
   🌍 Countries:        ${COUNTRIES.length}
   🗺️  Regions:          ${REGIONS.length}
   🏙️  Cities:           ${CITIES.length}
@@ -674,14 +695,25 @@ const PAYMENT_CARD_TYPES = [
   ℹ️  All business data (listings, artists, jobs, properties,
      reviews, etc.) will be populated by real users.
 `);
-    console.log(
-      "📋 SUPERADMIN CREDENTIALS (first run only — forced to change on login):",
-    );
-    console.log(`   Password: ${PASSWORD}`);
+    console.log("📋 ADMIN ACCOUNT CREDENTIALS:");
     console.log("─".repeat(60));
-    for (const u of TEST_USERS) {
-      console.log(`   ${u.role.toUpperCase().padEnd(16)} → ${u.email}`);
+    
+    // Print superadmin (exempt — no forced change)
+    const superadmin = TEST_USERS[0];
+    console.log(`✅ ${superadmin.role.toUpperCase()} (EXEMPT — self-create)`);
+    console.log(`   Email:    ${superadmin.email}`);
+    console.log(`   Password: ${PASSWORD}`);
+    console.log(`   Status:   Direct access (no forced change) ✓`);
+    
+    // Print CEO (exempt — no forced change)
+    if (TEST_USERS[1]) {
+      const ceo = TEST_USERS[1];
+      console.log(`\n✅ ${ceo.role.toUpperCase()} (EXEMPT — self-create)`);
+      console.log(`   Email:    ${ceo.email}`);
+      console.log(`   Password: ${CEO_PASSWORD}`);
+      console.log(`   Status:   Direct access (no forced change) ✓`);
     }
+    
     console.log("═".repeat(60) + "\n");
   } catch (err) {
     console.error("❌ Seed failed:", err.message);
