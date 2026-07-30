@@ -235,6 +235,12 @@ const goldTextStyles = `
     animation: flash 4s infinite linear;
   }
 
+  @media (min-width: 769px) {
+    .gold-text {
+      white-space: nowrap;
+    }
+  }
+
   @media (max-width: 768px) {
     .gold-text {
       font-size: 2rem;
