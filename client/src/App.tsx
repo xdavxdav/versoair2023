@@ -746,11 +746,11 @@ function AppContent() {
           <ContentNav />
         </Suspense>
       )}
-      {/* Main Navbar — hide on auth pages, ContentNav pages, music pages, immersive pages,
-           and mobile/tablet (where MobileMenuBubble handles navigation) */}
-      {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
+      {/* Main Navbar — hidden on all viewports; MobileMenuBubble handles nav everywhere
+           (still hidden on auth/content-nav/music/immersive pages as before) */}
+      {false && !isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
         <div
-          className={`hidden md:block transition-opacity duration-300 ${
+          className={`hidden transition-opacity duration-300 ${
             isLoading && !isFadingOut
               ? "opacity-0 pointer-events-none"
               : "opacity-100"
