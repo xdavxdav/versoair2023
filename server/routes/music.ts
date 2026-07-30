@@ -341,11 +341,19 @@ router.post(
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
         } else {
-          // No artist profile — reject upload
-          return res.status(403).json({
-            success: false,
-            error: "You must register as an artist before uploading tracks",
-          });
+          // No artist profile yet — auto-create a minimal one so uploads
+          // from device are never blocked for authenticated users.
+          const fallbackName =
+            req.user.email?.split("@")[0] || `Artist${req.user.userId}`;
+          const created = await pool.query(
+            `INSERT INTO artists (user_id, stage_name, label_status)
+             VALUES ($1, $2, 'unsigned') RETURNING id`,
+            [parseInt(req.user.userId), fallbackName],
+          );
+          artistId = created.rows[0].id;
+          console.log(
+            `🎤 [MUSIC] Auto-created artist profile "${fallbackName}" (id ${artistId}) for user ${req.user.userId}`,
+          );
         }
       }
 

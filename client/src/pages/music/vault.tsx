@@ -347,7 +347,7 @@ export default function MusicVault() {
 
   // Handle upload
   const handleUpload = async () => {
-    if (!uploadFile || !uploadForm.title || !myArtist?.id) return;
+    if (!uploadFile || !uploadForm.title) return;
 
     setIsUploading(true);
     setUploadProgress(10);
@@ -356,7 +356,9 @@ export default function MusicVault() {
       const formData = new FormData();
       formData.append("audio", uploadFile);
       formData.append("title", uploadForm.title);
-      formData.append("artist_id", String(myArtist.id));
+      // If we don't have an artist profile yet, the server auto-creates one
+      // from the authenticated user, so only send artist_id when known.
+      if (myArtist?.id) formData.append("artist_id", String(myArtist.id));
       if (uploadForm.genre) formData.append("genre", uploadForm.genre);
       if (uploadForm.price) formData.append("price", uploadForm.price);
       if (uploadForm.description)

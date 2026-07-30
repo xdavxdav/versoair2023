@@ -7,6 +7,7 @@ import { EditBusinessForm } from "@/components/EditBusinessForm";
 import { SessionMonitorPanel } from "@/components/SessionMonitorPanel";
 import { PaymentSettingsPanel } from "@/components/PaymentSettingsPanel";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
+import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1925,7 +1926,7 @@ export default function DatabaseExpert({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-10 w-full min-h-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
+          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-11 w-full min-h-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl p-1.5 gap-1">
             <TabsTrigger
               value="dashboard"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
@@ -2009,6 +2010,13 @@ export default function DatabaseExpert({
                   {contractPendingCount > 9 ? "9+" : contractPendingCount}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="marketplace"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline">Marketplace</span>
             </TabsTrigger>
           </TabsList>
 
@@ -3877,6 +3885,11 @@ export default function DatabaseExpert({
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Marketplace Moderation Tab */}
+          <TabsContent value="marketplace" className="space-y-6 mt-8">
+            <MarketplaceModeration />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -3926,6 +3939,7 @@ export default function DatabaseExpert({
               { label: "Sessions", tab: "sessions", icon: Shield },
               { label: "Payments", tab: "payments", icon: Sparkles },
               { label: "Candidatures", tab: "contracts", icon: Music },
+              { label: "Marketplace", tab: "marketplace", icon: ShoppingCart },
             ].map((item) => (
               <Button
                 key={item.tab}
