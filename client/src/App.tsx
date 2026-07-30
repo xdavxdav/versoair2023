@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
+import { AudioProvider } from "@/lib/audio-context";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ArtistPortalRedirect from "@/components/ArtistPortalRedirect";
@@ -913,10 +914,12 @@ function App() {
             <AuthProvider>
               <TooltipProvider>
                 <LoadingProvider>
-                  <NavigationProgress />
-                  <AppContent />
-                  <InactivityGuard />
-                  <Toaster />
+                  <AudioProvider>
+                    <NavigationProgress />
+                    <AppContent />
+                    <InactivityGuard />
+                    <Toaster />
+                  </AudioProvider>
                 </LoadingProvider>
               </TooltipProvider>
             </AuthProvider>
