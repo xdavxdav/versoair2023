@@ -771,11 +771,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-950 via-blue-950/50 to-slate-950 relative overflow-x-hidden">
-      {/* Matrix Rain Background */}
-      <canvas
-        id="matrix-canvas"
-        className="fixed inset-0 pointer-events-none opacity-30 z-0"
-      ></canvas>
+      {/* Matrix Rain Background — disabled: caused repeated crash/error loop on mobile */}
 
       {/* Starfield background */}
       <div className="fixed inset-0 -z-10 pointer-events-none starfield">
@@ -809,7 +805,7 @@ export default function Home() {
         </div>
 
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 gap-12 items-center">
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 bg-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
                 <Zap className="h-4 w-4 text-blue-400" />
@@ -914,7 +910,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Visualization - Solar System */}
+            {/* Visualization - Solar System — disabled: unwanted square eagle image + planets moving out of frame on mobile */}
+            {false && (
             <div className="relative lg:flex justify-center min-w-0">
               <div className="relative w-full h-[420px] sm:h-[520px] md:h-[600px] flex items-center justify-center min-w-0 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -1566,6 +1563,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
