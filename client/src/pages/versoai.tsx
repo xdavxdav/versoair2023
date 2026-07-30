@@ -1503,6 +1503,10 @@ export default function Home() {
                         width: "90%",
                         height: "90%",
                         objectFit: "contain",
+                        WebkitMaskImage:
+                          "radial-gradient(ellipse 50% 50% at 50% 50%, black 55%, transparent 78%)",
+                        maskImage:
+                          "radial-gradient(ellipse 50% 50% at 50% 50%, black 55%, transparent 78%)",
                         filter:
                           "drop-shadow(0 0 30px rgba(251, 191, 36, 0.5)) drop-shadow(0 0 60px rgba(96, 165, 250, 0.4))",
                         animation: "eaglePulse 4s ease-in-out infinite",
