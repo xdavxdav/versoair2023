@@ -803,25 +803,22 @@ function AppContent() {
       )}
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
-      {!isAuthPage &&
-        !showContentNav &&
-        !isMusicPage &&
-        !isImmersivePage && (
-          <div
-            className={`hidden md:block transition-opacity duration-300 ${
-              isLoading && !isFadingOut
-                ? "opacity-0 pointer-events-none"
-                : "opacity-100"
-            }`}
-          >
-            <Navbar
-              onLocationPanelToggle={() =>
-                setIsLocationPanelOpen((prev) => !prev)
-              }
-              isLocationPanelOpen={isLocationPanelOpen}
-            />
-          </div>
-        )}
+      {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
+        <div
+          className={`hidden md:block transition-opacity duration-300 ${
+            isLoading && !isFadingOut
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100"
+          }`}
+        >
+          <Navbar
+            onLocationPanelToggle={() =>
+              setIsLocationPanelOpen((prev) => !prev)
+            }
+            isLocationPanelOpen={isLocationPanelOpen}
+          />
+        </div>
+      )}
 
       {/* Side Panels */}
       <Suspense fallback={null}>

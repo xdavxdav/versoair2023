@@ -697,14 +697,14 @@ const PAYMENT_CARD_TYPES = [
 `);
     console.log("📋 ADMIN ACCOUNT CREDENTIALS:");
     console.log("─".repeat(60));
-    
+
     // Print superadmin (exempt — no forced change)
     const superadmin = TEST_USERS[0];
     console.log(`✅ ${superadmin.role.toUpperCase()} (EXEMPT — self-create)`);
     console.log(`   Email:    ${superadmin.email}`);
     console.log(`   Password: ${PASSWORD}`);
     console.log(`   Status:   Direct access (no forced change) ✓`);
-    
+
     // Print CEO (exempt — no forced change)
     if (TEST_USERS[1]) {
       const ceo = TEST_USERS[1];
@@ -713,7 +713,7 @@ const PAYMENT_CARD_TYPES = [
       console.log(`   Password: ${CEO_PASSWORD}`);
       console.log(`   Status:   Direct access (no forced change) ✓`);
     }
-    
+
     console.log("═".repeat(60) + "\n");
   } catch (err) {
     console.error("❌ Seed failed:", err.message);

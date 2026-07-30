@@ -810,13 +810,13 @@ export default function MusicVault() {
               {/* Audio File */}
               <div className="space-y-2">
                 <Label>Audio File *</Label>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                <label
+                  htmlFor="vault-audio-file-input"
+                  className={`block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
                     uploadFile
                       ? "border-purple-500/50 bg-purple-500/10"
                       : "border-white/20 hover:border-purple-500/30"
                   }`}
-                  onClick={() => fileInputRef.current?.click()}
                 >
                   {uploadFile ? (
                     <div className="flex items-center justify-center gap-3">
@@ -834,6 +834,7 @@ export default function MusicVault() {
                         size="icon"
                         className="text-white/50 hover:text-red-400"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setUploadFile(null);
                         }}
@@ -852,8 +853,9 @@ export default function MusicVault() {
                       </p>
                     </>
                   )}
-                </div>
+                </label>
                 <input
+                  id="vault-audio-file-input"
                   ref={fileInputRef}
                   type="file"
                   accept="audio/*"
@@ -916,13 +918,13 @@ export default function MusicVault() {
               {/* Cover Art */}
               <div className="space-y-2">
                 <Label>Cover Art (optional)</Label>
-                <div
-                  className={`border border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                <label
+                  htmlFor="vault-cover-file-input"
+                  className={`block border border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                     coverFile
                       ? "border-purple-500/50 bg-purple-500/10"
                       : "border-white/20 hover:border-purple-500/30"
                   }`}
-                  onClick={() => coverInputRef.current?.click()}
                 >
                   {coverFile ? (
                     <div className="flex items-center justify-center gap-3">
@@ -933,6 +935,7 @@ export default function MusicVault() {
                         size="icon"
                         className="h-6 w-6 text-white/50 hover:text-red-400"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setCoverFile(null);
                         }}
@@ -945,8 +948,9 @@ export default function MusicVault() {
                       Click to add cover art
                     </p>
                   )}
-                </div>
+                </label>
                 <input
+                  id="vault-cover-file-input"
                   ref={coverInputRef}
                   type="file"
                   accept="image/*"

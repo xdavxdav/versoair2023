@@ -5063,29 +5063,29 @@ export default function ArtistPortal() {
             <div className="space-y-2">
               <Label>Fichier audio *</Label>
               <input
+                id="artist-portal-audio-file-input"
                 ref={fileInputRef}
                 type="file"
-                accept="audio/*,.mp3,.wav,.flac,.aiff,.ogg,.m4a"
+                accept="audio/*"
                 style={{
                   position: "absolute",
                   width: 1,
                   height: 1,
                   opacity: 0,
                   overflow: "hidden",
-                  pointerEvents: "none",
                 }}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) setUploadFile(f);
                 }}
               />
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+              <label
+                htmlFor="artist-portal-audio-file-input"
+                className={`block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                   uploadFile
                     ? "border-green-400/50 bg-green-500/10"
                     : "border-white/30 hover:border-purple-400/50 hover:bg-white/5"
                 }`}
-                onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -5112,6 +5112,7 @@ export default function ArtistPortal() {
                       size="sm"
                       className="text-red-400 hover:text-red-300"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         setUploadFile(null);
                       }}
@@ -5130,7 +5131,7 @@ export default function ArtistPortal() {
                     </p>
                   </>
                 )}
-              </div>
+              </label>
             </div>
 
             {/* Description */}

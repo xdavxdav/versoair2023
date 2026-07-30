@@ -588,170 +588,174 @@ const PLAY_DEBOUNCE_MS = 30_000; // 30 seconds between increments per IP+track
 // 💳 TRACK PURCHASE — POST /api/music/tracks/:id/purchase
 // Debits buyer wallet, credits artist wallet (70/30 split)
 // ═════════════════════════════════════════════════════════════════════
-router.post("/tracks/:id/purchase", requireAuth, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.id;
-    const trackId = parseInt(req.params.id);
-    if (!userId) return res.status(401).json({ error: "Not authenticated" });
-
-    // Get track info
-    const trackResult = await pool.query(
-      "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
-      [trackId],
-    );
-    if (!trackResult.rows.length) {
-      return res.status(404).json({ error: "Track not found" });
-    }
-    const track = trackResult.rows[0];
-    const price = parseFloat(track.price || "1.29");
-
-    // Already purchased?
+router.post(
+  "/tracks/:id/purchase",
+  requireAuth,
+  async (req: Request, res: Response) => {
     try {
-      const existing = await pool.query(
-        "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-        [userId, trackId],
-      );
-      if (existing.rows.length > 0) {
-        return res.json({
-          success: true,
-          alreadyOwned: true,
-          message: "Track already purchased",
-        });
-      }
-    } catch {
-      /* table may not exist yet */
-    }
+      const userId = (req as any).user?.id;
+      const trackId = parseInt(req.params.id);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    // Get or create buyer wallet
-    let buyerWallet = await pool.query(
-      "SELECT * FROM platform_wallets WHERE user_id = $1",
-      [userId],
-    );
-    if (buyerWallet.rows.length === 0) {
-      buyerWallet = await pool.query(
-        "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+      // Get track info
+      const trackResult = await pool.query(
+        "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
+        [trackId],
+      );
+      if (!trackResult.rows.length) {
+        return res.status(404).json({ error: "Track not found" });
+      }
+      const track = trackResult.rows[0];
+      const price = parseFloat(track.price || "1.29");
+
+      // Already purchased?
+      try {
+        const existing = await pool.query(
+          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+          [userId, trackId],
+        );
+        if (existing.rows.length > 0) {
+          return res.json({
+            success: true,
+            alreadyOwned: true,
+            message: "Track already purchased",
+          });
+        }
+      } catch {
+        /* table may not exist yet */
+      }
+
+      // Get or create buyer wallet
+      let buyerWallet = await pool.query(
+        "SELECT * FROM platform_wallets WHERE user_id = $1",
         [userId],
       );
-    }
-    const bw = buyerWallet.rows[0];
-    const buyerBalance = parseFloat(bw.balance || "0");
-
-    if (buyerBalance < price) {
-      return res.status(402).json({
-        error: "Insufficient credits",
-        required: price,
-        current: buyerBalance,
-        requiresDeposit: true,
-      });
-    }
-
-    // 70% artist / 30% platform
-    const artistShare = price * 0.7;
-    const platformShare = price * 0.3;
-
-    await pool.query("BEGIN");
-
-    // Debit buyer
-    const buyerAfter = buyerBalance - price;
-    await pool.query(
-      "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-      [buyerAfter.toFixed(2), price.toFixed(2), userId],
-    );
-
-    // Credit artist (if track has an artist)
-    if (track.artist_id) {
-      let artistWallet = await pool.query(
-        "SELECT * FROM platform_wallets WHERE user_id = $1",
-        [track.artist_id],
-      );
-      if (artistWallet.rows.length === 0) {
-        artistWallet = await pool.query(
+      if (buyerWallet.rows.length === 0) {
+        buyerWallet = await pool.query(
           "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
-          [track.artist_id],
+          [userId],
         );
       }
-      const aw = artistWallet.rows[0];
-      const artistBalance = parseFloat(aw.balance || "0");
+      const bw = buyerWallet.rows[0];
+      const buyerBalance = parseFloat(bw.balance || "0");
+
+      if (buyerBalance < price) {
+        return res.status(402).json({
+          error: "Insufficient credits",
+          required: price,
+          current: buyerBalance,
+          requiresDeposit: true,
+        });
+      }
+
+      // 70% artist / 30% platform
+      const artistShare = price * 0.7;
+      const platformShare = price * 0.3;
+
+      await pool.query("BEGIN");
+
+      // Debit buyer
+      const buyerAfter = buyerBalance - price;
       await pool.query(
-        "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-        [
-          (artistBalance + artistShare).toFixed(2),
-          artistShare.toFixed(2),
-          track.artist_id,
-        ],
+        "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+        [buyerAfter.toFixed(2), price.toFixed(2), userId],
       );
 
-      // Log artist transaction
+      // Credit artist (if track has an artist)
+      if (track.artist_id) {
+        let artistWallet = await pool.query(
+          "SELECT * FROM platform_wallets WHERE user_id = $1",
+          [track.artist_id],
+        );
+        if (artistWallet.rows.length === 0) {
+          artistWallet = await pool.query(
+            "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+            [track.artist_id],
+          );
+        }
+        const aw = artistWallet.rows[0];
+        const artistBalance = parseFloat(aw.balance || "0");
+        await pool.query(
+          "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+          [
+            (artistBalance + artistShare).toFixed(2),
+            artistShare.toFixed(2),
+            track.artist_id,
+          ],
+        );
+
+        // Log artist transaction
+        await pool.query(
+          `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+          [
+            track.artist_id,
+            aw.id,
+            artistShare.toFixed(2),
+            artistBalance.toFixed(2),
+            (artistBalance + artistShare).toFixed(2),
+            `Track sale: ${track.title}`,
+            String(trackId),
+          ],
+        );
+      }
+
+      // Log buyer transaction
       await pool.query(
         `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
         [
-          track.artist_id,
-          aw.id,
-          artistShare.toFixed(2),
-          artistBalance.toFixed(2),
-          (artistBalance + artistShare).toFixed(2),
-          `Track sale: ${track.title}`,
+          userId,
+          bw.id,
+          (-price).toFixed(2),
+          buyerBalance.toFixed(2),
+          buyerAfter.toFixed(2),
+          `Track purchase: ${track.title}`,
           String(trackId),
         ],
       );
-    }
 
-    // Log buyer transaction
-    await pool.query(
-      `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
-      [
-        userId,
-        bw.id,
-        (-price).toFixed(2),
-        buyerBalance.toFixed(2),
-        buyerAfter.toFixed(2),
-        `Track purchase: ${track.title}`,
-        String(trackId),
-      ],
-    );
-
-    // Insert track_purchases record
-    try {
-      await pool.query(
-        `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
+      // Insert track_purchases record
+      try {
+        await pool.query(
+          `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
          VALUES ($1, $2, $3, $4, $5, 'completed', NOW())`,
-        [
-          userId,
-          trackId,
-          price.toFixed(2),
-          artistShare.toFixed(2),
-          platformShare.toFixed(2),
-        ],
+          [
+            userId,
+            trackId,
+            price.toFixed(2),
+            artistShare.toFixed(2),
+            platformShare.toFixed(2),
+          ],
+        );
+      } catch {
+        // track_purchases table might have different columns — just log
+        console.warn("[MUSIC] track_purchases insert failed, continuing");
+      }
+
+      // Update track revenue
+      await pool.query(
+        "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
+        [price, trackId],
       );
-    } catch {
-      // track_purchases table might have different columns — just log
-      console.warn("[MUSIC] track_purchases insert failed, continuing");
+
+      await pool.query("COMMIT");
+
+      res.json({
+        success: true,
+        message: "Track purchased successfully",
+        price,
+        artistShare,
+        platformShare,
+        newBalance: buyerAfter,
+      });
+    } catch (err: any) {
+      await pool.query("ROLLBACK").catch(() => {});
+      console.error("❌ Track purchase error:", err);
+      res.status(500).json({ error: "Purchase failed" });
     }
-
-    // Update track revenue
-    await pool.query(
-      "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
-      [price, trackId],
-    );
-
-    await pool.query("COMMIT");
-
-    res.json({
-      success: true,
-      message: "Track purchased successfully",
-      price,
-      artistShare,
-      platformShare,
-      newBalance: buyerAfter,
-    });
-  } catch (err: any) {
-    await pool.query("ROLLBACK").catch(() => {});
-    console.error("❌ Track purchase error:", err);
-    res.status(500).json({ error: "Purchase failed" });
-  }
-});
+  },
+);
 
 // ═════════════════════════════════════════════════════════════════════
 // 🔊 TRACK STREAM (play in browser) — GET /api/music/tracks/:id/stream
