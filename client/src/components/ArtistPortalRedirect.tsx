@@ -1,9 +1,8 @@
 /**
- * Redirects /artist-portal to the music app (SIBLING_URL)
- * Prevents users from hitting the 404 catch-all
+ * Direct navigation to artist portal on music app
+ * Sends user straight to /artist-portal without showing UI
  */
 import { useEffect } from "react";
-import { PageLoader } from "./ui/app-loader";
 
 export default function ArtistPortalRedirect() {
   useEffect(() => {
@@ -13,11 +12,11 @@ export default function ArtistPortalRedirect() {
 
     // Ensure clean URL — no double slashes
     const cleanUrl = siblingUrl.replace(/\/$/, "");
-    const redirectUrl = `${cleanUrl}/artist-portal`;
+    const targetUrl = `${cleanUrl}/artist-portal`;
 
-    // Redirect immediately
-    window.location.href = redirectUrl;
+    // Direct navigation immediately - no UI shown
+    window.location.href = targetUrl;
   }, []);
 
-  return <PageLoader />;
+  return null;
 }
