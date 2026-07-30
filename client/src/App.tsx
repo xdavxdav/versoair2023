@@ -353,8 +353,8 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
-      {/* Redirect /artist-portal to music app (SIBLING_URL) */}
-      <Route path="/artist-portal" component={ArtistPortalRedirect} />
+      {/* On unified domain: /artist-portal renders welcome page directly (no cross-domain redirect) */}
+      <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
       <Route
         path="/artist-portal/welcome"
         component={ArtistPortalWelcomePage}
