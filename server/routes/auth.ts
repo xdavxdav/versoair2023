@@ -1225,6 +1225,16 @@ router.post(
   "/register-geoadmin",
   registerLimiter,
   asyncHandler(async (req: Request, res: Response) => {
+    // 🔒 Only existing Admin/Superadmin accounts may create .test accounts.
+    // (This route requires authentication — see PUBLIC_PATHS in middleware/auth.ts)
+    const requesterRole = (req as any).user?.role;
+    if (requesterRole !== "admin" && requesterRole !== "superuser") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Admin or Superadmin accounts can create .test accounts.",
+      });
+    }
+
     const parsed = registerGeoAdminSchema.safeParse(req.body);
     if (!parsed.success) {
       return res
@@ -1291,7 +1301,10 @@ router.post(
         role: schema.users.role,
       });
 
-    // Issue JWT immediately
+    // Issue a JWT for the newly created .test account. We intentionally do
+    // NOT call setAuthCookie() here — the admin/superadmin making this request
+    // stays logged in under their own session; the new account's token is
+    // only returned in the response body for reference.
     const token = jwt.sign(
       {
         userId: String(newUser.id),
@@ -1303,7 +1316,6 @@ router.post(
       { expiresIn: JWT_EXPIRES_IN },
     );
 
-    setAuthCookie(res, token);
     await createSession(newUser.id, token, req);
 
     res.status(201).json({

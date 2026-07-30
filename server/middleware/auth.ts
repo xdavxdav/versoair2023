@@ -79,7 +79,9 @@ const PUBLIC_PATHS: string[] = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
-  "/auth/register-geoadmin",
+  // "/auth/register-geoadmin" intentionally NOT public — creating .test admin
+  // accounts requires an existing authenticated Admin/Superadmin session
+  // (enforced by requireAuth + role check in the route handler).
   // Artist portal auth
   "/auth/artist/login",
   "/auth/artist/register",
