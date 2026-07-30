@@ -383,9 +383,9 @@ export function MobileMenuBubble() {
 
   return (
     <>
-      {/* ── Floating draggable bubble — mobile only (hidden on desktop/tablet) ── */}
+      {/* ── Floating draggable bubble — visible on all viewports ── */}
       <div
-        className="fixed z-[90] md:hidden"
+        className="fixed z-[90]"
         style={{
           left: pos.x,
           top: pos.y,
