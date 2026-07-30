@@ -746,7 +746,7 @@ export default function Navbar({
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {/* Music Portal Toggle */}
             <Button
-              onClick={() => { const u = (window as any).__APP_CONFIG__?.siblingUrl || import.meta.env.VITE_MUSIC_URL || "http://localhost:5004"; window.location.href = u; }}
+              onClick={() => { const u = (window as any).__APP_CONFIG__?.siblingUrl || import.meta.env.VITE_MUSIC_URL || window.location.origin; window.location.href = u; }}
               className="portal-toggle bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 lg:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <Music className="h-3 w-3 lg:mr-1" />

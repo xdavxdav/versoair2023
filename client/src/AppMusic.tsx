@@ -146,7 +146,7 @@ function AppContent() {
     }
   }, [isLoading, isFadingOut]);
 
-  const mainSiteUrl = (window as any).__APP_CONFIG__?.siblingUrl || (import.meta as any).env?.VITE_MAIN_URL || "http://localhost:5003";
+  const mainSiteUrl = (window as any).__APP_CONFIG__?.siblingUrl || (import.meta as any).env?.VITE_MAIN_URL || window.location.origin;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">

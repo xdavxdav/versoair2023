@@ -6,9 +6,11 @@ import { useEffect } from "react";
 
 export default function ArtistPortalRedirect() {
   useEffect(() => {
-    // Get the sibling URL from the injected config
+    // Get the sibling URL from the injected config; on production the server
+    // injects the real URL. Fall back to the current origin (never localhost)
+    // so users never get sent off-domain.
     const config = (window as any).__APP_CONFIG__;
-    const siblingUrl = config?.siblingUrl || "http://localhost:5004";
+    const siblingUrl = config?.siblingUrl || window.location.origin;
 
     // Ensure clean URL — no double slashes
     const cleanUrl = siblingUrl.replace(/\/$/, "");

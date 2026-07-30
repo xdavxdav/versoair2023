@@ -11,7 +11,9 @@ if (!process.env.SIBLING_URL) {
     process.env.MUSIC_APP_URL ||
     process.env.PRODUCTION_URL ||
     process.env.APP_PUBLIC_URL ||
-    (isProdEnv ? "https://verso-air-online.onrender.com" : "http://localhost:5004");
+    (isProdEnv
+      ? "https://verso-air-online.onrender.com"
+      : "http://localhost:5004");
 
   // On production, append /music if not already present
   if (isProdEnv && musicUrl && !musicUrl.includes("/music")) {

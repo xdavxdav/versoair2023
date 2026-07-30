@@ -252,8 +252,8 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
                 const musicUrl =
                   (window as any).__APP_CONFIG__?.siblingUrl ||
                   import.meta.env.VITE_MUSIC_URL ||
-                  "http://localhost:5004";
-                window.location.href = musicUrl + "/artist-portal";
+                  window.location.origin;
+                window.location.href = musicUrl.replace(/\/$/, "") + "/artist-portal";
               }}
             >
               <Music className="mr-2 h-4 w-4" />
