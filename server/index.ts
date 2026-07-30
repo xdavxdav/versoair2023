@@ -2,21 +2,23 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // ─── Set sibling URL for runtime injection into HTML ─────────────────────────
-// CRITICAL: Must be set in production via MUSIC_APP_URL or SIBLING_URL in dashboard
-// Locally defaults to localhost:5004 ONLY in development
-// PRODUCTION FAIL-SAFE: If production and URL not set, throw error to prevent 
-// users being directed to localhost URLs on render.com
+// CRITICAL: Prevents localhost:5004 from leaking to production users on Render
+// Priority: SIBLING_URL > MUSIC_APP_URL > PRODUCTION_URL/APP_PUBLIC_URL (fallback)
 const isProdEnv = process.env.NODE_ENV === "production";
 if (!process.env.SIBLING_URL) {
-  if (isProdEnv && !process.env.MUSIC_APP_URL) {
-    console.error(
-      "[FATAL] MUSIC_APP_URL or SIBLING_URL must be set in production to prevent localhost fallback"
-    );
-    process.exit(1);
+  // Try MUSIC_APP_URL first, then fallback to PRODUCTION_URL/APP_PUBLIC_URL
+  const musicUrl =
+    process.env.MUSIC_APP_URL ||
+    process.env.PRODUCTION_URL ||
+    process.env.APP_PUBLIC_URL ||
+    (isProdEnv ? "https://verso-air-online.onrender.com" : "http://localhost:5004");
+
+  // On production, append /music if not already present
+  if (isProdEnv && musicUrl && !musicUrl.includes("/music")) {
+    process.env.SIBLING_URL = musicUrl + "/music";
+  } else {
+    process.env.SIBLING_URL = musicUrl;
   }
-  process.env.SIBLING_URL =
-    process.env.MUSIC_APP_URL || 
-    (isProdEnv ? "" : "http://localhost:5004");
 }
 
 // ─── Startup security checks (must run before anything else) ──────────────────
