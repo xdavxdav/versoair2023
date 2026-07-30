@@ -188,10 +188,28 @@ const Sponsorship = lazy(() => import("@/pages/sponsorship"));
 // ─────────────────────────────────────────────────────
 // 🎧 Streaming Platform (lazy-loaded)
 // ─────────────────────────────────────────────────────
+const StreamPage = lazy(() => import("@/pages/stream"));
+const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
+const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
+const LibraryPage = lazy(() => import("@/pages/library"));
+const AnalyticsStreamingPage = lazy(
+  () => import("@/pages/analytics-streaming"),
+);
+const ArenaContestPage = lazy(() => import("@/pages/arena-contest"));
+const RevenuePulsePage = lazy(() => import("@/pages/revenue-pulse"));
+const ArcadePage = lazy(() => import("@/pages/arcade"));
+const ListenerPortal = lazy(() => import("@/pages/listener-portal"));
+const StreamerPortal = lazy(() => import("@/pages/streamer-portal"));
 
 // ─────────────────────────────────────────────────────
 // 🎹 Musical Universe (lazy-loaded)
 // ─────────────────────────────────────────────────────
+const MusicDashboard = lazy(() => import("@/pages/music/dashboard"));
+const BeatmakerStudio = lazy(() => import("@/pages/music/beatmaker-studio"));
+const VersaVidsStudio = lazy(() => import("@/pages/music/versavids-studio"));
+const MusicVault = lazy(() => import("@/pages/music/vault"));
+const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
+const MusicLibrary = lazy(() => import("@/pages/music/library"));
 
 // ─────────────────────────────────────────────────────
 // 📢 Marketing Platform (lazy-loaded)
@@ -514,15 +532,51 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🎧 STREAMING — Verso Air Stream platform
           ═══════════════════════════════════════════════ */}
+      <Route path="/stream" component={StreamPage} />
+      <Route path="/track/:id" component={TrackDetailPage} />
+      <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
+      <Route path="/library" component={LibraryPage} />
+      <Route path="/analytics" component={AnalyticsStreamingPage} />
+      <Route path="/arena" component={ArenaContestPage} />
+      <Route path="/arena/:id" component={ArenaContestPage} />
+      <Route path="/revenue-pulse" component={RevenuePulsePage} />
+      <Route path="/arcade" component={ArcadePage} />
+      <Route path="/listener-portal" component={ListenerPortal} />
+      <Route path="/streamer-portal" component={StreamerPortal} />
 
       {/* ═══════════════════════════════════════════════
           🎹 MUSICAL UNIVERSE — Creator ecosystem
           ═══════════════════════════════════════════════ */}
-      {/* Analytics/Insights — redirect to main analytics for now */}
-      {/* Live/Royale — redirect to arena/stream */}
-      {/* Management routes — redirect to dashboard until dedicated pages */}
-      {/* StreamRoyale public access */}
-      {/* Redirects for legacy/alternate paths */}
+      <Route path="/music">{() => <Redirect to="/music/dashboard" />}</Route>
+      <Route path="/music/dashboard">
+        {() => <ProtectedRoute component={MusicDashboard} />}
+      </Route>
+      <Route path="/music/studio">
+        {() => <ProtectedRoute component={BeatmakerStudio} />}
+      </Route>
+      <Route path="/music/versavids">
+        {() => <ProtectedRoute component={VersaVidsStudio} />}
+      </Route>
+      <Route path="/versavids">
+        {() => <ProtectedRoute component={VersaVidsStudio} />}
+      </Route>
+      <Route path="/music/vault">
+        {() => <ProtectedRoute component={MusicVault} />}
+      </Route>
+      <Route path="/music/royalties">
+        {() => <ProtectedRoute component={MusicRoyalties} />}
+      </Route>
+      <Route path="/music/library">
+        {() => <ProtectedRoute component={MusicLibrary} />}
+      </Route>
+      <Route path="/music/favorites">{() => <Redirect to="/library" />}</Route>
+      <Route path="/music/insights">{() => <Redirect to="/analytics" />}</Route>
+      <Route path="/music/live">{() => <Redirect to="/stream" />}</Route>
+      <Route path="/music/settings">{() => <Redirect to="/profile" />}</Route>
+      <Route path="/music/upgrade">{() => <Redirect to="/apply" />}</Route>
+      <Route path="/streamroyale">{() => <Redirect to="/arena" />}</Route>
+      <Route path="/royale">{() => <Redirect to="/arena" />}</Route>
+      <Route path="/beatmaker">{() => <Redirect to="/music/studio" />}</Route>
 
       {/* 404 Fallback */}
       <Route component={NotFound} />
