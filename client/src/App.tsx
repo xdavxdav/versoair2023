@@ -7,6 +7,7 @@ import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ArtistPortalRedirect from "@/components/ArtistPortalRedirect";
 import {
   useState,
   useEffect,
@@ -352,6 +353,8 @@ function Router() {
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />
+      {/* Redirect /artist-portal to music app (SIBLING_URL) */}
+      <Route path="/artist-portal" component={ArtistPortalRedirect} />
       <Route
         path="/artist-portal/welcome"
         component={ArtistPortalWelcomePage}
