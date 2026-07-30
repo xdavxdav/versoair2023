@@ -917,8 +917,6 @@ export default function Home() {
             {/* Visualization - Solar System */}
             <div className="relative lg:flex justify-center min-w-0">
               <div className="relative w-full h-[420px] sm:h-[520px] md:h-[600px] flex items-center justify-center min-w-0 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-
                 {/* Solar System Container */}
                 <div
                   ref={solarSystemRef}
