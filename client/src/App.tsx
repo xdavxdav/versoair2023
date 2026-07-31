@@ -1,4 +1,5 @@
-import { Switch, Route, useLocation, Redirect } from "wouter";
+import { Switch, Route, Link, useLocation, Redirect } from "wouter";
+import { Home as HomeIcon } from "lucide-react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -593,7 +594,12 @@ function AppContent() {
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
   const isContentNavPage = isContentNavPath(currentPath);
-  const isMusicPage = false;
+  // Musical Universe pages have their own navigation (MusicSidebar/MusicMobileDock
+  // for /music/*, and the internal Tabs nav for /artist-portal) — hide the main
+  // site Navbar/footer/ticker there.
+  const isMusicPage =
+    currentPath.startsWith("/music") ||
+    currentPath.startsWith("/artist-portal");
   const { user, logout } = useAuthContext();
   const { currentLang } = useLanguage();
   const isFr = currentLang === "fr";
@@ -884,10 +890,23 @@ function AppContent() {
       )}
 
       {/* Mobile Menu Bubble — hide on Blog & Musical Universe and immersive pages */}
-      {!isImmersivePage && (
+      {!isImmersivePage && !isMusicPage && (
         <Suspense fallback={null}>
           <MobileMenuBubble />
         </Suspense>
+      )}
+
+      {/* Musical Universe has its own navigation (sidebar/dock/tabs) — no main
+          site Navbar/bubble here. Fallback: a small Home button so users can
+          always get back to the main site. */}
+      {isMusicPage && (
+        <Link
+          href="/"
+          className="fixed bottom-6 right-6 z-[90] flex items-center justify-center w-12 h-12 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-white/10 shadow-lg shadow-black/30 text-white transition-colors"
+          aria-label="Home"
+        >
+          <HomeIcon className="h-5 w-5" />
+        </Link>
       )}
 
       {/* Quick Sign In Modal — global shortcut */}

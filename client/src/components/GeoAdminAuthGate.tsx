@@ -206,7 +206,10 @@ export default function GeoAdminAuthGate({
       localStorage.removeItem("geoadmin_username");
       localStorage.removeItem("geoadmin_login_time");
       localStorage.removeItem("geoadmin_session_start");
-      toast({ title: "Successfully logged out", description: "You've been disconnected from GeoAdmin." });
+      toast({
+        title: "Successfully logged out",
+        description: "You've been disconnected from GeoAdmin.",
+      });
       setIsSuccess(false);
       setMode("gate");
       setUsername("");
@@ -446,7 +449,6 @@ export default function GeoAdminAuthGate({
             </div>
           </div>
         </div>
-
       </div>
     );
   }
@@ -775,7 +777,6 @@ export default function GeoAdminAuthGate({
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
