@@ -1200,7 +1200,10 @@ export default function ArtistPortal() {
 
   const handlePlayTrack = useCallback(
     (track: any) => {
-      const hasAudio = !!(track as any).hasAudio || !!(track as any).file_path;
+      const hasAudio =
+        !!(track as any).hasAudio ||
+        !!(track as any).has_audio_data ||
+        !!(track as any).file_path;
       if (!hasAudio) return;
 
       const trackId =
@@ -2128,7 +2131,9 @@ export default function ArtistPortal() {
           {filteredTracks.map((track) => {
             const artist = displayArtists.find((a) => a.id === track.artistId);
             const hasAudio =
-              !!(track as any).hasAudio || !!(track as any).file_path;
+              !!(track as any).hasAudio ||
+              !!(track as any).has_audio_data ||
+              !!(track as any).file_path;
             const trackRevenue = parseFloat((track as any).revenue || "0");
             const trackDownloads = (track as any).downloads || 0;
             const trackPrice = (track as any).price || "0.99";
@@ -2414,7 +2419,9 @@ export default function ArtistPortal() {
           {filteredTracks.map((track) => {
             const artist = displayArtists.find((a) => a.id === track.artistId);
             const hasAudio =
-              !!(track as any).hasAudio || !!(track as any).file_path;
+              !!(track as any).hasAudio ||
+              !!(track as any).has_audio_data ||
+              !!(track as any).file_path;
             const trackRevenue = parseFloat((track as any).revenue || "0");
             const trackDownloads = (track as any).downloads || 0;
             const trackPrice = (track as any).price || "0.99";
