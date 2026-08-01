@@ -81,6 +81,28 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | null>(null);
 
 // ═══════════════════════════════════════════════════════════
+// WEB AUDIO GRAPH — OPT-IN ONLY
+// ═══════════════════════════════════════════════════════════
+// Calling ctx.createMediaElementSource(audioEl) permanently DISCONNECTS the
+// <audio> element from the speakers and reroutes it through the Web Audio
+// graph. From that point on, anything that goes wrong in the graph (a
+// CORS-tainted source, a suspended context, a zeroed GainNode) results in
+// TOTAL SILENCE while the element still reports that it is playing — which is
+// impossible to distinguish from a broken file.
+//
+// Sound is more important than the waveform bars, so the graph is now OFF by
+// default: the <audio> element plays natively, which always works. The
+// visualizer already degrades to an idle animation when analyser is null.
+// Set localStorage "verso_visualizer" = "1" to opt back into the graph.
+function webAudioGraphEnabled(): boolean {
+  try {
+    return localStorage.getItem("verso_visualizer") === "1";
+  } catch {
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // PROVIDER
 // ═══════════════════════════════════════════════════════════
 export function AudioProvider({ children }: { children: React.ReactNode }) {
@@ -165,7 +187,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const handlePause = () => setIsPlaying(false);
     const handleError = () => {
       setIsLoading(false);
-      console.warn("[Audio] Playback error, trying next track");
+      const e = audio.error;
+      const reason =
+        {
+          1: "MEDIA_ERR_ABORTED (load aborted)",
+          2: "MEDIA_ERR_NETWORK (network failure)",
+          3: "MEDIA_ERR_DECODE (corrupt or unsupported encoding)",
+          4: "MEDIA_ERR_SRC_NOT_SUPPORTED (bad URL, 404, or not real audio)",
+        }[e?.code ?? 0] || "unknown";
+      console.error(
+        `[Audio] Playback error on ${audio.currentSrc || audio.src}: ${reason}`,
+        e?.message || "",
+      );
       // Auto-skip on error
       setTimeout(() => handleTrackEnd(), 1000);
     };
@@ -189,9 +222,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Setup Web Audio API for waveform
+  // Setup Web Audio API for waveform — OPT-IN, never required for playback
   const setupAudioContext = useCallback(() => {
     if (!audioRef.current) return;
+    if (!webAudioGraphEnabled()) return;
 
     // If context already exists, just make sure it's running
     if (audioContextRef.current) {
@@ -323,8 +357,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       }
 
       audio.src = url;
+      audio.load();
+      audio.muted = isMuted;
       audio.volume = isMuted ? 0 : volume;
-      // Sync GainNode volume for Web Audio API routing
+      // Sync GainNode volume if the (opt-in) Web Audio graph is active
       if (gainRef.current) {
         gainRef.current.gain.value = isMuted ? 0 : volume;
       }
@@ -334,13 +370,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       (audio as any).webkitPreservesPitch = true;
       audio.playbackRate = playbackRate;
 
+      console.info(
+        `[Audio] loading "${track.title}" → ${url} (vol=${audio.volume}, muted=${audio.muted})`,
+      );
+
       const playPromise = audio.play();
       if (playPromise) {
         playPromise
           .then(() => {
             setIsPlaying(true);
+            // Optional visualizer graph — must never block or mute playback
             setupAudioContext();
-            // Belt-and-suspenders: ensure AudioContext is running after play
             if (audioContextRef.current?.state === "suspended") {
               audioContextRef.current.resume().catch(() => {});
             }
@@ -348,7 +388,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             recordStreamAfterDelay(track.id);
           })
           .catch((err) => {
-            console.warn("[Audio] Play failed:", err.message);
+            // NotAllowedError = browser blocked autoplay (needs a user gesture)
+            console.warn(`[Audio] Play failed (${err.name}):`, err.message);
+            setIsPlaying(false);
             setIsLoading(false);
           });
       }

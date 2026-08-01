@@ -813,7 +813,12 @@ router.get("/tracks/:id/stream", async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      "SELECT * FROM music_tracks WHERE id = $1",
+      // NEVER "SELECT *" here — audio_data is a multi-MB BYTEA and pulling it
+      // just to read metadata made every request transfer the whole file twice
+      // (8s for a 101-byte range request). Fetch only what this handler needs.
+      `SELECT id, artist_id, file_path, mime_type,
+              octet_length(audio_data) AS audio_size
+         FROM music_tracks WHERE id = $1`,
       [parseInt(id)],
     );
     if (!result.rows.length) {
@@ -898,45 +903,54 @@ router.get("/tracks/:id/stream", async (req, res) => {
       }
     } else {
       // ── Fallback: serve from database BYTEA (persists across Render redeploys) ──
-      const audioResult = await pool.query(
-        "SELECT audio_data, mime_type FROM music_tracks WHERE id = $1 AND audio_data IS NOT NULL",
-        [parseInt(id)],
-      );
-      if (!audioResult.rows.length || !audioResult.rows[0].audio_data) {
+      const totalSize: number = Number(track.audio_size || 0);
+      if (!totalSize) {
         return res
           .status(404)
           .json({ success: false, error: "Audio file not found" });
       }
 
-      const buffer: Buffer = audioResult.rows[0].audio_data;
-      const mimeType = audioResult.rows[0].mime_type || "audio/mpeg";
+      const mimeType = track.mime_type || "audio/mpeg";
       const range = req.headers.range;
-
-      // Also re-cache to disk so subsequent seeks are fast
-      try {
-        if (track.file_path) {
-          const dir = path.dirname(track.file_path);
-          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-          fs.writeFileSync(track.file_path, buffer);
-        }
-      } catch {
-        /* best-effort disk cache */
-      }
 
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+        const start = parseInt(parts[0], 10) || 0;
+        const end = parts[1]
+          ? Math.min(parseInt(parts[1], 10), totalSize - 1)
+          : totalSize - 1;
+
+        if (start >= totalSize || start > end) {
+          res.setHeader("Content-Range", `bytes */${totalSize}`);
+          return res.status(416).end();
+        }
+
         const chunkSize = end - start + 1;
+        // Slice inside Postgres so we transfer only the requested bytes.
+        // substring() on bytea is 1-indexed.
+        const chunkResult = await pool.query(
+          "SELECT substring(audio_data from $2 for $3) AS chunk FROM music_tracks WHERE id = $1",
+          [parseInt(id), start + 1, chunkSize],
+        );
 
         res.writeHead(206, {
-          "Content-Range": `bytes ${start}-${end}/${buffer.length}`,
+          "Content-Range": `bytes ${start}-${end}/${totalSize}`,
           "Accept-Ranges": "bytes",
           "Content-Length": chunkSize,
           "Content-Type": mimeType,
         });
-        res.end(buffer.slice(start, end + 1));
+        res.end(chunkResult.rows[0]?.chunk ?? Buffer.alloc(0));
       } else {
+        const fullResult = await pool.query(
+          "SELECT audio_data FROM music_tracks WHERE id = $1",
+          [parseInt(id)],
+        );
+        const buffer: Buffer = fullResult.rows[0]?.audio_data;
+        if (!buffer) {
+          return res
+            .status(404)
+            .json({ success: false, error: "Audio file not found" });
+        }
         res.writeHead(200, {
           "Content-Length": buffer.length,
           "Content-Type": mimeType,

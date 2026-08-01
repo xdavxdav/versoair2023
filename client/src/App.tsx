@@ -1,3 +1,4 @@
+
 import { Switch, Route, Link, useLocation, Redirect } from "wouter";
 import { Home as HomeIcon } from "lucide-react";
 import { queryClient } from "./lib/queryClient";
@@ -7,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
 import { AudioProvider } from "@/lib/audio-context";
+import AudioPlayer from "@/components/audio/AudioPlayer";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ArtistPortalRedirect from "@/components/ArtistPortalRedirect";
@@ -936,6 +938,9 @@ function App() {
                   <AudioProvider>
                     <NavigationProgress />
                     <AppContent />
+                    {/* Global "Now Playing" bar — renders itself only when a
+                        track is loaded. artist-portal.tsx depends on this. */}
+                    <AudioPlayer />
                     <InactivityGuard />
                     <Toaster />
                   </AudioProvider>
