@@ -796,6 +796,19 @@ router.post(
 // ═════════════════════════════════════════════════════════════════════
 router.get("/tracks/:id/stream", async (req, res) => {
   try {
+    // ── CORS for media ──────────────────────────────────────────────
+    // The player sets <audio crossOrigin="anonymous"> so it can route audio
+    // through the Web Audio API (analyser/gain). If the response has no
+    // Access-Control-Allow-Origin the media becomes CORS-tainted and
+    // createMediaElementSource() outputs SILENCE — the track appears to play
+    // but nothing is audible. Always echo the origin back for this endpoint.
+    const origin = req.headers.origin;
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    if (origin) res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Timing-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Expose-Headers", "Content-Range, Accept-Ranges, Content-Length");
+
     await ensureTrackColumns();
     const { id } = req.params;
 

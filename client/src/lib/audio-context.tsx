@@ -121,7 +121,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
-      audio.crossOrigin = "anonymous";
+      // NOTE: do NOT force crossOrigin here. Our stream endpoint is same-origin
+      // (/api/music/tracks/:id/stream), and setting crossOrigin="anonymous"
+      // makes the browser do a CORS check. If the response lacks
+      // Access-Control-Allow-Origin the media is tainted and the Web Audio
+      // graph (createMediaElementSource) plays SILENCE. crossOrigin is set
+      // per-track in playTrack() only when the source is truly cross-origin.
       audio.preload = "auto";
       // ── CRITICAL: preserve pitch at any playback speed ──
       // Without this, 0.75x sounds deep/slow and 1.5x sounds chipmunk-fast
@@ -301,6 +306,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         console.warn(`Track "${track.title}" has no audio file`);
         setIsLoading(false);
         return;
+      }
+
+      // Only opt into CORS mode for genuinely cross-origin sources, and do it
+      // BEFORE assigning src (the attribute is read when the load starts).
+      // Same-origin stream URLs must stay in no-CORS mode, otherwise a missing
+      // Access-Control-Allow-Origin taints the media and the Web Audio graph
+      // (createMediaElementSource) renders it completely silent.
+      const isCrossOrigin = /^https?:\/\//i.test(url)
+        ? new URL(url, window.location.href).origin !== window.location.origin
+        : false;
+      if (isCrossOrigin) {
+        audio.crossOrigin = "anonymous";
+      } else {
+        audio.removeAttribute("crossorigin");
       }
 
       audio.src = url;
