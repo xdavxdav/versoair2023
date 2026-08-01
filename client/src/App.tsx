@@ -694,7 +694,11 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Fixed Header Block: amber top bar (always) + scrolling ticker (conditional) ── */}
+      {/* ── Fixed Header Block: amber top bar (always) + scrolling ticker (conditional) ──
+          Hidden entirely on Musical Universe pages (/music/*, /artist-portal) — those
+          have their own dedicated navigation and this bar (BI platform banner, country
+          selector, GPS Services) doesn't belong there. */}
+      {!isMusicPage && (
       <div
         ref={headerRef}
         className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
@@ -796,6 +800,7 @@ function AppContent() {
             </Suspense>
           )}
       </div>
+      )}
       {/* Spacer for fixed header — always present, height auto-measured */}
       <div style={{ height: headerHeight }} />
 
