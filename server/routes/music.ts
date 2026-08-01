@@ -10,40 +10,12 @@ import { requireAuth } from "../middleware/auth";
 const router = Router();
 // Mounted at /api/music
 
-// ── Audio uploads directory ──────────────────────────────────────────
-// Pick a writable dir: prefer local ./uploads/tracks in dev, /tmp/uploads/tracks
-// otherwise (Render, Fly.io, most managed containers only allow writes to /tmp).
-// Falls back to /tmp if the preferred dir cannot be created/written.
-function resolveWritableDir(preferred: string, fallback: string): string {
-  const candidates = [preferred, fallback];
-  for (const dir of candidates) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-      fs.accessSync(dir, fs.constants.W_OK);
-      return dir;
-    } catch {
-      // try next
-    }
-  }
-  return fallback;
-}
-
-const isDev = process.env.NODE_ENV === "development";
-const TRACKS_DIR = resolveWritableDir(
-  isDev ? path.resolve("uploads", "tracks") : path.join("/tmp", "uploads", "tracks"),
-  path.join("/tmp", "uploads", "tracks"),
-);
-console.log(`🎵 [MUSIC] Track upload dir: ${TRACKS_DIR}`);
-
 // ── Multer config ────────────────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, TRACKS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `track-${uniqueSuffix}${ext}`);
-  },
-});
+// MEMORY storage: uploads are streamed into RAM then persisted straight into
+// Neon (music_tracks.audio_data BYTEA). Nothing is written to the container
+// filesystem, so Render's ephemeral/read-only disk can never break uploads and
+// tracks survive every redeploy (and stay editable from GeoAdmin).
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -401,8 +373,6 @@ router.post(
       }
 
       if (!title) {
-        // Clean up the uploaded file
-        fs.unlinkSync(file.path);
         return res
           .status(400)
           .json({ success: false, error: "Track title is required" });
@@ -414,7 +384,7 @@ router.post(
         genre || null,
         description || null,
         price,
-        file.path,
+        null, // file_path — audio lives in Neon (audio_data), not on disk
         file.originalname,
         file.size,
         file.mimetype,
@@ -466,35 +436,38 @@ router.post(
       // Persist cover art (pochette) as data-URI if provided
       if (coverImgFile) {
         try {
-          const buf = fs.readFileSync(coverImgFile.path);
-          const dataUri = `data:${coverImgFile.mimetype};base64,${buf.toString("base64")}`;
+          const dataUri = `data:${coverImgFile.mimetype};base64,${coverImgFile.buffer.toString("base64")}`;
           await pool.query(
             "UPDATE music_tracks SET pochette = $1, cover_art = COALESCE(cover_art, $1) WHERE id = $2",
             [dataUri, result.rows[0].id],
           );
-          // best-effort cleanup of temp cover file
-          try {
-            fs.unlinkSync(coverImgFile.path);
-          } catch {}
         } catch (e: any) {
           console.warn(`⚠️ [MUSIC] Cover persist failed: ${e.message}`);
         }
       }
 
-      // Persist audio binary into DB so it survives Render's ephemeral /tmp wipe
+      // Persist audio binary into Neon — this IS the storage, not the disk.
+      // If it fails the track is unplayable, so roll back the row and report it.
       try {
-        const audioBuffer = fs.readFileSync(file.path);
         await pool.query(
           "UPDATE music_tracks SET audio_data = $1 WHERE id = $2",
-          [audioBuffer, result.rows[0].id],
+          [file.buffer, result.rows[0].id],
         );
         console.log(
-          `🎵 [MUSIC] Track uploaded + persisted to DB: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
+          `🎵 [MUSIC] Track persisted to Neon: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`,
         );
       } catch (persistErr: any) {
-        console.warn(
-          `⚠️ [MUSIC] Track uploaded to disk but DB persist failed: ${persistErr.message}`,
+        console.error(
+          `❌ [MUSIC] Audio persist to Neon failed: ${persistErr.message}`,
         );
+        await pool
+          .query("DELETE FROM music_tracks WHERE id = $1", [result.rows[0].id])
+          .catch(() => {});
+        return res.status(500).json({
+          success: false,
+          error: "Could not save audio to the database. Please try again.",
+          details: persistErr.message,
+        });
       }
       res.json({ success: true, data: result.rows[0] });
     } catch (error: any) {
@@ -1112,21 +1085,18 @@ router.put(
         [parseInt(id)],
       );
       if (!existing.rows.length) {
-        fs.unlinkSync(file.path);
         return res
           .status(404)
           .json({ success: false, error: "Track not found" });
       }
 
-      // Read file buffer and persist to DB + update file metadata
-      const audioBuffer = fs.readFileSync(file.path);
+      // Persist the in-memory buffer straight into Neon + update file metadata
       await pool.query(
         `UPDATE music_tracks
-         SET audio_data = $1, file_path = $2, file_name = $3, file_size = $4, mime_type = $5
-         WHERE id = $6`,
+         SET audio_data = $1, file_path = NULL, file_name = $2, file_size = $3, mime_type = $4
+         WHERE id = $5`,
         [
-          audioBuffer,
-          file.path,
+          file.buffer,
           file.originalname,
           file.size,
           file.mimetype,
