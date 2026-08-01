@@ -95,6 +95,7 @@ import {
   deleteTrack,
   useInvalidateTracks,
 } from "@/hooks/use-music";
+import { useAudio } from "@/lib/audio-context";
 
 /* ─── Track type ─── */
 interface Track {
@@ -209,6 +210,38 @@ export default function MusicVault() {
   const { data: myArtist } = useMyArtist();
   const invalidateTracks = useInvalidateTracks();
   const queryClient = useQueryClient();
+  const audio = useAudio();
+
+  const isCurrentTrack = useCallback(
+    (track: Track) => audio.currentTrack?.id === track.id,
+    [audio.currentTrack],
+  );
+
+  const handlePlayTrack = useCallback(
+    (track: Track) => {
+      const hasAudio =
+        !!track.has_audio_data || !!(track as any).file_path;
+      if (!hasAudio) {
+        console.warn(`[Vault] "${track.title}" has no audio uploaded yet`);
+        return;
+      }
+      if (isCurrentTrack(track)) {
+        audio.togglePlay();
+        return;
+      }
+      audio.playTrack({
+        id: track.id,
+        title: track.title,
+        duration: track.duration || 0,
+        artist_name: track.artist_name || myArtist?.stageName,
+        genre: track.genre || null,
+        file_path: (track as any).file_path || "uploaded",
+        has_pochette: track.has_pochette,
+        cover_art: track.cover_art || null,
+      } as any);
+    },
+    [audio, isCurrentTrack, myArtist?.stageName],
+  );
 
   // Fetch user's tracks - try multiple endpoints
   const {
@@ -631,8 +664,16 @@ export default function MusicVault() {
                     <Button
                       size="icon"
                       className="bg-purple-500 hover:bg-purple-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayTrack(track);
+                      }}
                     >
-                      <Play className="w-5 h-5" />
+                      {isCurrentTrack(track) && audio.isPlaying ? (
+                        <Pause className="w-5 h-5" />
+                      ) : (
+                        <Play className="w-5 h-5" />
+                      )}
                     </Button>
                   </div>
                   {track.status !== "published" && (
@@ -718,6 +759,18 @@ export default function MusicVault() {
                     <td className="p-4 text-white/40">{index + 1}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-10 w-10 flex-shrink-0 text-white/70 hover:text-white"
+                          onClick={() => handlePlayTrack(track)}
+                        >
+                          {isCurrentTrack(track) && audio.isPlaying ? (
+                            <Pause className="w-5 h-5" />
+                          ) : (
+                            <Play className="w-5 h-5" />
+                          )}
+                        </Button>
                         <div className="w-10 h-10 rounded bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
                           {track.has_pochette ? (
                             <img
