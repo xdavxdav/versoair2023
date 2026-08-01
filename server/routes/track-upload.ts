@@ -25,25 +25,31 @@ const router = Router();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UPLOAD DIRECTORY — Local storage (swap to S3/R2 SDK when ready)
-// Production (Render): /tmp is the only writable directory
+// Managed containers (Render, Fly.io, etc.) only allow writes to /tmp.
+// Fall back to /tmp if the preferred dir isn't writable.
 // ═══════════════════════════════════════════════════════════════════════════════
-const UPLOAD_DIR =
-  process.env.NODE_ENV === "production"
-    ? path.join("/tmp", "uploads", "tracks")
-    : path.resolve("uploads", "tracks");
-const COVER_DIR =
-  process.env.NODE_ENV === "production"
-    ? path.join("/tmp", "uploads", "covers")
-    : path.resolve("uploads", "covers");
-
-// Ensure dirs exist
-try {
-  [UPLOAD_DIR, COVER_DIR].forEach((dir) => {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  });
-} catch (err: any) {
-  console.warn(`⚠️  Could not create upload dirs: ${err.message}`);
+function resolveWritableDir(preferred: string, fallback: string): string {
+  for (const dir of [preferred, fallback]) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch {
+      /* try next */
+    }
+  }
+  return fallback;
 }
+const isDev = process.env.NODE_ENV === "development";
+const UPLOAD_DIR = resolveWritableDir(
+  isDev ? path.resolve("uploads", "tracks") : path.join("/tmp", "uploads", "tracks"),
+  path.join("/tmp", "uploads", "tracks"),
+);
+const COVER_DIR = resolveWritableDir(
+  isDev ? path.resolve("uploads", "covers") : path.join("/tmp", "uploads", "covers"),
+  path.join("/tmp", "uploads", "covers"),
+);
+console.log(`🎵 [UPLOAD] audio=${UPLOAD_DIR} cover=${COVER_DIR}`);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MULTER CONFIG

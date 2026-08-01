@@ -11,18 +11,29 @@ const router = Router();
 // Mounted at /api/music
 
 // ── Audio uploads directory ──────────────────────────────────────────
-const TRACKS_DIR =
-  process.env.NODE_ENV === "production"
-    ? path.join("/tmp", "uploads", "tracks")
-    : path.resolve("uploads", "tracks");
-
-try {
-  if (!fs.existsSync(TRACKS_DIR)) {
-    fs.mkdirSync(TRACKS_DIR, { recursive: true });
+// Pick a writable dir: prefer local ./uploads/tracks in dev, /tmp/uploads/tracks
+// otherwise (Render, Fly.io, most managed containers only allow writes to /tmp).
+// Falls back to /tmp if the preferred dir cannot be created/written.
+function resolveWritableDir(preferred: string, fallback: string): string {
+  const candidates = [preferred, fallback];
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch {
+      // try next
+    }
   }
-} catch (err: any) {
-  console.warn(`⚠️  Could not create tracks dir (${TRACKS_DIR}):`, err.message);
+  return fallback;
 }
+
+const isDev = process.env.NODE_ENV === "development";
+const TRACKS_DIR = resolveWritableDir(
+  isDev ? path.resolve("uploads", "tracks") : path.join("/tmp", "uploads", "tracks"),
+  path.join("/tmp", "uploads", "tracks"),
+);
+console.log(`🎵 [MUSIC] Track upload dir: ${TRACKS_DIR}`);
 
 // ── Multer config ────────────────────────────────────────────────────
 const storage = multer.diskStorage({
