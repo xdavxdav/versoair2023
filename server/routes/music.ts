@@ -38,6 +38,15 @@ const upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
   fileFilter: (_req, file, cb) => {
+    // Cover art field — accept common images
+    if (file.fieldname === "pochette" || file.fieldname === "cover") {
+      const okImg =
+        /^image\/(jpeg|jpg|png|webp|avif|gif)$/i.test(file.mimetype) ||
+        /\.(jpe?g|png|webp|avif|gif)$/i.test(file.originalname);
+      return okImg
+        ? cb(null, true)
+        : cb(new Error(`Unsupported cover image: ${file.mimetype}`));
+    }
     const allowed = [
       "audio/mpeg",
       "audio/mp3",
@@ -307,12 +316,35 @@ router.get("/my-artist", requireAuth(), async (req, res) => {
 router.post(
   "/tracks/upload",
   requireAuth(),
-  upload.single("audio"),
+  (req, res, next) => {
+    const handler = upload.fields([
+      { name: "audio", maxCount: 1 },
+      { name: "pochette", maxCount: 1 },
+      { name: "cover", maxCount: 1 },
+    ]);
+    handler(req, res, (err: any) => {
+      if (err instanceof multer.MulterError) {
+        return res
+          .status(400)
+          .json({ success: false, error: `Upload error: ${err.message}` });
+      }
+      if (err) {
+        return res
+          .status(400)
+          .json({ success: false, error: err.message || "Upload rejected" });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     try {
       await ensureTrackColumns();
 
-      const file = req.file;
+      const files = req.files as
+        | Record<string, Express.Multer.File[]>
+        | undefined;
+      const file = files?.audio?.[0];
+      const coverImgFile = files?.pochette?.[0] || files?.cover?.[0];
       if (!file) {
         return res
           .status(400)
@@ -417,6 +449,24 @@ router.post(
           result = await pool.query(insertSQL, insertParams);
         } else {
           throw insertErr;
+        }
+      }
+
+      // Persist cover art (pochette) as data-URI if provided
+      if (coverImgFile) {
+        try {
+          const buf = fs.readFileSync(coverImgFile.path);
+          const dataUri = `data:${coverImgFile.mimetype};base64,${buf.toString("base64")}`;
+          await pool.query(
+            "UPDATE music_tracks SET pochette = $1, cover_art = COALESCE(cover_art, $1) WHERE id = $2",
+            [dataUri, result.rows[0].id],
+          );
+          // best-effort cleanup of temp cover file
+          try {
+            fs.unlinkSync(coverImgFile.path);
+          } catch {}
+        } catch (e: any) {
+          console.warn(`⚠️ [MUSIC] Cover persist failed: ${e.message}`);
         }
       }
 

@@ -136,8 +136,8 @@ app.use(
 app.use(cookieParser());
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // ─── CSRF protection ──────────────────────────────────────────────────────────
 app.use(csrfSetCookie);
@@ -247,14 +247,17 @@ app.use((req, res, next) => {
   // (like /auth/signin, /dashboard, etc.) and serves index.html
   if (app.get("env") === "development") {
     const { setupVite } = await import("./vite");
-    await setupVite(app, server, 'vite.music.config.ts');
+    await setupVite(app, server, "vite.music.config.ts");
   } else {
     serveStatic(app);
   }
 
   // ---------- START SERVER ----------
   // On Render: PORT is injected automatically. Locally use MUSIC_PORT to avoid clashing with main server.
-  const port = parseInt(process.env.MUSIC_PORT || process.env.PORT || "5004", 10);
+  const port = parseInt(
+    process.env.MUSIC_PORT || process.env.PORT || "5004",
+    10,
+  );
 
   server.listen(
     {

@@ -15,6 +15,22 @@ export function errorHandler(
 ) {
   log.error("Unhandled request error:", err);
 
+  // Payload too large (e.g. base64 cover art / body-parser limit exceeded)
+  if (
+    err.type === "entity.too.large" ||
+    err.status === 413 ||
+    err.statusCode === 413
+  ) {
+    return res.status(413).json({
+      success: false,
+      status: 413,
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "File or request body is too large. Try a smaller image/file.",
+      },
+    });
+  }
+
   // Database errors
   if (err.code?.startsWith("42")) {
     return res.status(500).json({
@@ -66,7 +82,7 @@ export function errorHandler(
   }
 
   // Generic error
-  const statusCode = err.statusCode || 500;
+  const statusCode = err.statusCode || err.status || 500;
   const message = err.message || "Internal server error";
 
   res.status(statusCode).json({
