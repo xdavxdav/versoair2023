@@ -249,7 +249,12 @@ export default function MusicVault() {
     isLoading: tracksLoading,
     refetch: refetchTracks,
   } = useQuery({
-    queryKey: ["vault-tracks", user?.id],
+    // IMPORTANT: myArtist?.id must be in the key. The queryFn reads myArtist
+    // from render scope but on a hard reload it starts as undefined and
+    // resolves a moment later; without it in the key, react-query caches the
+    // empty-tracks result under ["vault-tracks", user.id] before myArtist
+    // loads and never re-runs — tracks silently vanish after refresh.
+    queryKey: ["vault-tracks", user?.id, myArtist?.id],
     queryFn: async () => {
       // Try /api/upload/my-tracks first (portal upload system)
       try {

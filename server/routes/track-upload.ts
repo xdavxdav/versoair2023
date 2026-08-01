@@ -42,11 +42,15 @@ function resolveWritableDir(preferred: string, fallback: string): string {
 }
 const isDev = process.env.NODE_ENV === "development";
 const UPLOAD_DIR = resolveWritableDir(
-  isDev ? path.resolve("uploads", "tracks") : path.join("/tmp", "uploads", "tracks"),
+  isDev
+    ? path.resolve("uploads", "tracks")
+    : path.join("/tmp", "uploads", "tracks"),
   path.join("/tmp", "uploads", "tracks"),
 );
 const COVER_DIR = resolveWritableDir(
-  isDev ? path.resolve("uploads", "covers") : path.join("/tmp", "uploads", "covers"),
+  isDev
+    ? path.resolve("uploads", "covers")
+    : path.join("/tmp", "uploads", "covers"),
   path.join("/tmp", "uploads", "covers"),
 );
 console.log(`🎵 [UPLOAD] audio=${UPLOAD_DIR} cover=${COVER_DIR}`);
@@ -376,7 +380,9 @@ router.get("/my-tracks", requireAuth(), async (req: Request, res: Response) => {
     const tracks = await pool.query(
       `SELECT id, title, genre, mood, bpm, musical_key, streams, play_count, likes,
               downloads, revenue, status, audio_url, cover_art, duration,
-              file_name, file_size, is_explicit, created_at
+              file_name, file_size, is_explicit, created_at, file_path,
+              (audio_data IS NOT NULL) AS has_audio_data,
+              (pochette IS NOT NULL) AS has_pochette
        FROM music_tracks
        WHERE artist_id = $1
        ORDER BY created_at DESC`,
