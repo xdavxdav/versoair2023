@@ -807,7 +807,10 @@ router.get("/tracks/:id/stream", async (req, res) => {
     if (origin) res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Vary", "Origin");
     res.setHeader("Timing-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Expose-Headers", "Content-Range, Accept-Ranges, Content-Length");
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Accept-Ranges, Content-Length",
+    );
 
     await ensureTrackColumns();
     const { id } = req.params;

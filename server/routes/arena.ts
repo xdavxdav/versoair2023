@@ -989,15 +989,19 @@ router.post(
 
       let awardedCount = 0;
 
-      for (const voter of votersResult.rows) {
-        // Check if already awarded
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'prediction_correct'`,
-          [voter.user_id, contestId],
-        );
+      // Pre-fetch everyone who already has this reward in ONE query instead of
+      // issuing a SELECT per voter inside the loop.
+      const alreadyAwarded = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'prediction_correct'`,
+        [contestId],
+      );
+      const awardedUserIds = new Set<number>(
+        alreadyAwarded.rows.map((r: any) => r.user_id),
+      );
 
-        if (existing.rows.length === 0) {
+      for (const voter of votersResult.rows) {
+        if (!awardedUserIds.has(voter.user_id)) {
           // Award prediction XP
           await pool
             .query(
@@ -1050,14 +1054,25 @@ router.post(
       );
 
       let underdogCount = 0;
-      for (const underdog of underdogResult.rows) {
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'underdog'`,
-          [underdog.user_id, contestId],
-        );
 
-        if (existing.rows.length === 0) {
+      // Same pre-fetch strategy as above — one query rather than one per row.
+      const alreadyUnderdog = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'underdog'`,
+        [contestId],
+      );
+      const underdogUserIds = new Set<number>(
+        alreadyUnderdog.rows.map((r: any) => r.user_id),
+      );
+
+      for (const underdog of underdogResult.rows) {
+        if (!underdogUserIds.has(underdog.user_id)) {
+          // The source query is DISTINCT on (user_id, artist_profile_id), so a
+          // user backing several eliminated artists appears more than once.
+          // Mark them immediately to keep the original one-reward-per-user
+          // behaviour that the old per-iteration SELECT provided.
+          underdogUserIds.add(underdog.user_id);
+
           await pool
             .query(
               `INSERT INTO listener_stats (user_id, total_points)

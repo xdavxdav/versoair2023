@@ -592,7 +592,10 @@ export default function UsersControlPanel() {
         );
         if (!newRole) return;
         const ok = await tryAction(
-          `/api/v1/admin/security/users/${userId}/role`,
+          // Route is /users/:id/change-role — /users/:id/role does not exist
+          // and 404'd every time, silently falling through to the legacy
+          // /auth/admin/change-role endpoint below.
+          `/api/v1/admin/security/users/${userId}/change-role`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

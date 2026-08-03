@@ -45,6 +45,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import { useMyArtist } from "@/hooks/use-music";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { PaymentTopBanner } from "@/components/PaymentTopBanner";
 import { PaymentLogo } from "@/components/PaymentLogos";
@@ -184,38 +185,66 @@ export default function MusicDashboard() {
   const { isArtist, userTier, isPremium, canAccessVault, canAccessAnalytics } =
     useMusicAccess();
 
-  // Dashboard stats
+  // Dashboard stats.
+  // NOTE: /api/streaming/dashboard-stats does not exist — the real endpoint is
+  // /api/streaming/artist/:id/dashboard, which returns { artist, ... } with
+  // aggregate counts on the artist row.
+  const { data: myArtist } = useMyArtist();
   const { data: statsData } = useQuery({
-    queryKey: ["music-dashboard-stats"],
+    queryKey: ["music-dashboard-stats", myArtist?.id],
     queryFn: async () => {
-      const res = await fetch("/api/streaming/dashboard-stats", {
-        credentials: "include",
-      });
+      if (!myArtist?.id) return null;
+      const res = await fetch(
+        `/api/streaming/artist/${myArtist.id}/dashboard`,
+        { credentials: "include" },
+      );
       if (!res.ok) return null;
-      return res.json();
+      const data = await res.json();
+      const a = data?.artist ?? {};
+      const streams = Number(a.total_streams) || 0;
+      return {
+        streams,
+        totalPlays: streams,
+        tracks: Number(a.track_count) || 0,
+        followers: Number(a.follower_count) || 0,
+        // Not exposed by this endpoint — kept at 0 rather than invented.
+        earnings: 0,
+        pendingRequests: 0,
+        upcomingReleases: 0,
+        totalArtists: 0,
+        savedTracks: 0,
+        favorites: 0,
+      };
     },
-    enabled: !!user,
+    enabled: !!user && !!myArtist?.id,
   });
 
-  // Recent activity
+  // Recent activity — /api/streaming/recent-plays does not exist; the listening
+  // history endpoint is /api/streaming/history and returns { history: [...] }.
   const { data: recentActivity } = useQuery({
     queryKey: ["music-recent-activity"],
     queryFn: async () => {
-      const res = await fetch("/api/streaming/recent-plays?limit=5", {
+      const res = await fetch("/api/streaming/history", {
         credentials: "include",
       });
       if (!res.ok) return { plays: [] };
-      return res.json();
+      const data = await res.json();
+      return { plays: (data?.history ?? []).slice(0, 5) };
     },
     enabled: !!user,
   });
 
   const stats = statsData || {
     streams: 0,
+    totalPlays: 0,
     tracks: 0,
     followers: 0,
     earnings: 0,
     pendingRequests: 0,
+    upcomingReleases: 0,
+    totalArtists: 0,
+    savedTracks: 0,
+    favorites: 0,
   };
 
   return (
@@ -584,9 +613,9 @@ export default function MusicDashboard() {
               <h3 className="font-semibold text-white">Recent Activity</h3>
             </div>
 
-            {recentActivity?.plays?.length > 0 ? (
+            {(recentActivity?.plays?.length ?? 0) > 0 ? (
               <div className="space-y-3">
-                {recentActivity.plays
+                {recentActivity!.plays
                   .slice(0, 5)
                   .map((play: any, i: number) => (
                     <div key={i} className="flex items-center gap-3">

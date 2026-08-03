@@ -1243,6 +1243,8 @@ const INDEX_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS music_tracks_artist_idx ON music_tracks (artist_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_album_idx ON music_tracks (album_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_genre_idx ON music_tracks (genre)`,
+  // Browse/streaming queries filter on status ('published') and sort by newest.
+  `CREATE INDEX IF NOT EXISTS music_tracks_status_created_idx ON music_tracks (status, created_at DESC)`,
   // connections
   `CREATE INDEX IF NOT EXISTS connections_status_idx ON connections (status)`,
   `CREATE INDEX IF NOT EXISTS connections_requester_idx ON connections (requester_id)`,

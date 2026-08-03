@@ -132,30 +132,51 @@ router.post(
         method: string;
       }> = [];
 
-      for (const biz of businessResult.rows) {
-        // Store notification in database
+      // Build every notification row up front and insert them in ONE statement
+      // instead of issuing an INSERT per matched business.
+      // NOTE: businesses with no owner are skipped — notifications.user_id is
+      // NOT NULL, so those rows could never be inserted anyway.
+      const notificationRows = businessResult.rows
+        .filter((biz: any) => biz.owner_id != null)
+        .map((biz: any) => ({
+          userId: biz.owner_id,
+          title: `🚨 Emergency Request — ${biz.name}`,
+          data: JSON.stringify({
+            businessId: biz.id,
+            contactPhone,
+            contactEmail,
+            location,
+            urgency: "emergency",
+            sentAt: new Date().toISOString(),
+          }),
+        }));
+
+      if (notificationRows.length > 0) {
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, metadata, created_at)
-             VALUES ($1, 'emergency_alert', $2, $3, $4, NOW())`,
+            `INSERT INTO notifications (user_id, type, title, message, data, created_at)
+             SELECT u.user_id, 'emergency_alert', u.title, u.message, u.data, NOW()
+             FROM UNNEST($1::int[], $2::text[], $3::text[], $4::jsonb[])
+               AS u(user_id, title, message, data)`,
             [
-              biz.owner_id ?? null,
-              `🚨 Emergency Request — ${biz.name}`,
-              message,
-              JSON.stringify({
-                businessId: biz.id,
-                contactPhone,
-                contactEmail,
-                location,
-                urgency: "emergency",
-                sentAt: new Date().toISOString(),
-              }),
+              notificationRows.map((r) => r.userId),
+              notificationRows.map((r) => r.title),
+              notificationRows.map(() => message),
+              notificationRows.map((r) => r.data),
             ],
           );
-        } catch {
-          // notifications table might not exist yet — non-blocking
+        } catch (err) {
+          // Non-blocking: the alert response still goes out. Log it though —
+          // this used to be swallowed silently by a bare `catch {}`, which hid
+          // the fact that the column was misnamed and NO alert was ever stored.
+          console.error(
+            "[intent-search] failed to persist emergency notifications:",
+            err,
+          );
         }
+      }
 
+      for (const biz of businessResult.rows) {
         notified.push({
           businessId: biz.id,
           businessName: biz.name,

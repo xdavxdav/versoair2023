@@ -293,6 +293,21 @@ export default function AudioPlayer() {
     );
   }, [audio.currentTrack]);
 
+  // Reserve space at the bottom of the document while the docked bar is shown.
+  // The bar is `position: fixed`, so without this it overlaps the last rows of
+  // page content (footers, list items, action buttons become unclickable).
+  // Height = 12px progress scrubber + 64px control row.
+  useEffect(() => {
+    const docked = !!audio.currentTrack && !tiroirMode;
+    const previous = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = docked
+      ? "var(--audio-player-height, 76px)"
+      : "";
+    return () => {
+      document.body.style.paddingBottom = previous;
+    };
+  }, [audio.currentTrack, tiroirMode]);
+
   // Fallback click handler (drag handlers are primary for the bottom/expanded bars)
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {

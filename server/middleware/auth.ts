@@ -7,6 +7,13 @@ import * as schema from "@shared/schema";
 
 export interface AuthUser {
   userId: string;
+  /**
+   * Alias of `userId`. Large parts of the route layer (streaming.ts, wallet.ts,
+   * paypal.ts, games.ts, music.ts, ...) read `req.user.id`, which silently
+   * evaluated to `undefined` because only `userId` was ever set. Both are
+   * populated from the same JWT claim so the two can never disagree.
+   */
+  id: string;
   email: string;
   role:
     | "admin"
@@ -230,6 +237,7 @@ export async function globalAuthGate(
 
     req.user = {
       userId: decoded.userId,
+      id: decoded.userId,
       email: decoded.email,
       role: decoded.role,
     };
@@ -273,6 +281,7 @@ export function requireAuth(allowedRoles?: string[]) {
 
       const user: AuthUser = {
         userId: decoded.userId,
+        id: decoded.userId,
         email: decoded.email,
         role: decoded.role,
       };
@@ -314,7 +323,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
     const token = extractToken(req);
     if (token) {
       const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
-      req.user = decoded;
+      req.user = { ...decoded, id: decoded.userId };
     }
     next();
   } catch {

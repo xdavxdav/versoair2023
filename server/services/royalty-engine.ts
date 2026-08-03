@@ -234,18 +234,25 @@ export async function distributeWeeklyPool(
         // Also insert notification
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               artist.user_id,
               "royalty_payout",
               `💰 Weekly Earnings: $${totalEarnings.toFixed(2)}`,
               `Week ${weekNumber}: Guaranteed $${guaranteedAmount.toFixed(2)} + Performance $${performanceAmount.toFixed(2)}${badgeBonus > 0 ? ` + Badge Bonus $${badgeBonus.toFixed(2)}` : ""}. Rank #${globalRank}.`,
-              "/artist-portal/dashboard?tab=royalties",
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties",
+              }),
             ],
           );
         } catch (e) {
-          // Skip if notifications table missing
+          // Non-blocking, but log it — this insert previously targeted a
+          // non-existent `action_url` column and failed on every payout.
+          console.error(
+            "[royalty-engine] failed to persist payout notification:",
+            e,
+          );
         }
       }
     }

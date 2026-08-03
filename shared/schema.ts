@@ -440,6 +440,12 @@ export const musicTracks = pgTable(
     artistIdx: index("music_tracks_artist_idx").on(t.artistId),
     albumIdx: index("music_tracks_album_idx").on(t.albumId),
     genreIdx: index("music_tracks_genre_idx").on(t.genre),
+    // `status` is the most common filter in browse/streaming queries
+    // (WHERE status = 'published'), usually ordered by newest first.
+    statusCreatedIdx: index("music_tracks_status_created_idx").on(
+      t.status,
+      t.createdAt,
+    ),
   }),
 );
 

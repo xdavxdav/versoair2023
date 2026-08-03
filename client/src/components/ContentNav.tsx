@@ -220,7 +220,9 @@ function SmartSearch({ onClose }: { onClose: () => void }) {
       setLoading(true);
       try {
         const endpoints: Record<SearchTab, string> = {
-          people: `/api/artists?search=${encodeURIComponent(query)}&limit=6`,
+          // artistsRouter exposes /search (param: `query`) — there is no
+          // GET /api/artists collection route, so the bare path 404s.
+          people: `/api/artists/search?query=${encodeURIComponent(query)}&limit=6`,
           merch: `/api/businesses?search=${encodeURIComponent(query)}&limit=6`,
           posts: `/api/blog?search=${encodeURIComponent(query)}&limit=6`,
           videos: `/api/tracks?search=${encodeURIComponent(query)}&limit=6`,

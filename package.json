@@ -10,6 +10,7 @@
     "build:music": "vite build -c vite.music.config.ts && esbuild server/index-music.ts --platform=node --packages=external --bundle --format=esm --splitting --external:./server/vite --external:../vite.music.config --outdir=dist-music",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
+    "check:api": "node scripts/check-api-contract.cjs",
     "db:push": "drizzle-kit push --force",
     "db:seed-streaming": "node _seed_streaming_data.cjs",
     "db:seed-streaming:reset": "node _seed_streaming_data.cjs --reset",

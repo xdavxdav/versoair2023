@@ -1,34 +1,103 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
+import jwt from "jsonwebtoken";
 import { notificationEmitter } from "../services/notification-service";
 
 let io: SocketIOServer | null = null;
 const userConnections = new Map<number, string[]>(); // userId -> [socketIds]
 
+/**
+ * Mirrors the HTTP CORS allowlist in server/index.ts so socket origins can't
+ * drift from the app's. In production CORS_ORIGIN is authoritative.
+ */
+function socketAllowedOrigins(): string[] {
+  return process.env.NODE_ENV === "production"
+    ? (process.env.CORS_ORIGIN || "")
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : [
+        "http://localhost:5003",
+        "http://localhost:5004",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://localhost:5173",
+      ];
+}
+
+/** Reads a cookie value out of a raw `Cookie` header. */
+function cookieFromHeader(
+  header: string | undefined,
+  name: string,
+): string | null {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() === name) {
+      return decodeURIComponent(part.slice(idx + 1).trim());
+    }
+  }
+  return null;
+}
+
+/**
+ * Verifies the JWT presented on the socket handshake and returns the numeric
+ * user id. The token is the ONLY source of identity — a client-supplied
+ * userId is never trusted, otherwise any connected socket could join another
+ * user's notification room and read their private notifications.
+ */
+function authenticateHandshake(socket: Socket): number | null {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+
+  const handshakeToken = socket.handshake.auth?.token;
+  const token =
+    (typeof handshakeToken === "string" && handshakeToken) ||
+    cookieFromHeader(socket.handshake.headers.cookie, "auth_token");
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.verify(token, secret) as { userId?: string | number };
+    const userId = Number(decoded?.userId);
+    return Number.isFinite(userId) ? userId : null;
+  } catch {
+    return null;
+  }
+}
+
 export function initializeSocket(server: HTTPServer): SocketIOServer {
   io = new SocketIOServer(server, {
     cors: {
-      origin: [
-        "http://localhost:5003", // Single port for frontend + backend
-        "http://localhost:3000",
-        process.env.PRODUCTION_URL || "http://localhost:5003",
-      ],
+      origin: socketAllowedOrigins(),
       credentials: true,
       methods: ["GET", "POST"],
     },
     transports: ["websocket", "polling"],
   });
 
+  // ---------- HANDSHAKE AUTH ----------
+  // Unauthenticated sockets are still allowed to connect (public broadcasts
+  // like job_posted are not user-scoped), but they get no verified identity
+  // and therefore can never join a `user_*` room.
+  io.use((socket, next) => {
+    socket.data.userId = authenticateHandshake(socket);
+    next();
+  });
+
   // ---------- CONNECTION HANDLERS ----------
   io.on("connection", (socket: Socket) => {
-    console.log(`[SOCKET] User connected: ${socket.id}`);
+    const userId: number | null = socket.data.userId ?? null;
+    console.log(
+      `[SOCKET] Connected: ${socket.id} (user: ${userId ?? "anonymous"})`,
+    );
 
-    // User joins their personal notification room
-    socket.on("user_auth", (userId: number) => {
+    // Join the personal notification room automatically, using the identity
+    // proven by the JWT. No client event is required or trusted for this.
+    if (userId !== null) {
       const roomName = `user_${userId}`;
       socket.join(roomName);
 
-      // Track this connection
       const connections = userConnections.get(userId) || [];
       connections.push(socket.id);
       userConnections.set(userId, connections);
@@ -37,12 +106,32 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
         `[SOCKET] User ${userId} joined room ${roomName} (socket ${socket.id})`,
       );
 
-      // Emit confirmation
-      socket.emit("auth_confirmed", { userId, roomName });
+      socket.emit("authenticated", { userId, roomName });
+      socket.emit("auth_confirmed", { userId, roomName }); // legacy event name
+    } else {
+      socket.emit("unauthenticated", {
+        message: "No valid session — only public broadcasts will be received.",
+      });
+    }
+
+    // Legacy no-ops: identity is established at handshake time. These remain so
+    // older clients emitting them don't error, but the payload is ignored.
+    socket.on("authenticate", () => {
+      if (socket.data.userId !== null && socket.data.userId !== undefined) {
+        socket.emit("authenticated", { userId: socket.data.userId });
+      }
+    });
+    socket.on("user_auth", () => {
+      if (socket.data.userId !== null && socket.data.userId !== undefined) {
+        socket.emit("auth_confirmed", { userId: socket.data.userId });
+      }
     });
 
     // Game room: player joins a match room for real-time PvP sync
     socket.on("join_game_room", (data: { room: string }) => {
+      if (socket.data.userId === null || socket.data.userId === undefined) {
+        return; // authenticated users only
+      }
       if (data?.room && data.room.startsWith("game_")) {
         socket.join(data.room);
         console.log(`[SOCKET] ${socket.id} joined game room ${data.room}`);

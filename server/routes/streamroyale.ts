@@ -540,18 +540,26 @@ async function checkBadgeMilestone(artistProfileId: number) {
         // Also insert into notifications table
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               user_id,
               "badge_unlocked",
               `🏆 Badge Unlocked: ${badge.name}!`,
               `You've reached ${streams.toLocaleString()} lifetime streams!`,
-              "/artist-portal/dashboard?tab=royalties",
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties",
+              }),
             ],
           );
         } catch (e) {
-          // Skip if notifications table missing
+          // Non-blocking, but log it — this insert previously targeted a
+          // non-existent `action_url` column and failed on every badge unlock
+          // without anyone noticing.
+          console.error(
+            "[streamroyale] failed to persist badge notification:",
+            e,
+          );
         }
       }
 

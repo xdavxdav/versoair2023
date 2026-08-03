@@ -77,7 +77,10 @@ router.get("/tracks", async (req: Request, res: Response) => {
         a.title as album_title, a.cover_art as album_cover,
         COALESCE(
           (SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0
-        ) as like_count
+        ) as like_count,
+        COALESCE(
+          (SELECT COUNT(*) FROM track_comments tc WHERE tc.track_id = mt.id), 0
+        ) as comment_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
@@ -1774,21 +1777,42 @@ router.get("/track/:id/thread", async (req: Request, res: Response) => {
       [trackId, limit, offset],
     );
 
-    // Get replies for each comment (max 3 per comment initially)
-    const commentsWithReplies = await Promise.all(
-      comments.rows.map(async (comment: any) => {
-        const replies = await pool.query(
-          `SELECT tc.*, u.username, u.display_name, u.avatar_url
+    // Get replies for each comment (max 3 per comment initially).
+    // Fetched in ONE query with a window function instead of one query per
+    // comment — a page of 50 comments used to issue 50 extra round-trips.
+    const parentIds = comments.rows.map((c: any) => c.id);
+    const repliesByParent = new Map<number, any[]>();
+
+    if (parentIds.length > 0) {
+      const replies = await pool.query(
+        `SELECT * FROM (
+           SELECT tc.*, u.username, u.display_name, u.avatar_url,
+             ROW_NUMBER() OVER (
+               PARTITION BY tc.parent_id ORDER BY tc.created_at ASC
+             ) AS rn
            FROM track_comments tc
            JOIN users u ON tc.user_id = u.id
-           WHERE tc.parent_id = $1
-           ORDER BY tc.created_at ASC
-           LIMIT 3`,
-          [comment.id],
-        );
-        return { ...comment, replies: replies.rows };
-      }),
-    );
+           WHERE tc.parent_id = ANY($1::int[])
+         ) ranked
+         WHERE ranked.rn <= 3
+         ORDER BY ranked.parent_id, ranked.created_at ASC`,
+        [parentIds],
+      );
+
+      for (const reply of replies.rows) {
+        const bucket = repliesByParent.get(reply.parent_id);
+        if (bucket) {
+          bucket.push(reply);
+        } else {
+          repliesByParent.set(reply.parent_id, [reply]);
+        }
+      }
+    }
+
+    const commentsWithReplies = comments.rows.map((comment: any) => ({
+      ...comment,
+      replies: repliesByParent.get(comment.id) ?? [],
+    }));
 
     // Get total comment count
     const countResult = await pool.query(

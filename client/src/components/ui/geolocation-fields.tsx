@@ -632,7 +632,10 @@ export async function detectUserLocation(): Promise<GeoCoords | null> {
   // Try IP-based geolocation FIRST because it gives us country + city too
   const ipProviders = [
     {
-      url: "/api/geo/ip",
+      // Our own endpoint (server/routes/businesses.ts) — /api/geo/ip does not
+      // exist and used to 404, silently pushing every user onto the
+      // third-party fallbacks below (slower, and leaks the client IP).
+      url: "/api/location/ip-data",
       extract: (d: any) => ({
         latitude: String(d.latitude),
         longitude: String(d.longitude),

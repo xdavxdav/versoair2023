@@ -55,8 +55,9 @@ export function QuickSignIn({
 
     setIsLoading(true);
     try {
-      const endpoint =
-        mode === "signin" ? "/api/auth/login" : "/api/auth/register";
+      // NOTE: authRouter is mounted at "/auth" (server/routes.ts), NOT
+      // "/api/auth" — the latter 404s.
+      const endpoint = mode === "signin" ? "/auth/login" : "/auth/register";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,7 +112,7 @@ export function QuickSignIn({
     setPassword(password);
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

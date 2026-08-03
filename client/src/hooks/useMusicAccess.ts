@@ -68,7 +68,9 @@ export function useMusicAccess(): MusicAccessState {
   const { data: subscriptionData, isLoading: subLoading } = useQuery({
     queryKey: ["user-streaming-subscription"],
     queryFn: async () => {
-      const res = await fetch("/api/streaming/subscription", {
+      // NOTE: the route is /subscription/status — /api/streaming/subscription
+      // does not exist and used to 404, pinning every user to the "free" tier.
+      const res = await fetch("/api/streaming/subscription/status", {
         credentials: "include",
       });
       if (!res.ok) return null;
@@ -82,7 +84,9 @@ export function useMusicAccess(): MusicAccessState {
   const { data: artistData, isLoading: artistLoading } = useQuery({
     queryKey: ["user-artist-profile"],
     queryFn: async () => {
-      const res = await fetch("/api/artist/profile", {
+      // NOTE: /api/artist/profile does not exist. The artist's division data
+      // lives on /api/artist/division-status (server/routes/evaluations.ts).
+      const res = await fetch("/api/artist/division-status", {
         credentials: "include",
       });
       if (!res.ok) return null;
@@ -127,9 +131,10 @@ export function useMusicAccess(): MusicAccessState {
       : subscriptionData?.tier?.toLowerCase() || "free";
     const tierRank = isSuperuser ? 4 : getTierRank(subTier); // Superuser = max tier rank
 
-    // Get artist tier (from StreamRoyale)
-    const artistTier = artistData?.current_division?.toLowerCase() || null;
-    const isArtist = canAccessArtist || !!artistData?.id || isSuperuser; // Superuser can access artist features
+    // Get artist tier (from StreamRoyale). division-status responds with
+    // { success, division: { current, ... } } — there is no `current_division`.
+    const artistTier = artistData?.division?.current?.toLowerCase() || null;
+    const isArtist = canAccessArtist || !!artistData?.success || isSuperuser; // Superuser can access artist features
 
     // Premium = Supporter or higher OR admin/superuser (god mode)
     const isPremium = tierRank >= 1 || isAdmin;

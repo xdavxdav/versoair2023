@@ -76,8 +76,11 @@ export default function ProfilePage() {
     try {
       const token =
         localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-      const res = await fetch("/auth/display-name", {
-        method: "PUT",
+      // NOTE: the route is POST /auth/account/set-display-name.
+      // PUT /auth/display-name does not exist and silently 404'd, so saving a
+      // display name from this page never did anything.
+      const res = await fetch("/auth/account/set-display-name", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -88,6 +91,14 @@ export default function ProfilePage() {
       if (res.ok) {
         // Refresh page to pick up new name
         window.location.reload();
+      } else {
+        // Changing an existing name requires the current password server-side;
+        // surface that instead of failing silently.
+        const data = await res.json().catch(() => null);
+        console.error(
+          "Failed to update display name:",
+          data?.message || res.status,
+        );
       }
     } catch (err) {
       console.error("Failed to update display name:", err);

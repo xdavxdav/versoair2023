@@ -10,7 +10,16 @@ export interface Notification {
     name: string;
     email: string;
   };
-  type: "connection_request" | "connection_accepted" | "message" | "activity";
+  type:
+    | "connection_request"
+    | "connection_accepted"
+    | "profile_updated"
+    | "job_posted"
+    | "contract_posted"
+    | "reservation_update"
+    | "track_review"
+    | "message"
+    | "activity";
   title: string;
   description?: string;
   timestamp: string;
@@ -53,8 +62,13 @@ export function useNotifications(
       // Create socket connection with auth header
       const socket = io(window.location.origin, {
         auth: {
-          token: localStorage.getItem("authToken") || "",
-          userId: user.id,
+          // The app writes the JWT under several legacy keys; the handshake
+          // also falls back to the HttpOnly auth_token cookie server-side.
+          token:
+            localStorage.getItem("auth_token") ||
+            localStorage.getItem("authToken") ||
+            localStorage.getItem("token") ||
+            "",
         },
         reconnection: true,
         reconnectionDelay: 1000,
@@ -70,16 +84,19 @@ export function useNotifications(
         );
         setIsConnected(true);
         setError(null);
-
-        // Authenticate in user-specific room
-        socket.emit("authenticate", {
-          userId: user.id,
-          token: localStorage.getItem("authToken"),
-        });
+        // No client-side "authenticate" emit: identity is established from the
+        // JWT on the handshake and the server joins the user room itself.
       });
 
-      socket.on("authenticated", () => {
-        console.log(`[SOCKET] User authenticated in room: user_${user.id}`);
+      socket.on("authenticated", (data: any) => {
+        console.log(`[SOCKET] Authenticated in room: user_${data?.userId}`);
+      });
+
+      socket.on("unauthenticated", (data: any) => {
+        console.warn("[SOCKET] Not authenticated:", data?.message);
+        setError(
+          "Real-time notifications unavailable (session not recognized)",
+        );
       });
 
       socket.on("connect_error", (error: any) => {
@@ -93,44 +110,17 @@ export function useNotifications(
         setIsConnected(false);
       });
 
-      // Notification handlers
-      socket.on("connection_request", (data: any) => {
-        console.log("[NOTIFICATION] Connection request received:", data);
+      // Notification handler — the server emits a single canonical
+      // `notification` event and discriminates via the `type` field.
+      socket.on("notification", (data: any) => {
+        console.log("[NOTIFICATION] Received:", data);
         const notification: Notification = {
-          id: `${Date.now()}_${Math.random()}`,
-          fromUserId: data.fromUserId,
+          id: String(data.id ?? `${Date.now()}_${Math.random()}`),
+          fromUserId: data.fromUserId ?? 0,
           fromUser: data.fromUser,
-          type: "connection_request",
-          title: `${data.fromUser?.name || "User"} sent a connection request`,
-          description: data.message || "Click to view request",
-          timestamp: new Date().toISOString(),
-          read: false,
-        };
-        setNotifications((prev) => [notification, ...prev]);
-      });
-
-      socket.on("connection_accepted", (data: any) => {
-        console.log("[NOTIFICATION] Connection accepted:", data);
-        const notification: Notification = {
-          id: `${Date.now()}_${Math.random()}`,
-          fromUserId: data.fromUserId,
-          fromUser: data.fromUser,
-          type: "connection_accepted",
-          title: `${data.fromUser?.name || "User"} accepted your connection`,
-          timestamp: new Date().toISOString(),
-          read: false,
-        };
-        setNotifications((prev) => [notification, ...prev]);
-      });
-
-      socket.on("new_notification", (data: any) => {
-        console.log("[NOTIFICATION] New notification:", data);
-        const notification: Notification = {
-          id: data.id || `${Date.now()}_${Math.random()}`,
-          fromUserId: data.fromUserId || 0,
           type: data.type || "activity",
           title: data.title,
-          description: data.description,
+          description: data.description ?? data.message,
           timestamp: data.timestamp || new Date().toISOString(),
           read: false,
         };

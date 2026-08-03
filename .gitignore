@@ -52,6 +52,7 @@ scripts/*
 !scripts/run-migrations.sh
 !scripts/seed-production.cjs
 !scripts/seed-launch-businesses.cjs
+!scripts/check-api-contract.cjs
 
 # Backup & duplicate configs
 client/postcss.config.cjs

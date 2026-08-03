@@ -219,8 +219,7 @@ export default function MusicVault() {
 
   const handlePlayTrack = useCallback(
     (track: Track) => {
-      const hasAudio =
-        !!track.has_audio_data || !!(track as any).file_path;
+      const hasAudio = !!track.has_audio_data || !!(track as any).file_path;
       if (!hasAudio) {
         console.warn(`[Vault] "${track.title}" has no audio uploaded yet`);
         return;
@@ -256,9 +255,10 @@ export default function MusicVault() {
     // loads and never re-runs — tracks silently vanish after refresh.
     queryKey: ["vault-tracks", user?.id, myArtist?.id],
     queryFn: async () => {
-      // Try /api/upload/my-tracks first (portal upload system)
+      // Try /api/tracks/my-tracks first (portal upload system).
+      // NOTE: trackUploadRouter is mounted at /api/tracks in server/routes.ts.
       try {
-        const res1 = await fetch("/api/upload/my-tracks", {
+        const res1 = await fetch("/api/tracks/my-tracks", {
           credentials: "include",
         });
         if (res1.ok) {
@@ -268,7 +268,7 @@ export default function MusicVault() {
           }
         }
       } catch (e) {
-        console.warn("[Vault] /api/upload/my-tracks request failed:", e);
+        console.warn("[Vault] /api/tracks/my-tracks request failed:", e);
       }
 
       // Then try /api/music/artists/:id/tracks (Drizzle system)
