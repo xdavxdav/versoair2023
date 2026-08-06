@@ -116,6 +116,7 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
   const [connectedUsers, setConnectedUsers] = useState<number[]>([]);
+  const [followPendingIds, setFollowPendingIds] = useState<number[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -207,6 +208,31 @@ export default function BlogPage() {
     }
   }, [feedPosts]);
 
+  // Load the members the signed-in user already follows
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setConnectedUsers([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await authenticatedFetch(
+          "/api/social/follow/following",
+        );
+        const data = await response.json();
+        if (!cancelled && data.success && Array.isArray(data.data)) {
+          setConnectedUsers(data.data.map((id: any) => Number(id)));
+        }
+      } catch {
+        // Falls back to an empty list; the follow action still works.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
   // Define loadMorePosts FIRST (needed by useEffect)
   const loadMorePosts = useCallback(() => {
     if (hasNextPage) {
@@ -248,11 +274,44 @@ export default function BlogPage() {
     setIsConnectionModalOpen(true);
   };
 
-  const handleConnectUser = (userId: number) => {
-    setConnectedUsers((prev) => [...prev, userId]);
+  const setFollowState = async (userId: number, shouldFollow: boolean) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      throw new Error("Sign in to follow other members");
+    }
+    setFollowPendingIds((prev) =>
+      prev.includes(userId) ? prev : [...prev, userId],
+    );
+    try {
+      const response = await authenticatedFetch(
+        `/api/social/follow/${userId}`,
+        { method: shouldFollow ? "POST" : "DELETE" },
+      );
+      const data = await response.json().catch(() => ({ success: false }));
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Could not update this connection");
+      }
+      setConnectedUsers((prev) =>
+        shouldFollow
+          ? prev.includes(userId)
+            ? prev
+            : [...prev, userId]
+          : prev.filter((id) => id !== userId),
+      );
+    } finally {
+      setFollowPendingIds((prev) => prev.filter((id) => id !== userId));
+    }
   };
 
+  const handleConnectUser = (userId: number) => setFollowState(userId, true);
+
+  const handleDisconnectUser = (userId: number) => setFollowState(userId, false);
+
   const handleMessageUser = async (userId: number) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     const account = TEST_ACCOUNTS.find((item) => item.id === userId);
     if (!account) return;
 
@@ -345,21 +404,10 @@ export default function BlogPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Feed Column */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-              <p className="text-sm text-slate-400">
-                Keep threads private, then publish your own sent message when it
-                deserves a wider audience.
-              </p>
-              <button
-                onClick={() =>
-                  window.dispatchEvent(new Event("messenger:open"))
-                }
-                className="flex items-center gap-2 px-3 py-2 bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25 rounded-lg text-sm font-medium transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Messages
-              </button>
-            </div>
+            <p className="text-sm text-slate-400">
+              Keep threads private, then publish your own sent message when it
+              deserves a wider audience.
+            </p>
 
             {/* Sort Controls */}
             <div className="flex items-center gap-2 pb-4 border-b border-white/10">
@@ -383,6 +431,15 @@ export default function BlogPage() {
                 }`}
               >
                 Trending
+              </button>
+              <button
+                onClick={() =>
+                  window.dispatchEvent(new Event("messenger:open"))
+                }
+                className="ml-auto flex items-center gap-2 px-3 py-2 bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25 rounded-lg text-sm font-medium transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Messages
               </button>
             </div>
 
@@ -473,7 +530,14 @@ export default function BlogPage() {
                   >
                     <UserProfileCard
                       user={user as any}
-                      onFollow={() => handleShowUserModal(user)}
+                      isFollowing={connectedUsers.includes(user.id)}
+                      isFollowPending={followPendingIds.includes(user.id)}
+                      onFollow={(id) => {
+                        void handleConnectUser(id).catch(() => {});
+                      }}
+                      onUnfollow={(id) => {
+                        void handleDisconnectUser(id).catch(() => {});
+                      }}
                       onMessage={() => handleMessageUser(user.id)}
                     />
                     <p className="mt-1 text-xs text-slate-500">
@@ -585,6 +649,7 @@ export default function BlogPage() {
           setSelectedUser(null);
         }}
         onConnect={handleConnectUser}
+        onDisconnect={handleDisconnectUser}
         onMessage={handleMessageUser}
         onShare={handleShareUser}
       />

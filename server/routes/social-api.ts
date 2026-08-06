@@ -58,6 +58,18 @@ async function getSocialProfileId(appUserId: number): Promise<number> {
   return profile.id;
 }
 
+async function syncFollowerCount(socialUserId: number): Promise<void> {
+  const followers = await db
+    .select({ id: socialFollowers.id })
+    .from(socialFollowers)
+    .where(eq(socialFollowers.followingId, socialUserId));
+
+  await db
+    .update(socialUsers)
+    .set({ followerCount: followers.length })
+    .where(eq(socialUsers.id, socialUserId));
+}
+
 // ============================================
 // POSTS ENDPOINTS
 // ============================================
@@ -440,17 +452,47 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
 // FOLLOW ENDPOINTS
 // ============================================
 
+// GET /api/social/follow/following - ids of the users the caller follows
+router.get("/follow/following", async (req: Request, res: Response) => {
+  try {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const rows = await db
+      .select({ appUserId: socialUsers.userId })
+      .from(socialFollowers)
+      .innerJoin(socialUsers, eq(socialUsers.id, socialFollowers.followingId))
+      .where(eq(socialFollowers.followerId, followerId));
+
+    res.json({
+      success: true,
+      data: rows.map((row) => row.appUserId).filter(Boolean),
+    });
+  } catch (error) {
+    console.error("Error fetching following list:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch following list" });
+  }
+});
+
 // POST /api/social/follow/:userId - Follow a user
 router.post("/follow/:userId", async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
+    const appUserId = req.user?.userId;
 
-    if (!followerId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Missing followerId" });
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to follow other members",
+      });
     }
+
+    const followerId = await getSocialProfileId(Number(appUserId));
 
     // ── Artist protection: non-artist users cannot follow artist accounts ──
     // Artists can view and link with users, but users cannot link with artists.
@@ -471,11 +513,11 @@ router.post("/follow/:userId", async (req: Request, res: Response) => {
         // Check if the follower is also an artist — artists CAN follow other artists
         const followerUser = await pool.query(
           "SELECT role FROM users WHERE id = $1",
-          [followerId],
+          [appUserId],
         );
         const followerHasArtist = await pool.query(
           "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
-          [followerId],
+          [appUserId],
         );
         const followerIsArtist =
           followerUser.rows[0]?.role === "artist" ||
@@ -493,46 +535,35 @@ router.post("/follow/:userId", async (req: Request, res: Response) => {
       // If check fails, allow the follow to proceed
     }
 
-    // Check if already following
+    const followingId = await getSocialProfileId(parseInt(userId));
+
+    if (followingId === followerId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "You cannot follow yourself" });
+    }
+
+    // Check if already following — following twice is a no-op, not an error
     const existingFollow = await db
       .select()
       .from(socialFollowers)
       .where(
         and(
           eq(socialFollowers.followerId, followerId),
-          eq(socialFollowers.followingId, parseInt(userId)),
+          eq(socialFollowers.followingId, followingId),
         ),
       )
       .limit(1);
 
-    if (existingFollow.length) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Already following this user" });
+    if (!existingFollow.length) {
+      await db.insert(socialFollowers).values({ followerId, followingId });
     }
 
-    // Add follow
-    await db.insert(socialFollowers).values({
-      followerId,
-      followingId: parseInt(userId),
-    });
-
-    // Update counts
-    await db
-      .update(socialUsers)
-      .set({
-        followerCount:
-          (
-            await db
-              .select()
-              .from(socialFollowers)
-              .where(eq(socialFollowers.followingId, parseInt(userId)))
-          ).length + 1,
-      })
-      .where(eq(socialUsers.id, parseInt(userId)));
+    await syncFollowerCount(followingId);
 
     res.json({
       success: true,
+      following: true,
       message: "User followed successfully",
     });
   } catch (error) {
@@ -545,25 +576,32 @@ router.post("/follow/:userId", async (req: Request, res: Response) => {
 router.delete("/follow/:userId", async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
+    const appUserId = req.user?.userId;
 
-    if (!followerId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Missing followerId" });
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to manage the members you follow",
+      });
     }
+
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const followingId = await getSocialProfileId(parseInt(userId));
 
     await db
       .delete(socialFollowers)
       .where(
         and(
           eq(socialFollowers.followerId, followerId),
-          eq(socialFollowers.followingId, parseInt(userId)),
+          eq(socialFollowers.followingId, followingId),
         ),
       );
 
+    await syncFollowerCount(followingId);
+
     res.json({
       success: true,
+      following: false,
       message: "User unfollowed successfully",
     });
   } catch (error) {

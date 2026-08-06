@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import {
   Users,
   UserPlus,
+  UserMinus,
   MessageCircle,
   Share2,
   Star,
@@ -29,7 +30,9 @@ interface UserProfileCardProps {
   user: UserProfile;
   isCurrentUser?: boolean;
   isFollowing?: boolean;
+  isFollowPending?: boolean;
   onFollow?: (userId: number) => void;
+  onUnfollow?: (userId: number) => void;
   onMessage?: (userId: number) => void;
   onShare?: (userId: number) => void;
 }
@@ -38,15 +41,20 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   user,
   isCurrentUser = false,
   isFollowing = false,
+  isFollowPending = false,
   onFollow,
+  onUnfollow,
   onMessage,
   onShare,
 }) => {
-  const [following, setFollowing] = useState(isFollowing);
-
-  const handleFollow = () => {
-    setFollowing(!following);
-    onFollow?.(user.id);
+  const handleFollowToggle = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isFollowPending) return;
+    if (isFollowing) {
+      onUnfollow?.(user.id);
+    } else {
+      onFollow?.(user.id);
+    }
   };
 
   return (
@@ -164,20 +172,28 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleFollow}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all duration-200 font-medium text-xs font-handstyle ${
-                following
-                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30"
+              onClick={handleFollowToggle}
+              disabled={isFollowPending}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all duration-200 font-medium text-xs font-handstyle disabled:opacity-60 disabled:cursor-wait ${
+                isFollowing
+                  ? "bg-white/5 text-rose-300 border border-rose-400/30 hover:bg-rose-500/15"
                   : "bg-cyan-500 text-white hover:bg-cyan-600"
               }`}
             >
-              <UserPlus className="w-4 h-4" />
-              {following ? "Following" : "Follow"}
+              {isFollowing ? (
+                <UserMinus className="w-4 h-4" />
+              ) : (
+                <UserPlus className="w-4 h-4" />
+              )}
+              {isFollowing ? "Unfollow" : "Follow"}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onMessage?.(user.id)}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMessage?.(user.id);
+              }}
               className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10 transition-all duration-200 font-medium text-xs font-handstyle"
             >
               <MessageCircle className="w-4 h-4" />

@@ -25,6 +25,30 @@ const navLinks = [
   { href: "/sav", label: "SAV 24/7", icon: Headphones },
 ];
 
+/* ── mobile quick-nav pills (Marketplace is reached by tapping Home) ── */
+const MOBILE_PILLS = [
+  {
+    href: "/blog",
+    label: "Blog",
+    hover: "hover:text-cyan-300 hover:bg-cyan-500/10",
+  },
+  {
+    href: "/stream",
+    label: "🎵",
+    hover: "hover:text-cyan-300 hover:bg-cyan-500/10",
+  },
+  {
+    href: "/arcade",
+    label: "🎮",
+    hover: "hover:text-fuchsia-300 hover:bg-fuchsia-500/10",
+  },
+  {
+    href: "/versoai",
+    label: "AI",
+    hover: "hover:text-cyan-300 hover:bg-cyan-500/10",
+  },
+];
+
 /* ── shared dropdown style tokens ───────────────────────────── */
 const BTN =
   "flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium";
@@ -105,8 +129,8 @@ export default function BlogNavbar({
       const count = tapCountRef.current;
       tapCountRef.current = 0;
       if (count >= 2) {
-        // Double-tap → go home
-        setLocation("/");
+        // Double-tap → full reload onto the public site root
+        window.location.assign("/");
       } else {
         // Single tap → marketplace or scroll to top
         if (currentPath === "/marketplace") {
@@ -207,71 +231,30 @@ export default function BlogNavbar({
                 onPointerCancel={handlePressEnd}
                 onContextMenu={(e) => e.preventDefault()}
                 className="flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
-                title="Tap=Marketplace · Double-tap=Home · Hold 2s=Logout"
+                title={
+                  isAuthenticated
+                    ? "Tap=Marketplace · Double-tap=Home · Hold 2s=Logout"
+                    : "Tap=Marketplace · Double-tap=Home"
+                }
               >
                 <Home className="w-4 h-4" />
                 <span className="hidden sm:inline">Accueil</span>
               </button>
             </div>
 
-            {/* ── Mobile quick nav pills ── */}
-            <div className="flex md:hidden items-center gap-1 flex-1 min-w-0 justify-start overflow-x-auto scrollbar-hide px-1">
-              <Link href="/blog">
-                <a
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
-                    currentPath === "/blog"
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                  }`}
-                >
-                  Blog
-                </a>
-              </Link>
-              <Link href="/marketplace">
-                <a
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
-                    currentPath === "/marketplace"
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                  }`}
-                >
-                  <ShoppingBag className="w-3 h-3 inline mr-1" />
-                  Shop
-                </a>
-              </Link>
-              <Link href="/stream">
-                <a
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
-                    currentPath === "/stream"
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                  }`}
-                >
-                  🎵
-                </a>
-              </Link>
-              <Link href="/arcade">
-                <a
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
-                    currentPath === "/arcade"
-                      ? "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30"
-                      : "text-slate-400 hover:text-fuchsia-300 hover:bg-fuchsia-500/10"
-                  }`}
-                >
-                  🎮
-                </a>
-              </Link>
-              <Link href="/versoai">
-                <a
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap ${
-                    currentPath === "/versoai"
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                  }`}
-                >
-                  AI
-                </a>
-              </Link>
+            {/* ── Mobile quick nav pills (Home button already covers Marketplace) ── */}
+            <div className="flex md:hidden items-center gap-1 flex-1 min-w-0 justify-end overflow-x-auto scrollbar-hide px-1">
+              {MOBILE_PILLS.filter((pill) => pill.href !== currentPath).map(
+                (pill) => (
+                  <Link key={pill.href} href={pill.href}>
+                    <a
+                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
+                    >
+                      {pill.label}
+                    </a>
+                  </Link>
+                ),
+              )}
             </div>
 
             {/* ── Centered nav (desktop only) ── */}

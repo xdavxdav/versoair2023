@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, UserPlus, MessageCircle, Share2, Mail } from "lucide-react";
+import { X, UserPlus, UserMinus, MessageCircle, Share2, Mail } from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface User {
@@ -24,7 +24,8 @@ interface UserConnectionModalProps {
   user: User | null;
   isConnected?: boolean;
   onClose: () => void;
-  onConnect: (userId: number) => void;
+  onConnect: (userId: number) => void | Promise<void>;
+  onDisconnect?: (userId: number) => void | Promise<void>;
   onMessage: (userId: number) => void;
   onShare: (userId: number) => void;
 }
@@ -35,11 +36,13 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
   isConnected = false,
   onClose,
   onConnect,
+  onDisconnect,
   onMessage,
   onShare,
 }) => {
   useScrollLock(isOpen);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
     "idle" | "connecting" | "connected" | "failed"
   >("idle");
@@ -51,11 +54,7 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
     setConnectionStatus("connecting");
 
     try {
-      // Brief connection animation
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      // Call the onConnect callback
-      onConnect(user.id);
+      await onConnect(user.id);
 
       setConnectionStatus("connected");
 
@@ -68,6 +67,21 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
     } catch (error) {
       setConnectionStatus("failed");
       setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!user || !onDisconnect) return;
+
+    setIsDisconnecting(true);
+    try {
+      await onDisconnect(user.id);
+      setConnectionStatus("idle");
+      onClose();
+    } catch (error) {
+      setConnectionStatus("failed");
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -92,12 +106,12 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ type: "spring", duration: 0.4 }}
-            className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-contain touch-pan-y flex items-start justify-center p-3 sm:p-4 [-webkit-overflow-scrolling:touch]"
           >
-            <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl shadow-2xl border border-white/10 overflow-hidden font-handstyle">
+            <div className="w-full max-w-md my-[max(0.75rem,env(safe-area-inset-top))] mb-[max(0.75rem,env(safe-area-inset-bottom))] max-h-[calc(100dvh-1.5rem)] flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl shadow-2xl border border-white/10 overflow-hidden font-handstyle">
               {/* Cover Image */}
               {user.coverImage && (
-                <div className="h-32 overflow-hidden relative">
+                <div className="h-32 overflow-hidden relative flex-shrink-0">
                   <motion.img
                     src={user.coverImage}
                     alt="Cover"
@@ -110,7 +124,7 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
               )}
 
               {/* Content */}
-              <div className="px-6 pb-6 pt-4">
+              <div className="px-6 pb-6 pt-4 overflow-y-auto overscroll-contain">
                 {/* Close Button */}
                 <div className="flex justify-end mb-4">
                   <button
@@ -242,11 +256,12 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      disabled
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-green-500/20 text-green-400 font-medium rounded-lg border border-green-500/50 disabled:cursor-default font-handstyle"
+                      onClick={handleDisconnect}
+                      disabled={isDisconnecting || !onDisconnect}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 text-rose-300 font-medium rounded-lg border border-rose-400/30 hover:bg-rose-500/15 transition-all disabled:opacity-60 disabled:cursor-wait font-handstyle"
                     >
-                      <UserPlus className="w-5 h-5" />
-                      Connected
+                      <UserMinus className="w-5 h-5" />
+                      {isDisconnecting ? "Disconnecting…" : "Disconnect"}
                     </motion.button>
                   )}
 
