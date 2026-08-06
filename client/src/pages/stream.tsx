@@ -1108,6 +1108,16 @@ export default function StreamPage() {
                       <p className="text-gray-500 text-xs truncate px-0.5">
                         {track.artist_name}
                       </p>
+                      <Link
+                        href={`/track/${track.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-1 flex items-center gap-1 px-0.5 text-gray-500 hover:text-amber-400 transition-colors w-fit"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        <span className="text-[11px]">
+                          {track.comment_count || 0}
+                        </span>
+                      </Link>
                     </motion.div>
                   ))}
                 </div>
@@ -1238,6 +1248,20 @@ export default function StreamPage() {
                   <p className="text-gray-500 text-xs truncate mt-0.5">
                     {track.artist_name}
                   </p>
+                  {/* Comments were previously unreachable from the browse
+                      feed — clicking a card only played the track. This
+                      opens the track detail page, which already has a full
+                      comment thread wired up. */}
+                  <Link
+                    href={`/track/${track.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1.5 flex items-center gap-1 text-gray-500 hover:text-amber-400 transition-colors w-fit"
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                    <span className="text-[11px]">
+                      {track.comment_count || 0}
+                    </span>
+                  </Link>
                 </motion.div>
               ))}
             </div>
@@ -1532,6 +1556,14 @@ export default function StreamPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link
+                          href={`/track/${track.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-gray-500 hover:text-amber-400 transition-colors p-1"
+                          title="Voir les commentaires"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </Link>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

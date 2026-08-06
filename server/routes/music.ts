@@ -546,34 +546,105 @@ router.get("/tracks/:id/download", async (req, res) => {
     }
 
     if (!isArtistOwner) {
-      // Check if user has purchased this track
-      try {
-        const purchaseCheck = await pool.query(
-          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-          [userId, parseInt(id)],
-        );
-        if (!purchaseCheck.rows.length) {
-          const trackPrice = parseFloat(track.price || "0.99");
-          return res.status(402).json({
-            success: false,
-            error: "Achat requis pour télécharger",
-            requiresPayment: true,
-            price: trackPrice,
-            trackId: parseInt(id),
-            trackTitle: track.title,
-          });
+      // ── Role bypass: staff can always download for moderation/QA ──
+      const role = String(
+        (req as any).user?.role || (req as any).user?.userRole || "",
+      ).toLowerCase();
+      const staffBypass = ["superuser", "admin", "moderator"].includes(role);
+
+      if (!staffBypass) {
+        // ── 1) If the user purchased this specific track, always allow ──
+        let hasPurchase = false;
+        try {
+          const purchaseCheck = await pool.query(
+            "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+            [userId, parseInt(id)],
+          );
+          hasPurchase = purchaseCheck.rows.length > 0;
+        } catch (_) {
+          // track_purchases may not exist yet — treat as no purchase
+          hasPurchase = false;
         }
-      } catch (_) {
-        // track_purchases table may not exist yet — block download
-        const trackPrice = parseFloat(track.price || "0.99");
-        return res.status(402).json({
-          success: false,
-          error: "Achat requis pour télécharger",
-          requiresPayment: true,
-          price: trackPrice,
-          trackId: parseInt(id),
-          trackTitle: track.title,
-        });
+
+        if (!hasPurchase) {
+          // ── 2) Streamer subscription quota check ──
+          // Get active listener subscription + plan quota, otherwise treat as guest.
+          let planName = "Gratuit";
+          let quota = 0;
+          try {
+            const subResult = await pool.query(
+              `SELECT sp.name, sp.downloads_per_month
+                 FROM listener_subscriptions ls
+                 JOIN streaming_plans sp ON sp.id = ls.plan_id
+                 WHERE ls.user_id = $1 AND ls.status = 'active'
+                 ORDER BY ls.created_at DESC
+                 LIMIT 1`,
+              [userId],
+            );
+            if (subResult.rows.length) {
+              planName = subResult.rows[0].name;
+              quota = Number(subResult.rows[0].downloads_per_month) || 0;
+            }
+          } catch (_) {
+            // Table may not exist yet on fresh boot — treat as guest quota=0
+          }
+
+          // Guest / plan with 0 quota → offer per-track purchase upgrade
+          if (quota === 0) {
+            const trackPrice = parseFloat(track.price || "0.99");
+            return res.status(402).json({
+              success: false,
+              error:
+                planName === "Gratuit"
+                  ? "Downloading requires a Supporter subscription or a one-time purchase."
+                  : "Your current plan does not include downloads.",
+              requiresPayment: true,
+              requiresUpgrade: true,
+              plan: planName,
+              quota: 0,
+              price: trackPrice,
+              trackId: parseInt(id),
+              trackTitle: track.title,
+            });
+          }
+
+          // Enforce monthly quota unless plan is unlimited (-1)
+          if (quota !== -1) {
+            let usedThisMonth = 0;
+            try {
+              const usedResult = await pool.query(
+                `SELECT COUNT(*)::int AS n FROM track_downloads
+                   WHERE user_id = $1
+                     AND downloaded_at >= date_trunc('month', NOW())`,
+                [userId],
+              );
+              usedThisMonth = Number(usedResult.rows[0]?.n) || 0;
+            } catch (_) {
+              // Fallback: allow this download if we can't check
+            }
+            if (usedThisMonth >= quota) {
+              return res.status(429).json({
+                success: false,
+                error: `Monthly download quota reached (${usedThisMonth}/${quota}) on ${planName}. Upgrade for more.`,
+                requiresUpgrade: true,
+                plan: planName,
+                quota,
+                used: usedThisMonth,
+              });
+            }
+          }
+
+          // Record the download for quota tracking
+          try {
+            await pool.query(
+              `INSERT INTO track_downloads (user_id, track_id, plan_tier)
+                 VALUES ($1, $2, $3)`,
+              [userId, parseInt(id), planName],
+            );
+          } catch (_) {
+            /* non-fatal */
+          }
+        }
       }
     }
 

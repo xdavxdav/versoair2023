@@ -43,7 +43,8 @@ function walk(dir, out = []) {
 function resolveImport(spec, fromFile) {
   let base;
   if (spec.startsWith("@/")) base = path.join(CLIENT_SRC, spec.slice(2));
-  else if (spec.startsWith(".")) base = path.resolve(path.dirname(fromFile), spec);
+  else if (spec.startsWith("."))
+    base = path.resolve(path.dirname(fromFile), spec);
   else return null; // bare package import
   const candidates = [
     base,
@@ -52,7 +53,9 @@ function resolveImport(spec, fromFile) {
     path.join(base, "index.ts"),
     path.join(base, "index.tsx"),
   ];
-  return candidates.find((c) => fs.existsSync(c) && fs.statSync(c).isFile()) || null;
+  return (
+    candidates.find((c) => fs.existsSync(c) && fs.statSync(c).isFile()) || null
+  );
 }
 
 /**
@@ -107,7 +110,10 @@ function normalize(p) {
 function stripComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
-    .replace(/(^|[^:])\/\/[^\n]*/g, (m, p1) => p1 + " ".repeat(m.length - p1.length));
+    .replace(
+      /(^|[^:])\/\/[^\n]*/g,
+      (m, p1) => p1 + " ".repeat(m.length - p1.length),
+    );
 }
 
 // ── 1. Router resolution ─────────────────────────────────────────────────────
@@ -288,7 +294,9 @@ function report(list, heading) {
 }
 
 if (liveBad.length === 0) {
-  console.log("\n✓ Every REACHABLE client API path resolves to a server route.");
+  console.log(
+    "\n✓ Every REACHABLE client API path resolves to a server route.",
+  );
 } else {
   report(liveBad, "✗ BROKEN IN LIVE CODE — reachable from an app entry point:");
 }

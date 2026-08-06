@@ -743,27 +743,27 @@ export function Tickets() {
                   return (
                     <div
                       key={ticket.id}
-                      className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-700 rounded-lg border dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 transition"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 bg-slate-50 dark:bg-slate-700 rounded-lg border dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 transition"
                     >
                       <div
-                        className="flex-1 cursor-pointer"
+                        className="flex-1 min-w-0 w-full cursor-pointer"
                         onClick={() => {
                           setSelectedTicket(ticket);
                           setShowDetailModal(true);
                         }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                          <div className="flex-1 min-w-0 w-full">
+                            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                               {ticket.title}
                             </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                               {ticket.description?.substring(0, 60) ||
                                 "No description"}
                               ...
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <Badge
                               className={getPriorityColor(ticket.priority)}
                             >
@@ -778,20 +778,25 @@ export function Tickets() {
                               </Badge>
                             )}
                           </div>
-                          <div className="w-32">
+                          <div className="w-full sm:w-32 flex-shrink-0">
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                               SLA: {slaPercent}%
                             </div>
-                            <div
-                              className={`h-2 rounded-full bg-gradient-to-r ${getSLAColor(slaPercent, ticket.sla_breached)}`}
-                            />
+                            <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full bg-gradient-to-r ${getSLAColor(slaPercent, ticket.sla_breached)} transition-[width]`}
+                                style={{
+                                  width: `${Math.min(100, Math.max(0, slaPercent))}%`,
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="dark:hover:bg-slate-500"
+                        className="dark:hover:bg-slate-500 self-end sm:self-auto"
                         onClick={() => {
                           setSelectedTicket(ticket);
                           setShowDetailModal(true);
@@ -1109,6 +1114,15 @@ function CreateTicketForm({
   );
 }
 
+interface TicketComment {
+  id: number;
+  ticket_id: number;
+  author_id?: number;
+  author_name?: string;
+  body: string;
+  created_at: string;
+}
+
 function TicketDetailView({
   ticket,
   onStatusChange,
@@ -1120,6 +1134,47 @@ function TicketDetailView({
   onDelete: () => void;
   isUpdating: boolean;
 }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [commentText, setCommentText] = useState("");
+
+  const { data: comments = [], isLoading: commentsLoading } = useQuery<
+    TicketComment[]
+  >({
+    queryKey: ["ticket-comments", ticket.id],
+    queryFn: async () => {
+      const res = await authenticatedFetch(
+        `/api/tickets/${ticket.id}/comments`,
+      );
+      if (!res.ok) throw new Error("Failed to fetch comments");
+      return res.json();
+    },
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async (body: string) => {
+      const res = await authenticatedFetch(
+        `/api/tickets/${ticket.id}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            body,
+            authorName: user?.username || user?.email,
+          }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to add comment");
+      return res.json();
+    },
+    onSuccess: () => {
+      setCommentText("");
+      queryClient.invalidateQueries({
+        queryKey: ["ticket-comments", ticket.id],
+      });
+    },
+  });
+
   const slaPercent = calculateSLAPercentage(
     ticket.created_at,
     ticket.sla_target_hours,
@@ -1212,6 +1267,62 @@ function TicketDetailView({
           <p className="font-semibold dark:text-white">
             {ticket.reporter || "Unknown"}
           </p>
+        </div>
+      </div>
+
+      {/* Comments / Activity thread — Remedy-style */}
+      <div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          Comments
+        </p>
+        <div className="max-h-52 overflow-y-auto space-y-3 border dark:border-slate-600 rounded-lg p-3 bg-slate-50 dark:bg-slate-900/40">
+          {commentsLoading ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Loading comments...
+            </p>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              No comments yet — be the first to reply.
+            </p>
+          ) : (
+            comments.map((c) => (
+              <div
+                key={c.id}
+                className="text-sm bg-white dark:bg-slate-800 rounded-lg p-3 border dark:border-slate-700"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold dark:text-white">
+                    {c.author_name || "Anonymous"}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(c.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                  {c.body}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Leave a comment..."
+            className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+            rows={2}
+          />
+          <Button
+            onClick={() => {
+              if (commentText.trim())
+                addCommentMutation.mutate(commentText.trim());
+            }}
+            disabled={!commentText.trim() || addCommentMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700 self-end"
+          >
+            {addCommentMutation.isPending ? "Posting..." : "Post"}
+          </Button>
         </div>
       </div>
 

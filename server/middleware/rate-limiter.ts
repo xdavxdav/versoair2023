@@ -141,6 +141,62 @@ export const aiLimiter = rateLimit({
   },
 });
 
+// Marketplace messaging limiter: max 40 messages/conversations per hour per user
+// Spam control only — NOT a paywall. Buyer<->seller messaging stays free for all tiers.
+export const marketplaceMessageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    const userId = (req as any).user?.userId;
+    return userId ? `mp-user-${userId}` : (req.ip as string);
+  },
+  handler: (req: Request, res: Response) => {
+    console.warn(
+      `[RATE_LIMIT] Marketplace message limit exceeded for: ${(req as any).user?.userId || req.ip}`,
+    );
+    res.status(429).json({
+      success: false,
+      error:
+        "You're sending messages too fast. Please slow down and try again shortly.",
+    });
+  },
+});
+
+// Fan-chat slow mode: 2 messages per minute per user (== 30s cooldown).
+// Paid tiers (essential+) skip the limit — Phase 1 plan: "free for all, cooldown removed for subscribers".
+export const fanChatSlowMode = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 2,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    const userId = (req as any).user?.userId || (req as any).user?.id;
+    return userId ? `fan-user-${userId}` : (req.ip as string);
+  },
+  skip: (req: Request) => {
+    const user = (req as any).user;
+    if (!user) return false;
+    if (user.role === "superuser") return true;
+    const tier = user.subscriptionTier;
+    return (
+      tier === "essential" ||
+      tier === "verified" ||
+      tier === "max" ||
+      tier === "enterprise"
+    );
+  },
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      error:
+        "Slow mode: please wait ~30 seconds between messages. Subscribers post without cooldown.",
+      slowMode: true,
+      upgradeAvailable: true,
+    });
+  },
+});
+
 /**
  * For serverless deployments (Vercel, AWS Lambda, etc.),
  * use Upstash Redis for rate limiting persistence:

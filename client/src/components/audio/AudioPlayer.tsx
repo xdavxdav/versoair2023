@@ -293,20 +293,18 @@ export default function AudioPlayer() {
     );
   }, [audio.currentTrack]);
 
-  // Reserve space at the bottom of the document while the docked bar is shown.
-  // The bar is `position: fixed`, so without this it overlaps the last rows of
-  // page content (footers, list items, action buttons become unclickable).
-  // Height = 12px progress scrubber + 64px control row.
+  // The docked bar is a plain `position: fixed` element and must stay that way.
+  // A previous attempt made it draggable via a persisted translate3d offset;
+  // that offset floated the bar over page content, survived reloads, and its
+  // reset handle was `hidden sm:flex` so it was unreachable on phones. Drop any
+  // value left in storage by that version so affected users recover.
   useEffect(() => {
-    const docked = !!audio.currentTrack && !tiroirMode;
-    const previous = document.body.style.paddingBottom;
-    document.body.style.paddingBottom = docked
-      ? "var(--audio-player-height, 76px)"
-      : "";
-    return () => {
-      document.body.style.paddingBottom = previous;
-    };
-  }, [audio.currentTrack, tiroirMode]);
+    try {
+      localStorage.removeItem("verso_player_offset");
+    } catch {
+      /* storage may be unavailable */
+    }
+  }, []);
 
   // Fallback click handler (drag handlers are primary for the bottom/expanded bars)
   const handleProgressClick = useCallback(

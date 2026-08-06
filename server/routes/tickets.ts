@@ -232,6 +232,62 @@ router.post("/:id/escalate", async (req, res) => {
   }
 });
 
+// GET /api/tickets/:id/comments
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const rows = await db.execute(
+          sql`SELECT * FROM ticket_comments WHERE ticket_id=${parseInt(id)} ORDER BY created_at ASC`,
+        );
+        return res.json(rows.rows || []);
+      } catch (dbError: any) {
+        console.error("❌ Fetch ticket comments error:", dbError);
+      }
+    }
+    res.json([]);
+  } catch (error: any) {
+    console.error("❌ Get ticket comments failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/tickets/:id/comments
+router.post("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { body, authorName } = req.body || {};
+    if (!body || !String(body).trim()) {
+      return res.status(400).json({ error: "Comment body is required" });
+    }
+    const authorId = (req as any).user?.id || null;
+    const resolvedAuthorName =
+      authorName || (req as any).user?.username || "Anonymous";
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const inserted = await db.execute(
+          sql`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
+              VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${body})
+              RETURNING *`,
+        );
+        return res.json(inserted.rows[0]);
+      } catch (dbError: any) {
+        console.error("❌ Create ticket comment error:", dbError);
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+    }
+    res
+      .status(503)
+      .json({ success: false, error: "Tickets table unavailable" });
+  } catch (error: any) {
+    console.error("❌ Create ticket comment failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/tickets/stats/summary
 router.get("/stats/summary", async (req, res) => {
   try {

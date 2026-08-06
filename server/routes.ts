@@ -45,6 +45,7 @@ import geoSeoRouter from "./routes/geo-seo";
 import businessLogoRouter from "./routes/business-logo";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
+import communityRouter from "./routes/community";
 import geoActionsRouter from "./routes/geo-actions";
 import contractorPipelineRouter from "./routes/contractor-pipeline";
 import purgatoireRouter from "./routes/purgatoire";
@@ -259,6 +260,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/seo", geoSeoRouter); // GEO SEO — JSON-LD, sitemap, robots.txt
   app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
+  app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
   app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
   app.use("/api/contractor-pipeline", contractorPipelineRouter); // Contractor Pipeline — apply → verify → assign
 
@@ -1082,7 +1084,6 @@ export async function registerRoutes(app: Express) {
       });
     }
   });
-
 
   // ========== ARTIST DIRECTORY (EXTRACTED → server/routes/music.ts) ==========
   // Handled by musicRouter registered above

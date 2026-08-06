@@ -17,6 +17,7 @@ import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
+import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 
 const router = Router();
 
@@ -227,104 +228,115 @@ router.get(
 
 // ─── POST /api/inbox/conversations ───────────────────────────────────────────
 // Create a new conversation. Support threads auto-exist; this creates networking threads.
-router.post("/conversations", async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
-  const tier = getTierFromUser(req.user!);
-  const {
-    participantId,
-    participantName,
-    participantAvatar,
-    type = "business_network",
-    businessId,
-  } = req.body;
+// NOTE: `marketplace` (buyer<->seller listing DMs) AND `music_artist` (fan<->artist
+// direct chat) types are intentionally free/ungated for every tier — only rate-limited
+// for spam control. Only `business_network` is tier-gated.
+router.post(
+  "/conversations",
+  marketplaceMessageLimiter,
+  async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const tier = getTierFromUser(req.user!);
+    const {
+      participantId,
+      participantName,
+      participantAvatar,
+      type = "business_network",
+      businessId,
+    } = req.body;
 
-  if (!participantId || !participantName) {
-    return res
-      .status(400)
-      .json({
+    if (!participantId || !participantName) {
+      return res.status(400).json({
         success: false,
         error: "participantId and participantName are required",
       });
-  }
-
-  // Tier gate for business_network
-  if (type === "business_network") {
-    const limit = TIER_NETWORKING_LIMIT[tier];
-    if (limit === 0) {
-      return res.status(403).json({
-        success: false,
-        error: "Business Networking requires Essential plan or above.",
-        upgradeRequired: true,
-      });
     }
 
-    if (limit < 999) {
-      // Count active networking threads
-      const [{ count: activeCount }] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.inboxConversations)
-        .where(
-          and(
-            eq(schema.inboxConversations.userId, Number(userId)),
-            eq(schema.inboxConversations.type, "business_network"),
-          ),
-        );
-
-      if (Number(activeCount) >= limit) {
+    // Tier gate for business_network only — marketplace & music_artist DMs stay free
+    if (type === "business_network") {
+      const limit = TIER_NETWORKING_LIMIT[tier];
+      if (limit === 0) {
         return res.status(403).json({
           success: false,
-          error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+          error: "Business Networking requires Essential plan or above.",
           upgradeRequired: true,
         });
       }
+
+      if (limit < 999) {
+        // Count active networking threads
+        const [{ count: activeCount }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.inboxConversations)
+          .where(
+            and(
+              eq(schema.inboxConversations.userId, Number(userId)),
+              eq(schema.inboxConversations.type, "business_network"),
+            ),
+          );
+
+        if (Number(activeCount) >= limit) {
+          return res.status(403).json({
+            success: false,
+            error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+            upgradeRequired: true,
+          });
+        }
+      }
     }
-  }
 
-  // Prevent duplicate conversations with same participant
-  const [existing] = await db
-    .select({ id: schema.inboxConversations.id })
-    .from(schema.inboxConversations)
-    .where(
-      and(
-        eq(schema.inboxConversations.userId, Number(userId)),
-        eq(schema.inboxConversations.participantId, String(participantId)),
-        eq(schema.inboxConversations.type, type),
-      ),
-    )
-    .limit(1);
+    // Prevent duplicate conversations with same participant
+    const [existing] = await db
+      .select({ id: schema.inboxConversations.id })
+      .from(schema.inboxConversations)
+      .where(
+        and(
+          eq(schema.inboxConversations.userId, Number(userId)),
+          eq(schema.inboxConversations.participantId, String(participantId)),
+          eq(schema.inboxConversations.type, type),
+        ),
+      )
+      .limit(1);
 
-  if (existing) {
-    return res.json({ success: true, conversation: existing, existing: true });
-  }
+    if (existing) {
+      return res.json({
+        success: true,
+        conversation: existing,
+        existing: true,
+      });
+    }
 
-  try {
-    const [conv] = await db
-      .insert(schema.inboxConversations)
-      .values({
-        userId: Number(userId),
-        type,
-        participantId: String(participantId),
-        participantName: String(participantName),
-        participantAvatar: participantAvatar || null,
-        businessId: businessId ? Number(businessId) : null,
-        priority: priority(tier),
-        unreadCount: 0,
-      })
-      .returning();
+    try {
+      const [conv] = await db
+        .insert(schema.inboxConversations)
+        .values({
+          userId: Number(userId),
+          type,
+          participantId: String(participantId),
+          participantName: String(participantName),
+          participantAvatar: participantAvatar || null,
+          businessId: businessId ? Number(businessId) : null,
+          priority: priority(tier),
+          unreadCount: 0,
+        })
+        .returning();
 
-    return res.json({ success: true, conversation: conv });
-  } catch (err: any) {
-    console.error("[Inbox] POST /conversations error:", err?.message);
-    return res
-      .status(500)
-      .json({ success: false, error: "Failed to create conversation" });
-  }
-});
+      return res.json({ success: true, conversation: conv });
+    } catch (err: any) {
+      console.error("[Inbox] POST /conversations error:", err?.message);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to create conversation" });
+    }
+  },
+);
 
 // ─── POST /api/inbox/conversations/:id/messages ──────────────────────────────
-// Send a message. Respects daily message limits per tier.
+// Send a message. Respects daily message limits per tier for business_network only.
+// marketplace messages are free/ungated (rate-limited for spam only).
 router.post(
   "/conversations/:id/messages",
+  marketplaceMessageLimiter,
   async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const tier = getTierFromUser(req.user!);

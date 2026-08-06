@@ -868,40 +868,48 @@ function PortalSwitcher({
         />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-xl shadow-black/40 z-[9999] overflow-hidden">
-          <div className="px-3 py-2 border-b border-slate-700">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-              Switch Portal
-            </p>
+        <>
+          {/* Full-viewport backdrop: greys out the page and closes on outside click */}
+          <div
+            className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-full mt-1.5 w-56 bg-slate-800 border border-slate-600 rounded-lg shadow-2xl shadow-black/60 z-[9999] overflow-hidden">
+            <div className="px-3 py-2 border-b border-slate-700">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                Switch Portal
+              </p>
+            </div>
+            {accessiblePortals.map((pid) => {
+              const meta = PORTAL_META[pid];
+              if (!meta) return null;
+              const isActive = currentPath.startsWith(
+                meta.path.split("/").slice(0, 2).join("/"),
+              );
+              return (
+                <button
+                  key={pid}
+                  onClick={() => {
+                    navigate(meta.path);
+                    setOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-xs transition-colors ${
+                    isActive
+                      ? "bg-slate-700/70 text-white"
+                      : "text-slate-300 hover:bg-slate-700/40 hover:text-white"
+                  }`}
+                >
+                  <span className={meta.color}>{meta.icon}</span>
+                  <span className="font-medium">{meta.label}</span>
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-          {accessiblePortals.map((pid) => {
-            const meta = PORTAL_META[pid];
-            if (!meta) return null;
-            const isActive = currentPath.startsWith(
-              meta.path.split("/").slice(0, 2).join("/"),
-            );
-            return (
-              <button
-                key={pid}
-                onClick={() => {
-                  navigate(meta.path);
-                  setOpen(false);
-                }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors ${
-                  isActive
-                    ? "bg-slate-700/70 text-white"
-                    : "text-slate-300 hover:bg-slate-700/40 hover:text-white"
-                }`}
-              >
-                <span className={meta.color}>{meta.icon}</span>
-                <span className="font-medium">{meta.label}</span>
-                {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        </>
       )}
     </div>
   );

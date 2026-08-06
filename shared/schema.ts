@@ -924,6 +924,26 @@ export type InsertTicket = typeof tickets.$inferInsert;
 export type TicketAssignment = typeof ticketAssignments.$inferSelect;
 export type InsertTicketAssignment = typeof ticketAssignments.$inferInsert;
 
+export const ticketComments = pgTable(
+  "ticket_comments",
+  {
+    id: serial("id").primaryKey(),
+    ticketId: integer("ticket_id")
+      .references(() => tickets.id, { onDelete: "cascade" })
+      .notNull(),
+    authorId: integer("author_id").references(() => users.id),
+    authorName: varchar("author_name"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    ticketIdx: index("ticket_comments_ticket_idx").on(t.ticketId),
+  }),
+);
+
+export type TicketComment = typeof ticketComments.$inferSelect;
+export type InsertTicketComment = typeof ticketComments.$inferInsert;
+
 // ── USER SETTINGS (Sector-Specific Preferences) ─────────────────────────────
 export const userSettings = pgTable(
   "user_settings",

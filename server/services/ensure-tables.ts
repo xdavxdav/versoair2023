@@ -67,6 +67,36 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    // ── Column drift: streaming_plans + backfill download quotas per tier ──
+    const STREAMING_PLANS_ADDITIONS = [
+      `ALTER TABLE streaming_plans ADD COLUMN IF NOT EXISTS downloads_per_month INTEGER DEFAULT 0`,
+    ];
+    for (const alt of STREAMING_PLANS_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+        /* fine */
+      }
+    }
+    // Backfill known plan quotas (only touches rows that currently have 0/NULL)
+    const PLAN_QUOTA_UPDATES: Array<[string, number]> = [
+      ["Gratuit", 0],
+      ["Supporter", 5],
+      ["Champion", 20],
+      ["Patron", -1], // -1 = unlimited
+    ];
+    for (const [name, quota] of PLAN_QUOTA_UPDATES) {
+      try {
+        await client.query(
+          `UPDATE streaming_plans SET downloads_per_month = $1
+             WHERE name = $2 AND (downloads_per_month IS NULL OR downloads_per_month = 0)`,
+          [quota, name],
+        );
+      } catch (_) {
+        /* streaming_plans may not exist yet on first boot — will be created above */
+      }
+    }
+
     // Create indexes after all tables exist (separate pass to avoid FK issues)
     for (const idx of INDEX_STATEMENTS) {
       try {
@@ -756,6 +786,30 @@ const TABLE_STATEMENTS: TableDef[] = [
       notes TEXT
     )`,
   },
+  {
+    table: "ticket_comments",
+    sql: `CREATE TABLE IF NOT EXISTS ticket_comments (
+      id SERIAL PRIMARY KEY,
+      ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+      author_id INTEGER REFERENCES users(id),
+      author_name VARCHAR,
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "community_posts",
+    sql: `CREATE TABLE IF NOT EXISTS community_posts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      author_name VARCHAR,
+      author_avatar TEXT,
+      content TEXT NOT NULL,
+      parent_id INTEGER REFERENCES community_posts(id) ON DELETE CASCADE,
+      is_hidden BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
 
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
@@ -950,10 +1004,22 @@ const TABLE_STATEMENTS: TableDef[] = [
       stream_limit INTEGER,
       pool_contribution_percent INTEGER NOT NULL,
       boost_credits INTEGER DEFAULT 0,
+      downloads_per_month INTEGER DEFAULT 0,
       stripe_price_id VARCHAR(255),
       stripe_product_id VARCHAR(255),
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    // Per-user download event log — used to enforce monthly quota per plan tier
+    table: "track_downloads",
+    sql: `CREATE TABLE IF NOT EXISTS track_downloads (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      track_id INTEGER NOT NULL REFERENCES music_tracks(id) ON DELETE CASCADE,
+      plan_tier VARCHAR(50),
+      downloaded_at TIMESTAMP DEFAULT NOW()
     )`,
   },
   {
@@ -1270,6 +1336,15 @@ const INDEX_STATEMENTS: string[] = [
   // ticket_assignments
   `CREATE INDEX IF NOT EXISTS ticket_assignments_ticket_idx ON ticket_assignments (ticket_id)`,
   `CREATE INDEX IF NOT EXISTS ticket_assignments_assigned_to_idx ON ticket_assignments (assigned_to)`,
+  // ticket_comments
+  `CREATE INDEX IF NOT EXISTS ticket_comments_ticket_idx ON ticket_comments (ticket_id)`,
+  // community_posts
+  `CREATE INDEX IF NOT EXISTS community_posts_created_idx ON community_posts (created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_user_idx ON community_posts (user_id)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_parent_idx ON community_posts (parent_id)`,
+  // track_downloads
+  `CREATE INDEX IF NOT EXISTS track_downloads_user_time_idx ON track_downloads (user_id, downloaded_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS track_downloads_track_idx ON track_downloads (track_id)`,
   // user_settings
   `CREATE INDEX IF NOT EXISTS user_settings_user_sector_idx ON user_settings (user_id, sector)`,
   `CREATE INDEX IF NOT EXISTS user_settings_sector_idx ON user_settings (sector)`,

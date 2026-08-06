@@ -70,20 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("token");
 
-    // Show cached user immediately while we verify in background (UX fast path)
+    // Show cached user immediately while we verify in background (UX fast path).
+    // We do NOT flip loading=false here — ProtectedRoute needs to keep waiting for
+    // the real verify response, otherwise it races and redirects to /auth/signin
+    // while a valid cookie is being confirmed.
     const cachedRaw = localStorage.getItem(USER_CACHE_KEY);
     if (cachedRaw) {
       try {
         setUser(JSON.parse(cachedRaw));
-        setLoading(false);
       } catch {
         localStorage.removeItem(USER_CACHE_KEY);
       }
     }
 
-    // Verify session via httpOnly cookie (no token needed in header)
+    // Verify session via httpOnly cookie (no token needed in header).
+    // 8 s timeout — Render free-tier cold starts routinely take 2–5 s and a 1.5 s
+    // budget caused false-negative "unauthenticated" states even when the cookie
+    // was valid.
     const abortCtrl = new AbortController();
-    const abortTimer = setTimeout(() => abortCtrl.abort(), 1500);
+    const abortTimer = setTimeout(() => abortCtrl.abort(), 8000);
     try {
       const response = await fetch("/auth/verify", {
         method: "GET",
@@ -100,14 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(data.token ?? null);
           if (data.token) setAuthToken(data.token);
           localStorage.setItem(USER_CACHE_KEY, JSON.stringify(normalized));
-        } else {
+        } else if (response.status === 401) {
+          // Definitive unauthenticated response — safe to clear
           clearSession();
         }
+        // 2xx with success:false but not 401 → server ambiguity, keep cached
       } else if (response.status === 401) {
+        // Server explicitly says unauthenticated → clear
         clearSession();
       }
+      // Any other status (5xx, 502, 503 during deploy) → keep cached user
     } catch {
-      // Network error — keep cached display state, will re-verify on next heartbeat
+      // Network error, abort, or timeout — keep cached display state.
+      // Heartbeat will re-verify. DO NOT clearSession here (that was causing the
+      // "logged in but pages think I'm not" bug on cold starts).
     } finally {
       setLoading(false);
     }
@@ -127,7 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: "GET",
           credentials: "include",
         });
-        if (!res.ok) {
+        // Only clear on definitive 401 — 5xx / network errors keep the user logged in
+        if (res.status === 401) {
           clearSession();
         }
       } catch {
@@ -176,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    clearSession();
+    fullClearOnLogout();
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } catch {
@@ -185,6 +197,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   function clearSession() {
+    // Narrow clear: only the main auth artefacts. Gate/community sessions and
+    // admin timers are intentionally NOT touched here so a transient 401 on one
+    // subsystem doesn't wipe unrelated context. Explicit logout() calls the
+    // full-clear helper below.
+    clearCachedUser();
+    localStorage.removeItem(USER_CACHE_KEY);
+    setToken(null);
+    setUser(null);
+  }
+
+  function fullClearOnLogout() {
     clearCachedUser();
     localStorage.removeItem(USER_CACHE_KEY);
     localStorage.removeItem("geoadmin_session");

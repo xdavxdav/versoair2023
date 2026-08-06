@@ -3,6 +3,179 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authenticatedFetch } from "@/lib/auth";
+import { useAuth } from "@/hooks/use-auth";
+
+interface CommunityPost {
+  id: number;
+  content: string;
+  author_name?: string;
+  display_name?: string;
+  username?: string;
+  avatar_url?: string;
+  user_id?: number;
+  created_at: string;
+}
+
+function timeAgo(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso).getTime();
+  const s = Math.max(1, Math.floor((Date.now() - d) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function FanWall() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [text, setText] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery<{ posts: CommunityPost[] }>({
+    queryKey: ["community-posts"],
+    queryFn: async () => {
+      const res = await fetch("/api/community/posts?limit=50");
+      if (!res.ok) return { posts: [] };
+      return res.json();
+    },
+    refetchInterval: 15000,
+  });
+
+  const postMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const res = await authenticatedFetch("/api/community/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Could not post");
+      return json;
+    },
+    onSuccess: () => {
+      setText("");
+      setError(null);
+      qc.invalidateQueries({ queryKey: ["community-posts"] });
+    },
+    onError: (err: any) => setError(err?.message || "Failed to post"),
+  });
+
+  const posts = data?.posts || [];
+
+  return (
+    <div className="space-y-4">
+      {/* Composer */}
+      <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4">
+        {user ? (
+          <>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              disabled={postMutation.isPending}
+              rows={3}
+              maxLength={2000}
+              placeholder="Share something with the community…"
+              className="w-full bg-slate-900/60 text-white placeholder:text-slate-500 border border-slate-700 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/60"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-[11px] text-slate-500">
+                Free for everyone · 30s slow-mode · No cooldown for subscribers
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500">
+                  {text.length}/2000
+                </span>
+                <Button
+                  size="sm"
+                  disabled={!text.trim() || postMutation.isPending}
+                  onClick={() => postMutation.mutate(text.trim())}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {postMutation.isPending ? "Posting…" : "Post"}
+                </Button>
+              </div>
+            </div>
+            {error && (
+              <div className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/25 rounded px-3 py-2">
+                {error}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-2">
+            <p className="text-slate-400 text-sm mb-2">
+              Sign in to join the conversation.
+            </p>
+            <Link href="/login">
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                Sign in
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Feed */}
+      {isLoading ? (
+        <div className="text-slate-500 text-sm py-6 text-center">
+          Loading feed…
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-8 text-center">
+          <MessageSquare className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+          <p className="text-slate-400 text-sm">
+            No posts yet. Be the first to say hi 👋
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((p) => {
+            const name =
+              p.display_name || p.username || p.author_name || "Anonymous";
+            return (
+              <div
+                key={p.id}
+                className="bg-slate-800/40 border border-slate-700 rounded-xl p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden">
+                    {p.avatar_url ? (
+                      <img
+                        src={p.avatar_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      name[0]?.toUpperCase() || "U"
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {name}
+                      </p>
+                      <span className="text-xs text-slate-500">
+                        {timeAgo(p.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-200 whitespace-pre-wrap break-words">
+                      {p.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CommunityDetail() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -138,28 +311,7 @@ export default function CommunityDetail() {
             </div>
           )}
 
-          {selectedTab === "discussions" && (
-            <div className="space-y-4">
-              {[
-                "Best practices for data analysis",
-                "How to optimize dashboards",
-                "Industry insights Q1 2024",
-              ].map((topic, idx) => (
-                <div
-                  key={idx}
-                  className="bg-slate-800/30 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/50 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-white">{topic}</h3>
-                    <span className="text-emerald-400 text-sm">12 replies</span>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">
-                    Last updated 2 days ago
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+          {selectedTab === "discussions" && <FanWall />}
 
           {selectedTab === "events" && (
             <div className="space-y-4">

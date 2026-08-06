@@ -5,6 +5,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import {
   Search,
   Heart,
@@ -266,8 +267,11 @@ export default function MarketplacePage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const [listingSubmitState, setListingSubmitState] = useState<
-    "idle" | "submitting" | "submitted"
+    "idle" | "submitting" | "submitted" | "error"
   >("idle");
+  const [listingSubmitError, setListingSubmitError] = useState<string | null>(
+    null,
+  );
 
   const resetListingForm = () => {
     setListingForm({
@@ -291,6 +295,7 @@ export default function MarketplacePage() {
   const handlePublishListing = async () => {
     if (!listingForm.title.trim()) return;
     setListingSubmitState("submitting");
+    setListingSubmitError(null);
     try {
       const formData = new FormData();
       formData.append("title", listingForm.title);
@@ -304,9 +309,12 @@ export default function MarketplacePage() {
       // Attach video files
       listingVideos.forEach((file) => formData.append("videos", file));
 
-      const res = await fetch("/api/marketing/journal/listings", {
+      // Must use authenticatedFetch — a bare fetch() only relied on cookies,
+      // which the server's requireAuth() doesn't accept (it expects a Bearer
+      // token). That silently 401'd and the listing was never saved, even
+      // though the UI used to show "submitted" anyway.
+      const res = await authenticatedFetch("/api/marketing/journal/listings", {
         method: "POST",
-        credentials: "include",
         body: formData,
       });
       if (!res.ok) {
@@ -317,8 +325,13 @@ export default function MarketplacePage() {
       refetchMyListings();
     } catch (err: any) {
       console.error("Publish listing error:", err);
-      // Still show submitted for UX — the listing goes to pending review
-      setListingSubmitState("submitted");
+      // Surface the real failure instead of pretending it worked — a fake
+      // "submitted" state left users thinking their listing was under review
+      // when it was never saved to the database.
+      setListingSubmitState("error");
+      setListingSubmitError(
+        err?.message || "Something went wrong. Please try again.",
+      );
     }
   };
 
@@ -422,9 +435,137 @@ export default function MarketplacePage() {
     };
   }, [showCreateListing]);
 
-  const [listings] = useState(generateListings);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // ═══ LIVE LISTINGS (public browse feed) ═══
+  const { data: liveListings = [] } = useQuery<any[]>({
+    queryKey: ["public-marketplace-listings", activeCategory],
+    queryFn: async () => {
+      try {
+        const url =
+          activeCategory === "all"
+            ? "/api/marketing/journal/listings?status=active&limit=60"
+            : `/api/marketing/journal/listings?status=active&limit=60&category=${encodeURIComponent(activeCategory)}`;
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) return [];
+        const json = await res.json();
+        const rows = json.data || json.listings || [];
+        // Normalize DB row → UI card shape
+        return rows.map((r: any) => {
+          let images: string[] = [];
+          try {
+            images =
+              typeof r.images === "string"
+                ? JSON.parse(r.images)
+                : r.images || [];
+          } catch {
+            images = [];
+          }
+          const createdAt = r.created_at ? new Date(r.created_at) : null;
+          const days = createdAt
+            ? Math.floor((Date.now() - createdAt.getTime()) / 86400000)
+            : null;
+          return {
+            id: r.id,
+            title: r.title || "Untitled listing",
+            description: r.description || "",
+            category: r.category || "community",
+            price: Number(r.price) || 0,
+            image:
+              images[0] ||
+              "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect fill='%23334155' width='400' height='400'/><text x='50%25' y='50%25' fill='%236b7280' font-size='28' font-family='sans-serif' text-anchor='middle' dy='.3em'>No image</text></svg>",
+            images,
+            location: r.location || r.business_name || "—",
+            posted:
+              days === null
+                ? "recently"
+                : days === 0
+                  ? "today"
+                  : `${days}d ago`,
+            condition: r.condition || "New",
+            views: r.views ?? 0,
+            saves: r.saves ?? 0,
+            messages: r.message_count ?? 0,
+            owner_id: r.user_id,
+            owner_name: r.owner_name || r.business_name || "Seller",
+            owner_email: r.owner_email || null,
+            seller: {
+              name: r.owner_name || r.business_name || "Seller",
+              verified: !!r.owner_verified,
+            },
+          };
+        });
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30_000,
+  });
+  const listings = liveListings;
+
+  // ═══ MESSAGE SELLER (marketplace DMs — free/ungated for all tiers) ═══
+  const [messageTarget, setMessageTarget] = useState<any | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [messageState, setMessageState] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  const openMessageSeller = (listing: any) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setMessageTarget(listing);
+    setMessageText(
+      `Hi! I'm interested in your listing "${listing.title}". Is it still available?`,
+    );
+    setMessageState("idle");
+    setMessageError(null);
+  };
+
+  const sendSellerMessage = async () => {
+    if (!messageTarget || !messageText.trim()) return;
+    setMessageState("sending");
+    setMessageError(null);
+    try {
+      // 1. Create or reuse marketplace conversation with the seller
+      const convRes = await authenticatedFetch("/api/inbox/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: String(messageTarget.owner_id ?? messageTarget.id),
+          participantName: messageTarget.owner_name || "Seller",
+          type: "marketplace",
+        }),
+      });
+      const convJson = await convRes.json();
+      if (!convRes.ok || !convJson.success) {
+        throw new Error(convJson.error || "Could not open conversation");
+      }
+      const convId = convJson.conversation?.id;
+      if (!convId) throw new Error("Missing conversation id");
+
+      // 2. Send the message
+      const msgRes = await authenticatedFetch(
+        `/api/inbox/conversations/${convId}/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: messageText.trim() }),
+        },
+      );
+      const msgJson = await msgRes.json();
+      if (!msgRes.ok || !msgJson.success) {
+        throw new Error(msgJson.error || "Could not send message");
+      }
+      setMessageState("sent");
+    } catch (err: any) {
+      setMessageState("error");
+      setMessageError(err?.message || "Something went wrong. Try again.");
+    }
+  };
 
   // Theme classes
   const t = {
@@ -1097,11 +1238,16 @@ export default function MarketplacePage() {
                             >
                               <div className="flex gap-2 w-full">
                                 <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="flex-1 py-2 bg-cyan-600 text-white text-sm font-semibold rounded-xl hover:bg-cyan-700 transition-colors"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openMessageSeller(item);
+                                  }}
+                                  className="flex-1 py-2 bg-cyan-600 text-white text-sm font-semibold rounded-xl hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
                                 >
-                                  View Details
+                                  <MessageCircle className="w-4 h-4" />
+                                  Message Seller
                                 </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.15 }}
@@ -1226,6 +1372,18 @@ export default function MarketplacePage() {
                                 </p>
                               </div>
                               <div className="flex gap-2 flex-shrink-0">
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openMessageSeller(item);
+                                  }}
+                                  className="px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-600 text-white hover:bg-cyan-700 transition-colors flex items-center gap-1"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  Message
+                                </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   onClick={() => toggleFav(item.id)}
@@ -1950,6 +2108,18 @@ export default function MarketplacePage() {
                   <div
                     className={`px-4 sm:px-5 py-3 border-t ${t.border} shrink-0`}
                   >
+                    {listingSubmitState === "error" && (
+                      <div
+                        className="mb-2 px-3 py-2 rounded-lg text-xs font-medium"
+                        style={{
+                          background: "rgba(239,68,68,0.1)",
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          color: "#f87171",
+                        }}
+                      >
+                        ⚠️ {listingSubmitError || "Failed to submit listing."}
+                      </div>
+                    )}
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
@@ -2003,6 +2173,151 @@ export default function MarketplacePage() {
       >
         <Plus className="w-6 h-6" />
       </motion.button>
+
+      {/* ═══ MESSAGE SELLER MODAL ═══ */}
+      <AnimatePresence>
+        {messageTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => messageState !== "sending" && setMessageTarget(null)}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full max-w-md rounded-2xl border ${t.border} ${t.bgCard} shadow-2xl overflow-hidden`}
+            >
+              {/* Header */}
+              <div
+                className={`px-5 py-4 border-b ${t.border} flex items-center justify-between`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cyan-500/20 flex items-center justify-center">
+                    {messageTarget.image ? (
+                      <img
+                        src={messageTarget.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="w-5 h-5 text-cyan-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-semibold ${t.text} truncate`}>
+                      Message {messageTarget.owner_name || "Seller"}
+                    </p>
+                    <p className={`text-xs ${t.textMuted} truncate`}>
+                      About: {messageTarget.title}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMessageTarget(null)}
+                  disabled={messageState === "sending"}
+                  className={`${t.textMuted} hover:${t.text} disabled:opacity-40 p-1`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5">
+                {messageState === "sent" ? (
+                  <div className="text-center py-6">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
+                      <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <p className={`text-base font-semibold ${t.text} mb-1`}>
+                      Message sent!
+                    </p>
+                    <p className={`text-sm ${t.textMuted} mb-5`}>
+                      {messageTarget.owner_name || "The seller"} will see your
+                      message in their inbox.
+                    </p>
+                    <button
+                      onClick={() => setMessageTarget(null)}
+                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-medium"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label
+                      className={`text-xs font-medium ${t.textSecondary} mb-2 block`}
+                    >
+                      Your message
+                    </label>
+                    <textarea
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      disabled={messageState === "sending"}
+                      rows={5}
+                      maxLength={1000}
+                      placeholder="Ask a question, propose a price, arrange pickup…"
+                      className={`w-full rounded-xl px-3 py-2.5 text-sm resize-none border ${t.border} ${t.bgInput} ${t.text} placeholder:${t.textMuted} focus:outline-none focus:border-cyan-500/60`}
+                    />
+                    <div className={`mt-1 text-xs ${t.textMuted} text-right`}>
+                      {messageText.length}/1000
+                    </div>
+                    {messageState === "error" && messageError && (
+                      <div
+                        className="mt-2 px-3 py-2 rounded-lg text-xs font-medium flex items-start gap-2"
+                        style={{
+                          background: "rgba(239,68,68,0.1)",
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          color: "#f87171",
+                        }}
+                      >
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>{messageError}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => setMessageTarget(null)}
+                        disabled={messageState === "sending"}
+                        className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border ${t.border} ${t.text} ${t.bgHover} disabled:opacity-40`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={sendSellerMessage}
+                        disabled={
+                          messageState === "sending" || !messageText.trim()
+                        }
+                        className="flex-1 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
+                      >
+                        {messageState === "sending" ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Sending…
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="w-4 h-4" />
+                            Send message
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <p
+                      className={`mt-3 text-[11px] ${t.textMuted} text-center`}
+                    >
+                      Marketplace messaging is free for all users.
+                    </p>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

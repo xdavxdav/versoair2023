@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
-import { AudioProvider } from "@/lib/audio-context";
+import { AudioProvider, useAudio } from "@/lib/audio-context";
 import AudioPlayer from "@/components/audio/AudioPlayer";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -21,6 +21,7 @@ import {
 } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import { isContentNavPath } from "@/components/ContentNav";
+import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
 
@@ -592,15 +593,22 @@ function AppContent() {
   const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
   const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();
+  // The docked player is a fixed overlay, so space is reserved for it ONLY
+  // while a track is loaded. Reserving it unconditionally left a permanent
+  // ~68px dead strip at the bottom of every non-music page.
+  const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
   const isContentNavPage = isContentNavPath(currentPath);
-  // Musical Universe pages have their own navigation (MusicSidebar/MusicMobileDock
-  // for /music/*, and the internal Tabs nav for /artist-portal) — hide the main
-  // site Navbar/footer/ticker there.
-  const isMusicPage =
-    currentPath.startsWith("/music") ||
-    currentPath.startsWith("/artist-portal");
+  // Musical Universe pages have their own dedicated chrome (MusicSidebar /
+  // MusicMobileDock for /music/*, /stream, /streamer-portal, /arcade, /arena,
+  // /beatmaker, /listener-portal, and internal Tabs for /artist-portal) — the
+  // business site Navbar/amber-bar/BlogNavbar/footer would obstruct that
+  // chrome, so suppress them here. Canonical list lives in @/lib/music-routes
+  // so any new music-family route automatically inherits this behavior.
+  const isMusicPage = MUSIC_ROUTE_PREFIXES.some(
+    (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`),
+  );
   const { user, logout } = useAuthContext();
   const { currentLang } = useLanguage();
   const isFr = currentLang === "fr";
@@ -855,7 +863,7 @@ function AppContent() {
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} ${isMusicPage ? "" : "pb-[68px]"}`}
+        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""}`}
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>

@@ -892,7 +892,12 @@ const BusinessManagement = ({
             .then((data) => {
               const raw = Array.isArray(data) ? data : data.data || [];
               const deduped = Array.from(
-                ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
+                ((): any[] => {
+                  const seen = new Set<string>();
+                  return raw.filter(
+                    (c: any) => !seen.has(c.name) && seen.add(c.name),
+                  );
+                })(),
               );
               setCitiesList(deduped);
             })
@@ -910,7 +915,12 @@ const BusinessManagement = ({
       .then((data) => {
         const raw = Array.isArray(data) ? data : data.data || [];
         const deduped = Array.from(
-          ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
+          ((): any[] => {
+            const seen = new Set<string>();
+            return raw.filter(
+              (c: any) => !seen.has(c.name) && seen.add(c.name),
+            );
+          })(),
         );
         setCitiesList(deduped);
       })
@@ -980,7 +990,12 @@ const BusinessManagement = ({
             .then((data) => {
               const raw = Array.isArray(data) ? data : data.data || [];
               const deduped = Array.from(
-                ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
+                ((): any[] => {
+                  const seen = new Set<string>();
+                  return raw.filter(
+                    (c: any) => !seen.has(c.name) && seen.add(c.name),
+                  );
+                })(),
               );
               setEditCitiesList(deduped);
             })
@@ -998,7 +1013,12 @@ const BusinessManagement = ({
       .then((data) => {
         const raw = Array.isArray(data) ? data : data.data || [];
         const deduped = Array.from(
-          ((): any[] => { const seen = new Set<string>(); return raw.filter((c: any) => !seen.has(c.name) && seen.add(c.name)); })(),
+          ((): any[] => {
+            const seen = new Set<string>();
+            return raw.filter(
+              (c: any) => !seen.has(c.name) && seen.add(c.name),
+            );
+          })(),
         );
         setEditCitiesList(deduped);
       })
@@ -6461,6 +6481,21 @@ export default function AdminDashboard() {
           new Date().getTime().toString(),
         );
         localStorage.setItem("adminUsername", "vault-superuser");
+        return true;
+      }
+      // Admin Dashboard used a SEPARATE 15-min gate from GeoAdmin/TAM
+      // (`adminAccessTime` vs `geoadmin_session`), so a user already signed
+      // in through the shared GeoAdminAuthGate was re-prompted here even
+      // though they were still connected. Honor that session too.
+      if (localStorage.getItem("geoadmin_session") === "true") {
+        localStorage.setItem(
+          "adminAccessTime",
+          new Date().getTime().toString(),
+        );
+        localStorage.setItem(
+          "adminUsername",
+          localStorage.getItem("geoadmin_username") || "geoadmin",
+        );
         return true;
       }
       const savedAccessTime = localStorage.getItem("adminAccessTime");

@@ -286,8 +286,8 @@ export function AdminTicketManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Navigation Bar - Right under Navbar */}
-      <div className="sticky top-16 z-40 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-8 py-3 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
+      <div className="sticky top-16 z-40 bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-4 sm:px-8 py-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           {/* Identity indicator */}
           <div className="flex items-center gap-2 min-w-0">
             {user?.role === "admin" ||
@@ -344,7 +344,7 @@ export function AdminTicketManagement() {
       </div>
 
       {/* Main Content */}
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         {/* Session Timer Bar */}
         {isAdminAuthenticated && (
           <SessionTimerBar
@@ -357,18 +357,18 @@ export function AdminTicketManagement() {
           />
         )}
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
             Ticket Assignment Management
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Manage and assign tickets to team members • Session:{" "}
             {formatTimeLeft(sessionTimeLeft)}
           </p>
         </div>
 
         {/* Main Kanban Board */}
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {/* Unassigned Column */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 mb-2">

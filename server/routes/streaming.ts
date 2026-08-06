@@ -4,6 +4,7 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
+import { fanChatSlowMode } from "../middleware/rate-limiter";
 
 const router = Router();
 
@@ -1022,6 +1023,7 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         ap.lifetime_streams as total_streams,
         ap.instagram_handle,
         ap.spotify_url,
+        ap.user_id as user_id,
         (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
@@ -1465,41 +1467,45 @@ router.get("/liked", async (req: Request, res: Response) => {
 });
 
 // POST /api/streaming/comment — Add comment to a track
-router.post("/comment", async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.id;
-    if (!userId)
-      return res.status(401).json({ error: "Authentication required" });
+router.post(
+  "/comment",
+  fanChatSlowMode,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId)
+        return res.status(401).json({ error: "Authentication required" });
 
-    const { trackId, content, parentId } = req.body;
-    if (!trackId || !content)
-      return res.status(400).json({ error: "trackId and content required" });
+      const { trackId, content, parentId } = req.body;
+      if (!trackId || !content)
+        return res.status(400).json({ error: "trackId and content required" });
 
-    const result = await pool.query(
-      `
+      const result = await pool.query(
+        `
       INSERT INTO track_comments (track_id, user_id, content, parent_id)
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `,
-      [trackId, userId, content, parentId || null],
-    );
+        [trackId, userId, content, parentId || null],
+      );
 
-    // Join with user info
-    const comment = await pool.query(
-      `
+      // Join with user info
+      const comment = await pool.query(
+        `
       SELECT tc.*, u.username, u.display_name
       FROM track_comments tc
       JOIN users u ON tc.user_id = u.id
       WHERE tc.id = $1
     `,
-      [result.rows[0].id],
-    );
+        [result.rows[0].id],
+      );
 
-    res.json({ comment: comment.rows[0] });
-  } catch (err: any) {
-    res.status(500).json({ error: "Failed to add comment" });
-  }
-});
+      res.json({ comment: comment.rows[0] });
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  },
+);
 
 // DELETE /api/streaming/comment/:id
 router.delete("/comment/:id", async (req: Request, res: Response) => {

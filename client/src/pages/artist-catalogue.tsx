@@ -12,6 +12,8 @@ import {
   useUserFollowing,
   useArtistAnalytics,
 } from "@/hooks/use-streaming";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import {
   Play,
   Pause,
@@ -37,6 +39,9 @@ import {
   MapPin,
   Award,
   Mic2,
+  MessageCircle,
+  Send,
+  X,
 } from "lucide-react";
 
 function formatStreams(n: number): string {
@@ -67,6 +72,15 @@ export default function ArtistCataloguePage() {
   const { data: following } = useUserFollowing();
   const followMutation = useToggleFollow();
   const { data: analytics } = useArtistAnalytics(artistId);
+  const { user } = useAuthContext();
+
+  // ─── Message Artist state (music_artist DM — free/ungated for all tiers) ───
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [messageState, setMessageState] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [messageError, setMessageError] = useState<string | null>(null);
 
   const artist = data?.artist;
   const topTracks = data?.topTracks || [];
@@ -109,6 +123,78 @@ export default function ArtistCataloguePage() {
   const playAllTracks = () => {
     if (topTracks.length > 0) {
       audio.playTracks(topTracks);
+    }
+  };
+
+  const openMessageModal = () => {
+    if (!user) {
+      // Redirect to sign-in with return-to = current artist page
+      window.location.href = `/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    setMessageText(
+      `Hi ${artist.name}! Big fan of your music. `,
+    );
+    setMessageState("idle");
+    setMessageError(null);
+    setShowMessageModal(true);
+  };
+
+  const sendArtistMessage = async () => {
+    if (!user || !artist) return;
+    const content = messageText.trim();
+    if (!content) return;
+
+    // Must have owner user_id to route the DM
+    const ownerId = (artist as any).user_id;
+    if (!ownerId) {
+      setMessageState("error");
+      setMessageError(
+        "This artist hasn't linked a message inbox yet. Try again later.",
+      );
+      return;
+    }
+
+    setMessageState("sending");
+    setMessageError(null);
+
+    try {
+      const convRes = await authenticatedFetch("/api/inbox/conversations", {
+        method: "POST",
+        body: JSON.stringify({
+          participantId: String(ownerId),
+          participantName: artist.name || "Artist",
+          participantAvatar: artist.image_url || null,
+          type: "music_artist",
+        }),
+      });
+      const convData = await convRes.json();
+      if (!convRes.ok || !convData?.conversation?.id) {
+        throw new Error(convData?.error || "Could not open conversation");
+      }
+      const convId = convData.conversation.id;
+
+      const msgRes = await authenticatedFetch(
+        `/api/inbox/conversations/${convId}/messages`,
+        {
+          method: "POST",
+          body: JSON.stringify({ content }),
+        },
+      );
+      const msgData = await msgRes.json();
+      if (!msgRes.ok) {
+        throw new Error(msgData?.error || "Could not send message");
+      }
+
+      setMessageState("sent");
+      setTimeout(() => {
+        setShowMessageModal(false);
+        setMessageState("idle");
+        setMessageText("");
+      }, 1500);
+    } catch (err: any) {
+      setMessageState("error");
+      setMessageError(err?.message || "Something went wrong. Try again.");
     }
   };
 
@@ -254,6 +340,19 @@ export default function ArtistCataloguePage() {
                     <UserPlus className="w-4 h-4" />
                   )}
                   {isFollowing ? "Suivi" : "Suivre"}
+                </button>
+
+                <button
+                  onClick={openMessageModal}
+                  title={
+                    user
+                      ? "Send a direct message to this artist"
+                      : "Sign in to message this artist"
+                  }
+                  className="px-4 py-2.5 rounded-xl flex items-center gap-1.5 border bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400/50 transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Message
                 </button>
 
                 {/* Social links */}
@@ -634,6 +733,92 @@ export default function ArtistCataloguePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* MESSAGE ARTIST MODAL — free/ungated music_artist DM         */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {showMessageModal && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">
+                    Message {artist.name}
+                  </p>
+                  <p className="text-white/50 text-[10px]">
+                    Direct message — free for all fans
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMessageModal(false)}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4">
+              {messageState === "sent" ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
+                    <Send className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <p className="text-white font-semibold">Message sent!</p>
+                  <p className="text-white/50 text-xs mt-1">
+                    You&apos;ll see the reply in your inbox.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {messageError && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs">
+                      {messageError}
+                    </div>
+                  )}
+                  <textarea
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value.slice(0, 1000))}
+                    placeholder="Write a message…"
+                    rows={5}
+                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none"
+                    disabled={messageState === "sending"}
+                  />
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-white/40 text-[10px]">
+                      {messageText.length}/1000
+                    </span>
+                    <button
+                      onClick={sendArtistMessage}
+                      disabled={
+                        !messageText.trim() || messageState === "sending"
+                      }
+                      className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {messageState === "sending" ? "Sending…" : "Send"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-2.5 bg-slate-950/50 border-t border-white/10">
+              <p className="text-white/40 text-[10px] text-center">
+                Direct messaging is free for all fans · Rate-limited to prevent spam
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

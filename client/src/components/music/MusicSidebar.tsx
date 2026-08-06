@@ -117,7 +117,7 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
         />
       )}
       <div
-        className="h-14 flex items-center justify-center cursor-pointer group relative overflow-hidden select-none"
+        className="h-14 flex-shrink-0 flex items-center justify-center cursor-pointer group relative overflow-hidden select-none bg-[#0a0512] z-[2]"
         onMouseDown={startHold}
         onMouseUp={() => {
           clearHold();
@@ -235,7 +235,7 @@ export function MusicSidebar() {
   }, [isArtist]);
 
   return (
-    <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[70] w-16">
+    <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[95] w-16">
       {/* Glass background */}
       <div className="absolute inset-0 bg-[#0a0512] backdrop-blur-xl border-r border-white/[0.06]" />
       {/* Purple glow edge - vertical */}
@@ -251,7 +251,7 @@ export function MusicSidebar() {
         <LogoWithHoldToHome navigate={navigate} />
 
         {/* ─── Core section ─── */}
-        <nav className="px-2 space-y-1 pt-3">
+        <nav className="px-2 space-y-1 pt-3 flex-shrink-0">
           {coreItems.map((item) => {
             const Icon = sidebarIconMap[item.icon];
             const isActive =
@@ -293,9 +293,9 @@ export function MusicSidebar() {
         </nav>
 
         {/* ─── Manage section (Artists only) ─── */}
-        {isArtist && manageItems.length > 0 && (
+        {isArtist && manageItems.length > 0 ? (
           <>
-            <div className="pt-3 border-t border-white/[0.04] mx-3 mt-2" />
+            <div className="pt-3 border-t border-white/[0.04] mx-3 mt-2 flex-shrink-0" />
 
             <nav className="px-2 space-y-1 pt-2 flex-1 overflow-y-auto">
               {manageItems.map((item) => {
@@ -340,10 +340,13 @@ export function MusicSidebar() {
               })}
             </nav>
           </>
+        ) : (
+          /* Streamers: flex spacer so bottom actions push down without squashing logo/nav */
+          <div className="flex-1" />
         )}
 
         {/* ─── Bottom actions (icons only) ─── */}
-        <div className="px-2 pb-3 space-y-1 border-t border-white/[0.04] pt-3 mt-auto">
+        <div className="px-2 pb-3 space-y-1 border-t border-white/[0.04] pt-3 mt-auto flex-shrink-0">
           {/* New Project button - Artists only */}
           {isArtist && (
             <Link href="/music/studio">
