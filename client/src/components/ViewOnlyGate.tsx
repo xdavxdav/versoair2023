@@ -185,6 +185,25 @@ export default function ViewOnlyGate({
             </motion.button>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto text-left">
+            <div className="border border-cyan-400/20 bg-cyan-400/5 p-3 rounded-lg">
+              <p className="text-sm font-semibold text-white">
+                Superadmin test account
+              </p>
+              <p className="text-xs text-cyan-300 mt-1">
+                Sign in with staff username: joel_007
+              </p>
+            </div>
+            <div className="border border-cyan-400/20 bg-cyan-400/5 p-3 rounded-lg">
+              <p className="text-sm font-semibold text-white">
+                CEO test account
+              </p>
+              <p className="text-xs text-cyan-300 mt-1">
+                Sign in with staff username: admin_025
+              </p>
+            </div>
+          </div>
+
           {/* ─── SSO Divider + Professional Network SSO Buttons ─── */}
           {showProfessionalSSO && (
             <>

@@ -265,7 +265,7 @@ export default function AuthModal({
                   {/* Email */}
                   <div>
                     <label className="block text-sm text-slate-300 mb-2 font-handstyle">
-                      Email Address
+                      Email Address or Staff Username
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
@@ -273,7 +273,7 @@ export default function AuthModal({
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder="Email, joel_007, or admin_025"
                         className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors font-handstyle"
                       />
                     </div>

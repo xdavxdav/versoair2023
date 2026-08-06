@@ -67,6 +67,16 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    // ── Column drift: businesses branding ──────────────────────────────────
+    // Drizzle includes logo_url in every business insert, so older databases
+    // must receive this column before GeoAdmin can create a business.
+    const BUSINESSES_COLUMN_ADDITIONS = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+    ];
+    for (const alt of BUSINESSES_COLUMN_ADDITIONS) {
+      await client.query(alt);
+    }
+
     // ── Column drift: streaming_plans + backfill download quotas per tier ──
     const STREAMING_PLANS_ADDITIONS = [
       `ALTER TABLE streaming_plans ADD COLUMN IF NOT EXISTS downloads_per_month INTEGER DEFAULT 0`,
@@ -307,6 +317,12 @@ const TABLE_STATEMENTS: TableDef[] = [
       approved_by INTEGER REFERENCES users(id),
       approval_notes TEXT,
       pdf_path TEXT,
+      tier VARCHAR DEFAULT 'free',
+      tier_expires_at TIMESTAMP,
+      logo_url TEXT,
+      verification_status VARCHAR DEFAULT 'unverified',
+      verification_documents JSONB DEFAULT '[]',
+      avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )`,

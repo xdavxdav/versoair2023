@@ -919,21 +919,8 @@ function AppContent() {
           since streamers/artists/fans all need to reach it. */}
       {!isImmersivePage && (
         <Suspense fallback={null}>
-          <MessengerLauncher />
+          <MessengerLauncher hidden={isMusicPage || currentPath === "/blog"} />
         </Suspense>
-      )}
-
-      {/* Musical Universe has its own navigation (sidebar/dock/tabs) — no main
-          site Navbar/bubble here. Fallback: a small Home button so users can
-          always get back to the main site. */}
-      {isMusicPage && (
-        <Link
-          href="/"
-          className="fixed bottom-6 right-6 z-[90] flex items-center justify-center w-12 h-12 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-white/10 shadow-lg shadow-black/30 text-white transition-colors"
-          aria-label="Home"
-        >
-          <HomeIcon className="h-5 w-5" />
-        </Link>
       )}
 
       {/* Quick Sign In Modal — global shortcut */}

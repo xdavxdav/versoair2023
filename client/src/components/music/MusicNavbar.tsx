@@ -22,6 +22,7 @@ import {
   Sparkles,
   Menu,
   Home,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -181,7 +182,7 @@ export function MusicNavbar() {
               onPointerLeave={handleHomePressEnd}
               onPointerCancel={handleHomePressEnd}
               onContextMenu={(e) => e.preventDefault()}
-              title="Tap=Dashboard · Double-tap=Home · Hold 3s=Home"
+              title="Tap=Dashboard · Double-tap=Verso Air home · Hold 3s=Home"
             >
               <div className="relative w-8 h-8 sm:w-10 sm:h-10">
                 {/* Purple glow behind - always visible */}
@@ -289,6 +290,15 @@ export function MusicNavbar() {
                         <Bell className="w-4 h-4 mr-2" />
                         Notifications
                         <span className="ml-auto w-2 h-2 bg-pink-500 rounded-full" />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="hover:bg-white/5 cursor-pointer"
+                        onClick={() =>
+                          window.dispatchEvent(new Event("messenger:open"))
+                        }
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Messages
                       </DropdownMenuItem>
                       <DropdownMenuItem className="hover:bg-white/5 cursor-pointer">
                         <User className="w-4 h-4 mr-2" />
@@ -453,6 +463,18 @@ export function MusicNavbar() {
 
               {user && user.id ? (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white/60 hover:text-white hover:bg-white/5 w-10 h-10"
+                    onClick={() =>
+                      window.dispatchEvent(new Event("messenger:open"))
+                    }
+                    title="Messages"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </Button>
+
                   {/* Notifications */}
                   <Button
                     variant="ghost"

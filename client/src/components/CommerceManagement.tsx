@@ -150,16 +150,21 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
   // Add new business
   const addBusinessMutation = useMutation({
     mutationFn: async (data: Partial<Business>) => {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/businesses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          category_id:
-            selectedCategory === "all" ? undefined : parseInt(selectedCategory),
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            category_id:
+              selectedCategory === "all"
+                ? undefined
+                : parseInt(selectedCategory),
+          }),
+          signal: AbortSignal.timeout(15000),
+        },
+      );
       let result: any = null;
       try {
         result = await response.json();

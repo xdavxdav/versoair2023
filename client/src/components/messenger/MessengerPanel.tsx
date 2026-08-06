@@ -9,15 +9,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  X,
-  Send,
-  ArrowLeft,
-  Loader2,
-  Globe2,
-  Lock,
-  Check,
-} from "lucide-react";
+import { X, Send, ArrowLeft, Loader2, Globe2, Lock, Check } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -76,9 +68,7 @@ export default function MessengerPanel({
   useEffect(() => {
     if (!activeConvo) return;
     setLoadingMessages(true);
-    authenticatedFetch(
-      `/api/inbox/conversations/${activeConvo.id}/messages`,
-    )
+    authenticatedFetch(`/api/inbox/conversations/${activeConvo.id}/messages`)
       .then((r) => r.json())
       .then((data) => {
         if (data?.success) setMessages(data.messages || []);
@@ -126,7 +116,9 @@ export default function MessengerPanel({
       const data = await res.json();
       if (data?.success) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === messageId ? { ...m, isPublished: true } : m)),
+          prev.map((m) =>
+            m.id === messageId ? { ...m, isPublished: true } : m,
+          ),
         );
       }
     } catch {
@@ -259,9 +251,7 @@ export default function MessengerPanel({
                               onClick={() =>
                                 !m.isPublished && publishMessage(m.id)
                               }
-                              disabled={
-                                m.isPublished || publishingId === m.id
-                              }
+                              disabled={m.isPublished || publishingId === m.id}
                               className={`mt-1 flex items-center gap-1 text-[10px] ${
                                 m.isPublished
                                   ? "text-emerald-400"

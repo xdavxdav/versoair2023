@@ -49,13 +49,8 @@ export default function ThreadFeedWidget({
 }: ThreadFeedWidgetProps) {
   const { user } = useAuthContext();
   const [draft, setDraft] = useState("");
-  const {
-    posts,
-    isLoading,
-    createPost,
-    isCreatingPost,
-    likePost,
-  } = useSocialFeed(1, limit, "recent", postType);
+  const { posts, isLoading, createPost, isCreatingPost, likePost } =
+    useSocialFeed(1, limit, "recent", postType);
 
   const handlePost = () => {
     const content = draft.trim();

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Zap, Search, Filter } from "lucide-react";
+import { MessageCircle, Filter } from "lucide-react";
 import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -15,10 +15,44 @@ import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
 import AdBanner from "@/components/AdBanner";
 import { useSocialFeed } from "@/hooks/use-social-feed";
+import { authenticatedFetch } from "@/lib/auth";
+
+const TEST_ACCOUNTS = [
+  {
+    id: 23,
+    name: "Verso Air Superadmin",
+    profession: "Platform Superadmin",
+    bio: "Test account for community posts, comments, and private threads.",
+    avatar: "https://api.dicebear.com/9.x/initials/svg?seed=Superadmin",
+    followerCount: 0,
+    followingCount: 0,
+    postCount: 0,
+    engagementScore: 0,
+    satisfactionRating: 5,
+    verified: true,
+    premiumMember: true,
+    loginName: "joel_007",
+  },
+  {
+    id: 24,
+    name: "Verso Air CEO",
+    profession: "Chief Executive Officer",
+    bio: "Test account for community posts, comments, and private threads.",
+    avatar: "https://api.dicebear.com/9.x/initials/svg?seed=CEO",
+    followerCount: 0,
+    followingCount: 0,
+    postCount: 0,
+    engagementScore: 0,
+    satisfactionRating: 5,
+    verified: true,
+    premiumMember: true,
+    loginName: "admin_025",
+  },
+];
 
 export default function BlogPage() {
   // ═══ Unified auth: AuthContext (main/artist/geo-admin) OR community session ═══
-  const { user: globalUser } = useAuthContext();
+  const { user: globalUser, login: setGlobalLogin } = useAuthContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem("blog_community_user") || "User";
@@ -75,10 +109,11 @@ export default function BlogPage() {
     loadMore,
     hasNextPage,
     createPost: apiCreatePost,
+    likePost,
+    unlikePost,
   } = useSocialFeed(1, 10, sortBy);
 
   const [posts, setPosts] = useState<any[]>([]);
-  const [suggestedUsers] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
   const [connectedUsers, setConnectedUsers] = useState<number[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -86,21 +121,28 @@ export default function BlogPage() {
 
   // Authentication handlers — use real community auth endpoints
   const handleAuthenticate = async (
-    email: string,
+    identifier: string,
     password: string,
     isSignUp: boolean,
   ) => {
     setIsAuthLoading(true);
     setAuthError("");
     try {
-      const endpoint = isSignUp
-        ? "/auth/community/register"
-        : "/auth/community/login";
-      const body: Record<string, any> = { email, password };
+      const isStaffLogin =
+        !isSignUp &&
+        TEST_ACCOUNTS.some((account) => account.loginName === identifier);
+      const endpoint = isStaffLogin
+        ? "/auth/admin-gate"
+        : isSignUp
+          ? "/auth/community/register"
+          : "/auth/community/login";
+      const body: Record<string, any> = isStaffLogin
+        ? { username: identifier, password }
+        : { email: identifier, password };
       if (isSignUp) {
         body.displayName =
-          email.split("@")[0].charAt(0).toUpperCase() +
-          email.split("@")[0].slice(1);
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+          identifier.split("@")[0].slice(1);
       }
 
       const response = await fetch(endpoint, {
@@ -121,8 +163,12 @@ export default function BlogPage() {
 
         const name =
           data.user?.displayName ||
-          email.split("@")[0].charAt(0).toUpperCase() +
-            email.split("@")[0].slice(1);
+          data.user?.username ||
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+            identifier.split("@")[0].slice(1);
+        if (data.token && data.user) {
+          setGlobalLogin(data.token, { ...data.user, name });
+        }
         setUserName(name);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
@@ -206,7 +252,50 @@ export default function BlogPage() {
     setConnectedUsers((prev) => [...prev, userId]);
   };
 
-  const handleMessageUser = (userId: number) => {};
+  const handleMessageUser = async (userId: number) => {
+    const account = TEST_ACCOUNTS.find((item) => item.id === userId);
+    if (!account) return;
+
+    try {
+      const response = await authenticatedFetch("/api/inbox/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: account.id,
+          participantName: account.name,
+          participantAvatar: account.avatar,
+          type: "marketplace",
+        }),
+      });
+      if (response.ok) window.dispatchEvent(new Event("messenger:open"));
+    } catch {
+      // The inbox panel exposes retryable failures from its normal UI.
+    }
+  };
+
+  const handleComment = async (postId: number, content: string) => {
+    try {
+      const response = await authenticatedFetch(
+        `/api/social/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        },
+      );
+      if (response.ok) {
+        setPosts((current) =>
+          current.map((post) =>
+            post.id === postId
+              ? { ...post, commentCount: (post.commentCount || 0) + 1 }
+              : post,
+          ),
+        );
+      }
+    } catch {
+      // A failed comment stays unsent and can be retried.
+    }
+  };
 
   const handleShareUser = (userId: number) => {};
 
@@ -216,7 +305,6 @@ export default function BlogPage() {
     tags?: string[];
   }) => {
     apiCreatePost({
-      authorId: 1,
       content: postData.content,
       imageUrls: postData.imageUrls,
       tags: postData.tags,
@@ -257,6 +345,22 @@ export default function BlogPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Feed Column */}
           <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <p className="text-sm text-slate-400">
+                Keep threads private, then publish your own sent message when it
+                deserves a wider audience.
+              </p>
+              <button
+                onClick={() =>
+                  window.dispatchEvent(new Event("messenger:open"))
+                }
+                className="flex items-center gap-2 px-3 py-2 bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25 rounded-lg text-sm font-medium transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Messages
+              </button>
+            </div>
+
             {/* Sort Controls */}
             <div className="flex items-center gap-2 pb-4 border-b border-white/10">
               <Filter className="w-4 h-4 text-slate-400" />
@@ -283,20 +387,54 @@ export default function BlogPage() {
             </div>
 
             {/* Posts */}
-            {displayPosts.map((post, idx) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <PostCard
-                  post={post as any}
-                  liked={likedPosts.includes(post.id)}
-                  onLike={() => handleToggleLike(post.id)}
-                />
-              </motion.div>
-            ))}
+            {displayPosts.map((post, idx) => {
+              const author = post.author || {};
+              const cardPost = {
+                id: post.id,
+                author: {
+                  id: author.id || post.authorId,
+                  name: author.displayName || "Verso community member",
+                  avatar:
+                    author.avatarUrl ||
+                    "https://api.dicebear.com/9.x/initials/svg?seed=Verso",
+                  profession: author.profession,
+                  verified: author.verifiedBadge,
+                },
+                content: post.content,
+                images: post.imageUrls,
+                timestamp: post.createdAt,
+                likes: post.likeCount || 0,
+                comments: post.commentCount || 0,
+                shares: post.shareCount || 0,
+                engagementScore: Number(post.engagementScore || 0),
+                isTrending: post.isTrending,
+                tags: post.tags,
+              };
+              return (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <PostCard
+                    post={cardPost}
+                    liked={likedPosts.includes(post.id)}
+                    onLike={() => {
+                      if (likedPosts.includes(post.id)) {
+                        unlikePost({ postId: post.id });
+                      } else {
+                        likePost({ postId: post.id });
+                      }
+                      handleToggleLike(post.id);
+                    }}
+                    onComment={(postId, content) =>
+                      handleComment(postId, content)
+                    }
+                  />
+                </motion.div>
+              );
+            })}
 
             {/* Infinite Scroll Trigger */}
             <div ref={observerTarget} className="py-8 text-center">
@@ -324,7 +462,7 @@ export default function BlogPage() {
                 Who to Follow
               </h2>
               <div className="space-y-3">
-                {suggestedUsers.map((user, index) => (
+                {TEST_ACCOUNTS.map((user, index) => (
                   <motion.div
                     key={user.id}
                     initial={{ opacity: 0, x: 20 }}
@@ -336,7 +474,12 @@ export default function BlogPage() {
                     <UserProfileCard
                       user={user as any}
                       onFollow={() => handleShowUserModal(user)}
+                      onMessage={() => handleMessageUser(user.id)}
                     />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Staff test sign-in:{" "}
+                      <span className="text-cyan-300">{user.loginName}</span>
+                    </p>
                   </motion.div>
                 ))}
               </div>

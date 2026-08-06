@@ -37,6 +37,27 @@ const ALLOWED_POST_TYPES = [
   "dm_share", // a DM the sender chose to publish/promote to the public feed
 ];
 
+async function getSocialProfileId(appUserId: number): Promise<number> {
+  const [existingProfile] = await db
+    .select({ id: socialUsers.id })
+    .from(socialUsers)
+    .where(eq(socialUsers.userId, appUserId))
+    .limit(1);
+
+  if (existingProfile) return existingProfile.id;
+
+  const [profile] = await db
+    .insert(socialUsers)
+    .values({
+      userId: appUserId,
+      username: `member_${appUserId}`,
+      displayName: `Verso member ${appUserId}`,
+    })
+    .returning({ id: socialUsers.id });
+
+  return profile.id;
+}
+
 // ============================================
 // POSTS ENDPOINTS
 // ============================================
@@ -111,10 +132,10 @@ router.post("/posts", async (req: Request, res: Response) => {
     // Use the authenticated user from JWT — never trust client-supplied
     // authorId (previously anyone could post as anyone by passing an
     // arbitrary authorId in the body).
-    const authorId = req.user?.userId;
+    const appUserId = req.user?.userId;
     const { content, imageUrls, tags, postType = "discussion" } = req.body;
 
-    if (!authorId) {
+    if (!appUserId) {
       return res.status(401).json({
         success: false,
         error: "Authentication required to post",
@@ -135,6 +156,7 @@ router.post("/posts", async (req: Request, res: Response) => {
       });
     }
 
+    const authorId = await getSocialProfileId(Number(appUserId));
     const newPost = await db
       .insert(socialPosts)
       .values({
@@ -200,11 +222,15 @@ router.get("/posts/:postId", async (req: Request, res: Response) => {
 router.post("/posts/:postId/like", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const userId = req.user?.userId;
+    const appUserId = req.user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+    if (!appUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
+
+    const userId = await getSocialProfileId(Number(appUserId));
 
     // Check if already liked
     const existingLike = await db
@@ -212,7 +238,7 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
       .from(socialLikes)
       .where(
         and(
-          eq(socialLikes.userId, Number(userId)),
+          eq(socialLikes.userId, userId),
           eq(socialLikes.postId, parseInt(postId)),
         ),
       )
@@ -226,7 +252,7 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
 
     // Add like
     await db.insert(socialLikes).values({
-      userId: Number(userId),
+      userId,
       postId: parseInt(postId),
       likeType: "post",
     });
@@ -266,17 +292,21 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
 router.delete("/posts/:postId/like", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const userId = req.user?.userId;
+    const appUserId = req.user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+    if (!appUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
+
+    const userId = await getSocialProfileId(Number(appUserId));
 
     await db
       .delete(socialLikes)
       .where(
         and(
-          eq(socialLikes.userId, Number(userId)),
+          eq(socialLikes.userId, userId),
           eq(socialLikes.postId, parseInt(postId)),
         ),
       );
@@ -319,11 +349,13 @@ router.delete("/posts/:postId/like", async (req: Request, res: Response) => {
 router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const authorId = req.user?.userId;
+    const appUserId = req.user?.userId;
     const { content, parentCommentId } = req.body;
 
-    if (!authorId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+    if (!appUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     if (!content) {
@@ -333,11 +365,12 @@ router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
       });
     }
 
+    const authorId = await getSocialProfileId(Number(appUserId));
     const newComment = await db
       .insert(socialComments)
       .values({
         postId: parseInt(postId),
-        authorId: Number(authorId),
+        authorId,
         content,
         parentCommentId,
       })

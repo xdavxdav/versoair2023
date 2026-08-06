@@ -33,7 +33,7 @@ interface Post {
 interface PostCardProps {
   post: Post;
   onLike?: (postId: number) => void;
-  onComment?: (postId: number) => void;
+  onComment?: (postId: number, content: string) => Promise<void> | void;
   onShare?: (postId: number) => void;
   liked?: boolean;
 }
@@ -48,6 +48,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [showParticles, setShowParticles] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comment, setComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const handleLike = () => {
     if (!isLiked) {
@@ -74,6 +77,19 @@ const PostCard: React.FC<PostCardProps> = ({
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const submitComment = async () => {
+    const content = comment.trim();
+    if (!content || isSubmittingComment) return;
+    setIsSubmittingComment(true);
+    try {
+      await onComment?.(post.id, content);
+      setComment("");
+      setIsCommenting(false);
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   return (
@@ -236,7 +252,7 @@ const PostCard: React.FC<PostCardProps> = ({
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onComment?.(post.id)}
+          onClick={() => setIsCommenting((current) => !current)}
           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10 transition-all duration-200"
         >
           <MessageCircle className="w-4 h-4" />
@@ -253,6 +269,27 @@ const PostCard: React.FC<PostCardProps> = ({
           <span className="text-xs font-medium font-handstyle">Share</span>
         </motion.button>
       </div>
+
+      {isCommenting && (
+        <div className="mt-3 flex gap-2 border-t border-white/5 pt-3">
+          <input
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") submitComment();
+            }}
+            placeholder="Write a reply..."
+            className="min-w-0 flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/50"
+          />
+          <button
+            onClick={submitComment}
+            disabled={!comment.trim() || isSubmittingComment}
+            className="px-3 py-2 rounded-lg bg-cyan-500 text-sm font-medium text-white disabled:opacity-50"
+          >
+            Reply
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
