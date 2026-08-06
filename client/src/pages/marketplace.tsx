@@ -158,7 +158,7 @@ const conditionStyle = (c: string) => {
 // ═══════════════════════════════════════════════════
 export default function MarketplacePage() {
   // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
-  const { user: globalUser } = useAuthContext();
+  const { user: globalUser, login: setGlobalLogin } = useAuthContext();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("blog_community_auth") === "true";
   });
@@ -167,6 +167,7 @@ export default function MarketplacePage() {
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   // Auto-auth if user is already signed in via any portal
   useEffect(() => {
@@ -181,20 +182,27 @@ export default function MarketplacePage() {
 
   // Auth handlers — real community auth endpoints (same as Blog)
   const handleAuthenticate = async (
-    email: string,
+    identifier: string,
     password: string,
     isSignUp: boolean,
   ) => {
     setIsAuthLoading(true);
+    setAuthError("");
     try {
-      const endpoint = isSignUp
-        ? "/auth/community/register"
-        : "/auth/community/login";
-      const body: Record<string, any> = { email, password };
+      const isStaffLogin =
+        !isSignUp && ["joel_007", "admin_025"].includes(identifier);
+      const endpoint = isStaffLogin
+        ? "/auth/admin-gate"
+        : isSignUp
+          ? "/auth/community/register"
+          : "/auth/community/login";
+      const body: Record<string, any> = isStaffLogin
+        ? { username: identifier, password }
+        : { email: identifier, password };
       if (isSignUp) {
         body.displayName =
-          email.split("@")[0].charAt(0).toUpperCase() +
-          email.split("@")[0].slice(1);
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+          identifier.split("@")[0].slice(1);
       }
 
       const response = await fetch(endpoint, {
@@ -213,18 +221,23 @@ export default function MarketplacePage() {
         }
         const name =
           data.user?.displayName ||
-          email.split("@")[0].charAt(0).toUpperCase() +
-            email.split("@")[0].slice(1);
+          data.user?.username ||
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+            identifier.split("@")[0].slice(1);
+        if (data.token && data.user) {
+          setGlobalLogin(data.token, { ...data.user, name });
+        }
         setUserName(name);
         setIsAuthenticated(true);
         setIsAuthModalOpen(false);
         localStorage.setItem("blog_community_auth", "true");
         localStorage.setItem("blog_community_user", name);
       } else {
-        console.error("Auth failed:", data.message);
+        setAuthError(data.message || "Authentication failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Auth error:", error);
+      setAuthError(error.message || "Network error. Please try again.");
     } finally {
       setIsAuthLoading(false);
     }
@@ -637,9 +650,13 @@ export default function MarketplacePage() {
         />
         <AuthModal
           isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setAuthError("");
+          }}
           onAuthenticate={handleAuthenticate}
           isLoading={isAuthLoading}
+          error={authError}
           showProfessionalSSO={false}
         />
       </>

@@ -115,7 +115,11 @@ function BlogSsoButtons() {
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuthenticate: (email: string, password: string, isSignUp: boolean) => void;
+  onAuthenticate: (
+    identifier: string,
+    password: string,
+    isSignUp: boolean,
+  ) => void;
   isLoading?: boolean;
   error?: string; // External error from parent (e.g., server response)
   showProfessionalSSO?: boolean;
@@ -193,14 +197,14 @@ export default function AuthModal({
           />
 
           {/* Modal — scrollable wrapper */}
-          <div className="fixed inset-0 z-[70] overflow-y-auto flex items-start sm:items-center justify-center p-4 py-8 pointer-events-none">
+          <div className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain touch-pan-y flex items-start justify-center p-3 sm:p-4 pointer-events-none [-webkit-overflow-scrolling:touch]">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md pointer-events-auto"
+              className="w-full max-w-md pointer-events-auto my-[max(0.75rem,env(safe-area-inset-top))] mb-[max(0.75rem,env(safe-area-inset-bottom))]"
             >
-              <div className="bg-slate-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="bg-slate-950 border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100dvh-1.5rem)] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                   <h2 className="text-2xl font-bold text-white">
@@ -217,7 +221,10 @@ export default function AuthModal({
                 </div>
 
                 {/* Content */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form
+                  onSubmit={handleSubmit}
+                  className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
+                >
                   {/* Tab Switcher */}
                   <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-lg">
                     {(["login", "signup"] as const).map((tab) => (
@@ -270,7 +277,10 @@ export default function AuthModal({
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                       <input
-                        type="email"
+                        type={mode === "signup" ? "email" : "text"}
+                        inputMode={mode === "signup" ? "email" : "text"}
+                        autoCapitalize="none"
+                        autoCorrect="off"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Email, joel_007, or admin_025"

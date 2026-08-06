@@ -124,7 +124,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
       {/* Background decorative elements */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
       <div
@@ -132,9 +132,9 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
         style={{ animationDelay: "1s" }}
       />
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-md mx-auto px-3 sm:px-4 py-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl">
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             {/* Header */}
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/20">
