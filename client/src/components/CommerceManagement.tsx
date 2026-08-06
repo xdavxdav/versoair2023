@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { authenticatedFetch } from "@/lib/auth";
 import {
   Card,
   CardContent,
@@ -149,7 +150,7 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
   // Add new business
   const addBusinessMutation = useMutation({
     mutationFn: async (data: Partial<Business>) => {
-      const response = await fetch(`${API_BASE_URL}/api/businesses`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/businesses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -157,9 +158,24 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
           category_id:
             selectedCategory === "all" ? undefined : parseInt(selectedCategory),
         }),
+        signal: AbortSignal.timeout(15000),
       });
-      if (!response.ok) throw new Error("Failed to add business");
-      return response.json();
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          `Server returned an unexpected response (HTTP ${response.status}). Please try again.`,
+        );
+      }
+      if (!response.ok) {
+        throw new Error(
+          result?.error?.message ||
+            result?.error ||
+            `Failed to add business (HTTP ${response.status})`,
+        );
+      }
+      return result;
     },
     onSuccess: () => {
       refetch();
@@ -179,16 +195,31 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
   // Update business
   const updateBusinessMutation = useMutation({
     mutationFn: async (data: Business) => {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${API_BASE_URL}/api/businesses/${data.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
+          signal: AbortSignal.timeout(15000),
         },
       );
-      if (!response.ok) throw new Error("Failed to update business");
-      return response.json();
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          `Server returned an unexpected response (HTTP ${response.status}). Please try again.`,
+        );
+      }
+      if (!response.ok) {
+        throw new Error(
+          result?.error?.message ||
+            result?.error ||
+            `Failed to update business (HTTP ${response.status})`,
+        );
+      }
+      return result;
     },
     onSuccess: () => {
       refetch();
@@ -208,11 +239,29 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
   // Delete business
   const deleteBusinessMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete business");
-      return response.json();
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses/${id}`,
+        {
+          method: "DELETE",
+          signal: AbortSignal.timeout(15000),
+        },
+      );
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          `Server returned an unexpected response (HTTP ${response.status}). Please try again.`,
+        );
+      }
+      if (!response.ok) {
+        throw new Error(
+          result?.error?.message ||
+            result?.error ||
+            `Failed to delete business (HTTP ${response.status})`,
+        );
+      }
+      return result;
     },
     onSuccess: () => {
       refetch();

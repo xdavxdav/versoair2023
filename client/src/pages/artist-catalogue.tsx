@@ -132,9 +132,7 @@ export default function ArtistCataloguePage() {
       window.location.href = `/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
-    setMessageText(
-      `Hi ${artist.name}! Big fan of your music. `,
-    );
+    setMessageText(`Hi ${artist.name}! Big fan of your music. `);
     setMessageState("idle");
     setMessageError(null);
     setShowMessageModal(true);
@@ -786,7 +784,9 @@ export default function ArtistCataloguePage() {
                   )}
                   <textarea
                     value={messageText}
-                    onChange={(e) => setMessageText(e.target.value.slice(0, 1000))}
+                    onChange={(e) =>
+                      setMessageText(e.target.value.slice(0, 1000))
+                    }
                     placeholder="Write a message…"
                     rows={5}
                     className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none"
@@ -814,7 +814,8 @@ export default function ArtistCataloguePage() {
             {/* Footer */}
             <div className="px-5 py-2.5 bg-slate-950/50 border-t border-white/10">
               <p className="text-white/40 text-[10px] text-center">
-                Direct messaging is free for all fans · Rate-limited to prevent spam
+                Direct messaging is free for all fans · Rate-limited to prevent
+                spam
               </p>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 /* webhint-disable hint-no-inline-styles */
 import { motion } from "framer-motion";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import {
   fadeInUp,
   staggerContainer,
@@ -1434,6 +1435,15 @@ export default function Careers() {
                   </div>
                 </CardFooter>
               </Card>
+
+              {/* Live community thread — real posts, filtered to job-seeker discussions */}
+              <ThreadFeedWidget
+                postType="job_seeker"
+                title="Job Seekers — Community"
+                composerPlaceholder="Ask for advice, share a lead…"
+                variant="light"
+                className="mt-6"
+              />
 
               {/* Database Stats Card */}
               <Card className="mt-6 border border-gray-200/80 shadow-sm">

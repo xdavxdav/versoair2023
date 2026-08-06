@@ -97,6 +97,19 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    // ── Column drift: inbox_messages — publish-to-community (viral DM) support ──
+    const INBOX_MESSAGES_ADDITIONS = [
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+    ];
+    for (const alt of INBOX_MESSAGES_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+        /* inbox_messages may not exist yet on first boot, or column already exists */
+      }
+    }
+
     // Create indexes after all tables exist (separate pass to avoid FK issues)
     for (const idx of INDEX_STATEMENTS) {
       try {

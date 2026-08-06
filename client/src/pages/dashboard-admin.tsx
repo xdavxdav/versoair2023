@@ -1228,20 +1228,45 @@ const BusinessManagement = ({
 
     setLoading(true);
     try {
-      // Use authenticatedFetch which handles auth cookie + CSRF token automatically
-      const response = await authenticatedFetch(
-        `${API_BASE_URL}/api/v1/admin/businesses`,
-        {
+      // Use authenticatedFetch which handles auth cookie + CSRF token automatically.
+      // Retries once on network failure / 5xx to absorb Render cold-start hiccups,
+      // and never lets a non-JSON (HTML error page) response crash into a generic message.
+      const postBusiness = () =>
+        authenticatedFetch(`${API_BASE_URL}/api/v1/admin/businesses`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(newBusiness),
-        },
-      );
-      const data = await response.json();
+          signal: AbortSignal.timeout(15000),
+        });
 
-      if (data.success) {
+      let response: Response;
+      try {
+        response = await postBusiness();
+        if (!response.ok && response.status >= 500) {
+          // Cold-start / transient server error — retry once
+          response = await postBusiness();
+        }
+      } catch {
+        // Network error / timeout — retry once before giving up
+        response = await postBusiness();
+      }
+
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Server returned non-JSON (e.g. HTML 502/504 during a cold start)
+        toast({
+          title: "Error",
+          description: `Server returned an unexpected response (HTTP ${response.status}). This usually means the server is waking up — please try again in a few seconds.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (response.ok && data?.success) {
         await fetchBusinesses(search, selectedCategory, page, selectedCountry);
         setShowAddDialog(false);
         setNewBusiness({
@@ -1269,15 +1294,22 @@ const BusinessManagement = ({
       } else {
         toast({
           title: "Error",
-          description: data.error?.message || "Failed to add business",
+          description:
+            data?.error?.message ||
+            data?.error ||
+            data?.message ||
+            `Failed to add business (HTTP ${response.status})`,
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add business:", error);
       toast({
         title: "Error",
-        description: "Failed to add business",
+        description:
+          error?.name === "TimeoutError" || error?.name === "AbortError"
+            ? "Request timed out — the server may be waking up. Please try again."
+            : "Failed to add business. Check your connection and try again.",
         variant: "destructive",
       });
     } finally {

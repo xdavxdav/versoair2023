@@ -16,6 +16,7 @@ import { Router, Request, Response } from "express";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
+import { socialPosts } from "@shared/social-schema";
 import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 
@@ -452,6 +453,96 @@ router.post(
           createdAt: new Date().toISOString(),
         },
       });
+    }
+  },
+);
+
+// ─── POST /api/inbox/messages/:id/publish ────────────────────────────────────
+// Promote your own sent message into the public community feed (social_posts,
+// postType='dm_share'). Messages always start private — publishing is an
+// explicit, one-way opt-in action taken by the sender after the fact (never
+// at send time, never reversible). Visibility is global for now.
+router.post(
+  "/messages/:id/publish",
+  async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const messageId = Number(req.params.id);
+
+    if (isNaN(messageId)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid message ID" });
+    }
+
+    try {
+      const [message] = await db
+        .select()
+        .from(schema.inboxMessages)
+        .where(eq(schema.inboxMessages.id, messageId))
+        .limit(1);
+
+      if (!message) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Message not found" });
+      }
+
+      // Only the sender can publish their own message
+      if (message.senderId !== String(userId)) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only publish your own messages",
+        });
+      }
+
+      if (message.isPublished) {
+        return res.status(400).json({
+          success: false,
+          error: "This message has already been published",
+        });
+      }
+
+      // Verify the requester actually owns the parent conversation (defense
+      // in depth — senderId is client-suppliable text, so don't rely on it alone)
+      const [conv] = await db
+        .select({ id: schema.inboxConversations.id })
+        .from(schema.inboxConversations)
+        .where(
+          and(
+            eq(schema.inboxConversations.id, message.conversationId),
+            eq(schema.inboxConversations.userId, Number(userId)),
+          ),
+        )
+        .limit(1);
+
+      if (!conv) {
+        return res.status(403).json({
+          success: false,
+          error: "You do not have access to this conversation",
+        });
+      }
+
+      const [post] = await db
+        .insert(socialPosts)
+        .values({
+          authorId: Number(userId),
+          content: message.content,
+          postType: "dm_share",
+          mediaType: "text",
+        })
+        .returning({ id: socialPosts.id });
+
+      await db
+        .update(schema.inboxMessages)
+        .set({ isPublished: true, publishedPostId: post.id })
+        .where(eq(schema.inboxMessages.id, messageId));
+
+      return res.json({ success: true, postId: post.id });
+    } catch (err: any) {
+      console.error("[Inbox] POST /messages/:id/publish error:", err?.message);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to publish message" });
     }
   },
 );

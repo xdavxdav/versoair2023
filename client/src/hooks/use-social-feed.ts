@@ -3,6 +3,7 @@
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
+import { authenticatedFetch } from "@/lib/auth";
 
 interface PostData {
   id: number;
@@ -40,6 +41,7 @@ export const useSocialFeed = (
   initialPage: number = 1,
   limit: number = 10,
   sort: "recent" | "trending" = "recent",
+  postType?: string,
 ) => {
   const [page, setPage] = useState(initialPage);
   const queryClient = useQueryClient();
@@ -51,11 +53,15 @@ export const useSocialFeed = (
     isError,
     error,
   } = useQuery({
-    queryKey: ["socialFeed", page, limit, sort],
+    queryKey: ["socialFeed", page, limit, sort, postType],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/social/posts?page=${page}&limit=${limit}&sort=${sort}`,
-      );
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        sort,
+      });
+      if (postType) params.set("postType", postType);
+      const response = await fetch(`/api/social/posts?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch feed");
       return (await response.json()) as FeedResponse;
     },
@@ -65,18 +71,14 @@ export const useSocialFeed = (
 
   // Like post mutation
   const likePostMutation = useMutation({
-    mutationFn: async ({
-      postId,
-      userId,
-    }: {
-      postId: number;
-      userId: number;
-    }) => {
-      const response = await fetch(`/api/social/posts/${postId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
+    mutationFn: async ({ postId }: { postId: number; userId?: number }) => {
+      const response = await authenticatedFetch(
+        `/api/social/posts/${postId}/like`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
       if (!response.ok) throw new Error("Failed to like post");
       return response.json();
     },
@@ -88,18 +90,14 @@ export const useSocialFeed = (
 
   // Unlike post mutation
   const unlikePostMutation = useMutation({
-    mutationFn: async ({
-      postId,
-      userId,
-    }: {
-      postId: number;
-      userId: number;
-    }) => {
-      const response = await fetch(`/api/social/posts/${postId}/like`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
+    mutationFn: async ({ postId }: { postId: number; userId?: number }) => {
+      const response = await authenticatedFetch(
+        `/api/social/posts/${postId}/like`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
       if (!response.ok) throw new Error("Failed to unlike post");
       return response.json();
     },
@@ -111,13 +109,13 @@ export const useSocialFeed = (
   // Create post mutation
   const createPostMutation = useMutation({
     mutationFn: async (postData: {
-      authorId: number;
+      authorId?: number;
       content: string;
       imageUrls?: string[];
       tags?: string[];
       postType?: string;
     }) => {
-      const response = await fetch("/api/social/posts", {
+      const response = await authenticatedFetch("/api/social/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(postData),

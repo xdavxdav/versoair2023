@@ -3159,6 +3159,13 @@ export const inboxMessages = pgTable(
     content: text("content").notNull(),
     isRead: boolean("is_read").notNull().default(false),
     isAi: boolean("is_ai").notNull().default(false), // true = VersoAI reply
+    // ── Publish-to-community (viral) ──
+    // Messages always start private. The sender can later choose to "publish"
+    // their own sent message, which mirrors it into `social_posts` (postType
+    // 'dm_share') making it visible on the public community feed. One-way —
+    // not un-publishable, and not toggleable at send time.
+    isPublished: boolean("is_published").notNull().default(false),
+    publishedPostId: integer("published_post_id"),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({

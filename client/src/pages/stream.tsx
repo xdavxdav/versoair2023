@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAudio } from "@/lib/audio-context";
 import { useAuthContext } from "@/contexts/AuthContext";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1269,6 +1270,19 @@ export default function StreamPage() {
         )}
 
         <SectionGlow />
+
+        {/* ========================================= */}
+        {/* MUSICAL UNIVERSE COMMUNITY THREADS */}
+        {/* Real live thread feed (reuses the social-blog engine) sits here */}
+        {/* instead of any static/mock content. */}
+        {/* ========================================= */}
+        <section className="max-w-[95vw] mx-auto px-4 mb-8 relative z-10">
+          <ThreadFeedWidget
+            postType="musical_universe"
+            title="Musical Universe — Community"
+            composerPlaceholder="Talk music, drops, collabs…"
+          />
+        </section>
 
         {/* ========================================= */}
         {/* FILTERS & GENRE PILLS */}

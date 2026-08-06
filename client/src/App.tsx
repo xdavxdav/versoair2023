@@ -256,6 +256,9 @@ const MobileMenuBubble = lazy(() =>
     default: m.MobileMenuBubble,
   })),
 );
+const MessengerLauncher = lazy(
+  () => import("@/components/messenger/MessengerLauncher"),
+);
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
@@ -907,6 +910,16 @@ function AppContent() {
       {!isImmersivePage && !isMusicPage && (
         <Suspense fallback={null}>
           <MobileMenuBubble />
+        </Suspense>
+      )}
+
+      {/* Messenger — Instagram-web style slide-in DM panel. Floating trigger
+          bottom-left (opposite corner from MobileMenuBubble/Home button) so
+          it never collides. Available everywhere, including Musical Universe,
+          since streamers/artists/fans all need to reach it. */}
+      {!isImmersivePage && (
+        <Suspense fallback={null}>
+          <MessengerLauncher />
         </Suspense>
       )}
 

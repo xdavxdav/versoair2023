@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import {
   ArrowLeft,
@@ -1253,6 +1254,15 @@ export default function Contractors() {
                   </div>
                 </CardFooter>
               </Card>
+
+              {/* Live community thread — real posts, filtered to contractor discussions */}
+              <ThreadFeedWidget
+                postType="contractor"
+                title="Contractors — Community"
+                composerPlaceholder="Ask a question, share a lead…"
+                variant="light"
+                className="mt-6"
+              />
 
               {/* profile card */}
               <Card className="mt-6 border border-gray-200/80 shadow-sm overflow-hidden">

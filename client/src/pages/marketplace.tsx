@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch } from "@/lib/auth";
 import {
@@ -1485,48 +1486,15 @@ export default function MarketplacePage() {
           className={`hidden xl:block w-[320px] flex-shrink-0 h-screen sticky top-0 overflow-y-auto border-l ${t.border}`}
         >
           <div className="p-4 space-y-4">
-            {/* Community Connections */}
-            <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-white" />
-                </div>
-                <h3 className={`font-bold ${t.text}`}>Community Hub</h3>
-              </div>
-              <p className={`text-xs ${t.textMuted} mb-3`}>
-                Connect with fellow artisans and creators in your area
-              </p>
-              <div className="space-y-3">
-                {COMMUNITY_ACTIVITY.map((act, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} transition-colors cursor-pointer`}
-                  >
-                    <img
-                      src={act.avatar}
-                      alt={act.user}
-                      className="w-9 h-9 rounded-full object-cover ring-2 ring-cyan-500/20"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${t.text}`}>
-                        <strong>{act.user}</strong>{" "}
-                        <span className={t.textMuted}>{act.action}</span>
-                      </p>
-                      <p className={`text-xs ${t.textMuted}`}>{act.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                className={`w-full mt-3 py-2.5 rounded-xl text-sm font-medium ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all`}
-              >
-                View All Activity
-              </motion.button>
-            </div>
+            {/* Community Hub — live thread feed (reuses the social-blog engine), */}
+            {/* replaces the previously-empty static COMMUNITY_ACTIVITY list. */}
+            <ThreadFeedWidget
+              postType="marketplace"
+              title="Marketplace — Community"
+              composerPlaceholder="Ask about an item, share a find…"
+              variant={darkMode ? "dark" : "light"}
+              limit={6}
+            />
 
             {/* Artisan Spotlight */}
             <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>

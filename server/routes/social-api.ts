@@ -17,22 +17,47 @@ import {
 
 const router = Router();
 
+/**
+ * Allowed `postType` values. Extended beyond the original
+ * discussion/job/trend/announcement/faq set to cover the thread feeds
+ * embedded on Marketplace, Musical Universe (/stream), Contractors and
+ * Job Seekers pages — all reuse this same social-posts engine instead of
+ * a bespoke system per page.
+ */
+const ALLOWED_POST_TYPES = [
+  "discussion",
+  "job",
+  "trend",
+  "announcement",
+  "faq",
+  "marketplace",
+  "musical_universe",
+  "contractor",
+  "job_seeker",
+  "dm_share", // a DM the sender chose to publish/promote to the public feed
+];
+
 // ============================================
 // POSTS ENDPOINTS
 // ============================================
 
-// GET /api/social/posts - Get feed with pagination
+// GET /api/social/posts - Get feed with pagination, optional postType filter
 router.get("/posts", async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const { page = 1, limit = 10, sort = "recent", postType } = req.query;
     const pageNum = parseInt(page as string) || 1;
-    const limitNum = parseInt(limit as string) || 10;
+    const limitNum = Math.min(parseInt(limit as string) || 10, 50);
     const offset = (pageNum - 1) * limitNum;
+
+    const conditions = [isNull(socialPosts.deletedAt)];
+    if (postType && typeof postType === "string") {
+      conditions.push(eq(socialPosts.postType, postType));
+    }
 
     let query = db
       .select()
       .from(socialPosts)
-      .where(isNull(socialPosts.deletedAt))
+      .where(and(...conditions))
       .orderBy(
         sort === "trending"
           ? desc(socialPosts.engagementScore)
@@ -83,26 +108,37 @@ router.get("/posts", async (req: Request, res: Response) => {
 // POST /api/social/posts - Create new post
 router.post("/posts", async (req: Request, res: Response) => {
   try {
-    const {
-      authorId,
-      content,
-      imageUrls,
-      tags,
-      postType = "discussion",
-    } = req.body;
+    // Use the authenticated user from JWT — never trust client-supplied
+    // authorId (previously anyone could post as anyone by passing an
+    // arbitrary authorId in the body).
+    const authorId = req.user?.userId;
+    const { content, imageUrls, tags, postType = "discussion" } = req.body;
 
-    // Validation
-    if (!authorId || !content) {
+    if (!authorId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to post",
+      });
+    }
+
+    if (!content) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, content",
+        error: "Missing required field: content",
+      });
+    }
+
+    if (!ALLOWED_POST_TYPES.includes(postType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid postType. Must be one of: ${ALLOWED_POST_TYPES.join(", ")}`,
       });
     }
 
     const newPost = await db
       .insert(socialPosts)
       .values({
-        authorId,
+        authorId: Number(authorId),
         content,
         imageUrls,
         tags,

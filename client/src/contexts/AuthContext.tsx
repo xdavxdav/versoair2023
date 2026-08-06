@@ -43,7 +43,9 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
   return {
     id: String((u.userId || u.id) ?? ""),
     email: String(u.email ?? ""),
-    name: (u.name || u.display_name || u.displayName || u.username) as string | undefined,
+    name: (u.name || u.display_name || u.displayName || u.username) as
+      | string
+      | undefined,
     username: u.username as string | undefined,
     role: u.role as string | undefined,
     isAdmin: ["admin", "superuser", "moderator"].includes(String(u.role)),
@@ -52,7 +54,9 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
     isContractor: Boolean(u.isContractor),
     hasOAuthAccount: Boolean(u.hasOAuthAccount),
     canAccessBlog: Boolean(u.canAccessBlog),
-    subscriptionTier: String(u.subscriptionTier || u.subscription_tier || "free"),
+    subscriptionTier: String(
+      u.subscriptionTier || u.subscription_tier || "free",
+    ),
     subscriptionStatus: u.subscriptionStatus as string | undefined,
   };
 }
@@ -100,7 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.user) {
-          const normalized = normalizeUser(data.user as Record<string, unknown>);
+          const normalized = normalizeUser(
+            data.user as Record<string, unknown>,
+          );
           setUser(normalized);
           setToken(data.token ?? null);
           if (data.token) setAuthToken(data.token);
@@ -223,7 +229,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, restoreAuth }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, logout, restoreAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
