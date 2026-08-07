@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, UserPlus, UserMinus, MessageCircle, Share2, Mail } from "lucide-react";
+import {
+  X,
+  UserPlus,
+  UserMinus,
+  MessageCircle,
+  Share2,
+  Mail,
+} from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface User {

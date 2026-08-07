@@ -305,7 +305,8 @@ export default function BlogPage() {
 
   const handleConnectUser = (userId: number) => setFollowState(userId, true);
 
-  const handleDisconnectUser = (userId: number) => setFollowState(userId, false);
+  const handleDisconnectUser = (userId: number) =>
+    setFollowState(userId, false);
 
   const handleMessageUser = async (userId: number) => {
     if (!isAuthenticated) {

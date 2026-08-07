@@ -6,7 +6,7 @@ import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
 import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch, checkAuth } from "@/lib/auth";
 import {
   Search,
   Heart,
@@ -169,15 +169,54 @@ export default function MarketplacePage() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
+  const promptMarketplaceAuth = (reason?: string) => {
+    if (reason) setAuthError(reason);
+    setIsAuthModalOpen(true);
+  };
+
   // Auto-auth if user is already signed in via any portal
   useEffect(() => {
-    if (globalUser && !isAuthenticated) {
-      const name = globalUser.name || globalUser.email?.split("@")[0] || "User";
-      setIsAuthenticated(true);
-      setUserName(name);
-      localStorage.setItem("blog_community_auth", "true");
-      localStorage.setItem("blog_community_user", name);
-    }
+    let cancelled = false;
+
+    const syncAuth = async () => {
+      if (globalUser) {
+        const name = globalUser.name || globalUser.email?.split("@")[0] || "User";
+        if (cancelled) return;
+        setIsAuthenticated(true);
+        setUserName(name);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+        return;
+      }
+
+      try {
+        const verifiedUser = await checkAuth();
+        if (!verifiedUser) {
+          if (cancelled) return;
+          setIsAuthenticated(false);
+          setUserName("User");
+          localStorage.removeItem("blog_community_auth");
+          localStorage.removeItem("blog_community_user");
+          return;
+        }
+
+        if (cancelled) return;
+        const name = verifiedUser.email?.split("@")[0] || "User";
+        setIsAuthenticated(true);
+        setUserName(name);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+      } catch {
+        if (cancelled) return;
+        setIsAuthenticated(false);
+      }
+    };
+
+    syncAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [globalUser]);
 
   // Auth handlers — real community auth endpoints (same as Blog)
@@ -425,10 +464,16 @@ export default function MarketplacePage() {
 
   // Open create-listing modal when dock Sell button fires marketplace:sell
   useEffect(() => {
-    const handler = () => setShowCreateListing(true);
+    const handler = () => {
+      if (!isAuthenticated) {
+        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+        return;
+      }
+      setShowCreateListing(true);
+    };
     window.addEventListener("marketplace:sell", handler);
     return () => window.removeEventListener("marketplace:sell", handler);
-  }, []);
+  }, [isAuthenticated]);
 
   // Reset form state when modal is closed
   useEffect(() => {
@@ -724,7 +769,13 @@ export default function MarketplacePage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowCreateListing(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                  return;
+                }
+                setShowCreateListing(true);
+              }}
               className={`w-full flex items-center justify-center gap-2 ${t.accentBg} text-white font-semibold py-3 rounded-xl mb-6 shadow-lg shadow-cyan-500/20 ${t.accentHover} transition-all`}
             >
               <Plus className="w-5 h-5" />
@@ -1068,7 +1119,13 @@ export default function MarketplacePage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowCreateListing(true)}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                        return;
+                      }
+                      setShowCreateListing(true);
+                    }}
                     className={`flex items-center gap-2 px-4 py-2 ${t.accentBg} text-white rounded-xl text-sm font-medium ${t.accentHover} transition-all`}
                   >
                     <Plus className="w-4 h-4" />
@@ -1104,7 +1161,13 @@ export default function MarketplacePage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowCreateListing(true)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                          return;
+                        }
+                        setShowCreateListing(true);
+                      }}
                       className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
                     >
                       Create First Listing
@@ -1478,6 +1541,10 @@ export default function MarketplacePage() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     if (listings.length === 0) {
+                      if (!isAuthenticated) {
+                        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                        return;
+                      }
                       setShowCreateListing(true);
                     } else {
                       setActiveCategory("all");
@@ -2153,7 +2220,13 @@ export default function MarketplacePage() {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setShowCreateListing(true)}
+        onClick={() => {
+          if (!isAuthenticated) {
+            promptMarketplaceAuth("Sign in to sell on Marketplace.");
+            return;
+          }
+          setShowCreateListing(true);
+        }}
         className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center hover:bg-cyan-700 transition-colors"
       >
         <Plus className="w-6 h-6" />

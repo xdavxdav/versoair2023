@@ -179,9 +179,25 @@ export default function MessengerPanel({
                   </div>
                 )}
                 {!loadingConvos && conversations.length === 0 && (
-                  <div className="px-4 py-10 text-center text-white/40 text-sm">
-                    No conversations yet. Messages from Marketplace sellers,
-                    artists, and the community will show up here.
+                  <div className="px-4 py-8 text-center text-white/40 text-sm space-y-4">
+                    <p>
+                      No conversations yet. Messages from Marketplace sellers,
+                      artists, and the community will show up here.
+                    </p>
+                    <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
+                      <p className="text-white/75 font-medium">Sample flow</p>
+                      <p>
+                        1. Start a private message from Marketplace (Message
+                        Seller), Blog (Message), or Music/Artist pages.
+                      </p>
+                      <p>
+                        2. The private thread appears in this inbox immediately.
+                      </p>
+                      <p>
+                        3. Tap Publish on your own sent message to make it
+                        visible in the public community feed.
+                      </p>
+                    </div>
                   </div>
                 )}
                 {conversations.map((c) => (
@@ -309,6 +325,10 @@ export default function MessengerPanel({
                       <Send className="w-4 h-4" />
                     )}
                   </button>
+                </div>
+                <div className="px-4 pb-3 text-[11px] text-white/45 border-t border-white/5">
+                  Private by default. Use Publish on your own message to surface
+                  it in the public community feed.
                 </div>
               </>
             )}

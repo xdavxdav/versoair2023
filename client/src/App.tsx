@@ -913,13 +913,12 @@ function AppContent() {
         </Suspense>
       )}
 
-      {/* Messenger — Instagram-web style slide-in DM panel. Floating trigger
-          bottom-left (opposite corner from MobileMenuBubble/Home button) so
-          it never collides. Available everywhere, including Musical Universe,
-          since streamers/artists/fans all need to reach it. */}
+      {/* Messenger panel remains globally mounted so pages can open it via
+          `messenger:open`, but the floating purple launcher button is hidden
+          to avoid UI overlap on mobile. */}
       {!isImmersivePage && (
         <Suspense fallback={null}>
-          <MessengerLauncher hidden={isMusicPage || currentPath === "/blog"} />
+          <MessengerLauncher hidden />
         </Suspense>
       )}
 

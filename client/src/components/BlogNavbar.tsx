@@ -143,41 +143,47 @@ export default function BlogNavbar({
     }, 300);
   }, [currentPath, setLocation]);
 
-  const handlePressStart = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!event.isPrimary) return;
-    if (!isAuthenticated) return;
-    holdCompletedRef.current = false;
-    holdStartRef.current = Date.now();
-    setIsHolding(true);
-    setHoldProgress(0);
-    holdIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - holdStartRef.current;
-      setHoldProgress(Math.min((elapsed / 2000) * 100, 100));
-    }, 16);
-    holdTimerRef.current = setTimeout(() => {
+  const handlePressStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      if (!isAuthenticated) return;
+      holdCompletedRef.current = false;
+      holdStartRef.current = Date.now();
+      setIsHolding(true);
+      setHoldProgress(0);
+      holdIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - holdStartRef.current;
+        setHoldProgress(Math.min((elapsed / 2000) * 100, 100));
+      }, 16);
+      holdTimerRef.current = setTimeout(() => {
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+        setIsHolding(false);
+        setHoldProgress(0);
+        holdCompletedRef.current = true;
+        // Hold 2s = logout
+        logout();
+        localStorage.removeItem("blog_community_auth");
+        localStorage.removeItem("blog_community_user");
+        toast({
+          title: "Successfully logged out",
+          description: "You've been disconnected from the marketplace.",
+        });
+        setLocation("/marketplace");
+      }, 2000);
+    },
+    [isAuthenticated, logout],
+  );
+
+  const handlePressEnd = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
       setIsHolding(false);
       setHoldProgress(0);
-      holdCompletedRef.current = true;
-      // Hold 2s = logout
-      logout();
-      localStorage.removeItem("blog_community_auth");
-      localStorage.removeItem("blog_community_user");
-      toast({
-        title: "Successfully logged out",
-        description: "You've been disconnected from the marketplace.",
-      });
-      setLocation("/marketplace");
-    }, 2000);
-  }, [isAuthenticated, logout]);
-
-  const handlePressEnd = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!event.isPrimary) return;
-    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
-    setIsHolding(false);
-    setHoldProgress(0);
-  }, []);
+    },
+    [],
+  );
 
   return (
     <>
