@@ -232,7 +232,7 @@ function ComposeBox({
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={userAvatar || undefined} />
           <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white text-sm font-bold">
-            {user?.displayName?.[0]?.toUpperCase() || "V"}
+            {user?.name?.[0]?.toUpperCase() || "V"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-3">
@@ -531,7 +531,7 @@ function PostCard({
             <div className="flex gap-2 pt-2">
               <Avatar className="h-7 w-7 shrink-0">
                 <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white text-xs">
-                  {user?.displayName?.[0]?.toUpperCase() || "V"}
+                  {user?.name?.[0]?.toUpperCase() || "V"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 flex gap-2">
