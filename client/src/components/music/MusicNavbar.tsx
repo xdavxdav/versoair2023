@@ -206,8 +206,8 @@ export function MusicNavbar() {
                   }}
                 />
                 {/* Fallback icon if image fails */}
-                <div className="hidden absolute inset-0 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
-                  <Music2 className="w-5 h-5 text-white" />
+                <div className="hidden absolute inset-0 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600">
+                  <Music2 className="w-5 h-5 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
                 </div>
               </div>
               <div className="hidden xs:block sm:block">
