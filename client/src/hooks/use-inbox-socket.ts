@@ -36,9 +36,7 @@ export interface InboxMessageEvent {
   };
 }
 
-export function useInboxSocket(
-  onMessage?: (data: InboxMessageEvent) => void,
-) {
+export function useInboxSocket(onMessage?: (data: InboxMessageEvent) => void) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {

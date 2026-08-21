@@ -557,10 +557,7 @@ router.post(
               message: mirrorMessage,
             });
           } catch (mirrorErr: any) {
-            console.error(
-              "[Inbox] Mirror message error:",
-              mirrorErr?.message,
-            );
+            console.error("[Inbox] Mirror message error:", mirrorErr?.message);
           }
         })();
       }
