@@ -100,6 +100,8 @@ export const socialPosts = pgTable(
     isEdited: boolean("is_edited").default(false),
     editHistory: jsonb("edit_history"), // Array of {editedAt, content}
     metadata: jsonb("metadata"), // Additional data, analytics, A/B test flags
+    // Attached music track — makes any post an instantly-playable music share
+    trackId: integer("track_id"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     deletedAt: timestamp("deleted_at"), // Soft delete
@@ -114,6 +116,7 @@ export const socialPosts = pgTable(
     tagsIdx: index("social_posts_tags_idx").on(t.tags),
     postTypeIdx: index("social_posts_post_type_idx").on(t.postType),
     faqCategoryIdx: index("social_posts_faq_category_idx").on(t.faqCategory),
+    trackIdIdx: index("social_posts_track_id_idx").on(t.trackId),
   }),
 );
 

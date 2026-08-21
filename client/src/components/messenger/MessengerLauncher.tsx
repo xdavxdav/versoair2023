@@ -1,10 +1,11 @@
 // Messenger Launcher — floating trigger bubble that opens the Instagram-web
 // style slide-in MessengerPanel. Mounted once, globally, in App.tsx.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch } from "@/lib/auth";
+import { useInboxSocket } from "@/hooks/use-inbox-socket";
 import MessengerPanel from "./MessengerPanel";
 
 export default function MessengerLauncher({
@@ -34,6 +35,12 @@ export default function MessengerLauncher({
       cancelled = true;
     };
   }, [user, open]);
+
+  // Live badge bump the instant a message arrives, no polling needed.
+  const handleLiveMessage = useCallback(() => {
+    if (!open) setUnread((n) => n + 1);
+  }, [open]);
+  useInboxSocket(user ? handleLiveMessage : undefined);
 
   useEffect(() => {
     const openMessenger = () => setOpen(true);

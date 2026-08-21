@@ -428,6 +428,126 @@ const TABLE_STATEMENTS: TableDef[] = [
   // ═══════════════════════════════════════════════
   // 5. MUSIC TRACKS
   // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
+  // 5b. SOCIAL PLATFORM (posts, comments, likes, follows, notifications)
+  // ═══════════════════════════════════════════════
+  {
+    table: "social_users",
+    sql: `CREATE TABLE IF NOT EXISTS social_users (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      username TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      bio TEXT,
+      avatar_url TEXT,
+      cover_image_url TEXT,
+      location TEXT,
+      website TEXT,
+      profession TEXT,
+      company TEXT,
+      follower_count INTEGER DEFAULT 0,
+      following_count INTEGER DEFAULT 0,
+      post_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      satisfaction_rating DECIMAL(3,2) DEFAULT 0,
+      verified_badge BOOLEAN DEFAULT false,
+      premium_member BOOLEAN DEFAULT false,
+      dark_mode_enabled BOOLEAN DEFAULT true,
+      notifications_enabled BOOLEAN DEFAULT true,
+      privacy_level TEXT DEFAULT 'public',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      last_active_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "social_posts",
+    sql: `CREATE TABLE IF NOT EXISTS social_posts (
+      id SERIAL PRIMARY KEY,
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      title TEXT,
+      content TEXT NOT NULL,
+      image_urls TEXT[],
+      video_url TEXT,
+      media_type TEXT,
+      post_type TEXT DEFAULT 'discussion',
+      faq_category TEXT,
+      is_resolved BOOLEAN DEFAULT false,
+      tags TEXT[],
+      mentioned_users INTEGER[],
+      like_count INTEGER DEFAULT 0,
+      comment_count INTEGER DEFAULT 0,
+      share_count INTEGER DEFAULT 0,
+      view_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      engagement_rate DECIMAL(5,2) DEFAULT 0,
+      is_trending BOOLEAN DEFAULT false,
+      is_pinned BOOLEAN DEFAULT false,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      metadata JSONB,
+      track_id INTEGER,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "social_comments",
+    sql: `CREATE TABLE IF NOT EXISTS social_comments (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES social_posts(id),
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      parent_comment_id INTEGER REFERENCES social_comments(id),
+      content TEXT NOT NULL,
+      like_count INTEGER DEFAULT 0,
+      reply_count INTEGER DEFAULT 0,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      mentioned_users INTEGER[],
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "social_likes",
+    sql: `CREATE TABLE IF NOT EXISTS social_likes (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      like_type TEXT DEFAULT 'post',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "social_followers",
+    sql: `CREATE TABLE IF NOT EXISTS social_followers (
+      id SERIAL PRIMARY KEY,
+      follower_id INTEGER NOT NULL REFERENCES social_users(id),
+      following_id INTEGER NOT NULL REFERENCES social_users(id),
+      is_close BOOLEAN DEFAULT false,
+      is_muted BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "social_notifications",
+    sql: `CREATE TABLE IF NOT EXISTS social_notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      from_user_id INTEGER REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      notification_type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      data JSONB,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      read_at TIMESTAMP
+    )`,
+  },
   {
     table: "music_tracks",
     sql: `CREATE TABLE IF NOT EXISTS music_tracks (

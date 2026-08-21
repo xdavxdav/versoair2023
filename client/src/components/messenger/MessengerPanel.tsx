@@ -7,11 +7,21 @@
 // own sent message to promote it into the public community feed (one-way,
 // not toggleable at send time, not un-publishable).
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Send, ArrowLeft, Loader2, Globe2, Lock, Check } from "lucide-react";
+import {
+  X,
+  Send,
+  ArrowLeft,
+  Loader2,
+  Globe2,
+  Lock,
+  Check,
+  Search,
+} from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useInboxSocket } from "@/hooks/use-inbox-socket";
 
 interface Conversation {
   id: number;
@@ -35,6 +45,35 @@ interface InboxMessage {
   createdAt: string;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  support: "Support",
+  business_network: "Business",
+  marketplace: "Marketplace",
+  music_artist: "Music",
+  dm_share: "Community",
+};
+
+const FILTER_TABS: { id: string; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "marketplace", label: "Marketplace" },
+  { id: "music_artist", label: "Music" },
+  { id: "business_network", label: "Business" },
+  { id: "support", label: "Support" },
+];
+
+function formatTimestamp(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export default function MessengerPanel({
   open,
   onClose,
@@ -51,7 +90,11 @@ export default function MessengerPanel({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [publishingId, setPublishingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activeConvoRef = useRef<Conversation | null>(null);
+  activeConvoRef.current = activeConvo;
 
   useEffect(() => {
     if (!open || !user) return;
@@ -64,6 +107,41 @@ export default function MessengerPanel({
       .catch(() => {})
       .finally(() => setLoadingConvos(false));
   }, [open, user]);
+
+  // Live push: new message arrives via socket while the panel is open.
+  const handleLiveMessage = useCallback(
+    (evt: { conversationId: number; message: InboxMessage }) => {
+      if (activeConvoRef.current?.id === evt.conversationId) {
+        setMessages((prev) => [...prev, evt.message]);
+      }
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c.id === evt.conversationId);
+        if (idx === -1) {
+          // New conversation opened by the other side — refresh the list.
+          authenticatedFetch("/api/inbox/conversations")
+            .then((r) => r.json())
+            .then((data) => {
+              if (data?.success) setConversations(data.conversations || []);
+            })
+            .catch(() => {});
+          return prev;
+        }
+        const updated = [...prev];
+        const isActive = activeConvoRef.current?.id === evt.conversationId;
+        updated[idx] = {
+          ...updated[idx],
+          lastMessage: evt.message.content,
+          lastMessageAt: evt.message.createdAt,
+          unreadCount: isActive ? 0 : updated[idx].unreadCount + 1,
+        };
+        // bump to top, newest first
+        const [moved] = updated.splice(idx, 1);
+        return [moved, ...updated];
+      });
+    },
+    [],
+  );
+  useInboxSocket(open && user ? handleLiveMessage : undefined);
 
   useEffect(() => {
     if (!activeConvo) return;
@@ -128,6 +206,18 @@ export default function MessengerPanel({
     }
   };
 
+  const filteredConversations = useMemo(() => {
+    return conversations.filter((c) => {
+      if (activeFilter !== "all" && c.type !== activeFilter) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        c.participantName?.toLowerCase().includes(q) ||
+        c.lastMessage?.toLowerCase().includes(q)
+      );
+    });
+  }, [conversations, activeFilter, searchQuery]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -158,8 +248,15 @@ export default function MessengerPanel({
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               )}
-              <h2 className="flex-1 text-white font-semibold text-sm truncate">
-                {activeConvo ? activeConvo.participantName : "Messages"}
+              <h2 className="flex-1 min-w-0 truncate">
+                <span className="text-white font-semibold text-sm block truncate">
+                  {activeConvo ? activeConvo.participantName : "Messages"}
+                </span>
+                {activeConvo && (
+                  <span className="text-[11px] text-white/40">
+                    {TYPE_LABELS[activeConvo.type] || activeConvo.type}
+                  </span>
+                )}
               </h2>
               <button
                 onClick={onClose}
@@ -172,7 +269,37 @@ export default function MessengerPanel({
 
             {!activeConvo ? (
               // ── Conversation list ──
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto flex flex-col">
+                {/* Search */}
+                <div className="px-4 pt-3 pb-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search conversations…"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+                    />
+                  </div>
+                </div>
+
+                {/* Filter tabs */}
+                <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto">
+                  {FILTER_TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveFilter(tab.id)}
+                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        activeFilter === tab.id
+                          ? "bg-purple-500/30 text-purple-200 border border-purple-500/40"
+                          : "bg-white/5 text-white/40 border border-white/10 hover:text-white/70"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
                 {loadingConvos && (
                   <div className="flex items-center justify-center py-10 text-white/40">
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -200,7 +327,14 @@ export default function MessengerPanel({
                     </div>
                   </div>
                 )}
-                {conversations.map((c) => (
+                {!loadingConvos &&
+                  conversations.length > 0 &&
+                  filteredConversations.length === 0 && (
+                    <div className="px-4 py-8 text-center text-white/40 text-sm">
+                      No conversations match your search.
+                    </div>
+                  )}
+                {filteredConversations.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => setActiveConvo(c)}
@@ -218,18 +352,28 @@ export default function MessengerPanel({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        {c.participantName}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-white truncate">
+                          {c.participantName}
+                        </p>
+                        <span className="shrink-0 text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/10 text-white/40">
+                          {TYPE_LABELS[c.type] || c.type}
+                        </span>
+                      </div>
                       <p className="text-xs text-white/40 truncate">
                         {c.lastMessage || "No messages yet"}
                       </p>
                     </div>
-                    {c.unreadCount > 0 && (
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-purple-500 text-[10px] text-white flex items-center justify-center">
-                        {c.unreadCount}
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <span className="text-[10px] text-white/30">
+                        {formatTimestamp(c.lastMessageAt)}
                       </span>
-                    )}
+                      {c.unreadCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-purple-500 text-[10px] text-white flex items-center justify-center">
+                          {c.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -262,6 +406,9 @@ export default function MessengerPanel({
                           <p className="whitespace-pre-wrap break-words">
                             {m.content}
                           </p>
+                          <span className="mt-1 block text-[10px] text-white/30">
+                            {formatTimestamp(m.createdAt)}
+                          </span>
                           {isMine && (
                             <button
                               onClick={() =>

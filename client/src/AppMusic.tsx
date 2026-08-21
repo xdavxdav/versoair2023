@@ -72,6 +72,10 @@ const VersaVidsStudio = lazy(() => import("@/pages/music/versavids-studio"));
 const MusicVault = lazy(() => import("@/pages/music/vault"));
 const MusicRoyalties = lazy(() => import("@/pages/music/royalties"));
 const MusicLibrary = lazy(() => import("@/pages/music/library"));
+const MusicSocial = lazy(() => import("@/pages/music/social"));
+const MessengerLauncher = lazy(
+  () => import("@/components/messenger/MessengerLauncher"),
+);
 
 function Router() {
   const [location] = useLocation();
@@ -192,6 +196,13 @@ function Router() {
           </Suspense>
         </MusicProtectedRoute>
       </Route>
+      <Route path="/music/social">
+        <MusicProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <MusicSocial />
+          </Suspense>
+        </MusicProtectedRoute>
+      </Route>
       <Route path="/music/favorites">{() => <Redirect to="/library" />}</Route>
       <Route path="/music/insights">{() => <Redirect to="/analytics" />}</Route>
       <Route path="/music/live">{() => <Redirect to="/stream" />}</Route>
@@ -305,6 +316,9 @@ function AppContent() {
       </main>
 
       <MobileMenuBubble />
+      <Suspense fallback={null}>
+        <MessengerLauncher />
+      </Suspense>
       <QuickSignIn
         open={showQuickSignIn}
         onClose={() => setShowQuickSignIn(false)}

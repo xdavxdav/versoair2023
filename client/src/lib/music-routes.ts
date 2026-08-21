@@ -73,6 +73,13 @@ export const MUSIC_NAV_ITEMS = [
     description: "Analytics & performance",
   },
   {
+    id: "social",
+    label: "Community",
+    href: "/music/social",
+    icon: "Users",
+    description: "Share tracks with the community",
+  },
+  {
     id: "live",
     label: "Royale",
     href: MUSIC_ROUTES.live,

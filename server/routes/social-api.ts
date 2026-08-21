@@ -32,6 +32,7 @@ const ALLOWED_POST_TYPES = [
   "faq",
   "marketplace",
   "musical_universe",
+  "music_post", // a social post with a playable track attached
   "contractor",
   "job_seeker",
   "dm_share", // a DM the sender chose to publish/promote to the public feed
@@ -56,6 +57,33 @@ async function getSocialProfileId(appUserId: number): Promise<number> {
     .returning({ id: socialUsers.id });
 
   return profile.id;
+}
+
+async function getTrackInfo(trackId: number) {
+  const result = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = $1 AND status = 'published'`,
+    [trackId],
+  );
+  return result.rows[0] || null;
+}
+
+async function enrichPostsWithTracks(posts: any[]) {
+  const trackIds = [...new Set(posts.map((p) => p.trackId).filter(Boolean))];
+  if (trackIds.length === 0) return posts;
+
+  const tracks = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = ANY($1::int[]) AND status = 'published'`,
+    [trackIds],
+  );
+
+  const trackMap = Object.fromEntries(tracks.rows.map((t: any) => [t.id, t]));
+
+  return posts.map((post) => ({
+    ...post,
+    track: post.trackId ? trackMap[post.trackId] || null : null,
+  }));
 }
 
 async function syncFollowerCount(socialUserId: number): Promise<void> {
@@ -123,9 +151,12 @@ router.get("/posts", async (req: Request, res: Response) => {
       author: authorMap[post.authorId] || null,
     }));
 
+    // Attach track info for music posts
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+
     res.json({
       success: true,
-      data: enrichedPosts,
+      data: withTracks,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -138,14 +169,145 @@ router.get("/posts", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/social/posts/following - Get posts from users you follow
+router.get("/posts/following", async (req: Request, res: Response) => {
+  try {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0 },
+      });
+    }
+
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = Math.min(parseInt(limit as string) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+
+    const following = await db
+      .select({ followingId: socialFollowers.followingId })
+      .from(socialFollowers)
+      .where(eq(socialFollowers.followerId, followerId));
+
+    if (following.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: pageNum, limit: limitNum, total: 0 },
+      });
+    }
+
+    const followingIds = following.map((f) => f.followingId);
+    const posts = await db
+      .select()
+      .from(socialPosts)
+      .where(
+        and(
+          isNull(socialPosts.deletedAt),
+          inArray(socialPosts.authorId, followingIds),
+        ),
+      )
+      .orderBy(desc(socialPosts.createdAt))
+      .limit(limitNum)
+      .offset(offset);
+
+    const authorIds = [...new Set(posts.map((p: any) => p.authorId))];
+    let authorMap: Record<number, any> = {};
+    if (authorIds.length > 0) {
+      const authors = await db
+        .select()
+        .from(socialUsers)
+        .where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+
+    const enrichedPosts = posts.map((post: any) => ({
+      ...post,
+      author: authorMap[post.authorId] || null,
+    }));
+
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length },
+    });
+  } catch (error) {
+    console.error("Error fetching following feed:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch feed" });
+  }
+});
+
+// GET /api/social/posts/music - Get music-only feed (posts with tracks)
+router.get("/posts/music", async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = Math.min(parseInt(limit as string) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+
+    const posts = await db
+      .select()
+      .from(socialPosts)
+      .where(
+        and(
+          isNull(socialPosts.deletedAt),
+          eq(socialPosts.postType, "music_post"),
+        ),
+      )
+      .orderBy(
+        sort === "trending"
+          ? desc(socialPosts.engagementScore)
+          : desc(socialPosts.createdAt),
+      )
+      .limit(limitNum)
+      .offset(offset);
+
+    const authorIds = [...new Set(posts.map((p: any) => p.authorId))];
+    let authorMap: Record<number, any> = {};
+    if (authorIds.length > 0) {
+      const authors = await db
+        .select()
+        .from(socialUsers)
+        .where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+
+    const enrichedPosts = posts.map((post: any) => ({
+      ...post,
+      author: authorMap[post.authorId] || null,
+    }));
+
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length },
+    });
+  } catch (error) {
+    console.error("Error fetching music feed:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch music feed" });
+  }
+});
+
 // POST /api/social/posts - Create new post
 router.post("/posts", async (req: Request, res: Response) => {
   try {
-    // Use the authenticated user from JWT — never trust client-supplied
-    // authorId (previously anyone could post as anyone by passing an
-    // arbitrary authorId in the body).
     const appUserId = req.user?.userId;
-    const { content, imageUrls, tags, postType = "discussion" } = req.body;
+    const {
+      content,
+      imageUrls,
+      tags,
+      postType = "discussion",
+      trackId,
+    } = req.body;
 
     if (!appUserId) {
       return res.status(401).json({
@@ -168,6 +330,17 @@ router.post("/posts", async (req: Request, res: Response) => {
       });
     }
 
+    // Validate track exists and is published if attaching one
+    if (trackId) {
+      const track = await getTrackInfo(Number(trackId));
+      if (!track) {
+        return res.status(400).json({
+          success: false,
+          error: "Track not found or not published",
+        });
+      }
+    }
+
     const authorId = await getSocialProfileId(Number(appUserId));
     const newPost = await db
       .insert(socialPosts)
@@ -177,7 +350,8 @@ router.post("/posts", async (req: Request, res: Response) => {
         imageUrls,
         tags,
         postType,
-        mediaType: imageUrls ? "image" : "text",
+        trackId: trackId ? Number(trackId) : null,
+        mediaType: trackId ? "audio" : imageUrls ? "image" : "text",
       })
       .returning();
 

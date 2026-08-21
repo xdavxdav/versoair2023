@@ -180,7 +180,8 @@ export default function MarketplacePage() {
 
     const syncAuth = async () => {
       if (globalUser) {
-        const name = globalUser.name || globalUser.email?.split("@")[0] || "User";
+        const name =
+          globalUser.name || globalUser.email?.split("@")[0] || "User";
         if (cancelled) return;
         setIsAuthenticated(true);
         setUserName(name);
@@ -1121,7 +1122,9 @@ export default function MarketplacePage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       if (!isAuthenticated) {
-                        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                        promptMarketplaceAuth(
+                          "Sign in to sell on Marketplace.",
+                        );
                         return;
                       }
                       setShowCreateListing(true);
@@ -1163,7 +1166,9 @@ export default function MarketplacePage() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         if (!isAuthenticated) {
-                          promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                          promptMarketplaceAuth(
+                            "Sign in to sell on Marketplace.",
+                          );
                           return;
                         }
                         setShowCreateListing(true);
@@ -1542,7 +1547,9 @@ export default function MarketplacePage() {
                   onClick={() => {
                     if (listings.length === 0) {
                       if (!isAuthenticated) {
-                        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                        promptMarketplaceAuth(
+                          "Sign in to sell on Marketplace.",
+                        );
                         return;
                       }
                       setShowCreateListing(true);

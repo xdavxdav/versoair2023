@@ -36,6 +36,7 @@ import {
   X,
   FileAudio,
   Image as ImageIcon,
+  Share2,
 } from "lucide-react";
 import { MusicLayout } from "@/layouts/MusicLayout";
 import { MusicTierBadge, MusicUpgradeGate } from "@/components/music";
@@ -452,6 +453,24 @@ export default function MusicVault() {
     }
   };
 
+  // Navigate to social feed with track pre-attached for sharing
+  const handleShareToFeed = (track: Track) => {
+    sessionStorage.setItem(
+      "versair_share_track",
+      JSON.stringify({
+        id: track.id,
+        title: track.title,
+        genre: track.genre,
+        duration: track.duration,
+        has_audio_data: track.has_audio_data,
+        pochette: track.has_pochette
+          ? `/api/streaming/tracks/${track.id}/pochette`
+          : null,
+      }),
+    );
+    window.location.href = "/music/social";
+  };
+
   // Format duration
   const formatDuration = (seconds?: number) => {
     if (!seconds) return "--:--";
@@ -711,6 +730,12 @@ export default function MusicVault() {
                       <DropdownMenuContent className="bg-gray-900 border-white/20">
                         <DropdownMenuItem className="text-white hover:bg-white/10">
                           <Edit className="w-4 h-4 mr-2" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-purple-400 hover:bg-purple-500/10"
+                          onClick={() => handleShareToFeed(track)}
+                        >
+                          <Share2 className="w-4 h-4 mr-2" /> Share to Feed
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-white/10" />
                         <DropdownMenuItem

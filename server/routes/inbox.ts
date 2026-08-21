@@ -19,6 +19,7 @@ import * as schema from "@shared/schema";
 import { socialPosts } from "@shared/social-schema";
 import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
+import { notificationEmitter } from "../services/notification-service";
 
 const router = Router();
 
@@ -52,6 +53,66 @@ function priority(tier: TierKey): string {
   if (tier === "max") return "priority";
   if (tier === "verified") return "high";
   return "normal";
+}
+
+// ─── Cross-account mirroring ──────────────────────────────────────────────────
+// Conversations are one-sided rows (owned by userId, pointing at participantId).
+// Without a mirror, the OTHER side of a marketplace/music_artist DM never sees
+// anything — this is the actual reason two accounts couldn't "communicate".
+// Only mirrors when participantId resolves to a real numeric user (never for
+// "support" or business-only ids that don't map to a user account).
+async function getOrCreateMirrorConversation(
+  recipientUserId: number,
+  senderUserId: number,
+  senderName: string,
+  senderAvatar: string | null,
+  type: string,
+  businessId?: number | null,
+): Promise<number | null> {
+  const [existing] = await db
+    .select({ id: schema.inboxConversations.id })
+    .from(schema.inboxConversations)
+    .where(
+      and(
+        eq(schema.inboxConversations.userId, recipientUserId),
+        eq(schema.inboxConversations.participantId, String(senderUserId)),
+        eq(schema.inboxConversations.type, type),
+      ),
+    )
+    .limit(1);
+
+  if (existing) return existing.id;
+
+  const [conv] = await db
+    .insert(schema.inboxConversations)
+    .values({
+      userId: recipientUserId,
+      type,
+      participantId: String(senderUserId),
+      participantName: senderName,
+      participantAvatar: senderAvatar || null,
+      businessId: businessId ? Number(businessId) : null,
+      unreadCount: 0,
+    })
+    .returning({ id: schema.inboxConversations.id });
+
+  return conv?.id ?? null;
+}
+
+async function resolveUserDisplay(
+  userId: number,
+): Promise<{ name: string; avatar: string | null } | null> {
+  const [u] = await db
+    .select({
+      displayName: schema.users.displayName,
+      username: schema.users.username,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1);
+
+  if (!u) return null;
+  return { name: u.displayName || u.username, avatar: null };
 }
 
 // ─── GET /api/inbox/conversations ────────────────────────────────────────────
@@ -322,6 +383,26 @@ router.post(
         })
         .returning();
 
+      // Mirror to the recipient's own inbox so they can see and reply —
+      // only when participantId is a real user account (not "support").
+      const recipientUserId = Number(participantId);
+      if (
+        Number.isFinite(recipientUserId) &&
+        recipientUserId !== Number(userId)
+      ) {
+        const sender = await resolveUserDisplay(Number(userId));
+        if (sender) {
+          await getOrCreateMirrorConversation(
+            recipientUserId,
+            Number(userId),
+            sender.name,
+            sender.avatar,
+            type,
+            businessId,
+          );
+        }
+      }
+
       return res.json({ success: true, conversation: conv });
     } catch (err: any) {
       console.error("[Inbox] POST /conversations error:", err?.message);
@@ -424,6 +505,65 @@ router.post(
         .catch(() => {
           /* non-critical */
         });
+
+      // Mirror the message to the recipient's own inbox, in real-time, so
+      // the other account actually sees it (this was previously missing —
+      // conversations are one-sided rows, so without this the recipient
+      // never got the message at all).
+      const recipientUserId = Number(conv.participantId);
+      if (
+        Number.isFinite(recipientUserId) &&
+        recipientUserId !== Number(userId)
+      ) {
+        (async () => {
+          try {
+            const sender = await resolveUserDisplay(Number(userId));
+            const mirrorConvId = await getOrCreateMirrorConversation(
+              recipientUserId,
+              Number(userId),
+              sender?.name || String(senderName ?? "Member"),
+              null,
+              conv.type,
+              conv.businessId,
+            );
+            if (!mirrorConvId) return;
+
+            const [mirrorMessage] = await db
+              .insert(schema.inboxMessages)
+              .values({
+                conversationId: mirrorConvId,
+                senderId: String(userId),
+                senderName: sender?.name || String(senderName ?? "Member"),
+                senderAvatar: senderAvatar || null,
+                content: content.trim(),
+                isRead: false,
+                isAi: false,
+              })
+              .returning();
+
+            await db
+              .update(schema.inboxConversations)
+              .set({
+                lastMessage: content.trim().substring(0, 120),
+                lastMessageAt: new Date(),
+                updatedAt: new Date(),
+                unreadCount: sql`${schema.inboxConversations.unreadCount} + 1`,
+              })
+              .where(eq(schema.inboxConversations.id, mirrorConvId));
+
+            notificationEmitter.emit("inbox_message", {
+              toUserId: recipientUserId,
+              conversationId: mirrorConvId,
+              message: mirrorMessage,
+            });
+          } catch (mirrorErr: any) {
+            console.error(
+              "[Inbox] Mirror message error:",
+              mirrorErr?.message,
+            );
+          }
+        })();
+      }
 
       return res.json({ success: true, message });
     } catch (err: any) {

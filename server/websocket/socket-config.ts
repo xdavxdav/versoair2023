@@ -295,6 +295,27 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     });
   });
 
+  // Broadcast an inbox message to the recipient in real-time — powers live
+  // updates in MessengerPanel/MessengerLauncher without polling.
+  notificationEmitter.on("inbox_message", (data) => {
+    if (!io) return;
+
+    const roomName = `user_${data.toUserId}`;
+    io.to(roomName).emit("inbox_message", {
+      conversationId: data.conversationId,
+      message: data.message,
+    });
+
+    io.to(roomName).emit("notification", {
+      id: `inbox-${data.message?.id ?? Date.now()}`,
+      type: "message",
+      title: `New message from ${data.message?.senderName || "someone"}`,
+      message: data.message?.content?.slice(0, 100) || "",
+      timestamp: new Date().toISOString(),
+      read: false,
+    });
+  });
+
   return io;
 }
 

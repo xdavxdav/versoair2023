@@ -23,6 +23,7 @@ import {
   Menu,
   Home,
   MessageCircle,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Library,
   BarChart3,
   Flame,
+  Users,
 };
 
 export function MusicNavbar() {
