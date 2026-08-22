@@ -69,6 +69,7 @@ import { setupCategoryIntegrityCheck } from "./services/category-integrity-check
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { ensureAllTables } from "./services/ensure-tables";
+import { syncLegacyProfiles } from "./services/profile-migration";
 import { createLogger } from "./utils/logger";
 
 const serverLog = createLogger("server");
@@ -230,6 +231,17 @@ app.use((req, res, next) => {
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
   await ensureAllTables();
   serverLog.info("Database tables verified");
+
+  // Non-blocking: populate unified_profiles from legacy businesses + artist_profiles
+  syncLegacyProfiles()
+    .then((r) =>
+      serverLog.info(
+        `Profile sync: ${r.businessesSynced} biz, ${r.artistsSynced} artisans synced (${r.skipped} skipped, ${r.errors.length} errors)`,
+      ),
+    )
+    .catch((err) =>
+      serverLog.error("Profile sync failed (non-fatal):", err.message),
+    );
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);

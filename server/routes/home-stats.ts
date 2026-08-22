@@ -8,7 +8,7 @@ const router = Router();
  *
  * Returns country-specific aggregate stats for the home page:
  *   - businessCount, artisanCount, categoryCount
- *   - featuredArtisans (up to 3 random artisans from that country)
+ *   - featuredArtisans (up to 3 published artisans from unified_profiles)
  *
  * When countryCode is empty / omitted, returns global totals.
  */
@@ -18,44 +18,68 @@ router.get("/stats", async (req, res) => {
     const cc = countryCode.trim().toUpperCase();
 
     /* ── aggregate counts ── */
-    const countryFilter = cc ? `WHERE country_code = $1` : "";
-    const countParams = cc ? [cc] : [];
+    const bizCountParams = cc ? [cc] : [];
+    const bizCountFilter = cc ? `WHERE country_code = $1` : "";
 
-    const [bizRes, artistRes, catRes] = await Promise.all([
+    const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
-        `SELECT COUNT(*)::int AS count FROM businesses ${countryFilter}`,
-        countParams,
+        `SELECT COUNT(*)::int AS count FROM businesses ${bizCountFilter}`,
+        bizCountParams,
       ),
-      pool.query(
-        `SELECT COUNT(*)::int AS count FROM artists ${countryFilter}`,
-        countParams,
-      ),
-      // Distinct categories used by businesses in that country
+      // Artisan count from the unified index (published craft artisans)
+      cc
+        ? pool.query(
+            `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1`,
+            [cc],
+          )
+        : pool.query(
+            `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED'`,
+          ),
       pool.query(
         cc
           ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND category_id IS NOT NULL`
           : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE category_id IS NOT NULL`,
-        countParams,
+        bizCountParams,
       ),
     ]);
 
     const businessCount = bizRes.rows[0]?.count ?? 0;
-    const artisanCount = artistRes.rows[0]?.count ?? 0;
+    const artisanCount = artisanRes.rows[0]?.count ?? 0;
     const categoryCount = catRes.rows[0]?.count ?? 0;
 
-    /* ── featured artisans (up to 3) ── */
-    const featuredQuery = cc
-      ? `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         WHERE country_code = $1
-         ORDER BY RANDOM()
-         LIMIT 3`
-      : `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         ORDER BY RANDOM()
-         LIMIT 3`;
+    /* ── featured artisans: prefer unified_profiles, fall back to music artists ── */
+    let featuredArtisans: any[] = [];
+    try {
+      const unified = cc
+        ? await pool.query(
+            `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1
+             ORDER BY RANDOM() LIMIT 3`,
+            [cc],
+          )
+        : await pool.query(
+            `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED'
+             ORDER BY RANDOM() LIMIT 3`,
+          );
 
-    const featuredRes = await pool.query(featuredQuery, countParams);
+      if (unified.rows.length > 0) {
+        featuredArtisans = unified.rows;
+      } else {
+        // Fallback: legacy music artists table
+        const fallback = cc
+          ? await pool.query(
+              `SELECT id, stage_name AS name, genre FROM artists WHERE country_code = $1 ORDER BY RANDOM() LIMIT 3`,
+              [cc],
+            )
+          : await pool.query(
+              `SELECT id, stage_name AS name, genre FROM artists ORDER BY RANDOM() LIMIT 3`,
+            );
+        featuredArtisans = fallback.rows;
+      }
+    } catch (_) {
+      // unified_profiles may not exist on first boot — safe to ignore
+    }
 
     res.json({
       success: true,
@@ -63,7 +87,7 @@ router.get("/stats", async (req, res) => {
       businessCount,
       artisanCount,
       categoryCount,
-      featuredArtisans: featuredRes.rows,
+      featuredArtisans,
     });
   } catch (error: any) {
     console.error("Home stats error:", error);

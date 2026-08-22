@@ -1,4 +1,20 @@
-import { searchBusinesses, Business } from "@/lib/business-data";
+interface DirectoryProfile {
+  id: number;
+  name: string;
+  category: string | null;
+  description: string | null;
+  cityName: string | null;
+  countryCode: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  rating: string | null;
+  reviewCount: number | null;
+  isVerified: boolean;
+  slug: string | null;
+  metadata: Record<string, unknown>;
+}
 import { useEffect, useState, useRef } from "react";
 import { useCountry } from "@/contexts/CountryContext";
 import {
@@ -630,7 +646,7 @@ export default function Annuaire() {
   const [locationQuery, setLocationQuery] = useState("");
   const { selectedCountry, detecting, reloadDetection } = useCountry();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<Business[]>([]);
+  const [searchResults, setSearchResults] = useState<DirectoryProfile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -643,9 +659,8 @@ export default function Annuaire() {
     sort_by: "rating_desc",
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
-    null,
-  );
+  const [selectedBusiness, setSelectedBusiness] =
+    useState<DirectoryProfile | null>(null);
   const [showBusinessDetails, setShowBusinessDetails] = useState(false);
   useScrollLock(showBusinessDetails);
 
@@ -706,19 +721,27 @@ export default function Annuaire() {
     setCurrentPage(page);
 
     const category = categoryOverride ?? selectedCategory;
+    // Combine name query + location text so cityName is searched server-side
+    const q =
+      [searchQuery.trim(), locationQuery.trim()].filter(Boolean).join(" ") ||
+      undefined;
 
     try {
-      const results = await searchBusinesses({
-        query: searchQuery,
-        category: category || undefined,
-        location: locationQuery || undefined,
-        countryCode: selectedCountry || undefined,
-        status: activeFilters.status || undefined,
-        limit: 12,
+      const params = new URLSearchParams({
+        accountType: "business",
+        limit: "12",
       });
+      if (q) params.set("q", q);
+      if (category) params.set("category", category);
+      if (selectedCountry) params.set("countryCode", selectedCountry);
 
-      setSearchResults(Array.isArray(results) ? results : []);
-      setTotalResults(results.length || 0);
+      const res = await fetch(`/api/profiles/search?${params}`);
+      if (!res.ok) throw new Error("Search failed");
+      const data = await res.json();
+      const results: DirectoryProfile[] = data.data ?? [];
+
+      setSearchResults(results);
+      setTotalResults(results.length);
       setHasSearched(true);
     } catch (error) {
       console.error("Search failed:", error);
@@ -1055,65 +1078,88 @@ export default function Annuaire() {
                 {searchResults.length > 0 ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <AnimatePresence>
-                      {searchResults.map((business, index) => (
-                        <motion.div
-                          key={business.id}
-                          initial={{ opacity: 0, y: 40 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
-                          onClick={() => {
-                            setSelectedBusiness(business);
-                            setShowBusinessDetails(true);
-                          }}
-                        >
-                          <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
-                          <div className="p-6">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
-                                {business.title}
-                              </h4>
-                              {(business as any).is_featured && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  ⭐ Featured
-                                </span>
-                              )}
-                              {(business as any).owner_tier &&
-                                (business as any).owner_tier !== "free" && (
+                      {searchResults.map((business, index) => {
+                        const locationStr = [
+                          business.cityName,
+                          business.countryCode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
+                        const ratingNum = business.rating
+                          ? parseFloat(business.rating)
+                          : null;
+                        return (
+                          <motion.div
+                            key={business.id}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
+                            onClick={() => {
+                              setSelectedBusiness(business);
+                              setShowBusinessDetails(true);
+                            }}
+                          >
+                            <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
+                            <div className="p-6">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
+                                  {business.name}
+                                </h4>
+                                {business.isVerified && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                                     ✓
                                   </span>
                                 )}
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-400 mb-3">
-                              <Building className="h-4 w-4 text-blue-500" />
-                              <span className="text-sm font-medium">
-                                {business.location}
-                              </span>
-                            </div>
-                            <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                              {business.description}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1 bg-blue-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
-                                <Star className="h-3 w-3 fill-current" />
-                                <span className="font-bold">
-                                  {business.rating}
-                                </span>
                               </div>
-                              <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                }}
-                              >
-                                <Phone className="h-4 w-4" />
-                              </Button>
+                              {locationStr && (
+                                <div className="flex items-center gap-2 text-gray-400 mb-3">
+                                  <Building className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm font-medium">
+                                    {locationStr}
+                                  </span>
+                                </div>
+                              )}
+                              <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                                {business.description}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                {ratingNum != null ? (
+                                  <div className="flex items-center gap-1 bg-blue-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                                    <Star className="h-3 w-3 fill-current" />
+                                    <span className="font-bold">
+                                      {ratingNum.toFixed(1)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span />
+                                )}
+                                {business.phone ? (
+                                  <a
+                                    href={`tel:${business.phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Button
+                                      size="sm"
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    >
+                                      <Phone className="h-4 w-4" />
+                                    </Button>
+                                  </a>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    disabled
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 opacity-40"
+                                  >
+                                    <Phone className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })}
                     </AnimatePresence>
                   </div>
                 ) : (
@@ -1245,7 +1291,7 @@ export default function Annuaire() {
             >
               <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-white">
-                  {selectedBusiness.title}
+                  {selectedBusiness.name}
                 </h2>
                 <button
                   onClick={() => setShowBusinessDetails(false)}
@@ -1258,49 +1304,72 @@ export default function Annuaire() {
               <div className="p-6 space-y-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-300">
-                        {selectedBusiness.location}
-                      </span>
-                    </div>
-                    <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30">
-                      {selectedBusiness.category}
-                    </Badge>
+                    {(selectedBusiness.cityName ||
+                      selectedBusiness.countryCode) && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-300">
+                          {[
+                            selectedBusiness.cityName,
+                            selectedBusiness.countryCode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    )}
+                    {selectedBusiness.category && (
+                      <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30">
+                        {selectedBusiness.category}
+                      </Badge>
+                    )}
                   </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Description
-                  </h3>
-                  <p className="text-gray-300">
-                    {selectedBusiness.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
-                      <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
-                          Chiffre d'affaires
-                        </div>
-                        <div className="text-xl font-bold text-white">
-                          €{selectedBusiness.revenue.toLocaleString()}
-                        </div>
-                      </CardContent>
-                    </Card>
+                  {selectedBusiness.isVerified && (
+                    <Badge className="bg-emerald-900/30 text-emerald-300 border-emerald-500/30">
+                      ✓ Vérifié
+                    </Badge>
                   )}
-                  {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-4">
-                      <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employés</div>
-                        <div className="text-xl font-bold text-white">
-                          {selectedBusiness.employees}+
-                        </div>
-                      </CardContent>
-                    </Card>
+                </div>
+
+                {selectedBusiness.description && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Description
+                    </h3>
+                    <p className="text-gray-300">
+                      {selectedBusiness.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {selectedBusiness.phone && (
+                    <a
+                      href={`tel:${selectedBusiness.phone}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <Phone className="h-4 w-4" />
+                      {selectedBusiness.phone}
+                    </a>
+                  )}
+                  {selectedBusiness.email && (
+                    <a
+                      href={`mailto:${selectedBusiness.email}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      {selectedBusiness.email}
+                    </a>
+                  )}
+                  {selectedBusiness.website && (
+                    <a
+                      href={selectedBusiness.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Site web
+                    </a>
                   )}
                 </div>
               </div>
