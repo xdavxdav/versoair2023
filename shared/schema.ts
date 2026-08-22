@@ -924,6 +924,109 @@ export type InsertTicket = typeof tickets.$inferInsert;
 export type TicketAssignment = typeof ticketAssignments.$inferSelect;
 export type InsertTicketAssignment = typeof ticketAssignments.$inferInsert;
 
+// ── UNIFIED PROFILE (master source of truth for all partner types) ────────────
+// Recycles existing business/artisan/foundation data via a migration backfill.
+// Old tables remain active; new reads go through this entity.
+export const unifiedProfiles = pgTable(
+  "unified_profiles",
+  {
+    id: serial("id").primaryKey(),
+    ownerId: integer("owner_id").references(() => users.id, { onDelete: "cascade" }),
+
+    // 'business' | 'artisan' | 'foundation'
+    accountType: varchar("account_type", { length: 30 }).notNull(),
+
+    name: text("name").notNull(),
+    displayName: text("display_name"),
+    // URL-safe unique identifier — generated with collision protection
+    slug: varchar("slug", { length: 255 }).unique(),
+    category: varchar("category", { length: 120 }),
+    description: text("description"),
+    bio: text("bio"),
+
+    email: varchar("email"),
+    phone: varchar("phone"),
+    website: text("website"),
+    socialLinks: jsonb("social_links").$type<Record<string, string>>().default({}),
+
+    latitude: decimal("latitude", { precision: 10, scale: 8 }),
+    longitude: decimal("longitude", { precision: 11, scale: 8 }),
+    address: text("address"),
+    cityId: integer("city_id").references(() => cities.id),
+    regionId: integer("region_id").references(() => regions.id),
+    countryId: integer("country_id").references(() => countries.id),
+    countryCode: varchar("country_code", { length: 2 }),
+    cityName: varchar("city_name"),
+
+    isVerified: boolean("is_verified").default(false),
+    // 'pending' | 'approved' | 'rejected'
+    verificationStatus: varchar("verification_status").default("pending"),
+    verifiedAt: timestamp("verified_at"),
+    verifiedBy: integer("verified_by").references(() => users.id),
+
+    // 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'SUSPENDED'
+    status: varchar("status", { length: 30 }).default("DRAFT"),
+    approvedBy: integer("approved_by").references(() => users.id),
+    approvalNotes: text("approval_notes"),
+
+    logoUrl: text("logo_url"),
+    coverImageUrl: text("cover_image_url"),
+    profileImageUrl: text("profile_image_url"),
+
+    // Null until rated — prevents showing 0.0★ on unrated cards
+    rating: decimal("rating", { precision: 3, scale: 1 }),
+    reviewCount: integer("review_count").default(0),
+    viewCount: integer("view_count").default(0),
+
+    // Niche-specific data per accountType stored without schema bloat
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+
+    // Back-references for audit trail during migration
+    legacyBusinessId: integer("legacy_business_id"),
+    legacyArtistProfileId: integer("legacy_artist_profile_id"),
+
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    ownerIdx: index("up_owner_idx").on(t.ownerId),
+    statusIdx: index("up_status_idx").on(t.status),
+    verificationIdx: index("up_verification_idx").on(t.verificationStatus),
+    accountTypeIdx: index("up_account_type_idx").on(t.accountType),
+    // Composite index powers the public-safe getPublicProfiles() query
+    publishedIdx: index("up_published_idx").on(t.status, t.isVerified),
+    geoIdx: index("up_geo_idx").on(t.latitude, t.longitude),
+    slugUniq: unique("up_slug_uniq").on(t.slug),
+  }),
+);
+
+// Flat audit trail for every admin approval action — one row per action
+export const profileApprovalActions = pgTable(
+  "profile_approval_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: integer("profile_id")
+      .references(() => unifiedProfiles.id, { onDelete: "cascade" })
+      .notNull(),
+    // 'approve' | 'reject' | 'suspend' | 'restore'
+    action: varchar("action", { length: 20 }).notNull(),
+    performedBy: integer("performed_by")
+      .references(() => users.id)
+      .notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    profileIdx: index("paa_profile_idx").on(t.profileId),
+    adminIdx: index("paa_admin_idx").on(t.performedBy),
+  }),
+);
+
+export type UnifiedProfile = typeof unifiedProfiles.$inferSelect;
+export type InsertUnifiedProfile = typeof unifiedProfiles.$inferInsert;
+export type ProfileApprovalAction = typeof profileApprovalActions.$inferSelect;
+export const insertUnifiedProfileSchema = createInsertSchema(unifiedProfiles);
+
 export const ticketComments = pgTable(
   "ticket_comments",
   {
