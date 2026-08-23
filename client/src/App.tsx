@@ -259,6 +259,7 @@ const MobileMenuBubble = lazy(() =>
 const MessengerLauncher = lazy(
   () => import("@/components/messenger/MessengerLauncher"),
 );
+import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
@@ -935,6 +936,13 @@ function AppContent() {
         <Suspense fallback={null}>
           <MessengerLauncher hidden />
         </Suspense>
+      )}
+
+      {/* Notification bell — fixed top-right, visible on all non-auth pages */}
+      {!isAuthPage && !isMusicPage && user && (
+        <div className="fixed top-3 right-4 z-[150]">
+          <NotificationCenter />
+        </div>
       )}
 
       {/* Quick Sign In Modal — global shortcut */}
