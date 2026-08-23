@@ -935,7 +935,9 @@ export const unifiedProfiles = pgTable(
   "unified_profiles",
   {
     id: serial("id").primaryKey(),
-    ownerId: integer("owner_id").references(() => users.id, { onDelete: "cascade" }),
+    ownerId: integer("owner_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
 
     // 'business' | 'artisan' | 'foundation'
     accountType: varchar("account_type", { length: 30 }).notNull(),
@@ -951,7 +953,9 @@ export const unifiedProfiles = pgTable(
     email: varchar("email"),
     phone: varchar("phone"),
     website: text("website"),
-    socialLinks: jsonb("social_links").$type<Record<string, string>>().default({}),
+    socialLinks: jsonb("social_links")
+      .$type<Record<string, string>>()
+      .default({}),
 
     latitude: decimal("latitude", { precision: 10, scale: 8 }),
     longitude: decimal("longitude", { precision: 11, scale: 8 }),

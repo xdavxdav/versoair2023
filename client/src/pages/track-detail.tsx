@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAudio } from "@/lib/audio-context";
+import { toast } from "@/hooks/use-toast";
 import {
   useTrackDetail,
   useToggleLike,
@@ -148,11 +149,17 @@ export default function TrackDetailPage() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+      toast({
+        title: "Download started",
+        description: "Check your downloads folder",
+      });
     } catch {
-      // iOS Safari / restricted browsers — show instructions
-      alert(
-        "Download blocked by your browser.\n\niOS: Press play → tap the share icon → Save to Files.\nAndroid: Long-press the audio player → Save audio.",
-      );
+      // iOS Safari / restricted browsers — show instructions via toast
+      toast({
+        title: "Browser download blocked",
+        description:
+          "iOS: Press play → tap the share icon → Save to Files\nAndroid: Long-press the audio player → Save audio",
+      });
     } finally {
       setIsDownloading(false);
     }

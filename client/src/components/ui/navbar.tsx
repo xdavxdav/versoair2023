@@ -17,6 +17,7 @@ import {
   Wrench,
   Zap,
   MessageCircle,
+  Bell,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -29,6 +30,7 @@ import { usePortalAccess } from "@/hooks/usePortalAccess";
 import type { PortalId } from "@/lib/portal-access";
 import styles from "./versoair-logo.module.css";
 import SearchModal from "@/components/SearchModal";
+import NotificationCenter from "@/components/NotificationCenter";
 
 // Portal metadata for the switcher dropdown
 const PORTAL_META: Record<
@@ -787,6 +789,9 @@ export default function Navbar({
                 <MessageCircle className="h-4 w-4" />
               </button>
             )}
+
+            {/* Notifications — bell icon with unread badge */}
+            {user && <NotificationCenter />}
 
             {/* User Actions - Always visible */}
             {user ? (
