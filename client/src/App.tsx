@@ -749,11 +749,17 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ── Fixed Header Block: amber top bar (always) + scrolling ticker (conditional) ──
-          Hidden entirely on Musical Universe pages (/music/*, /artist-portal) — those
-          have their own dedicated navigation and this bar (BI platform banner, country
-          selector, GPS Services) doesn't belong there. */}
-      {!isMusicPage && (
+      {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
+          Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
+          Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
+      {!isMusicPage &&
+        currentPath !== "/blog" &&
+        currentPath !== "/marketplace" &&
+        !currentPath.startsWith("/community") &&
+        !currentPath.startsWith("/profile") &&
+        !currentPath.startsWith("/dashboard") &&
+        !currentPath.startsWith("/admin") &&
+        !isImmersivePage && (
         <div
           ref={headerRef}
           className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
@@ -765,24 +771,27 @@ function AppContent() {
               className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
               style={{ overflow: "visible" }}
             >
-              {/* Left: Platform label */}
+              {/* Left: Platform label — Dynamic based on current page */}
               <span
                 className="font-medium flex-1 min-w-0 text-center notranslate"
                 translate="no"
               >
                 <span className="hidden md:inline notranslate" translate="no">
-                  {isFr
-                    ? "Plateforme d'Intelligence d'Affaires"
-                    : "Business Intelligence Platform"}
+                  {pageTitle === "Verso Air" 
+                    ? (isFr ? "Plateforme Verso Air" : "Verso Air Platform")
+                    : (isFr ? `Plateforme ${pageTitle === "Business Intelligence" ? "d'Intelligence d'Affaires" : pageTitle}` 
+                             : pageTitle)}
                 </span>
                 <span
                   className="hidden sm:inline md:hidden notranslate"
                   translate="no"
                 >
-                  {isFr ? "Plateforme IA" : "BI Platform"}
+                  {pageTitle === "Verso Air" 
+                    ? (isFr ? "Verso Air" : "VA")
+                    : (isFr ? pageTitle.substring(0, 3) : pageTitle.substring(0, 3))}
                 </span>
                 <span className="sm:hidden notranslate" translate="no">
-                  {isFr ? "PIA" : "BIP"}
+                  {pageTitle.substring(0, 2).toUpperCase()}
                 </span>
               </span>
 
