@@ -16,6 +16,7 @@ import ViewOnlyGate from "@/components/ViewOnlyGate";
 import AdBanner from "@/components/AdBanner";
 import { useSocialFeed } from "@/hooks/use-social-feed";
 import { authenticatedFetch } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 const TEST_ACCOUNTS = [
   {
@@ -279,6 +280,15 @@ export default function BlogPage() {
       setIsAuthModalOpen(true);
       throw new Error("Sign in to follow other members");
     }
+    // Optimistic update — flip the UI instantly, roll back only on failure
+    const wasConnected = connectedUsers.includes(userId);
+    setConnectedUsers((prev) =>
+      shouldFollow
+        ? prev.includes(userId)
+          ? prev
+          : [...prev, userId]
+        : prev.filter((id) => id !== userId),
+    );
     setFollowPendingIds((prev) =>
       prev.includes(userId) ? prev : [...prev, userId],
     );
@@ -291,13 +301,28 @@ export default function BlogPage() {
       if (!response.ok || !data.success) {
         throw new Error(data.error || "Could not update this connection");
       }
+      toast({
+        title: shouldFollow ? "Following" : "Unfollowed",
+        description: shouldFollow
+          ? "You'll now see their activity in your feed"
+          : "You've unfollowed this member",
+      });
+    } catch (err) {
+      // Roll back to previous state
       setConnectedUsers((prev) =>
-        shouldFollow
+        wasConnected
           ? prev.includes(userId)
             ? prev
             : [...prev, userId]
           : prev.filter((id) => id !== userId),
       );
+      toast({
+        title: "Something went wrong",
+        description:
+          err instanceof Error ? err.message : "Could not update this connection",
+        variant: "destructive",
+      });
+      throw err;
     } finally {
       setFollowPendingIds((prev) => prev.filter((id) => id !== userId));
     }

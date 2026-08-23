@@ -72,6 +72,32 @@ export default function ProfilePage() {
       .slice(0, 2) || "VA";
   const avatarUrl = user?.avatar && !avatarFailed ? user.avatar : null;
 
+  // Real stats — pulled from the social API, falls back to "—" if unavailable
+  const [stats, setStats] = useState<{
+    followerCount: number | null;
+    followingCount: number | null;
+    postCount: number | null;
+  }>({ followerCount: null, followingCount: null, postCount: null });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    fetch(`/api/social/users/${user.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (cancelled || !json?.data) return;
+        setStats({
+          followerCount: json.data.followerCount ?? null,
+          followingCount: json.data.followingCount ?? null,
+          postCount: json.data.postCount ?? null,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const handleBack = () => {
     if (window.history.length > 1) {
       window.history.back();
@@ -261,7 +287,29 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Real stats — Followers / Following / Posts, from /api/social/users/:id */}
+            <div className="flex gap-6 mb-4">
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">
+                  {stats.followerCount ?? "—"}
+                </p>
+                <p className="text-xs text-slate-400">Followers</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">
+                  {stats.followingCount ?? "—"}
+                </p>
+                <p className="text-xs text-slate-400">Following</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-white">
+                  {stats.postCount ?? "—"}
+                </p>
+                <p className="text-xs text-slate-400">Posts</p>
+              </div>
+            </div>
+
+            {/* Action Buttons — single set, responsive across all breakpoints */}
             <div className="flex gap-3 flex-wrap">
               <Link href="/dashboard">
                 <motion.button
