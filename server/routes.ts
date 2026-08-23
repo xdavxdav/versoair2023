@@ -23,6 +23,7 @@ import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
 import capabilitiesRouter from "./routes/capabilities";
 import evaluationsRouter from "./routes/evaluations";
+import notificationsRouter from "./routes/notifications";
 import marketingRouter from "./routes/marketing";
 import userHistoryRouter from "./routes/user-history";
 import trackUploadRouter from "./routes/track-upload";
@@ -92,6 +93,7 @@ const TABLE_NAME_MAP: Record<string, string> = {
 
 import adCampaignsRouter from "./routes/ad-campaigns";
 import adminRouter from "./routes/admin";
+import profilesRouter from "./routes/profiles";
 import astrologyRouter from "./routes/astrology";
 import businessSearchRouter from "./routes/business-search";
 import categoriesRouter from "./routes/categories";
@@ -106,6 +108,9 @@ export async function registerRoutes(app: Express) {
   // Register auth routes
   app.use("/auth", authRouter);
   app.use("/auth", oauthRouter);
+
+  // Unified profile search + admin approval workflow
+  app.use("/", profilesRouter);
 
   // ═══════════════════════════════════════════════════════════
   // 🔐 VAULT AUTHORIZATION — superadmin@versoair.test ONLY
@@ -174,6 +179,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/tickets", ticketsRouter);
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
+  app.use("/api/notifications", notificationsRouter);
   app.use("/api/streamroyale", streamroyaleRouter);
 
   // ─── PREVIEW ROUTE (must come before streaming router to avoid :id catch) ───
