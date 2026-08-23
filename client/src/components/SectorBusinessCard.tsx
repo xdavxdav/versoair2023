@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,14 @@ export default function SectorBusinessCard({
     typeof sectorLabel === "function"
       ? sectorLabel(business)
       : sectorLabel || business.business_type || "Business";
+  const [imageBroken, setImageBroken] = useState(false);
+  const hasImage = Boolean(business.imageUrl) && !imageBroken;
+  const initials = (business.title || "?")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w: string) => w[0])
+    .join("")
+    .toUpperCase();
 
   return (
     <motion.div
@@ -145,24 +154,31 @@ export default function SectorBusinessCard({
       {/* Color bar */}
       <div className={`h-2 bg-gradient-to-r ${t.barGradient}`} />
 
-      {/* Thumbnail image (if available) */}
-      {business.imageUrl && (
-        <div className="relative w-full h-32 overflow-hidden">
+      {/* Thumbnail — always rendered so card heights stay consistent even without a photo */}
+      <div className="relative w-full h-32 overflow-hidden">
+        {hasImage ? (
           <img
             src={business.imageUrl}
             alt={business.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
-            onError={(e) => {
-              // Hide broken images gracefully
-              (e.target as HTMLImageElement).style.display = "none";
-              (e.target as HTMLImageElement).parentElement!.style.display =
-                "none";
-            }}
+            onError={() => setImageBroken(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent" />
-        </div>
-      )}
+        ) : (
+          <div
+            className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${t.barGradient} bg-opacity-20`}
+          >
+            {SectorIcon ? (
+              <SectorIcon className="h-10 w-10 text-white/70" />
+            ) : (
+              <span className="text-2xl font-bold text-white/70">
+                {initials}
+              </span>
+            )}
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent" />
+      </div>
 
       <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
         {/* Header: title + rating */}

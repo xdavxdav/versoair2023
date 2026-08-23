@@ -8,7 +8,9 @@ import { requireAuth } from "../middleware/auth";
 const router = Router();
 
 async function ensureNotifTable() {
-  await pool.query(`
+  await pool
+    .query(
+      `
     CREATE TABLE IF NOT EXISTS notifications (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id INTEGER NOT NULL,
@@ -21,18 +23,20 @@ async function ensureNotifTable() {
       read BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
-  `).catch(() => {/* may already exist with different shape */});
+  `,
+    )
+    .catch(() => {
+      /* may already exist with different shape */
+    });
   // Ensure new columns exist on legacy tables
-  const cols = [
-    "actor_name TEXT",
-    "actor_avatar TEXT",
-    "entity_url TEXT",
-  ];
+  const cols = ["actor_name TEXT", "actor_avatar TEXT", "entity_url TEXT"];
   for (const col of cols) {
     const [name] = col.split(" ");
-    await pool.query(
-      `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`,
-    ).catch(() => {});
+    await pool
+      .query(
+        `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`,
+      )
+      .catch(() => {});
   }
 }
 
@@ -100,10 +104,9 @@ router.post("/read-all", requireAuth(), async (req, res) => {
 // POST /api/notifications/:id/read
 router.post("/:id/read", requireAuth(), async (req, res) => {
   try {
-    await pool.query(
-      `UPDATE notifications SET read = true WHERE id = $1`,
-      [req.params.id],
-    );
+    await pool.query(`UPDATE notifications SET read = true WHERE id = $1`, [
+      req.params.id,
+    ]);
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

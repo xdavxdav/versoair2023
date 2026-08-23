@@ -40,7 +40,10 @@ export function usePublishTrack(onSuccess?: (trackId: number) => void) {
         }
 
         setPublishState("success");
-        toast({ title: "Published Successfully! 🎉", description: "Your track is now live." });
+        toast({
+          title: "Published Successfully! 🎉",
+          description: "Your track is now live.",
+        });
         onSuccess?.(trackId);
 
         // Reset after 2s so the button can be reused

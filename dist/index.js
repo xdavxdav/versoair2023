@@ -15,11 +15,11 @@ var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except, desc20) => {
+var __copyProps = (to, from, except, desc21) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc20 = __getOwnPropDesc(from, key)) || desc20.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc21 = __getOwnPropDesc(from, key)) || desc21.enumerable });
   }
   return to;
 };
@@ -128,6 +128,7 @@ __export(schema_exports, {
   insertTrackCommentSchema: () => insertTrackCommentSchema,
   insertTrackLikeSchema: () => insertTrackLikeSchema,
   insertTrackReactionSchema: () => insertTrackReactionSchema,
+  insertUnifiedProfileSchema: () => insertUnifiedProfileSchema,
   insertUserBrowsingHistorySchema: () => insertUserBrowsingHistorySchema,
   insertUserPaymentMethodSchema: () => insertUserPaymentMethodSchema,
   insertUserSchema: () => insertUserSchema,
@@ -177,6 +178,7 @@ __export(schema_exports, {
   pointsRedemptions: () => pointsRedemptions,
   printJobs: () => printJobs,
   printProducts: () => printProducts,
+  profileApprovalActions: () => profileApprovalActions,
   promotionThresholds: () => promotionThresholds,
   properties: () => properties,
   regionalLeagues: () => regionalLeagues,
@@ -190,6 +192,7 @@ __export(schema_exports, {
   streamingSubscriptions: () => streamingSubscriptions,
   systemSettings: () => systemSettings,
   ticketAssignments: () => ticketAssignments,
+  ticketComments: () => ticketComments,
   tickets: () => tickets,
   trackComments: () => trackComments,
   trackLikes: () => trackLikes,
@@ -197,6 +200,7 @@ __export(schema_exports, {
   trackReactions: () => trackReactions,
   transactions: () => transactions,
   tsrWhitelist: () => tsrWhitelist,
+  unifiedProfiles: () => unifiedProfiles,
   userBrowsingHistory: () => userBrowsingHistory,
   userBrowsingHistoryRelations: () => userBrowsingHistoryRelations,
   userPaymentMethods: () => userPaymentMethods,
@@ -232,7 +236,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-var countries, regions, cities, users, verificationTokens, businessCategories, businesses, artists, contractors, tsrWhitelist, contractorApplications, geoActionRequests, assignedContracts, paymentCardTypes, savedPaymentMethods, ngoCharges, musicTracks, jobs, connections, transactions, businessReviews, auditLogs, adCampaigns, properties, reservations, analytics, musicAnalytics, trackPurchases, musicArtists, businessMessages, notifications, userRelations, businessRelations, connectionsRelations, insertUserSchema, insertBusinessSchema, insertConnectionSchema, verifications, tickets, ticketAssignments, userSettings, settingsTemplates, emailSubscriptions, insertEmailSubscriptionSchema, emailQueue, insertEmailQueueSchema, issuedCards, pointsLedger, pointsRedemptions, insertIssuedCardSchema, insertPointsLedgerSchema, insertPointsRedemptionSchema, artistProfiles, evaluationSubmissions, promotionThresholds, regionalLeagues, streamingPlans, listenerSubscriptions, streamEvents, weeklyPools, artistRoyalties, artistBadges, payoutRequests, insertArtistProfileSchema, insertStreamEventSchema, insertWeeklyPoolSchema, insertArtistRoyaltySchema, insertArtistBadgeSchema, insertPayoutRequestSchema, albums, playlists, playlistTracks, streamPlays, trackLikes, trackComments, trackReactions, insertTrackReactionSchema, artistFollows, streamingSubscriptions, listeningHistory, insertAlbumSchema, insertPlaylistSchema, insertPlaylistTrackSchema, insertStreamPlaySchema, insertTrackLikeSchema, insertTrackCommentSchema, insertArtistFollowSchema, insertStreamingSubscriptionSchema, insertListeningHistorySchema, artistContracts, insertArtistContractSchema, adJournalListings, journalEditions, marketingPacks, packItems, printProducts, printJobs, cartItems, orders, orderItems, newsletterCampaigns, newsletterSubscribers, marketingPackRelations, packItemRelations, orderRelations, orderItemRelations, insertAdJournalListingSchema, insertJournalEditionSchema, insertMarketingPackSchema, insertPackItemSchema, insertPrintProductSchema, insertPrintJobSchema, insertCartItemSchema, insertOrderSchema, insertOrderItemSchema, insertNewsletterCampaignSchema, insertNewsletterSubscriberSchema, userBrowsingHistory, userBrowsingHistoryRelations, insertUserBrowsingHistorySchema, artistCollaborations, contestVotes, artistSubscriptions, arenaContests, arenaBrackets, arenaVotes, contestParticipationRequirements, listenerContestRewards, vaultRules, collabRequests, platformWallets, walletTransactions, userPaymentMethods, bankTransferRequests, gameMatches, gameMoves, insertGameMatchSchema, insertGameMoveSchema, listenerStats, listenerActivity, listenerBonuses, listenerBadges, insertListenerStatsSchema, insertListenerActivitySchema, insertListenerBonusesSchema, insertListenerBadgesSchema, insertContestParticipationRequirementsSchema, insertListenerContestRewardsSchema, insertContestVoteSchema, insertArtistSubscriptionSchema, insertArenaContestSchema, insertArenaBracketSchema, insertArenaVoteSchema, insertVaultRuleSchema, insertCollabRequestSchema, insertPlatformWalletSchema, insertWalletTransactionSchema, insertUserPaymentMethodSchema, insertBankTransferRequestSchema, paylistItems, paylistAccessLog, insertPaylistItemSchema, insertPaylistAccessLogSchema, activeSessions, insertActiveSessionSchema, platformSettings, insertPlatformSettingSchema, inventoryProducts, insertInventoryProductSchema, inboxConversations, insertInboxConversationSchema, inboxMessages, insertInboxMessageSchema, videoProjects, insertVideoProjectSchema, videoBriefs, insertVideoBriefSchema, videoDeliverables, insertVideoDeliverableSchema, videoRevisions, insertVideoRevisionSchema, videoLicenses, insertVideoLicenseSchema, systemSettings, insertSystemSettingsSchema;
+var countries, regions, cities, users, verificationTokens, businessCategories, businesses, artists, contractors, tsrWhitelist, contractorApplications, geoActionRequests, assignedContracts, paymentCardTypes, savedPaymentMethods, ngoCharges, musicTracks, jobs, connections, transactions, businessReviews, auditLogs, adCampaigns, properties, reservations, analytics, musicAnalytics, trackPurchases, musicArtists, businessMessages, notifications, userRelations, businessRelations, connectionsRelations, insertUserSchema, insertBusinessSchema, insertConnectionSchema, verifications, tickets, ticketAssignments, unifiedProfiles, profileApprovalActions, insertUnifiedProfileSchema, ticketComments, userSettings, settingsTemplates, emailSubscriptions, insertEmailSubscriptionSchema, emailQueue, insertEmailQueueSchema, issuedCards, pointsLedger, pointsRedemptions, insertIssuedCardSchema, insertPointsLedgerSchema, insertPointsRedemptionSchema, artistProfiles, evaluationSubmissions, promotionThresholds, regionalLeagues, streamingPlans, listenerSubscriptions, streamEvents, weeklyPools, artistRoyalties, artistBadges, payoutRequests, insertArtistProfileSchema, insertStreamEventSchema, insertWeeklyPoolSchema, insertArtistRoyaltySchema, insertArtistBadgeSchema, insertPayoutRequestSchema, albums, playlists, playlistTracks, streamPlays, trackLikes, trackComments, trackReactions, insertTrackReactionSchema, artistFollows, streamingSubscriptions, listeningHistory, insertAlbumSchema, insertPlaylistSchema, insertPlaylistTrackSchema, insertStreamPlaySchema, insertTrackLikeSchema, insertTrackCommentSchema, insertArtistFollowSchema, insertStreamingSubscriptionSchema, insertListeningHistorySchema, artistContracts, insertArtistContractSchema, adJournalListings, journalEditions, marketingPacks, packItems, printProducts, printJobs, cartItems, orders, orderItems, newsletterCampaigns, newsletterSubscribers, marketingPackRelations, packItemRelations, orderRelations, orderItemRelations, insertAdJournalListingSchema, insertJournalEditionSchema, insertMarketingPackSchema, insertPackItemSchema, insertPrintProductSchema, insertPrintJobSchema, insertCartItemSchema, insertOrderSchema, insertOrderItemSchema, insertNewsletterCampaignSchema, insertNewsletterSubscriberSchema, userBrowsingHistory, userBrowsingHistoryRelations, insertUserBrowsingHistorySchema, artistCollaborations, contestVotes, artistSubscriptions, arenaContests, arenaBrackets, arenaVotes, contestParticipationRequirements, listenerContestRewards, vaultRules, collabRequests, platformWallets, walletTransactions, userPaymentMethods, bankTransferRequests, gameMatches, gameMoves, insertGameMatchSchema, insertGameMoveSchema, listenerStats, listenerActivity, listenerBonuses, listenerBadges, insertListenerStatsSchema, insertListenerActivitySchema, insertListenerBonusesSchema, insertListenerBadgesSchema, insertContestParticipationRequirementsSchema, insertListenerContestRewardsSchema, insertContestVoteSchema, insertArtistSubscriptionSchema, insertArenaContestSchema, insertArenaBracketSchema, insertArenaVoteSchema, insertVaultRuleSchema, insertCollabRequestSchema, insertPlatformWalletSchema, insertWalletTransactionSchema, insertUserPaymentMethodSchema, insertBankTransferRequestSchema, paylistItems, paylistAccessLog, insertPaylistItemSchema, insertPaylistAccessLogSchema, activeSessions, insertActiveSessionSchema, platformSettings, insertPlatformSettingSchema, inventoryProducts, insertInventoryProductSchema, inboxConversations, insertInboxConversationSchema, inboxMessages, insertInboxMessageSchema, videoProjects, insertVideoProjectSchema, videoBriefs, insertVideoBriefSchema, videoDeliverables, insertVideoDeliverableSchema, videoRevisions, insertVideoRevisionSchema, videoLicenses, insertVideoLicenseSchema, systemSettings, insertSystemSettingsSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -612,7 +616,13 @@ var init_schema = __esm({
       (t) => ({
         artistIdx: index("music_tracks_artist_idx").on(t.artistId),
         albumIdx: index("music_tracks_album_idx").on(t.albumId),
-        genreIdx: index("music_tracks_genre_idx").on(t.genre)
+        genreIdx: index("music_tracks_genre_idx").on(t.genre),
+        // `status` is the most common filter in browse/streaming queries
+        // (WHERE status = 'published'), usually ordered by newest first.
+        statusCreatedIdx: index("music_tracks_status_created_idx").on(
+          t.status,
+          t.createdAt
+        )
       })
     );
     jobs = pgTable("jobs", {
@@ -1055,6 +1065,98 @@ var init_schema = __esm({
       (t) => ({
         ticketIdx: index("ticket_assignments_ticket_idx").on(t.ticketId),
         assignedToIdx: index("ticket_assignments_assigned_to_idx").on(t.assignedTo)
+      })
+    );
+    unifiedProfiles = pgTable(
+      "unified_profiles",
+      {
+        id: serial("id").primaryKey(),
+        ownerId: integer("owner_id").references(() => users.id, { onDelete: "cascade" }),
+        // 'business' | 'artisan' | 'foundation'
+        accountType: varchar("account_type", { length: 30 }).notNull(),
+        name: text("name").notNull(),
+        displayName: text("display_name"),
+        // URL-safe unique identifier — generated with collision protection
+        slug: varchar("slug", { length: 255 }).unique(),
+        category: varchar("category", { length: 120 }),
+        description: text("description"),
+        bio: text("bio"),
+        email: varchar("email"),
+        phone: varchar("phone"),
+        website: text("website"),
+        socialLinks: jsonb("social_links").$type().default({}),
+        latitude: decimal("latitude", { precision: 10, scale: 8 }),
+        longitude: decimal("longitude", { precision: 11, scale: 8 }),
+        address: text("address"),
+        cityId: integer("city_id").references(() => cities.id),
+        regionId: integer("region_id").references(() => regions.id),
+        countryId: integer("country_id").references(() => countries.id),
+        countryCode: varchar("country_code", { length: 2 }),
+        cityName: varchar("city_name"),
+        isVerified: boolean("is_verified").default(false),
+        // 'pending' | 'approved' | 'rejected'
+        verificationStatus: varchar("verification_status").default("pending"),
+        verifiedAt: timestamp("verified_at"),
+        verifiedBy: integer("verified_by").references(() => users.id),
+        // 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'SUSPENDED'
+        status: varchar("status", { length: 30 }).default("DRAFT"),
+        approvedBy: integer("approved_by").references(() => users.id),
+        approvalNotes: text("approval_notes"),
+        logoUrl: text("logo_url"),
+        coverImageUrl: text("cover_image_url"),
+        profileImageUrl: text("profile_image_url"),
+        // Null until rated — prevents showing 0.0★ on unrated cards
+        rating: decimal("rating", { precision: 3, scale: 1 }),
+        reviewCount: integer("review_count").default(0),
+        viewCount: integer("view_count").default(0),
+        // Niche-specific data per accountType stored without schema bloat
+        metadata: jsonb("metadata").$type().default({}),
+        // Back-references for audit trail during migration
+        legacyBusinessId: integer("legacy_business_id"),
+        legacyArtistProfileId: integer("legacy_artist_profile_id"),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (t) => ({
+        ownerIdx: index("up_owner_idx").on(t.ownerId),
+        statusIdx: index("up_status_idx").on(t.status),
+        verificationIdx: index("up_verification_idx").on(t.verificationStatus),
+        accountTypeIdx: index("up_account_type_idx").on(t.accountType),
+        // Composite index powers the public-safe getPublicProfiles() query
+        publishedIdx: index("up_published_idx").on(t.status, t.isVerified),
+        geoIdx: index("up_geo_idx").on(t.latitude, t.longitude),
+        slugUniq: unique("up_slug_uniq").on(t.slug)
+      })
+    );
+    profileApprovalActions = pgTable(
+      "profile_approval_actions",
+      {
+        id: uuid("id").primaryKey().defaultRandom(),
+        profileId: integer("profile_id").references(() => unifiedProfiles.id, { onDelete: "cascade" }).notNull(),
+        // 'approve' | 'reject' | 'suspend' | 'restore'
+        action: varchar("action", { length: 20 }).notNull(),
+        performedBy: integer("performed_by").references(() => users.id).notNull(),
+        notes: text("notes"),
+        createdAt: timestamp("created_at").defaultNow()
+      },
+      (t) => ({
+        profileIdx: index("paa_profile_idx").on(t.profileId),
+        adminIdx: index("paa_admin_idx").on(t.performedBy)
+      })
+    );
+    insertUnifiedProfileSchema = createInsertSchema(unifiedProfiles);
+    ticketComments = pgTable(
+      "ticket_comments",
+      {
+        id: serial("id").primaryKey(),
+        ticketId: integer("ticket_id").references(() => tickets.id, { onDelete: "cascade" }).notNull(),
+        authorId: integer("author_id").references(() => users.id),
+        authorName: varchar("author_name"),
+        body: text("body").notNull(),
+        createdAt: timestamp("created_at").defaultNow()
+      },
+      (t) => ({
+        ticketIdx: index("ticket_comments_ticket_idx").on(t.ticketId)
       })
     );
     userSettings = pgTable(
@@ -2989,6 +3091,13 @@ var init_schema = __esm({
         isRead: boolean("is_read").notNull().default(false),
         isAi: boolean("is_ai").notNull().default(false),
         // true = VersoAI reply
+        // ── Publish-to-community (viral) ──
+        // Messages always start private. The sender can later choose to "publish"
+        // their own sent message, which mirrors it into `social_posts` (postType
+        // 'dm_share') making it visible on the public community feed. One-way —
+        // not un-publishable, and not toggleable at send time.
+        isPublished: boolean("is_published").notNull().default(false),
+        publishedPostId: integer("published_post_id"),
         createdAt: timestamp("created_at").defaultNow()
       },
       (t) => ({
@@ -3242,7 +3351,12 @@ async function loadSmtpConfigFromDb() {
     return smtpCache;
   }
   try {
-    const result = await db.select().from(systemSettings).where(eq(systemSettings.key, "smtp_config")).limit(1);
+    const result = await Promise.race([
+      db.select().from(systemSettings).where(eq(systemSettings.key, "smtp_config")).limit(1),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error("DB query timeout")), 5e3)
+      )
+    ]);
     if (result[0]?.value) {
       smtpCache = result[0].value;
       cacheExpires = now + 5 * 60 * 1e3;
@@ -5726,23 +5840,60 @@ __export(socket_config_exports, {
   isUserConnected: () => isUserConnected
 });
 import { Server as SocketIOServer } from "socket.io";
+import jwt3 from "jsonwebtoken";
+function socketAllowedOrigins() {
+  return process.env.NODE_ENV === "production" ? (process.env.CORS_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean) : [
+    "http://localhost:5003",
+    "http://localhost:5004",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://localhost:5173"
+  ];
+}
+function cookieFromHeader(header, name) {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() === name) {
+      return decodeURIComponent(part.slice(idx + 1).trim());
+    }
+  }
+  return null;
+}
+function authenticateHandshake(socket) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+  const handshakeToken = socket.handshake.auth?.token;
+  const token = typeof handshakeToken === "string" && handshakeToken || cookieFromHeader(socket.handshake.headers.cookie, "auth_token");
+  if (!token) return null;
+  try {
+    const decoded = jwt3.verify(token, secret);
+    const userId = Number(decoded?.userId);
+    return Number.isFinite(userId) ? userId : null;
+  } catch {
+    return null;
+  }
+}
 function initializeSocket(server) {
   io = new SocketIOServer(server, {
     cors: {
-      origin: [
-        "http://localhost:5003",
-        // Single port for frontend + backend
-        "http://localhost:3000",
-        process.env.PRODUCTION_URL || "http://localhost:5003"
-      ],
+      origin: socketAllowedOrigins(),
       credentials: true,
       methods: ["GET", "POST"]
     },
     transports: ["websocket", "polling"]
   });
+  io.use((socket, next) => {
+    socket.data.userId = authenticateHandshake(socket);
+    next();
+  });
   io.on("connection", (socket) => {
-    console.log(`[SOCKET] User connected: ${socket.id}`);
-    socket.on("user_auth", (userId) => {
+    const userId = socket.data.userId ?? null;
+    console.log(
+      `[SOCKET] Connected: ${socket.id} (user: ${userId ?? "anonymous"})`
+    );
+    if (userId !== null) {
       const roomName = `user_${userId}`;
       socket.join(roomName);
       const connections2 = userConnections.get(userId) || [];
@@ -5751,9 +5902,27 @@ function initializeSocket(server) {
       console.log(
         `[SOCKET] User ${userId} joined room ${roomName} (socket ${socket.id})`
       );
+      socket.emit("authenticated", { userId, roomName });
       socket.emit("auth_confirmed", { userId, roomName });
+    } else {
+      socket.emit("unauthenticated", {
+        message: "No valid session \u2014 only public broadcasts will be received."
+      });
+    }
+    socket.on("authenticate", () => {
+      if (socket.data.userId !== null && socket.data.userId !== void 0) {
+        socket.emit("authenticated", { userId: socket.data.userId });
+      }
+    });
+    socket.on("user_auth", () => {
+      if (socket.data.userId !== null && socket.data.userId !== void 0) {
+        socket.emit("auth_confirmed", { userId: socket.data.userId });
+      }
     });
     socket.on("join_game_room", (data) => {
+      if (socket.data.userId === null || socket.data.userId === void 0) {
+        return;
+      }
       if (data?.room && data.room.startsWith("game_")) {
         socket.join(data.room);
         console.log(`[SOCKET] ${socket.id} joined game room ${data.room}`);
@@ -5766,12 +5935,12 @@ function initializeSocket(server) {
     });
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
-      for (const [userId, socketIds] of userConnections.entries()) {
+      for (const [userId2, socketIds] of userConnections.entries()) {
         const filtered = socketIds.filter((id) => id !== socket.id);
         if (filtered.length === 0) {
-          userConnections.delete(userId);
+          userConnections.delete(userId2);
         } else {
-          userConnections.set(userId, filtered);
+          userConnections.set(userId2, filtered);
         }
       }
     });
@@ -5884,6 +6053,22 @@ function initializeSocket(server) {
       read: false
     });
   });
+  notificationEmitter.on("inbox_message", (data) => {
+    if (!io) return;
+    const roomName = `user_${data.toUserId}`;
+    io.to(roomName).emit("inbox_message", {
+      conversationId: data.conversationId,
+      message: data.message
+    });
+    io.to(roomName).emit("notification", {
+      id: `inbox-${data.message?.id ?? Date.now()}`,
+      type: "message",
+      title: `New message from ${data.message?.senderName || "someone"}`,
+      message: data.message?.content?.slice(0, 100) || "",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      read: false
+    });
+  });
   return io;
 }
 function getIO() {
@@ -5965,7 +6150,9 @@ var PUBLIC_PATHS = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
-  "/auth/register-geoadmin",
+  // "/auth/register-geoadmin" intentionally NOT public — creating .test admin
+  // accounts requires an existing authenticated Admin/Superadmin session
+  // (enforced by requireAuth + role check in the route handler).
   // Artist portal auth
   "/auth/artist/login",
   "/auth/artist/register",
@@ -6047,22 +6234,22 @@ var PUBLIC_PATH_PREFIXES = [
   "/api/streaming/subscription/plans"
   // Subscription plan listing (public)
 ];
-function isPublicPath(path8, method) {
-  if (PUBLIC_PATHS.includes(path8)) return true;
-  if (path8.startsWith("/auth/oauth/")) return true;
-  if (path8.startsWith("/auth/google/") || path8.startsWith("/auth/facebook/"))
+function isPublicPath(path7, method) {
+  if (PUBLIC_PATHS.includes(path7)) return true;
+  if (path7.startsWith("/auth/oauth/")) return true;
+  if (path7.startsWith("/auth/google/") || path7.startsWith("/auth/facebook/"))
     return true;
   if (method === "GET") {
     for (const prefix of PUBLIC_PATH_PREFIXES) {
-      if (path8.startsWith(prefix)) return true;
+      if (path7.startsWith(prefix)) return true;
     }
   }
   return false;
 }
 async function globalAuthGate(req, res, next) {
-  const path8 = req.path;
-  if (isPublicPath(path8, req.method.toUpperCase())) return next();
-  if (!path8.startsWith("/api/") && !path8.startsWith("/auth/")) return next();
+  const path7 = req.path;
+  if (isPublicPath(path7, req.method.toUpperCase())) return next();
+  if (!path7.startsWith("/api/") && !path7.startsWith("/auth/")) return next();
   try {
     const token = extractToken(req);
     if (!token) {
@@ -6090,6 +6277,7 @@ async function globalAuthGate(req, res, next) {
     }
     req.user = {
       userId: decoded.userId,
+      id: decoded.userId,
       email: decoded.email,
       role: decoded.role
     };
@@ -6122,6 +6310,7 @@ function requireAuth(allowedRoles) {
       const decoded = jwt.verify(token, getJwtSecret());
       const user = {
         userId: decoded.userId,
+        id: decoded.userId,
         email: decoded.email,
         role: decoded.role
       };
@@ -6151,7 +6340,7 @@ function optionalAuth(req, res, next) {
     const token = extractToken(req);
     if (token) {
       const decoded = jwt.verify(token, getJwtSecret());
-      req.user = decoded;
+      req.user = { ...decoded, id: decoded.userId };
     }
     next();
   } catch {
@@ -6880,7 +7069,7 @@ async function validateBusinessCategory(businessData) {
   return result;
 }
 function checkDescriptionCategoryMatch(description, categoryName) {
-  const desc20 = description.toLowerCase();
+  const desc21 = description.toLowerCase();
   const cat = categoryName.toLowerCase();
   const categoryKeywords = {
     plumb: ["plumb", "water", "pipe", "drain", "faucet", "sewer"],
@@ -6906,7 +7095,7 @@ function checkDescriptionCategoryMatch(description, categoryName) {
   if (matchedKeywords.length === 0) {
     return { isSuspicious: false, expectedKeywords: [] };
   }
-  const hasMatch = matchedKeywords.some((kw) => desc20.includes(kw));
+  const hasMatch = matchedKeywords.some((kw) => desc21.includes(kw));
   return {
     isSuspicious: !hasMatch,
     expectedKeywords: matchedKeywords
@@ -12281,6 +12470,51 @@ var aiLimiter = rateLimit({
     });
   }
 });
+var marketplaceMessageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1e3,
+  // 1 hour
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = req.user?.userId;
+    return userId ? `mp-user-${userId}` : req.ip;
+  },
+  handler: (req, res) => {
+    console.warn(
+      `[RATE_LIMIT] Marketplace message limit exceeded for: ${req.user?.userId || req.ip}`
+    );
+    res.status(429).json({
+      success: false,
+      error: "You're sending messages too fast. Please slow down and try again shortly."
+    });
+  }
+});
+var fanChatSlowMode = rateLimit({
+  windowMs: 60 * 1e3,
+  // 1 minute
+  max: 2,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = req.user?.userId || req.user?.id;
+    return userId ? `fan-user-${userId}` : req.ip;
+  },
+  skip: (req) => {
+    const user = req.user;
+    if (!user) return false;
+    if (user.role === "superuser") return true;
+    const tier = user.subscriptionTier;
+    return tier === "essential" || tier === "verified" || tier === "max" || tier === "enterprise";
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: "Slow mode: please wait ~30 seconds between messages. Subscribers post without cooldown.",
+      slowMode: true,
+      upgradeAvailable: true
+    });
+  }
+});
 console.log("[RATE_LIMIT] Rate limiters initialized (memory store)");
 console.log(
   "[RATE_LIMIT] For production serverless: Configure Upstash Redis in .env"
@@ -15105,7 +15339,7 @@ var api_v1_default = router21;
 init_db();
 init_schema();
 import { Router as Router23 } from "express";
-import jwt3 from "jsonwebtoken";
+import jwt4 from "jsonwebtoken";
 import bcrypt2 from "bcryptjs";
 import crypto3 from "crypto";
 import { z as z3 } from "zod";
@@ -15524,7 +15758,7 @@ async function createSession(userId, token, req, opts = {}) {
     if (isNaN(numericUserId) || numericUserId === 0) return;
     const device = parseDevice(req.headers["user-agent"]);
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null;
-    const decoded = jwt3.decode(token);
+    const decoded = jwt4.decode(token);
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1e3) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
     if (opts.revokeOthers) {
       await db.update(activeSessions).set({
@@ -15596,7 +15830,7 @@ function generateOtpCode() {
   return String(crypto3.randomInt(1e5, 1e6));
 }
 async function finishLogin(user, effectiveLoginRole, req, res) {
-  const token = jwt3.sign(
+  const token = jwt4.sign(
     {
       userId: String(user.id),
       email: user.email,
@@ -15794,7 +16028,7 @@ router23.post(
         "Your Verso Air sign-in code",
         `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes. If you didn't try to sign in, ignore this email.</p>`
       ).catch((e) => console.warn("[AUTH] Failed to send OTP email:", e));
-      const otpToken = jwt3.sign(
+      const otpToken = jwt4.sign(
         { userId: String(user.id), purpose: "login_otp" },
         getJwtSecret2(),
         { expiresIn: "10m" }
@@ -15821,7 +16055,7 @@ router23.post(
     }
     let payload;
     try {
-      payload = jwt3.verify(otpToken, getJwtSecret2());
+      payload = jwt4.verify(otpToken, getJwtSecret2());
     } catch {
       res.status(401).json({
         success: false,
@@ -15932,7 +16166,7 @@ router23.get(
     const verifiedUser = verifiedUserResult.rows?.[0];
     const appUrl = (process.env.APP_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || process.env.VERSOAIR_URL || "").replace(/\/$/, "");
     if (verifiedUser) {
-      const verifyToken = jwt3.sign(
+      const verifyToken = jwt4.sign(
         {
           userId: String(verifiedUser.id),
           email: verifiedUser.email,
@@ -16019,7 +16253,7 @@ router23.get(
       return;
     }
     try {
-      const decoded = jwt3.verify(token, getJwtSecret2());
+      const decoded = jwt4.verify(token, getJwtSecret2());
       res.json({ success: true, user: decoded });
     } catch {
       res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -16035,7 +16269,7 @@ router23.get(
       return;
     }
     try {
-      const decoded = jwt3.verify(token, getJwtSecret2());
+      const decoded = jwt4.verify(token, getJwtSecret2());
       const userId = decoded.userId || decoded.sub;
       const dbResult = await db.execute(
         sql7`SELECT id, username, email, role, subscription_tier, subscription_status,
@@ -16102,7 +16336,7 @@ router23.post(
       res.json(GENERIC_OK);
       return;
     }
-    const resetToken = jwt3.sign(
+    const resetToken = jwt4.sign(
       { userId: String(user.id), purpose: "password_reset" },
       getJwtSecret2(),
       { expiresIn: "1h" }
@@ -16170,7 +16404,7 @@ router23.post(
         message: "Access denied. Admin, CEO, or Moderator clearance required."
       });
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: String(user.id),
         email: user.email,
@@ -16224,6 +16458,13 @@ router23.post(
   "/register-geoadmin",
   registerLimiter,
   asyncHandler(async (req, res) => {
+    const requesterRole = req.user?.role;
+    if (requesterRole !== "admin" && requesterRole !== "superuser") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Admin or Superadmin accounts can create .test accounts."
+      });
+    }
     const parsed = registerGeoAdminSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ success: false, message: parsed.error.errors[0].message });
@@ -16265,7 +16506,7 @@ router23.post(
       email: users.email,
       role: users.role
     });
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: String(newUser.id),
         email: newUser.email,
@@ -16275,7 +16516,6 @@ router23.post(
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
     );
-    setAuthCookie(res, token);
     await createSession(newUser.id, token, req);
     res.status(201).json({
       success: true,
@@ -16300,7 +16540,7 @@ router23.post(
     const { token, password } = parsed.data;
     let decoded;
     try {
-      decoded = jwt3.verify(token, getJwtSecret2());
+      decoded = jwt4.verify(token, getJwtSecret2());
     } catch {
       res.status(400).json({
         success: false,
@@ -16363,7 +16603,7 @@ router23.post(
     }
     let decoded;
     try {
-      decoded = jwt3.verify(token, getJwtSecret2());
+      decoded = jwt4.verify(token, getJwtSecret2());
     } catch {
       res.status(401).json({ success: false, message: "Invalid or expired token" });
       return;
@@ -16820,7 +17060,7 @@ function requireSuperuser(req, res, next) {
     return;
   }
   try {
-    const decoded = jwt3.verify(token, getJwtSecret2());
+    const decoded = jwt4.verify(token, getJwtSecret2());
     if (decoded.role !== "superuser") {
       res.status(403).json({ success: false, message: "Superuser role required" });
       return;
@@ -17259,7 +17499,7 @@ router23.post(
       if (profiles.length > 0) artistProfile = profiles[0];
     } catch (e) {
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       { userId: user.id, email: user.email, role: effectiveRole },
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
@@ -17343,7 +17583,7 @@ router23.post(
       subscriptionTier: users.subscriptionTier
     });
     try {
-      const verificationToken = jwt3.sign(
+      const verificationToken = jwt4.sign(
         { userId: newUser.id, purpose: "email_verification" },
         getJwtSecret2(),
         { expiresIn: "24h" }
@@ -17421,7 +17661,7 @@ router23.post(
         console.log(`[AUTH] TSR role granted to subscriber ${user.email}`);
       }
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: user.id,
         email: user.email,
@@ -17577,7 +17817,7 @@ router23.post(
       return;
     }
     await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq20(users.id, user.id));
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       { userId: user.id, email: user.email, role: user.role || "user" },
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
@@ -17781,7 +18021,7 @@ init_db();
 init_db();
 init_schema();
 import { Router as Router24 } from "express";
-import jwt4 from "jsonwebtoken";
+import jwt5 from "jsonwebtoken";
 import crypto4 from "crypto";
 import { eq as eq21, sql as sql8 } from "drizzle-orm";
 var router24 = Router24();
@@ -18096,7 +18336,7 @@ async function handleOAuthCallback(req, res) {
       subscriptionTier,
       oauthProvider: provider
     };
-    const token = jwt4.sign(jwtPayload, getJwtSecret3(), {
+    const token = jwt5.sign(jwtPayload, getJwtSecret3(), {
       expiresIn: JWT_EXPIRES_IN2
     });
     setAuthCookie2(res, token);
@@ -18135,7 +18375,7 @@ router24.get(
       return;
     }
     try {
-      const decoded = jwt4.verify(token, getJwtSecret3());
+      const decoded = jwt5.verify(token, getJwtSecret3());
       const result = await db.execute(
         sql8`SELECT id, username, email, role, is_verified, subscription_tier, subscription_status,
                    trial_tier, trial_expires_at, oauth_provider, created_at
@@ -18363,6 +18603,8 @@ var socialPosts = pgTable2(
     // Array of {editedAt, content}
     metadata: jsonb2("metadata"),
     // Additional data, analytics, A/B test flags
+    // Attached music track — makes any post an instantly-playable music share
+    trackId: integer2("track_id"),
     createdAt: timestamp2("created_at").defaultNow(),
     updatedAt: timestamp2("updated_at").defaultNow(),
     deletedAt: timestamp2("deleted_at")
@@ -18377,7 +18619,8 @@ var socialPosts = pgTable2(
     isTrendingIdx: index2("social_posts_is_trending_idx").on(t.isTrending),
     tagsIdx: index2("social_posts_tags_idx").on(t.tags),
     postTypeIdx: index2("social_posts_post_type_idx").on(t.postType),
-    faqCategoryIdx: index2("social_posts_faq_category_idx").on(t.faqCategory)
+    faqCategoryIdx: index2("social_posts_faq_category_idx").on(t.faqCategory),
+    trackIdIdx: index2("social_posts_track_id_idx").on(t.trackId)
   })
 );
 var faqCategories = pgTable2("faq_categories", {
@@ -18706,13 +18949,68 @@ var insertFaqCategorySchema = createInsertSchema2(faqCategories);
 
 // server/routes/social-api.ts
 var router25 = Router25();
+var ALLOWED_POST_TYPES = [
+  "discussion",
+  "job",
+  "trend",
+  "announcement",
+  "faq",
+  "marketplace",
+  "musical_universe",
+  "music_post",
+  // a social post with a playable track attached
+  "contractor",
+  "job_seeker",
+  "dm_share"
+  // a DM the sender chose to publish/promote to the public feed
+];
+async function getSocialProfileId(appUserId) {
+  const [existingProfile] = await db.select({ id: socialUsers.id }).from(socialUsers).where(eq22(socialUsers.userId, appUserId)).limit(1);
+  if (existingProfile) return existingProfile.id;
+  const [profile] = await db.insert(socialUsers).values({
+    userId: appUserId,
+    username: `member_${appUserId}`,
+    displayName: `Verso member ${appUserId}`
+  }).returning({ id: socialUsers.id });
+  return profile.id;
+}
+async function getTrackInfo(trackId) {
+  const result = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = $1 AND status = 'published'`,
+    [trackId]
+  );
+  return result.rows[0] || null;
+}
+async function enrichPostsWithTracks(posts) {
+  const trackIds = [...new Set(posts.map((p) => p.trackId).filter(Boolean))];
+  if (trackIds.length === 0) return posts;
+  const tracks = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = ANY($1::int[]) AND status = 'published'`,
+    [trackIds]
+  );
+  const trackMap = Object.fromEntries(tracks.rows.map((t) => [t.id, t]));
+  return posts.map((post) => ({
+    ...post,
+    track: post.trackId ? trackMap[post.trackId] || null : null
+  }));
+}
+async function syncFollowerCount(socialUserId) {
+  const followers = await db.select({ id: socialFollowers.id }).from(socialFollowers).where(eq22(socialFollowers.followingId, socialUserId));
+  await db.update(socialUsers).set({ followerCount: followers.length }).where(eq22(socialUsers.id, socialUserId));
+}
 router25.get("/posts", async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const { page = 1, limit = 10, sort = "recent", postType } = req.query;
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
     const offset = (pageNum - 1) * limitNum;
-    let query = db.select().from(socialPosts).where(isNull(socialPosts.deletedAt)).orderBy(
+    const conditions = [isNull(socialPosts.deletedAt)];
+    if (postType && typeof postType === "string") {
+      conditions.push(eq22(socialPosts.postType, postType));
+    }
+    let query = db.select().from(socialPosts).where(and12(...conditions)).orderBy(
       sort === "trending" ? desc10(socialPosts.engagementScore) : desc10(socialPosts.createdAt)
     ).limit(limitNum).offset(offset);
     const posts = await query;
@@ -18730,9 +19028,10 @@ router25.get("/posts", async (req, res) => {
       ...post,
       author: authorMap[post.authorId] || null
     }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
     res.json({
       success: true,
-      data: enrichedPosts,
+      data: withTracks,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -18744,28 +19043,138 @@ router25.get("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch posts" });
   }
 });
+router25.get("/posts/following", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0 }
+      });
+    }
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+    const following = await db.select({ followingId: socialFollowers.followingId }).from(socialFollowers).where(eq22(socialFollowers.followerId, followerId));
+    if (following.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: pageNum, limit: limitNum, total: 0 }
+      });
+    }
+    const followingIds = following.map((f) => f.followingId);
+    const posts = await db.select().from(socialPosts).where(
+      and12(
+        isNull(socialPosts.deletedAt),
+        inArray(socialPosts.authorId, followingIds)
+      )
+    ).orderBy(desc10(socialPosts.createdAt)).limit(limitNum).offset(offset);
+    const authorIds = [...new Set(posts.map((p) => p.authorId))];
+    let authorMap = {};
+    if (authorIds.length > 0) {
+      const authors = await db.select().from(socialUsers).where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+    const enrichedPosts = posts.map((post) => ({
+      ...post,
+      author: authorMap[post.authorId] || null
+    }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length }
+    });
+  } catch (error) {
+    console.error("Error fetching following feed:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch feed" });
+  }
+});
+router25.get("/posts/music", async (req, res) => {
+  try {
+    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+    const posts = await db.select().from(socialPosts).where(
+      and12(
+        isNull(socialPosts.deletedAt),
+        eq22(socialPosts.postType, "music_post")
+      )
+    ).orderBy(
+      sort === "trending" ? desc10(socialPosts.engagementScore) : desc10(socialPosts.createdAt)
+    ).limit(limitNum).offset(offset);
+    const authorIds = [...new Set(posts.map((p) => p.authorId))];
+    let authorMap = {};
+    if (authorIds.length > 0) {
+      const authors = await db.select().from(socialUsers).where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+    const enrichedPosts = posts.map((post) => ({
+      ...post,
+      author: authorMap[post.authorId] || null
+    }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length }
+    });
+  } catch (error) {
+    console.error("Error fetching music feed:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch music feed" });
+  }
+});
 router25.post("/posts", async (req, res) => {
   try {
+    const appUserId = req.user?.userId;
     const {
-      authorId,
       content,
       imageUrls,
       tags,
-      postType = "discussion"
+      postType = "discussion",
+      trackId
     } = req.body;
-    if (!authorId || !content) {
-      return res.status(400).json({
+    if (!appUserId) {
+      return res.status(401).json({
         success: false,
-        error: "Missing required fields: authorId, content"
+        error: "Authentication required to post"
       });
     }
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: content"
+      });
+    }
+    if (!ALLOWED_POST_TYPES.includes(postType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid postType. Must be one of: ${ALLOWED_POST_TYPES.join(", ")}`
+      });
+    }
+    if (trackId) {
+      const track = await getTrackInfo(Number(trackId));
+      if (!track) {
+        return res.status(400).json({
+          success: false,
+          error: "Track not found or not published"
+        });
+      }
+    }
+    const authorId = await getSocialProfileId(Number(appUserId));
     const newPost = await db.insert(socialPosts).values({
-      authorId,
+      authorId: Number(authorId),
       content,
       imageUrls,
       tags,
       postType,
-      mediaType: imageUrls ? "image" : "text"
+      trackId: trackId ? Number(trackId) : null,
+      mediaType: trackId ? "audio" : imageUrls ? "image" : "text"
     }).returning();
     res.status(201).json({
       success: true,
@@ -18800,13 +19209,14 @@ router25.get("/posts/:postId", async (req, res) => {
 router25.post("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
-    const userId = req.user?.userId;
-    if (!userId) {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    const userId = await getSocialProfileId(Number(appUserId));
     const existingLike = await db.select().from(socialLikes).where(
       and12(
-        eq22(socialLikes.userId, Number(userId)),
+        eq22(socialLikes.userId, userId),
         eq22(socialLikes.postId, parseInt(postId))
       )
     ).limit(1);
@@ -18814,7 +19224,7 @@ router25.post("/posts/:postId/like", async (req, res) => {
       return res.status(400).json({ success: false, error: "Already liked this post" });
     }
     await db.insert(socialLikes).values({
-      userId: Number(userId),
+      userId,
       postId: parseInt(postId),
       likeType: "post"
     });
@@ -18836,13 +19246,14 @@ router25.post("/posts/:postId/like", async (req, res) => {
 router25.delete("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
-    const userId = req.user?.userId;
-    if (!userId) {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    const userId = await getSocialProfileId(Number(appUserId));
     await db.delete(socialLikes).where(
       and12(
-        eq22(socialLikes.userId, Number(userId)),
+        eq22(socialLikes.userId, userId),
         eq22(socialLikes.postId, parseInt(postId))
       )
     );
@@ -18867,9 +19278,9 @@ router25.delete("/posts/:postId/like", async (req, res) => {
 router25.post("/posts/:postId/comments", async (req, res) => {
   try {
     const { postId } = req.params;
-    const authorId = req.user?.userId;
+    const appUserId = req.user?.userId;
     const { content, parentCommentId } = req.body;
-    if (!authorId) {
+    if (!appUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
     if (!content) {
@@ -18878,9 +19289,10 @@ router25.post("/posts/:postId/comments", async (req, res) => {
         error: "Missing required field: content"
       });
     }
+    const authorId = await getSocialProfileId(Number(appUserId));
     const newComment = await db.insert(socialComments).values({
       postId: parseInt(postId),
-      authorId: Number(authorId),
+      authorId,
       content,
       parentCommentId
     }).returning();
@@ -18921,13 +19333,34 @@ router25.get("/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch comments" });
   }
 });
+router25.get("/follow/following", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({ success: true, data: [] });
+    }
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const rows = await db.select({ appUserId: socialUsers.userId }).from(socialFollowers).innerJoin(socialUsers, eq22(socialUsers.id, socialFollowers.followingId)).where(eq22(socialFollowers.followerId, followerId));
+    res.json({
+      success: true,
+      data: rows.map((row) => row.appUserId).filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error fetching following list:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch following list" });
+  }
+});
 router25.post("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
-    if (!followerId) {
-      return res.status(400).json({ success: false, error: "Missing followerId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to follow other members"
+      });
     }
+    const followerId = await getSocialProfileId(Number(appUserId));
     try {
       const targetUser = await pool.query(
         "SELECT role FROM users WHERE id = $1",
@@ -18940,11 +19373,11 @@ router25.post("/follow/:userId", async (req, res) => {
       if (targetUser.rows[0]?.role === "artist" || targetHasArtist.rows.length > 0) {
         const followerUser = await pool.query(
           "SELECT role FROM users WHERE id = $1",
-          [followerId]
+          [appUserId]
         );
         const followerHasArtist = await pool.query(
           "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
-          [followerId]
+          [appUserId]
         );
         const followerIsArtist = followerUser.rows[0]?.role === "artist" || followerHasArtist.rows.length > 0;
         if (!followerIsArtist) {
@@ -18957,24 +19390,23 @@ router25.post("/follow/:userId", async (req, res) => {
       }
     } catch (_artistCheckErr) {
     }
+    const followingId = await getSocialProfileId(parseInt(userId));
+    if (followingId === followerId) {
+      return res.status(400).json({ success: false, error: "You cannot follow yourself" });
+    }
     const existingFollow = await db.select().from(socialFollowers).where(
       and12(
         eq22(socialFollowers.followerId, followerId),
-        eq22(socialFollowers.followingId, parseInt(userId))
+        eq22(socialFollowers.followingId, followingId)
       )
     ).limit(1);
-    if (existingFollow.length) {
-      return res.status(400).json({ success: false, error: "Already following this user" });
+    if (!existingFollow.length) {
+      await db.insert(socialFollowers).values({ followerId, followingId });
     }
-    await db.insert(socialFollowers).values({
-      followerId,
-      followingId: parseInt(userId)
-    });
-    await db.update(socialUsers).set({
-      followerCount: (await db.select().from(socialFollowers).where(eq22(socialFollowers.followingId, parseInt(userId)))).length + 1
-    }).where(eq22(socialUsers.id, parseInt(userId)));
+    await syncFollowerCount(followingId);
     res.json({
       success: true,
+      following: true,
       message: "User followed successfully"
     });
   } catch (error) {
@@ -18985,18 +19417,25 @@ router25.post("/follow/:userId", async (req, res) => {
 router25.delete("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
-    if (!followerId) {
-      return res.status(400).json({ success: false, error: "Missing followerId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to manage the members you follow"
+      });
     }
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const followingId = await getSocialProfileId(parseInt(userId));
     await db.delete(socialFollowers).where(
       and12(
         eq22(socialFollowers.followerId, followerId),
-        eq22(socialFollowers.followingId, parseInt(userId))
+        eq22(socialFollowers.followingId, followingId)
       )
     );
+    await syncFollowerCount(followingId);
     res.json({
       success: true,
+      following: false,
       message: "User unfollowed successfully"
     });
   } catch (error) {
@@ -19526,6 +19965,55 @@ router27.post("/:id/escalate", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+router27.get("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const rows = await db.execute(
+          sql10`SELECT * FROM ticket_comments WHERE ticket_id=${parseInt(id)} ORDER BY created_at ASC`
+        );
+        return res.json(rows.rows || []);
+      } catch (dbError) {
+        console.error("\u274C Fetch ticket comments error:", dbError);
+      }
+    }
+    res.json([]);
+  } catch (error) {
+    console.error("\u274C Get ticket comments failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router27.post("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { body, authorName } = req.body || {};
+    if (!body || !String(body).trim()) {
+      return res.status(400).json({ error: "Comment body is required" });
+    }
+    const authorId = req.user?.id || null;
+    const resolvedAuthorName = authorName || req.user?.username || "Anonymous";
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const inserted = await db.execute(
+          sql10`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
+              VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${body})
+              RETURNING *`
+        );
+        return res.json(inserted.rows[0]);
+      } catch (dbError) {
+        console.error("\u274C Create ticket comment error:", dbError);
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+    }
+    res.status(503).json({ success: false, error: "Tickets table unavailable" });
+  } catch (error) {
+    console.error("\u274C Create ticket comment failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 router27.get("/stats/summary", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
@@ -19650,7 +20138,7 @@ init_schema();
 init_email_service();
 import { Router as Router28 } from "express";
 import { sql as sql11, eq as eq24, and as and14, or as or5, ilike as ilike8, desc as desc12, count as count10 } from "drizzle-orm";
-import jwt5 from "jsonwebtoken";
+import jwt6 from "jsonwebtoken";
 var ADMIN_NOTIFICATION_EMAIL5 = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var router28 = Router28();
 router28.get("/", async (req, res) => {
@@ -19873,7 +20361,7 @@ router28.post("/:id/apply", async (req, res) => {
         const token = authHeader.substring(7);
         const secret = process.env.JWT_SECRET;
         if (!secret) throw new Error("JWT_SECRET not set");
-        const decoded = jwt5.verify(token, secret);
+        const decoded = jwt6.verify(token, secret);
         applicantId = decoded.userId || decoded.email || "authenticated-user";
       } catch {
       }
@@ -20000,30 +20488,18 @@ init_schema();
 import { Router as Router29 } from "express";
 import { eq as eq25 } from "drizzle-orm";
 import multer from "multer";
-import path2 from "path";
 import fs2 from "fs";
 var router29 = Router29();
-var TRACKS_DIR = process.env.NODE_ENV === "production" ? path2.join("/tmp", "uploads", "tracks") : path2.resolve("uploads", "tracks");
-try {
-  if (!fs2.existsSync(TRACKS_DIR)) {
-    fs2.mkdirSync(TRACKS_DIR, { recursive: true });
-  }
-} catch (err) {
-  console.warn(`\u26A0\uFE0F  Could not create tracks dir (${TRACKS_DIR}):`, err.message);
-}
-var storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, TRACKS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path2.extname(file.originalname);
-    cb(null, `track-${uniqueSuffix}${ext}`);
-  }
-});
+var storage = multer.memoryStorage();
 var upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 },
   // 100 MB
   fileFilter: (_req, file, cb) => {
+    if (file.fieldname === "pochette" || file.fieldname === "cover") {
+      const okImg = /^image\/(jpeg|jpg|png|webp|avif|gif)$/i.test(file.mimetype) || /\.(jpe?g|png|webp|avif|gif)$/i.test(file.originalname);
+      return okImg ? cb(null, true) : cb(new Error(`Unsupported cover image: ${file.mimetype}`));
+    }
     const allowed = [
       "audio/mpeg",
       "audio/mp3",
@@ -20241,11 +20717,28 @@ router29.get("/my-artist", requireAuth(), async (req, res) => {
 router29.post(
   "/tracks/upload",
   requireAuth(),
-  upload.single("audio"),
+  (req, res, next) => {
+    const handler = upload.fields([
+      { name: "audio", maxCount: 1 },
+      { name: "pochette", maxCount: 1 },
+      { name: "cover", maxCount: 1 }
+    ]);
+    handler(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+      }
+      if (err) {
+        return res.status(400).json({ success: false, error: err.message || "Upload rejected" });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     try {
       await ensureTrackColumns();
-      const file = req.file;
+      const files = req.files;
+      const file = files?.audio?.[0];
+      const coverImgFile = files?.pochette?.[0] || files?.cover?.[0];
       if (!file) {
         return res.status(400).json({ success: false, error: "No audio file provided" });
       }
@@ -20269,14 +20762,19 @@ router29.post(
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
         } else {
-          return res.status(403).json({
-            success: false,
-            error: "You must register as an artist before uploading tracks"
-          });
+          const fallbackName = req.user.email?.split("@")[0] || `Artist${req.user.userId}`;
+          const created = await pool.query(
+            `INSERT INTO artists (user_id, stage_name, label_status)
+             VALUES ($1, $2, 'unsigned') RETURNING id`,
+            [parseInt(req.user.userId), fallbackName]
+          );
+          artistId = created.rows[0].id;
+          console.log(
+            `\u{1F3A4} [MUSIC] Auto-created artist profile "${fallbackName}" (id ${artistId}) for user ${req.user.userId}`
+          );
         }
       }
       if (!title) {
-        fs2.unlinkSync(file.path);
         return res.status(400).json({ success: false, error: "Track title is required" });
       }
       const insertParams = [
@@ -20285,7 +20783,8 @@ router29.post(
         genre || null,
         description || null,
         price,
-        file.path,
+        null,
+        // file_path — audio lives in Neon (audio_data), not on disk
         file.originalname,
         file.size,
         file.mimetype,
@@ -20324,19 +20823,36 @@ router29.post(
           throw insertErr;
         }
       }
+      if (coverImgFile) {
+        try {
+          const dataUri = `data:${coverImgFile.mimetype};base64,${coverImgFile.buffer.toString("base64")}`;
+          await pool.query(
+            "UPDATE music_tracks SET pochette = $1, cover_art = COALESCE(cover_art, $1) WHERE id = $2",
+            [dataUri, result.rows[0].id]
+          );
+        } catch (e) {
+          console.warn(`\u26A0\uFE0F [MUSIC] Cover persist failed: ${e.message}`);
+        }
+      }
       try {
-        const audioBuffer = fs2.readFileSync(file.path);
         await pool.query(
           "UPDATE music_tracks SET audio_data = $1 WHERE id = $2",
-          [audioBuffer, result.rows[0].id]
+          [file.buffer, result.rows[0].id]
         );
         console.log(
-          `\u{1F3B5} [MUSIC] Track uploaded + persisted to DB: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`
+          `\u{1F3B5} [MUSIC] Track persisted to Neon: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`
         );
       } catch (persistErr) {
-        console.warn(
-          `\u26A0\uFE0F [MUSIC] Track uploaded to disk but DB persist failed: ${persistErr.message}`
+        console.error(
+          `\u274C [MUSIC] Audio persist to Neon failed: ${persistErr.message}`
         );
+        await pool.query("DELETE FROM music_tracks WHERE id = $1", [result.rows[0].id]).catch(() => {
+        });
+        return res.status(500).json({
+          success: false,
+          error: "Could not save audio to the database. Please try again.",
+          details: persistErr.message
+        });
       }
       res.json({ success: true, data: result.rows[0] });
     } catch (error) {
@@ -20394,32 +20910,86 @@ router29.get("/tracks/:id/download", async (req, res) => {
       }
     }
     if (!isArtistOwner) {
-      try {
-        const purchaseCheck = await pool.query(
-          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-          [userId, parseInt(id)]
-        );
-        if (!purchaseCheck.rows.length) {
-          const trackPrice = parseFloat(track.price || "0.99");
-          return res.status(402).json({
-            success: false,
-            error: "Achat requis pour t\xE9l\xE9charger",
-            requiresPayment: true,
-            price: trackPrice,
-            trackId: parseInt(id),
-            trackTitle: track.title
-          });
+      const role = String(
+        req.user?.role || req.user?.userRole || ""
+      ).toLowerCase();
+      const staffBypass = ["superuser", "admin", "moderator"].includes(role);
+      if (!staffBypass) {
+        let hasPurchase = false;
+        try {
+          const purchaseCheck = await pool.query(
+            "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+            [userId, parseInt(id)]
+          );
+          hasPurchase = purchaseCheck.rows.length > 0;
+        } catch (_) {
+          hasPurchase = false;
         }
-      } catch (_) {
-        const trackPrice = parseFloat(track.price || "0.99");
-        return res.status(402).json({
-          success: false,
-          error: "Achat requis pour t\xE9l\xE9charger",
-          requiresPayment: true,
-          price: trackPrice,
-          trackId: parseInt(id),
-          trackTitle: track.title
-        });
+        if (!hasPurchase) {
+          let planName = "Gratuit";
+          let quota = 0;
+          try {
+            const subResult = await pool.query(
+              `SELECT sp.name, sp.downloads_per_month
+                 FROM listener_subscriptions ls
+                 JOIN streaming_plans sp ON sp.id = ls.plan_id
+                 WHERE ls.user_id = $1 AND ls.status = 'active'
+                 ORDER BY ls.created_at DESC
+                 LIMIT 1`,
+              [userId]
+            );
+            if (subResult.rows.length) {
+              planName = subResult.rows[0].name;
+              quota = Number(subResult.rows[0].downloads_per_month) || 0;
+            }
+          } catch (_) {
+          }
+          if (quota === 0) {
+            const trackPrice = parseFloat(track.price || "0.99");
+            return res.status(402).json({
+              success: false,
+              error: planName === "Gratuit" ? "Downloading requires a Supporter subscription or a one-time purchase." : "Your current plan does not include downloads.",
+              requiresPayment: true,
+              requiresUpgrade: true,
+              plan: planName,
+              quota: 0,
+              price: trackPrice,
+              trackId: parseInt(id),
+              trackTitle: track.title
+            });
+          }
+          if (quota !== -1) {
+            let usedThisMonth = 0;
+            try {
+              const usedResult = await pool.query(
+                `SELECT COUNT(*)::int AS n FROM track_downloads
+                   WHERE user_id = $1
+                     AND downloaded_at >= date_trunc('month', NOW())`,
+                [userId]
+              );
+              usedThisMonth = Number(usedResult.rows[0]?.n) || 0;
+            } catch (_) {
+            }
+            if (usedThisMonth >= quota) {
+              return res.status(429).json({
+                success: false,
+                error: `Monthly download quota reached (${usedThisMonth}/${quota}) on ${planName}. Upgrade for more.`,
+                requiresUpgrade: true,
+                plan: planName,
+                quota,
+                used: usedThisMonth
+              });
+            }
+          }
+          try {
+            await pool.query(
+              `INSERT INTO track_downloads (user_id, track_id, plan_tier)
+                 VALUES ($1, $2, $3)`,
+              [userId, parseInt(id), planName]
+            );
+          } catch (_) {
+          }
+        }
       }
     }
     if (!isArtistOwner) {
@@ -20455,151 +21025,169 @@ router29.get("/tracks/:id/download", async (req, res) => {
 });
 var playCountDebounce = /* @__PURE__ */ new Map();
 var PLAY_DEBOUNCE_MS = 3e4;
-router29.post("/tracks/:id/purchase", requireAuth, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const trackId = parseInt(req.params.id);
-    if (!userId) return res.status(401).json({ error: "Not authenticated" });
-    const trackResult = await pool.query(
-      "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
-      [trackId]
-    );
-    if (!trackResult.rows.length) {
-      return res.status(404).json({ error: "Track not found" });
-    }
-    const track = trackResult.rows[0];
-    const price = parseFloat(track.price || "1.29");
+router29.post(
+  "/tracks/:id/purchase",
+  requireAuth,
+  async (req, res) => {
     try {
-      const existing = await pool.query(
-        "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-        [userId, trackId]
+      const userId = req.user?.id;
+      const trackId = parseInt(req.params.id);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+      const trackResult = await pool.query(
+        "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
+        [trackId]
       );
-      if (existing.rows.length > 0) {
-        return res.json({
-          success: true,
-          alreadyOwned: true,
-          message: "Track already purchased"
-        });
+      if (!trackResult.rows.length) {
+        return res.status(404).json({ error: "Track not found" });
       }
-    } catch {
-    }
-    let buyerWallet = await pool.query(
-      "SELECT * FROM platform_wallets WHERE user_id = $1",
-      [userId]
-    );
-    if (buyerWallet.rows.length === 0) {
-      buyerWallet = await pool.query(
-        "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+      const track = trackResult.rows[0];
+      const price = parseFloat(track.price || "1.29");
+      try {
+        const existing = await pool.query(
+          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+          [userId, trackId]
+        );
+        if (existing.rows.length > 0) {
+          return res.json({
+            success: true,
+            alreadyOwned: true,
+            message: "Track already purchased"
+          });
+        }
+      } catch {
+      }
+      let buyerWallet = await pool.query(
+        "SELECT * FROM platform_wallets WHERE user_id = $1",
         [userId]
       );
-    }
-    const bw = buyerWallet.rows[0];
-    const buyerBalance = parseFloat(bw.balance || "0");
-    if (buyerBalance < price) {
-      return res.status(402).json({
-        error: "Insufficient credits",
-        required: price,
-        current: buyerBalance,
-        requiresDeposit: true
-      });
-    }
-    const artistShare = price * 0.7;
-    const platformShare = price * 0.3;
-    await pool.query("BEGIN");
-    const buyerAfter = buyerBalance - price;
-    await pool.query(
-      "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-      [buyerAfter.toFixed(2), price.toFixed(2), userId]
-    );
-    if (track.artist_id) {
-      let artistWallet = await pool.query(
-        "SELECT * FROM platform_wallets WHERE user_id = $1",
-        [track.artist_id]
-      );
-      if (artistWallet.rows.length === 0) {
-        artistWallet = await pool.query(
+      if (buyerWallet.rows.length === 0) {
+        buyerWallet = await pool.query(
           "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
-          [track.artist_id]
+          [userId]
         );
       }
-      const aw = artistWallet.rows[0];
-      const artistBalance = parseFloat(aw.balance || "0");
+      const bw = buyerWallet.rows[0];
+      const buyerBalance = parseFloat(bw.balance || "0");
+      if (buyerBalance < price) {
+        return res.status(402).json({
+          error: "Insufficient credits",
+          required: price,
+          current: buyerBalance,
+          requiresDeposit: true
+        });
+      }
+      const artistShare = price * 0.7;
+      const platformShare = price * 0.3;
+      await pool.query("BEGIN");
+      const buyerAfter = buyerBalance - price;
       await pool.query(
-        "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-        [
-          (artistBalance + artistShare).toFixed(2),
-          artistShare.toFixed(2),
-          track.artist_id
-        ]
+        "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+        [buyerAfter.toFixed(2), price.toFixed(2), userId]
       );
+      if (track.artist_id) {
+        let artistWallet = await pool.query(
+          "SELECT * FROM platform_wallets WHERE user_id = $1",
+          [track.artist_id]
+        );
+        if (artistWallet.rows.length === 0) {
+          artistWallet = await pool.query(
+            "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+            [track.artist_id]
+          );
+        }
+        const aw = artistWallet.rows[0];
+        const artistBalance = parseFloat(aw.balance || "0");
+        await pool.query(
+          "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+          [
+            (artistBalance + artistShare).toFixed(2),
+            artistShare.toFixed(2),
+            track.artist_id
+          ]
+        );
+        await pool.query(
+          `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+          [
+            track.artist_id,
+            aw.id,
+            artistShare.toFixed(2),
+            artistBalance.toFixed(2),
+            (artistBalance + artistShare).toFixed(2),
+            `Track sale: ${track.title}`,
+            String(trackId)
+          ]
+        );
+      }
       await pool.query(
         `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
         [
-          track.artist_id,
-          aw.id,
-          artistShare.toFixed(2),
-          artistBalance.toFixed(2),
-          (artistBalance + artistShare).toFixed(2),
-          `Track sale: ${track.title}`,
+          userId,
+          bw.id,
+          (-price).toFixed(2),
+          buyerBalance.toFixed(2),
+          buyerAfter.toFixed(2),
+          `Track purchase: ${track.title}`,
           String(trackId)
         ]
       );
-    }
-    await pool.query(
-      `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
-      [
-        userId,
-        bw.id,
-        (-price).toFixed(2),
-        buyerBalance.toFixed(2),
-        buyerAfter.toFixed(2),
-        `Track purchase: ${track.title}`,
-        String(trackId)
-      ]
-    );
-    try {
-      await pool.query(
-        `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
+      try {
+        await pool.query(
+          `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
          VALUES ($1, $2, $3, $4, $5, 'completed', NOW())`,
-        [
-          userId,
-          trackId,
-          price.toFixed(2),
-          artistShare.toFixed(2),
-          platformShare.toFixed(2)
-        ]
+          [
+            userId,
+            trackId,
+            price.toFixed(2),
+            artistShare.toFixed(2),
+            platformShare.toFixed(2)
+          ]
+        );
+      } catch {
+        console.warn("[MUSIC] track_purchases insert failed, continuing");
+      }
+      await pool.query(
+        "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
+        [price, trackId]
       );
-    } catch {
-      console.warn("[MUSIC] track_purchases insert failed, continuing");
+      await pool.query("COMMIT");
+      res.json({
+        success: true,
+        message: "Track purchased successfully",
+        price,
+        artistShare,
+        platformShare,
+        newBalance: buyerAfter
+      });
+    } catch (err) {
+      await pool.query("ROLLBACK").catch(() => {
+      });
+      console.error("\u274C Track purchase error:", err);
+      res.status(500).json({ error: "Purchase failed" });
     }
-    await pool.query(
-      "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
-      [price, trackId]
-    );
-    await pool.query("COMMIT");
-    res.json({
-      success: true,
-      message: "Track purchased successfully",
-      price,
-      artistShare,
-      platformShare,
-      newBalance: buyerAfter
-    });
-  } catch (err) {
-    await pool.query("ROLLBACK").catch(() => {
-    });
-    console.error("\u274C Track purchase error:", err);
-    res.status(500).json({ error: "Purchase failed" });
   }
-});
+);
 router29.get("/tracks/:id/stream", async (req, res) => {
   try {
+    const origin = req.headers.origin;
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    if (origin) res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Timing-Allow-Origin", origin || "*");
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Accept-Ranges, Content-Length"
+    );
     await ensureTrackColumns();
     const { id } = req.params;
     const result = await pool.query(
-      "SELECT * FROM music_tracks WHERE id = $1",
+      // NEVER "SELECT *" here — audio_data is a multi-MB BYTEA and pulling it
+      // just to read metadata made every request transfer the whole file twice
+      // (8s for a 101-byte range request). Fetch only what this handler needs.
+      `SELECT id, artist_id, file_path, mime_type,
+              octet_length(audio_data) AS audio_size
+         FROM music_tracks WHERE id = $1`,
       [parseInt(id)]
     );
     if (!result.rows.length) {
@@ -20612,8 +21200,8 @@ router29.get("/tracks/:id/stream", async (req, res) => {
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : req.cookies?.auth_token || null;
       if (token && track.artist_id) {
-        const jwt8 = __require("jsonwebtoken");
-        const decoded = jwt8.verify(token, process.env.JWT_SECRET);
+        const jwt9 = __require("jsonwebtoken");
+        const decoded = jwt9.verify(token, process.env.JWT_SECRET);
         const userId = decoded?.userId || decoded?.id;
         if (userId) {
           if (String(userId) === String(track.artist_id)) {
@@ -20663,37 +21251,41 @@ router29.get("/tracks/:id/stream", async (req, res) => {
         fs2.createReadStream(track.file_path).pipe(res);
       }
     } else {
-      const audioResult = await pool.query(
-        "SELECT audio_data, mime_type FROM music_tracks WHERE id = $1 AND audio_data IS NOT NULL",
-        [parseInt(id)]
-      );
-      if (!audioResult.rows.length || !audioResult.rows[0].audio_data) {
+      const totalSize = Number(track.audio_size || 0);
+      if (!totalSize) {
         return res.status(404).json({ success: false, error: "Audio file not found" });
       }
-      const buffer = audioResult.rows[0].audio_data;
-      const mimeType = audioResult.rows[0].mime_type || "audio/mpeg";
+      const mimeType = track.mime_type || "audio/mpeg";
       const range = req.headers.range;
-      try {
-        if (track.file_path) {
-          const dir = path2.dirname(track.file_path);
-          if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
-          fs2.writeFileSync(track.file_path, buffer);
-        }
-      } catch {
-      }
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+        const start = parseInt(parts[0], 10) || 0;
+        const end = parts[1] ? Math.min(parseInt(parts[1], 10), totalSize - 1) : totalSize - 1;
+        if (start >= totalSize || start > end) {
+          res.setHeader("Content-Range", `bytes */${totalSize}`);
+          return res.status(416).end();
+        }
         const chunkSize = end - start + 1;
+        const chunkResult = await pool.query(
+          "SELECT substring(audio_data from $2 for $3) AS chunk FROM music_tracks WHERE id = $1",
+          [parseInt(id), start + 1, chunkSize]
+        );
         res.writeHead(206, {
-          "Content-Range": `bytes ${start}-${end}/${buffer.length}`,
+          "Content-Range": `bytes ${start}-${end}/${totalSize}`,
           "Accept-Ranges": "bytes",
           "Content-Length": chunkSize,
           "Content-Type": mimeType
         });
-        res.end(buffer.slice(start, end + 1));
+        res.end(chunkResult.rows[0]?.chunk ?? Buffer.alloc(0));
       } else {
+        const fullResult = await pool.query(
+          "SELECT audio_data FROM music_tracks WHERE id = $1",
+          [parseInt(id)]
+        );
+        const buffer = fullResult.rows[0]?.audio_data;
+        if (!buffer) {
+          return res.status(404).json({ success: false, error: "Audio file not found" });
+        }
         res.writeHead(200, {
           "Content-Length": buffer.length,
           "Content-Type": mimeType,
@@ -20820,17 +21412,14 @@ router29.put(
         [parseInt(id)]
       );
       if (!existing.rows.length) {
-        fs2.unlinkSync(file.path);
         return res.status(404).json({ success: false, error: "Track not found" });
       }
-      const audioBuffer = fs2.readFileSync(file.path);
       await pool.query(
         `UPDATE music_tracks
-         SET audio_data = $1, file_path = $2, file_name = $3, file_size = $4, mime_type = $5
-         WHERE id = $6`,
+         SET audio_data = $1, file_path = NULL, file_name = $2, file_size = $3, mime_type = $4
+         WHERE id = $5`,
         [
-          audioBuffer,
-          file.path,
+          file.buffer,
           file.originalname,
           file.size,
           file.mimetype,
@@ -21458,17 +22047,23 @@ async function distributeWeeklyPool(weekNumber, yearNumber) {
         });
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               artist.user_id,
               "royalty_payout",
               `\u{1F4B0} Weekly Earnings: $${totalEarnings.toFixed(2)}`,
               `Week ${weekNumber}: Guaranteed $${guaranteedAmount.toFixed(2)} + Performance $${performanceAmount.toFixed(2)}${badgeBonus > 0 ? ` + Badge Bonus $${badgeBonus.toFixed(2)}` : ""}. Rank #${globalRank}.`,
-              "/artist-portal/dashboard?tab=royalties"
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties"
+              })
             ]
           );
         } catch (e) {
+          console.error(
+            "[royalty-engine] failed to persist payout notification:",
+            e
+          );
         }
       }
     }
@@ -22033,17 +22628,23 @@ async function checkBadgeMilestone(artistProfileId) {
         });
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               user_id,
               "badge_unlocked",
               `\u{1F3C6} Badge Unlocked: ${badge.name}!`,
               `You've reached ${streams.toLocaleString()} lifetime streams!`,
-              "/artist-portal/dashboard?tab=royalties"
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties"
+              })
             ]
           );
         } catch (e) {
+          console.error(
+            "[streamroyale] failed to persist badge notification:",
+            e
+          );
         }
       }
       console.log(
@@ -22903,7 +23504,10 @@ router31.get("/tracks", async (req, res) => {
         a.title as album_title, a.cover_art as album_cover,
         COALESCE(
           (SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0
-        ) as like_count
+        ) as like_count,
+        COALESCE(
+          (SELECT COUNT(*) FROM track_comments tc WHERE tc.track_id = mt.id), 0
+        ) as comment_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
@@ -23649,6 +24253,7 @@ router31.get("/artists/:id", async (req, res) => {
         ap.lifetime_streams as total_streams,
         ap.instagram_handle,
         ap.spotify_url,
+        ap.user_id as user_id,
         (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
@@ -24010,36 +24615,40 @@ router31.get("/liked", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch liked tracks" });
   }
 });
-router31.post("/comment", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId)
-      return res.status(401).json({ error: "Authentication required" });
-    const { trackId, content, parentId } = req.body;
-    if (!trackId || !content)
-      return res.status(400).json({ error: "trackId and content required" });
-    const result = await pool.query(
-      `
+router31.post(
+  "/comment",
+  fanChatSlowMode,
+  async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId)
+        return res.status(401).json({ error: "Authentication required" });
+      const { trackId, content, parentId } = req.body;
+      if (!trackId || !content)
+        return res.status(400).json({ error: "trackId and content required" });
+      const result = await pool.query(
+        `
       INSERT INTO track_comments (track_id, user_id, content, parent_id)
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `,
-      [trackId, userId, content, parentId || null]
-    );
-    const comment = await pool.query(
-      `
+        [trackId, userId, content, parentId || null]
+      );
+      const comment = await pool.query(
+        `
       SELECT tc.*, u.username, u.display_name
       FROM track_comments tc
       JOIN users u ON tc.user_id = u.id
       WHERE tc.id = $1
     `,
-      [result.rows[0].id]
-    );
-    res.json({ comment: comment.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add comment" });
+        [result.rows[0].id]
+      );
+      res.json({ comment: comment.rows[0] });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to add comment" });
+    }
   }
-});
+);
 router31.delete("/comment/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -24250,20 +24859,36 @@ router31.get("/track/:id/thread", async (req, res) => {
        LIMIT $2 OFFSET $3`,
       [trackId, limit, offset]
     );
-    const commentsWithReplies = await Promise.all(
-      comments.rows.map(async (comment) => {
-        const replies = await pool.query(
-          `SELECT tc.*, u.username, u.display_name, u.avatar_url
+    const parentIds = comments.rows.map((c) => c.id);
+    const repliesByParent = /* @__PURE__ */ new Map();
+    if (parentIds.length > 0) {
+      const replies = await pool.query(
+        `SELECT * FROM (
+           SELECT tc.*, u.username, u.display_name, u.avatar_url,
+             ROW_NUMBER() OVER (
+               PARTITION BY tc.parent_id ORDER BY tc.created_at ASC
+             ) AS rn
            FROM track_comments tc
            JOIN users u ON tc.user_id = u.id
-           WHERE tc.parent_id = $1
-           ORDER BY tc.created_at ASC
-           LIMIT 3`,
-          [comment.id]
-        );
-        return { ...comment, replies: replies.rows };
-      })
-    );
+           WHERE tc.parent_id = ANY($1::int[])
+         ) ranked
+         WHERE ranked.rn <= 3
+         ORDER BY ranked.parent_id, ranked.created_at ASC`,
+        [parentIds]
+      );
+      for (const reply of replies.rows) {
+        const bucket = repliesByParent.get(reply.parent_id);
+        if (bucket) {
+          bucket.push(reply);
+        } else {
+          repliesByParent.set(reply.parent_id, [reply]);
+        }
+      }
+    }
+    const commentsWithReplies = comments.rows.map((comment) => ({
+      ...comment,
+      replies: repliesByParent.get(comment.id) ?? []
+    }));
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM track_comments WHERE track_id = $1`,
       [trackId]
@@ -26002,7 +26627,7 @@ init_db();
 init_schema();
 import { Router as Router35 } from "express";
 import { eq as eq27, and as and15 } from "drizzle-orm";
-import jwt6 from "jsonwebtoken";
+import jwt7 from "jsonwebtoken";
 var router35 = Router35();
 router35.get("/", async (req, res) => {
   try {
@@ -26013,7 +26638,7 @@ router35.get("/", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || "your-secret-key"
       );
@@ -26058,7 +26683,7 @@ router35.get("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || process.env.SESSION_SECRET
       );
@@ -26106,7 +26731,7 @@ router35.post("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || process.env.SESSION_SECRET
       );
@@ -26165,42 +26790,60 @@ router36.get("/stats", async (req, res) => {
   try {
     const { countryCode = "" } = req.query;
     const cc = countryCode.trim().toUpperCase();
-    const countryFilter = cc ? `WHERE country_code = $1` : "";
-    const countParams = cc ? [cc] : [];
-    const [bizRes, artistRes, catRes] = await Promise.all([
+    const bizCountParams = cc ? [cc] : [];
+    const bizCountFilter = cc ? `WHERE country_code = $1` : "";
+    const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
-        `SELECT COUNT(*)::int AS count FROM businesses ${countryFilter}`,
-        countParams
+        `SELECT COUNT(*)::int AS count FROM businesses ${bizCountFilter}`,
+        bizCountParams
       ),
-      pool.query(
-        `SELECT COUNT(*)::int AS count FROM artists ${countryFilter}`,
-        countParams
+      // Artisan count from the unified index (published craft artisans)
+      cc ? pool.query(
+        `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1`,
+        [cc]
+      ) : pool.query(
+        `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED'`
       ),
-      // Distinct categories used by businesses in that country
       pool.query(
         cc ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND category_id IS NOT NULL` : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE category_id IS NOT NULL`,
-        countParams
+        bizCountParams
       )
     ]);
     const businessCount = bizRes.rows[0]?.count ?? 0;
-    const artisanCount = artistRes.rows[0]?.count ?? 0;
+    const artisanCount = artisanRes.rows[0]?.count ?? 0;
     const categoryCount = catRes.rows[0]?.count ?? 0;
-    const featuredQuery = cc ? `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         WHERE country_code = $1
-         ORDER BY RANDOM()
-         LIMIT 3` : `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         ORDER BY RANDOM()
-         LIMIT 3`;
-    const featuredRes = await pool.query(featuredQuery, countParams);
+    let featuredArtisans = [];
+    try {
+      const unified = cc ? await pool.query(
+        `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1
+             ORDER BY RANDOM() LIMIT 3`,
+        [cc]
+      ) : await pool.query(
+        `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED'
+             ORDER BY RANDOM() LIMIT 3`
+      );
+      if (unified.rows.length > 0) {
+        featuredArtisans = unified.rows;
+      } else {
+        const fallback = cc ? await pool.query(
+          `SELECT id, stage_name AS name, genre FROM artists WHERE country_code = $1 ORDER BY RANDOM() LIMIT 3`,
+          [cc]
+        ) : await pool.query(
+          `SELECT id, stage_name AS name, genre FROM artists ORDER BY RANDOM() LIMIT 3`
+        );
+        featuredArtisans = fallback.rows;
+      }
+    } catch (_) {
+    }
     res.json({
       success: true,
       countryCode: cc || "ALL",
       businessCount,
       artisanCount,
       categoryCount,
-      featuredArtisans: featuredRes.rows
+      featuredArtisans
     });
   } catch (error) {
     console.error("Home stats error:", error);
@@ -29507,7 +30150,7 @@ var evaluations_default = router39;
 init_db();
 import { Router as Router40 } from "express";
 import multer2 from "multer";
-import path4 from "path";
+import path3 from "path";
 import fs4 from "fs";
 import Stripe3 from "stripe";
 
@@ -29515,8 +30158,8 @@ import Stripe3 from "stripe";
 init_db();
 import PDFDocument2 from "pdfkit";
 import fs3 from "fs";
-import path3 from "path";
-var JOURNAL_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "journal-editions") : path3.resolve("uploads", "journal-editions");
+import path2 from "path";
+var JOURNAL_DIR = process.env.NODE_ENV === "production" ? path2.join("/tmp", "uploads", "journal-editions") : path2.resolve("uploads", "journal-editions");
 try {
   if (!fs3.existsSync(JOURNAL_DIR)) {
     fs3.mkdirSync(JOURNAL_DIR, { recursive: true });
@@ -29535,7 +30178,7 @@ async function generateJournalPDF(type = "on_demand") {
   );
   const listings = listingsResult.rows;
   const fileName = `journal-${type}-${Date.now()}.pdf`;
-  const filePath = path3.join(JOURNAL_DIR, fileName);
+  const filePath = path2.join(JOURNAL_DIR, fileName);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument2({ size: "A4", margin: 50, bufferPages: true });
     const stream = fs3.createWriteStream(filePath);
@@ -29848,7 +30491,7 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
 // server/routes/marketing.ts
 var router40 = Router40();
 var stripe3 = process.env.STRIPE_SECRET_KEY ? new Stripe3(process.env.STRIPE_SECRET_KEY) : null;
-var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path4.join("/tmp", "uploads", "print") : path4.resolve("uploads", "print");
+var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "print") : path3.resolve("uploads", "print");
 try {
   if (!fs4.existsSync(PRINT_UPLOADS_DIR)) {
     fs4.mkdirSync(PRINT_UPLOADS_DIR, { recursive: true });
@@ -29860,7 +30503,7 @@ var printStorage = multer2.diskStorage({
   destination: (_req, _file, cb) => cb(null, PRINT_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path4.extname(file.originalname);
+    const ext = path3.extname(file.originalname);
     cb(null, `print-${uniqueSuffix}${ext}`);
   }
 });
@@ -29885,7 +30528,7 @@ var printUpload = multer2({
     }
   }
 });
-var LISTING_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path4.join("/tmp", "uploads", "listings") : path4.resolve("uploads", "listings");
+var LISTING_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "listings") : path3.resolve("uploads", "listings");
 try {
   if (!fs4.existsSync(LISTING_UPLOADS_DIR)) {
     fs4.mkdirSync(LISTING_UPLOADS_DIR, { recursive: true });
@@ -29897,7 +30540,7 @@ var listingStorage = multer2.diskStorage({
   destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path4.extname(file.originalname);
+    const ext = path3.extname(file.originalname);
     cb(null, `listing-${uniqueSuffix}${ext}`);
   }
 });
@@ -30009,10 +30652,10 @@ router40.post(
       }
       const files = req.files;
       const imagePaths = (files?.images || []).map(
-        (f) => `/uploads/listings/${path4.basename(f.path)}`
+        (f) => `/uploads/listings/${path3.basename(f.path)}`
       );
       const videoPaths = (files?.videos || []).map(
-        (f) => `/uploads/listings/${path4.basename(f.path)}`
+        (f) => `/uploads/listings/${path3.basename(f.path)}`
       );
       const result = await pool.query(
         `INSERT INTO ad_journal_listings
@@ -31220,19 +31863,31 @@ var user_history_default = router41;
 init_db();
 import { Router as Router42 } from "express";
 import multer3 from "multer";
-import path5 from "path";
+import path4 from "path";
 import fs5 from "fs";
 import crypto5 from "crypto";
 var router42 = Router42();
-var UPLOAD_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "tracks") : path5.resolve("uploads", "tracks");
-var COVER_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "covers") : path5.resolve("uploads", "covers");
-try {
-  [UPLOAD_DIR, COVER_DIR].forEach((dir) => {
-    if (!fs5.existsSync(dir)) fs5.mkdirSync(dir, { recursive: true });
-  });
-} catch (err) {
-  console.warn(`\u26A0\uFE0F  Could not create upload dirs: ${err.message}`);
+function resolveWritableDir(preferred, fallback) {
+  for (const dir of [preferred, fallback]) {
+    try {
+      fs5.mkdirSync(dir, { recursive: true });
+      fs5.accessSync(dir, fs5.constants.W_OK);
+      return dir;
+    } catch {
+    }
+  }
+  return fallback;
 }
+var isDev = process.env.NODE_ENV === "development";
+var UPLOAD_DIR = resolveWritableDir(
+  isDev ? path4.resolve("uploads", "tracks") : path4.join("/tmp", "uploads", "tracks"),
+  path4.join("/tmp", "uploads", "tracks")
+);
+var COVER_DIR = resolveWritableDir(
+  isDev ? path4.resolve("uploads", "covers") : path4.join("/tmp", "uploads", "covers"),
+  path4.join("/tmp", "uploads", "covers")
+);
+console.log(`\u{1F3B5} [UPLOAD] audio=${UPLOAD_DIR} cover=${COVER_DIR}`);
 var ALLOWED_AUDIO = /* @__PURE__ */ new Set([
   "audio/mpeg",
   "audio/mp3",
@@ -31257,7 +31912,7 @@ var audioStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
     const unique2 = crypto5.randomBytes(8).toString("hex");
-    const ext = path5.extname(file.originalname) || ".mp3";
+    const ext = path4.extname(file.originalname) || ".mp3";
     cb(null, `${Date.now()}_${unique2}${ext}`);
   }
 });
@@ -31280,7 +31935,7 @@ var coverStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, COVER_DIR),
   filename: (_req, file, cb) => {
     const unique2 = crypto5.randomBytes(8).toString("hex");
-    const ext = path5.extname(file.originalname) || ".jpg";
+    const ext = path4.extname(file.originalname) || ".jpg";
     cb(null, `cover_${Date.now()}_${unique2}${ext}`);
   }
 });
@@ -31308,7 +31963,7 @@ var uploadFields = multer3({
     },
     filename: (_req, file, cb) => {
       const unique2 = crypto5.randomBytes(8).toString("hex");
-      const ext = path5.extname(file.originalname) || "";
+      const ext = path4.extname(file.originalname) || "";
       const prefix = ALLOWED_IMAGE.has(file.mimetype) ? "cover" : "track";
       cb(null, `${prefix}_${Date.now()}_${unique2}${ext}`);
     }
@@ -31412,8 +32067,8 @@ router42.post(
         }
       } catch (e) {
       }
-      const audioUrl = `/uploads/tracks/${path5.basename(audioFile.path)}`;
-      const coverArt = coverFile ? `/uploads/covers/${path5.basename(coverFile.path)}` : null;
+      const audioUrl = `/uploads/tracks/${path4.basename(audioFile.path)}`;
+      const coverArt = coverFile ? `/uploads/covers/${path4.basename(coverFile.path)}` : null;
       const result = await pool.query(
         `INSERT INTO music_tracks (
            title, artist_id, album_id, genre, mood, bpm, musical_key,
@@ -31492,7 +32147,9 @@ router42.get("/my-tracks", requireAuth(), async (req, res) => {
     const tracks = await pool.query(
       `SELECT id, title, genre, mood, bpm, musical_key, streams, play_count, likes,
               downloads, revenue, status, audio_url, cover_art, duration,
-              file_name, file_size, is_explicit, created_at
+              file_name, file_size, is_explicit, created_at, file_path,
+              (audio_data IS NOT NULL) AS has_audio_data,
+              (pochette IS NOT NULL) AS has_pochette
        FROM music_tracks
        WHERE artist_id = $1
        ORDER BY created_at DESC`,
@@ -31541,7 +32198,7 @@ router42.delete(
         fs5.unlinkSync(row.file_path);
       }
       if (row.cover_art) {
-        const coverPath = path5.resolve(
+        const coverPath = path4.resolve(
           process.cwd(),
           row.cover_art.replace(/^\//, "")
         );
@@ -33877,13 +34534,16 @@ router45.post(
         [contestId, winnerId]
       );
       let awardedCount = 0;
+      const alreadyAwarded = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'prediction_correct'`,
+        [contestId]
+      );
+      const awardedUserIds = new Set(
+        alreadyAwarded.rows.map((r) => r.user_id)
+      );
       for (const voter of votersResult.rows) {
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'prediction_correct'`,
-          [voter.user_id, contestId]
-        );
-        if (existing.rows.length === 0) {
+        if (!awardedUserIds.has(voter.user_id)) {
           await pool.query(
             `INSERT INTO listener_stats (user_id, total_points)
              VALUES ($1, $2)
@@ -33924,13 +34584,17 @@ router45.post(
         [contestId]
       );
       let underdogCount = 0;
+      const alreadyUnderdog = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'underdog'`,
+        [contestId]
+      );
+      const underdogUserIds = new Set(
+        alreadyUnderdog.rows.map((r) => r.user_id)
+      );
       for (const underdog of underdogResult.rows) {
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'underdog'`,
-          [underdog.user_id, contestId]
-        );
-        if (existing.rows.length === 0) {
+        if (!underdogUserIds.has(underdog.user_id)) {
+          underdogUserIds.add(underdog.user_id);
           await pool.query(
             `INSERT INTO listener_stats (user_id, total_points)
              VALUES ($1, $2)
@@ -37391,27 +38055,40 @@ router55.post(
         [businessIds]
       );
       const notified = [];
-      for (const biz of businessResult.rows) {
+      const notificationRows = businessResult.rows.filter((biz) => biz.owner_id != null).map((biz) => ({
+        userId: biz.owner_id,
+        title: `\u{1F6A8} Emergency Request \u2014 ${biz.name}`,
+        data: JSON.stringify({
+          businessId: biz.id,
+          contactPhone,
+          contactEmail,
+          location,
+          urgency: "emergency",
+          sentAt: (/* @__PURE__ */ new Date()).toISOString()
+        })
+      }));
+      if (notificationRows.length > 0) {
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, metadata, created_at)
-             VALUES ($1, 'emergency_alert', $2, $3, $4, NOW())`,
+            `INSERT INTO notifications (user_id, type, title, message, data, created_at)
+             SELECT u.user_id, 'emergency_alert', u.title, u.message, u.data, NOW()
+             FROM UNNEST($1::int[], $2::text[], $3::text[], $4::jsonb[])
+               AS u(user_id, title, message, data)`,
             [
-              biz.owner_id ?? null,
-              `\u{1F6A8} Emergency Request \u2014 ${biz.name}`,
-              message,
-              JSON.stringify({
-                businessId: biz.id,
-                contactPhone,
-                contactEmail,
-                location,
-                urgency: "emergency",
-                sentAt: (/* @__PURE__ */ new Date()).toISOString()
-              })
+              notificationRows.map((r) => r.userId),
+              notificationRows.map((r) => r.title),
+              notificationRows.map(() => message),
+              notificationRows.map((r) => r.data)
             ]
           );
-        } catch {
+        } catch (err) {
+          console.error(
+            "[intent-search] failed to persist emergency notifications:",
+            err
+          );
         }
+      }
+      for (const biz of businessResult.rows) {
         notified.push({
           businessId: biz.id,
           businessName: biz.name,
@@ -38267,10 +38944,10 @@ var geo_seo_default = router58;
 init_db();
 import { Router as Router59 } from "express";
 import multer4 from "multer";
-import path6 from "path";
+import path5 from "path";
 import fs6 from "fs";
 var router59 = Router59();
-var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path6.join("/tmp", "uploads", "logos") : path6.resolve("uploads", "logos");
+var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "logos") : path5.resolve("uploads", "logos");
 try {
   if (!fs6.existsSync(LOGO_UPLOADS_DIR)) {
     fs6.mkdirSync(LOGO_UPLOADS_DIR, { recursive: true });
@@ -38282,7 +38959,7 @@ var logoStorage = multer4.diskStorage({
   destination: (_req, _file, cb) => cb(null, LOGO_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path6.extname(file.originalname).toLowerCase();
+    const ext = path5.extname(file.originalname).toLowerCase();
     cb(null, `logo-${uniqueSuffix}${ext}`);
   }
 });
@@ -38378,12 +39055,12 @@ router59.post(
       );
       const oldLogoUrl = oldLogoResult.rows[0]?.logo_url;
       if (oldLogoUrl) {
-        const oldFilename = path6.basename(oldLogoUrl);
-        const oldPath = path6.join(LOGO_UPLOADS_DIR, oldFilename);
+        const oldFilename = path5.basename(oldLogoUrl);
+        const oldPath = path5.join(LOGO_UPLOADS_DIR, oldFilename);
         fs6.unlink(oldPath, () => {
         });
       }
-      const logoUrl = `/api/business-logo/file/${path6.basename(req.file.path)}`;
+      const logoUrl = `/api/business-logo/file/${path5.basename(req.file.path)}`;
       await pool.query(`UPDATE businesses SET logo_url = $1 WHERE id = $2`, [
         logoUrl,
         businessId
@@ -38424,8 +39101,8 @@ router59.delete(
       }
       const logoUrl = ownerCheck.rows[0].logo_url;
       if (logoUrl) {
-        const filename = path6.basename(logoUrl);
-        const filePath = path6.join(LOGO_UPLOADS_DIR, filename);
+        const filename = path5.basename(logoUrl);
+        const filePath = path5.join(LOGO_UPLOADS_DIR, filename);
         fs6.unlink(filePath, () => {
         });
       }
@@ -38447,7 +39124,7 @@ router59.get("/file/:filename", (req, res) => {
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, message: "Invalid filename" });
   }
-  const filePath = path6.join(LOGO_UPLOADS_DIR, filename);
+  const filePath = path5.join(LOGO_UPLOADS_DIR, filename);
   if (!fs6.existsSync(filePath)) {
     return res.status(404).json({ success: false, message: "Logo not found" });
   }
@@ -38874,6 +39551,7 @@ init_db();
 init_schema();
 import { Router as Router61 } from "express";
 import { eq as eq31, and as and18, desc as desc16, sql as sql17 } from "drizzle-orm";
+init_notification_service();
 var router61 = Router61();
 var TIER_NETWORKING_LIMIT = {
   free: 0,
@@ -38898,6 +39576,34 @@ function priority(tier) {
   if (tier === "max") return "priority";
   if (tier === "verified") return "high";
   return "normal";
+}
+async function getOrCreateMirrorConversation(recipientUserId, senderUserId, senderName, senderAvatar, type, businessId) {
+  const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+    and18(
+      eq31(inboxConversations.userId, recipientUserId),
+      eq31(inboxConversations.participantId, String(senderUserId)),
+      eq31(inboxConversations.type, type)
+    )
+  ).limit(1);
+  if (existing) return existing.id;
+  const [conv] = await db.insert(inboxConversations).values({
+    userId: recipientUserId,
+    type,
+    participantId: String(senderUserId),
+    participantName: senderName,
+    participantAvatar: senderAvatar || null,
+    businessId: businessId ? Number(businessId) : null,
+    unreadCount: 0
+  }).returning({ id: inboxConversations.id });
+  return conv?.id ?? null;
+}
+async function resolveUserDisplay(userId) {
+  const [u] = await db.select({
+    displayName: users.displayName,
+    username: users.username
+  }).from(users).where(eq31(users.id, userId)).limit(1);
+  if (!u) return null;
+  return { name: u.displayName || u.username, avatar: null };
 }
 router61.get("/conversations", async (req, res) => {
   const userId = req.user.userId;
@@ -39013,76 +39719,99 @@ router61.get(
     }
   }
 );
-router61.post("/conversations", async (req, res) => {
-  const userId = req.user.userId;
-  const tier = getTierFromUser(req.user);
-  const {
-    participantId,
-    participantName,
-    participantAvatar,
-    type = "business_network",
-    businessId
-  } = req.body;
-  if (!participantId || !participantName) {
-    return res.status(400).json({
-      success: false,
-      error: "participantId and participantName are required"
-    });
-  }
-  if (type === "business_network") {
-    const limit = TIER_NETWORKING_LIMIT[tier];
-    if (limit === 0) {
-      return res.status(403).json({
+router61.post(
+  "/conversations",
+  marketplaceMessageLimiter,
+  async (req, res) => {
+    const userId = req.user.userId;
+    const tier = getTierFromUser(req.user);
+    const {
+      participantId,
+      participantName,
+      participantAvatar,
+      type = "business_network",
+      businessId
+    } = req.body;
+    if (!participantId || !participantName) {
+      return res.status(400).json({
         success: false,
-        error: "Business Networking requires Essential plan or above.",
-        upgradeRequired: true
+        error: "participantId and participantName are required"
       });
     }
-    if (limit < 999) {
-      const [{ count: activeCount }] = await db.select({ count: sql17`count(*)` }).from(inboxConversations).where(
-        and18(
-          eq31(inboxConversations.userId, Number(userId)),
-          eq31(inboxConversations.type, "business_network")
-        )
-      );
-      if (Number(activeCount) >= limit) {
+    if (type === "business_network") {
+      const limit = TIER_NETWORKING_LIMIT[tier];
+      if (limit === 0) {
         return res.status(403).json({
           success: false,
-          error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+          error: "Business Networking requires Essential plan or above.",
           upgradeRequired: true
         });
       }
+      if (limit < 999) {
+        const [{ count: activeCount }] = await db.select({ count: sql17`count(*)` }).from(inboxConversations).where(
+          and18(
+            eq31(inboxConversations.userId, Number(userId)),
+            eq31(inboxConversations.type, "business_network")
+          )
+        );
+        if (Number(activeCount) >= limit) {
+          return res.status(403).json({
+            success: false,
+            error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+            upgradeRequired: true
+          });
+        }
+      }
+    }
+    const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+      and18(
+        eq31(inboxConversations.userId, Number(userId)),
+        eq31(inboxConversations.participantId, String(participantId)),
+        eq31(inboxConversations.type, type)
+      )
+    ).limit(1);
+    if (existing) {
+      return res.json({
+        success: true,
+        conversation: existing,
+        existing: true
+      });
+    }
+    try {
+      const [conv] = await db.insert(inboxConversations).values({
+        userId: Number(userId),
+        type,
+        participantId: String(participantId),
+        participantName: String(participantName),
+        participantAvatar: participantAvatar || null,
+        businessId: businessId ? Number(businessId) : null,
+        priority: priority(tier),
+        unreadCount: 0
+      }).returning();
+      const recipientUserId = Number(participantId);
+      if (Number.isFinite(recipientUserId) && recipientUserId !== Number(userId)) {
+        const sender = await resolveUserDisplay(Number(userId));
+        if (sender) {
+          await getOrCreateMirrorConversation(
+            recipientUserId,
+            Number(userId),
+            sender.name,
+            sender.avatar,
+            type,
+            businessId
+          );
+        }
+      }
+      return res.json({ success: true, conversation: conv });
+    } catch (err) {
+      console.error("[Inbox] POST /conversations error:", err?.message);
+      return res.status(500).json({ success: false, error: "Failed to create conversation" });
     }
   }
-  const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
-    and18(
-      eq31(inboxConversations.userId, Number(userId)),
-      eq31(inboxConversations.participantId, String(participantId)),
-      eq31(inboxConversations.type, type)
-    )
-  ).limit(1);
-  if (existing) {
-    return res.json({ success: true, conversation: existing, existing: true });
-  }
-  try {
-    const [conv] = await db.insert(inboxConversations).values({
-      userId: Number(userId),
-      type,
-      participantId: String(participantId),
-      participantName: String(participantName),
-      participantAvatar: participantAvatar || null,
-      businessId: businessId ? Number(businessId) : null,
-      priority: priority(tier),
-      unreadCount: 0
-    }).returning();
-    return res.json({ success: true, conversation: conv });
-  } catch (err) {
-    console.error("[Inbox] POST /conversations error:", err?.message);
-    return res.status(500).json({ success: false, error: "Failed to create conversation" });
-  }
-});
+);
 router61.post(
   "/conversations/:id/messages",
+  marketplaceMessageLimiter,
   async (req, res) => {
     const userId = req.user.userId;
     const tier = getTierFromUser(req.user);
@@ -39138,6 +39867,45 @@ router61.post(
         updatedAt: /* @__PURE__ */ new Date()
       }).where(eq31(inboxConversations.id, convId)).catch(() => {
       });
+      const recipientUserId = Number(conv.participantId);
+      if (Number.isFinite(recipientUserId) && recipientUserId !== Number(userId)) {
+        (async () => {
+          try {
+            const sender = await resolveUserDisplay(Number(userId));
+            const mirrorConvId = await getOrCreateMirrorConversation(
+              recipientUserId,
+              Number(userId),
+              sender?.name || String(senderName ?? "Member"),
+              null,
+              conv.type,
+              conv.businessId
+            );
+            if (!mirrorConvId) return;
+            const [mirrorMessage] = await db.insert(inboxMessages).values({
+              conversationId: mirrorConvId,
+              senderId: String(userId),
+              senderName: sender?.name || String(senderName ?? "Member"),
+              senderAvatar: senderAvatar || null,
+              content: content.trim(),
+              isRead: false,
+              isAi: false
+            }).returning();
+            await db.update(inboxConversations).set({
+              lastMessage: content.trim().substring(0, 120),
+              lastMessageAt: /* @__PURE__ */ new Date(),
+              updatedAt: /* @__PURE__ */ new Date(),
+              unreadCount: sql17`${inboxConversations.unreadCount} + 1`
+            }).where(eq31(inboxConversations.id, mirrorConvId));
+            notificationEmitter.emit("inbox_message", {
+              toUserId: recipientUserId,
+              conversationId: mirrorConvId,
+              message: mirrorMessage
+            });
+          } catch (mirrorErr) {
+            console.error("[Inbox] Mirror message error:", mirrorErr?.message);
+          }
+        })();
+      }
       return res.json({ success: true, message });
     } catch (err) {
       console.error(
@@ -39168,6 +39936,54 @@ router61.post(
     }
   }
 );
+router61.post("/messages/:id/publish", async (req, res) => {
+  const userId = req.user.userId;
+  const messageId = Number(req.params.id);
+  if (isNaN(messageId)) {
+    return res.status(400).json({ success: false, error: "Invalid message ID" });
+  }
+  try {
+    const [message] = await db.select().from(inboxMessages).where(eq31(inboxMessages.id, messageId)).limit(1);
+    if (!message) {
+      return res.status(404).json({ success: false, error: "Message not found" });
+    }
+    if (message.senderId !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only publish your own messages"
+      });
+    }
+    if (message.isPublished) {
+      return res.status(400).json({
+        success: false,
+        error: "This message has already been published"
+      });
+    }
+    const [conv] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+      and18(
+        eq31(inboxConversations.id, message.conversationId),
+        eq31(inboxConversations.userId, Number(userId))
+      )
+    ).limit(1);
+    if (!conv) {
+      return res.status(403).json({
+        success: false,
+        error: "You do not have access to this conversation"
+      });
+    }
+    const [post] = await db.insert(socialPosts).values({
+      authorId: Number(userId),
+      content: message.content,
+      postType: "dm_share",
+      mediaType: "text"
+    }).returning({ id: socialPosts.id });
+    await db.update(inboxMessages).set({ isPublished: true, publishedPostId: post.id }).where(eq31(inboxMessages.id, messageId));
+    return res.json({ success: true, postId: post.id });
+  } catch (err) {
+    console.error("[Inbox] POST /messages/:id/publish error:", err?.message);
+    return res.status(500).json({ success: false, error: "Failed to publish message" });
+  }
+});
 router61.patch("/conversations/:id/read", async (req, res) => {
   const userId = req.user.userId;
   const convId = Number(req.params.id);
@@ -39241,12 +40057,108 @@ router61.get("/ensure-support-thread", async (req, res) => {
 });
 var inbox_default = router61;
 
+// server/routes/community.ts
+init_db();
+import { Router as Router62 } from "express";
+var router62 = Router62();
+router62.get("/posts", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "50"), 100);
+    const before = req.query.before ? parseInt(req.query.before) : null;
+    const params = [];
+    let where = "cp.is_hidden = FALSE AND cp.parent_id IS NULL";
+    if (before) {
+      params.push(before);
+      where += ` AND cp.id < $${params.length}`;
+    }
+    params.push(limit);
+    const result = await pool.query(
+      `
+      SELECT cp.id, cp.content, cp.author_name, cp.author_avatar, cp.created_at, cp.user_id,
+             u.username, u.display_name, u.avatar_url
+      FROM community_posts cp
+      LEFT JOIN users u ON u.id = cp.user_id
+      WHERE ${where}
+      ORDER BY cp.created_at DESC
+      LIMIT $${params.length}
+      `,
+      params
+    );
+    res.json({ success: true, posts: result.rows });
+  } catch (err) {
+    console.error("[COMMUNITY] GET /posts error:", err?.message);
+    res.status(500).json({ success: false, error: "Failed to load posts" });
+  }
+});
+router62.post(
+  "/posts",
+  requireAuth(),
+  fanChatSlowMode,
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const userId = user?.userId || user?.id;
+      const content = String(req.body?.content || "").trim();
+      if (!content) {
+        return res.status(400).json({ success: false, error: "Message content is required" });
+      }
+      if (content.length > 2e3) {
+        return res.status(400).json({ success: false, error: "Message too long (2000 chars max)" });
+      }
+      const result = await pool.query(
+        `INSERT INTO community_posts (user_id, author_name, author_avatar, content)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, content, author_name, author_avatar, user_id, created_at`,
+        [
+          userId,
+          user?.displayName || user?.username || user?.email || "Anonymous",
+          user?.avatarUrl || null,
+          content
+        ]
+      );
+      res.json({ success: true, post: result.rows[0] });
+    } catch (err) {
+      console.error("[COMMUNITY] POST /posts error:", err?.message);
+      res.status(500).json({ success: false, error: "Failed to publish message" });
+    }
+  }
+);
+router62.delete(
+  "/posts/:id",
+  requireAuth(),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const userId = user?.userId || user?.id;
+      const isSuper = user?.role === "superuser";
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ success: false, error: "Invalid post id" });
+      }
+      const cond = isSuper ? "id = $1" : "id = $1 AND user_id = $2";
+      const params = isSuper ? [postId] : [postId, userId];
+      const result = await pool.query(
+        `DELETE FROM community_posts WHERE ${cond} RETURNING id`,
+        params
+      );
+      if (!result.rowCount) {
+        return res.status(404).json({ success: false, error: "Post not found or not yours" });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[COMMUNITY] DELETE /posts error:", err?.message);
+      res.status(500).json({ success: false, error: "Failed to delete" });
+    }
+  }
+);
+var community_default = router62;
+
 // server/routes/geo-actions.ts
 init_db();
 init_schema();
-import { Router as Router62 } from "express";
+import { Router as Router63 } from "express";
 import { eq as eq32, sql as sql18 } from "drizzle-orm";
-var router62 = Router62();
+var router63 = Router63();
 async function getGeoAccessLevel(userId) {
   const result = await db.execute(
     sql18`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
@@ -39306,7 +40218,7 @@ async function getGeoAccessLevel(userId) {
     deleteDelayHours: 72
   };
 }
-router62.get(
+router63.get(
   "/access-level",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39315,7 +40227,7 @@ router62.get(
     res.json({ success: true, access });
   })
 );
-router62.post(
+router63.post(
   "/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39388,7 +40300,7 @@ router62.post(
     });
   })
 );
-router62.get(
+router63.get(
   "/my-requests",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39416,7 +40328,7 @@ router62.get(
     });
   })
 );
-router62.get(
+router63.get(
   "/pending",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -39445,7 +40357,7 @@ router62.get(
     });
   })
 );
-router62.post(
+router63.post(
   "/:id/approve",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -39480,7 +40392,7 @@ router62.post(
     });
   })
 );
-router62.post(
+router63.post(
   "/:id/reject",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -39515,15 +40427,15 @@ router62.post(
     });
   })
 );
-var geo_actions_default = router62;
+var geo_actions_default = router63;
 
 // server/routes/contractor-pipeline.ts
 init_db();
 init_schema();
-import { Router as Router63 } from "express";
+import { Router as Router64 } from "express";
 import { eq as eq33, sql as sql19 } from "drizzle-orm";
 import { z as z9 } from "zod";
-var router63 = Router63();
+var router64 = Router64();
 var applySchema = z9.object({
   name: z9.string().min(1, "Name is required").max(200),
   phone: z9.string().max(30).optional(),
@@ -39532,7 +40444,7 @@ var applySchema = z9.object({
   portfolioUrl: z9.string().url().max(500).optional().or(z9.literal("")),
   coverLetter: z9.string().max(2e3).optional()
 });
-router63.post(
+router64.post(
   "/apply",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39597,7 +40509,7 @@ router63.post(
     });
   })
 );
-router63.get(
+router64.get(
   "/my-application",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39617,7 +40529,7 @@ router63.get(
     res.json({ success: true, application: result.rows[0] });
   })
 );
-router63.get(
+router64.get(
   "/applications",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39647,7 +40559,7 @@ router63.get(
     });
   })
 );
-router63.post(
+router64.post(
   "/applications/:id/approve",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39694,7 +40606,7 @@ router63.post(
     });
   })
 );
-router63.post(
+router64.post(
   "/applications/:id/reject",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39728,7 +40640,7 @@ router63.post(
     });
   })
 );
-router63.get(
+router64.get(
   "/contractors",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39745,7 +40657,7 @@ router63.get(
     res.json({ success: true, contractors: contractors2.rows });
   })
 );
-router63.get(
+router64.get(
   "/assignments",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39776,7 +40688,7 @@ router63.get(
     });
   })
 );
-router63.post(
+router64.post(
   "/assign",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -39814,7 +40726,7 @@ router63.post(
     });
   })
 );
-router63.get(
+router64.get(
   "/my-contracts",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39837,7 +40749,7 @@ router63.get(
     res.json({ success: true, contracts: contracts.rows });
   })
 );
-router63.post(
+router64.post(
   "/contracts/:id/accept",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39866,7 +40778,7 @@ router63.post(
     res.json({ success: true, message: "Contract accepted" });
   })
 );
-router63.post(
+router64.post(
   "/contracts/:id/decline",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39895,7 +40807,7 @@ router63.post(
     res.json({ success: true, message: "Contract declined" });
   })
 );
-router63.post(
+router64.post(
   "/contracts/:id/complete",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -39924,13 +40836,13 @@ router63.post(
     res.json({ success: true, message: "Contract marked as completed" });
   })
 );
-var contractor_pipeline_default = router63;
+var contractor_pipeline_default = router64;
 
 // server/routes/purgatoire.ts
 init_db();
-import { Router as Router64 } from "express";
+import { Router as Router65 } from "express";
 init_notification_service();
-var router64 = Router64();
+var router65 = Router65();
 var APPROVE_ROLES = ["superuser", "admin"];
 var FLAG_ROLES = ["superuser", "admin", "moderator"];
 async function getUserRole(userId) {
@@ -39939,7 +40851,7 @@ async function getUserRole(userId) {
   ]);
   return result.rows[0]?.role || null;
 }
-router64.get("/queue", requireAuth(), async (req, res) => {
+router65.get("/queue", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -39994,7 +40906,7 @@ router64.get("/queue", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch queue" });
   }
 });
-router64.get("/stats", requireAuth(), async (req, res) => {
+router65.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -40018,7 +40930,7 @@ router64.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router64.post(
+router65.post(
   "/:trackId/approve",
   requireAuth(),
   async (req, res) => {
@@ -40098,7 +41010,7 @@ router64.post(
     }
   }
 );
-router64.post(
+router65.post(
   "/:trackId/reject",
   requireAuth(),
   async (req, res) => {
@@ -40184,7 +41096,7 @@ router64.post(
     }
   }
 );
-router64.post(
+router65.post(
   "/:trackId/flag",
   requireAuth(),
   async (req, res) => {
@@ -40228,14 +41140,14 @@ router64.post(
     }
   }
 );
-var purgatoire_default = router64;
+var purgatoire_default = router65;
 
 // server/routes/ad-campaigns.ts
 init_db();
-import { Router as Router65 } from "express";
+import { Router as Router66 } from "express";
 import { sql as sql20 } from "drizzle-orm";
-var router65 = Router65();
-router65.get(
+var router66 = Router66();
+router66.get(
   "/",
   asyncHandler(async (req, res) => {
     const { countryCode, limit = "50" } = req.query;
@@ -40273,12 +41185,12 @@ router65.get(
     res.json({ success: true, data: campaigns });
   })
 );
-var ad_campaigns_default = router65;
+var ad_campaigns_default = router66;
 
 // server/routes/admin.ts
 init_db();
 init_schema();
-import { Router as Router66 } from "express";
+import { Router as Router67 } from "express";
 import { sql as sql21, eq as eq34, ilike as ilike9 } from "drizzle-orm";
 import * as os from "os";
 import { execSync } from "child_process";
@@ -40320,8 +41232,8 @@ var TABLE_NAME_MAP = {
   contractors: "contractors",
   payment_card_types: "paymentCardTypes"
 };
-var router66 = Router66();
-router66.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
+var router67 = Router67();
+router67.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const tables = [
       "users",
@@ -40388,7 +41300,7 @@ router66.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router67.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const { search } = req.query;
@@ -40441,7 +41353,7 @@ router66.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router67.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const data = req.body;
@@ -40473,7 +41385,7 @@ router66.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.put(
+router67.put(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -40555,7 +41467,7 @@ router66.put(
     }
   }
 );
-router66.delete(
+router67.delete(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -40607,7 +41519,7 @@ router66.delete(
     }
   }
 );
-router66.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
+router67.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
   try {
     const { query: sqlQuery } = req.body;
     if (!sqlQuery || typeof sqlQuery !== "string") {
@@ -40660,7 +41572,7 @@ router66.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.get("/health", requireAuth(["admin"]), async (req, res) => {
+router67.get("/health", requireAuth(["admin"]), async (req, res) => {
   try {
     const connResult = await db.execute(
       sql21.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
@@ -40715,7 +41627,7 @@ router66.get("/health", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
+router67.post("/backup", requireAuth(["admin"]), async (req, res) => {
   try {
     const { type = "full" } = req.body;
     if (!["full", "partial"].includes(type)) {
@@ -40761,7 +41673,7 @@ router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
+router67.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const result = await db.execute(
       sql21.raw(`
@@ -40778,7 +41690,7 @@ router66.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.post(
+router67.post(
   "/preview-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -40805,7 +41717,7 @@ router66.post(
     }
   }
 );
-router66.post(
+router67.post(
   "/apply-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -40836,7 +41748,7 @@ router66.post(
     }
   }
 );
-router66.get("/categories", requireAuth(["admin"]), async (req, res) => {
+router67.get("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     console.log("\u{1F50D} Fetching admin categories (no slug)");
     const result = await db.execute(
@@ -40852,7 +41764,7 @@ router66.get("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.post("/categories", requireAuth(["admin"]), async (req, res) => {
+router67.post("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     const { name, description, parent_id, slug } = req.body;
     if (!name)
@@ -40868,7 +41780,7 @@ router66.post("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router67.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, parent_id, slug } = req.body;
@@ -40884,7 +41796,7 @@ router66.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router67.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id: idStr } = req.params;
     const { force } = req.query;
@@ -40911,7 +41823,7 @@ router66.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.get(
+router67.get(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -40931,7 +41843,7 @@ router66.get(
     });
   })
 );
-router66.post(
+router67.post(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -40971,7 +41883,7 @@ router66.post(
     });
   })
 );
-router66.post(
+router67.post(
   "/settings/smtp/test",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -41018,11 +41930,374 @@ router66.post(
     }
   })
 );
-var admin_default2 = router66;
+var admin_default2 = router67;
+
+// server/routes/profiles.ts
+init_db();
+init_schema();
+import { Router as Router68 } from "express";
+import { eq as eq37 } from "drizzle-orm";
+
+// server/services/profile-queries.ts
+init_db();
+init_schema();
+import { eq as eq35, and as and22, or as or7, ilike as ilike10, desc as desc20 } from "drizzle-orm";
+async function getPublicProfiles(filters = {}) {
+  const {
+    category,
+    query,
+    accountType,
+    countryCode,
+    limit = 20,
+    offset = 0
+  } = filters;
+  const conditions = [eq35(unifiedProfiles.status, "PUBLISHED")];
+  if (accountType)
+    conditions.push(eq35(unifiedProfiles.accountType, accountType));
+  if (category) conditions.push(eq35(unifiedProfiles.category, category));
+  if (countryCode)
+    conditions.push(eq35(unifiedProfiles.countryCode, countryCode));
+  let results = db.select().from(unifiedProfiles).where(and22(...conditions)).orderBy(desc20(unifiedProfiles.createdAt)).limit(limit).offset(offset);
+  if (query) {
+    const like3 = `%${query}%`;
+    return db.select().from(unifiedProfiles).where(
+      and22(
+        eq35(unifiedProfiles.status, "PUBLISHED"),
+        ...accountType ? [eq35(unifiedProfiles.accountType, accountType)] : [],
+        ...category ? [eq35(unifiedProfiles.category, category)] : [],
+        ...countryCode ? [eq35(unifiedProfiles.countryCode, countryCode)] : [],
+        or7(
+          ilike10(unifiedProfiles.name, like3),
+          ilike10(unifiedProfiles.description, like3),
+          ilike10(unifiedProfiles.category, like3),
+          ilike10(unifiedProfiles.cityName, like3)
+        )
+      )
+    ).orderBy(desc20(unifiedProfiles.createdAt)).limit(limit).offset(offset);
+  }
+  return results;
+}
+async function getAdminProfiles(filters = {}) {
+  const conditions = [];
+  if (filters.status)
+    conditions.push(eq35(unifiedProfiles.status, filters.status));
+  if (filters.verificationStatus)
+    conditions.push(
+      eq35(unifiedProfiles.verificationStatus, filters.verificationStatus)
+    );
+  if (filters.accountType)
+    conditions.push(eq35(unifiedProfiles.accountType, filters.accountType));
+  if (conditions.length === 0) {
+    return db.select().from(unifiedProfiles).orderBy(desc20(unifiedProfiles.createdAt));
+  }
+  return db.select().from(unifiedProfiles).where(and22(...conditions)).orderBy(desc20(unifiedProfiles.createdAt));
+}
+async function getPublicProfileBySlug(slug) {
+  const [profile] = await db.select().from(unifiedProfiles).where(
+    and22(
+      eq35(unifiedProfiles.slug, slug),
+      eq35(unifiedProfiles.status, "PUBLISHED")
+    )
+  ).limit(1);
+  return profile ?? null;
+}
+
+// server/services/profile-migration.ts
+init_db();
+init_schema();
+import { eq as eq36 } from "drizzle-orm";
+function slugify(str) {
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+async function generateUniqueSlug(rawName, accountType) {
+  const base = slugify(rawName);
+  const typeSuffix = `-${accountType}`;
+  const candidates = [base, `${base}${typeSuffix}`];
+  for (let i = 2; i <= 99; i++) {
+    candidates.push(`${base}${typeSuffix}-${i}`);
+  }
+  for (const candidate of candidates) {
+    const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq36(unifiedProfiles.slug, candidate)).limit(1);
+    if (!existing) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+function deriveStatus(approvalStatus, verificationStatus, isActive) {
+  if (!isActive) return "SUSPENDED";
+  if (approvalStatus === "approved") return "PUBLISHED";
+  if (approvalStatus === "pending" || verificationStatus === "pending")
+    return "PENDING";
+  return "DRAFT";
+}
+async function syncBusinesses() {
+  let synced = 0;
+  let skipped = 0;
+  const errors = [];
+  const allBusinesses = await db.select().from(businesses);
+  for (const biz of allBusinesses) {
+    try {
+      const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq36(unifiedProfiles.legacyBusinessId, biz.id)).limit(1);
+      if (existing) {
+        skipped++;
+        continue;
+      }
+      const slug = await generateUniqueSlug(biz.name, "business");
+      const status = deriveStatus(
+        biz.approvalStatus,
+        biz.verificationStatus,
+        biz.isActive
+      );
+      await db.insert(unifiedProfiles).values({
+        accountType: "business",
+        ownerId: biz.ownerId ?? void 0,
+        name: biz.name,
+        slug,
+        category: void 0,
+        // resolved via join — stored in metadata for now
+        description: biz.description ?? void 0,
+        email: biz.email ?? void 0,
+        phone: biz.phone ?? void 0,
+        website: biz.website ?? void 0,
+        socialLinks: biz.socialLinks ?? {},
+        latitude: biz.latitude ?? void 0,
+        longitude: biz.longitude ?? void 0,
+        address: biz.address ?? void 0,
+        cityId: biz.cityId ?? void 0,
+        regionId: biz.regionId ?? void 0,
+        countryId: biz.countryId ?? void 0,
+        countryCode: biz.countryCode ?? void 0,
+        cityName: biz.cityName ?? void 0,
+        isVerified: biz.isVerified ?? false,
+        verificationStatus: biz.verificationStatus ?? "pending",
+        verifiedAt: biz.verifiedAt ?? void 0,
+        status,
+        logoUrl: biz.logoUrl ?? void 0,
+        rating: biz.rating ?? void 0,
+        reviewCount: biz.reviewsCount ?? 0,
+        metadata: {
+          businessType: biz.businessType,
+          tier: biz.tier,
+          tags: biz.tags,
+          attributes: biz.attributes,
+          approvalNotes: biz.approvalNotes
+        },
+        legacyBusinessId: biz.id,
+        createdAt: biz.createdAt ?? /* @__PURE__ */ new Date()
+      });
+      synced++;
+    } catch (err) {
+      errors.push(`Business #${biz.id} (${biz.name}): ${String(err)}`);
+    }
+  }
+  return { synced, skipped, errors };
+}
+async function syncArtists() {
+  let synced = 0;
+  let skipped = 0;
+  const errors = [];
+  try {
+    const { rows } = await pool.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'artist_profiles' LIMIT 1`
+    );
+    if (rows.length === 0) return { synced: 0, skipped: 0, errors: [] };
+    const { rows: artists2 } = await pool.query(`SELECT * FROM artist_profiles`);
+    for (const artist of artists2) {
+      try {
+        const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq36(unifiedProfiles.legacyArtistProfileId, artist.id)).limit(1);
+        if (existing) {
+          skipped++;
+          continue;
+        }
+        const name = artist.display_name || artist.stage_name || artist.name || `Artist #${artist.id}`;
+        const slug = await generateUniqueSlug(name, "artisan");
+        await db.insert(unifiedProfiles).values({
+          accountType: "artisan",
+          ownerId: artist.user_id ?? void 0,
+          name,
+          slug,
+          description: artist.bio ?? void 0,
+          email: artist.email ?? void 0,
+          website: artist.website_url ?? void 0,
+          countryCode: artist.country_code ?? void 0,
+          isVerified: artist.is_verified ?? false,
+          verificationStatus: artist.is_verified ? "approved" : "pending",
+          status: artist.is_verified ? "PUBLISHED" : "DRAFT",
+          logoUrl: artist.avatar_url ?? void 0,
+          profileImageUrl: artist.avatar_url ?? void 0,
+          coverImageUrl: artist.cover_image_url ?? void 0,
+          metadata: {
+            genre: artist.genre,
+            stageName: artist.stage_name,
+            accountType: artist.account_type
+          },
+          legacyArtistProfileId: artist.id
+        });
+        synced++;
+      } catch (err) {
+        errors.push(`Artist #${artist.id}: ${String(err)}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`Artist sync failed: ${String(err)}`);
+  }
+  return { synced, skipped, errors };
+}
+async function syncLegacyProfiles() {
+  const [bizResult, artistResult] = await Promise.all([
+    syncBusinesses(),
+    syncArtists()
+  ]);
+  return {
+    businessesSynced: bizResult.synced,
+    artistsSynced: artistResult.synced,
+    skipped: bizResult.skipped + artistResult.skipped,
+    errors: [...bizResult.errors, ...artistResult.errors]
+  };
+}
+
+// server/routes/profiles.ts
+var router68 = Router68();
+var VALID_ACTIONS = ["approve", "reject", "suspend", "restore"];
+var TRANSITIONS = {
+  DRAFT: { approve: "DRAFT", reject: "DRAFT", suspend: "SUSPENDED", restore: "DRAFT" },
+  PENDING: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PENDING" },
+  PUBLISHED: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PUBLISHED" },
+  SUSPENDED: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PUBLISHED" }
+};
+function requireAdmin(req, res) {
+  const user = req.user;
+  if (!user || !["admin", "superadmin", "superuser"].includes(user.role)) {
+    res.status(403).json({ error: "Admin access required" });
+    return false;
+  }
+  return true;
+}
+router68.get("/api/profiles/search", async (req, res) => {
+  try {
+    const {
+      q,
+      category,
+      accountType,
+      countryCode,
+      limit = "20",
+      offset = "0"
+    } = req.query;
+    const profiles = await getPublicProfiles({
+      query: q,
+      category,
+      accountType,
+      countryCode,
+      limit: Math.min(Number(limit) || 20, 100),
+      offset: Number(offset) || 0
+    });
+    res.json({ success: true, data: profiles, count: profiles.length });
+  } catch (err) {
+    console.error("[profiles/search]", err);
+    res.status(500).json({ error: "Search failed" });
+  }
+});
+router68.get("/api/profiles/:slug", async (req, res) => {
+  try {
+    const profile = await getPublicProfileBySlug(req.params.slug);
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    db.update(unifiedProfiles).set({ viewCount: (profile.viewCount ?? 0) + 1 }).where(eq37(unifiedProfiles.id, profile.id)).catch(() => {
+    });
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[profiles/:slug]", err);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+router68.get("/api/admin/profiles", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const { status, verificationStatus, accountType } = req.query;
+    const profiles = await getAdminProfiles({ status, verificationStatus, accountType });
+    res.json({ success: true, data: profiles, count: profiles.length });
+  } catch (err) {
+    console.error("[admin/profiles]", err);
+    res.status(500).json({ error: "Failed to fetch profiles" });
+  }
+});
+router68.get("/api/admin/profiles/pending", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const profiles = await getAdminProfiles({ status: "PENDING" });
+    res.json({ success: true, data: profiles, count: profiles.length });
+  } catch (err) {
+    console.error("[admin/profiles/pending]", err);
+    res.status(500).json({ error: "Failed to fetch pending profiles" });
+  }
+});
+router68.post(
+  "/api/admin/profiles/:id/action",
+  async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const profileId = Number(req.params.id);
+    const { action, notes } = req.body;
+    const adminUser = req.user;
+    if (!VALID_ACTIONS.includes(action)) {
+      return res.status(400).json({ error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}` });
+    }
+    try {
+      const [profile] = await db.select().from(unifiedProfiles).where(eq37(unifiedProfiles.id, profileId)).limit(1);
+      if (!profile) return res.status(404).json({ error: "Profile not found" });
+      const currentStatus = profile.status ?? "DRAFT";
+      const nextStatus = TRANSITIONS[currentStatus]?.[action];
+      if (!nextStatus) {
+        return res.status(400).json({
+          error: `Transition '${action}' is not valid from status '${currentStatus}'`
+        });
+      }
+      const isVerified = nextStatus === "PUBLISHED";
+      const verificationStatus = action === "approve" ? "approved" : action === "reject" ? "rejected" : profile.verificationStatus;
+      await db.update(unifiedProfiles).set({
+        status: nextStatus,
+        isVerified,
+        verificationStatus,
+        approvedBy: action === "approve" ? adminUser.id : profile.approvedBy,
+        approvalNotes: notes ?? profile.approvalNotes,
+        verifiedAt: action === "approve" ? /* @__PURE__ */ new Date() : profile.verifiedAt,
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq37(unifiedProfiles.id, profileId));
+      await db.insert(profileApprovalActions).values({
+        profileId,
+        action,
+        performedBy: adminUser.id,
+        notes: notes ?? null
+      });
+      res.json({
+        success: true,
+        profileId,
+        previousStatus: currentStatus,
+        newStatus: nextStatus,
+        action
+      });
+    } catch (err) {
+      console.error("[admin/profiles/:id/action]", err);
+      res.status(500).json({ error: "Action failed" });
+    }
+  }
+);
+router68.post("/api/admin/profiles/sync", async (req, res) => {
+  const user = req.user;
+  if (!user || !["superadmin", "superuser"].includes(user.role)) {
+    return res.status(403).json({ error: "Superadmin access required" });
+  }
+  try {
+    const result = await syncLegacyProfiles();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("[admin/profiles/sync]", err);
+    res.status(500).json({ error: "Sync failed" });
+  }
+});
+var profiles_default = router68;
 
 // server/routes/astrology.ts
-import { Router as Router67 } from "express";
-var router67 = Router67();
+import { Router as Router69 } from "express";
+var router69 = Router69();
 var astroCache = /* @__PURE__ */ new Map();
 var ASTRO_TTL = 10 * 60 * 1e3;
 var ASTRO_FETCH_TIMEOUT = 5e3;
@@ -41070,7 +42345,7 @@ async function fetchAstroWithRetries(sign) {
   }
   throw lastErr || new Error("Unknown upstream error");
 }
-router67.post(
+router69.post(
   "/astrology",
   asyncHandler(async (req, res) => {
     const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
@@ -41137,34 +42412,34 @@ router67.post(
     }
   })
 );
-var astrology_default = router67;
+var astrology_default = router69;
 
 // server/routes/business-search.ts
 init_schema();
 init_db();
-import { Router as Router68 } from "express";
-import { and as and22, eq as eq35, ilike as ilike10, or as or7, sql as sql22 } from "drizzle-orm";
-var router68 = Router68();
-router68.get(
+import { Router as Router70 } from "express";
+import { and as and23, eq as eq38, ilike as ilike11, or as or8, sql as sql22 } from "drizzle-orm";
+var router70 = Router70();
+router70.get(
   "/business/search",
   asyncHandler(async (req, res) => {
     const { query, category, location, page = "1", limit = "10" } = req.query;
     console.log("\u{1F50D} [BUSINESS] Search:", { query, category, location });
     const conditions = [];
     if (query && typeof query === "string") {
-      const searchCondition = or7(
-        ilike10(businesses.name, `${query}%`),
-        ilike10(businesses.description, `${query}%`)
+      const searchCondition = or8(
+        ilike11(businesses.name, `${query}%`),
+        ilike11(businesses.description, `${query}%`)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
     if (category && typeof category === "string") {
-      const categoryRecord = await db.select().from(businessCategories).where(eq35(businessCategories.slug, category)).limit(1);
+      const categoryRecord = await db.select().from(businessCategories).where(eq38(businessCategories.slug, category)).limit(1);
       if (categoryRecord.length > 0) {
-        conditions.push(eq35(businesses.categoryId, categoryRecord[0].id));
+        conditions.push(eq38(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and22(...conditions) : void 0;
+    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
     const countResult = await db.select({ count: sql22`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const pageNum = parseInt(page, 10);
@@ -41184,7 +42459,7 @@ router68.get(
       website: businesses.website
     }).from(businesses).leftJoin(
       businessCategories,
-      eq35(businesses.categoryId, businessCategories.id)
+      eq38(businesses.categoryId, businessCategories.id)
     ).where(whereCondition).orderBy(businesses.name).limit(limitNum).offset(offset);
     const formattedResults = businessResults.map((business) => ({
       id: business.id.toString(),
@@ -41218,7 +42493,7 @@ router68.get(
     });
   })
 );
-router68.get(
+router70.get(
   "/category/:slug/search",
   asyncHandler(async (req, res) => {
     const { slug } = req.params;
@@ -41302,7 +42577,7 @@ router68.get(
     });
   })
 );
-router68.get(
+router70.get(
   "/business/categories",
   asyncHandler(async (_req, res) => {
     try {
@@ -41327,7 +42602,7 @@ router68.get(
     }
   })
 );
-router68.get(
+router70.get(
   "/businesses/pool/:categoryName",
   asyncHandler(async (req, res) => {
     const { categoryName } = req.params;
@@ -41427,7 +42702,7 @@ router68.get(
     });
   })
 );
-router68.get(
+router70.get(
   "/business/locations",
   asyncHandler(async (_req, res) => {
     try {
@@ -41457,7 +42732,7 @@ router68.get(
     }
   })
 );
-router68.get(
+router70.get(
   "/business/test-connection",
   asyncHandler(async (_req, res) => {
     try {
@@ -41501,15 +42776,15 @@ router68.get(
     }
   })
 );
-var business_search_default = router68;
+var business_search_default = router70;
 
 // server/routes/categories.ts
 init_schema();
 init_db();
-import { Router as Router69 } from "express";
+import { Router as Router71 } from "express";
 import { sql as sql23 } from "drizzle-orm";
-var router69 = Router69();
-router69.get(
+var router71 = Router71();
+router71.get(
   "/business-categories",
   asyncHandler(async (req, res) => {
     const { countryCode } = req.query;
@@ -41532,7 +42807,7 @@ router69.get(
     res.json(result.rows);
   })
 );
-router69.get(
+router71.get(
   "/categories",
   asyncHandler(async (_req, res) => {
     const result = await db.select({
@@ -41546,15 +42821,15 @@ router69.get(
     res.json(result);
   })
 );
-var categories_default2 = router69;
+var categories_default2 = router71;
 
 // server/routes/commerce-ads.ts
 init_schema();
 init_db();
-import { Router as Router70 } from "express";
-import { and as and23, eq as eq36, ilike as ilike11, or as or8, sql as sql24 } from "drizzle-orm";
-var router70 = Router70();
-router70.get(
+import { Router as Router72 } from "express";
+import { and as and24, eq as eq39, ilike as ilike12, or as or9, sql as sql24 } from "drizzle-orm";
+var router72 = Router72();
+router72.get(
   "/ads/search",
   asyncHandler(async (req, res) => {
     const {
@@ -41573,19 +42848,19 @@ router70.get(
     });
     const conditions = [];
     if (query && typeof query === "string") {
-      const searchCondition = or8(
-        ilike11(businesses.name, `${query}%`),
-        ilike11(businesses.description, `${query}%`)
+      const searchCondition = or9(
+        ilike12(businesses.name, `${query}%`),
+        ilike12(businesses.description, `${query}%`)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
     if (category && typeof category === "string") {
-      const categoryRecord = await db.select().from(businessCategories).where(eq36(businessCategories.slug, category)).limit(1);
+      const categoryRecord = await db.select().from(businessCategories).where(eq39(businessCategories.slug, category)).limit(1);
       if (categoryRecord.length > 0) {
-        conditions.push(eq36(businesses.categoryId, categoryRecord[0].id));
+        conditions.push(eq39(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
+    const whereCondition = conditions.length > 0 ? and24(...conditions) : void 0;
     let baseQuery = db.select({
       id: businesses.id,
       name: businesses.name,
@@ -41604,7 +42879,7 @@ router70.get(
       website: businesses.website
     }).from(businesses).leftJoin(
       businessCategories,
-      eq36(businesses.categoryId, businessCategories.id)
+      eq39(businesses.categoryId, businessCategories.id)
     ).where(whereCondition);
     const countResult = await db.select({ count: sql24`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
@@ -41711,7 +42986,7 @@ router70.get(
     });
   })
 );
-router70.get(
+router72.get(
   "/analytics",
   asyncHandler(async (_req, res) => {
     console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
@@ -41767,7 +43042,7 @@ router70.get(
       count: sql24`count(*)`
     }).from(businesses).leftJoin(
       businessCategories,
-      eq36(businesses.categoryId, businessCategories.id)
+      eq39(businesses.categoryId, businessCategories.id)
     ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql24`count(*) DESC`).limit(10);
     const totalCatCount = categoryResult.reduce(
       (sum, cat) => sum + (cat.count || 0),
@@ -41815,14 +43090,14 @@ router70.get(
     });
   })
 );
-var commerce_ads_default = router70;
+var commerce_ads_default = router72;
 
 // server/routes/contact.ts
 init_schema();
 init_db();
-import { Router as Router71 } from "express";
-var router71 = Router71();
-router71.post(
+import { Router as Router73 } from "express";
+var router73 = Router73();
+router73.post(
   "/",
   asyncHandler(async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
@@ -41879,15 +43154,15 @@ router71.post(
     });
   })
 );
-var contact_default = router71;
+var contact_default = router73;
 
 // server/routes/geo.ts
 init_schema();
 init_db();
-import { Router as Router72 } from "express";
+import { Router as Router74 } from "express";
 import { sql as sql25 } from "drizzle-orm";
-var router72 = Router72();
-router72.get(
+var router74 = Router74();
+router74.get(
   "/regions",
   asyncHandler(async (req, res) => {
     const { countryId } = req.query;
@@ -41904,7 +43179,7 @@ router72.get(
     res.json(result.rows);
   })
 );
-router72.get(
+router74.get(
   "/cities",
   asyncHandler(async (req, res) => {
     const { countryId, regionId } = req.query;
@@ -41939,7 +43214,7 @@ router72.get(
     res.json(result.rows);
   })
 );
-router72.get(
+router74.get(
   "/countries",
   asyncHandler(async (_req, res) => {
     try {
@@ -41982,14 +43257,14 @@ router72.get(
     }
   })
 );
-var geo_default = router72;
+var geo_default = router74;
 
 // server/routes/public-stats.ts
 init_db();
-import { Router as Router73 } from "express";
+import { Router as Router75 } from "express";
 import { sql as sql26 } from "drizzle-orm";
-var router73 = Router73();
-router73.get(
+var router75 = Router75();
+router75.get(
   "/dashboard-stats",
   asyncHandler(async (req, res) => {
     const { category, businessId } = req.query;
@@ -42492,15 +43767,15 @@ function generateBusinessStats(category, rating, reviewCount) {
     growthRate: (Math.random() * 15 + 5).toFixed(1)
   };
 }
-var public_stats_default = router73;
+var public_stats_default = router75;
 
 // server/routes/seed.ts
 init_schema();
 init_db();
-import { Router as Router74 } from "express";
-import { eq as eq37 } from "drizzle-orm";
-var router74 = Router74();
-router74.post(
+import { Router as Router76 } from "express";
+import { eq as eq40 } from "drizzle-orm";
+var router76 = Router76();
+router76.post(
   "/seed-categories",
   asyncHandler(async (_req, res) => {
     if (process.env.NODE_ENV !== "development") {
@@ -42528,7 +43803,7 @@ router74.post(
           createdCategories.push(result[0]);
         }
       } catch {
-        const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq37(businessCategories.slug, catData.slug)).limit(1);
+        const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq40(businessCategories.slug, catData.slug)).limit(1);
         if (existing.length > 0) {
           categorySlugMap.set(catData.slug, existing[0].id);
         }
@@ -42539,7 +43814,7 @@ router74.post(
         const catId = categorySlugMap.get(catData.slug);
         const parentId = categorySlugMap.get(catData.parentSlug);
         if (catId && parentId) {
-          await db.update(businessCategories).set({ parentId }).where(eq37(businessCategories.id, catId));
+          await db.update(businessCategories).set({ parentId }).where(eq40(businessCategories.id, catId));
         }
       }
     }
@@ -42551,14 +43826,14 @@ router74.post(
     });
   })
 );
-var seed_default = router74;
+var seed_default = router76;
 
 // server/routes/system.ts
 init_db();
-import { Router as Router75 } from "express";
+import { Router as Router77 } from "express";
 import { sql as sql27 } from "drizzle-orm";
-var router75 = Router75();
-router75.get(
+var router77 = Router77();
+router77.get(
   "/status",
   asyncHandler(async (_req, res) => {
     try {
@@ -42587,7 +43862,7 @@ router75.get(
     }
   })
 );
-router75.get(
+router77.get(
   "/health",
   asyncHandler(async (_req, res) => {
     try {
@@ -42618,7 +43893,7 @@ router75.get(
     }
   })
 );
-router75.get(
+router77.get(
   "/verify-db-counts",
   asyncHandler(async (_req, res) => {
     const [
@@ -42694,7 +43969,7 @@ router75.get(
     });
   })
 );
-router75.get("/simple-test", (_req, res) => {
+router77.get("/simple-test", (_req, res) => {
   res.json({
     message: "Server is working!",
     success: true,
@@ -42714,12 +43989,12 @@ router75.get("/simple-test", (_req, res) => {
     ]
   });
 });
-var system_default = router75;
+var system_default = router77;
 
 // server/routes/users.ts
-import { Router as Router76 } from "express";
-import jwt7 from "jsonwebtoken";
-var router76 = Router76();
+import { Router as Router78 } from "express";
+import jwt8 from "jsonwebtoken";
+var router78 = Router78();
 var activeUsers = /* @__PURE__ */ new Map();
 var INACTIVE_THRESHOLD = 5 * 60 * 1e3;
 setInterval(() => {
@@ -42732,7 +44007,7 @@ setInterval(() => {
   });
   entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
 }, 6e4);
-router76.post("/users/heartbeat", (req, res) => {
+router78.post("/users/heartbeat", (req, res) => {
   const sessionId = req.body.sessionId || req.ip;
   activeUsers.set(sessionId, Date.now());
   res.json({
@@ -42741,7 +44016,7 @@ router76.post("/users/heartbeat", (req, res) => {
     sessionId
   });
 });
-router76.get("/users/active-count", (_req, res) => {
+router78.get("/users/active-count", (_req, res) => {
   const now = Date.now();
   const entriesToDelete = [];
   activeUsers.forEach((lastSeen, sessionId) => {
@@ -42756,7 +44031,7 @@ router76.get("/users/active-count", (_req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-router76.get("/user", (req, res) => {
+router78.get("/user", (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -42770,7 +44045,7 @@ router76.get("/user", (req, res) => {
     try {
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) throw new Error("JWT_SECRET not set");
-      const decoded = jwt7.verify(token, jwtSecret);
+      const decoded = jwt8.verify(token, jwtSecret);
       const isAdmin = decoded.role === "admin" || decoded.role === "superuser";
       return res.json({
         success: true,
@@ -42797,12 +44072,13 @@ router76.get("/user", (req, res) => {
     });
   }
 });
-var users_default2 = router76;
+var users_default2 = router78;
 
 // server/routes.ts
 async function registerRoutes(app2) {
   app2.use("/auth", auth_default);
   app2.use("/auth", oauth_default);
+  app2.use("/", profiles_default);
   app2.get("/api/vault/authorize", requireAuth(), async (req, res) => {
     const VAULT_MASTER_EMAIL = "superadmin@versoair.test";
     const user = req.user;
@@ -42905,6 +44181,7 @@ async function registerRoutes(app2) {
   app2.use("/api/seo", geo_seo_default);
   app2.use("/api/inventory", inventory_default);
   app2.use("/api/inbox", inbox_default);
+  app2.use("/api/community", community_default);
   app2.use("/api/geo-actions", geo_actions_default);
   app2.use("/api/contractor-pipeline", contractor_pipeline_default);
   app2.get("/api/csrf-token", (req, res) => {
@@ -43504,7 +44781,7 @@ async function registerRoutes(app2) {
 // server/prod-static.ts
 import express from "express";
 import fs7 from "fs";
-import path7 from "path";
+import path6 from "path";
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -43515,7 +44792,7 @@ function log(message, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 function serveStatic(app2) {
-  const distPath = path7.join(process.cwd(), "dist", "public");
+  const distPath = path6.join(process.cwd(), "dist", "public");
   console.log(`[STATIC] Serving static files from: ${distPath}`);
   console.log(`[STATIC] Directory exists: ${fs7.existsSync(distPath)}`);
   if (fs7.existsSync(distPath)) {
@@ -43551,7 +44828,18 @@ function serveStatic(app2) {
     if (req.originalUrl.includes(".")) {
       return next();
     }
-    res.sendFile(path7.join(distPath, "index.html"));
+    const siblingUrl = process.env.SIBLING_URL || "";
+    const runtimeScript = `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>`;
+    fs7.readFile(path6.join(distPath, "index.html"), "utf-8", (err, html) => {
+      if (err) {
+        console.error("[STATIC] Failed to read index.html:", err);
+        return res.sendFile(path6.join(distPath, "index.html"));
+      }
+      const injected = html.replace("</head>", `${runtimeScript}
+  </head>`);
+      res.set("Content-Type", "text/html");
+      res.send(injected);
+    });
   });
 }
 
@@ -43799,6 +45087,48 @@ async function ensureAllTables() {
       } catch (_) {
       }
     }
+    const BUSINESSES_COLUMN_ADDITIONS = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT`
+    ];
+    for (const alt of BUSINESSES_COLUMN_ADDITIONS) {
+      await client.query(alt);
+    }
+    const STREAMING_PLANS_ADDITIONS = [
+      `ALTER TABLE streaming_plans ADD COLUMN IF NOT EXISTS downloads_per_month INTEGER DEFAULT 0`
+    ];
+    for (const alt of STREAMING_PLANS_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
+    const PLAN_QUOTA_UPDATES = [
+      ["Gratuit", 0],
+      ["Supporter", 5],
+      ["Champion", 20],
+      ["Patron", -1]
+      // -1 = unlimited
+    ];
+    for (const [name, quota] of PLAN_QUOTA_UPDATES) {
+      try {
+        await client.query(
+          `UPDATE streaming_plans SET downloads_per_month = $1
+             WHERE name = $2 AND (downloads_per_month IS NULL OR downloads_per_month = 0)`,
+          [quota, name]
+        );
+      } catch (_) {
+      }
+    }
+    const INBOX_MESSAGES_ADDITIONS = [
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`
+    ];
+    for (const alt of INBOX_MESSAGES_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
     for (const idx of INDEX_STATEMENTS) {
       try {
         await client.query(idx);
@@ -43978,6 +45308,12 @@ var TABLE_STATEMENTS = [
       approved_by INTEGER REFERENCES users(id),
       approval_notes TEXT,
       pdf_path TEXT,
+      tier VARCHAR DEFAULT 'free',
+      tier_expires_at TIMESTAMP,
+      logo_url TEXT,
+      verification_status VARCHAR DEFAULT 'unverified',
+      verification_documents JSONB DEFAULT '[]',
+      avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )`
@@ -44081,6 +45417,126 @@ var TABLE_STATEMENTS = [
   // ═══════════════════════════════════════════════
   // 5. MUSIC TRACKS
   // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
+  // 5b. SOCIAL PLATFORM (posts, comments, likes, follows, notifications)
+  // ═══════════════════════════════════════════════
+  {
+    table: "social_users",
+    sql: `CREATE TABLE IF NOT EXISTS social_users (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      username TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      bio TEXT,
+      avatar_url TEXT,
+      cover_image_url TEXT,
+      location TEXT,
+      website TEXT,
+      profession TEXT,
+      company TEXT,
+      follower_count INTEGER DEFAULT 0,
+      following_count INTEGER DEFAULT 0,
+      post_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      satisfaction_rating DECIMAL(3,2) DEFAULT 0,
+      verified_badge BOOLEAN DEFAULT false,
+      premium_member BOOLEAN DEFAULT false,
+      dark_mode_enabled BOOLEAN DEFAULT true,
+      notifications_enabled BOOLEAN DEFAULT true,
+      privacy_level TEXT DEFAULT 'public',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      last_active_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_posts",
+    sql: `CREATE TABLE IF NOT EXISTS social_posts (
+      id SERIAL PRIMARY KEY,
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      title TEXT,
+      content TEXT NOT NULL,
+      image_urls TEXT[],
+      video_url TEXT,
+      media_type TEXT,
+      post_type TEXT DEFAULT 'discussion',
+      faq_category TEXT,
+      is_resolved BOOLEAN DEFAULT false,
+      tags TEXT[],
+      mentioned_users INTEGER[],
+      like_count INTEGER DEFAULT 0,
+      comment_count INTEGER DEFAULT 0,
+      share_count INTEGER DEFAULT 0,
+      view_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      engagement_rate DECIMAL(5,2) DEFAULT 0,
+      is_trending BOOLEAN DEFAULT false,
+      is_pinned BOOLEAN DEFAULT false,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      metadata JSONB,
+      track_id INTEGER,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_comments",
+    sql: `CREATE TABLE IF NOT EXISTS social_comments (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES social_posts(id),
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      parent_comment_id INTEGER REFERENCES social_comments(id),
+      content TEXT NOT NULL,
+      like_count INTEGER DEFAULT 0,
+      reply_count INTEGER DEFAULT 0,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      mentioned_users INTEGER[],
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_likes",
+    sql: `CREATE TABLE IF NOT EXISTS social_likes (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      like_type TEXT DEFAULT 'post',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "social_followers",
+    sql: `CREATE TABLE IF NOT EXISTS social_followers (
+      id SERIAL PRIMARY KEY,
+      follower_id INTEGER NOT NULL REFERENCES social_users(id),
+      following_id INTEGER NOT NULL REFERENCES social_users(id),
+      is_close BOOLEAN DEFAULT false,
+      is_muted BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "social_notifications",
+    sql: `CREATE TABLE IF NOT EXISTS social_notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      from_user_id INTEGER REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      notification_type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      data JSONB,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      read_at TIMESTAMP
+    )`
+  },
   {
     table: "music_tracks",
     sql: `CREATE TABLE IF NOT EXISTS music_tracks (
@@ -44456,6 +45912,30 @@ var TABLE_STATEMENTS = [
       notes TEXT
     )`
   },
+  {
+    table: "ticket_comments",
+    sql: `CREATE TABLE IF NOT EXISTS ticket_comments (
+      id SERIAL PRIMARY KEY,
+      ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+      author_id INTEGER REFERENCES users(id),
+      author_name VARCHAR,
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "community_posts",
+    sql: `CREATE TABLE IF NOT EXISTS community_posts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      author_name VARCHAR,
+      author_avatar TEXT,
+      content TEXT NOT NULL,
+      parent_id INTEGER REFERENCES community_posts(id) ON DELETE CASCADE,
+      is_hidden BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
   // ═══════════════════════════════════════════════
@@ -44646,10 +46126,22 @@ var TABLE_STATEMENTS = [
       stream_limit INTEGER,
       pool_contribution_percent INTEGER NOT NULL,
       boost_credits INTEGER DEFAULT 0,
+      downloads_per_month INTEGER DEFAULT 0,
       stripe_price_id VARCHAR(255),
       stripe_product_id VARCHAR(255),
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    // Per-user download event log — used to enforce monthly quota per plan tier
+    table: "track_downloads",
+    sql: `CREATE TABLE IF NOT EXISTS track_downloads (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      track_id INTEGER NOT NULL REFERENCES music_tracks(id) ON DELETE CASCADE,
+      plan_tier VARCHAR(50),
+      downloaded_at TIMESTAMP DEFAULT NOW()
     )`
   },
   {
@@ -44935,6 +46427,8 @@ var INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS music_tracks_artist_idx ON music_tracks (artist_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_album_idx ON music_tracks (album_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_genre_idx ON music_tracks (genre)`,
+  // Browse/streaming queries filter on status ('published') and sort by newest.
+  `CREATE INDEX IF NOT EXISTS music_tracks_status_created_idx ON music_tracks (status, created_at DESC)`,
   // connections
   `CREATE INDEX IF NOT EXISTS connections_status_idx ON connections (status)`,
   `CREATE INDEX IF NOT EXISTS connections_requester_idx ON connections (requester_id)`,
@@ -44960,6 +46454,15 @@ var INDEX_STATEMENTS = [
   // ticket_assignments
   `CREATE INDEX IF NOT EXISTS ticket_assignments_ticket_idx ON ticket_assignments (ticket_id)`,
   `CREATE INDEX IF NOT EXISTS ticket_assignments_assigned_to_idx ON ticket_assignments (assigned_to)`,
+  // ticket_comments
+  `CREATE INDEX IF NOT EXISTS ticket_comments_ticket_idx ON ticket_comments (ticket_id)`,
+  // community_posts
+  `CREATE INDEX IF NOT EXISTS community_posts_created_idx ON community_posts (created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_user_idx ON community_posts (user_id)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_parent_idx ON community_posts (parent_id)`,
+  // track_downloads
+  `CREATE INDEX IF NOT EXISTS track_downloads_user_time_idx ON track_downloads (user_id, downloaded_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS track_downloads_track_idx ON track_downloads (track_id)`,
   // user_settings
   `CREATE INDEX IF NOT EXISTS user_settings_user_sector_idx ON user_settings (user_id, sector)`,
   `CREATE INDEX IF NOT EXISTS user_settings_sector_idx ON user_settings (sector)`,
@@ -45037,7 +46540,66 @@ var INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS artist_contracts_email_idx ON artist_contracts (email)`,
   `CREATE INDEX IF NOT EXISTS artist_contracts_status_idx ON artist_contracts (status)`,
   `CREATE INDEX IF NOT EXISTS artist_contracts_grade_idx ON artist_contracts (grade)`,
-  `CREATE INDEX IF NOT EXISTS artist_contracts_artist_idx ON artist_contracts (artist_id)`
+  `CREATE INDEX IF NOT EXISTS artist_contracts_artist_idx ON artist_contracts (artist_id)`,
+  // ── unified_profiles ──────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS unified_profiles (
+    id SERIAL PRIMARY KEY,
+    owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    account_type VARCHAR(30) NOT NULL,
+    name TEXT NOT NULL,
+    display_name TEXT,
+    slug VARCHAR(255) UNIQUE,
+    category VARCHAR(120),
+    description TEXT,
+    bio TEXT,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    website TEXT,
+    social_links JSONB DEFAULT '{}',
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    address TEXT,
+    city_id INTEGER REFERENCES cities(id),
+    region_id INTEGER REFERENCES regions(id),
+    country_id INTEGER REFERENCES countries(id),
+    country_code VARCHAR(2),
+    city_name VARCHAR(120),
+    is_verified BOOLEAN DEFAULT false,
+    verification_status VARCHAR(30) DEFAULT 'pending',
+    verified_at TIMESTAMP,
+    verified_by INTEGER REFERENCES users(id),
+    status VARCHAR(30) DEFAULT 'DRAFT',
+    approved_by INTEGER REFERENCES users(id),
+    approval_notes TEXT,
+    logo_url TEXT,
+    cover_image_url TEXT,
+    profile_image_url TEXT,
+    rating DECIMAL(3,1),
+    review_count INTEGER DEFAULT 0,
+    view_count INTEGER DEFAULT 0,
+    metadata JSONB DEFAULT '{}',
+    legacy_business_id INTEGER,
+    legacy_artist_profile_id INTEGER,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS up_owner_idx ON unified_profiles (owner_id)`,
+  `CREATE INDEX IF NOT EXISTS up_status_idx ON unified_profiles (status)`,
+  `CREATE INDEX IF NOT EXISTS up_verification_idx ON unified_profiles (verification_status)`,
+  `CREATE INDEX IF NOT EXISTS up_account_type_idx ON unified_profiles (account_type)`,
+  `CREATE INDEX IF NOT EXISTS up_published_idx ON unified_profiles (status, is_verified)`,
+  `CREATE INDEX IF NOT EXISTS up_geo_idx ON unified_profiles (latitude, longitude)`,
+  // ── profile_approval_actions (flat audit log) ─────────────────────────────
+  `CREATE TABLE IF NOT EXISTS profile_approval_actions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id INTEGER NOT NULL REFERENCES unified_profiles(id) ON DELETE CASCADE,
+    action VARCHAR(20) NOT NULL,
+    performed_by INTEGER NOT NULL REFERENCES users(id),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS paa_profile_idx ON profile_approval_actions (profile_id)`,
+  `CREATE INDEX IF NOT EXISTS paa_admin_idx ON profile_approval_actions (performed_by)`
 ];
 
 // server/utils/logger.ts
@@ -45083,7 +46645,7 @@ var logger = createLogger("app");
 init_db();
 init_schema();
 init_email_service();
-import { eq as eq39, and as and24, sql as sql29, inArray as inArray2 } from "drizzle-orm";
+import { eq as eq42, and as and25, sql as sql29, inArray as inArray2 } from "drizzle-orm";
 var DIGEST_CHECK_INTERVAL_MS = 60 * 60 * 1e3;
 var MAX_RETRIES = 3;
 var BATCH_SIZE = 50;
@@ -45132,12 +46694,12 @@ async function processDailyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq39(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq39(emailQueue.recipientUserId, users.id)).where(
-      and24(
-        eq39(emailQueue.status, "pending"),
-        eq39(emailSubscriptions.frequency, "daily_digest"),
-        eq39(emailSubscriptions.isActive, true)
+      eq42(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq42(emailQueue.recipientUserId, users.id)).where(
+      and25(
+        eq42(emailQueue.status, "pending"),
+        eq42(emailSubscriptions.frequency, "daily_digest"),
+        eq42(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE);
     if (pendingItems.length === 0) {
@@ -45181,12 +46743,12 @@ async function processWeeklyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq39(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq39(emailQueue.recipientUserId, users.id)).where(
-      and24(
-        eq39(emailQueue.status, "pending"),
-        eq39(emailSubscriptions.frequency, "weekly_digest"),
-        eq39(emailSubscriptions.isActive, true)
+      eq42(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq42(emailQueue.recipientUserId, users.id)).where(
+      and25(
+        eq42(emailQueue.status, "pending"),
+        eq42(emailSubscriptions.frequency, "weekly_digest"),
+        eq42(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE * 2);
     if (pendingItems.length === 0) {
@@ -45228,10 +46790,10 @@ async function processGeoAdminReports() {
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
-    }).from(emailSubscriptions).innerJoin(users, eq39(emailSubscriptions.userId, users.id)).where(
-      and24(
-        eq39(emailSubscriptions.type, "geoadmin_reports"),
-        eq39(emailSubscriptions.isActive, true)
+    }).from(emailSubscriptions).innerJoin(users, eq42(emailSubscriptions.userId, users.id)).where(
+      and25(
+        eq42(emailSubscriptions.type, "geoadmin_reports"),
+        eq42(emailSubscriptions.isActive, true)
       )
     );
     if (subscribers.length === 0) {
@@ -45261,7 +46823,7 @@ async function processGeoAdminReports() {
       );
       if (success) {
         sent++;
-        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq39(emailSubscriptions.id, sub.subscription.id));
+        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq42(emailSubscriptions.id, sub.subscription.id));
       }
     }
     console.log(
@@ -45332,8 +46894,8 @@ async function sendDigestEmail(recipientEmail, items, digestType) {
 async function retryFailedItems() {
   try {
     const failedItems = await db.select().from(emailQueue).where(
-      and24(
-        eq39(emailQueue.status, "failed"),
+      and25(
+        eq42(emailQueue.status, "failed"),
         sql29`${emailQueue.retryCount} < ${MAX_RETRIES}`
       )
     ).limit(20);
@@ -45351,12 +46913,12 @@ async function retryFailedItems() {
           sentAt: sent ? /* @__PURE__ */ new Date() : void 0,
           retryCount: (item.retryCount || 0) + 1,
           error: sent ? void 0 : `Retry ${(item.retryCount || 0) + 1} failed`
-        }).where(eq39(emailQueue.id, item.id));
+        }).where(eq42(emailQueue.id, item.id));
       } catch (err) {
         await db.update(emailQueue).set({
           retryCount: (item.retryCount || 0) + 1,
           error: `Retry error: ${err instanceof Error ? err.message : String(err)}`
-        }).where(eq39(emailQueue.id, item.id));
+        }).where(eq42(emailQueue.id, item.id));
       }
     }
   } catch (error) {
@@ -45866,8 +47428,8 @@ var CSRF_EXEMPT_PATHS = [
   // geo-admin login — must be exempt so it can bootstrap the token
   "/auth/admin-gate",
   // admin gate login — must be exempt so it can bootstrap the token
-  "/auth/register-geoadmin",
-  // .test account creation — must be exempt to bootstrap auth
+  // "/auth/register-geoadmin" requires an authenticated Admin/Superadmin session,
+  // so it goes through normal CSRF validation like any other protected write.
   "/api/users/heartbeat",
   // public presence-tracking ping — no CSRF needed
   "/api/v1/admin/gtm-events",
@@ -45977,10 +47539,16 @@ function csrfProtect(req, res, next) {
 
 // server/index.ts
 dotenv2.config();
+var isProdEnv = process.env.NODE_ENV === "production";
 if (!process.env.SIBLING_URL) {
-  process.env.SIBLING_URL = process.env.MUSIC_APP_URL || "http://localhost:5004";
+  const musicUrl = process.env.MUSIC_APP_URL || process.env.PRODUCTION_URL || process.env.APP_PUBLIC_URL || (isProdEnv ? "https://verso-air-online.onrender.com" : "http://localhost:5004");
+  if (isProdEnv && musicUrl && !musicUrl.includes("/music")) {
+    process.env.SIBLING_URL = musicUrl + "/music";
+  } else {
+    process.env.SIBLING_URL = musicUrl;
+  }
 }
-var isProd = process.env.NODE_ENV === "production";
+var isProd = isProdEnv;
 var requiredEnvVars = ["JWT_SECRET", "SESSION_SECRET", "DATABASE_URL"];
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
@@ -46018,8 +47586,8 @@ process.on("unhandledRejection", (reason) => {
 process.on("uncaughtException", (error) => {
   serverLog.error("Uncaught exception:", error);
 });
-var isDev = process.env.NODE_ENV !== "production";
-if (!isDev) {
+var isDev2 = process.env.NODE_ENV !== "production";
+if (!isDev2) {
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -46086,14 +47654,14 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express2.json({ limit: "2mb" }));
-app.use(express2.urlencoded({ extended: false }));
+app.use(express2.json({ limit: "10mb" }));
+app.use(express2.urlencoded({ extended: false, limit: "10mb" }));
 app.use(csrfSetCookie);
 app.use(csrfProtect);
 app.use(globalAuthGate);
 app.use((req, res, next) => {
   const start = Date.now();
-  const path8 = req.path;
+  const path7 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -46102,8 +47670,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path8.startsWith("/api")) {
-      let line = `${req.method} ${path8} ${res.statusCode} in ${duration}ms`;
+    if (path7.startsWith("/api")) {
+      let line = `${req.method} ${path7} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -46121,6 +47689,13 @@ app.use((req, res, next) => {
   serverLog.info("Email service initialized");
   await ensureAllTables();
   serverLog.info("Database tables verified");
+  syncLegacyProfiles().then(
+    (r) => serverLog.info(
+      `Profile sync: ${r.businessesSynced} biz, ${r.artistsSynced} artisans synced (${r.skipped} skipped, ${r.errors.length} errors)`
+    )
+  ).catch(
+    (err) => serverLog.error("Profile sync failed (non-fatal):", err.message)
+  );
   await registerRoutes(app);
   serverLog.info("Routes registered successfully");
   setupCategoryIntegrityCheck();
@@ -46146,9 +47721,17 @@ app.use((req, res, next) => {
   const server = http.createServer(app);
   initializeSocket(server);
   serverLog.info("Socket.io initialized for real-time notifications");
-  if (app.get("env") === "development") {
-    const { setupVite } = await import("../server/vite");
-    await setupVite(app, server);
+  if (process.env.NODE_ENV !== "production" && app.get("env") === "development") {
+    try {
+      const { setupVite } = await import("../server/vite");
+      await setupVite(app, server);
+    } catch (err) {
+      serverLog.warn(
+        "Vite dev middleware unavailable, falling back to static",
+        { err: err.message }
+      );
+      serveStatic(app);
+    }
   } else {
     serveStatic(app);
   }

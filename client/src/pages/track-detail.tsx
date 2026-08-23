@@ -138,10 +138,10 @@ export default function TrackDetailPage() {
     setIsDownloading(true);
     try {
       const response = await fetch(`/api/music/tracks/${trackId}/stream`);
-      if (!response.ok) throw new Error('fetch failed');
+      if (!response.ok) throw new Error("fetch failed");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `${track.title} - ${track.artist_name}.mp3`;
       document.body.appendChild(a);
@@ -150,7 +150,9 @@ export default function TrackDetailPage() {
       window.URL.revokeObjectURL(url);
     } catch {
       // iOS Safari / restricted browsers — show instructions
-      alert('Download blocked by your browser.\n\niOS: Press play → tap the share icon → Save to Files.\nAndroid: Long-press the audio player → Save audio.');
+      alert(
+        "Download blocked by your browser.\n\niOS: Press play → tap the share icon → Save to Files.\nAndroid: Long-press the audio player → Save audio.",
+      );
     } finally {
       setIsDownloading(false);
     }
@@ -181,13 +183,20 @@ export default function TrackDetailPage() {
           >
             <div className="w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl shadow-black/60 mx-auto md:mx-0 relative group">
               <img
-                src={track.cover_art || track.album_cover || track.pochette || '/default-music.png'}
+                src={
+                  track.cover_art ||
+                  track.album_cover ||
+                  track.pochette ||
+                  "/default-music.png"
+                }
                 alt=""
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const img = e.currentTarget;
-                  if (!img.dataset.fb) { img.dataset.fb = '1'; img.src = '/default-music.png'; }
-                  else img.style.display = 'none';
+                  if (!img.dataset.fb) {
+                    img.dataset.fb = "1";
+                    img.src = "/default-music.png";
+                  } else img.style.display = "none";
                 }}
               />
               {/* Play overlay on art */}
@@ -300,7 +309,9 @@ export default function TrackDetailPage() {
                 onClick={() =>
                   navigator
                     .share?.({ title: track.title, url: window.location.href })
-                    .catch(() => navigator.clipboard?.writeText(window.location.href))
+                    .catch(() =>
+                      navigator.clipboard?.writeText(window.location.href),
+                    )
                 }
                 className="px-4 py-2.5 bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl hover:text-white hover:border-gray-600 flex items-center gap-1.5 transition-all"
               >
@@ -314,9 +325,14 @@ export default function TrackDetailPage() {
                 className="px-4 py-2.5 bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl hover:text-amber-400 hover:border-amber-500/30 flex items-center gap-1.5 transition-all disabled:opacity-50"
               >
                 {isDownloading ? (
-                  <><span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" /> Téléchargement…</>
+                  <>
+                    <span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />{" "}
+                    Téléchargement…
+                  </>
                 ) : (
-                  <><MoreHorizontal className="w-4 h-4" /> Télécharger</>
+                  <>
+                    <MoreHorizontal className="w-4 h-4" /> Télécharger
+                  </>
                 )}
               </button>
 

@@ -50,6 +50,7 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
   useScrollLock(isOpen);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<
     "idle" | "connecting" | "connected" | "failed"
   >("idle");
@@ -144,14 +145,31 @@ const UserConnectionModal: React.FC<UserConnectionModalProps> = ({
 
                 {/* User Avatar & Info */}
                 <div className="flex flex-col items-center text-center mb-6">
-                  <motion.img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-24 h-24 rounded-full border-4 border-slate-900 object-cover ring-2 ring-cyan-500/50 mb-4"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.1 }}
-                  />
+                  {user.avatar && !avatarFailed ? (
+                    <motion.img
+                      src={user.avatar}
+                      alt={user.name}
+                      onError={() => setAvatarFailed(true)}
+                      className="w-24 h-24 rounded-full border-4 border-slate-900 object-cover ring-2 ring-cyan-500/50 mb-4"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.1 }}
+                    />
+                  ) : (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.1 }}
+                      className="w-24 h-24 rounded-full border-4 border-slate-900 bg-gradient-to-br from-cyan-600 to-slate-700 ring-2 ring-cyan-500/50 mb-4 flex items-center justify-center text-white font-bold text-2xl"
+                    >
+                      {(user.name || "?")
+                        .split(/\s+/)
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()}
+                    </motion.div>
+                  )}
 
                   <div className="flex items-center gap-2 justify-center mb-2">
                     <h2 className="text-2xl font-bold text-white font-handstyle">

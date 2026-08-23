@@ -1,4 +1,11 @@
-import { MapPin, Users, TrendingUp, MessageSquare, Flame, ChevronDown } from "lucide-react";
+import {
+  MapPin,
+  Users,
+  TrendingUp,
+  MessageSquare,
+  Flame,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -7,14 +14,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuth } from "@/hooks/use-auth";
 
-type Pool = 'all' | 'mudp' | 'cdp' | 'crossdp';
+type Pool = "all" | "mudp" | "cdp" | "crossdp";
 
-const POOL_META: Record<Pool, { label: string; color: string; desc: string }> = {
-  all:    { label: 'All Discussions', color: 'bg-slate-600',  desc: '' },
-  mudp:   { label: 'MUDP',           color: 'bg-violet-600', desc: 'Musical Universe — artists, tracks, royalties, streaming' },
-  cdp:    { label: 'CDP',            color: 'bg-blue-600',   desc: 'Community — blogs, business, public topics' },
-  crossdp:{ label: 'CrossDP',        color: 'bg-amber-600',  desc: 'Hybrid — music + community, events, cultural activities' },
-};
+const POOL_META: Record<Pool, { label: string; color: string; desc: string }> =
+  {
+    all: { label: "All Discussions", color: "bg-slate-600", desc: "" },
+    mudp: {
+      label: "MUDP",
+      color: "bg-violet-600",
+      desc: "Musical Universe — artists, tracks, royalties, streaming",
+    },
+    cdp: {
+      label: "CDP",
+      color: "bg-blue-600",
+      desc: "Community — blogs, business, public topics",
+    },
+    crossdp: {
+      label: "CrossDP",
+      color: "bg-amber-600",
+      desc: "Hybrid — music + community, events, cultural activities",
+    },
+  };
 
 interface CommunityPost {
   id: number;
@@ -77,21 +97,30 @@ function FanWall({ pool }: { pool: Pool }) {
   const allPosts = data?.posts || [];
   // client-side pool filter — pool tag stored in content prefix [MUDP], [CDP], [CrossDP]
   const posts = useMemo(() => {
-    if (pool === 'all') return allPosts;
-    const tag = pool === 'mudp' ? '[MUDP]' : pool === 'cdp' ? '[CDP]' : '[CrossDP]';
-    return allPosts.filter(p => p.content?.startsWith(tag));
+    if (pool === "all") return allPosts;
+    const tag =
+      pool === "mudp" ? "[MUDP]" : pool === "cdp" ? "[CDP]" : "[CrossDP]";
+    return allPosts.filter((p) => p.content?.startsWith(tag));
   }, [allPosts, pool]);
 
-  const poolPlaceholder = pool === 'mudp'
-    ? 'Share about artists, tracks, royalties…'
-    : pool === 'cdp'
-    ? 'Share a blog, community topic, or business insight…'
-    : pool === 'crossdp'
-    ? 'Cross-pollinate — music + community, events, cultural…'
-    : 'Share something with the community…';
+  const poolPlaceholder =
+    pool === "mudp"
+      ? "Share about artists, tracks, royalties…"
+      : pool === "cdp"
+        ? "Share a blog, community topic, or business insight…"
+        : pool === "crossdp"
+          ? "Cross-pollinate — music + community, events, cultural…"
+          : "Share something with the community…";
 
   const postWithPool = (content: string) => {
-    const prefix = pool === 'mudp' ? '[MUDP] ' : pool === 'cdp' ? '[CDP] ' : pool === 'crossdp' ? '[CrossDP] ' : '';
+    const prefix =
+      pool === "mudp"
+        ? "[MUDP] "
+        : pool === "cdp"
+          ? "[CDP] "
+          : pool === "crossdp"
+            ? "[CrossDP] "
+            : "";
     postMutation.mutate(prefix + content);
   };
 
@@ -177,7 +206,9 @@ function FanWall({ pool }: { pool: Pool }) {
                         src={p.avatar_url}
                         alt=""
                         className="w-full h-full object-cover"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
                     ) : (
                       name[0]?.toUpperCase() || "U"
@@ -208,7 +239,7 @@ function FanWall({ pool }: { pool: Pool }) {
 
 export default function CommunityDetail() {
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [activePool, setActivePool] = useState<Pool>('all');
+  const [activePool, setActivePool] = useState<Pool>("all");
   const [poolOpen, setPoolOpen] = useState(false);
 
   return (
@@ -227,7 +258,10 @@ export default function CommunityDetail() {
               </p>
             </div>
             <Link href="/">
-              <Button variant="outline" className="border-slate-600 text-slate-300">
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300"
+              >
                 ← Back
               </Button>
             </Link>
@@ -270,28 +304,43 @@ export default function CommunityDetail() {
               {tab}
             </button>
           ))}
-          {selectedTab === 'discussions' && (
+          {selectedTab === "discussions" && (
             <div className="ml-auto relative">
               <button
-                onClick={() => setPoolOpen(o => !o)}
+                onClick={() => setPoolOpen((o) => !o)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-sm text-white hover:border-amber-500/50 transition-colors"
               >
-                <span className={`w-2 h-2 rounded-full ${POOL_META[activePool].color}`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${POOL_META[activePool].color}`}
+                />
                 {POOL_META[activePool].label}
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${poolOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-400 transition-transform ${poolOpen ? "rotate-180" : ""}`}
+                />
               </button>
               {poolOpen && (
                 <div className="absolute right-0 top-full mt-1 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
-                  {(Object.keys(POOL_META) as Pool[]).map(p => (
+                  {(Object.keys(POOL_META) as Pool[]).map((p) => (
                     <button
                       key={p}
-                      onClick={() => { setActivePool(p); setPoolOpen(false); }}
-                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-800 transition-colors ${ p === activePool ? 'bg-slate-800' : '' }`}
+                      onClick={() => {
+                        setActivePool(p);
+                        setPoolOpen(false);
+                      }}
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-800 transition-colors ${p === activePool ? "bg-slate-800" : ""}`}
                     >
-                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${POOL_META[p].color}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${POOL_META[p].color}`}
+                      />
                       <div>
-                        <p className="text-sm font-medium text-white">{POOL_META[p].label}</p>
-                        {POOL_META[p].desc && <p className="text-[11px] text-slate-400 mt-0.5">{POOL_META[p].desc}</p>}
+                        <p className="text-sm font-medium text-white">
+                          {POOL_META[p].label}
+                        </p>
+                        {POOL_META[p].desc && (
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {POOL_META[p].desc}
+                          </p>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -362,11 +411,19 @@ export default function CommunityDetail() {
                   className="bg-slate-800 border border-slate-700 hover:border-amber-500/50 rounded-xl p-4 text-center transition-all hover:-translate-y-0.5 group"
                 >
                   <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-violet-600 rounded-full mx-auto mb-3" />
-                  <p className="font-semibold text-white text-sm truncate">Community Member</p>
-                  <p className="text-slate-400 text-xs mt-0.5 mb-3">Member since 2024</p>
+                  <p className="font-semibold text-white text-sm truncate">
+                    Community Member
+                  </p>
+                  <p className="text-slate-400 text-xs mt-0.5 mb-3">
+                    Member since 2024
+                  </p>
                   <div className="flex gap-2 justify-center">
-                    <button className="px-3 py-1 rounded-lg bg-amber-600/20 text-amber-400 text-xs border border-amber-600/30 hover:bg-amber-600/30 transition-colors">Follow</button>
-                    <button className="px-3 py-1 rounded-lg bg-slate-700 text-slate-300 text-xs border border-slate-600 hover:bg-slate-600 transition-colors">Message</button>
+                    <button className="px-3 py-1 rounded-lg bg-amber-600/20 text-amber-400 text-xs border border-amber-600/30 hover:bg-amber-600/30 transition-colors">
+                      Follow
+                    </button>
+                    <button className="px-3 py-1 rounded-lg bg-slate-700 text-slate-300 text-xs border border-slate-600 hover:bg-slate-600 transition-colors">
+                      Message
+                    </button>
                   </div>
                 </div>
               ))}

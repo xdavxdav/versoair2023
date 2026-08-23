@@ -606,18 +606,47 @@ function AppContent() {
 
   // Contextual page title — read by any header/navbar that needs a dynamic title
   const pageTitle = (() => {
-    if (currentPath.startsWith('/music') || currentPath.startsWith('/stream') || currentPath.startsWith('/track') || currentPath.startsWith('/artist-portal')) return 'Musical Universe';
-    if (currentPath.startsWith('/community') || currentPath.startsWith('/blog') || currentPath.startsWith('/communities')) return 'Community Hub';
-    if (currentPath.startsWith('/commerce') || currentPath.startsWith('/business') || currentPath.startsWith('/hotellerie') || currentPath.startsWith('/batiment') || currentPath.startsWith('/automobile') || currentPath.startsWith('/finances') || currentPath.startsWith('/divertissement') || currentPath.startsWith('/sante') || currentPath.startsWith('/geo-admin')) return 'Business Intelligence';
-    if (currentPath.startsWith('/royal')) return 'Royal';
-    if (currentPath.startsWith('/vault') || currentPath.startsWith('/sys/')) return 'Vault';
-    if (currentPath.startsWith('/profile')) return 'Profile';
-    if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin')) return 'Dashboard';
-    return 'Verso Air';
+    if (
+      currentPath.startsWith("/music") ||
+      currentPath.startsWith("/stream") ||
+      currentPath.startsWith("/track") ||
+      currentPath.startsWith("/artist-portal")
+    )
+      return "Musical Universe";
+    if (
+      currentPath.startsWith("/community") ||
+      currentPath.startsWith("/blog") ||
+      currentPath.startsWith("/communities")
+    )
+      return "Community Hub";
+    if (
+      currentPath.startsWith("/commerce") ||
+      currentPath.startsWith("/business") ||
+      currentPath.startsWith("/hotellerie") ||
+      currentPath.startsWith("/batiment") ||
+      currentPath.startsWith("/automobile") ||
+      currentPath.startsWith("/finances") ||
+      currentPath.startsWith("/divertissement") ||
+      currentPath.startsWith("/sante") ||
+      currentPath.startsWith("/geo-admin")
+    )
+      return "Business Intelligence";
+    if (currentPath.startsWith("/royal")) return "Royal";
+    if (currentPath.startsWith("/vault") || currentPath.startsWith("/sys/"))
+      return "Vault";
+    if (currentPath.startsWith("/profile")) return "Profile";
+    if (
+      currentPath.startsWith("/dashboard") ||
+      currentPath.startsWith("/admin")
+    )
+      return "Dashboard";
+    return "Verso Air";
   })();
 
   // Expose as a data attribute so any child can read it without a context
-  if (typeof document !== 'undefined') document.title = pageTitle === 'Verso Air' ? 'Verso Air' : `${pageTitle} — Verso Air`;
+  if (typeof document !== "undefined")
+    document.title =
+      pageTitle === "Verso Air" ? "Verso Air" : `${pageTitle} — Verso Air`;
   const isContentNavPage = isContentNavPath(currentPath);
   // Musical Universe pages have their own dedicated chrome (MusicSidebar /
   // MusicMobileDock for /music/*, /stream, /streamer-portal, /arcade, /arena,
@@ -938,9 +967,17 @@ function AppContent() {
         </Suspense>
       )}
 
-      {/* Notification bell — fixed top-right, visible on all non-auth pages */}
+      {/* Notification bell — fixed top-right, visible on all non-auth pages.
+          Dropped below the bar on /blog & /marketplace since BlogNavbar has
+          its own auth/Sign-Out controls anchored in that same corner. */}
       {!isAuthPage && !isMusicPage && user && (
-        <div className="fixed top-3 right-4 z-[150]">
+        <div
+          className={`fixed right-4 z-[150] ${
+            currentPath === "/blog" || currentPath === "/marketplace"
+              ? "top-16 md:top-[4.5rem]"
+              : "top-3"
+          }`}
+        >
           <NotificationCenter />
         </div>
       )}

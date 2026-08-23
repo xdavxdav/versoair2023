@@ -1,14 +1,31 @@
 // Global notification bell — amber badge, real-time socket, click-to-read.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, X, Check, CheckCheck, Heart, MessageCircle, UserPlus, Download, Radio } from "lucide-react";
+import {
+  Bell,
+  X,
+  Check,
+  CheckCheck,
+  Heart,
+  MessageCircle,
+  UserPlus,
+  Download,
+  Radio,
+} from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch } from "@/lib/auth";
 import { useInboxSocket } from "@/hooks/use-inbox-socket";
 
 interface AppNotification {
   id: string;
-  type: "follow" | "like" | "comment" | "message" | "mention" | "download" | "publish";
+  type:
+    | "follow"
+    | "like"
+    | "comment"
+    | "message"
+    | "mention"
+    | "download"
+    | "publish";
   actorName: string;
   actorAvatar?: string | null;
   text: string;
@@ -26,13 +43,13 @@ function timeAgo(iso: string): string {
 }
 
 const TYPE_ICON: Record<AppNotification["type"], React.ReactNode> = {
-  follow:   <UserPlus className="w-4 h-4 text-amber-400" />,
-  like:     <Heart className="w-4 h-4 text-red-400" />,
-  comment:  <MessageCircle className="w-4 h-4 text-blue-400" />,
-  message:  <MessageCircle className="w-4 h-4 text-violet-400" />,
-  mention:  <MessageCircle className="w-4 h-4 text-cyan-400" />,
+  follow: <UserPlus className="w-4 h-4 text-amber-400" />,
+  like: <Heart className="w-4 h-4 text-red-400" />,
+  comment: <MessageCircle className="w-4 h-4 text-blue-400" />,
+  message: <MessageCircle className="w-4 h-4 text-violet-400" />,
+  mention: <MessageCircle className="w-4 h-4 text-cyan-400" />,
   download: <Download className="w-4 h-4 text-amber-400" />,
-  publish:  <Radio className="w-4 h-4 text-green-400" />,
+  publish: <Radio className="w-4 h-4 text-green-400" />,
 };
 
 export default function NotificationCenter() {
@@ -89,14 +106,18 @@ export default function NotificationCenter() {
 
   const markAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    authenticatedFetch("/api/notifications/read-all", { method: "POST" }).catch(() => {});
+    authenticatedFetch("/api/notifications/read-all", { method: "POST" }).catch(
+      () => {},
+    );
   };
 
   const markOne = (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-    authenticatedFetch(`/api/notifications/${id}/read`, { method: "POST" }).catch(() => {});
+    authenticatedFetch(`/api/notifications/${id}/read`, {
+      method: "POST",
+    }).catch(() => {});
   };
 
   if (!user) return null;
@@ -128,7 +149,9 @@ export default function NotificationCenter() {
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <span className="font-semibold text-white text-sm">Notifications</span>
+              <span className="font-semibold text-white text-sm">
+                Notifications
+              </span>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
                   <button
@@ -140,7 +163,10 @@ export default function NotificationCenter() {
                     All read
                   </button>
                 )}
-                <button onClick={() => setOpen(false)} className="text-white/40 hover:text-white">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-white/40 hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -162,8 +188,11 @@ export default function NotificationCenter() {
               {notifications.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => { markOne(n.id); if (n.entityUrl) window.location.href = n.entityUrl; }}
-                  className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${!n.read ? 'bg-amber-500/5' : ''}`}
+                  onClick={() => {
+                    markOne(n.id);
+                    if (n.entityUrl) window.location.href = n.entityUrl;
+                  }}
+                  className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${!n.read ? "bg-amber-500/5" : ""}`}
                 >
                   {/* Actor avatar */}
                   <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
@@ -172,22 +201,31 @@ export default function NotificationCenter() {
                         src={n.actorAvatar}
                         alt=""
                         className="w-full h-full object-cover"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
                     ) : (
-                      <span className="text-sm font-bold text-white/60">{n.actorName?.[0]?.toUpperCase()}</span>
+                      <span className="text-sm font-bold text-white/60">
+                        {n.actorName?.[0]?.toUpperCase()}
+                      </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {TYPE_ICON[n.type]}
                       <p className="text-sm text-white truncate">
-                        <span className="font-semibold">{n.actorName}</span>{' '}{n.text}
+                        <span className="font-semibold">{n.actorName}</span>{" "}
+                        {n.text}
                       </p>
                     </div>
-                    <p className="text-[11px] text-white/30">{timeAgo(n.createdAt)}</p>
+                    <p className="text-[11px] text-white/30">
+                      {timeAgo(n.createdAt)}
+                    </p>
                   </div>
-                  {!n.read && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 mt-1.5" />}
+                  {!n.read && (
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 mt-1.5" />
+                  )}
                 </button>
               ))}
             </div>

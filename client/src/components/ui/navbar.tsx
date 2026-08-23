@@ -16,6 +16,7 @@ import {
   Users,
   Wrench,
   Zap,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -773,6 +774,19 @@ export default function Navbar({
             >
               <Search className="h-4 w-4" />
             </button>
+
+            {/* Messages — opens the globally mounted MessengerPanel */}
+            {user && (
+              <button
+                onClick={() =>
+                  window.dispatchEvent(new Event("messenger:open"))
+                }
+                className="text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
+                aria-label="Messages"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+            )}
 
             {/* User Actions - Always visible */}
             {user ? (

@@ -310,9 +310,12 @@ export default function MessengerPanel({
                     <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center">
                       <Send className="w-7 h-7 text-amber-400" />
                     </div>
-                    <p className="text-white font-semibold">Start a conversation</p>
+                    <p className="text-white font-semibold">
+                      Start a conversation
+                    </p>
                     <p className="text-white/40 text-sm max-w-xs mx-auto">
-                      Messages from Marketplace sellers, artists, and the community will show up here.
+                      Messages from Marketplace sellers, artists, and the
+                      community will show up here.
                     </p>
                     <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
                       <p className="text-white/75 font-medium">Sample flow</p>
@@ -342,7 +345,9 @@ export default function MessengerPanel({
                     key={c.id}
                     onClick={() => setActiveConvo(c)}
                     className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-white/5 ${
-                      c.unreadCount > 0 ? 'bg-slate-800/50 hover:bg-slate-800' : 'hover:bg-white/5'
+                      c.unreadCount > 0
+                        ? "bg-slate-800/50 hover:bg-slate-800"
+                        : "hover:bg-white/5"
                     }`}
                   >
                     <div className="relative w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-semibold text-amber-300 overflow-hidden shrink-0">
@@ -351,7 +356,9 @@ export default function MessengerPanel({
                           src={c.participantAvatar}
                           alt=""
                           className="w-full h-full object-cover"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       ) : (
                         c.participantName?.[0]?.toUpperCase()
@@ -360,7 +367,9 @@ export default function MessengerPanel({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className={`text-sm font-medium truncate ${ c.unreadCount > 0 ? 'text-white' : 'text-white/70' }`}>
+                        <p
+                          className={`text-sm font-medium truncate ${c.unreadCount > 0 ? "text-white" : "text-white/70"}`}
+                        >
                           {c.participantName}
                         </p>
                         <span className="shrink-0 text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/10 text-white/40">
@@ -376,7 +385,10 @@ export default function MessengerPanel({
                         {formatTimestamp(c.lastMessageAt)}
                       </span>
                       {c.unreadCount > 0 && (
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" aria-label={`${c.unreadCount} unread`} />
+                        <span
+                          className="w-2.5 h-2.5 rounded-full bg-amber-500"
+                          aria-label={`${c.unreadCount} unread`}
+                        />
                       )}
                     </div>
                   </button>

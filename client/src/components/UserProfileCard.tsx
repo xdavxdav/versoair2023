@@ -47,6 +47,14 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onMessage,
   onShare,
 }) => {
+  const [avatarFailed, setAvatarFailed] = React.useState(false);
+  const initials = (user.name || "?")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
   const handleFollowToggle = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (isFollowPending) return;
@@ -83,12 +91,19 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
       <div className="px-4 pb-4 pt-2">
         {/* Avatar and basic info */}
         <div className="flex gap-4 mb-4">
-          <motion.img
-            src={user.avatar}
-            alt={user.name}
-            className="w-20 h-20 rounded-full border-4 border-slate-900 object-cover ring-2 ring-cyan-500/30"
-            whileHover={{ scale: 1.05 }}
-          />
+          {user.avatar && !avatarFailed ? (
+            <motion.img
+              src={user.avatar}
+              alt={user.name}
+              onError={() => setAvatarFailed(true)}
+              className="w-20 h-20 rounded-full border-4 border-slate-900 object-cover ring-2 ring-cyan-500/30"
+              whileHover={{ scale: 1.05 }}
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full border-4 border-slate-900 bg-gradient-to-br from-cyan-600 to-slate-700 ring-2 ring-cyan-500/30 flex items-center justify-center text-white font-bold text-xl">
+              {initials}
+            </div>
+          )}
           <div className="flex-1">
             <div className="flex items-start gap-2 mb-1">
               <h3 className="font-bold text-white text-lg font-handstyle">

@@ -1311,13 +1311,19 @@ router.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
     const { status } = req.body;
     const allowed = ["published", "draft", "scheduled", "archived"];
     if (!allowed.includes(status)) {
-      return res.status(400).json({ success: false, error: `status must be one of: ${allowed.join(", ")}` });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: `status must be one of: ${allowed.join(", ")}`,
+        });
     }
     const result = await pool.query(
       `UPDATE music_tracks SET status = $1 WHERE id = $2 RETURNING id, title, status`,
       [status, trackId],
     );
-    if (!result.rows.length) return res.status(404).json({ success: false, error: "Track not found" });
+    if (!result.rows.length)
+      return res.status(404).json({ success: false, error: "Track not found" });
     console.log(`[MUSIC] Track #${trackId} status → ${status}`);
     res.json({ success: true, track: result.rows[0] });
   } catch (err: any) {
