@@ -132,6 +132,30 @@ export default function TrackDetailPage() {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/music/tracks/${trackId}/stream`);
+      if (!response.ok) throw new Error('fetch failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title} - ${track.artist_name}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // iOS Safari / restricted browsers — show instructions
+      alert('Download blocked by your browser.\n\niOS: Press play → tap the share icon → Save to Files.\nAndroid: Long-press the audio player → Save audio.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
       {/* Back nav */}
@@ -276,12 +300,24 @@ export default function TrackDetailPage() {
                 onClick={() =>
                   navigator
                     .share?.({ title: track.title, url: window.location.href })
-                    .catch(() => {})
+                    .catch(() => navigator.clipboard?.writeText(window.location.href))
                 }
                 className="px-4 py-2.5 bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl hover:text-white hover:border-gray-600 flex items-center gap-1.5 transition-all"
               >
                 <Share2 className="w-4 h-4" />
                 Partager
+              </button>
+
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="px-4 py-2.5 bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl hover:text-amber-400 hover:border-amber-500/30 flex items-center gap-1.5 transition-all disabled:opacity-50"
+              >
+                {isDownloading ? (
+                  <><span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" /> Téléchargement…</>
+                ) : (
+                  <><MoreHorizontal className="w-4 h-4" /> Télécharger</>
+                )}
               </button>
 
               {track.wiki_url && (

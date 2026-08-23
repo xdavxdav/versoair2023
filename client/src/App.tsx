@@ -602,6 +602,21 @@ function AppContent() {
   const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
+
+  // Contextual page title — read by any header/navbar that needs a dynamic title
+  const pageTitle = (() => {
+    if (currentPath.startsWith('/music') || currentPath.startsWith('/stream') || currentPath.startsWith('/track') || currentPath.startsWith('/artist-portal')) return 'Musical Universe';
+    if (currentPath.startsWith('/community') || currentPath.startsWith('/blog') || currentPath.startsWith('/communities')) return 'Community Hub';
+    if (currentPath.startsWith('/commerce') || currentPath.startsWith('/business') || currentPath.startsWith('/hotellerie') || currentPath.startsWith('/batiment') || currentPath.startsWith('/automobile') || currentPath.startsWith('/finances') || currentPath.startsWith('/divertissement') || currentPath.startsWith('/sante') || currentPath.startsWith('/geo-admin')) return 'Business Intelligence';
+    if (currentPath.startsWith('/royal')) return 'Royal';
+    if (currentPath.startsWith('/vault') || currentPath.startsWith('/sys/')) return 'Vault';
+    if (currentPath.startsWith('/profile')) return 'Profile';
+    if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin')) return 'Dashboard';
+    return 'Verso Air';
+  })();
+
+  // Expose as a data attribute so any child can read it without a context
+  if (typeof document !== 'undefined') document.title = pageTitle === 'Verso Air' ? 'Verso Air' : `${pageTitle} — Verso Air`;
   const isContentNavPage = isContentNavPath(currentPath);
   // Musical Universe pages have their own dedicated chrome (MusicSidebar /
   // MusicMobileDock for /music/*, /stream, /streamer-portal, /arcade, /arena,

@@ -1,11 +1,20 @@
-import { MapPin, Users, TrendingUp, MessageSquare } from "lucide-react";
+import { MapPin, Users, TrendingUp, MessageSquare, Flame, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuth } from "@/hooks/use-auth";
+
+type Pool = 'all' | 'mudp' | 'cdp' | 'crossdp';
+
+const POOL_META: Record<Pool, { label: string; color: string; desc: string }> = {
+  all:    { label: 'All Discussions', color: 'bg-slate-600',  desc: '' },
+  mudp:   { label: 'MUDP',           color: 'bg-violet-600', desc: 'Musical Universe — artists, tracks, royalties, streaming' },
+  cdp:    { label: 'CDP',            color: 'bg-blue-600',   desc: 'Community — blogs, business, public topics' },
+  crossdp:{ label: 'CrossDP',        color: 'bg-amber-600',  desc: 'Hybrid — music + community, events, cultural activities' },
+};
 
 interface CommunityPost {
   id: number;
@@ -30,7 +39,7 @@ function timeAgo(iso?: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function FanWall() {
+function FanWall({ pool }: { pool: Pool }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [text, setText] = useState("");
@@ -65,7 +74,26 @@ function FanWall() {
     onError: (err: any) => setError(err?.message || "Failed to post"),
   });
 
-  const posts = data?.posts || [];
+  const allPosts = data?.posts || [];
+  // client-side pool filter — pool tag stored in content prefix [MUDP], [CDP], [CrossDP]
+  const posts = useMemo(() => {
+    if (pool === 'all') return allPosts;
+    const tag = pool === 'mudp' ? '[MUDP]' : pool === 'cdp' ? '[CDP]' : '[CrossDP]';
+    return allPosts.filter(p => p.content?.startsWith(tag));
+  }, [allPosts, pool]);
+
+  const poolPlaceholder = pool === 'mudp'
+    ? 'Share about artists, tracks, royalties…'
+    : pool === 'cdp'
+    ? 'Share a blog, community topic, or business insight…'
+    : pool === 'crossdp'
+    ? 'Cross-pollinate — music + community, events, cultural…'
+    : 'Share something with the community…';
+
+  const postWithPool = (content: string) => {
+    const prefix = pool === 'mudp' ? '[MUDP] ' : pool === 'cdp' ? '[CDP] ' : pool === 'crossdp' ? '[CrossDP] ' : '';
+    postMutation.mutate(prefix + content);
+  };
 
   return (
     <div className="space-y-4">
@@ -79,8 +107,8 @@ function FanWall() {
               disabled={postMutation.isPending}
               rows={3}
               maxLength={2000}
-              placeholder="Share something with the community…"
-              className="w-full bg-slate-900/60 text-white placeholder:text-slate-500 border border-slate-700 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/60"
+              placeholder={poolPlaceholder}
+              className="w-full bg-slate-900/60 text-white placeholder:text-slate-500 border border-slate-700 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-amber-500/60"
             />
             <div className="flex items-center justify-between mt-2">
               <p className="text-[11px] text-slate-500">
@@ -93,8 +121,8 @@ function FanWall() {
                 <Button
                   size="sm"
                   disabled={!text.trim() || postMutation.isPending}
-                  onClick={() => postMutation.mutate(text.trim())}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => postWithPool(text.trim())}
+                  className="bg-amber-600 hover:bg-amber-700"
                 >
                   {postMutation.isPending ? "Posting…" : "Post"}
                 </Button>
@@ -111,8 +139,8 @@ function FanWall() {
             <p className="text-slate-400 text-sm mb-2">
               Sign in to join the conversation.
             </p>
-            <Link href="/login">
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+            <Link href="/auth/signin">
+              <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
                 Sign in
               </Button>
             </Link>
@@ -143,12 +171,13 @@ function FanWall() {
                 className="bg-slate-800/40 border border-slate-700 rounded-xl p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden">
                     {p.avatar_url ? (
                       <img
                         src={p.avatar_url}
                         alt=""
                         className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                       />
                     ) : (
                       name[0]?.toUpperCase() || "U"
@@ -179,24 +208,26 @@ function FanWall() {
 
 export default function CommunityDetail() {
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [activePool, setActivePool] = useState<Pool>('all');
+  const [poolOpen, setPoolOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <div className="relative pt-20 pb-16 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
+      <div className="relative pt-20 pb-10 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
         <div className="max-w-[95vw] mx-auto">
-          <div className="flex items-start justify-between mb-8">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-5xl font-bold text-white mb-3">
+              <h1 className="text-4xl font-bold text-white mb-2">
                 Community Hub
               </h1>
-              <p className="text-slate-300 flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+              <p className="text-slate-400 flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4" />
                 Global Community
               </p>
             </div>
             <Link href="/">
-              <Button variant="outline" className="border-slate-600">
+              <Button variant="outline" className="border-slate-600 text-slate-300">
                 ← Back
               </Button>
             </Link>
@@ -223,22 +254,51 @@ export default function CommunityDetail() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="max-w-[95vw] mx-auto px-4 py-8">
-        <div className="flex gap-4 border-b border-slate-700 mb-8">
+      {/* Tabs + Pool dropdown */}
+      <div className="max-w-[95vw] mx-auto px-4 py-6">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-700 pb-4 mb-6">
           {["overview", "members", "discussions", "events"].map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
-              className={`px-4 py-2 font-semibold capitalize transition-all ${
+              className={`px-4 py-2 font-semibold capitalize transition-all text-sm ${
                 selectedTab === tab
-                  ? "text-emerald-400 border-b-2 border-emerald-400"
+                  ? "text-amber-400 border-b-2 border-amber-400"
                   : "text-slate-400 hover:text-white"
               }`}
             >
               {tab}
             </button>
           ))}
+          {selectedTab === 'discussions' && (
+            <div className="ml-auto relative">
+              <button
+                onClick={() => setPoolOpen(o => !o)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-sm text-white hover:border-amber-500/50 transition-colors"
+              >
+                <span className={`w-2 h-2 rounded-full ${POOL_META[activePool].color}`} />
+                {POOL_META[activePool].label}
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${poolOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {poolOpen && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                  {(Object.keys(POOL_META) as Pool[]).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => { setActivePool(p); setPoolOpen(false); }}
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-800 transition-colors ${ p === activePool ? 'bg-slate-800' : '' }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${POOL_META[p].color}`} />
+                      <div>
+                        <p className="text-sm font-medium text-white">{POOL_META[p].label}</p>
+                        {POOL_META[p].desc && <p className="text-[11px] text-slate-400 mt-0.5">{POOL_META[p].desc}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tab Content */}
@@ -299,19 +359,21 @@ export default function CommunityDetail() {
               {[1, 2, 3, 4, 5, 6, 7, 8].map((_, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-800/30 border border-slate-700 rounded-lg p-4 text-center"
+                  className="bg-slate-800 border border-slate-700 hover:border-amber-500/50 rounded-xl p-4 text-center transition-all hover:-translate-y-0.5 group"
                 >
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full mx-auto mb-3"></div>
-                  <p className="font-semibold text-white">Community Member</p>
-                  <p className="text-slate-400 text-xs mt-1">
-                    Member since 2024
-                  </p>
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-violet-600 rounded-full mx-auto mb-3" />
+                  <p className="font-semibold text-white text-sm truncate">Community Member</p>
+                  <p className="text-slate-400 text-xs mt-0.5 mb-3">Member since 2024</p>
+                  <div className="flex gap-2 justify-center">
+                    <button className="px-3 py-1 rounded-lg bg-amber-600/20 text-amber-400 text-xs border border-amber-600/30 hover:bg-amber-600/30 transition-colors">Follow</button>
+                    <button className="px-3 py-1 rounded-lg bg-slate-700 text-slate-300 text-xs border border-slate-600 hover:bg-slate-600 transition-colors">Message</button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          {selectedTab === "discussions" && <FanWall />}
+          {selectedTab === "discussions" && <FanWall pool={activePool} />}
 
           {selectedTab === "events" && (
             <div className="space-y-4">
@@ -329,7 +391,7 @@ export default function CommunityDetail() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-3 text-emerald-400"
+                    className="mt-3 text-amber-400"
                   >
                     Learn More →
                   </Button>
