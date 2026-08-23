@@ -17,25 +17,35 @@
 }
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(43, 83%, 48%);
-  --primary: hsl(36, 82%, 43%);
-  --primary-foreground: hsl(60, 9.1%, 97.8%);
-  --secondary: hsl(48, 96%, 89%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(60, 4.8%, 95.9%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
+  --verso-navy: #0f172a;
+  --verso-navy-muted: #1e293b;
+  --verso-amber: #d97706;
+  --verso-amber-bright: #f59e0b;
+  --verso-violet: #7c3aed;
+  --verso-violet-bright: #8b5cf6;
+  --verso-success: #22c55e;
+  --verso-danger: #ef4444;
+  --verso-text: #f8fafc;
+  --verso-text-muted: #94a3b8;
+  --background: var(--verso-navy);
+  --foreground: var(--verso-text);
+  --muted: var(--verso-navy-muted);
+  --muted-foreground: var(--verso-text-muted);
+  --popover: var(--verso-navy-muted);
+  --popover-foreground: var(--verso-text);
+  --card: var(--verso-navy-muted);
+  --card-foreground: var(--verso-text);
+  --border: #334155;
+  --input: #334155;
+  --primary: var(--verso-amber);
+  --primary-foreground: var(--verso-text);
+  --secondary: var(--verso-violet);
+  --secondary-foreground: var(--verso-text);
+  --accent: #334155;
+  --accent-foreground: var(--verso-text);
+  --destructive: var(--verso-danger);
+  --destructive-foreground: var(--verso-text);
+  --ring: var(--verso-amber-bright);
   --radius: 0.5rem;
 }
 
@@ -94,6 +104,7 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-family: ui-sans-serif, system-ui, sans-serif;
     width: 100%;
     overflow-x: hidden;
     margin: 0;

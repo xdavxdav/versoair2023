@@ -188,7 +188,7 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className="bg-slate-950/95 backdrop-blur-xl border-b border-white/10 relative overflow-x-hidden"
+        className="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 z-[100] overflow-x-hidden"
         style={{ overflowX: "hidden", overflowY: "visible" }}
       >
         <div className="max-w-full mx-auto px-3 md:px-5">

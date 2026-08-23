@@ -15,7 +15,7 @@
 
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 interface ProtectedRouteProps {
   /** The page component to render when authorized (alternative to children) */
@@ -36,16 +36,21 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading } = useAuthContext();
   const [, setLocation] = useLocation();
+  const redirectingRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (loading) return;
 
     if (!user) {
+      if (redirectingRef.current) return;
+      redirectingRef.current = true;
       setLocation(
         `/auth/signin?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`,
       );
       return;
     }
+
+    redirectingRef.current = false;
 
     if (roles && roles.length > 0) {
       const userRole = user.role || "";

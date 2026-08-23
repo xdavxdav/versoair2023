@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from "react";
 import { setAuthToken, clearCachedUser } from "@/lib/auth";
+import { queryClient } from "@/lib/queryClient";
 
 export interface AuthUser {
   id: string;
@@ -215,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function fullClearOnLogout() {
     clearCachedUser();
+    queryClient.clear();
     localStorage.removeItem(USER_CACHE_KEY);
     localStorage.removeItem("geoadmin_session");
     localStorage.removeItem("geoadmin_username");
@@ -224,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("adminUsername");
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
+    sessionStorage.removeItem("music_referrer");
     setToken(null);
     setUser(null);
   }

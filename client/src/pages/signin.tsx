@@ -107,6 +107,14 @@ export default function SignIn() {
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/");
+    }
+  };
+
   // Onboarding: display name prompt after first login
   const [onboardingName, setOnboardingName] = useState("");
   const [onboardingSaving, setOnboardingSaving] = useState(false);
@@ -1843,7 +1851,16 @@ export default function SignIn() {
 
   if (step === "login") {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
+      <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-xl p-8">

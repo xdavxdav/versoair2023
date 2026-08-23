@@ -306,10 +306,13 @@ export default function MessengerPanel({
                   </div>
                 )}
                 {!loadingConvos && conversations.length === 0 && (
-                  <div className="px-4 py-8 text-center text-white/40 text-sm space-y-4">
-                    <p>
-                      No conversations yet. Messages from Marketplace sellers,
-                      artists, and the community will show up here.
+                  <div className="px-4 py-12 text-center space-y-3">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center">
+                      <Send className="w-7 h-7 text-amber-400" />
+                    </div>
+                    <p className="text-white font-semibold">Start a conversation</p>
+                    <p className="text-white/40 text-sm max-w-xs mx-auto">
+                      Messages from Marketplace sellers, artists, and the community will show up here.
                     </p>
                     <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
                       <p className="text-white/75 font-medium">Sample flow</p>
@@ -338,22 +341,26 @@ export default function MessengerPanel({
                   <button
                     key={c.id}
                     onClick={() => setActiveConvo(c)}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left border-b border-white/5"
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-white/5 ${
+                      c.unreadCount > 0 ? 'bg-slate-800/50 hover:bg-slate-800' : 'hover:bg-white/5'
+                    }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-sm font-semibold text-purple-300 overflow-hidden shrink-0">
+                    <div className="relative w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-semibold text-amber-300 overflow-hidden shrink-0">
                       {c.participantAvatar ? (
                         <img
                           src={c.participantAvatar}
                           alt=""
                           className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                       ) : (
                         c.participantName?.[0]?.toUpperCase()
                       )}
+                      {/* online dot placeholder — will be driven by socket status */}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-white truncate">
+                        <p className={`text-sm font-medium truncate ${ c.unreadCount > 0 ? 'text-white' : 'text-white/70' }`}>
                           {c.participantName}
                         </p>
                         <span className="shrink-0 text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/10 text-white/40">
@@ -369,9 +376,7 @@ export default function MessengerPanel({
                         {formatTimestamp(c.lastMessageAt)}
                       </span>
                       {c.unreadCount > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-purple-500 text-[10px] text-white flex items-center justify-center">
-                          {c.unreadCount}
-                        </span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" aria-label={`${c.unreadCount} unread`} />
                       )}
                     </div>
                   </button>
@@ -399,8 +404,8 @@ export default function MessengerPanel({
                         <div
                           className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                             isMine
-                              ? "bg-purple-500/20 text-white border border-purple-500/30"
-                              : "bg-white/5 text-white/90 border border-white/10"
+                              ? "bg-amber-600 text-white rounded-br-sm"
+                              : "bg-slate-700 text-white/90 rounded-bl-sm"
                           }`}
                         >
                           <p className="whitespace-pre-wrap break-words">
@@ -456,14 +461,14 @@ export default function MessengerPanel({
                         sendMessage();
                       }
                     }}
-                    placeholder="Write a private message…"
+                    placeholder="Write a message…"
                     maxLength={2000}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!draft.trim() || sending}
-                    className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 disabled:opacity-40 hover:bg-purple-500/30 transition-colors"
+                    className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-amber-600 text-white disabled:opacity-40 hover:bg-amber-500 transition-colors"
                     aria-label="Send"
                   >
                     {sending ? (

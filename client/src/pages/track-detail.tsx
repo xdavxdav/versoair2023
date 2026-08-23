@@ -156,17 +156,16 @@ export default function TrackDetailPage() {
             className="flex-shrink-0"
           >
             <div className="w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl shadow-black/60 mx-auto md:mx-0 relative group">
-              {track.cover_art || track.album_cover ? (
-                <img
-                  src={track.cover_art || track.album_cover}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                  <Music className="w-20 h-20 text-white/20" />
-                </div>
-              )}
+              <img
+                src={track.cover_art || track.album_cover || track.pochette || '/default-music.png'}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fb) { img.dataset.fb = '1'; img.src = '/default-music.png'; }
+                  else img.style.display = 'none';
+                }}
+              />
               {/* Play overlay on art */}
               <div
                 onClick={handlePlay}

@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   // Track referrer for proper back navigation
   useEffect(() => {
@@ -69,6 +70,15 @@ export default function ProfilePage() {
       .join("")
       .toUpperCase()
       .slice(0, 2) || "VA";
+  const avatarUrl = user?.avatar && !avatarFailed ? user.avatar : null;
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/");
+    }
+  };
 
   const handleSaveDisplayName = async () => {
     if (!editName.trim() || editName.trim().length < 2) return;
@@ -165,22 +175,21 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Cover gradient */}
+      {/* Cover gradient — capped to avoid dead vertical space */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative h-48 overflow-hidden"
+        className="relative h-28 md:h-36 overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/30 via-purple-600/20 to-pink-600/30" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(6,182,212,0.15)_0%,transparent_50%),radial-gradient(ellipse_at_70%_80%,rgba(168,85,247,0.1)_0%,transparent_50%)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-700/30 via-violet-600/20 to-amber-900/20" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950" />
       </motion.div>
 
       {/* Profile Content */}
       <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10 pb-12 w-full">
-        {/* Back button */}
+        {/* Back button — visible on all viewports, amber accent */}
         <button
-          onClick={() => window.history.back()}
+          onClick={handleBack}
           className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200 text-white mb-6"
           title="Go back"
         >
@@ -194,9 +203,18 @@ export default function ProfilePage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring" }}
-            className="w-28 h-28 rounded-full border-4 border-slate-900 bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center ring-2 ring-cyan-500/50 text-white text-3xl font-bold shrink-0"
+            className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-900 bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center ring-2 ring-amber-500/50 text-white text-3xl font-bold shrink-0"
           >
-            {initials}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${displayName}'s avatar`}
+                onError={() => setAvatarFailed(true)}
+                className="h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </motion.div>
 
           {/* Info */}

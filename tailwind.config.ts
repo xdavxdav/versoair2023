@@ -12,6 +12,18 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        verso: {
+          navy: "#0f172a",
+          "navy-muted": "#1e293b",
+          amber: "#d97706",
+          "amber-bright": "#f59e0b",
+          violet: "#7c3aed",
+          "violet-bright": "#8b5cf6",
+          success: "#22c55e",
+          danger: "#ef4444",
+          text: "#f8fafc",
+          "text-muted": "#94a3b8",
+        },
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
