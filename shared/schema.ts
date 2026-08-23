@@ -3268,6 +3268,7 @@ export const inboxMessages = pgTable(
     senderName: text("sender_name").notNull(),
     senderAvatar: text("sender_avatar"),
     content: text("content").notNull(),
+    attachmentUrl: text("attachment_url"),
     isRead: boolean("is_read").notNull().default(false),
     isAi: boolean("is_ai").notNull().default(false), // true = VersoAI reply
     // ── Publish-to-community (viral) ──

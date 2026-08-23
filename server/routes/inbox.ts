@@ -14,6 +14,9 @@
 
 import { Router, Request, Response } from "express";
 import { eq, and, desc, sql } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { socialPosts } from "@shared/social-schema";
@@ -22,6 +25,39 @@ import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 import { notificationEmitter } from "../services/notification-service";
 
 const router = Router();
+
+// ── Chat attachment uploads (images only) ──────────────────────────────────
+const INBOX_UPLOADS_DIR =
+  process.env.NODE_ENV === "production"
+    ? path.join("/tmp", "uploads", "inbox")
+    : path.resolve("uploads", "inbox");
+
+try {
+  if (!fs.existsSync(INBOX_UPLOADS_DIR)) {
+    fs.mkdirSync(INBOX_UPLOADS_DIR, { recursive: true });
+  }
+} catch (err: any) {
+  console.warn(`⚠️  Could not create inbox uploads dir: ${err.message}`);
+}
+
+const inboxUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, INBOX_UPLOADS_DIR),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(
+        null,
+        `chat-${uniqueSuffix}${path.extname(file.originalname).toLowerCase()}`,
+      );
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only image attachments are allowed") as any, false);
+  },
+});
 
 // ─── Tier helpers ─────────────────────────────────────────────────────────────
 
@@ -413,6 +449,35 @@ router.post(
   },
 );
 
+// ─── POST /api/inbox/attachments — upload a chat image, returns its URL ──────
+router.post(
+  "/attachments",
+  inboxUpload.single("file"),
+  async (req: Request, res: Response) => {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, error: "No file uploaded" });
+    }
+    const url = `/api/inbox/attachments/file/${req.file.filename}`;
+    res.json({ success: true, url });
+  },
+);
+
+// ─── GET /api/inbox/attachments/file/:filename — serve an uploaded chat image ─
+router.get("/attachments/file/:filename", (req: Request, res: Response) => {
+  const { filename } = req.params;
+  if (/[^a-zA-Z0-9._-]/.test(filename)) {
+    return res.status(400).json({ success: false, error: "Invalid filename" });
+  }
+  const filePath = path.join(INBOX_UPLOADS_DIR, filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: "File not found" });
+  }
+  res.set("Cache-Control", "public, max-age=86400");
+  res.sendFile(filePath);
+});
+
 // ─── POST /api/inbox/conversations/:id/messages ──────────────────────────────
 // Send a message. Respects daily message limits per tier for business_network only.
 // marketplace messages are free/ungated (rate-limited for spam only).
@@ -423,9 +488,10 @@ router.post(
     const userId = req.user!.userId;
     const tier = getTierFromUser(req.user!);
     const convId = Number(req.params.id);
-    const { content, senderId, senderName, senderAvatar } = req.body;
+    const { content, senderId, senderName, senderAvatar, attachmentUrl } =
+      req.body;
 
-    if (!content?.trim()) {
+    if (!content?.trim() && !attachmentUrl) {
       return res
         .status(400)
         .json({ success: false, error: "Message content is required" });
@@ -488,7 +554,8 @@ router.post(
           senderId: String(senderId ?? userId),
           senderName: String(senderName ?? "You"),
           senderAvatar: senderAvatar || null,
-          content: content.trim(),
+          content: content?.trim() || "",
+          attachmentUrl: attachmentUrl || null,
           isRead: true,
           isAi: false,
         })
@@ -497,7 +564,9 @@ router.post(
       // Update conversation summary (fire-and-forget)
       db.update(schema.inboxConversations)
         .set({
-          lastMessage: content.trim().substring(0, 120),
+          lastMessage: content?.trim()
+            ? content.trim().substring(0, 120)
+            : "📷 Photo",
           lastMessageAt: new Date(),
           updatedAt: new Date(),
         })

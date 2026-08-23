@@ -20,8 +20,9 @@ import {
   CheckCheck,
   Search,
   UserPlus,
+  Paperclip,
 } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch, getAuthToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   useInboxSocket,
@@ -47,6 +48,7 @@ interface InboxMessage {
   senderId: string;
   senderName: string;
   content: string;
+  attachmentUrl?: string | null;
   isRead: boolean;
   isPublished?: boolean;
   createdAt: string;
@@ -104,9 +106,15 @@ export default function MessengerPanel({
   const [otherTyping, setOtherTyping] = useState(false);
   const [otherOnline, setOtherOnline] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<string | null>(
+    null,
+  );
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConvoRef = useRef<Conversation | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   activeConvoRef.current = activeConvo;
 
   useEffect(() => {
@@ -158,7 +166,11 @@ export default function MessengerPanel({
 
   // Typing indicator from the other participant, scoped to the active conversation
   const handleTyping = useCallback(
-    (evt: { conversationId: number; fromUserId: number; isTyping: boolean }) => {
+    (evt: {
+      conversationId: number;
+      fromUserId: number;
+      isTyping: boolean;
+    }) => {
       if (activeConvoRef.current?.id === evt.conversationId) {
         setOtherTyping(evt.isTyping);
       }
@@ -194,9 +206,11 @@ export default function MessengerPanel({
 
   const sendMessage = async () => {
     const content = draft.trim();
-    if (!content || !activeConvo || sending) return;
+    if ((!content && !pendingAttachment) || !activeConvo || sending) return;
     setSending(true);
     setDraft("");
+    const attachmentUrl = pendingAttachment;
+    setPendingAttachment(null);
     emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, false);
     // Optimistic bubble — shows instantly with a pending/SENDING state
     const tempId = -Date.now();
@@ -206,6 +220,7 @@ export default function MessengerPanel({
       senderId: String(user?.id),
       senderName: user?.name || "You",
       content,
+      attachmentUrl,
       isRead: false,
       createdAt: new Date().toISOString(),
       pending: true,
@@ -217,7 +232,7 @@ export default function MessengerPanel({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, attachmentUrl }),
         },
       );
       const data = await res.json();
@@ -245,6 +260,31 @@ export default function MessengerPanel({
     typingTimeoutRef.current = setTimeout(() => {
       emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, false);
     }, 2000);
+  };
+
+  const handleAttachmentPick = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingAttachment(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/inbox/attachments", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data?.success && data.url) setPendingAttachment(data.url);
+    } catch {
+      // silent — user can retry
+    } finally {
+      setUploadingAttachment(false);
+    }
   };
 
   const publishMessage = async (messageId: number) => {
@@ -568,9 +608,23 @@ export default function MessengerPanel({
                               : "bg-slate-700 text-white/90 rounded-bl-sm"
                           } ${m.pending ? "opacity-60" : ""}`}
                         >
-                          <p className="whitespace-pre-wrap break-words">
-                            {m.content}
-                          </p>
+                          {m.attachmentUrl && (
+                            <button
+                              onClick={() => setLightboxUrl(m.attachmentUrl!)}
+                              className="block mb-1.5 rounded-lg overflow-hidden max-w-[220px]"
+                            >
+                              <img
+                                src={m.attachmentUrl}
+                                alt="Attachment"
+                                className="w-full h-auto object-cover"
+                              />
+                            </button>
+                          )}
+                          {m.content && (
+                            <p className="whitespace-pre-wrap break-words">
+                              {m.content}
+                            </p>
+                          )}
                           <span className="mt-1 flex items-center gap-1 text-[10px] text-white/30">
                             {formatTimestamp(m.createdAt)}
                             {isMine && (
@@ -630,8 +684,46 @@ export default function MessengerPanel({
                   )}
                 </div>
 
+                {pendingAttachment && (
+                  <div className="px-4 pt-2 flex items-center gap-2">
+                    <div className="relative">
+                      <img
+                        src={pendingAttachment}
+                        alt="Attachment preview"
+                        className="w-14 h-14 rounded-lg object-cover border border-white/10"
+                      />
+                      <button
+                        onClick={() => setPendingAttachment(null)}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 border border-white/20 flex items-center justify-center"
+                        aria-label="Remove attachment"
+                      >
+                        <X className="w-2.5 h-2.5 text-white" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="px-4 py-3 border-t border-white/10 flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5 text-white/30 shrink-0" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAttachmentPick}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAttachment}
+                    className="shrink-0 p-1.5 text-white/40 hover:text-amber-400 transition-colors disabled:opacity-40"
+                    aria-label="Attach image"
+                  >
+                    {uploadingAttachment ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Paperclip className="w-4 h-4" />
+                    )}
+                  </button>
                   <input
                     value={draft}
                     onChange={(e) => handleDraftChange(e.target.value)}
@@ -647,7 +739,7 @@ export default function MessengerPanel({
                   />
                   <button
                     onClick={sendMessage}
-                    disabled={!draft.trim() || sending}
+                    disabled={(!draft.trim() && !pendingAttachment) || sending}
                     className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-amber-600 text-white disabled:opacity-40 hover:bg-amber-500 transition-colors"
                     aria-label="Send"
                   >
@@ -664,6 +756,32 @@ export default function MessengerPanel({
                 </div>
               </>
             )}
+
+            {/* Lightbox — full-screen preview for attachment images */}
+            <AnimatePresence>
+              {lightboxUrl && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setLightboxUrl(null)}
+                  className="fixed inset-0 bg-black/90 z-[300] flex items-center justify-center p-6"
+                >
+                  <img
+                    src={lightboxUrl}
+                    alt="Attachment"
+                    className="max-w-full max-h-full rounded-lg object-contain"
+                  />
+                  <button
+                    onClick={() => setLightboxUrl(null)}
+                    className="absolute top-4 right-4 p-2 text-white/70 hover:text-white"
+                    aria-label="Close preview"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </>
       )}

@@ -147,7 +147,11 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     // Inbox typing indicator — relayed to the other participant's room only.
     socket.on(
       "inbox_typing",
-      (data: { toUserId: number; conversationId: number; isTyping: boolean }) => {
+      (data: {
+        toUserId: number;
+        conversationId: number;
+        isTyping: boolean;
+      }) => {
         if (socket.data.userId === null || socket.data.userId === undefined) {
           return;
         }

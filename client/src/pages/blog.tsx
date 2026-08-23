@@ -319,7 +319,9 @@ export default function BlogPage() {
       toast({
         title: "Something went wrong",
         description:
-          err instanceof Error ? err.message : "Could not update this connection",
+          err instanceof Error
+            ? err.message
+            : "Could not update this connection",
         variant: "destructive",
       });
       throw err;
