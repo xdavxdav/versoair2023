@@ -60,3 +60,53 @@ export function useInboxSocket(onMessage?: (data: InboxMessageEvent) => void) {
 
   return socketRef;
 }
+
+export interface TypingEvent {
+  conversationId: number;
+  fromUserId: number;
+  isTyping: boolean;
+}
+
+/** Listen for typing indicator events from the other participant. */
+export function useInboxTyping(onTyping?: (data: TypingEvent) => void) {
+  useEffect(() => {
+    if (!onTyping) return;
+    const socket = getSocket();
+    refCount++;
+    socket.on("inbox_typing", onTyping);
+    return () => {
+      socket.off("inbox_typing", onTyping);
+      refCount--;
+      if (refCount <= 0) {
+        sharedSocket?.disconnect();
+        sharedSocket = null;
+        refCount = 0;
+      }
+    };
+  }, [onTyping]);
+}
+
+/** Emit a typing state change to the other participant in a conversation. */
+export function emitInboxTyping(
+  toUserId: number,
+  conversationId: number,
+  isTyping: boolean,
+) {
+  getSocket().emit("inbox_typing", { toUserId, conversationId, isTyping });
+}
+
+/** One-shot presence check — resolves via the "presence_status" callback. */
+export function checkPresence(
+  userId: number,
+  onStatus: (online: boolean) => void,
+) {
+  const socket = getSocket();
+  const handler = (data: { userId: number; online: boolean }) => {
+    if (data.userId === userId) {
+      onStatus(data.online);
+      socket.off("presence_status", handler);
+    }
+  };
+  socket.on("presence_status", handler);
+  socket.emit("presence_check", { userId });
+}

@@ -144,6 +144,31 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       }
     });
 
+    // Inbox typing indicator — relayed to the other participant's room only.
+    socket.on(
+      "inbox_typing",
+      (data: { toUserId: number; conversationId: number; isTyping: boolean }) => {
+        if (socket.data.userId === null || socket.data.userId === undefined) {
+          return;
+        }
+        if (!data?.toUserId || !data?.conversationId) return;
+        io?.to(`user_${data.toUserId}`).emit("inbox_typing", {
+          conversationId: data.conversationId,
+          fromUserId: socket.data.userId,
+          isTyping: Boolean(data.isTyping),
+        });
+      },
+    );
+
+    // Presence check — respond with whether the requested user has an active socket
+    socket.on("presence_check", (data: { userId: number }) => {
+      if (!data?.userId) return;
+      socket.emit("presence_status", {
+        userId: data.userId,
+        online: isUserConnected(data.userId),
+      });
+    });
+
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
 

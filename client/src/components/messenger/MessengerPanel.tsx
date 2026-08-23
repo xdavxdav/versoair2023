@@ -17,11 +17,18 @@ import {
   Globe2,
   Lock,
   Check,
+  CheckCheck,
   Search,
+  UserPlus,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useInboxSocket } from "@/hooks/use-inbox-socket";
+import {
+  useInboxSocket,
+  useInboxTyping,
+  emitInboxTyping,
+  checkPresence,
+} from "@/hooks/use-inbox-socket";
 
 interface Conversation {
   id: number;
@@ -43,6 +50,8 @@ interface InboxMessage {
   isRead: boolean;
   isPublished?: boolean;
   createdAt: string;
+  /** Client-only: true while optimistically shown before the server confirms it. */
+  pending?: boolean;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -92,8 +101,12 @@ export default function MessengerPanel({
   const [publishingId, setPublishingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [otherTyping, setOtherTyping] = useState(false);
+  const [otherOnline, setOtherOnline] = useState(false);
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConvoRef = useRef<Conversation | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   activeConvoRef.current = activeConvo;
 
   useEffect(() => {
@@ -143,6 +156,26 @@ export default function MessengerPanel({
   );
   useInboxSocket(open && user ? handleLiveMessage : undefined);
 
+  // Typing indicator from the other participant, scoped to the active conversation
+  const handleTyping = useCallback(
+    (evt: { conversationId: number; fromUserId: number; isTyping: boolean }) => {
+      if (activeConvoRef.current?.id === evt.conversationId) {
+        setOtherTyping(evt.isTyping);
+      }
+    },
+    [],
+  );
+  useInboxTyping(open && activeConvo ? handleTyping : undefined);
+
+  // Check the other participant's online status whenever a thread is opened
+  useEffect(() => {
+    if (!activeConvo) {
+      setOtherOnline(false);
+      return;
+    }
+    checkPresence(Number(activeConvo.participantId), setOtherOnline);
+  }, [activeConvo]);
+
   useEffect(() => {
     if (!activeConvo) return;
     setLoadingMessages(true);
@@ -163,6 +196,21 @@ export default function MessengerPanel({
     const content = draft.trim();
     if (!content || !activeConvo || sending) return;
     setSending(true);
+    setDraft("");
+    emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, false);
+    // Optimistic bubble — shows instantly with a pending/SENDING state
+    const tempId = -Date.now();
+    const optimisticMsg: InboxMessage = {
+      id: tempId,
+      conversationId: activeConvo.id,
+      senderId: String(user?.id),
+      senderName: user?.name || "You",
+      content,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      pending: true,
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
     try {
       const res = await authenticatedFetch(
         `/api/inbox/conversations/${activeConvo.id}/messages`,
@@ -174,14 +222,29 @@ export default function MessengerPanel({
       );
       const data = await res.json();
       if (data?.success && data.message) {
-        setMessages((prev) => [...prev, data.message]);
-        setDraft("");
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? data.message : m)),
+        );
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
       }
     } catch {
       // silent — best-effort UI, existing rate-limiter surfaces its own errors
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
       setSending(false);
     }
+  };
+
+  // Debounced typing emitter — fires isTyping:true then auto-clears after 2s idle
+  const handleDraftChange = (value: string) => {
+    setDraft(value);
+    if (!activeConvo) return;
+    emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, false);
+    }, 2000);
   };
 
   const publishMessage = async (messageId: number) => {
@@ -235,17 +298,43 @@ export default function MessengerPanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.25 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl relative"
           >
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
               {activeConvo && (
                 <button
-                  onClick={() => setActiveConvo(null)}
+                  onClick={() => {
+                    setActiveConvo(null);
+                    setShowProfileDrawer(false);
+                  }}
                   className="p-1 text-white/60 hover:text-white"
                   aria-label="Back"
                 >
                   <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              {activeConvo && (
+                <button
+                  onClick={() => setShowProfileDrawer(true)}
+                  className="relative w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-semibold text-amber-300 overflow-hidden shrink-0"
+                  aria-label="View profile"
+                >
+                  {activeConvo.participantAvatar ? (
+                    <img
+                      src={activeConvo.participantAvatar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    activeConvo.participantName?.[0]?.toUpperCase()
+                  )}
+                  {otherOnline && (
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-[#0f0f17]" />
+                  )}
                 </button>
               )}
               <h2 className="flex-1 min-w-0 truncate">
@@ -254,7 +343,11 @@ export default function MessengerPanel({
                 </span>
                 {activeConvo && (
                   <span className="text-[11px] text-white/40">
-                    {TYPE_LABELS[activeConvo.type] || activeConvo.type}
+                    {otherTyping
+                      ? "typing…"
+                      : otherOnline
+                        ? "online"
+                        : TYPE_LABELS[activeConvo.type] || activeConvo.type}
                   </span>
                 )}
               </h2>
@@ -266,6 +359,58 @@ export default function MessengerPanel({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Profile preview drawer */}
+            <AnimatePresence>
+              {showProfileDrawer && activeConvo && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-14 left-0 right-0 z-10 bg-[#161622] border-b border-white/10 shadow-xl px-4 py-4"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center text-lg font-semibold text-amber-300 overflow-hidden shrink-0">
+                      {activeConvo.participantAvatar ? (
+                        <img
+                          src={activeConvo.participantAvatar}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        activeConvo.participantName?.[0]?.toUpperCase()
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-sm">
+                        {activeConvo.participantName}
+                      </p>
+                      <p className="text-[11px] text-white/40">
+                        {otherOnline ? "Online now" : "Offline"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-600/20 text-amber-300 text-xs font-medium border border-amber-500/30 hover:bg-amber-600/30 transition-colors">
+                      <UserPlus className="w-3.5 h-3.5" />
+                      Follow
+                    </button>
+                    <a
+                      href={`/user/${activeConvo.participantId}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-medium border border-white/10 hover:bg-white/10 transition-colors"
+                    >
+                      View Profile
+                    </a>
+                    <button
+                      onClick={() => setShowProfileDrawer(false)}
+                      className="px-3 py-2 rounded-lg bg-white/5 text-white/50 text-xs border border-white/10 hover:bg-white/10 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {!activeConvo ? (
               // ── Conversation list ──
@@ -343,7 +488,10 @@ export default function MessengerPanel({
                 {filteredConversations.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => setActiveConvo(c)}
+                    onClick={() => {
+                      setActiveConvo(c);
+                      setShowProfileDrawer(false);
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-white/5 ${
                       c.unreadCount > 0
                         ? "bg-slate-800/50 hover:bg-slate-800"
@@ -418,15 +566,26 @@ export default function MessengerPanel({
                             isMine
                               ? "bg-amber-600 text-white rounded-br-sm"
                               : "bg-slate-700 text-white/90 rounded-bl-sm"
-                          }`}
+                          } ${m.pending ? "opacity-60" : ""}`}
                         >
                           <p className="whitespace-pre-wrap break-words">
                             {m.content}
                           </p>
-                          <span className="mt-1 block text-[10px] text-white/30">
+                          <span className="mt-1 flex items-center gap-1 text-[10px] text-white/30">
                             {formatTimestamp(m.createdAt)}
+                            {isMine && (
+                              <>
+                                {m.pending ? (
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin ml-0.5" />
+                                ) : m.isRead ? (
+                                  <CheckCheck className="w-3 h-3 ml-0.5 text-amber-300" />
+                                ) : (
+                                  <Check className="w-3 h-3 ml-0.5" />
+                                )}
+                              </>
+                            )}
                           </span>
-                          {isMine && (
+                          {isMine && !m.pending && (
                             <button
                               onClick={() =>
                                 !m.isPublished && publishMessage(m.id)
@@ -460,13 +619,22 @@ export default function MessengerPanel({
                       </div>
                     );
                   })}
+                  {otherTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-slate-700 rounded-2xl rounded-bl-sm px-3 py-2 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="px-4 py-3 border-t border-white/10 flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5 text-white/30 shrink-0" />
                   <input
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => handleDraftChange(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
