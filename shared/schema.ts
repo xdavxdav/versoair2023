@@ -514,14 +514,18 @@ export const connections = pgTable(
 
 // --- 5. FINANCES & REVIEWS ---
 export const transactions = pgTable("transactions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  businessId: integer("business_id").references(() => businesses.id),
+  id: serial("id").primaryKey(),
+  reference: varchar("reference").notNull().unique(),
   userId: integer("user_id").references(() => users.id),
+  businessId: integer("business_id").references(() => businesses.id),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  type: varchar("type"), // 'ad_topup', 'subscription_fee'
-  status: varchar("status").default("pending"),
-  reference: varchar("reference").unique(),
-  createdAt: timestamp("created_at").defaultNow(),
+  currency: varchar("currency"),
+  type: varchar("type").notNull(), // 'ad_topup', 'subscription_fee'
+  status: varchar("status").notNull().default("pending"),
+  paymentMethodId: integer("payment_method_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
 });
 
 export const businessReviews = pgTable("business_reviews", {
