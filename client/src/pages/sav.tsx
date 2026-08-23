@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -66,10 +65,6 @@ export default function SAV() {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [chartPeriod, setChartPeriod] = useState("week");
-
-  const { data: analytics } = useQuery({
-    queryKey: ["/api/analytics/sav"],
-  });
 
   const serviceCategories = [
     {
@@ -356,7 +351,7 @@ export default function SAV() {
         chartInstanceRef.current = null;
       }
     };
-  }, [analytics]);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white">

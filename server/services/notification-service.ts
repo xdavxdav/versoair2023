@@ -758,3 +758,191 @@ export async function notifyReservationUpdate(reservation: {
     return false;
   }
 }
+
+// ============================================
+// GENERIC SOCIAL NOTIFICATIONS (NEW)
+// ============================================
+
+export interface CreateGenericNotificationParams {
+  userId: number; // recipient
+  type: string; // follow, like, comment, message, download, publish, etc.
+  actorId?: number; // who triggered it (optional)
+  actorName: string;
+  message: string;
+  entityUrl?: string;
+}
+
+/**
+ * Create a generic notification for any social action
+ * Used by: follow, like, comment, message, track publish, etc.
+ */
+export async function createGenericNotification(
+  params: CreateGenericNotificationParams,
+): Promise<boolean> {
+  const { userId, type, actorName, message, entityUrl } = params;
+
+  try {
+    await db.insert(notifications).values({
+      userId,
+      type,
+      title: actorName,
+      message,
+      actionUrl: entityUrl || null,
+      isRead: false,
+    });
+
+    // Emit real-time event for WebSocket
+    notificationEmitter.emit("notification", {
+      userId,
+      type,
+      actorName,
+      message,
+      entityUrl,
+      timestamp: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (error) {
+    console.error(
+      "[NOTIFICATION] Failed to create generic notification:",
+      error,
+    );
+    return false;
+  }
+}
+
+/**
+ * Notify when someone follows you
+ */
+export async function notifyFollow(params: {
+  followerId: number;
+  followingId: number;
+  followerName: string;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.followingId,
+    type: "follow",
+    actorId: params.followerId,
+    actorName: params.followerName,
+    message: "started following you",
+    entityUrl: `/user/${params.followerId}`,
+  });
+}
+
+/**
+ * Notify when someone likes your post
+ */
+export async function notifyLike(params: {
+  likerId: number;
+  postAuthorId: number;
+  likerName: string;
+  postId: number;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "like",
+    actorId: params.likerId,
+    actorName: params.likerName,
+    message: "liked your post",
+    entityUrl: `/post/${params.postId}`,
+  });
+}
+
+/**
+ * Notify when someone comments on your post
+ */
+export async function notifyComment(params: {
+  commenterId: number;
+  postAuthorId: number;
+  commenterName: string;
+  postId: number;
+  commentPreview: string;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "comment",
+    actorId: params.commenterId,
+    actorName: params.commenterName,
+    message: `commented: "${params.commentPreview.slice(0, 50)}${params.commentPreview.length > 50 ? "..." : ""}"`,
+    entityUrl: `/post/${params.postId}`,
+  });
+}
+
+/**
+ * Notify when someone sends you a message
+ */
+export async function notifyMessage(params: {
+  senderId: number;
+  recipientId: number;
+  senderName: string;
+  messagePreview: string;
+  conversationId?: number;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.recipientId,
+    type: "message",
+    actorId: params.senderId,
+    actorName: params.senderName,
+    message: `sent you a message: "${params.messagePreview.slice(0, 40)}${params.messagePreview.length > 40 ? "..." : ""}"`,
+    entityUrl: params.conversationId
+      ? `/inbox?conversation=${params.conversationId}`
+      : "/inbox",
+  });
+}
+
+/**
+ * Notify when your track is published/approved
+ */
+export async function notifyTrackPublished(params: {
+  artistId: number;
+  trackTitle: string;
+  trackId: number;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "publish",
+    actorName: "Verso Air",
+    message: `Your track "${params.trackTitle}" has been published!`,
+    entityUrl: `/streaming/${params.trackId}`,
+  });
+}
+
+/**
+ * Notify when someone downloads your track
+ */
+export async function notifyTrackDownload(params: {
+  artistId: number;
+  downloaderId: number;
+  downloaderName: string;
+  trackTitle: string;
+  trackId: number;
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "download",
+    actorId: params.downloaderId,
+    actorName: params.downloaderName,
+    message: `downloaded your track "${params.trackTitle}"`,
+    entityUrl: `/streaming/${params.trackId}`,
+  });
+}
+
+/**
+ * Notify when someone mentions you in a post/comment
+ */
+export async function notifyMention(params: {
+  mentionedUserId: number;
+  mentionerId: number;
+  mentionerName: string;
+  postId: number;
+  context: string; // "post" or "comment"
+}): Promise<boolean> {
+  return createGenericNotification({
+    userId: params.mentionedUserId,
+    type: "mention",
+    actorId: params.mentionerId,
+    actorName: params.mentionerName,
+    message: `mentioned you in a ${params.context}`,
+    entityUrl: `/post/${params.postId}`,
+  });
+}

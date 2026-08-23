@@ -19,11 +19,11 @@ import {
   Check,
   CheckCheck,
   Search,
-  UserPlus,
   Paperclip,
 } from "lucide-react";
 import { authenticatedFetch, getAuthToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import FollowButton from "@/components/FollowButton";
 import {
   useInboxSocket,
   useInboxTyping,
@@ -103,6 +103,7 @@ export default function MessengerPanel({
   const [publishingId, setPublishingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [followingUserIds, setFollowingUserIds] = useState<number[]>([]);
   const [otherTyping, setOtherTyping] = useState(false);
   const [otherOnline, setOtherOnline] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
@@ -127,6 +128,29 @@ export default function MessengerPanel({
       })
       .catch(() => {})
       .finally(() => setLoadingConvos(false));
+  }, [open, user]);
+
+  useEffect(() => {
+    if (!open || !user) {
+      setFollowingUserIds([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    authenticatedFetch("/api/social/follow/following")
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.success || !Array.isArray(data.data)) return;
+        setFollowingUserIds(
+          data.data.map((id: unknown) => Number(id)).filter(Boolean),
+        );
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, user]);
 
   // Live push: new message arrives via socket while the panel is open.
@@ -321,6 +345,14 @@ export default function MessengerPanel({
     });
   }, [conversations, activeFilter, searchQuery]);
 
+  const drawerUserId = activeConvo ? Number(activeConvo.participantId) : NaN;
+  const canFollowFromDrawer =
+    !!activeConvo &&
+    Number.isFinite(drawerUserId) &&
+    drawerUserId > 0 &&
+    activeConvo.type !== "support" &&
+    String(user?.id) !== String(activeConvo.participantId);
+
   return (
     <AnimatePresence>
       {open && (
@@ -431,10 +463,26 @@ export default function MessengerPanel({
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-600/20 text-amber-300 text-xs font-medium border border-amber-500/30 hover:bg-amber-600/30 transition-colors">
-                      <UserPlus className="w-3.5 h-3.5" />
-                      Follow
-                    </button>
+                    {canFollowFromDrawer ? (
+                      <FollowButton
+                        userId={drawerUserId}
+                        initialIsFollowing={followingUserIds.includes(
+                          drawerUserId,
+                        )}
+                        initialFollowerCount={0}
+                        size="sm"
+                        className="flex-1 rounded-lg border-amber-500/30"
+                        onFollowChange={(isFollowing) => {
+                          setFollowingUserIds((prev) =>
+                            isFollowing
+                              ? prev.includes(drawerUserId)
+                                ? prev
+                                : [...prev, drawerUserId]
+                              : prev.filter((id) => id !== drawerUserId),
+                          );
+                        }}
+                      />
+                    ) : null}
                     <a
                       href={`/user/${activeConvo.participantId}`}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-medium border border-white/10 hover:bg-white/10 transition-colors"

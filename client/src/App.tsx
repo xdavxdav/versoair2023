@@ -41,6 +41,7 @@ const Pricing = lazy(() => import("@/pages/pricing"));
 const Blog = lazy(() => import("@/pages/blog"));
 const FaqPage = lazy(() => import("@/pages/faq"));
 const Profile = lazy(() => import("@/pages/profile"));
+const UserProfile = lazy(() => import("@/pages/user-profile"));
 const Marketplace = lazy(() => import("@/pages/marketplace"));
 const Partners = lazy(() => import("@/pages/partners"));
 const SystemStatus = lazy(() => import("@/pages/status"));
@@ -320,6 +321,7 @@ function Router() {
       <Route path="/profile">
         {() => <ProtectedRoute component={Profile} />}
       </Route>
+      <Route path="/user/:id" component={UserProfile} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/sell">{() => <Redirect to="/marketplace" />}</Route>
       <Route path="/orders">
@@ -635,6 +637,7 @@ function AppContent() {
     if (currentPath.startsWith("/vault") || currentPath.startsWith("/sys/"))
       return "Vault";
     if (currentPath.startsWith("/profile")) return "Profile";
+    if (currentPath.startsWith("/user/")) return "Member Profile";
     if (
       currentPath.startsWith("/dashboard") ||
       currentPath.startsWith("/admin")
@@ -670,6 +673,7 @@ function AppContent() {
     currentPath === "/dashboard" ||
     currentPath === "/apply" ||
     currentPath === "/profile" ||
+    currentPath.startsWith("/user/") ||
     currentPath === "/inventory";
   // Track when loading just finished so we can apply page-enter animation
   const [pageEnter, setPageEnter] = useState(false);
@@ -757,6 +761,7 @@ function AppContent() {
         currentPath !== "/marketplace" &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
+        !currentPath.startsWith("/user/") &&
         !currentPath.startsWith("/dashboard") &&
         !currentPath.startsWith("/admin") &&
         !isImmersivePage && (

@@ -15,12 +15,12 @@ import {
   Business,
   SearchParams,
   SearchResponse,
-} from "client/src/pages/services/businessServices";
+} from "@/pages/services/businessServices";
 
 // Search businesses hook
 export function useSearchBusinesses(
   params: SearchParams,
-  options?: UseQueryOptions<SearchResponse>
+  options?: UseQueryOptions<SearchResponse>,
 ) {
   return useQuery<SearchResponse>({
     queryKey: businessKeys.search(params),
@@ -49,7 +49,7 @@ export function useBusiness(id: string, options?: UseQueryOptions<Business>) {
 // Get all businesses hook
 export function useBusinesses(
   filters: Partial<SearchParams> = {},
-  options?: UseQueryOptions<SearchResponse>
+  options?: UseQueryOptions<SearchResponse>,
 ) {
   return useQuery<SearchResponse>({
     queryKey: businessKeys.list(filters),
@@ -71,7 +71,7 @@ export function useBusinessStats(options?: UseQueryOptions<any>) {
 export function useCreateBusiness() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Business, Error, Partial<Business>>({
     mutationFn: createBusiness,
     onSuccess: (newBusiness) => {
       // Invalidate and refetch
@@ -81,7 +81,7 @@ export function useCreateBusiness() {
       // Update cache for the new business
       queryClient.setQueryData(
         businessKeys.detail(newBusiness.id),
-        newBusiness
+        newBusiness,
       );
     },
   });
@@ -91,14 +91,14 @@ export function useCreateBusiness() {
 export function useUpdateBusiness() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Business, Error, { id: string; data: Partial<Business> }>({
     mutationFn: ({ id, data }: { id: string; data: Partial<Business> }) =>
       updateBusiness(id, data),
     onSuccess: (updatedBusiness) => {
       // Update specific business cache
       queryClient.setQueryData(
         businessKeys.detail(updatedBusiness.id),
-        updatedBusiness
+        updatedBusiness,
       );
 
       // Invalidate lists

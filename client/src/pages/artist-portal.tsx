@@ -4309,7 +4309,7 @@ export default function ArtistPortal() {
                     className="text-purple-200 hover:text-white hover:bg-white/10"
                   >
                     <Avatar className="h-8 w-8 mr-2">
-                      <AvatarImage src="/api/placeholder/32/32" />
+                      <AvatarImage src="" />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                         {connectedUser.initials}
                       </AvatarFallback>

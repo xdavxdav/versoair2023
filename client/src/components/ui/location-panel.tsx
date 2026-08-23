@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import { Button } from "./button";
-import { useQuery } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -377,11 +376,6 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
 
     return () => clearInterval(interval);
   }, [isOpen, liveLocation, activeUsers]);
-
-  const { data: locationData } = useQuery<LocationData>({
-    queryKey: ["/api/location/analytics"],
-    enabled: false, // Disable API call since we're using live data
-  });
 
   // Mock data with realistic values (fallback)
   const mockLocationData: LocationData = {

@@ -224,7 +224,7 @@ function SmartSearch({ onClose }: { onClose: () => void }) {
           // GET /api/artists collection route, so the bare path 404s.
           people: `/api/artists/search?query=${encodeURIComponent(query)}&limit=6`,
           merch: `/api/businesses?search=${encodeURIComponent(query)}&limit=6`,
-          posts: `/api/blog?search=${encodeURIComponent(query)}&limit=6`,
+          posts: `/api/social/posts?search=${encodeURIComponent(query)}&limit=6`,
           videos: `/api/tracks?search=${encodeURIComponent(query)}&limit=6`,
         };
         const res = await fetch(endpoints[tab]);

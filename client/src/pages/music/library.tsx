@@ -3,7 +3,6 @@
  * Shows saved tracks, playlists, albums, and recently played
  */
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import {
   Library,
   Play,
@@ -40,12 +39,6 @@ export default function MusicLibrary() {
   const { user } = useAuthContext();
   const [activeTab, setActiveTab] = useState<LibraryTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Fetch user's library (saved tracks, playlists, etc.)
-  const { data: library, isLoading } = useQuery({
-    queryKey: ["/api/streaming/library", user?.id],
-    enabled: !!user?.id,
-  });
 
   return (
     <MusicLayout>

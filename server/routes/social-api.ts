@@ -4,7 +4,7 @@
 
 import { Router, Request, Response } from "express";
 import { db, pool } from "../../server/db";
-import { desc, eq, isNull, and, inArray } from "drizzle-orm";
+import { desc, eq, isNull, and, inArray, sql } from "drizzle-orm";
 import {
   socialPosts,
   socialComments,
@@ -14,6 +14,12 @@ import {
   socialNotifications,
   socialPostAnalytics,
 } from "../../shared/social-schema";
+import { musicTracks, users } from "../../shared/schema";
+import {
+  notifyFollow,
+  notifyLike,
+  notifyComment,
+} from "../services/notification-service";
 
 const router = Router();
 
@@ -463,6 +469,36 @@ router.post("/posts/:postId/like", async (req: Request, res: Response) => {
       .where(eq(socialPosts.id, parseInt(postId)))
       .returning();
 
+    // Create notification for post author (don't notify yourself)
+    if (post[0] && post[0].authorId !== userId) {
+      try {
+        const [postAuthor] = await db
+          .select({ userId: socialUsers.userId })
+          .from(socialUsers)
+          .where(eq(socialUsers.id, post[0].authorId))
+          .limit(1);
+
+        const [likerInfo] = await db
+          .select({
+            name: users.displayName,
+          })
+          .from(users)
+          .where(eq(users.id, Number(appUserId)))
+          .limit(1);
+
+        if (postAuthor && likerInfo) {
+          await notifyLike({
+            likerId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            likerName: likerInfo.name || "Someone",
+            postId: parseInt(postId),
+          });
+        }
+      } catch (notifError) {
+        console.error("[LIKE] Failed to create notification:", notifError);
+      }
+    }
+
     res.json({
       success: true,
       data: updatedPost[0],
@@ -578,6 +614,37 @@ router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
         ).toFixed(2), // Comment worth 3 points
       })
       .where(eq(socialPosts.id, parseInt(postId)));
+
+    // Create notification for post author (don't notify yourself)
+    if (post[0] && post[0].authorId !== authorId) {
+      try {
+        const [postAuthor] = await db
+          .select({ userId: socialUsers.userId })
+          .from(socialUsers)
+          .where(eq(socialUsers.id, post[0].authorId))
+          .limit(1);
+
+        const [commenterInfo] = await db
+          .select({
+            name: users.displayName,
+          })
+          .from(users)
+          .where(eq(users.id, Number(appUserId)))
+          .limit(1);
+
+        if (postAuthor && commenterInfo) {
+          await notifyComment({
+            commenterId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            commenterName: commenterInfo.name || "Someone",
+            postId: parseInt(postId),
+            commentPreview: content,
+          });
+        }
+      } catch (notifError) {
+        console.error("[COMMENT] Failed to create notification:", notifError);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -731,13 +798,40 @@ router.post("/follow/:userId", async (req: Request, res: Response) => {
 
     if (!existingFollow.length) {
       await db.insert(socialFollowers).values({ followerId, followingId });
+
+      // Create notification for the followed user
+      try {
+        const [followerInfo] = await db
+          .select({
+            name: users.displayName,
+          })
+          .from(users)
+          .where(eq(users.id, Number(appUserId)))
+          .limit(1);
+
+        if (followerInfo) {
+          await notifyFollow({
+            followerId: Number(appUserId),
+            followingId: parseInt(userId),
+            followerName: followerInfo.name || "Someone",
+          });
+        }
+      } catch (notifError) {
+        console.error("[FOLLOW] Failed to create notification:", notifError);
+      }
     }
 
     await syncFollowerCount(followingId);
 
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(socialFollowers)
+      .where(eq(socialFollowers.followingId, followingId));
+
     res.json({
       success: true,
       following: true,
+      followerCount: Number(count) || 0,
       message: "User followed successfully",
     });
   } catch (error) {
@@ -773,9 +867,15 @@ router.delete("/follow/:userId", async (req: Request, res: Response) => {
 
     await syncFollowerCount(followingId);
 
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(socialFollowers)
+      .where(eq(socialFollowers.followingId, followingId));
+
     res.json({
       success: true,
       following: false,
+      followerCount: Number(count) || 0,
       message: "User unfollowed successfully",
     });
   } catch (error) {
@@ -791,34 +891,233 @@ router.delete("/follow/:userId", async (req: Request, res: Response) => {
 // GET /api/social/users/:userId - Get user profile
 router.get("/users/:userId", async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const targetAppUserId = parseInt(req.params.userId, 10);
 
-    const user = await db
-      .select()
-      .from(socialUsers)
-      .where(eq(socialUsers.id, parseInt(userId)))
+    if (!targetAppUserId || Number.isNaN(targetAppUserId)) {
+      return res.status(400).json({ success: false, error: "Invalid user id" });
+    }
+
+    const [account] = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        role: users.role,
+        subscriptionTier: users.subscriptionTier,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, targetAppUserId))
       .limit(1);
 
-    if (!user.length) {
+    if (!account) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    // Get user posts
-    const posts = await db
+    const currentAppUserId = req.user?.userId ? Number(req.user.userId) : null;
+    const targetSocialId = await getSocialProfileId(targetAppUserId);
+    const [socialProfile] = await db
       .select()
+      .from(socialUsers)
+      .where(eq(socialUsers.id, targetSocialId))
+      .limit(1);
+
+    if (!socialProfile) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    let viewerSocialId: number | null = null;
+    if (currentAppUserId) {
+      viewerSocialId = await getSocialProfileId(currentAppUserId);
+    }
+
+    const [followerRow] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(socialFollowers)
+      .where(eq(socialFollowers.followingId, targetSocialId));
+
+    const [followingRow] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(socialFollowers)
+      .where(eq(socialFollowers.followerId, targetSocialId));
+
+    const [postStats] = await db
+      .select({
+        postCount: sql<number>`count(*)`,
+        likeCount: sql<number>`coalesce(sum(${socialPosts.likeCount}), 0)`,
+      })
       .from(socialPosts)
-      .where(eq(socialPosts.authorId, parseInt(userId)));
+      .where(
+        and(
+          eq(socialPosts.authorId, targetSocialId),
+          isNull(socialPosts.deletedAt),
+        ),
+      );
+
+    const [trackStats] = await db
+      .select({
+        trackCount: sql<number>`count(*)`,
+        streamCount: sql<number>`coalesce(sum(${musicTracks.playCount}), 0)`,
+      })
+      .from(musicTracks)
+      .where(eq(musicTracks.artistId, targetAppUserId));
+
+    const artistCheck = await pool.query(
+      "SELECT 1 FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+      [targetAppUserId],
+    );
+
+    let isFollowing = false;
+    if (viewerSocialId && viewerSocialId !== targetSocialId) {
+      const [followState] = await db
+        .select({ id: socialFollowers.id })
+        .from(socialFollowers)
+        .where(
+          and(
+            eq(socialFollowers.followerId, viewerSocialId),
+            eq(socialFollowers.followingId, targetSocialId),
+          ),
+        )
+        .limit(1);
+      isFollowing = Boolean(followState);
+    }
 
     res.json({
       success: true,
       data: {
-        ...user[0],
-        postCount: posts.length,
+        id: account.id,
+        userId: account.id,
+        socialUserId: socialProfile.id,
+        username: account.username,
+        displayName:
+          account.displayName || socialProfile.displayName || account.username,
+        name:
+          account.displayName || socialProfile.displayName || account.username,
+        avatarUrl: socialProfile.avatarUrl ?? null,
+        avatar: socialProfile.avatarUrl ?? null,
+        bio: socialProfile.bio ?? null,
+        location: socialProfile.location ?? null,
+        website: socialProfile.website ?? null,
+        profession: socialProfile.profession ?? null,
+        role: account.role || "user",
+        tier: account.subscriptionTier || "free",
+        joinedAt: account.createdAt ?? null,
+        isArtist: artistCheck.rows.length > 0,
+        isFollowing,
+        followerCount: Number(followerRow?.count) || 0,
+        followingCount: Number(followingRow?.count) || 0,
+        postCount: Number(postStats?.postCount) || 0,
+        trackCount: Number(trackStats?.trackCount) || 0,
+        streamCount: Number(trackStats?.streamCount) || 0,
+        likeCount: Number(postStats?.likeCount) || 0,
+        engagementScore: Number(socialProfile.engagementScore || 0),
+        satisfactionRating: Number(socialProfile.satisfactionRating || 0),
+        stats: {
+          followerCount: Number(followerRow?.count) || 0,
+          followingCount: Number(followingRow?.count) || 0,
+          postCount: Number(postStats?.postCount) || 0,
+          trackCount: Number(trackStats?.trackCount) || 0,
+          streamCount: Number(trackStats?.streamCount) || 0,
+          likeCount: Number(postStats?.likeCount) || 0,
+        },
       },
     });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ success: false, error: "Failed to fetch user" });
+  }
+});
+
+// ============================================
+// USER CONTENT ENDPOINTS (for public profile tabs)
+// ============================================
+
+// GET /api/social/users/:userId/tracks - Get user's tracks
+router.get("/users/:userId/tracks", async (req: Request, res: Response) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    // Query music_tracks where artistId matches the user ID
+    const tracks = await db
+      .select({
+        id: musicTracks.id,
+        title: musicTracks.title,
+        duration: musicTracks.duration,
+        coverArt: musicTracks.coverArt,
+        audioUrl: musicTracks.audioUrl,
+        genre: musicTracks.genre,
+        playCount: musicTracks.playCount,
+        createdAt: musicTracks.createdAt,
+      })
+      .from(musicTracks)
+      .where(eq(musicTracks.artistId, targetUserId))
+      .orderBy(desc(musicTracks.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(musicTracks)
+      .where(eq(musicTracks.artistId, targetUserId));
+
+    res.json({
+      success: true,
+      data: tracks,
+      meta: { total: totalResult?.count || 0, limit, offset },
+    });
+  } catch (error) {
+    console.error("Error fetching user tracks:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch tracks" });
+  }
+});
+
+// GET /api/social/users/:userId/posts - Get user's posts
+router.get("/users/:userId/posts", async (req: Request, res: Response) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    // First get the social user ID for this app user
+    const targetSocialId = await getSocialProfileId(targetUserId);
+
+    // Query posts by authorId (social_users.id)
+    const posts = await db
+      .select()
+      .from(socialPosts)
+      .where(
+        and(
+          eq(socialPosts.authorId, targetSocialId),
+          isNull(socialPosts.deletedAt),
+        ),
+      )
+      .orderBy(desc(socialPosts.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(socialPosts)
+      .where(
+        and(
+          eq(socialPosts.authorId, targetSocialId),
+          isNull(socialPosts.deletedAt),
+        ),
+      );
+
+    // Enrich with track info if applicable
+    const enriched = await enrichPostsWithTracks(posts);
+
+    res.json({
+      success: true,
+      data: enriched,
+      meta: { total: totalResult?.count || 0, limit, offset },
+    });
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch posts" });
   }
 });
 

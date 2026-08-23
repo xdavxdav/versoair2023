@@ -22,7 +22,10 @@ import * as schema from "@shared/schema";
 import { socialPosts } from "@shared/social-schema";
 import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
-import { notificationEmitter } from "../services/notification-service";
+import {
+  notificationEmitter,
+  notifyMessage,
+} from "../services/notification-service";
 
 const router = Router();
 
@@ -619,6 +622,15 @@ router.post(
                 unreadCount: sql`${schema.inboxConversations.unreadCount} + 1`,
               })
               .where(eq(schema.inboxConversations.id, mirrorConvId));
+
+            // Create notification for recipient
+            await notifyMessage({
+              senderId: Number(userId),
+              recipientId: recipientUserId,
+              senderName: sender?.name || String(senderName ?? "Member"),
+              messagePreview: content.trim(),
+              conversationId: mirrorConvId,
+            });
 
             notificationEmitter.emit("inbox_message", {
               toUserId: recipientUserId,

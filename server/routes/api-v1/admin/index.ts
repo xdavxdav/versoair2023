@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../../../db";
+import { db, pool } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import {
@@ -20,6 +20,69 @@ import usersRouter from "./users";
 import rolesRouter from "./roles";
 
 const router = Router();
+
+const ADMIN_ANALYTICS_PERIODS: Record<string, number> = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365,
+};
+
+router.get("/analytics", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
+    const result = await pool.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM businesses) AS "totalBusinesses",
+         (SELECT COUNT(*)::int FROM content_pages) AS "totalPages",
+         (SELECT COUNT(*)::int FROM users) AS "totalUsers",
+         (SELECT COUNT(*)::int FROM users WHERE role IN ('admin', 'superuser')) AS "activeAdmins",
+         (SELECT COUNT(*)::int FROM businesses WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS "newBusinesses",
+         (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS "newUsers"`,
+      [days],
+    );
+    const metrics = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        totalBusinesses: Number(metrics.totalBusinesses || 0),
+        totalPages: Number(metrics.totalPages || 0),
+        totalUsers: Number(metrics.totalUsers || 0),
+        activeAdmins: Number(metrics.activeAdmins || 0),
+        businessesTrend: Number(metrics.newBusinesses || 0),
+        usersTrend: Number(metrics.newUsers || 0),
+      },
+    });
+  } catch (error: any) {
+    console.error("Failed to fetch admin analytics:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch analytics" });
+  }
+});
+
+router.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
+    const result = await pool.query(
+      `SELECT al.id, al.action, al.entity_type AS entity,
+              al.created_at AS timestamp,
+              COALESCE(u.display_name, u.username, 'System') AS "user"
+       FROM audit_logs al
+       LEFT JOIN users u ON u.id = al.user_id
+       WHERE al.created_at >= NOW() - ($1::int * INTERVAL '1 day')
+       ORDER BY al.created_at DESC
+       LIMIT 100`,
+      [days],
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    console.error("Failed to fetch admin activity log:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch activity log" });
+  }
+});
 
 // Mount sub-routers
 router.use("/businesses", businessesRouter);

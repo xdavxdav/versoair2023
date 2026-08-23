@@ -684,15 +684,19 @@ var init_schema = __esm({
       })
     );
     transactions = pgTable("transactions", {
-      id: uuid("id").primaryKey().defaultRandom(),
-      businessId: integer("business_id").references(() => businesses.id),
+      id: serial("id").primaryKey(),
+      reference: varchar("reference").notNull().unique(),
       userId: integer("user_id").references(() => users.id),
+      businessId: integer("business_id").references(() => businesses.id),
       amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-      type: varchar("type"),
+      currency: varchar("currency"),
+      type: varchar("type").notNull(),
       // 'ad_topup', 'subscription_fee'
-      status: varchar("status").default("pending"),
-      reference: varchar("reference").unique(),
-      createdAt: timestamp("created_at").defaultNow()
+      status: varchar("status").notNull().default("pending"),
+      paymentMethodId: integer("payment_method_id"),
+      metadata: jsonb("metadata"),
+      createdAt: timestamp("created_at"),
+      updatedAt: timestamp("updated_at")
     });
     businessReviews = pgTable("business_reviews", {
       id: serial("id").primaryKey(),
@@ -1071,7 +1075,9 @@ var init_schema = __esm({
       "unified_profiles",
       {
         id: serial("id").primaryKey(),
-        ownerId: integer("owner_id").references(() => users.id, { onDelete: "cascade" }),
+        ownerId: integer("owner_id").references(() => users.id, {
+          onDelete: "cascade"
+        }),
         // 'business' | 'artisan' | 'foundation'
         accountType: varchar("account_type", { length: 30 }).notNull(),
         name: text("name").notNull(),
@@ -3088,6 +3094,7 @@ var init_schema = __esm({
         senderName: text("sender_name").notNull(),
         senderAvatar: text("sender_avatar"),
         content: text("content").notNull(),
+        attachmentUrl: text("attachment_url"),
         isRead: boolean("is_read").notNull().default(false),
         isAi: boolean("is_ai").notNull().default(false),
         // true = VersoAI reply
@@ -5820,6 +5827,93 @@ async function notifyReservationUpdate(reservation) {
     return false;
   }
 }
+async function createGenericNotification(params) {
+  const { userId, type, actorName, message, entityUrl } = params;
+  try {
+    await db.insert(notifications).values({
+      userId,
+      type,
+      title: actorName,
+      message,
+      actionUrl: entityUrl || null,
+      isRead: false
+    });
+    notificationEmitter.emit("notification", {
+      userId,
+      type,
+      actorName,
+      message,
+      entityUrl,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    return true;
+  } catch (error) {
+    console.error(
+      "[NOTIFICATION] Failed to create generic notification:",
+      error
+    );
+    return false;
+  }
+}
+async function notifyFollow(params) {
+  return createGenericNotification({
+    userId: params.followingId,
+    type: "follow",
+    actorId: params.followerId,
+    actorName: params.followerName,
+    message: "started following you",
+    entityUrl: `/user/${params.followerId}`
+  });
+}
+async function notifyLike(params) {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "like",
+    actorId: params.likerId,
+    actorName: params.likerName,
+    message: "liked your post",
+    entityUrl: `/post/${params.postId}`
+  });
+}
+async function notifyComment(params) {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "comment",
+    actorId: params.commenterId,
+    actorName: params.commenterName,
+    message: `commented: "${params.commentPreview.slice(0, 50)}${params.commentPreview.length > 50 ? "..." : ""}"`,
+    entityUrl: `/post/${params.postId}`
+  });
+}
+async function notifyMessage(params) {
+  return createGenericNotification({
+    userId: params.recipientId,
+    type: "message",
+    actorId: params.senderId,
+    actorName: params.senderName,
+    message: `sent you a message: "${params.messagePreview.slice(0, 40)}${params.messagePreview.length > 40 ? "..." : ""}"`,
+    entityUrl: params.conversationId ? `/inbox?conversation=${params.conversationId}` : "/inbox"
+  });
+}
+async function notifyTrackPublished(params) {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "publish",
+    actorName: "Verso Air",
+    message: `Your track "${params.trackTitle}" has been published!`,
+    entityUrl: `/streaming/${params.trackId}`
+  });
+}
+async function notifyTrackDownload(params) {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "download",
+    actorId: params.downloaderId,
+    actorName: params.downloaderName,
+    message: `downloaded your track "${params.trackTitle}"`,
+    entityUrl: `/streaming/${params.trackId}`
+  });
+}
 var notificationEmitter;
 var init_notification_service = __esm({
   "server/services/notification-service.ts"() {
@@ -5932,6 +6026,27 @@ function initializeSocket(server) {
       if (data?.room && data.room.startsWith("game_")) {
         socket.leave(data.room);
       }
+    });
+    socket.on(
+      "inbox_typing",
+      (data) => {
+        if (socket.data.userId === null || socket.data.userId === void 0) {
+          return;
+        }
+        if (!data?.toUserId || !data?.conversationId) return;
+        io?.to(`user_${data.toUserId}`).emit("inbox_typing", {
+          conversationId: data.conversationId,
+          fromUserId: socket.data.userId,
+          isTyping: Boolean(data.isTyping)
+        });
+      }
+    );
+    socket.on("presence_check", (data) => {
+      if (!data?.userId) return;
+      socket.emit("presence_status", {
+        userId: data.userId,
+        online: isUserConnected(data.userId)
+      });
     });
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
@@ -6100,7 +6215,7 @@ import cookieParser from "cookie-parser";
 
 // server/routes.ts
 init_db();
-import { sql as sql28 } from "drizzle-orm";
+import { sql as sql29 } from "drizzle-orm";
 
 // server/routes/database-management.ts
 init_db();
@@ -6234,22 +6349,22 @@ var PUBLIC_PATH_PREFIXES = [
   "/api/streaming/subscription/plans"
   // Subscription plan listing (public)
 ];
-function isPublicPath(path7, method) {
-  if (PUBLIC_PATHS.includes(path7)) return true;
-  if (path7.startsWith("/auth/oauth/")) return true;
-  if (path7.startsWith("/auth/google/") || path7.startsWith("/auth/facebook/"))
+function isPublicPath(path8, method) {
+  if (PUBLIC_PATHS.includes(path8)) return true;
+  if (path8.startsWith("/auth/oauth/")) return true;
+  if (path8.startsWith("/auth/google/") || path8.startsWith("/auth/facebook/"))
     return true;
   if (method === "GET") {
     for (const prefix of PUBLIC_PATH_PREFIXES) {
-      if (path7.startsWith(prefix)) return true;
+      if (path8.startsWith(prefix)) return true;
     }
   }
   return false;
 }
 async function globalAuthGate(req, res, next) {
-  const path7 = req.path;
-  if (isPublicPath(path7, req.method.toUpperCase())) return next();
-  if (!path7.startsWith("/api/") && !path7.startsWith("/auth/")) return next();
+  const path8 = req.path;
+  if (isPublicPath(path8, req.method.toUpperCase())) return next();
+  if (!path8.startsWith("/api/") && !path8.startsWith("/auth/")) return next();
   try {
     const token = extractToken(req);
     if (!token) {
@@ -8244,8 +8359,8 @@ router2.get("/api/businesses/:id/pdf", async (req, res) => {
       });
     }
     const { pdf_path, name } = result.rows[0];
-    const fs8 = await import("fs");
-    if (!fs8.existsSync(pdf_path)) {
+    const fs9 = await import("fs");
+    if (!fs9.existsSync(pdf_path)) {
       return res.status(404).json({
         success: false,
         error: "PDF file not found on server"
@@ -18498,7 +18613,7 @@ var oauth_default = router24;
 // server/routes/social-api.ts
 init_db();
 import { Router as Router25 } from "express";
-import { desc as desc10, eq as eq22, isNull, and as and12, inArray } from "drizzle-orm";
+import { desc as desc10, eq as eq22, isNull, and as and12, inArray, sql as sql9 } from "drizzle-orm";
 
 // shared/social-schema.ts
 import {
@@ -18948,6 +19063,8 @@ var insertSavedPostSchema = createInsertSchema2(savedPosts);
 var insertFaqCategorySchema = createInsertSchema2(faqCategories);
 
 // server/routes/social-api.ts
+init_schema();
+init_notification_service();
 var router25 = Router25();
 var ALLOWED_POST_TYPES = [
   "discussion",
@@ -19233,6 +19350,24 @@ router25.post("/posts/:postId/like", async (req, res) => {
       likeCount: (post[0].likeCount || 0) + 1,
       engagementScore: (((typeof post[0].engagementScore === "string" ? parseFloat(post[0].engagementScore) : post[0].engagementScore) || 0) + 1).toFixed(2)
     }).where(eq22(socialPosts.id, parseInt(postId))).returning();
+    if (post[0] && post[0].authorId !== userId) {
+      try {
+        const [postAuthor] = await db.select({ userId: socialUsers.userId }).from(socialUsers).where(eq22(socialUsers.id, post[0].authorId)).limit(1);
+        const [likerInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq22(users.id, Number(appUserId))).limit(1);
+        if (postAuthor && likerInfo) {
+          await notifyLike({
+            likerId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            likerName: likerInfo.name || "Someone",
+            postId: parseInt(postId)
+          });
+        }
+      } catch (notifError) {
+        console.error("[LIKE] Failed to create notification:", notifError);
+      }
+    }
     res.json({
       success: true,
       data: updatedPost[0],
@@ -19302,6 +19437,25 @@ router25.post("/posts/:postId/comments", async (req, res) => {
       engagementScore: ((parseFloat(post[0].engagementScore) || 0) + 3).toFixed(2)
       // Comment worth 3 points
     }).where(eq22(socialPosts.id, parseInt(postId)));
+    if (post[0] && post[0].authorId !== authorId) {
+      try {
+        const [postAuthor] = await db.select({ userId: socialUsers.userId }).from(socialUsers).where(eq22(socialUsers.id, post[0].authorId)).limit(1);
+        const [commenterInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq22(users.id, Number(appUserId))).limit(1);
+        if (postAuthor && commenterInfo) {
+          await notifyComment({
+            commenterId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            commenterName: commenterInfo.name || "Someone",
+            postId: parseInt(postId),
+            commentPreview: content
+          });
+        }
+      } catch (notifError) {
+        console.error("[COMMENT] Failed to create notification:", notifError);
+      }
+    }
     res.status(201).json({
       success: true,
       data: Array.isArray(newComment) ? newComment[0] : newComment,
@@ -19402,11 +19556,27 @@ router25.post("/follow/:userId", async (req, res) => {
     ).limit(1);
     if (!existingFollow.length) {
       await db.insert(socialFollowers).values({ followerId, followingId });
+      try {
+        const [followerInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq22(users.id, Number(appUserId))).limit(1);
+        if (followerInfo) {
+          await notifyFollow({
+            followerId: Number(appUserId),
+            followingId: parseInt(userId),
+            followerName: followerInfo.name || "Someone"
+          });
+        }
+      } catch (notifError) {
+        console.error("[FOLLOW] Failed to create notification:", notifError);
+      }
     }
     await syncFollowerCount(followingId);
+    const [{ count: count11 }] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq22(socialFollowers.followingId, followingId));
     res.json({
       success: true,
       following: true,
+      followerCount: Number(count11) || 0,
       message: "User followed successfully"
     });
   } catch (error) {
@@ -19433,9 +19603,11 @@ router25.delete("/follow/:userId", async (req, res) => {
       )
     );
     await syncFollowerCount(followingId);
+    const [{ count: count11 }] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq22(socialFollowers.followingId, followingId));
     res.json({
       success: true,
       following: false,
+      followerCount: Number(count11) || 0,
       message: "User unfollowed successfully"
     });
   } catch (error) {
@@ -19445,17 +19617,96 @@ router25.delete("/follow/:userId", async (req, res) => {
 });
 router25.get("/users/:userId", async (req, res) => {
   try {
-    const { userId } = req.params;
-    const user = await db.select().from(socialUsers).where(eq22(socialUsers.id, parseInt(userId))).limit(1);
-    if (!user.length) {
+    const targetAppUserId = parseInt(req.params.userId, 10);
+    if (!targetAppUserId || Number.isNaN(targetAppUserId)) {
+      return res.status(400).json({ success: false, error: "Invalid user id" });
+    }
+    const [account] = await db.select({
+      id: users.id,
+      username: users.username,
+      displayName: users.displayName,
+      role: users.role,
+      subscriptionTier: users.subscriptionTier,
+      createdAt: users.createdAt
+    }).from(users).where(eq22(users.id, targetAppUserId)).limit(1);
+    if (!account) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
-    const posts = await db.select().from(socialPosts).where(eq22(socialPosts.authorId, parseInt(userId)));
+    const currentAppUserId = req.user?.userId ? Number(req.user.userId) : null;
+    const targetSocialId = await getSocialProfileId(targetAppUserId);
+    const [socialProfile] = await db.select().from(socialUsers).where(eq22(socialUsers.id, targetSocialId)).limit(1);
+    if (!socialProfile) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    let viewerSocialId = null;
+    if (currentAppUserId) {
+      viewerSocialId = await getSocialProfileId(currentAppUserId);
+    }
+    const [followerRow] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq22(socialFollowers.followingId, targetSocialId));
+    const [followingRow] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq22(socialFollowers.followerId, targetSocialId));
+    const [postStats] = await db.select({
+      postCount: sql9`count(*)`,
+      likeCount: sql9`coalesce(sum(${socialPosts.likeCount}), 0)`
+    }).from(socialPosts).where(
+      and12(
+        eq22(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    );
+    const [trackStats] = await db.select({
+      trackCount: sql9`count(*)`,
+      streamCount: sql9`coalesce(sum(${musicTracks.playCount}), 0)`
+    }).from(musicTracks).where(eq22(musicTracks.artistId, targetAppUserId));
+    const artistCheck = await pool.query(
+      "SELECT 1 FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+      [targetAppUserId]
+    );
+    let isFollowing = false;
+    if (viewerSocialId && viewerSocialId !== targetSocialId) {
+      const [followState] = await db.select({ id: socialFollowers.id }).from(socialFollowers).where(
+        and12(
+          eq22(socialFollowers.followerId, viewerSocialId),
+          eq22(socialFollowers.followingId, targetSocialId)
+        )
+      ).limit(1);
+      isFollowing = Boolean(followState);
+    }
     res.json({
       success: true,
       data: {
-        ...user[0],
-        postCount: posts.length
+        id: account.id,
+        userId: account.id,
+        socialUserId: socialProfile.id,
+        username: account.username,
+        displayName: account.displayName || socialProfile.displayName || account.username,
+        name: account.displayName || socialProfile.displayName || account.username,
+        avatarUrl: socialProfile.avatarUrl ?? null,
+        avatar: socialProfile.avatarUrl ?? null,
+        bio: socialProfile.bio ?? null,
+        location: socialProfile.location ?? null,
+        website: socialProfile.website ?? null,
+        profession: socialProfile.profession ?? null,
+        role: account.role || "user",
+        tier: account.subscriptionTier || "free",
+        joinedAt: account.createdAt ?? null,
+        isArtist: artistCheck.rows.length > 0,
+        isFollowing,
+        followerCount: Number(followerRow?.count) || 0,
+        followingCount: Number(followingRow?.count) || 0,
+        postCount: Number(postStats?.postCount) || 0,
+        trackCount: Number(trackStats?.trackCount) || 0,
+        streamCount: Number(trackStats?.streamCount) || 0,
+        likeCount: Number(postStats?.likeCount) || 0,
+        engagementScore: Number(socialProfile.engagementScore || 0),
+        satisfactionRating: Number(socialProfile.satisfactionRating || 0),
+        stats: {
+          followerCount: Number(followerRow?.count) || 0,
+          followingCount: Number(followingRow?.count) || 0,
+          postCount: Number(postStats?.postCount) || 0,
+          trackCount: Number(trackStats?.trackCount) || 0,
+          streamCount: Number(trackStats?.streamCount) || 0,
+          likeCount: Number(postStats?.likeCount) || 0
+        }
       }
     });
   } catch (error) {
@@ -19463,12 +19714,67 @@ router25.get("/users/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch user" });
   }
 });
+router25.get("/users/:userId/tracks", async (req, res) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const offset = parseInt(req.query.offset) || 0;
+    const tracks = await db.select({
+      id: musicTracks.id,
+      title: musicTracks.title,
+      duration: musicTracks.duration,
+      coverArt: musicTracks.coverArt,
+      audioUrl: musicTracks.audioUrl,
+      genre: musicTracks.genre,
+      playCount: musicTracks.playCount,
+      createdAt: musicTracks.createdAt
+    }).from(musicTracks).where(eq22(musicTracks.artistId, targetUserId)).orderBy(desc10(musicTracks.createdAt)).limit(limit).offset(offset);
+    const [totalResult] = await db.select({ count: sql9`count(*)` }).from(musicTracks).where(eq22(musicTracks.artistId, targetUserId));
+    res.json({
+      success: true,
+      data: tracks,
+      meta: { total: totalResult?.count || 0, limit, offset }
+    });
+  } catch (error) {
+    console.error("Error fetching user tracks:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch tracks" });
+  }
+});
+router25.get("/users/:userId/posts", async (req, res) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const offset = parseInt(req.query.offset) || 0;
+    const targetSocialId = await getSocialProfileId(targetUserId);
+    const posts = await db.select().from(socialPosts).where(
+      and12(
+        eq22(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    ).orderBy(desc10(socialPosts.createdAt)).limit(limit).offset(offset);
+    const [totalResult] = await db.select({ count: sql9`count(*)` }).from(socialPosts).where(
+      and12(
+        eq22(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    );
+    const enriched = await enrichPostsWithTracks(posts);
+    res.json({
+      success: true,
+      data: enriched,
+      meta: { total: totalResult?.count || 0, limit, offset }
+    });
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch posts" });
+  }
+});
 var social_api_default = router25;
 
 // server/routes/faq-api.ts
 init_db();
 import { Router as Router26 } from "express";
-import { desc as desc11, eq as eq23, and as and13, ilike as ilike7, isNull as isNull2, sql as sql9 } from "drizzle-orm";
+import { desc as desc11, eq as eq23, and as and13, ilike as ilike7, isNull as isNull2, sql as sql10 } from "drizzle-orm";
 var router26 = Router26();
 router26.get("/categories", async (_req, res) => {
   try {
@@ -19551,7 +19857,7 @@ router26.get("/", async (req, res) => {
     ];
     if (search) {
       conditions.push(
-        sql9`(${ilike7(socialPosts.title, `${search}%`)} OR ${ilike7(socialPosts.content, `${search}%`)})`
+        sql10`(${ilike7(socialPosts.title, `${search}%`)} OR ${ilike7(socialPosts.content, `${search}%`)})`
       );
     }
     if (category && category !== "all") {
@@ -19576,7 +19882,7 @@ router26.get("/", async (req, res) => {
         };
       })
     );
-    const totalResult = await db.select({ count: sql9`count(*)` }).from(socialPosts).where(and13(...conditions));
+    const totalResult = await db.select({ count: sql10`count(*)` }).from(socialPosts).where(and13(...conditions));
     const total = Number(totalResult[0]?.count || 0);
     res.json({
       success: true,
@@ -19611,7 +19917,7 @@ router26.get("/search", async (req, res) => {
       and13(
         eq23(socialPosts.postType, "faq"),
         isNull2(socialPosts.deletedAt),
-        sql9`(${ilike7(socialPosts.title, `${q}%`)} OR ${ilike7(socialPosts.content, `${q}%`)})`
+        sql10`(${ilike7(socialPosts.title, `${q}%`)} OR ${ilike7(socialPosts.content, `${q}%`)})`
       )
     ).orderBy(desc11(socialPosts.viewCount)).limit(limitNum);
     res.json({ success: true, data: results });
@@ -19659,7 +19965,7 @@ router26.get("/:id", async (req, res) => {
       ...reply,
       replies: nested.filter((n) => n.parentCommentId === reply.id)
     }));
-    await db.update(socialPosts).set({ viewCount: sql9`${socialPosts.viewCount} + 1` }).where(eq23(socialPosts.id, postId));
+    await db.update(socialPosts).set({ viewCount: sql10`${socialPosts.viewCount} + 1` }).where(eq23(socialPosts.id, postId));
     res.json({
       success: true,
       data: {
@@ -19737,9 +20043,9 @@ router26.post("/:id/reply", async (req, res) => {
       content,
       parentCommentId: parentCommentId || null
     }).returning();
-    await db.update(socialPosts).set({ commentCount: sql9`${socialPosts.commentCount} + 1` }).where(eq23(socialPosts.id, postId));
+    await db.update(socialPosts).set({ commentCount: sql10`${socialPosts.commentCount} + 1` }).where(eq23(socialPosts.id, postId));
     if (parentCommentId) {
-      await db.update(socialComments).set({ replyCount: sql9`${socialComments.replyCount} + 1` }).where(eq23(socialComments.id, parentCommentId));
+      await db.update(socialComments).set({ replyCount: sql10`${socialComments.replyCount} + 1` }).where(eq23(socialComments.id, parentCommentId));
     }
     res.status(201).json({
       success: true,
@@ -19774,12 +20080,12 @@ var faq_api_default = router26;
 // server/routes/tickets.ts
 init_db();
 import { Router as Router27 } from "express";
-import { sql as sql10 } from "drizzle-orm";
+import { sql as sql11 } from "drizzle-orm";
 var router27 = Router27();
 var inMemoryTickets = [];
 async function ensureTicketsTable() {
   try {
-    await db.execute(sql10`SELECT 1 FROM tickets LIMIT 1`);
+    await db.execute(sql11`SELECT 1 FROM tickets LIMIT 1`);
     return true;
   } catch {
     return false;
@@ -19799,7 +20105,7 @@ router27.get("/", async (req, res) => {
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -19836,7 +20142,7 @@ router27.post("/", async (req, res) => {
     if (exists) {
       try {
         const inserted = await db.execute(
-          sql10`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
+          sql11`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
               VALUES (${payload.title || "Untitled"}, ${payload.description || ""}, ${payload.status || "open"}, ${priority2}, ${payload.category || "general"}, ${payload.reporter || null}, ${payload.requesterEmail || null}, ${payload.assigneeId || null}, ${payload.team || null}, ${payload.source || "portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
               RETURNING *`
         );
@@ -19860,7 +20166,7 @@ router27.put("/:id", async (req, res) => {
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets 
+          sql11`UPDATE tickets 
               SET title=${payload.title || ""}, 
                   description=${payload.description || ""}, 
                   status=${payload.status || "open"},
@@ -19897,7 +20203,7 @@ router27.delete("/:id", async (req, res) => {
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
-        await db.execute(sql10`DELETE FROM tickets WHERE id = ${parseInt(id)}`);
+        await db.execute(sql11`DELETE FROM tickets WHERE id = ${parseInt(id)}`);
         return res.json({ success: true });
       } catch (dbError) {
         console.error("\u274C Database delete error:", dbError);
@@ -19918,7 +20224,7 @@ router27.put("/:id/assign", async (req, res) => {
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets SET assignee_id=${assigneeId}, team=${team || null}, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
+          sql11`UPDATE tickets SET assignee_id=${assigneeId}, team=${team || null}, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
         );
         return res.json(updated.rows[0]);
       } catch (dbError) {
@@ -19945,7 +20251,7 @@ router27.post("/:id/escalate", async (req, res) => {
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets SET priority='critical', sla_target_hours=2, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
+          sql11`UPDATE tickets SET priority='critical', sla_target_hours=2, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
         );
         return res.json(updated.rows[0]);
       } catch (dbError) {
@@ -19972,7 +20278,7 @@ router27.get("/:id/comments", async (req, res) => {
     if (exists) {
       try {
         const rows = await db.execute(
-          sql10`SELECT * FROM ticket_comments WHERE ticket_id=${parseInt(id)} ORDER BY created_at ASC`
+          sql11`SELECT * FROM ticket_comments WHERE ticket_id=${parseInt(id)} ORDER BY created_at ASC`
         );
         return res.json(rows.rows || []);
       } catch (dbError) {
@@ -19998,7 +20304,7 @@ router27.post("/:id/comments", async (req, res) => {
     if (exists) {
       try {
         const inserted = await db.execute(
-          sql10`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
+          sql11`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
               VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${body})
               RETURNING *`
         );
@@ -20020,7 +20326,7 @@ router27.get("/stats/summary", async (req, res) => {
     if (exists) {
       try {
         const statsRows = await db.execute(
-          sql10`SELECT 
+          sql11`SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) as open,
                 SUM(CASE WHEN status='in-progress' THEN 1 ELSE 0 END) as in_progress,
@@ -20070,7 +20376,7 @@ router27.get("/sla/breaches", async (req, res) => {
     if (exists) {
       try {
         const breaches = await db.execute(
-          sql10`SELECT * FROM tickets WHERE sla_breached=true ORDER BY created_at DESC`
+          sql11`SELECT * FROM tickets WHERE sla_breached=true ORDER BY created_at DESC`
         );
         return res.json(breaches.rows || []);
       } catch (dbError) {
@@ -20088,7 +20394,7 @@ router27.get("/status/:status", async (req, res) => {
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets WHERE status = ${status} ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets WHERE status = ${status} ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -20102,7 +20408,7 @@ router27.get("/priority/critical", async (req, res) => {
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets WHERE priority IN ('critical', 'high') ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets WHERE priority IN ('critical', 'high') ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -20121,7 +20427,7 @@ router27.post("/batch/update", async (req, res) => {
     if (exists) {
       for (const id of ids) {
         await db.execute(
-          sql10`UPDATE tickets SET status = ${updates?.status || "open"}, updated_at = NOW() WHERE id = ${parseInt(id)}`
+          sql11`UPDATE tickets SET status = ${updates?.status || "open"}, updated_at = NOW() WHERE id = ${parseInt(id)}`
         );
       }
     }
@@ -20137,7 +20443,7 @@ init_db();
 init_schema();
 init_email_service();
 import { Router as Router28 } from "express";
-import { sql as sql11, eq as eq24, and as and14, or as or5, ilike as ilike8, desc as desc12, count as count10 } from "drizzle-orm";
+import { sql as sql12, eq as eq24, and as and14, or as or5, ilike as ilike8, desc as desc12, count as count10 } from "drizzle-orm";
 import jwt6 from "jsonwebtoken";
 var ADMIN_NOTIFICATION_EMAIL5 = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var router28 = Router28();
@@ -20300,7 +20606,7 @@ router28.get("/search", async (req, res) => {
     if (businessIds.length > 0) {
       try {
         const reviewData = await db.execute(
-          sql11`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+          sql12`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
            FROM business_reviews
            WHERE business_id = ANY(${businessIds})
            GROUP BY business_id`
@@ -20489,6 +20795,7 @@ import { Router as Router29 } from "express";
 import { eq as eq25 } from "drizzle-orm";
 import multer from "multer";
 import fs2 from "fs";
+init_notification_service();
 var router29 = Router29();
 var storage = multer.memoryStorage();
 var upload = multer({
@@ -20997,6 +21304,25 @@ router29.get("/tracks/:id/download", async (req, res) => {
         "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1",
         [parseInt(id)]
       );
+      if (track.artist_id) {
+        try {
+          const [downloaderInfo] = await db.select({
+            name: users.displayName
+          }).from(users).where(eq25(users.id, userId)).limit(1);
+          await notifyTrackDownload({
+            artistId: track.artist_id,
+            downloaderId: userId,
+            downloaderName: downloaderInfo?.name || "Someone",
+            trackTitle: track.title || "Your track",
+            trackId: parseInt(id)
+          });
+        } catch (notifError) {
+          console.error(
+            "[DOWNLOAD] Failed to create notification:",
+            notifError
+          );
+        }
+      }
     }
     const fileName = track.file_name || `track-${id}.mp3`;
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
@@ -21494,8 +21820,8 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
       return res.status(400).json({ success: false, error: "No fields to update" });
     }
     values.push(trackId);
-    const sql30 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
-    const result = await pool.query(sql30, values);
+    const sql31 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
+    const result = await pool.query(sql31, values);
     console.log(
       "[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)"
     );
@@ -21503,6 +21829,45 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
   } catch (error) {
     console.error("Track edit error:", error);
     res.status(500).json({ success: false, error: "Failed to edit track" });
+  }
+});
+router29.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const { status } = req.body;
+    const allowed = ["published", "draft", "scheduled", "archived"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `status must be one of: ${allowed.join(", ")}`
+      });
+    }
+    const result = await pool.query(
+      `UPDATE music_tracks SET status = $1 WHERE id = $2 RETURNING id, title, artist_id, status`,
+      [status, trackId]
+    );
+    if (!result.rows.length)
+      return res.status(404).json({ success: false, error: "Track not found" });
+    const track = result.rows[0];
+    console.log(`[MUSIC] Track #${trackId} status \u2192 ${status}`);
+    if (status === "published" && track.artist_id) {
+      try {
+        await notifyTrackPublished({
+          artistId: track.artist_id,
+          trackTitle: track.title || "Your track",
+          trackId
+        });
+      } catch (notifError) {
+        console.error(
+          "[MUSIC] Failed to create publication notification:",
+          notifError
+        );
+      }
+    }
+    res.json({ success: true, track });
+  } catch (err) {
+    console.error("Track status error:", err);
+    res.status(500).json({ success: false, error: "Failed to update status" });
   }
 });
 router29.delete("/tracks/:id", requireAuth(), async (req, res) => {
@@ -26457,7 +26822,7 @@ var artists_default2 = router33;
 init_db();
 init_schema();
 import { Router as Router34 } from "express";
-import { eq as eq26, sql as sql12 } from "drizzle-orm";
+import { eq as eq26, sql as sql13 } from "drizzle-orm";
 var router34 = Router34();
 router34.post("/categories", async (req, res) => {
   try {
@@ -26578,12 +26943,12 @@ router34.post("/categories", async (req, res) => {
 });
 router34.get("/status", async (_req, res) => {
   try {
-    const categoryCount = await db.select({ count: sql12`count(*)` }).from(businessCategories).execute();
-    const businessCount = await db.select({ count: sql12`count(*)` }).from(businesses).execute();
+    const categoryCount = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
+    const businessCount = await db.select({ count: sql13`count(*)` }).from(businesses).execute();
     const categoryStats = await db.select({
       categoryName: businessCategories.name,
       categorySlug: businessCategories.slug,
-      businessCount: sql12`count(${businesses.id})`
+      businessCount: sql13`count(${businesses.id})`
     }).from(businessCategories).leftJoin(
       businesses,
       eq26(businessCategories.id, businesses.categoryId)
@@ -26591,7 +26956,7 @@ router34.get("/status", async (_req, res) => {
       businessCategories.id,
       businessCategories.name,
       businessCategories.slug
-    ).orderBy(sql12`count(${businesses.id}) DESC`).execute();
+    ).orderBy(sql13`count(${businesses.id}) DESC`).execute();
     res.json({
       success: true,
       statistics: {
@@ -26608,8 +26973,8 @@ router34.get("/status", async (_req, res) => {
 router34.post("/all", async (req, res) => {
   try {
     console.log("Starting full data dispatch...");
-    const cats = await db.select({ count: sql12`count(*)` }).from(businessCategories).execute();
-    const biz = await db.select({ count: sql12`count(*)` }).from(businesses).execute();
+    const cats = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
+    const biz = await db.select({ count: sql13`count(*)` }).from(businesses).execute();
     res.json({
       success: true,
       message: "Full data dispatch completed",
@@ -29559,7 +29924,7 @@ init_db();
 init_schema();
 import { Router as Router39 } from "express";
 import { z as z5 } from "zod";
-import { eq as eq29, sql as sql14, desc as desc14 } from "drizzle-orm";
+import { eq as eq29, sql as sql15, desc as desc14 } from "drizzle-orm";
 
 // server/utils/artist-code-generator.ts
 function nameToCode(stageName) {
@@ -29807,7 +30172,7 @@ router39.get(
       Math.max(1, parseInt(req.query.limit) || 20)
     );
     const offset = (page - 1) * limit;
-    const submissions = await db.execute(sql14`
+    const submissions = await db.execute(sql15`
       SELECT
         es.id, es.project_title, es.status, es.tracks, es.cover_art_url,
         es.ai_score, es.final_score, es.reviewer_notes, es.submission_number,
@@ -29820,7 +30185,7 @@ router39.get(
       ORDER BY es.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    const countResult = await db.execute(sql14`
+    const countResult = await db.execute(sql15`
       SELECT COUNT(*) as total FROM evaluation_submissions WHERE status = ${status}
     `);
     res.json({
@@ -29841,7 +30206,7 @@ router39.get(
       return res.status(403).json({ success: false, message: "Staff only" });
     }
     const id = parseInt(req.params.id);
-    const result = await db.execute(sql14`
+    const result = await db.execute(sql15`
       SELECT
         es.*,
         ap.stage_name, ap.genre, ap.country, ap.country_code,
@@ -29960,7 +30325,7 @@ router39.get(
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
-    const result = await db.execute(sql14`
+    const result = await db.execute(sql15`
       SELECT
         es.id, es.project_title, es.status, es.ai_score, es.final_score,
         es.scores, es.reviewer_notes, es.submission_number,
@@ -29990,7 +30355,7 @@ router39.get(
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
-    const profileResult = await db.execute(sql14`
+    const profileResult = await db.execute(sql15`
       SELECT
         ap.id, ap.stage_name, ap.artist_code, ap.division, ap.evaluation_status,
         ap.evaluation_score, ap.contract_access, ap.promotion_eligible_at,
@@ -30049,7 +30414,7 @@ router39.get(
     let thresholds = null;
     let progress = 100;
     if (nextDiv) {
-      const threshResult = await db.execute(sql14`
+      const threshResult = await db.execute(sql15`
         SELECT min_streams, min_releases, min_active_days, min_engagement_rate
         FROM promotion_thresholds
         WHERE from_division = ${division}
@@ -30080,7 +30445,7 @@ router39.get(
         };
       }
     }
-    const evalResult = await db.execute(sql14`
+    const evalResult = await db.execute(sql15`
       SELECT status, final_score, reviewed_at, resubmit_after
       FROM evaluation_submissions
       WHERE artist_id = ${profile.id}
@@ -30146,9 +30511,107 @@ function computeAIPreScore(tracks) {
 }
 var evaluations_default = router39;
 
-// server/routes/marketing.ts
+// server/routes/notifications.ts
 init_db();
 import { Router as Router40 } from "express";
+var router40 = Router40();
+async function ensureNotifTable() {
+  await pool.query(
+    `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL,
+      type VARCHAR(30) NOT NULL DEFAULT 'activity',
+      title TEXT NOT NULL DEFAULT '',
+      message TEXT,
+      actor_name TEXT,
+      actor_avatar TEXT,
+      entity_url TEXT,
+      read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `
+  ).catch(() => {
+  });
+  const cols = ["actor_name TEXT", "actor_avatar TEXT", "entity_url TEXT"];
+  for (const col of cols) {
+    const [name] = col.split(" ");
+    await pool.query(
+      `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`
+    ).catch(() => {
+    });
+  }
+}
+function mapType(raw2) {
+  const map = {
+    connection_request: "follow",
+    connection_accepted: "follow",
+    track_review: "like",
+    message: "message",
+    activity: "publish",
+    job_posted: "mention",
+    contract_posted: "mention",
+    reservation_update: "comment"
+  };
+  return map[raw2] || raw2;
+}
+router40.get("/", requireAuth(), async (req, res) => {
+  try {
+    await ensureNotifTable();
+    const userId = parseInt(req.user.userId);
+    const result = await pool.query(
+      `SELECT id::text, type, title, message,
+              actor_name AS "actorName", actor_avatar AS "actorAvatar",
+              entity_url AS "entityUrl", read, created_at AS "createdAt"
+       FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [userId]
+    );
+    const rows = result.rows.map((r) => ({
+      id: r.id,
+      type: mapType(r.type),
+      actorName: r.actorName || "Someone",
+      actorAvatar: r.actorAvatar || null,
+      text: r.message || r.title || "",
+      entityUrl: r.entityUrl || null,
+      read: r.read,
+      createdAt: r.createdAt
+    }));
+    res.json({ success: true, notifications: rows });
+  } catch (err) {
+    console.error("[NOTIFICATIONS] GET error:", err.message);
+    res.json({ success: true, notifications: [] });
+  }
+});
+router40.post("/read-all", requireAuth(), async (req, res) => {
+  try {
+    const userId = parseInt(req.user.userId);
+    await pool.query(
+      `UPDATE notifications SET read = true WHERE user_id = $1`,
+      [userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+router40.post("/:id/read", requireAuth(), async (req, res) => {
+  try {
+    await pool.query(`UPDATE notifications SET read = true WHERE id = $1`, [
+      req.params.id
+    ]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+var notifications_default = router40;
+
+// server/routes/marketing.ts
+init_db();
+import { Router as Router41 } from "express";
 import multer2 from "multer";
 import path3 from "path";
 import fs4 from "fs";
@@ -30450,10 +30913,10 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
   }
   if (mimetype === "application/pdf") {
     try {
-      const fs8 = await import("fs");
+      const fs9 = await import("fs");
       const pdfParseModule = await import("pdf-parse");
       const pdfParse = pdfParseModule.default || pdfParseModule;
-      const buffer = fs8.readFileSync(filePath);
+      const buffer = fs9.readFileSync(filePath);
       const pdfData = await pdfParse(buffer);
       checks.push({
         name: "PDF pages",
@@ -30489,7 +30952,7 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
 }
 
 // server/routes/marketing.ts
-var router40 = Router40();
+var router41 = Router41();
 var stripe3 = process.env.STRIPE_SECRET_KEY ? new Stripe3(process.env.STRIPE_SECRET_KEY) : null;
 var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "print") : path3.resolve("uploads", "print");
 try {
@@ -30572,7 +31035,7 @@ var listingUpload = multer2({
   { name: "images", maxCount: 10 },
   { name: "videos", maxCount: 3 }
 ]);
-router40.get("/journal/listings", async (req, res) => {
+router41.get("/journal/listings", async (req, res) => {
   try {
     const { category, status, page = "1", limit = "20" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -30617,7 +31080,7 @@ router40.get("/journal/listings", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router41.post(
   "/journal/listings",
   requireAuth(),
   (req, res, next) => {
@@ -30687,7 +31150,7 @@ router40.post(
     }
   }
 );
-router40.get(
+router41.get(
   "/journal/my-listings",
   requireAuth(),
   async (req, res) => {
@@ -30703,7 +31166,7 @@ router40.get(
     }
   }
 );
-router40.put(
+router41.put(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -30769,7 +31232,7 @@ router40.put(
     }
   }
 );
-router40.delete(
+router41.delete(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -30795,7 +31258,7 @@ router40.delete(
     }
   }
 );
-router40.get("/journal/pdf/:type", async (req, res) => {
+router41.get("/journal/pdf/:type", async (req, res) => {
   try {
     const type = req.params.type;
     if (type !== "weekly" && type !== "monthly") {
@@ -30828,7 +31291,7 @@ router40.get("/journal/pdf/:type", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router41.post(
   "/journal/generate",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -30845,7 +31308,7 @@ router40.post(
     }
   }
 );
-router40.get("/journal/editions", async (_req, res) => {
+router41.get("/journal/editions", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, type, listing_count, generated_at, pdf_url FROM journal_editions ORDER BY generated_at DESC LIMIT 20`
@@ -30855,7 +31318,7 @@ router40.get("/journal/editions", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.patch(
+router41.patch(
   "/journal/listings/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -30877,7 +31340,7 @@ router40.patch(
     }
   }
 );
-router40.get("/packs", async (_req, res) => {
+router41.get("/packs", async (_req, res) => {
   try {
     const packs = await pool.query(
       `SELECT mp.*, 
@@ -30895,7 +31358,7 @@ router40.get("/packs", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get("/packs/:id", async (req, res) => {
+router41.get("/packs/:id", async (req, res) => {
   try {
     const pack = await pool.query(
       `SELECT mp.*,
@@ -30916,7 +31379,7 @@ router40.get("/packs/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get("/print/products", async (_req, res) => {
+router41.get("/print/products", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM print_products WHERE is_active = true ORDER BY price_cents ASC`
@@ -30926,7 +31389,7 @@ router40.get("/print/products", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router41.post(
   "/print/upload",
   requireAuth(),
   printUpload.single("file"),
@@ -30982,7 +31445,7 @@ router40.post(
     }
   }
 );
-router40.get(
+router41.get(
   "/print/jobs",
   requireAuth(),
   async (req, res) => {
@@ -31014,7 +31477,7 @@ router40.get(
     }
   }
 );
-router40.patch(
+router41.patch(
   "/print/jobs/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31058,7 +31521,7 @@ router40.patch(
     }
   }
 );
-router40.get("/cart", requireAuth(), async (req, res) => {
+router41.get("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const result = await pool.query(
@@ -31089,7 +31552,7 @@ router40.get("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post("/cart", requireAuth(), async (req, res) => {
+router41.post("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { item_type, item_id, quantity = 1, metadata } = req.body;
@@ -31149,7 +31612,7 @@ router40.post("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.put("/cart/:id", requireAuth(), async (req, res) => {
+router41.put("/cart/:id", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { quantity } = req.body;
@@ -31169,7 +31632,7 @@ router40.put("/cart/:id", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.delete(
+router41.delete(
   "/cart/:id",
   requireAuth(),
   async (req, res) => {
@@ -31188,7 +31651,7 @@ router40.delete(
     }
   }
 );
-router40.delete("/cart", requireAuth(), async (req, res) => {
+router41.delete("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     await pool.query(`DELETE FROM cart_items WHERE user_id = $1`, [userId]);
@@ -31197,7 +31660,7 @@ router40.delete("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router41.post(
   "/cart/merge",
   requireAuth(),
   async (req, res) => {
@@ -31284,7 +31747,7 @@ router40.post(
     }
   }
 );
-router40.post(
+router41.post(
   "/cart/checkout",
   requireAuth(),
   async (req, res) => {
@@ -31370,7 +31833,7 @@ router40.post(
     }
   }
 );
-router40.get("/orders", requireAuth(), async (req, res) => {
+router41.get("/orders", requireAuth(), async (req, res) => {
   try {
     const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
     const { status, page = "1", limit = "20" } = req.query;
@@ -31402,7 +31865,7 @@ router40.get("/orders", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get(
+router41.get(
   "/orders/:id",
   requireAuth(),
   async (req, res) => {
@@ -31433,7 +31896,7 @@ router40.get(
     }
   }
 );
-router40.patch(
+router41.patch(
   "/orders/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31467,7 +31930,7 @@ router40.patch(
     }
   }
 );
-router40.post("/newsletters/subscribe", async (req, res) => {
+router41.post("/newsletters/subscribe", async (req, res) => {
   try {
     const { email, name } = req.body;
     if (!email) {
@@ -31487,7 +31950,7 @@ router40.post("/newsletters/subscribe", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post("/newsletters/unsubscribe", async (req, res) => {
+router41.post("/newsletters/unsubscribe", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -31502,7 +31965,7 @@ router40.post("/newsletters/unsubscribe", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get("/newsletters/archive", async (req, res) => {
+router41.get("/newsletters/archive", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -31519,7 +31982,7 @@ router40.get("/newsletters/archive", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get(
+router41.get(
   "/newsletters/subscribers",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -31533,7 +31996,7 @@ router40.get(
     }
   }
 );
-router40.get(
+router41.get(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -31547,7 +32010,7 @@ router40.get(
     }
   }
 );
-router40.post(
+router41.post(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31580,7 +32043,7 @@ router40.post(
     }
   }
 );
-router40.put(
+router41.put(
   "/newsletters/campaigns/:id",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31615,7 +32078,7 @@ router40.put(
     }
   }
 );
-router40.post(
+router41.post(
   "/newsletters/campaigns/:id/send",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31661,7 +32124,7 @@ router40.post(
     }
   }
 );
-router40.get(
+router41.get(
   "/analytics",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -31716,7 +32179,7 @@ router40.get(
     }
   }
 );
-router40.get(
+router41.get(
   "/printshop/queue",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -31756,7 +32219,7 @@ router40.get(
     }
   }
 );
-router40.delete(
+router41.delete(
   "/cart/purge-expired",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -31774,15 +32237,15 @@ router40.delete(
     }
   }
 );
-var marketing_default = router40;
+var marketing_default = router41;
 
 // server/routes/user-history.ts
 init_db();
 init_schema();
-import { Router as Router41 } from "express";
+import { Router as Router42 } from "express";
 import { eq as eq30, desc as desc15, and as and17 } from "drizzle-orm";
-var router41 = Router41();
-router41.get(
+var router42 = Router42();
+router42.get(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -31793,7 +32256,7 @@ router41.get(
     res.json({ success: true, history: rows });
   })
 );
-router41.post(
+router42.post(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -31832,7 +32295,7 @@ router41.post(
     res.status(201).json({ success: true, action: "created", id: inserted.id });
   })
 );
-router41.delete(
+router42.delete(
   "/:id",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -31857,16 +32320,16 @@ router41.delete(
     res.json({ success: true, action: "deleted", id: deleted.id });
   })
 );
-var user_history_default = router41;
+var user_history_default = router42;
 
 // server/routes/track-upload.ts
 init_db();
-import { Router as Router42 } from "express";
+import { Router as Router43 } from "express";
 import multer3 from "multer";
 import path4 from "path";
 import fs5 from "fs";
 import crypto5 from "crypto";
-var router42 = Router42();
+var router43 = Router43();
 function resolveWritableDir(preferred, fallback) {
   for (const dir of [preferred, fallback]) {
     try {
@@ -32002,7 +32465,7 @@ async function getArtistSubscriptionTier(userId) {
   }
   return { tier: "spark", uploadsUsed: 0, maxUploads: 3 };
 }
-router42.post(
+router43.post(
   "/track",
   requireAuth(),
   (req, res, next) => {
@@ -32131,7 +32594,7 @@ router42.post(
     }
   }
 );
-router42.get("/my-tracks", requireAuth(), async (req, res) => {
+router43.get("/my-tracks", requireAuth(), async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     if (!userId)
@@ -32171,7 +32634,7 @@ router42.get("/my-tracks", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch tracks" });
   }
 });
-router42.delete(
+router43.delete(
   "/track/:id",
   requireAuth(),
   async (req, res) => {
@@ -32220,12 +32683,12 @@ router42.delete(
     }
   }
 );
-var track_upload_default = router42;
+var track_upload_default = router43;
 
 // server/routes/artist-subscriptions.ts
 init_db();
-import { Router as Router43 } from "express";
-var router43 = Router43();
+import { Router as Router44 } from "express";
+var router44 = Router44();
 var ARTIST_TIERS = {
   spark: {
     name: "Spark",
@@ -32312,7 +32775,7 @@ var ARTIST_TIERS = {
     icon: "\u{1F451}"
   }
 };
-router43.get("/tiers", async (_req, res) => {
+router44.get("/tiers", async (_req, res) => {
   const tiers = Object.entries(ARTIST_TIERS).map(([key, tier]) => ({
     id: key,
     ...tier,
@@ -32320,7 +32783,7 @@ router43.get("/tiers", async (_req, res) => {
   }));
   res.json({ success: true, tiers });
 });
-router43.get(
+router44.get(
   "/my-subscription",
   optionalAuth,
   async (req, res) => {
@@ -32364,7 +32827,7 @@ router43.get(
     }
   }
 );
-router43.post(
+router44.post(
   "/subscribe",
   requireAuth(),
   async (req, res) => {
@@ -32492,7 +32955,7 @@ router43.post(
     }
   }
 );
-router43.post("/cancel", requireAuth(), async (req, res) => {
+router44.post("/cancel", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const result = await pool.query(
@@ -32515,7 +32978,7 @@ router43.post("/cancel", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to cancel" });
   }
 });
-router43.get(
+router44.get(
   "/subscription",
   optionalAuth,
   async (req, res) => {
@@ -32557,12 +33020,12 @@ router43.get(
     }
   }
 );
-var artist_subscriptions_default = router43;
+var artist_subscriptions_default = router44;
 
 // server/routes/payments.ts
 init_db();
-import { Router as Router44 } from "express";
-var router44 = Router44();
+import { Router as Router45 } from "express";
+var router45 = Router45();
 var PAYMENT_METHODS = [
   {
     id: "wallet",
@@ -32642,7 +33105,7 @@ var PAYMENT_METHODS = [
     requiresMinActivity: 500
   }
 ];
-router44.get("/methods", async (_req, res) => {
+router45.get("/methods", async (_req, res) => {
   let interacEnabled = false;
   let cryptoEnabled = false;
   let mobileMoneyEnabled = false;
@@ -32693,7 +33156,7 @@ router44.get("/methods", async (_req, res) => {
   }
   res.json({ success: true, methods });
 });
-router44.get("/wallet", requireAuth(), async (req, res) => {
+router45.get("/wallet", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const wallet = await pool.query(
@@ -32721,7 +33184,7 @@ router44.get("/wallet", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch wallet" });
   }
 });
-router44.post(
+router45.post(
   "/wallet/create",
   requireAuth(),
   async (req, res) => {
@@ -32756,7 +33219,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router45.post(
   "/wallet/deposit",
   requireAuth(),
   async (req, res) => {
@@ -32833,7 +33296,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router45.post(
   "/wallet/withdraw",
   requireAuth(),
   async (req, res) => {
@@ -32945,7 +33408,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router45.post(
   "/wallet/transfer",
   requireAuth(),
   async (req, res) => {
@@ -33036,7 +33499,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router45.get(
   "/transactions",
   requireAuth(),
   async (req, res) => {
@@ -33080,7 +33543,7 @@ router44.get(
     }
   }
 );
-router44.post(
+router45.post(
   "/method/add",
   requireAuth(),
   async (req, res) => {
@@ -33165,7 +33628,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router45.get(
   "/method/list",
   requireAuth(),
   async (req, res) => {
@@ -33184,7 +33647,7 @@ router44.get(
     }
   }
 );
-router44.delete(
+router45.delete(
   "/method/:id",
   requireAuth(),
   async (req, res) => {
@@ -33205,7 +33668,7 @@ router44.delete(
     }
   }
 );
-router44.post(
+router45.post(
   "/bank-transfer",
   requireAuth(),
   async (req, res) => {
@@ -33257,7 +33720,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router45.get(
   "/bank-transfers",
   requireAuth(),
   async (req, res) => {
@@ -33273,7 +33736,7 @@ router44.get(
     }
   }
 );
-router44.put(
+router45.put(
   "/bank-transfer/:id/review",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -33360,7 +33823,7 @@ router44.put(
     }
   }
 );
-router44.post(
+router45.post(
   "/interac/request",
   requireAuth(),
   async (req, res) => {
@@ -33432,7 +33895,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router45.get(
   "/crypto/addresses",
   requireAuth(),
   async (_req, res) => {
@@ -33463,7 +33926,7 @@ router44.get(
     }
   }
 );
-router44.post(
+router45.post(
   "/crypto/deposit",
   requireAuth(),
   async (req, res) => {
@@ -33507,7 +33970,7 @@ router44.post(
     }
   }
 );
-router44.get("/mobile-money/providers", async (_req, res) => {
+router45.get("/mobile-money/providers", async (_req, res) => {
   try {
     const enabled = await pool.query(
       `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`
@@ -33558,7 +34021,7 @@ router44.get("/mobile-money/providers", async (_req, res) => {
     });
   }
 });
-router44.post(
+router45.post(
   "/mobile-money/request",
   requireAuth(),
   async (req, res) => {
@@ -33624,7 +34087,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router45.get(
   "/admin/settings",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -33642,7 +34105,7 @@ router44.get(
     }
   }
 );
-router44.put(
+router45.put(
   "/admin/settings/:key",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -33675,7 +34138,7 @@ var TIER_PRICES = {
   // $99.99/month
 };
 var TIER_DURATION_DAYS = 30;
-router44.get("/tier/prices", (_req, res) => {
+router45.get("/tier/prices", (_req, res) => {
   res.json({
     success: true,
     tiers: [
@@ -33722,7 +34185,7 @@ router44.get("/tier/prices", (_req, res) => {
     ]
   });
 });
-router44.post(
+router45.post(
   "/tier/upgrade",
   requireAuth(),
   async (req, res) => {
@@ -33802,12 +34265,12 @@ router44.post(
     }
   }
 );
-var payments_default2 = router44;
+var payments_default2 = router45;
 
 // server/routes/arena.ts
 init_db();
-import { Router as Router45 } from "express";
-var router45 = Router45();
+import { Router as Router46 } from "express";
+var router46 = Router46();
 var ROUND_NAMES = [
   "Round of 16",
   "Quarter-Finals",
@@ -33852,7 +34315,7 @@ function getWeekNumber3(date2) {
   );
   return { week: weekNo, year: d.getUTCFullYear() };
 }
-router45.get("/active", async (_req, res) => {
+router46.get("/active", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT ac.*,
@@ -33868,7 +34331,7 @@ router45.get("/active", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch arenas" });
   }
 });
-router45.get("/:id", async (req, res) => {
+router46.get("/:id", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -33904,7 +34367,7 @@ router45.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch contest" });
   }
 });
-router45.get("/:id/bracket", async (req, res) => {
+router46.get("/:id/bracket", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -33934,7 +34397,7 @@ router45.get("/:id/bracket", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch bracket" });
   }
 });
-router45.post(
+router46.post(
   "/create",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -33987,7 +34450,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router46.post(
   "/:id/enter",
   requireAuth(),
   async (req, res) => {
@@ -34086,7 +34549,7 @@ router45.post(
     }
   }
 );
-router45.post("/:id/vote", requireAuth(), async (req, res) => {
+router46.post("/:id/vote", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const contestId = parseInt(req.params.id);
@@ -34228,7 +34691,7 @@ router45.post("/:id/vote", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to record vote" });
   }
 });
-router45.get(
+router46.get(
   "/:id/my-votes",
   requireAuth(),
   async (req, res) => {
@@ -34274,7 +34737,7 @@ router45.get(
     }
   }
 );
-router45.post(
+router46.post(
   "/:id/admin-unlock",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34317,7 +34780,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router46.post(
   "/:id/advance-round",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34426,7 +34889,7 @@ router45.post(
     }
   }
 );
-router45.get("/history", async (req, res) => {
+router46.get("/history", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const pageNum = Math.max(1, parseInt(page));
@@ -34455,7 +34918,7 @@ router45.get("/history", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch arena history" });
   }
 });
-router45.get("/eligible-artists", async (_req, res) => {
+router46.get("/eligible-artists", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -34504,7 +34967,7 @@ router45.get("/eligible-artists", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch eligible artists" });
   }
 });
-router45.post(
+router46.post(
   "/:id/award-predictions",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -34642,7 +35105,7 @@ router45.post(
     }
   }
 );
-router45.get("/participation-stats", async (_req, res) => {
+router46.get("/participation-stats", async (_req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
@@ -34679,12 +35142,12 @@ router45.get("/participation-stats", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-var arena_default = router45;
+var arena_default = router46;
 
 // server/routes/vault.ts
 init_db();
-import { Router as Router46 } from "express";
-var router46 = Router46();
+import { Router as Router47 } from "express";
+var router47 = Router47();
 var VALID_RULE_TYPES = [
   "time_gate",
   "stream_gate",
@@ -34693,7 +35156,7 @@ var VALID_RULE_TYPES = [
   "badge_gate"
 ];
 var TIER_HIERARCHY = ["free", "supporter", "champion", "patron"];
-router46.post("/rules", requireAuth(), async (req, res) => {
+router47.post("/rules", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const { trackId, rules } = req.body;
@@ -34795,7 +35258,7 @@ router46.post("/rules", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to set vault rules" });
   }
 });
-router46.get(
+router47.get(
   "/track/:trackId",
   optionalAuth,
   async (req, res) => {
@@ -34835,7 +35298,7 @@ router46.get(
     }
   }
 );
-router46.post(
+router47.post(
   "/check-unlock",
   requireAuth(),
   async (req, res) => {
@@ -34970,7 +35433,7 @@ router46.post(
     }
   }
 );
-router46.delete(
+router47.delete(
   "/rules/:ruleId",
   requireAuth(),
   async (req, res) => {
@@ -35009,7 +35472,7 @@ router46.delete(
     }
   }
 );
-router46.get(
+router47.get(
   "/my-vaulted",
   requireAuth(),
   async (req, res) => {
@@ -35033,15 +35496,15 @@ router46.get(
     }
   }
 );
-var vault_default = router46;
+var vault_default = router47;
 
 // server/routes/collab-chains.ts
 init_db();
-import { Router as Router47 } from "express";
-var router47 = Router47();
+import { Router as Router48 } from "express";
+var router48 = Router48();
 var COLLAB_TYPES = ["open_verse", "remix", "feature"];
 var MAX_SPLIT_TOTAL = 100;
-router47.post("/request", requireAuth(), async (req, res) => {
+router48.post("/request", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const {
@@ -35116,7 +35579,7 @@ router47.post("/request", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create collab request" });
   }
 });
-router47.get("/open", optionalAuth, async (req, res) => {
+router48.get("/open", optionalAuth, async (req, res) => {
   try {
     const {
       genre,
@@ -35167,7 +35630,7 @@ router47.get("/open", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch open requests" });
   }
 });
-router47.get(
+router48.get(
   "/my-requests",
   requireAuth(),
   async (req, res) => {
@@ -35211,7 +35674,7 @@ router47.get(
     }
   }
 );
-router47.put(
+router48.put(
   "/:id/respond",
   requireAuth(),
   async (req, res) => {
@@ -35292,7 +35755,7 @@ router47.put(
     }
   }
 );
-router47.post(
+router48.post(
   "/:id/submit",
   requireAuth(),
   async (req, res) => {
@@ -35329,7 +35792,7 @@ router47.post(
     }
   }
 );
-router47.post(
+router48.post(
   "/:id/finalize",
   requireAuth(),
   async (req, res) => {
@@ -35398,7 +35861,7 @@ router47.post(
     }
   }
 );
-router47.get("/track/:trackId", async (req, res) => {
+router48.get("/track/:trackId", async (req, res) => {
   try {
     const trackId = parseInt(req.params.trackId);
     const chain = await pool.query(
@@ -35425,12 +35888,12 @@ router47.get("/track/:trackId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch collab chain" });
   }
 });
-var collab_chains_default = router47;
+var collab_chains_default = router48;
 
 // server/routes/revenue-pulse.ts
 init_db();
-import { Router as Router48 } from "express";
-var router48 = Router48();
+import { Router as Router49 } from "express";
+var router49 = Router49();
 var BADGE_THRESHOLDS = [
   { badge: "initiate", streams: 0, bonusPct: 0, icon: "\u{1F331}", color: "#6b7280" },
   {
@@ -35500,7 +35963,7 @@ var LISTENER_TIERS = [
     label: "Patron (Unlimited)"
   }
 ];
-router48.get("/", optionalAuth, async (req, res) => {
+router49.get("/", optionalAuth, async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     const currentPool = await pool.query(
@@ -35587,7 +36050,7 @@ router48.get("/", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to load revenue pulse" });
   }
 });
-router48.get("/pool", async (_req, res) => {
+router49.get("/pool", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT wp.*,
@@ -35613,7 +36076,7 @@ router48.get("/pool", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch pool" });
   }
 });
-router48.get("/my-impact", requireAuth(), async (req, res) => {
+router49.get("/my-impact", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const lifetime = await pool.query(
@@ -35672,7 +36135,7 @@ router48.get("/my-impact", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch impact" });
   }
 });
-router48.get("/leaderboard", async (req, res) => {
+router49.get("/leaderboard", async (req, res) => {
   try {
     const { limit = "25" } = req.query;
     const limitNum = Math.min(100, parseInt(limit) || 25);
@@ -35708,7 +36171,7 @@ router48.get("/leaderboard", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
-router48.get("/badges", async (_req, res) => {
+router49.get("/badges", async (_req, res) => {
   res.json({
     success: true,
     badges: BADGE_THRESHOLDS,
@@ -35720,13 +36183,13 @@ router48.get("/badges", async (_req, res) => {
     }
   });
 });
-var revenue_pulse_default = router48;
+var revenue_pulse_default = router49;
 
 // server/routes/wallet.ts
 init_db();
-import { Router as Router49 } from "express";
-var router49 = Router49();
-router49.get("/balance", requireAuth, async (req, res) => {
+import { Router as Router50 } from "express";
+var router50 = Router50();
+router50.get("/balance", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -35760,7 +36223,7 @@ router49.get("/balance", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to get wallet balance" });
   }
 });
-router49.get(
+router50.get(
   "/transactions",
   requireAuth,
   async (req, res) => {
@@ -35783,7 +36246,7 @@ router49.get(
     }
   }
 );
-router49.post("/deposit", requireAuth, async (req, res) => {
+router50.post("/deposit", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -35814,7 +36277,7 @@ router49.post("/deposit", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to process deposit" });
   }
 });
-router49.post(
+router50.post(
   "/game-reward",
   requireAuth,
   async (req, res) => {
@@ -35884,7 +36347,7 @@ router49.post(
     }
   }
 );
-router49.post("/ad-reward", async (req, res) => {
+router50.post("/ad-reward", async (req, res) => {
   try {
     const { userId, amount, transactionId, secret } = req.body;
     if (!secret || secret !== process.env.AD_REWARD_SECRET) {
@@ -35944,13 +36407,13 @@ router49.post("/ad-reward", async (req, res) => {
     res.status(500).json({ error: "Failed to credit ad reward" });
   }
 });
-var wallet_default = router49;
+var wallet_default = router50;
 
 // server/routes/games.ts
 init_db();
-import { Router as Router50 } from "express";
+import { Router as Router51 } from "express";
 init_socket_config();
-var router50 = Router50();
+var router51 = Router51();
 var TRIVIA_QUESTIONS = [
   {
     q: "Quel artiste a popularis\xE9 l'Afrobeats \xE0 l'international en 2020 ?",
@@ -36118,7 +36581,7 @@ async function settleMatch(matchId, winnerId, loserId, wagerAmount) {
   await pool.query("COMMIT");
   return { winnerPrize, platformCut };
 }
-router50.post("/challenge", requireAuth, async (req, res) => {
+router51.post("/challenge", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -36237,7 +36700,7 @@ router50.post("/challenge", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to create game" });
   }
 });
-router50.post("/:id/join", requireAuth, async (req, res) => {
+router51.post("/:id/join", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -36315,7 +36778,7 @@ router50.post("/:id/join", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to join game" });
   }
 });
-router50.post("/:id/answer", requireAuth, async (req, res) => {
+router51.post("/:id/answer", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -36456,7 +36919,7 @@ router50.post("/:id/answer", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to submit answer" });
   }
 });
-router50.get("/open", async (_req, res) => {
+router51.get("/open", async (_req, res) => {
   try {
     const matches = await pool.query(
       `SELECT gm.id, gm.game_type, gm.wager_amount, gm.round_count, gm.created_at,
@@ -36474,7 +36937,7 @@ router50.get("/open", async (_req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router50.get("/my", requireAuth, async (req, res) => {
+router51.get("/my", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matches = await pool.query(
@@ -36503,7 +36966,7 @@ router50.get("/my", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router50.post("/verify-age", requireAuth, async (req, res) => {
+router51.post("/verify-age", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const { dateOfBirth } = req.body;
@@ -36533,7 +36996,7 @@ router50.post("/verify-age", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to verify age" });
   }
 });
-router50.get("/leaderboard", async (_req, res) => {
+router51.get("/leaderboard", async (_req, res) => {
   try {
     const leaders = await pool.query(
       `SELECT u.username,
@@ -36552,12 +37015,12 @@ router50.get("/leaderboard", async (_req, res) => {
     res.status(500).json({ error: "Failed to load leaderboard" });
   }
 });
-var games_default = router50;
+var games_default = router51;
 
 // server/routes/paypal.ts
 init_db();
-import { Router as Router51 } from "express";
-var router51 = Router51();
+import { Router as Router52 } from "express";
+var router52 = Router52();
 var PAYPAL_BASE = (process.env.PAYPAL_MODE || "sandbox") === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 var PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
 var PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
@@ -36610,7 +37073,7 @@ async function getOrCreateWallet2(userId) {
   }
   return w.rows[0];
 }
-router51.get("/config", (_req, res) => {
+router52.get("/config", (_req, res) => {
   if (!PAYPAL_CLIENT_ID) {
     return res.status(503).json({
       error: "PayPal not configured",
@@ -36629,7 +37092,7 @@ router51.get("/config", (_req, res) => {
     }))
   });
 });
-router51.post(
+router52.post(
   "/create-order",
   requireAuth,
   async (req, res) => {
@@ -36720,7 +37183,7 @@ router51.post(
     }
   }
 );
-router51.post(
+router52.post(
   "/capture-order",
   requireAuth,
   async (req, res) => {
@@ -36825,7 +37288,7 @@ router51.post(
     }
   }
 );
-router51.get("/success", requireAuth, async (req, res) => {
+router52.get("/success", requireAuth, async (req, res) => {
   try {
     const orderId = req.query.token;
     const userId = req.user?.id;
@@ -36907,15 +37370,15 @@ router51.get("/success", requireAuth, async (req, res) => {
     res.redirect("/account/paypal?paypal=error");
   }
 });
-router51.get("/cancel", (_req, res) => {
+router52.get("/cancel", (_req, res) => {
   res.redirect("/account/paypal?paypal=cancelled");
 });
-var paypal_default = router51;
+var paypal_default = router52;
 
 // server/routes/listener.ts
 init_db();
-import { Router as Router52 } from "express";
-var router52 = Router52();
+import { Router as Router53 } from "express";
+var router53 = Router53();
 var LEVEL_THRESHOLDS = [
   0,
   100,
@@ -36941,7 +37404,7 @@ function calculateLevel(points) {
   }
   return level;
 }
-router52.get("/stats", requireAuth(), async (req, res) => {
+router53.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -37099,7 +37562,7 @@ router52.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router52.post(
+router53.post(
   "/bonuses/:id/claim",
   requireAuth(),
   async (req, res) => {
@@ -37145,7 +37608,7 @@ router52.post(
     }
   }
 );
-router52.post(
+router53.post(
   "/activity/listen",
   requireAuth(),
   async (req, res) => {
@@ -37220,20 +37683,20 @@ router52.post(
     }
   }
 );
-var listener_default = router52;
+var listener_default = router53;
 
 // server/routes/beatmaker.ts
 init_db();
-import { Router as Router53 } from "express";
-import { sql as sql15 } from "drizzle-orm";
-var router53 = Router53();
-router53.get("/requests", requireAuth(), async (req, res) => {
+import { Router as Router54 } from "express";
+import { sql as sql16 } from "drizzle-orm";
+var router54 = Router54();
+router54.get("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -37243,7 +37706,7 @@ router53.get("/requests", requireAuth(), async (req, res) => {
     if (!tableCheck.rows[0]?.exists) {
       return res.json({ requests: [], message: "Table not yet created" });
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT 
         br.*,
         u.display_name as producer_name
@@ -37259,7 +37722,7 @@ router53.get("/requests", requireAuth(), async (req, res) => {
     res.json({ requests: [] });
   }
 });
-router53.post("/requests", requireAuth(), async (req, res) => {
+router54.post("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -37282,7 +37745,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
     if (!genre || !mood) {
       return res.status(400).json({ error: "Genre and mood are required" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -37290,7 +37753,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
       ) as exists
     `);
     if (!tableCheck.rows[0]?.exists) {
-      await db.execute(sql15`
+      await db.execute(sql16`
         CREATE TABLE IF NOT EXISTS beatmaker_requests (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id),
@@ -37316,7 +37779,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
         )
       `);
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       INSERT INTO beatmaker_requests (
         user_id, genre, mood, bpm, key, reference_urls, intent_style,
         intended_use, delivery_type, deadline, budget_tier, message,
@@ -37345,7 +37808,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create request" });
   }
 });
-router53.patch(
+router54.patch(
   "/requests/:id",
   requireAuth(),
   async (req, res) => {
@@ -37356,7 +37819,7 @@ router53.patch(
       }
       const requestId = parseInt(req.params.id);
       const { status, message } = req.body;
-      const check = await db.execute(sql15`
+      const check = await db.execute(sql16`
       SELECT id FROM beatmaker_requests WHERE id = ${requestId} AND user_id = ${userId}
     `);
       if (check.rows.length === 0) {
@@ -37366,7 +37829,7 @@ router53.patch(
       if (status && !allowedStatuses.includes(status)) {
         return res.status(403).json({ error: "Cannot update to this status" });
       }
-      const result = await db.execute(sql15`
+      const result = await db.execute(sql16`
       UPDATE beatmaker_requests
       SET 
         status = COALESCE(${status}, status),
@@ -37382,13 +37845,13 @@ router53.patch(
     }
   }
 );
-router53.get("/briefs", requireAuth(), async (req, res) => {
+router54.get("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -37398,7 +37861,7 @@ router53.get("/briefs", requireAuth(), async (req, res) => {
     if (!tableCheck.rows[0]?.exists) {
       return res.json({ briefs: [] });
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT * FROM beatmaker_briefs
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
@@ -37410,7 +37873,7 @@ router53.get("/briefs", requireAuth(), async (req, res) => {
     res.json({ briefs: [] });
   }
 });
-router53.post("/briefs", requireAuth(), async (req, res) => {
+router54.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -37431,7 +37894,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
       darkness,
       bounce
     } = req.body;
-    await db.execute(sql15`
+    await db.execute(sql16`
       CREATE TABLE IF NOT EXISTS beatmaker_briefs (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -37451,7 +37914,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       INSERT INTO beatmaker_briefs (
         user_id, name, genre, mood, bpm, key, reference_urls, intent_style,
         intended_use, delivery_type, message, energy, darkness, bounce
@@ -37479,7 +37942,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router53.delete(
+router54.delete(
   "/briefs/:id",
   requireAuth(),
   async (req, res) => {
@@ -37489,7 +37952,7 @@ router53.delete(
         return res.status(401).json({ error: "Not authenticated" });
       }
       const briefId = parseInt(req.params.id);
-      await db.execute(sql15`
+      await db.execute(sql16`
       DELETE FROM beatmaker_briefs
       WHERE id = ${briefId} AND user_id = ${userId}
     `);
@@ -37500,9 +37963,9 @@ router53.delete(
     }
   }
 );
-router53.get("/producers", requireAuth(), async (req, res) => {
+router54.get("/producers", requireAuth(), async (req, res) => {
   try {
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT 
         u.id,
         u.display_name,
@@ -37525,16 +37988,16 @@ router53.get("/producers", requireAuth(), async (req, res) => {
     res.json({ producers: [] });
   }
 });
-var beatmaker_default = router53;
+var beatmaker_default = router54;
 
 // server/routes/versavids.ts
 init_db();
-import { Router as Router54 } from "express";
-import { sql as sql16 } from "drizzle-orm";
-var router54 = Router54();
+import { Router as Router55 } from "express";
+import { sql as sql17 } from "drizzle-orm";
+var router55 = Router55();
 async function ensureVersaVidsTables() {
   try {
-    await db.execute(sql16`
+    await db.execute(sql17`
       CREATE TABLE IF NOT EXISTS video_projects (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -37638,13 +38101,13 @@ async function ensureVersaVidsTables() {
   }
 }
 ensureVersaVidsTables();
-router54.get("/projects", requireAuth(), async (req, res) => {
+router55.get("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const role = req.query.role || "client";
     let result;
     if (role === "videaste") {
-      result = await db.execute(sql16`
+      result = await db.execute(sql17`
         SELECT vp.*, u.display_name as client_name, u.email as client_email
         FROM video_projects vp
         LEFT JOIN users u ON vp.client_id = u.id
@@ -37655,7 +38118,7 @@ router54.get("/projects", requireAuth(), async (req, res) => {
         LIMIT 50
       `);
     } else {
-      result = await db.execute(sql16`
+      result = await db.execute(sql17`
         SELECT vp.*, u.display_name as videaste_name
         FROM video_projects vp
         LEFT JOIN users u ON vp.claimed_by = u.id
@@ -37670,9 +38133,9 @@ router54.get("/projects", requireAuth(), async (req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router54.get("/projects/open", async (_req, res) => {
+router55.get("/projects/open", async (_req, res) => {
   try {
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       SELECT vp.*, u.display_name as client_name
       FROM video_projects vp
       LEFT JOIN users u ON vp.client_id = u.id
@@ -37688,7 +38151,7 @@ router54.get("/projects/open", async (_req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router54.post("/projects", requireAuth(), async (req, res) => {
+router55.post("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const {
@@ -37708,7 +38171,7 @@ router54.post("/projects", requireAuth(), async (req, res) => {
     if (!title) {
       return res.status(400).json({ error: "Title is required" });
     }
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       INSERT INTO video_projects (client_id, title, description, project_type, genre, budget, currency, deadline, priority, tags, reference_urls, mood, target_audience)
       VALUES (${userId}, ${title}, ${description || null}, ${project_type || "music_video"}, ${genre || null}, ${budget || null}, ${currency || "USD"}, ${deadline ? new Date(deadline) : null}, ${priority2 || "normal"}, ${JSON.stringify(tags || [])}, ${JSON.stringify(reference_urls || [])}, ${mood || null}, ${target_audience || null})
       RETURNING *
@@ -37719,7 +38182,7 @@ router54.post("/projects", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create project" });
   }
 });
-router54.patch(
+router55.patch(
   "/projects/:id",
   requireAuth(),
   async (req, res) => {
@@ -37727,14 +38190,14 @@ router54.patch(
       const userId = req.user?.userId;
       const projectId = parseInt(req.params.id);
       const { status, claimed_by } = req.body;
-      const [project] = (await db.execute(sql16`
+      const [project] = (await db.execute(sql17`
       SELECT client_id, status, claimed_by FROM video_projects WHERE id = ${projectId}
     `)).rows;
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
       if (claimed_by !== void 0 && project.status === "open") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_projects SET claimed_by = ${userId}, claimed_at = NOW(), status = 'claimed', updated_at = NOW()
         WHERE id = ${projectId}
       `);
@@ -37744,11 +38207,11 @@ router54.patch(
         const updates = { status };
         if (status === "completed") {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${projectId}`
+            sql17`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${projectId}`
           );
         } else {
           await db.execute(
-            sql16`UPDATE video_projects SET status = ${status}, updated_at = NOW() WHERE id = ${projectId}`
+            sql17`UPDATE video_projects SET status = ${status}, updated_at = NOW() WHERE id = ${projectId}`
           );
         }
         return res.json({
@@ -37763,10 +38226,10 @@ router54.patch(
     }
   }
 );
-router54.get("/projects/:id", async (req, res) => {
+router55.get("/projects/:id", async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
-    const [project] = (await db.execute(sql16`
+    const [project] = (await db.execute(sql17`
       SELECT vp.*, u.display_name as client_name, u.email as client_email,
              v.display_name as videaste_name
       FROM video_projects vp
@@ -37777,17 +38240,17 @@ router54.get("/projects/:id", async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
     }
-    const briefResult = await db.execute(sql16`
+    const briefResult = await db.execute(sql17`
       SELECT * FROM video_briefs WHERE project_id = ${projectId} LIMIT 1
     `);
-    const deliverableResult = await db.execute(sql16`
+    const deliverableResult = await db.execute(sql17`
       SELECT vd.*, u.display_name as videaste_name
       FROM video_deliverables vd
       LEFT JOIN users u ON vd.videaste_id = u.id
       WHERE vd.project_id = ${projectId}
       ORDER BY vd.version DESC
     `);
-    const licenseResult = await db.execute(sql16`
+    const licenseResult = await db.execute(sql17`
       SELECT * FROM video_licenses WHERE project_id = ${projectId} LIMIT 1
     `);
     res.json({
@@ -37802,7 +38265,7 @@ router54.get("/projects/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch project" });
   }
 });
-router54.post("/briefs", requireAuth(), async (req, res) => {
+router55.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const {
       project_id,
@@ -37829,10 +38292,10 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
       return res.status(400).json({ error: "project_id is required" });
     }
     const existing = await db.execute(
-      sql16`SELECT id FROM video_briefs WHERE project_id = ${project_id} LIMIT 1`
+      sql17`SELECT id FROM video_briefs WHERE project_id = ${project_id} LIMIT 1`
     );
     if (existing.rows.length > 0) {
-      await db.execute(sql16`
+      await db.execute(sql17`
         UPDATE video_briefs SET
           visual_style = ${visual_style || null}, color_palette = ${color_palette || null},
           editing_pace = ${editing_pace || null}, duration = ${duration || null},
@@ -37849,7 +38312,7 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
       `);
       return res.json({ success: true, message: "Brief updated" });
     }
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       INSERT INTO video_briefs (project_id, visual_style, color_palette, editing_pace, duration, aspect_ratio, resolution, has_music_track, music_track_url, needs_sound_design, needs_voiceover, deliverable_formats, includes_raw_footage, includes_project_files, reference_links, moodboard_url, storyboard_url, script_text, additional_notes)
       VALUES (${project_id}, ${visual_style || null}, ${color_palette || null}, ${editing_pace || null}, ${duration || null}, ${aspect_ratio || "16:9"}, ${resolution || "4K"}, ${has_music_track || false}, ${music_track_url || null}, ${needs_sound_design || false}, ${needs_voiceover || false}, ${JSON.stringify(deliverable_formats || ["mp4"])}, ${includes_raw_footage || false}, ${includes_project_files || false}, ${JSON.stringify(reference_links || [])}, ${moodboard_url || null}, ${storyboard_url || null}, ${script_text || null}, ${additional_notes || null})
       RETURNING *
@@ -37860,7 +38323,7 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router54.post(
+router55.post(
   "/deliverables",
   requireAuth(),
   async (req, res) => {
@@ -37881,13 +38344,13 @@ router54.post(
       if (!project_id || !title || !file_url) {
         return res.status(400).json({ error: "project_id, title, and file_url are required" });
       }
-      const result = await db.execute(sql16`
+      const result = await db.execute(sql17`
       INSERT INTO video_deliverables (project_id, videaste_id, title, description, file_url, thumbnail_url, file_size, duration, format, resolution, version)
       VALUES (${project_id}, ${videasteId}, ${title}, ${description || null}, ${file_url}, ${thumbnail_url || null}, ${file_size || null}, ${duration || null}, ${format2 || "mp4"}, ${resolution || null}, ${version || 1})
       RETURNING *
     `);
       await db.execute(
-        sql16`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${project_id}`
+        sql17`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${project_id}`
       );
       res.status(201).json({ success: true, deliverable: result.rows[0] });
     } catch (error) {
@@ -37896,7 +38359,7 @@ router54.post(
     }
   }
 );
-router54.patch(
+router55.patch(
   "/deliverables/:id",
   requireAuth(),
   async (req, res) => {
@@ -37904,34 +38367,34 @@ router54.patch(
       const { status, client_feedback } = req.body;
       const deliverableId = parseInt(req.params.id);
       if (status === "approved") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_deliverables SET status = 'approved', client_feedback = ${client_feedback || null}, approved_at = NOW()
         WHERE id = ${deliverableId}
       `);
         const [deliv] = (await db.execute(
-          sql16`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
+          sql17`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
         )).rows;
         if (deliv) {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`
+            sql17`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`
           );
         }
       } else if (status === "revision_requested") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_deliverables SET status = 'revision_requested', client_feedback = ${client_feedback || null}
         WHERE id = ${deliverableId}
       `);
         const userId = req.user?.userId;
-        await db.execute(sql16`
+        await db.execute(sql17`
         INSERT INTO video_revisions (deliverable_id, requested_by, revision_notes)
         VALUES (${deliverableId}, ${userId}, ${client_feedback || "Revision requested"})
       `);
         const [deliv] = (await db.execute(
-          sql16`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
+          sql17`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
         )).rows;
         if (deliv) {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`
+            sql17`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`
           );
         }
       }
@@ -37942,9 +38405,9 @@ router54.patch(
     }
   }
 );
-router54.get("/stats", async (_req, res) => {
+router55.get("/stats", async (_req, res) => {
   try {
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       SELECT
         (SELECT COUNT(*) FROM video_projects) as total_projects,
         (SELECT COUNT(*) FROM video_projects WHERE status = 'open') as open_projects,
@@ -37966,13 +38429,13 @@ router54.get("/stats", async (_req, res) => {
     });
   }
 });
-var versavids_default = router54;
+var versavids_default = router55;
 
 // server/routes/intent-search.ts
-import { Router as Router55 } from "express";
+import { Router as Router56 } from "express";
 import { z as z6 } from "zod";
 init_db();
-var router55 = Router55();
+var router56 = Router56();
 var intentSearchSchema = z6.object({
   query: z6.string().min(2).max(500),
   limit: z6.number().min(1).max(20).optional().default(5)
@@ -37984,7 +38447,7 @@ var emergencyAlertSchema = z6.object({
   contactEmail: z6.string().email().optional(),
   location: z6.string().optional()
 });
-router55.post("/intent", optionalAuth, async (req, res) => {
+router56.post("/intent", optionalAuth, async (req, res) => {
   try {
     const parsed = intentSearchSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -38034,7 +38497,7 @@ router55.post("/intent", optionalAuth, async (req, res) => {
     });
   }
 });
-router55.post(
+router56.post(
   "/emergency-alert",
   optionalAuth,
   async (req, res) => {
@@ -38109,7 +38572,7 @@ router55.post(
     }
   }
 );
-router55.get("/status", async (_req, res) => {
+router56.get("/status", async (_req, res) => {
   let groqAvailable = false;
   let ollamaAvailable = false;
   if (process.env.GROQ_API_KEY) {
@@ -38139,10 +38602,10 @@ router55.get("/status", async (_req, res) => {
     }
   });
 });
-var intent_search_default = router55;
+var intent_search_default = router56;
 
 // server/routes/migrate.ts
-import { Router as Router56 } from "express";
+import { Router as Router57 } from "express";
 import { z as z7 } from "zod";
 init_db();
 
@@ -38274,12 +38737,12 @@ async function scrapeDirectoryUrl(url) {
 }
 
 // server/routes/migrate.ts
-var router56 = Router56();
-router56.use(requireAuth);
+var router57 = Router57();
+router57.use(requireAuth);
 var scrapeSchema = z7.object({
   url: z7.string().url().max(500)
 });
-router56.post("/scrape", async (req, res) => {
+router57.post("/scrape", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -38323,7 +38786,7 @@ var importSchema = z7.object({
   countryCode: z7.string().length(2).optional(),
   categoryId: z7.number().optional()
 });
-router56.post("/import", async (req, res) => {
+router57.post("/import", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -38376,7 +38839,7 @@ router56.post("/import", async (req, res) => {
     errors
   });
 });
-router56.get("/history", async (req, res) => {
+router57.get("/history", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -38400,14 +38863,14 @@ router56.get("/history", async (req, res) => {
     });
   }
 });
-var migrate_default = router56;
+var migrate_default = router57;
 
 // server/routes/escrow.ts
-import { Router as Router57 } from "express";
+import { Router as Router58 } from "express";
 import { z as z8 } from "zod";
 init_db();
-var router57 = Router57();
-router57.use(requireAuth);
+var router58 = Router58();
+router58.use(requireAuth);
 async function ensureEscrowTable() {
   try {
     await pool.query(`
@@ -38445,7 +38908,7 @@ var createEscrowSchema = z8.object({
   description: z8.string().max(1e3).optional(),
   serviceDate: z8.string().optional()
 });
-router57.post("/create", async (req, res) => {
+router58.post("/create", async (req, res) => {
   const parsed = createEscrowSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -38491,7 +38954,7 @@ router57.post("/create", async (req, res) => {
     });
   }
 });
-router57.post("/:id/fund", async (req, res) => {
+router58.post("/:id/fund", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -38525,7 +38988,7 @@ router57.post("/:id/fund", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.post("/:id/release", async (req, res) => {
+router58.post("/:id/release", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -38563,7 +39026,7 @@ router57.post("/:id/release", async (req, res) => {
 var disputeSchema = z8.object({
   reason: z8.string().min(10).max(1e3)
 });
-router57.post("/:id/dispute", async (req, res) => {
+router58.post("/:id/dispute", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   const parsed = disputeSchema.safeParse(req.body);
@@ -38593,7 +39056,7 @@ router57.post("/:id/dispute", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.get("/my", async (req, res) => {
+router58.get("/my", async (req, res) => {
   const userId = parseInt(req.user.userId);
   try {
     const result = await pool.query(
@@ -38613,7 +39076,7 @@ router57.get("/my", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.get("/:id", async (req, res) => {
+router58.get("/:id", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -38635,11 +39098,11 @@ router57.get("/:id", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-var escrow_default = router57;
+var escrow_default = router58;
 
 // server/routes/geo-seo.ts
 init_db();
-import { Router as Router58 } from "express";
+import { Router as Router59 } from "express";
 
 // server/services/json-ld-generator.ts
 function generateBusinessJsonLd(biz) {
@@ -38747,8 +39210,8 @@ function generateWebsiteJsonLd() {
 }
 
 // server/routes/geo-seo.ts
-var router58 = Router58();
-router58.get("/json-ld/business/:id", async (req, res) => {
+var router59 = Router59();
+router59.get("/json-ld/business/:id", async (req, res) => {
   const businessId = parseInt(req.params.id);
   if (isNaN(businessId)) {
     return res.status(400).json({ error: "Invalid business ID" });
@@ -38791,15 +39254,15 @@ router58.get("/json-ld/business/:id", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router58.get("/json-ld/organization", (_req, res) => {
+router59.get("/json-ld/organization", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateOrganizationJsonLd());
 });
-router58.get("/json-ld/website", (_req, res) => {
+router59.get("/json-ld/website", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateWebsiteJsonLd());
 });
-router58.get("/json-ld/search", async (req, res) => {
+router59.get("/json-ld/search", async (req, res) => {
   const query = req.query.q || "";
   const limit = Math.min(parseInt(req.query.limit) || 10, 50);
   try {
@@ -38848,7 +39311,7 @@ router58.get("/json-ld/search", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router58.get("/sitemap.xml", async (_req, res) => {
+router59.get("/sitemap.xml", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, name, updated_at FROM businesses WHERE is_active = true ORDER BY updated_at DESC LIMIT 50000`
@@ -38916,7 +39379,7 @@ router58.get("/sitemap.xml", async (_req, res) => {
     );
   }
 });
-router58.get("/robots.txt", (_req, res) => {
+router59.get("/robots.txt", (_req, res) => {
   const robots = `User-agent: *
 Allow: /
 Allow: /businesses-directory
@@ -38938,15 +39401,15 @@ Sitemap: https://verso-air.com/api/seo/sitemap.xml
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
 });
-var geo_seo_default = router58;
+var geo_seo_default = router59;
 
 // server/routes/business-logo.ts
 init_db();
-import { Router as Router59 } from "express";
+import { Router as Router60 } from "express";
 import multer4 from "multer";
 import path5 from "path";
 import fs6 from "fs";
-var router59 = Router59();
+var router60 = Router60();
 var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "logos") : path5.resolve("uploads", "logos");
 try {
   if (!fs6.existsSync(LOGO_UPLOADS_DIR)) {
@@ -38988,7 +39451,7 @@ var logoUpload = multer4({
   }
 });
 var PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
-router59.post(
+router60.post(
   "/upload",
   requireAuth(),
   (req, res, next) => {
@@ -39079,7 +39542,7 @@ router59.post(
     }
   }
 );
-router59.delete(
+router60.delete(
   "/:businessId",
   requireAuth(),
   async (req, res) => {
@@ -39119,7 +39582,7 @@ router59.delete(
     }
   }
 );
-router59.get("/file/:filename", (req, res) => {
+router60.get("/file/:filename", (req, res) => {
   const { filename } = req.params;
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, message: "Invalid filename" });
@@ -39131,14 +39594,14 @@ router59.get("/file/:filename", (req, res) => {
   res.set("Cache-Control", "public, max-age=86400");
   res.sendFile(filePath);
 });
-var business_logo_default = router59;
+var business_logo_default = router60;
 
 // server/routes/inventory.ts
 init_db();
 init_schema();
-import { Router as Router60 } from "express";
-var router60 = Router60();
-router60.get("/products", requireAuth(), async (req, res) => {
+import { Router as Router61 } from "express";
+var router61 = Router61();
+router61.get("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -39226,7 +39689,7 @@ router60.get("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
-router60.get(
+router61.get(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -39251,7 +39714,7 @@ router60.get(
     }
   }
 );
-router60.post("/products", requireAuth(), async (req, res) => {
+router61.post("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -39306,7 +39769,7 @@ router60.post("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create product" });
   }
 });
-router60.put(
+router61.put(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -39366,7 +39829,7 @@ router60.put(
     }
   }
 );
-router60.delete(
+router61.delete(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -39388,7 +39851,7 @@ router60.delete(
     }
   }
 );
-router60.get("/alerts", requireAuth(), async (req, res) => {
+router61.get("/alerts", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -39418,7 +39881,7 @@ router60.get("/alerts", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-router60.get(
+router61.get(
   "/predictions",
   requireAuth(),
   async (req, res) => {
@@ -39452,7 +39915,7 @@ router60.get(
     }
   }
 );
-router60.get("/stats", requireAuth(), async (req, res) => {
+router61.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -39497,7 +39960,7 @@ router60.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
-router60.get("/settings", requireAuth(), async (req, res) => {
+router61.get("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -39520,7 +39983,7 @@ router60.get("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
-router60.post("/settings", requireAuth(), async (req, res) => {
+router61.post("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const { settings } = req.body;
@@ -39544,15 +40007,45 @@ router60.post("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save settings" });
   }
 });
-var inventory_default = router60;
+var inventory_default = router61;
 
 // server/routes/inbox.ts
 init_db();
 init_schema();
-import { Router as Router61 } from "express";
-import { eq as eq31, and as and18, desc as desc16, sql as sql17 } from "drizzle-orm";
+import { Router as Router62 } from "express";
+import { eq as eq31, and as and18, desc as desc16, sql as sql18 } from "drizzle-orm";
+import multer5 from "multer";
+import path6 from "path";
+import fs7 from "fs";
 init_notification_service();
-var router61 = Router61();
+var router62 = Router62();
+var INBOX_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path6.join("/tmp", "uploads", "inbox") : path6.resolve("uploads", "inbox");
+try {
+  if (!fs7.existsSync(INBOX_UPLOADS_DIR)) {
+    fs7.mkdirSync(INBOX_UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`\u26A0\uFE0F  Could not create inbox uploads dir: ${err.message}`);
+}
+var inboxUpload = multer5({
+  storage: multer5.diskStorage({
+    destination: (_req, _file, cb) => cb(null, INBOX_UPLOADS_DIR),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(
+        null,
+        `chat-${uniqueSuffix}${path6.extname(file.originalname).toLowerCase()}`
+      );
+    }
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  // 8 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only image attachments are allowed"), false);
+  }
+});
 var TIER_NETWORKING_LIMIT = {
   free: 0,
   essential: 1,
@@ -39605,7 +40098,7 @@ async function resolveUserDisplay(userId) {
   if (!u) return null;
   return { name: u.displayName || u.username, avatar: null };
 }
-router61.get("/conversations", async (req, res) => {
+router62.get("/conversations", async (req, res) => {
   const userId = req.user.userId;
   try {
     const queued = await drainInboxQueue(userId);
@@ -39631,7 +40124,7 @@ router61.get("/conversations", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to load conversations" });
   }
 });
-router61.get("/suggested-contacts", async (req, res) => {
+router62.get("/suggested-contacts", async (req, res) => {
   const tier = getTierFromUser(req.user);
   if (tier === "free") {
     return res.json({
@@ -39645,7 +40138,7 @@ router61.get("/suggested-contacts", async (req, res) => {
     const search = req.query.q ?? "";
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const rows = await db.execute(
-      sql17`
+      sql18`
         SELECT
           b.id,
           b.name,
@@ -39663,7 +40156,7 @@ router61.get("/suggested-contacts", async (req, res) => {
             WHERE user_id = ${req.user.userId}
             LIMIT 1
           )
-          ${search ? sql17`AND b.name ILIKE ${"%" + search + "%"}` : sql17``}
+          ${search ? sql18`AND b.name ILIKE ${"%" + search + "%"}` : sql18``}
         ORDER BY b.rating DESC NULLS LAST
         LIMIT ${limit}
       `
@@ -39674,7 +40167,7 @@ router61.get("/suggested-contacts", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to load contacts" });
   }
 });
-router61.get(
+router62.get(
   "/conversations/:id/messages",
   async (req, res) => {
     const userId = req.user.userId;
@@ -39719,7 +40212,7 @@ router61.get(
     }
   }
 );
-router61.post(
+router62.post(
   "/conversations",
   marketplaceMessageLimiter,
   async (req, res) => {
@@ -39748,7 +40241,7 @@ router61.post(
         });
       }
       if (limit < 999) {
-        const [{ count: activeCount }] = await db.select({ count: sql17`count(*)` }).from(inboxConversations).where(
+        const [{ count: activeCount }] = await db.select({ count: sql18`count(*)` }).from(inboxConversations).where(
           and18(
             eq31(inboxConversations.userId, Number(userId)),
             eq31(inboxConversations.type, "business_network")
@@ -39809,15 +40302,38 @@ router61.post(
     }
   }
 );
-router61.post(
+router62.post(
+  "/attachments",
+  inboxUpload.single("file"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
+    const url = `/api/inbox/attachments/file/${req.file.filename}`;
+    res.json({ success: true, url });
+  }
+);
+router62.get("/attachments/file/:filename", (req, res) => {
+  const { filename } = req.params;
+  if (/[^a-zA-Z0-9._-]/.test(filename)) {
+    return res.status(400).json({ success: false, error: "Invalid filename" });
+  }
+  const filePath = path6.join(INBOX_UPLOADS_DIR, filename);
+  if (!fs7.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: "File not found" });
+  }
+  res.set("Cache-Control", "public, max-age=86400");
+  res.sendFile(filePath);
+});
+router62.post(
   "/conversations/:id/messages",
   marketplaceMessageLimiter,
   async (req, res) => {
     const userId = req.user.userId;
     const tier = getTierFromUser(req.user);
     const convId = Number(req.params.id);
-    const { content, senderId, senderName, senderAvatar } = req.body;
-    if (!content?.trim()) {
+    const { content, senderId, senderName, senderAvatar, attachmentUrl } = req.body;
+    if (!content?.trim() && !attachmentUrl) {
       return res.status(400).json({ success: false, error: "Message content is required" });
     }
     if (isNaN(convId)) {
@@ -39836,11 +40352,11 @@ router61.post(
       if (conv.type === "business_network") {
         const dailyLimit = TIER_DAILY_MSG_LIMIT[tier];
         if (dailyLimit < 999) {
-          const [{ count: todayCount }] = await db.select({ count: sql17`count(*)` }).from(inboxMessages).where(
+          const [{ count: todayCount }] = await db.select({ count: sql18`count(*)` }).from(inboxMessages).where(
             and18(
               eq31(inboxMessages.conversationId, convId),
               eq31(inboxMessages.senderId, String(userId)),
-              sql17`created_at > NOW() - INTERVAL '24 hours'`
+              sql18`created_at > NOW() - INTERVAL '24 hours'`
             )
           );
           if (Number(todayCount) >= dailyLimit) {
@@ -39857,12 +40373,13 @@ router61.post(
         senderId: String(senderId ?? userId),
         senderName: String(senderName ?? "You"),
         senderAvatar: senderAvatar || null,
-        content: content.trim(),
+        content: content?.trim() || "",
+        attachmentUrl: attachmentUrl || null,
         isRead: true,
         isAi: false
       }).returning();
       db.update(inboxConversations).set({
-        lastMessage: content.trim().substring(0, 120),
+        lastMessage: content?.trim() ? content.trim().substring(0, 120) : "\u{1F4F7} Photo",
         lastMessageAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
       }).where(eq31(inboxConversations.id, convId)).catch(() => {
@@ -39894,8 +40411,15 @@ router61.post(
               lastMessage: content.trim().substring(0, 120),
               lastMessageAt: /* @__PURE__ */ new Date(),
               updatedAt: /* @__PURE__ */ new Date(),
-              unreadCount: sql17`${inboxConversations.unreadCount} + 1`
+              unreadCount: sql18`${inboxConversations.unreadCount} + 1`
             }).where(eq31(inboxConversations.id, mirrorConvId));
+            await notifyMessage({
+              senderId: Number(userId),
+              recipientId: recipientUserId,
+              senderName: sender?.name || String(senderName ?? "Member"),
+              messagePreview: content.trim(),
+              conversationId: mirrorConvId
+            });
             notificationEmitter.emit("inbox_message", {
               toUserId: recipientUserId,
               conversationId: mirrorConvId,
@@ -39936,7 +40460,7 @@ router61.post(
     }
   }
 );
-router61.post("/messages/:id/publish", async (req, res) => {
+router62.post("/messages/:id/publish", async (req, res) => {
   const userId = req.user.userId;
   const messageId = Number(req.params.id);
   if (isNaN(messageId)) {
@@ -39984,7 +40508,7 @@ router61.post("/messages/:id/publish", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to publish message" });
   }
 });
-router61.patch("/conversations/:id/read", async (req, res) => {
+router62.patch("/conversations/:id/read", async (req, res) => {
   const userId = req.user.userId;
   const convId = Number(req.params.id);
   if (isNaN(convId)) {
@@ -40013,7 +40537,7 @@ router61.patch("/conversations/:id/read", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to mark as read" });
   }
 });
-router61.get("/ensure-support-thread", async (req, res) => {
+router62.get("/ensure-support-thread", async (req, res) => {
   const userId = req.user.userId;
   const tier = getTierFromUser(req.user);
   try {
@@ -40055,13 +40579,13 @@ router61.get("/ensure-support-thread", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to ensure support thread" });
   }
 });
-var inbox_default = router61;
+var inbox_default = router62;
 
 // server/routes/community.ts
 init_db();
-import { Router as Router62 } from "express";
-var router62 = Router62();
-router62.get("/posts", async (req, res) => {
+import { Router as Router63 } from "express";
+var router63 = Router63();
+router63.get("/posts", async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50"), 100);
     const before = req.query.before ? parseInt(req.query.before) : null;
@@ -40090,7 +40614,7 @@ router62.get("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to load posts" });
   }
 });
-router62.post(
+router63.post(
   "/posts",
   requireAuth(),
   fanChatSlowMode,
@@ -40123,7 +40647,7 @@ router62.post(
     }
   }
 );
-router62.delete(
+router63.delete(
   "/posts/:id",
   requireAuth(),
   async (req, res) => {
@@ -40151,17 +40675,17 @@ router62.delete(
     }
   }
 );
-var community_default = router62;
+var community_default = router63;
 
 // server/routes/geo-actions.ts
 init_db();
 init_schema();
-import { Router as Router63 } from "express";
-import { eq as eq32, sql as sql18 } from "drizzle-orm";
-var router63 = Router63();
+import { Router as Router64 } from "express";
+import { eq as eq32, sql as sql19 } from "drizzle-orm";
+var router64 = Router64();
 async function getGeoAccessLevel(userId) {
   const result = await db.execute(
-    sql18`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
+    sql19`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
   );
   const user = result.rows?.[0];
   if (!user) {
@@ -40218,7 +40742,7 @@ async function getGeoAccessLevel(userId) {
     deleteDelayHours: 72
   };
 }
-router63.get(
+router64.get(
   "/access-level",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -40227,7 +40751,7 @@ router63.get(
     res.json({ success: true, access });
   })
 );
-router63.post(
+router64.post(
   "/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -40300,7 +40824,7 @@ router63.post(
     });
   })
 );
-router63.get(
+router64.get(
   "/my-requests",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -40309,7 +40833,7 @@ router63.get(
     const limit = Math.min(50, parseInt(req.query.limit) || 20);
     const offset = (page - 1) * limit;
     const requests = await db.execute(
-      sql18`SELECT gar.*, u.username AS reviewer_name
+      sql19`SELECT gar.*, u.username AS reviewer_name
           FROM geo_action_requests gar
           LEFT JOIN users u ON u.id = gar.reviewed_by
           WHERE gar.requested_by = ${userId}
@@ -40317,7 +40841,7 @@ router63.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql18`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE requested_by = ${userId}`
+      sql19`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE requested_by = ${userId}`
     );
     res.json({
       success: true,
@@ -40328,7 +40852,7 @@ router63.get(
     });
   })
 );
-router63.get(
+router64.get(
   "/pending",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -40337,7 +40861,7 @@ router63.get(
     const offset = (page - 1) * limit;
     const status = req.query.status || "pending";
     const requests = await db.execute(
-      sql18`SELECT gar.*, u.username AS requester_name, u.email AS requester_email,
+      sql19`SELECT gar.*, u.username AS requester_name, u.email AS requester_email,
                  u.subscription_tier AS requester_tier
           FROM geo_action_requests gar
           JOIN users u ON u.id = gar.requested_by
@@ -40346,7 +40870,7 @@ router63.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql18`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE status = ${status}`
+      sql19`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE status = ${status}`
     );
     res.json({
       success: true,
@@ -40357,7 +40881,7 @@ router63.get(
     });
   })
 );
-router63.post(
+router64.post(
   "/:id/approve",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -40392,7 +40916,7 @@ router63.post(
     });
   })
 );
-router63.post(
+router64.post(
   "/:id/reject",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -40427,15 +40951,15 @@ router63.post(
     });
   })
 );
-var geo_actions_default = router63;
+var geo_actions_default = router64;
 
 // server/routes/contractor-pipeline.ts
 init_db();
 init_schema();
-import { Router as Router64 } from "express";
-import { eq as eq33, sql as sql19 } from "drizzle-orm";
+import { Router as Router65 } from "express";
+import { eq as eq33, sql as sql20 } from "drizzle-orm";
 import { z as z9 } from "zod";
-var router64 = Router64();
+var router65 = Router65();
 var applySchema = z9.object({
   name: z9.string().min(1, "Name is required").max(200),
   phone: z9.string().max(30).optional(),
@@ -40444,14 +40968,14 @@ var applySchema = z9.object({
   portfolioUrl: z9.string().url().max(500).optional().or(z9.literal("")),
   coverLetter: z9.string().max(2e3).optional()
 });
-router64.post(
+router65.post(
   "/apply",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const email = req.user.email;
     const existing = await db.execute(
-      sql19`SELECT id, status FROM contractor_applications
+      sql20`SELECT id, status FROM contractor_applications
           WHERE user_id = ${userId} AND status = 'pending'
           LIMIT 1`
     );
@@ -40463,7 +40987,7 @@ router64.post(
       return;
     }
     const alreadyContractor = await db.execute(
-      sql19`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
+      sql20`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
     );
     if (alreadyContractor.rows?.length) {
       res.status(409).json({
@@ -40509,13 +41033,13 @@ router64.post(
     });
   })
 );
-router64.get(
+router65.get(
   "/my-application",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const result = await db.execute(
-      sql19`SELECT ca.*, u.username AS reviewer_name
+      sql20`SELECT ca.*, u.username AS reviewer_name
           FROM contractor_applications ca
           LEFT JOIN users u ON u.id = ca.reviewed_by
           WHERE ca.user_id = ${userId}
@@ -40529,7 +41053,7 @@ router64.get(
     res.json({ success: true, application: result.rows[0] });
   })
 );
-router64.get(
+router65.get(
   "/applications",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -40538,7 +41062,7 @@ router64.get(
     const offset = (page - 1) * limit;
     const status = req.query.status || "pending";
     const applications = await db.execute(
-      sql19`SELECT ca.*, u.username, u.email AS user_email,
+      sql20`SELECT ca.*, u.username, u.email AS user_email,
                  u.subscription_tier, r.username AS reviewer_name
           FROM contractor_applications ca
           JOIN users u ON u.id = ca.user_id
@@ -40548,7 +41072,7 @@ router64.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql19`SELECT COUNT(*)::int AS total FROM contractor_applications WHERE status = ${status}`
+      sql20`SELECT COUNT(*)::int AS total FROM contractor_applications WHERE status = ${status}`
     );
     res.json({
       success: true,
@@ -40559,7 +41083,7 @@ router64.get(
     });
   })
 );
-router64.post(
+router65.post(
   "/applications/:id/approve",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -40593,7 +41117,7 @@ router64.post(
       hourlyRate: application.hourlyRate
     });
     await db.execute(
-      sql19`UPDATE users
+      sql20`UPDATE users
           SET portal_access = COALESCE(portal_access, '[]'::jsonb) || '["contractor"]'::jsonb
           WHERE id = ${application.userId}`
     );
@@ -40606,7 +41130,7 @@ router64.post(
     });
   })
 );
-router64.post(
+router65.post(
   "/applications/:id/reject",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -40640,14 +41164,14 @@ router64.post(
     });
   })
 );
-router64.get(
+router65.get(
   "/contractors",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
     const search = req.query.search || "";
-    const searchClause = search ? sql19` AND (c.name ILIKE ${"%" + search + "%"} OR c.email ILIKE ${"%" + search + "%"} OR c.specialization ILIKE ${"%" + search + "%"})` : sql19``;
+    const searchClause = search ? sql20` AND (c.name ILIKE ${"%" + search + "%"} OR c.email ILIKE ${"%" + search + "%"} OR c.specialization ILIKE ${"%" + search + "%"})` : sql20``;
     const contractors2 = await db.execute(
-      sql19`SELECT c.id, c.user_id, c.name, c.email, c.phone, c.specialization,
+      sql20`SELECT c.id, c.user_id, c.name, c.email, c.phone, c.specialization,
                  c.hourly_rate, c.created_at, u.username, u.subscription_tier
           FROM contractors c
           JOIN users u ON u.id = c.user_id
@@ -40657,7 +41181,7 @@ router64.get(
     res.json({ success: true, contractors: contractors2.rows });
   })
 );
-router64.get(
+router65.get(
   "/assignments",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -40665,9 +41189,9 @@ router64.get(
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(50, parseInt(req.query.limit) || 20);
     const offset = (page - 1) * limit;
-    const statusClause = status ? sql19` AND ac.status = ${status}` : sql19``;
+    const statusClause = status ? sql20` AND ac.status = ${status}` : sql20``;
     const assignments = await db.execute(
-      sql19`SELECT ac.*, c.name AS contractor_name, c.email AS contractor_email,
+      sql20`SELECT ac.*, c.name AS contractor_name, c.email AS contractor_email,
                  c.specialization, u.username AS assigned_by_name
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
@@ -40677,7 +41201,7 @@ router64.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql19`SELECT COUNT(*)::int AS total FROM assigned_contracts ac WHERE 1=1 ${statusClause}`
+      sql20`SELECT COUNT(*)::int AS total FROM assigned_contracts ac WHERE 1=1 ${statusClause}`
     );
     res.json({
       success: true,
@@ -40688,7 +41212,7 @@ router64.get(
     });
   })
 );
-router64.post(
+router65.post(
   "/assign",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -40726,13 +41250,13 @@ router64.post(
     });
   })
 );
-router64.get(
+router65.get(
   "/my-contracts",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const contractorResult = await db.execute(
-      sql19`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
+      sql20`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
     );
     const contractor = contractorResult.rows?.[0];
     if (!contractor) {
@@ -40740,7 +41264,7 @@ router64.get(
       return;
     }
     const contracts = await db.execute(
-      sql19`SELECT ac.*, u.username AS assigned_by_name
+      sql20`SELECT ac.*, u.username AS assigned_by_name
           FROM assigned_contracts ac
           LEFT JOIN users u ON u.id = ac.assigned_by
           WHERE ac.contractor_id = ${contractor.id}
@@ -40749,14 +41273,14 @@ router64.get(
     res.json({ success: true, contracts: contracts.rows });
   })
 );
-router64.post(
+router65.post(
   "/contracts/:id/accept",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, ac.contractor_id, c.user_id
+      sql20`SELECT ac.id, ac.status, ac.contractor_id, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -40778,14 +41302,14 @@ router64.post(
     res.json({ success: true, message: "Contract accepted" });
   })
 );
-router64.post(
+router65.post(
   "/contracts/:id/decline",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, c.user_id
+      sql20`SELECT ac.id, ac.status, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -40807,14 +41331,14 @@ router64.post(
     res.json({ success: true, message: "Contract declined" });
   })
 );
-router64.post(
+router65.post(
   "/contracts/:id/complete",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, c.user_id
+      sql20`SELECT ac.id, ac.status, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -40836,13 +41360,13 @@ router64.post(
     res.json({ success: true, message: "Contract marked as completed" });
   })
 );
-var contractor_pipeline_default = router64;
+var contractor_pipeline_default = router65;
 
 // server/routes/purgatoire.ts
 init_db();
-import { Router as Router65 } from "express";
+import { Router as Router66 } from "express";
 init_notification_service();
-var router65 = Router65();
+var router66 = Router66();
 var APPROVE_ROLES = ["superuser", "admin"];
 var FLAG_ROLES = ["superuser", "admin", "moderator"];
 async function getUserRole(userId) {
@@ -40851,7 +41375,7 @@ async function getUserRole(userId) {
   ]);
   return result.rows[0]?.role || null;
 }
-router65.get("/queue", requireAuth(), async (req, res) => {
+router66.get("/queue", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -40906,7 +41430,7 @@ router65.get("/queue", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch queue" });
   }
 });
-router65.get("/stats", requireAuth(), async (req, res) => {
+router66.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -40930,7 +41454,7 @@ router65.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router65.post(
+router66.post(
   "/:trackId/approve",
   requireAuth(),
   async (req, res) => {
@@ -41010,7 +41534,7 @@ router65.post(
     }
   }
 );
-router65.post(
+router66.post(
   "/:trackId/reject",
   requireAuth(),
   async (req, res) => {
@@ -41096,7 +41620,7 @@ router65.post(
     }
   }
 );
-router65.post(
+router66.post(
   "/:trackId/flag",
   requireAuth(),
   async (req, res) => {
@@ -41140,27 +41664,27 @@ router65.post(
     }
   }
 );
-var purgatoire_default = router65;
+var purgatoire_default = router66;
 
 // server/routes/ad-campaigns.ts
 init_db();
-import { Router as Router66 } from "express";
-import { sql as sql20 } from "drizzle-orm";
-var router66 = Router66();
-router66.get(
+import { Router as Router67 } from "express";
+import { sql as sql21 } from "drizzle-orm";
+var router67 = Router67();
+router67.get(
   "/",
   asyncHandler(async (req, res) => {
     const { countryCode, limit = "50" } = req.query;
     const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
     const result = countryCode && String(countryCode) !== "all" ? await db.execute(
-      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+      sql21`SELECT ac.*, b.name AS business_name, b.country_code
                 FROM ad_campaigns ac
                 INNER JOIN businesses b ON b.id = ac.business_id
                   AND UPPER(b.country_code) = UPPER(${String(countryCode)})
                 ORDER BY ac.created_at DESC NULLS LAST
                 LIMIT ${limitNum}`
     ) : await db.execute(
-      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+      sql21`SELECT ac.*, b.name AS business_name, b.country_code
                 FROM ad_campaigns ac
                 LEFT JOIN businesses b ON b.id = ac.business_id
                 ORDER BY ac.created_at DESC NULLS LAST
@@ -41185,13 +41709,13 @@ router66.get(
     res.json({ success: true, data: campaigns });
   })
 );
-var ad_campaigns_default = router66;
+var ad_campaigns_default = router67;
 
 // server/routes/admin.ts
 init_db();
 init_schema();
-import { Router as Router67 } from "express";
-import { sql as sql21, eq as eq34, ilike as ilike9 } from "drizzle-orm";
+import { Router as Router68 } from "express";
+import { sql as sql22, eq as eq34, ilike as ilike9 } from "drizzle-orm";
 import * as os from "os";
 import { execSync } from "child_process";
 init_notification_service();
@@ -41232,8 +41756,8 @@ var TABLE_NAME_MAP = {
   contractors: "contractors",
   payment_card_types: "paymentCardTypes"
 };
-var router67 = Router67();
-router67.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
+var router68 = Router68();
+router68.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const tables = [
       "users",
@@ -41273,7 +41797,7 @@ router67.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
     for (const tableName of tables) {
       try {
         const countResult = await db.execute(
-          sql21.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
+          sql22.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
         );
         const count11 = parseInt(
           String(countResult.rows[0]?.count) || "0"
@@ -41300,7 +41824,7 @@ router67.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router68.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const { search } = req.query;
@@ -41332,7 +41856,7 @@ router67.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
         query = query.where(ilike9(nameField, `${search}%`));
       }
     }
-    const countResult = await db.select({ count: sql21`count(*)` }).from(table);
+    const countResult = await db.select({ count: sql22`count(*)` }).from(table);
     const total = countResult[0]?.count || 0;
     const data = await query.limit(limit).offset(offset);
     res.json({
@@ -41353,7 +41877,7 @@ router67.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router68.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const data = req.body;
@@ -41385,7 +41909,7 @@ router67.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.put(
+router68.put(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -41467,7 +41991,7 @@ router67.put(
     }
   }
 );
-router67.delete(
+router68.delete(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -41519,7 +42043,7 @@ router67.delete(
     }
   }
 );
-router67.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
+router68.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
   try {
     const { query: sqlQuery } = req.body;
     if (!sqlQuery || typeof sqlQuery !== "string") {
@@ -41550,7 +42074,7 @@ router67.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
       sqlQuery.substring(0, 100) + "..."
     );
     const startTime = Date.now();
-    const result = await db.execute(sql21.raw(sqlQuery));
+    const result = await db.execute(sql22.raw(sqlQuery));
     const duration = Date.now() - startTime;
     const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
     res.json({
@@ -41572,10 +42096,10 @@ router67.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.get("/health", requireAuth(["admin"]), async (req, res) => {
+router68.get("/health", requireAuth(["admin"]), async (req, res) => {
   try {
     const connResult = await db.execute(
-      sql21.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
+      sql22.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
     );
     const connectionsCount = parseInt(
       String(connResult.rows[0]?.connections || 0),
@@ -41627,7 +42151,7 @@ router67.get("/health", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.post("/backup", requireAuth(["admin"]), async (req, res) => {
+router68.post("/backup", requireAuth(["admin"]), async (req, res) => {
   try {
     const { type = "full" } = req.body;
     if (!["full", "partial"].includes(type)) {
@@ -41642,11 +42166,11 @@ router67.post("/backup", requireAuth(["admin"]), async (req, res) => {
     let tableCount = 0;
     try {
       const sizeResult = await db.execute(
-        sql21`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
+        sql22`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
       );
       dbSize = sizeResult.rows[0]?.size || "unknown";
       const tableResult = await db.execute(
-        sql21`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
+        sql22`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
       );
       tableCount = parseInt(
         String(tableResult.rows[0]?.cnt || "0"),
@@ -41673,10 +42197,10 @@ router67.post("/backup", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router67.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
+router68.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const result = await db.execute(
-      sql21.raw(`
+      sql22.raw(`
       SELECT c.id, c.name, c.slug, c.parent_id, c.main_category, COUNT(b.id) AS businesses_count
       FROM business_categories c
       LEFT JOIN businesses b ON b.category_id = c.id
@@ -41690,13 +42214,13 @@ router67.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router67.post(
+router68.post(
   "/preview-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
     try {
       const result = await db.execute(
-        sql21.raw(`
+        sql22.raw(`
       SELECT b.id AS business_id, b.name AS business_name, b.business_type,
              c.id AS category_id, c.name AS category_name
       FROM businesses b
@@ -41717,14 +42241,14 @@ router67.post(
     }
   }
 );
-router67.post(
+router68.post(
   "/apply-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
     try {
-      await db.execute(sql21.raw(`BEGIN`));
+      await db.execute(sql22.raw(`BEGIN`));
       const result = await db.execute(
-        sql21.raw(`
+        sql22.raw(`
       UPDATE businesses b
       SET category_id = c.id
       FROM business_categories c
@@ -41734,13 +42258,13 @@ router67.post(
       RETURNING b.id
     `)
       );
-      await db.execute(sql21.raw(`COMMIT`));
+      await db.execute(sql22.raw(`COMMIT`));
       const affected = Array.isArray(result.rows) ? result.rows.length : 0;
       res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
     } catch (error) {
       console.error("\u274C Apply mapping failed, rolling back:", error);
       try {
-        await db.execute(sql21.raw(`ROLLBACK`));
+        await db.execute(sql22.raw(`ROLLBACK`));
       } catch (rbErr) {
         console.error("\u274C Rollback failed:", rbErr);
       }
@@ -41748,11 +42272,11 @@ router67.post(
     }
   }
 );
-router67.get("/categories", requireAuth(["admin"]), async (req, res) => {
+router68.get("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     console.log("\u{1F50D} Fetching admin categories (no slug)");
     const result = await db.execute(
-      sql21.raw(`
+      sql22.raw(`
         SELECT id, name, slug, description, parent_id, main_category
         FROM business_categories
         ORDER BY main_category DESC, name
@@ -41764,14 +42288,14 @@ router67.get("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router67.post("/categories", requireAuth(["admin"]), async (req, res) => {
+router68.post("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     const { name, description, parent_id, slug } = req.body;
     if (!name)
       return res.status(400).json({ success: false, error: "name is required" });
     const autoSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const insert = await db.execute(
-      sql21`INSERT INTO business_categories (name, slug, description, parent_id)
+      sql22`INSERT INTO business_categories (name, slug, description, parent_id)
         VALUES (${name}, ${autoSlug}, ${description ?? null}, ${parent_id ?? null}) RETURNING *`
     );
     res.json({ success: true, category: insert.rows[0] });
@@ -41780,12 +42304,12 @@ router67.post("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router67.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router68.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, parent_id, slug } = req.body;
     const update = await db.execute(
-      sql21`UPDATE business_categories
+      sql22`UPDATE business_categories
         SET name = ${name}, description = ${description ?? null}, parent_id = ${parent_id ?? null}, slug = COALESCE(${slug ?? null}, slug)
         WHERE id = ${id}
         RETURNING *`
@@ -41796,13 +42320,13 @@ router67.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router67.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router68.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id: idStr } = req.params;
     const { force } = req.query;
     const id = parseInt(idStr, 10);
     const countResult = await db.execute(
-      sql21`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
+      sql22`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
     );
     const cnt = parseInt(String(countResult.rows[0]?.cnt ?? "0"), 10);
     if (cnt > 0 && String(force) !== "true") {
@@ -41813,17 +42337,17 @@ router67.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     }
     if (cnt > 0 && String(force) === "true") {
       await db.execute(
-        sql21`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
+        sql22`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
       );
     }
-    await db.execute(sql21`DELETE FROM business_categories WHERE id = ${id}`);
+    await db.execute(sql22`DELETE FROM business_categories WHERE id = ${id}`);
     res.json({ success: true, deleted: true, unmapped: cnt });
   } catch (error) {
     console.error("\u274C Delete category failed:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router67.get(
+router68.get(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -41843,7 +42367,7 @@ router67.get(
     });
   })
 );
-router67.post(
+router68.post(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -41883,7 +42407,7 @@ router67.post(
     });
   })
 );
-router67.post(
+router68.post(
   "/settings/smtp/test",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -41930,12 +42454,12 @@ router67.post(
     }
   })
 );
-var admin_default2 = router67;
+var admin_default2 = router68;
 
 // server/routes/profiles.ts
 init_db();
 init_schema();
-import { Router as Router68 } from "express";
+import { Router as Router69 } from "express";
 import { eq as eq37 } from "drizzle-orm";
 
 // server/services/profile-queries.ts
@@ -42157,7 +42681,7 @@ async function syncLegacyProfiles() {
 }
 
 // server/routes/profiles.ts
-var router68 = Router68();
+var router69 = Router69();
 var VALID_ACTIONS = ["approve", "reject", "suspend", "restore"];
 var TRANSITIONS = {
   DRAFT: { approve: "DRAFT", reject: "DRAFT", suspend: "SUSPENDED", restore: "DRAFT" },
@@ -42173,7 +42697,7 @@ function requireAdmin(req, res) {
   }
   return true;
 }
-router68.get("/api/profiles/search", async (req, res) => {
+router69.get("/api/profiles/search", async (req, res) => {
   try {
     const {
       q,
@@ -42197,7 +42721,7 @@ router68.get("/api/profiles/search", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router68.get("/api/profiles/:slug", async (req, res) => {
+router69.get("/api/profiles/:slug", async (req, res) => {
   try {
     const profile = await getPublicProfileBySlug(req.params.slug);
     if (!profile) return res.status(404).json({ error: "Profile not found" });
@@ -42209,7 +42733,7 @@ router68.get("/api/profiles/:slug", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
-router68.get("/api/admin/profiles", async (req, res) => {
+router69.get("/api/admin/profiles", async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const { status, verificationStatus, accountType } = req.query;
@@ -42220,7 +42744,7 @@ router68.get("/api/admin/profiles", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch profiles" });
   }
 });
-router68.get("/api/admin/profiles/pending", async (req, res) => {
+router69.get("/api/admin/profiles/pending", async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const profiles = await getAdminProfiles({ status: "PENDING" });
@@ -42230,7 +42754,7 @@ router68.get("/api/admin/profiles/pending", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch pending profiles" });
   }
 });
-router68.post(
+router69.post(
   "/api/admin/profiles/:id/action",
   async (req, res) => {
     if (!requireAdmin(req, res)) return;
@@ -42280,7 +42804,7 @@ router68.post(
     }
   }
 );
-router68.post("/api/admin/profiles/sync", async (req, res) => {
+router69.post("/api/admin/profiles/sync", async (req, res) => {
   const user = req.user;
   if (!user || !["superadmin", "superuser"].includes(user.role)) {
     return res.status(403).json({ error: "Superadmin access required" });
@@ -42293,11 +42817,11 @@ router68.post("/api/admin/profiles/sync", async (req, res) => {
     res.status(500).json({ error: "Sync failed" });
   }
 });
-var profiles_default = router68;
+var profiles_default = router69;
 
 // server/routes/astrology.ts
-import { Router as Router69 } from "express";
-var router69 = Router69();
+import { Router as Router70 } from "express";
+var router70 = Router70();
 var astroCache = /* @__PURE__ */ new Map();
 var ASTRO_TTL = 10 * 60 * 1e3;
 var ASTRO_FETCH_TIMEOUT = 5e3;
@@ -42345,7 +42869,7 @@ async function fetchAstroWithRetries(sign) {
   }
   throw lastErr || new Error("Unknown upstream error");
 }
-router69.post(
+router70.post(
   "/astrology",
   asyncHandler(async (req, res) => {
     const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
@@ -42412,15 +42936,15 @@ router69.post(
     }
   })
 );
-var astrology_default = router69;
+var astrology_default = router70;
 
 // server/routes/business-search.ts
 init_schema();
 init_db();
-import { Router as Router70 } from "express";
-import { and as and23, eq as eq38, ilike as ilike11, or as or8, sql as sql22 } from "drizzle-orm";
-var router70 = Router70();
-router70.get(
+import { Router as Router71 } from "express";
+import { and as and23, eq as eq38, ilike as ilike11, or as or8, sql as sql23 } from "drizzle-orm";
+var router71 = Router71();
+router71.get(
   "/business/search",
   asyncHandler(async (req, res) => {
     const { query, category, location, page = "1", limit = "10" } = req.query;
@@ -42440,7 +42964,7 @@ router70.get(
       }
     }
     const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
-    const countResult = await db.select({ count: sql22`count(*)` }).from(businesses).where(whereCondition);
+    const countResult = await db.select({ count: sql23`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -42493,7 +43017,7 @@ router70.get(
     });
   })
 );
-router70.get(
+router71.get(
   "/category/:slug/search",
   asyncHandler(async (req, res) => {
     const { slug } = req.params;
@@ -42577,7 +43101,7 @@ router70.get(
     });
   })
 );
-router70.get(
+router71.get(
   "/business/categories",
   asyncHandler(async (_req, res) => {
     try {
@@ -42602,7 +43126,7 @@ router70.get(
     }
   })
 );
-router70.get(
+router71.get(
   "/businesses/pool/:categoryName",
   asyncHandler(async (req, res) => {
     const { categoryName } = req.params;
@@ -42669,20 +43193,20 @@ router70.get(
       });
     }
     const result = await db.execute(
-      sql22`
+      sql23`
         SELECT
           id,
           business_name,
           created_at,
           is_active
-        FROM ${sql22.identifier(selectedPool.tableName)}
+        FROM ${sql23.identifier(selectedPool.tableName)}
         WHERE is_active = true
         ORDER BY created_at DESC
         LIMIT ${limitNum} OFFSET ${offset}
       `
     );
     const countResult = await db.execute(
-      sql22`SELECT COUNT(*) as count FROM ${sql22.identifier(selectedPool.tableName)} WHERE is_active = true`
+      sql23`SELECT COUNT(*) as count FROM ${sql23.identifier(selectedPool.tableName)} WHERE is_active = true`
     );
     const businesses2 = result.rows.map((row) => ({
       id: row.id,
@@ -42702,19 +43226,19 @@ router70.get(
     });
   })
 );
-router70.get(
+router71.get(
   "/business/locations",
   asyncHandler(async (_req, res) => {
     try {
       const locResult = await db.execute(
-        sql22`SELECT DISTINCT location FROM businesses
+        sql23`SELECT DISTINCT location FROM businesses
             WHERE location IS NOT NULL AND TRIM(location) != ''
             ORDER BY location LIMIT 100`
       );
       let locations = locResult.rows.map((r) => r.location).filter(Boolean);
       if (locations.length === 0) {
         const cityResult = await db.execute(
-          sql22`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
+          sql23`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
         );
         locations = cityResult.rows.map((r) => r.name).filter(Boolean);
       }
@@ -42732,11 +43256,11 @@ router70.get(
     }
   })
 );
-router70.get(
+router71.get(
   "/business/test-connection",
   asyncHandler(async (_req, res) => {
     try {
-      const testResult = await db.execute(sql22`
+      const testResult = await db.execute(sql23`
         SELECT
           NOW() as time,
           current_database() as database,
@@ -42776,20 +43300,20 @@ router70.get(
     }
   })
 );
-var business_search_default = router70;
+var business_search_default = router71;
 
 // server/routes/categories.ts
 init_schema();
 init_db();
-import { Router as Router71 } from "express";
-import { sql as sql23 } from "drizzle-orm";
-var router71 = Router71();
-router71.get(
+import { Router as Router72 } from "express";
+import { sql as sql24 } from "drizzle-orm";
+var router72 = Router72();
+router72.get(
   "/business-categories",
   asyncHandler(async (req, res) => {
     const { countryCode } = req.query;
     const result = countryCode && String(countryCode) !== "all" ? await db.execute(
-      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+      sql24`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
                 COUNT(b.id)::int AS business_count
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
@@ -42797,7 +43321,7 @@ router71.get(
               GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
               ORDER BY bc.name`
     ) : await db.execute(
-      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+      sql24`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
                 COUNT(b.id)::int AS business_count
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
@@ -42807,7 +43331,7 @@ router71.get(
     res.json(result.rows);
   })
 );
-router71.get(
+router72.get(
   "/categories",
   asyncHandler(async (_req, res) => {
     const result = await db.select({
@@ -42821,15 +43345,15 @@ router71.get(
     res.json(result);
   })
 );
-var categories_default2 = router71;
+var categories_default2 = router72;
 
 // server/routes/commerce-ads.ts
 init_schema();
 init_db();
-import { Router as Router72 } from "express";
-import { and as and24, eq as eq39, ilike as ilike12, or as or9, sql as sql24 } from "drizzle-orm";
-var router72 = Router72();
-router72.get(
+import { Router as Router73 } from "express";
+import { and as and24, eq as eq39, ilike as ilike12, or as or9, sql as sql25 } from "drizzle-orm";
+var router73 = Router73();
+router73.get(
   "/ads/search",
   asyncHandler(async (req, res) => {
     const {
@@ -42881,7 +43405,7 @@ router72.get(
       businessCategories,
       eq39(businesses.categoryId, businessCategories.id)
     ).where(whereCondition);
-    const countResult = await db.select({ count: sql24`count(*)` }).from(businesses).where(whereCondition);
+    const countResult = await db.select({ count: sql25`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const sortMap = {
       rating_desc: businesses.createdAt,
@@ -42986,11 +43510,11 @@ router72.get(
     });
   })
 );
-router72.get(
+router73.get(
   "/analytics",
   asyncHandler(async (_req, res) => {
     console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
-    const totalAdsResult = await db.select({ count: sql24`count(*)` }).from(businesses);
+    const totalAdsResult = await db.select({ count: sql25`count(*)` }).from(businesses);
     const totalAds = totalAdsResult[0]?.count || 1250;
     const businesses2 = await db.select({
       id: businesses.id,
@@ -43004,7 +43528,7 @@ router72.get(
     let ratingCount = 0;
     try {
       const campaignStats = await db.execute(
-        sql24`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
+        sql25`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
                    COALESCE(SUM(impressions), 0) AS total_impressions,
                    COALESCE(SUM(clicks), 0) AS total_clicks,
                    COALESCE(SUM(conversions), 0) AS total_conversions
@@ -43018,7 +43542,7 @@ router72.get(
     }
     try {
       const ratingResult = await db.execute(
-        sql24`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
+        sql25`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
                    COUNT(*) FILTER (WHERE CAST(rating AS numeric) > 0) AS rated_count
             FROM businesses WHERE is_active = true`
       );
@@ -43039,11 +43563,11 @@ router72.get(
     const categoryResult = await db.select({
       name: businessCategories.name,
       slug: businessCategories.slug,
-      count: sql24`count(*)`
+      count: sql25`count(*)`
     }).from(businesses).leftJoin(
       businessCategories,
       eq39(businesses.categoryId, businessCategories.id)
-    ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql24`count(*) DESC`).limit(10);
+    ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql25`count(*) DESC`).limit(10);
     const totalCatCount = categoryResult.reduce(
       (sum, cat) => sum + (cat.count || 0),
       0
@@ -43090,14 +43614,14 @@ router72.get(
     });
   })
 );
-var commerce_ads_default = router72;
+var commerce_ads_default = router73;
 
 // server/routes/contact.ts
 init_schema();
 init_db();
-import { Router as Router73 } from "express";
-var router73 = Router73();
-router73.post(
+import { Router as Router74 } from "express";
+var router74 = Router74();
+router74.post(
   "/",
   asyncHandler(async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
@@ -43154,39 +43678,39 @@ router73.post(
     });
   })
 );
-var contact_default = router73;
+var contact_default = router74;
 
 // server/routes/geo.ts
 init_schema();
 init_db();
-import { Router as Router74 } from "express";
-import { sql as sql25 } from "drizzle-orm";
-var router74 = Router74();
-router74.get(
+import { Router as Router75 } from "express";
+import { sql as sql26 } from "drizzle-orm";
+var router75 = Router75();
+router75.get(
   "/regions",
   asyncHandler(async (req, res) => {
     const { countryId } = req.query;
     if (countryId) {
       const cid = parseInt(countryId, 10);
       const result2 = await db.execute(
-        sql25`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
+        sql26`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
       );
       return res.json(result2.rows);
     }
     const result = await db.execute(
-      sql25`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
+      sql26`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
     );
     res.json(result.rows);
   })
 );
-router74.get(
+router75.get(
   "/cities",
   asyncHandler(async (req, res) => {
     const { countryId, regionId } = req.query;
     if (regionId) {
       const rid = parseInt(regionId, 10);
       const result2 = await db.execute(
-        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+        sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
             FROM cities c
             JOIN regions r ON c.region_id = r.id
             WHERE c.region_id = ${rid}
@@ -43197,7 +43721,7 @@ router74.get(
     if (countryId) {
       const cid = parseInt(countryId, 10);
       const result2 = await db.execute(
-        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+        sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
             FROM cities c
             JOIN regions r ON c.region_id = r.id
             WHERE r.country_id = ${cid}
@@ -43206,7 +43730,7 @@ router74.get(
       return res.json(result2.rows);
     }
     const result = await db.execute(
-      sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+      sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
           FROM cities c
           LEFT JOIN regions r ON c.region_id = r.id
           ORDER BY c.name LIMIT 500`
@@ -43214,7 +43738,7 @@ router74.get(
     res.json(result.rows);
   })
 );
-router74.get(
+router75.get(
   "/countries",
   asyncHandler(async (_req, res) => {
     try {
@@ -43257,27 +43781,27 @@ router74.get(
     }
   })
 );
-var geo_default = router74;
+var geo_default = router75;
 
 // server/routes/public-stats.ts
 init_db();
-import { Router as Router75 } from "express";
-import { sql as sql26 } from "drizzle-orm";
-var router75 = Router75();
-router75.get(
+import { Router as Router76 } from "express";
+import { sql as sql27 } from "drizzle-orm";
+var router76 = Router76();
+router76.get(
   "/dashboard-stats",
   asyncHandler(async (req, res) => {
     const { category, businessId } = req.query;
     if (businessId) {
       const businessData = await db.execute(
-        sql26`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
+        sql27`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
       );
       const business = businessData.rows[0];
       if (!business) {
         return res.status(404).json({ success: false, error: "Business not found" });
       }
       const categoryData = await db.execute(
-        sql26`SELECT name FROM business_categories WHERE id = ${business.category_id}`
+        sql27`SELECT name FROM business_categories WHERE id = ${business.category_id}`
       );
       const categoryName = categoryData.rows[0]?.name || "General";
       return res.json({
@@ -43297,12 +43821,12 @@ router75.get(
     }
     if (category) {
       const categoryData = await db.execute(
-        sql26`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
+        sql27`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
       );
       const categoryIds = categoryData.rows.map((row) => row.id);
       if (categoryIds.length > 0) {
         const businessCount2 = await db.execute(
-          sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
+          sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
         );
         const totalBusinesses2 = parseInt(
           String(businessCount2.rows[0]?.count || 0),
@@ -43319,22 +43843,22 @@ router75.get(
       }
     }
     const [businessCount, categoryCount, jobCount, countryData, countryMapData, topCategories, recentListings] = await Promise.all([
-      db.execute(sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
-      db.execute(sql26`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql26`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
       db.execute(
-        sql26`SELECT COUNT(DISTINCT c.id) as count
+        sql27`SELECT COUNT(DISTINCT c.id) as count
               FROM countries c
               INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true`
       ),
       db.execute(
-        sql26`SELECT c.name, COUNT(b.id)::int as count
+        sql27`SELECT c.name, COUNT(b.id)::int as count
               FROM countries c
               INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true
               GROUP BY c.id, c.name
               ORDER BY count DESC`
       ),
-      db.execute(sql26`
+      db.execute(sql27`
           SELECT bc.name, COUNT(b.id) as count
           FROM business_categories bc
           LEFT JOIN businesses b ON b.category_id = bc.id AND b.is_active = true
@@ -43343,7 +43867,7 @@ router75.get(
           ORDER BY count DESC
           LIMIT 10
         `),
-      db.execute(sql26`
+      db.execute(sql27`
           SELECT id, name, location, created_at
           FROM businesses
           WHERE is_active = true
@@ -43767,15 +44291,15 @@ function generateBusinessStats(category, rating, reviewCount) {
     growthRate: (Math.random() * 15 + 5).toFixed(1)
   };
 }
-var public_stats_default = router75;
+var public_stats_default = router76;
 
 // server/routes/seed.ts
 init_schema();
 init_db();
-import { Router as Router76 } from "express";
+import { Router as Router77 } from "express";
 import { eq as eq40 } from "drizzle-orm";
-var router76 = Router76();
-router76.post(
+var router77 = Router77();
+router77.post(
   "/seed-categories",
   asyncHandler(async (_req, res) => {
     if (process.env.NODE_ENV !== "development") {
@@ -43826,18 +44350,18 @@ router76.post(
     });
   })
 );
-var seed_default = router76;
+var seed_default = router77;
 
 // server/routes/system.ts
 init_db();
-import { Router as Router77 } from "express";
-import { sql as sql27 } from "drizzle-orm";
-var router77 = Router77();
-router77.get(
+import { Router as Router78 } from "express";
+import { sql as sql28 } from "drizzle-orm";
+var router78 = Router78();
+router78.get(
   "/status",
   asyncHandler(async (_req, res) => {
     try {
-      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
+      const dbTest = await db.execute(sql28`SELECT NOW() as time`);
       return res.json({
         status: "ok",
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -43862,11 +44386,11 @@ router77.get(
     }
   })
 );
-router77.get(
+router78.get(
   "/health",
   asyncHandler(async (_req, res) => {
     try {
-      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
+      const dbTest = await db.execute(sql28`SELECT NOW() as time`);
       return res.json({
         success: true,
         status: "ok",
@@ -43893,7 +44417,7 @@ router77.get(
     }
   })
 );
-router77.get(
+router78.get(
   "/verify-db-counts",
   asyncHandler(async (_req, res) => {
     const [
@@ -43909,19 +44433,19 @@ router77.get(
       allReviews,
       allReservations
     ] = await Promise.all([
-      db.execute(sql27`SELECT COUNT(*) as count FROM businesses`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM jobs`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM businesses`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM jobs`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
       db.execute(
-        sql27`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
+        sql28`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
       ),
-      db.execute(sql27`SELECT COUNT(*) as count FROM users`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_reviews`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM reservations`)
+      db.execute(sql28`SELECT COUNT(*) as count FROM users`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_reviews`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM reservations`)
     ]);
     res.json({
       success: true,
@@ -43969,7 +44493,7 @@ router77.get(
     });
   })
 );
-router77.get("/simple-test", (_req, res) => {
+router78.get("/simple-test", (_req, res) => {
   res.json({
     message: "Server is working!",
     success: true,
@@ -43989,12 +44513,12 @@ router77.get("/simple-test", (_req, res) => {
     ]
   });
 });
-var system_default = router77;
+var system_default = router78;
 
 // server/routes/users.ts
-import { Router as Router78 } from "express";
+import { Router as Router79 } from "express";
 import jwt8 from "jsonwebtoken";
-var router78 = Router78();
+var router79 = Router79();
 var activeUsers = /* @__PURE__ */ new Map();
 var INACTIVE_THRESHOLD = 5 * 60 * 1e3;
 setInterval(() => {
@@ -44007,7 +44531,7 @@ setInterval(() => {
   });
   entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
 }, 6e4);
-router78.post("/users/heartbeat", (req, res) => {
+router79.post("/users/heartbeat", (req, res) => {
   const sessionId = req.body.sessionId || req.ip;
   activeUsers.set(sessionId, Date.now());
   res.json({
@@ -44016,7 +44540,7 @@ router78.post("/users/heartbeat", (req, res) => {
     sessionId
   });
 });
-router78.get("/users/active-count", (_req, res) => {
+router79.get("/users/active-count", (_req, res) => {
   const now = Date.now();
   const entriesToDelete = [];
   activeUsers.forEach((lastSeen, sessionId) => {
@@ -44031,7 +44555,7 @@ router78.get("/users/active-count", (_req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-router78.get("/user", (req, res) => {
+router79.get("/user", (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -44072,7 +44596,7 @@ router78.get("/user", (req, res) => {
     });
   }
 });
-var users_default2 = router78;
+var users_default2 = router79;
 
 // server/routes.ts
 async function registerRoutes(app2) {
@@ -44112,6 +44636,7 @@ async function registerRoutes(app2) {
   app2.use("/api/tickets", tickets_default);
   app2.use("/api/jobs", jobs_default2);
   app2.use("/api/music", music_default);
+  app2.use("/api/notifications", notifications_default);
   app2.use("/api/streamroyale", streamroyale_default);
   app2.get("/api/streaming/tracks/:id/preview", async (req, res) => {
     try {
@@ -44677,7 +45202,7 @@ async function registerRoutes(app2) {
   app2.use("/api", astrology_default);
   app2.get("/api/business/test-connection", async (req, res) => {
     try {
-      const testResult = await db.execute(sql28`
+      const testResult = await db.execute(sql29`
         SELECT 
           NOW() as time,
           current_database() as database,
@@ -44780,8 +45305,8 @@ async function registerRoutes(app2) {
 
 // server/prod-static.ts
 import express from "express";
-import fs7 from "fs";
-import path6 from "path";
+import fs8 from "fs";
+import path7 from "path";
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -44792,23 +45317,23 @@ function log(message, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 function serveStatic(app2) {
-  const distPath = path6.join(process.cwd(), "dist", "public");
+  const distPath = path7.join(process.cwd(), "dist", "public");
   console.log(`[STATIC] Serving static files from: ${distPath}`);
-  console.log(`[STATIC] Directory exists: ${fs7.existsSync(distPath)}`);
-  if (fs7.existsSync(distPath)) {
+  console.log(`[STATIC] Directory exists: ${fs8.existsSync(distPath)}`);
+  if (fs8.existsSync(distPath)) {
     try {
-      const assets = fs7.readdirSync(distPath);
+      const assets = fs8.readdirSync(distPath);
       console.log(`[STATIC] Contents: ${assets.join(", ")}`);
     } catch (err) {
       console.warn("[STATIC] Could not list dist contents:", err);
     }
   }
-  if (!fs7.existsSync(distPath)) {
+  if (!fs8.existsSync(distPath)) {
     console.error(
       `[STATIC] dist/public not found. Contents of cwd (${process.cwd()}):`
     );
     try {
-      console.error(fs7.readdirSync(process.cwd()).join(", "));
+      console.error(fs8.readdirSync(process.cwd()).join(", "));
     } catch (e) {
       console.error("Could not read cwd");
     }
@@ -44830,10 +45355,10 @@ function serveStatic(app2) {
     }
     const siblingUrl = process.env.SIBLING_URL || "";
     const runtimeScript = `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>`;
-    fs7.readFile(path6.join(distPath, "index.html"), "utf-8", (err, html) => {
+    fs8.readFile(path7.join(distPath, "index.html"), "utf-8", (err, html) => {
       if (err) {
         console.error("[STATIC] Failed to read index.html:", err);
-        return res.sendFile(path6.join(distPath, "index.html"));
+        return res.sendFile(path7.join(distPath, "index.html"));
       }
       const injected = html.replace("</head>", `${runtimeScript}
   </head>`);
@@ -46645,7 +47170,7 @@ var logger = createLogger("app");
 init_db();
 init_schema();
 init_email_service();
-import { eq as eq42, and as and25, sql as sql29, inArray as inArray2 } from "drizzle-orm";
+import { eq as eq42, and as and25, sql as sql30, inArray as inArray2 } from "drizzle-orm";
 var DIGEST_CHECK_INTERVAL_MS = 60 * 60 * 1e3;
 var MAX_RETRIES = 3;
 var BATCH_SIZE = 50;
@@ -46896,7 +47421,7 @@ async function retryFailedItems() {
     const failedItems = await db.select().from(emailQueue).where(
       and25(
         eq42(emailQueue.status, "failed"),
-        sql29`${emailQueue.retryCount} < ${MAX_RETRIES}`
+        sql30`${emailQueue.retryCount} < ${MAX_RETRIES}`
       )
     ).limit(20);
     if (failedItems.length === 0) return;
@@ -47661,7 +48186,7 @@ app.use(csrfProtect);
 app.use(globalAuthGate);
 app.use((req, res, next) => {
   const start = Date.now();
-  const path7 = req.path;
+  const path8 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -47670,8 +48195,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path7.startsWith("/api")) {
-      let line = `${req.method} ${path7} ${res.statusCode} in ${duration}ms`;
+    if (path8.startsWith("/api")) {
+      let line = `${req.method} ${path8} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
