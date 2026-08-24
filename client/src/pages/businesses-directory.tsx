@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 import { useCountry } from "@/contexts/CountryContext";
 import {
   getContinentAdjective,
@@ -563,6 +564,7 @@ const CategoryCard = ({
 };
 
 export default function BusinessesDirectory() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const { selectedCountry } = useCountry();
@@ -944,10 +946,7 @@ export default function BusinessesDirectory() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        onClick={() => {
-                          setSelectedBusiness(business);
-                          setShowBusinessDetails(true);
-                        }}
+                        onClick={() => setLocation(`/business/${business.id}`)}
                         className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all border border-gray-100 overflow-hidden cursor-pointer group"
                       >
                         <div
@@ -1020,8 +1019,7 @@ export default function BusinessesDirectory() {
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedBusiness(business);
-                              setShowBusinessDetails(true);
+                              setLocation(`/business/${business.id}`);
                             }}
                             className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white"
                           >

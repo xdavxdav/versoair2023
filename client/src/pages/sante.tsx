@@ -6,6 +6,7 @@ import {
 } from "@/lib/business-data";
 /* webhint-disable hint-no-inline-styles */
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useLocation } from "wouter";
 import { useCountry } from "@/contexts/CountryContext";
 import AnalyticsCard from "@/components/ui/analytics-card";
 import ProgressBar from "@/components/ui/progress-bar";
@@ -185,6 +186,7 @@ const statusOptions = [
 type TabType = "analytics" | "businesses" | "finance" | "ads" | "database";
 
 export default function Sante() {
+  const [, setLocation] = useLocation();
   const { selectedCountry } = useCountry();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
@@ -1202,7 +1204,9 @@ export default function Sante() {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.1 }}
                               whileHover={{ y: -5, scale: 1.01 }}
-                              onClick={() => handleBusinessSelect(business)}
+                              onClick={() =>
+                                setLocation(`/business/${business.id}`)
+                              }
                               className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-red-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-red-600 to-orange-600" />
@@ -1330,7 +1334,7 @@ export default function Sante() {
                                       className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleBusinessSelect(business);
+                                        setLocation(`/business/${business.id}`);
                                       }}
                                     >
                                       <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />

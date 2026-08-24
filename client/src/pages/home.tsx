@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1204,6 +1204,7 @@ function MottoFlip() {
 
 // MAIN HOME COMPONENT
 export default function Home() {
+  const [, setLocation] = useLocation();
   // Inject gold text styles
   useEffect(() => {
     const style = document.createElement("style");
@@ -2442,6 +2443,9 @@ export default function Home() {
                           <motion.div
                             key={business.id}
                             whileHover={{ y: -10, scale: 1.03 }}
+                            onClick={() =>
+                              setLocation(`/business/${business.id}`)
+                            }
                             className="business-card bg-white rounded-2xl md:rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100"
                           >
                             <div className="h-2 bg-gradient-to-r from-emerald-500 to-emerald-600" />

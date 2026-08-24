@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ export default function SectorBusinessCard({
   sectorLabel,
 }: SectorBusinessCardProps) {
   const t = themes[theme];
+  const [, setLocation] = useLocation();
   const label =
     typeof sectorLabel === "function"
       ? sectorLabel(business)
@@ -148,7 +150,7 @@ export default function SectorBusinessCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       whileHover={{ y: -5, scale: 1.01 }}
-      onClick={() => onSelect(business)}
+      onClick={() => setLocation(`/business/${business.id}`)}
       className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 ${t.hoverBorder} cursor-pointer group`}
     >
       {/* Color bar */}
@@ -318,7 +320,7 @@ export default function SectorBusinessCard({
               className={`bg-gradient-to-r ${t.buttonGradient} ${t.buttonHover}`}
               onClick={(e) => {
                 e.stopPropagation();
-                onSelect(business);
+                setLocation(`/business/${business.id}`);
               }}
             >
               <Phone className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-2" />

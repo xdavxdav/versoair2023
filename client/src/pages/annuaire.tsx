@@ -16,6 +16,7 @@ interface DirectoryProfile {
   metadata: Record<string, unknown>;
 }
 import { useEffect, useState, useRef } from "react";
+import { useLocation } from "wouter";
 import { useCountry } from "@/contexts/CountryContext";
 import {
   Search,
@@ -638,6 +639,7 @@ const statusOptions = [
 type TabType = "businesses" | "categories" | "database";
 
 export default function Annuaire() {
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabType>("businesses");
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
@@ -1095,10 +1097,9 @@ export default function Annuaire() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                             className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
-                            onClick={() => {
-                              setSelectedBusiness(business);
-                              setShowBusinessDetails(true);
-                            }}
+                            onClick={() =>
+                              setLocation(`/business/${business.id}`)
+                            }
                           >
                             <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
                             <div className="p-6">
