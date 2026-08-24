@@ -270,6 +270,7 @@ const BETA_ROUTE_PREFIXES = [
   "/",
   "/messages",
   "/about",
+  "/business/",
   "/businesses-directory",
   "/auth/",
   "/profile",
