@@ -721,17 +721,6 @@ function AppContent() {
   // Hide-on-scroll-down / show-on-scroll-up for the fixed header
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  // Measure the header height dynamically
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -794,7 +783,6 @@ function AppContent() {
         !currentPath.startsWith("/admin") &&
         !isImmersivePage && (
           <div
-            ref={headerRef}
             className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
             style={{ overflow: "visible" }}
           >

@@ -227,19 +227,9 @@ function AppContent() {
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
   const [pageEnter, setPageEnter] = useState(false);
   const wasLoading = useRef(false);
 
-  useLayoutEffect(() => {
-    if (!headerRef.current) return;
-    const obs = new ResizeObserver(() =>
-      setHeaderHeight(headerRef.current?.offsetHeight ?? 0),
-    );
-    obs.observe(headerRef.current);
-    return () => obs.disconnect();
-  }, []);
 
   useEffect(() => {
     if (isLoading && !isFadingOut) wasLoading.current = true;
@@ -258,7 +248,6 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
       <div
-        ref={headerRef}
         className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
         style={{ overflow: "visible" }}
       >
@@ -297,7 +286,6 @@ function AppContent() {
         <MusicNavbar />
       </div>
 
-      <div style={{ height: headerHeight + 56 }} />
       <PullToRefresh />
       <LocationPanel
         isOpen={isLocationPanelOpen}
