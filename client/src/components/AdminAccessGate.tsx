@@ -1,4 +1,4 @@
-import ImpersonatePanel from '../../../components/admin/ImpersonatePanel';
+import ImpersonatePanel from './admin/ImpersonatePanel';
 /**
  * 🔐 AdminAccessGate — 2FA access gate for Admin Dashboard
  *
