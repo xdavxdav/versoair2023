@@ -478,33 +478,14 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
+    // Keep the core business profile available even when optional detail
+    // tables have not been provisioned in an older production database.
     const result = await pool.query(
       `
-      SELECT 
-        b.*,
-        bc.name as category_name,
-        json_agg(
-          json_build_object(
-            'id', bs.id,
-            'name', bs.name,
-            'price', bs.price,
-            'category', bs.category
-          )
-        ) FILTER (WHERE bs.id IS NOT NULL) as services,
-        json_agg(
-          json_build_object(
-            'id', br.id,
-            'rating', br.rating,
-            'title', br.title,
-            'content', br.content
-          )
-        ) FILTER (WHERE br.id IS NOT NULL) as reviews
+      SELECT b.*, bc.name as category_name
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
-      LEFT JOIN business_services bs ON b.id = bs.business_id
-      LEFT JOIN business_reviews br ON b.id = br.business_id
       WHERE b.id = $1
-      GROUP BY b.id, bc.name
     `,
       [id],
     );
@@ -516,9 +497,37 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
       });
     }
 
+    const business = { ...result.rows[0], services: [], reviews: [] };
+
+    try {
+      const services = await pool.query(
+        `SELECT id, name, price, category
+         FROM business_services
+         WHERE business_id = $1
+         ORDER BY id ASC`,
+        [id],
+      );
+      business.services = services.rows;
+    } catch (error) {
+      console.warn("Optional business_services table unavailable:", (error as Error).message);
+    }
+
+    try {
+      const reviews = await pool.query(
+        `SELECT id, rating, title, content
+         FROM business_reviews
+         WHERE business_id = $1
+         ORDER BY id DESC`,
+        [id],
+      );
+      business.reviews = reviews.rows;
+    } catch (error) {
+      console.warn("Optional business_reviews table unavailable:", (error as Error).message);
+    }
+
     res.json({
       success: true,
-      data: result.rows[0],
+      data: business,
     });
   } catch (error) {
     console.error("Error fetching business:", error);
