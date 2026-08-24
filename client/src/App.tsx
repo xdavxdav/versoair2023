@@ -718,27 +718,6 @@ function AppContent() {
     }
   }, [isLoading, isFadingOut]);
 
-  // Hide-on-scroll-down / show-on-scroll-up for the fixed header
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      if (currentY < 10) {
-        setHeaderVisible(true);
-      } else if (currentY > lastScrollY.current && currentY > 60) {
-        setHeaderVisible(false);
-      } else if (currentY < lastScrollY.current) {
-        setHeaderVisible(true);
-      }
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   // Initialize GTM and track page views
   useEffect(() => {
     initializeGTMSession();
@@ -783,7 +762,7 @@ function AppContent() {
         !currentPath.startsWith("/admin") &&
         !isImmersivePage && (
           <div
-            className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
+            className="sticky top-0 left-0 right-0 z-[60] flex flex-col"
             style={{ overflow: "visible" }}
           >
             {/* Top Banner */}
@@ -907,7 +886,7 @@ function AppContent() {
            (still hidden on auth/content-nav/music/immersive pages as before) */}
       {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
         <div
-          className={`hidden md:block mt-[60px] transition-opacity duration-300 ${
+          className={`hidden md:block transition-opacity duration-300 ${
             isLoading && !isFadingOut
               ? "opacity-0 pointer-events-none"
               : "opacity-100"
