@@ -44,6 +44,17 @@ export interface KnowledgeResult {
 // ─── Sector slug → category name mapping ─────────────────────────────────────
 
 const SECTOR_TO_CATEGORIES: Record<string, string[]> = {
+  metallurgie: [
+    "Metal",
+    "Metallurgy",
+    "Metalworking",
+    "Steel",
+    "Foundry",
+    "Forge",
+    "Welding",
+    "Fabrication",
+    "Machining",
+  ],
   batiment: [
     "Construction",
     "Building",

@@ -258,9 +258,7 @@ const MobileMenuBubble = lazy(() =>
     default: m.MobileMenuBubble,
   })),
 );
-const MessengerLauncher = lazy(
-  () => import("@/components/messenger/MessengerLauncher"),
-);
+import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
@@ -270,6 +268,7 @@ import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 const BETA_SCOPE_FREEZE = true;
 const BETA_ROUTE_PREFIXES = [
   "/",
+  "/messages",
   "/about",
   "/businesses-directory",
   "/auth/",
@@ -287,6 +286,27 @@ function isBetaRoute(pathname: string) {
       ? pathname === "/"
       : pathname === prefix || pathname.startsWith(prefix),
   );
+}
+
+function MessagesRoute() {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    const open = () => {
+      window.dispatchEvent(new Event("messenger:open"));
+    };
+
+    open();
+    const timer = window.setTimeout(() => {
+      if (window.location.pathname === "/messages") {
+        navigate("/", { replace: true });
+      }
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [navigate]);
+
+  return null;
 }
 
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
@@ -337,6 +357,7 @@ function Router() {
           🏠 PUBLIC — Marketing & informational pages
           ═══════════════════════════════════════════════ */}
       <Route path="/" component={Home} />
+      <Route path="/messages" component={MessagesRoute} />
       <Route path="/hub" component={HubPage} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
@@ -748,7 +769,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BetaBanner />
+      {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}

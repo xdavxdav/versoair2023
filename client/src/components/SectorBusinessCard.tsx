@@ -286,8 +286,8 @@ export default function SectorBusinessCard({
         </div>
 
         {/* Footer: revenue + actions */}
-        <div className="flex flex-wrap items-center justify-between pt-[1vw] border-t border-gray-700 gap-[0.75vw]">
-          <div>
+        <div className="flex flex-col pt-[1vw] border-t border-gray-700 gap-3">
+          <div className="min-w-0">
             {business.revenue && (
               <>
                 <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
@@ -302,7 +302,7 @@ export default function SectorBusinessCard({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-[0.5vw]">
+          <div className="flex items-center justify-end gap-2">
             <Button
               variant="ghost"
               size="icon"

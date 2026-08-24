@@ -42,6 +42,13 @@ const SECTOR_PATTERNS: Array<{
       /\b(flood|plumb|roof|leak|pipe|burst|construct|build|contractor|electrician|electric|wir(ing|e)|hvac|heat|cool|renovate|renovation|repair|fix|handyman|carpenter|mason|concrete|demolition|foundation|insulation|plombier|toiture|fuite|tuyau|maçon|charpentier|rénovation)\b/i,
     urgencyBoost: 3,
   },
+  // Metalworking / metallurgy
+  {
+    slug: "metallurgie",
+    label: "Métallurgie / Travail des métaux",
+    patterns:
+      /\b(metal(?:lurgy|working)?|metallurgy|steel|foundry|forge|forging|welding|welder|fabrication|machining|metalwork|métallurgie|métallurgique|acier|fonderie|forge|soudure|soudeur|usinage|métal)\b/i,
+  },
   // Hospitality / Hotels
   {
     slug: "hotellerie",

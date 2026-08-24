@@ -105,10 +105,41 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 17px;
     width: 100%;
     overflow-x: hidden;
     margin: 0;
     padding: 0;
+  }
+
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    transition:
+      opacity 650ms ease,
+      transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  [data-reveal="scale"] {
+    transform: scale(0.96);
+  }
+
+  [data-reveal="fade"] {
+    transform: none;
+  }
+
+  [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      transition: none;
+      transform: none;
+    }
   }
 
   /* Enhanced scrolling for webkit browsers */

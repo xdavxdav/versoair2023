@@ -370,7 +370,7 @@ export default function MessengerPanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.25 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl relative"
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl relative text-[15px]"
           >
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
@@ -410,7 +410,7 @@ export default function MessengerPanel({
                 </button>
               )}
               <h2 className="flex-1 min-w-0 truncate">
-                <span className="text-white font-semibold text-sm block truncate">
+                <span className="text-white font-semibold text-[15px] block truncate">
                   {activeConvo ? activeConvo.participantName : "Messages"}
                 </span>
                 {activeConvo && (
@@ -650,7 +650,7 @@ export default function MessengerPanel({
                         className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                          className={`max-w-[75%] rounded-2xl px-3 py-2 text-[15px] ${
                             isMine
                               ? "bg-amber-600 text-white rounded-br-sm"
                               : "bg-slate-700 text-white/90 rounded-bl-sm"
@@ -783,7 +783,7 @@ export default function MessengerPanel({
                     }}
                     placeholder="Write a message…"
                     maxLength={2000}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
                   />
                   <button
                     onClick={sendMessage}

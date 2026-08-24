@@ -184,7 +184,7 @@ export default function Navbar({
 
   const isPanelOpen = isLocationPanelOpen || mobileMenuOpen;
 
-  const navbarClasses = `bg-white shadow-lg sticky top-[60px] z-40 transition-all duration-300 ${
+  const navbarClasses = `bg-white shadow-lg sticky top-[4.5rem] z-40 transition-all duration-300 ${
     isPanelOpen ? "opacity-60" : "opacity-100"
   } ${
     isMobile
@@ -780,9 +780,7 @@ export default function Navbar({
             {/* Messages — opens the globally mounted MessengerPanel */}
             {user && (
               <button
-                onClick={() =>
-                  window.dispatchEvent(new Event("messenger:open"))
-                }
+                onClick={() => navigate("/messages")}
                 className="text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
                 aria-label="Messages"
               >

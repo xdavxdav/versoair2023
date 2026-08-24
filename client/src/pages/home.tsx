@@ -1375,14 +1375,19 @@ export default function Home() {
             if (result.data.length > 0) {
               setSearchResults(result.data.slice(0, 5));
               setHasSearched(true);
+            } else {
+              setSearchResults([]);
+              setHasSearched(true);
             }
           }
         } catch (error) {
           console.error("Failed to get database count:", error);
+          setHasSearched(true);
         }
       } else {
         console.error("❌ Database connection failed", result.database?.error);
         setSearchError("Unable to connect to database");
+        setHasSearched(true);
       }
     };
 
@@ -2117,6 +2122,37 @@ export default function Home() {
                 )}
               </AnimatePresence>
 
+              {searchMode === "ai" && aiResults?.intent && !isAiSearching && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mt-3 rounded-xl border px-4 py-3 text-sm md:text-base ${
+                    (aiResults.results?.totalMatches || 0) > 0
+                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                      : "border-amber-400/30 bg-amber-500/10 text-amber-100"
+                  }`}
+                >
+                  {(aiResults.results?.totalMatches || 0) > 0 ? (
+                    <>
+                      L'IA a trouvé {aiResults.results.totalMatches} entreprise
+                      {aiResults.results.totalMatches > 1 ? "s" : ""}
+                      {aiResults.intent.sectorLabel
+                        ? ` en ${aiResults.intent.sectorLabel.toLowerCase()}`
+                        : " correspondant à votre recherche"}
+                      .
+                    </>
+                  ) : (
+                    <>
+                      Aucune entreprise trouvée
+                      {aiResults.intent.sectorLabel
+                        ? ` en ${aiResults.intent.sectorLabel.toLowerCase()}`
+                        : " pour cette recherche"}
+                      . Essayez un autre secteur ou une autre ville.
+                    </>
+                  )}
+                </motion.div>
+              )}
+
               {/* Emergency banner when urgency >= 8 */}
               <AnimatePresence>
                 {searchMode === "ai" && aiResults?.emergency?.isEmergency && (
@@ -2441,29 +2477,31 @@ export default function Home() {
                                 {business.description}
                               </p>
 
-                              <div className="flex flex-wrap items-center justify-between pt-4 md:pt-6 border-t border-gray-100 gap-3">
-                                <span className="px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-800 rounded-full text-sm font-bold capitalize">
-                                  {business.category}
-                                </span>
-                                {business.tags &&
-                                  business.tags.length > 0 &&
-                                  Array.isArray(business.tags) && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {business.tags
-                                        .slice(0, 2)
-                                        .map((tag, i) => (
-                                          <span
-                                            key={i}
-                                            className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
-                                          >
-                                            {tag}
-                                          </span>
-                                        ))}
-                                    </div>
-                                  )}
+                              <div className="flex flex-col pt-4 md:pt-6 border-t border-gray-100 gap-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="max-w-full px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-800 rounded-full text-sm font-bold capitalize break-words">
+                                    {business.category}
+                                  </span>
+                                  {business.tags &&
+                                    business.tags.length > 0 &&
+                                    Array.isArray(business.tags) && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {business.tags
+                                          .slice(0, 2)
+                                          .map((tag, i) => (
+                                            <span
+                                              key={i}
+                                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs"
+                                            >
+                                              {tag}
+                                            </span>
+                                          ))}
+                                      </div>
+                                    )}
+                                </div>
                                 <Link
                                   to={`/business/${business.id}`}
-                                  className="text-emerald-600 hover:text-emerald-700 text-sm md:text-base font-bold flex items-center gap-2"
+                                  className="self-end text-emerald-600 hover:text-emerald-700 text-sm md:text-base font-bold flex items-center gap-2"
                                 >
                                   <span>Détails</span>
                                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
@@ -2616,6 +2654,7 @@ export default function Home() {
                 <motion.div
                   whileHover={{ y: -4, scale: 1.05 }}
                   className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
+                  data-reveal="up"
                 >
                   <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mb-2 md:mb-3 flex-shrink-0" />
                   <p

@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Filter } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
@@ -17,6 +17,7 @@ import AdBanner from "@/components/AdBanner";
 import { useSocialFeed } from "@/hooks/use-social-feed";
 import { authenticatedFetch } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
+import { isContentNavPath } from "@/components/ContentNav";
 
 const TEST_ACCOUNTS = [
   {
@@ -102,6 +103,7 @@ export default function BlogPage() {
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
+  const [currentPath] = useLocation();
 
   // Real API data via useSocialFeed hook
   const {
@@ -426,6 +428,16 @@ export default function BlogPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
       <ScrollToTop />
+      {isContentNavPath(currentPath) && (
+        <div className="px-4 pt-4">
+          <Link href="/">
+            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20 transition-colors text-sm font-medium">
+              <span aria-hidden="true">←</span>
+              Retour à l'accueil
+            </button>
+          </Link>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
