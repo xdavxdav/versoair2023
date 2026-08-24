@@ -112,30 +112,6 @@ const goldTextStyles = `
     }
   }
 
-  @keyframes flash {
-    0% {
-      opacity: 1;
-    }
-    10% {
-      opacity: 0;
-    }
-    30% {
-      opacity: 0;
-    }
-    40% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
-    90% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-
   .gold-text {
     font-family: 'Alegreya', 'Georgia', serif;
     font-style: italic;
@@ -232,7 +208,7 @@ const goldTextStyles = `
         #DE9945 100%);
     background-clip: text;
     -webkit-background-clip: text;
-    animation: flash 4s infinite linear;
+    animation: none;
   }
 
   @media (min-width: 769px) {
@@ -1417,8 +1393,8 @@ export default function Home() {
   useLayoutEffect(() => {
     if (!panelsWrapperRef.current || !panelsContainerRef.current) return;
 
-    // Mobile config — ignoreMobileResize prevents recalc on address-bar hide/show
-    ScrollTrigger.config({ ignoreMobileResize: true });
+    // Let ScrollTrigger recalculate when the mobile viewport changes.
+    ScrollTrigger.config({ ignoreMobileResize: false });
     // NOTE: normalizeScroll intentionally NOT used — it intercepts all
     // touch/wheel events through JS causing jank. Each panel has
     // touch-action: pan-y in its inline styles instead.
@@ -1453,7 +1429,7 @@ export default function Home() {
           trigger: panelsWrapperRef.current,
           pin: true,
           pinSpacing: true,
-          scrub: 2.5, // Higher = more inertia — panels "catch up" slowly like a bike chain
+          scrub: 0.8,
           start: "top top",
           end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * 1.0}`, // Longer scroll = slower, more deliberate transitions
           invalidateOnRefresh: true,
@@ -2659,24 +2635,24 @@ export default function Home() {
 
       {/* FIXED PANELS SECTION - Smooth zoom-out → slide → zoom-in */}
       <div
-        className="panels-wrapper relative h-[100dvh] overflow-clip"
+        className="panels-wrapper relative h-[100svh] overflow-clip"
         ref={panelsWrapperRef}
         style={{ touchAction: "pan-y" }}
       >
         <div
-          className="h-[100dvh] w-full overflow-clip"
+          className="h-[100svh] w-full overflow-clip"
           style={{ touchAction: "pan-y" }}
         >
           <div
             ref={panelsContainerRef}
-            className="flex h-[100dvh]"
+            className="flex h-[100svh]"
             style={{
               width: `${NUM_PANELS * 100}%`,
             }}
           >
             {/* PANEL 1: ArtiHuman Foundation - Emerald Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-hidden"
+              className="panel h-[100svh] flex-shrink-0 relative overflow-hidden"
               style={{
                 flexBasis: "100%",
                 width: "100%",
@@ -2869,7 +2845,7 @@ export default function Home() {
 
             {/* PANEL 2: Artisan Marketplace - Amber Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
+              className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
@@ -3055,7 +3031,7 @@ export default function Home() {
 
             {/* PANEL 3: Impact Dashboard - Emerald Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
+              className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
@@ -3261,7 +3237,7 @@ export default function Home() {
 
             {/* PANEL 4: Get Involved - Teal Gradient */}
             <div
-              className="panel h-[100dvh] flex-shrink-0 relative overflow-clip"
+              className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
                 flexBasis: "100%",
                 width: "100%",
