@@ -26,12 +26,12 @@ export const MUSIC_ROUTES = {
   settings: "/music/settings",
 
   // Dashboard sections
-  projects: "/music/projects",
-  releasePipeline: "/music/releases",
-  releasePlanner: "/music/planner",
-  releaseMarketing: "/music/marketing",
-  artists: "/music/artists",
-  arDashboard: "/music/a-and-r",
+  projects: "/music/dashboard",
+  releasePipeline: "/music/library",
+  releasePlanner: "/music/dashboard",
+  releaseMarketing: "/marketing",
+  artists: "/artistes",
+  arDashboard: "/artistes",
 
   // Legacy/alternate paths (redirects)
   artistPortal: "/artist-portal",

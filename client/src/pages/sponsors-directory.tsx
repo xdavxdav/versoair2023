@@ -213,7 +213,7 @@ export default function SponsorsDirectory() {
       return;
     }
 
-    navigate("/sponsor/apply");
+    navigate("/apply");
   };
 
   const canAccessType = (minTier: string) => {

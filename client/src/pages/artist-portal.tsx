@@ -3030,7 +3030,7 @@ export default function ArtistPortal() {
                   <AlertCircle className="w-3 h-3" />
                   Aucun contrat actif —{" "}
                   <a
-                    href="/artist-portal-welcome"
+                    href="/artist-portal/welcome"
                     className="underline hover:text-amber-300"
                   >
                     postulez maintenant

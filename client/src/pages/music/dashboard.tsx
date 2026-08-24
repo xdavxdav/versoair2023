@@ -285,7 +285,7 @@ export default function MusicDashboard() {
                 label="Active Projects"
                 subLeft={`${stats.pendingRequests || 0} Completed`}
                 subRight="0 Ideas"
-                href="/music/projects"
+                href="/music/library"
               />
               <DashStatCard
                 icon={CalendarDays}
@@ -294,7 +294,7 @@ export default function MusicDashboard() {
                 label="Upcoming Releases"
                 subLeft="— Next"
                 subRight=""
-                href="/music/releases"
+                href="/music/library"
               />
               <DashStatCard
                 icon={Users}
@@ -303,7 +303,7 @@ export default function MusicDashboard() {
                 label="Signed Artists"
                 subLeft={`${stats.streams || 0} Listeners`}
                 subRight={`${stats.streams || 0} Streams`}
-                href="/music/artists"
+                href="/artistes"
               />
               <DashStatCard
                 icon={DollarSign}
@@ -325,7 +325,7 @@ export default function MusicDashboard() {
                 label="Upcoming Releases"
                 subLeft="All Artists"
                 subRight="Public drops"
-                href="/music/releases"
+                href="/music/library"
               />
               <DashStatCard
                 icon={Music2}
@@ -334,7 +334,7 @@ export default function MusicDashboard() {
                 label="Artist Projects"
                 subLeft="Teasers only"
                 subRight="Artist-controlled"
-                href="/music/projects"
+                href="/music/library"
               />
               <DashStatCard
                 icon={Users}
@@ -343,7 +343,7 @@ export default function MusicDashboard() {
                 label="Signed Artists"
                 subLeft={isPremium ? "Contract Activity" : "🔒 Patron Only"}
                 subRight={isPremium ? "Full access" : ""}
-                href={isPremium ? "/music/artists" : "#"}
+                href={isPremium ? "/artistes" : "#"}
               />
               <DashStatCard
                 icon={TrendingUp}
@@ -710,7 +710,7 @@ export default function MusicDashboard() {
                   Upcoming Releases
                 </h3>
               </div>
-              <Link href="/music/planner">
+              <Link href="/music/dashboard">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -727,7 +727,7 @@ export default function MusicDashboard() {
                 <p className="text-sm text-white/30">
                   No upcoming releases scheduled
                 </p>
-                <Link href="/music/planner">
+                <Link href="/music/dashboard">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -759,7 +759,7 @@ export default function MusicDashboard() {
                   Top Artists
                 </h3>
               </div>
-              <Link href="/music/artists">
+                  <Link href="/artistes">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -795,7 +795,7 @@ export default function MusicDashboard() {
                 <div className="text-center py-10">
                   <Users className="w-10 h-10 text-white/10 mx-auto mb-3" />
                   <p className="text-sm text-white/30">No signed artists yet</p>
-                  <Link href="/music/a-and-r">
+                  <Link href="/artistes">
                     <Button
                       variant="ghost"
                       size="sm"
