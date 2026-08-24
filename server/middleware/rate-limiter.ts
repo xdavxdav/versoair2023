@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { Request, Response } from "express";
 
 /**
@@ -150,7 +150,7 @@ export const marketplaceMessageLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
     const userId = (req as any).user?.userId;
-    return userId ? `mp-user-${userId}` : (req.ip as string);
+    return userId ? `mp-user-${userId}` : ipKeyGenerator(req.ip ?? "unknown");
   },
   handler: (req: Request, res: Response) => {
     console.warn(
@@ -173,7 +173,7 @@ export const fanChatSlowMode = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
     const userId = (req as any).user?.userId || (req as any).user?.id;
-    return userId ? `fan-user-${userId}` : (req.ip as string);
+    return userId ? `fan-user-${userId}` : ipKeyGenerator(req.ip ?? "unknown");
   },
   skip: (req: Request) => {
     const user = (req as any).user;
