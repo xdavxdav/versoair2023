@@ -907,7 +907,7 @@ function AppContent() {
            (still hidden on auth/content-nav/music/immersive pages as before) */}
       {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
         <div
-          className={`hidden md:block transition-opacity duration-300 ${
+          className={`hidden md:block mt-[60px] transition-opacity duration-300 ${
             isLoading && !isFadingOut
               ? "opacity-0 pointer-events-none"
               : "opacity-100"
