@@ -905,9 +905,6 @@ function AppContent() {
               )}
           </div>
         )}
-      {/* Spacer for fixed header — always present, height auto-measured */}
-      <div style={{ height: headerHeight }} />
-
       {/* ── Music Universe Navbar — sits below the amber bar ── */}
 
       <Suspense fallback={null}>
