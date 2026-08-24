@@ -1194,7 +1194,7 @@
 /* Panel container - centered and properly sized */
 .panels-wrapper {
   position: relative;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: clip;
 }
@@ -1208,7 +1208,7 @@
 /* Main panels container */
 .panels-container {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   width: 400vw; /* 4 panels * 100vw each */
   position: relative;
   will-change: transform;

@@ -62,15 +62,16 @@ export function serveStatic(app: Express) {
 
     // Inject runtime config (SIBLING_URL) into the HTML so the client
     // can discover the music app URL without hardcoding localhost.
-    const siblingUrl = process.env.SIBLING_URL || "";
-    const runtimeScript = `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>`;
-
     fs.readFile(path.join(distPath, "index.html"), "utf-8", (err, html) => {
       if (err) {
         console.error("[STATIC] Failed to read index.html:", err);
         return res.sendFile(path.join(distPath, "index.html"));
       }
-      const injected = html.replace("</head>", `${runtimeScript}\n  </head>`);
+      const siblingUrl = process.env.SIBLING_URL;
+      const runtimeScript = siblingUrl
+        ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>\n  `
+        : "";
+      const injected = html.replace("</head>", `${runtimeScript}</head>`);
       res.set("Content-Type", "text/html");
       res.send(injected);
     });

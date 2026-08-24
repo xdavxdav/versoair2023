@@ -1,3 +1,4 @@
+import ImpersonatePanel from '../../../components/admin/ImpersonatePanel';
 /**
  * 🔐 AdminAccessGate — 2FA access gate for Admin Dashboard
  *
@@ -318,6 +319,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
           </CardContent>
         </Card>
       </div>
+      <ImpersonatePanel />
     </div>
   );
 }

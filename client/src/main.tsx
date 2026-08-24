@@ -1,3 +1,4 @@
+import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
@@ -33,7 +34,11 @@ if (typeof Node !== "undefined" && Node.prototype) {
   };
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>,
+);
 
 // Register Service Worker for PWA background audio + offline caching
 if ("serviceWorker" in navigator) {

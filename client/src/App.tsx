@@ -266,6 +266,28 @@ import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 
+const BETA_SCOPE_FREEZE = true;
+const BETA_ROUTE_PREFIXES = [
+  "/",
+  "/about",
+  "/businesses-directory",
+  "/auth/",
+  "/profile",
+  "/dashboard",
+  "/geo-admin",
+  "/admin/",
+  "/blog",
+  "/faq",
+];
+
+function isBetaRoute(pathname: string) {
+  return BETA_ROUTE_PREFIXES.some((prefix) =>
+    prefix === "/"
+      ? pathname === "/"
+      : pathname === prefix || pathname.startsWith(prefix),
+  );
+}
+
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
 // Main loader — shown while lazy chunks download and on every navigation.
 function Router() {
@@ -303,6 +325,10 @@ function Router() {
   // Re-trigger GT translation after every route change so new page content
   // gets translated (GT only translates on init — misses React-rendered pages)
   useGTRetranslate([location]);
+
+  if (BETA_SCOPE_FREEZE && !isBetaRoute(location)) {
+    return <Redirect to="/" />;
+  }
 
   return (
     <Switch>

@@ -5,7 +5,7 @@ dotenv.config();
 // CRITICAL: Prevents localhost:5004 from leaking to production users on Render
 // Priority: SIBLING_URL > MUSIC_APP_URL > PRODUCTION_URL/APP_PUBLIC_URL (fallback)
 const isProdEnv = process.env.NODE_ENV === "production";
-if (!process.env.SIBLING_URL) {
+if (!process.env.SIBLING_URL && !isProdEnv) {
   // Try MUSIC_APP_URL first, then fallback to PRODUCTION_URL/APP_PUBLIC_URL
   const musicUrl =
     process.env.MUSIC_APP_URL ||

@@ -1468,26 +1468,9 @@ export default function Home() {
       ScrollTrigger.refresh();
     }, 100);
 
-    // After any refresh, ensure the pin spacer has no stray margin-left
-    // (can happen when body overflow changes during panel open/close)
-    const onRefresh = () => {
-      const spacer = document.querySelector(
-        ".pin-spacer-panels-scroll",
-      ) as HTMLElement | null;
-      if (
-        spacer &&
-        spacer.style.marginLeft &&
-        spacer.style.marginLeft !== "0px"
-      ) {
-        spacer.style.marginLeft = "";
-      }
-    };
-    ScrollTrigger.addEventListener("refresh", onRefresh);
-
     return () => {
       ctx.revert();
       clearTimeout(refreshTimeout);
-      ScrollTrigger.removeEventListener("refresh", onRefresh);
     };
   }, []);
 
