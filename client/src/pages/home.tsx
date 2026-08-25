@@ -2179,7 +2179,7 @@ export default function Home() {
                               .map((b: any) => (
                                 <a
                                   key={b.id}
-                                  href={`/businesses/${b.id}`}
+                                  href={`/business/${b.id}`}
                                   className="inline-flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-white text-xs font-medium transition-colors"
                                 >
                                   <CheckCircle className="w-3 h-3" />
