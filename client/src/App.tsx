@@ -276,6 +276,7 @@ const BETA_ROUTE_PREFIXES = [
   "/industries",
   "/pricing",
   "/marketplace",
+  "/apply",
   "/partners",
   "/import-business",
   "/status",
