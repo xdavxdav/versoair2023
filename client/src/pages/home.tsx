@@ -1954,11 +1954,12 @@ export default function Home() {
                 S'impliquer
               </Button>
             </Link>
-            <Link to="/apply">
-              <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
-                ✨ Postuler
-              </Button>
-            </Link>
+            <Button
+              asChild
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto"
+            >
+              <Link to="/apply">✨ Postuler</Link>
+            </Button>
             <Link to="/ong-culturelle">
               <Button className="border-2 border-white text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-white/10 transition-all text-base md:text-lg w-full sm:w-auto">
                 En savoir plus

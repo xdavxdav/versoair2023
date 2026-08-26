@@ -1121,16 +1121,7 @@ router.post(
       });
     }
 
-    // � .test email enforcement — GeoAdmin accounts must use .test domain
-    if (user.email && !user.email.endsWith(".test")) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "GeoAdmin access requires a .test email domain. Please register a .test account.",
-      });
-    }
-
-    // �🛡️ Role gate — admin, superuser & moderator may enter
+    // Role gate — admin, superuser & moderator may enter.
     const allowedRoles = ["admin", "superuser", "moderator"];
     if (!user.role || !allowedRoles.includes(user.role)) {
       return res.status(403).json({

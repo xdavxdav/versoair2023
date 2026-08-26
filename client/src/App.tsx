@@ -445,7 +445,14 @@ function Router() {
       <Route path="/account/paypal">
         {() => <ProtectedRoute component={PayPalPortal} />}
       </Route>
-      <Route path="/ad-campaigns" component={AdCampaignsPage} />
+      <Route path="/ad-campaigns">
+        {() => (
+          <ProtectedRoute
+            component={AdCampaignsPage}
+            roles={["admin", "superuser", "moderator", "business_owner"]}
+          />
+        )}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           🏢 SECTORS — Top-level for SEO & branding
