@@ -759,7 +759,7 @@ export default function MusicDashboard() {
                   Top Artists
                 </h3>
               </div>
-                  <Link href="/artistes">
+              <Link href="/artistes">
                 <Button
                   variant="ghost"
                   size="sm"

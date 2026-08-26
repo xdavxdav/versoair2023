@@ -61,10 +61,10 @@ export default function Footer() {
   ];
 
   const socials = [
-    { href: "https://facebook.com", Icon: Facebook, label: "Facebook" },
-    { href: "https://twitter.com", Icon: Twitter, label: "X" },
-    { href: "https://linkedin.com", Icon: Linkedin, label: "LinkedIn" },
-    { href: "https://instagram.com", Icon: Instagram, label: "Instagram" },
+    { href: "/about", Icon: Facebook, label: "Facebook" },
+    { href: "/blog", Icon: Twitter, label: "X" },
+    { href: "/marketplace", Icon: Linkedin, label: "LinkedIn" },
+    { href: "/contact", Icon: Instagram, label: "Instagram" },
   ];
 
   return (
@@ -167,19 +167,22 @@ export default function Footer() {
 
         {/* ── Bottom Bar ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            {socials.map(({ href, Icon, label }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={label}
-                className="w-9 h-9 rounded-full bg-white/[0.04] border border-gray-800 flex items-center justify-center text-gray-600 hover:text-white hover:bg-white/[0.08] hover:border-gray-700 transition-all duration-200"
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </a>
-            ))}
+          <div className="flex flex-col items-start sm:items-center gap-2">
+            <div className="flex items-center gap-3">
+              {socials.map(({ href, Icon, label }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  title={label}
+                  className="w-9 h-9 rounded-full bg-white/[0.04] border border-gray-800 flex items-center justify-center text-gray-600 hover:text-white hover:bg-white/[0.08] hover:border-gray-700 transition-all duration-200"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </Link>
+              ))}
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-gray-500">
+              Réseaux bientôt disponibles
+            </p>
           </div>
 
           <p

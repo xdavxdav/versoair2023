@@ -6,6 +6,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { newsletterLimiter } from "../middleware/rate-limiter";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -113,10 +114,17 @@ const listingUpload = multer({
   storage: listingStorage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB max per file
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_LISTING_IMAGES.has(file.mimetype) || ALLOWED_LISTING_VIDEOS.has(file.mimetype)) {
+    if (
+      ALLOWED_LISTING_IMAGES.has(file.mimetype) ||
+      ALLOWED_LISTING_VIDEOS.has(file.mimetype)
+    ) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`));
+      cb(
+        new Error(
+          `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`,
+        ),
+      );
     }
   },
 }).fields([
@@ -198,7 +206,9 @@ router.post(
   (req: Request, res: Response, next: Function) => {
     listingUpload(req, res, (err: any) => {
       if (err instanceof multer.MulterError) {
-        return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+        return res
+          .status(400)
+          .json({ success: false, error: `Upload error: ${err.message}` });
       }
       if (err) {
         return res.status(400).json({ success: false, error: err.message });
@@ -228,12 +238,14 @@ router.post(
       }
 
       // Collect uploaded file paths
-      const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+      const files = req.files as
+        | Record<string, Express.Multer.File[]>
+        | undefined;
       const imagePaths: string[] = (files?.images || []).map(
-        (f) => `/uploads/listings/${path.basename(f.path)}`
+        (f) => `/uploads/listings/${path.basename(f.path)}`,
       );
       const videoPaths: string[] = (files?.videos || []).map(
-        (f) => `/uploads/listings/${path.basename(f.path)}`
+        (f) => `/uploads/listings/${path.basename(f.path)}`,
       );
 
       const result = await pool.query(
@@ -255,7 +267,9 @@ router.post(
         ],
       );
 
-      console.log(`📦 [LISTING] New listing "${title}" by user ${userId} — ${imagePaths.length} images, ${videoPaths.length} videos`);
+      console.log(
+        `📦 [LISTING] New listing "${title}" by user ${userId} — ${imagePaths.length} images, ${videoPaths.length} videos`,
+      );
 
       res.status(201).json({
         success: true,
@@ -1326,56 +1340,64 @@ router.patch(
  * POST /api/marketing/newsletters/subscribe
  * Public: Subscribe to newsletter
  */
-router.post("/newsletters/subscribe", async (req: Request, res: Response) => {
-  try {
-    const { email, name } = req.body;
-    if (!email) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Email is required" });
-    }
+router.post(
+  "/newsletters/subscribe",
+  newsletterLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { email, name } = req.body;
+      if (!email) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Email is required" });
+      }
 
-    // Generate a unique unsubscribe token
-    const crypto = await import("crypto");
-    const unsubscribeToken = crypto.randomUUID();
+      // Generate a unique unsubscribe token
+      const crypto = await import("crypto");
+      const unsubscribeToken = crypto.randomUUID();
 
-    const result = await pool.query(
-      `INSERT INTO newsletter_subscribers (email, name, is_active, unsubscribe_token)
+      const result = await pool.query(
+        `INSERT INTO newsletter_subscribers (email, name, is_active, unsubscribe_token)
        VALUES ($1, $2, true, $3)
        ON CONFLICT (email) DO UPDATE SET is_active = true, name = COALESCE($2, newsletter_subscribers.name)
        RETURNING *`,
-      [email, name || null, unsubscribeToken],
-    );
+        [email, name || null, unsubscribeToken],
+      );
 
-    res.status(201).json({ success: true, data: result.rows[0] });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 /**
  * POST /api/marketing/newsletters/unsubscribe
  * Public: Unsubscribe from newsletter
  */
-router.post("/newsletters/unsubscribe", async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Email is required" });
+router.post(
+  "/newsletters/unsubscribe",
+  newsletterLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Email is required" });
+      }
+
+      await pool.query(
+        `UPDATE newsletter_subscribers SET is_active = false WHERE email = $1`,
+        [email],
+      );
+
+      res.json({ success: true, message: "Successfully unsubscribed" });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
     }
-
-    await pool.query(
-      `UPDATE newsletter_subscribers SET is_active = false WHERE email = $1`,
-      [email],
-    );
-
-    res.json({ success: true, message: "Successfully unsubscribed" });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+  },
+);
 
 /**
  * GET /api/marketing/newsletters/archive

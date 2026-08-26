@@ -230,7 +230,6 @@ function AppContent() {
   const [pageEnter, setPageEnter] = useState(false);
   const wasLoading = useRef(false);
 
-
   useEffect(() => {
     if (isLoading && !isFadingOut) wasLoading.current = true;
     if (!isLoading && wasLoading.current) {

@@ -26,6 +26,25 @@ async function bizHasColumn(col: string): Promise<boolean> {
   return _bizColCache[col]!;
 }
 
+async function ensureBusinessDetailTables(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_services (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      price DECIMAL(10,2),
+      category VARCHAR(50),
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    ALTER TABLE business_reviews
+    ADD COLUMN IF NOT EXISTS title TEXT
+  `);
+}
+
 // ============================================================================
 // COUNTRIES ENDPOINT
 // ============================================================================
@@ -497,7 +516,53 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
       });
     }
 
-    const business = { ...result.rows[0], services: [], reviews: [] };
+    const PUBLIC_BUSINESS_DETAIL_FIELDS = [
+      "id",
+      "name",
+      "category_id",
+      "category_name",
+      "description",
+      "location",
+      "address",
+      "city_name",
+      "country_code",
+      "region_id",
+      "region_name",
+      "phone",
+      "email",
+      "website",
+      "latitude",
+      "longitude",
+      "rating",
+      "reviews",
+      "tags",
+      "featured",
+      "is_active",
+      "is_verified",
+      "verification_status",
+      "created_at",
+      "updated_at",
+      "is_advertiser",
+      "logo_url",
+      "business_type",
+      "pdf_path",
+      "approval_status",
+    ];
+
+    const publicBusiness = Object.fromEntries(
+      PUBLIC_BUSINESS_DETAIL_FIELDS.flatMap((field) => {
+        const value = result.rows[0][field];
+        return value !== undefined && value !== null ? [[field, value]] : [];
+      }),
+    );
+
+    await ensureBusinessDetailTables();
+
+    const business: {
+      [key: string]: any;
+      services: any[];
+      reviews: any[];
+    } = { ...publicBusiness, services: [], reviews: [] };
 
     try {
       const services = await pool.query(
@@ -509,7 +574,10 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
       );
       business.services = services.rows;
     } catch (error) {
-      console.warn("Optional business_services table unavailable:", (error as Error).message);
+      console.warn(
+        "Optional business_services table unavailable:",
+        (error as Error).message,
+      );
     }
 
     try {
@@ -522,7 +590,10 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
       );
       business.reviews = reviews.rows;
     } catch (error) {
-      console.warn("Optional business_reviews table unavailable:", (error as Error).message);
+      console.warn(
+        "Optional business_reviews table unavailable:",
+        (error as Error).message,
+      );
     }
 
     res.json({

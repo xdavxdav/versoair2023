@@ -14,7 +14,24 @@
 import { pool } from "../db";
 
 export async function ensureAllTables(): Promise<void> {
-  const client = await pool.connect();
+  if (process.env.DISABLE_DB_CHECK === "true") {
+    console.warn(
+      "⚠️ [MIGRATE] DISABLE_DB_CHECK=true — skipping schema boot check.",
+    );
+    return;
+  }
+
+  let client;
+  try {
+    client = await pool.connect();
+  } catch (err: any) {
+    console.warn(
+      "⚠️ [MIGRATE] Database unavailable during boot check; skipping schema migration.",
+      err?.message || err,
+    );
+    return;
+  }
+
   const startTime = Date.now();
   let created = 0;
   let existed = 0;
@@ -325,6 +342,18 @@ const TABLE_STATEMENTS: TableDef[] = [
       avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "business_services",
+    sql: `CREATE TABLE IF NOT EXISTS business_services (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      price DECIMAL(10,2),
+      category VARCHAR(50),
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
 
@@ -661,6 +690,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       business_id INTEGER NOT NULL REFERENCES businesses(id),
       user_id INTEGER REFERENCES users(id),
       rating INTEGER NOT NULL,
+      title TEXT,
       content TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )`,

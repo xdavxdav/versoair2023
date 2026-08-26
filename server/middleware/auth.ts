@@ -122,6 +122,11 @@ const PUBLIC_PATHS: string[] = [
   "/api/request/business",
   "/api/request/artist",
   "/api/request/job",
+  // Public beta contact & newsletter endpoints
+  "/api/contact",
+  "/api/marketing/newsletters/subscribe",
+  "/api/marketing/newsletters/unsubscribe",
+  "/api/marketing/newsletters/archive",
   // VersoAI chat — public so the assistant works before login
   // NOTE: /api/ai/support/stream is intentionally EXCLUDED — it requires auth (JWT cookie)
   "/api/ai/status",

@@ -223,7 +223,7 @@ router.get("/sitemap.xml", async (_req: Request, res: Response) => {
 
 // ─── Robots.txt ──────────────────────────────────────────────────────────────
 
-router.get("/robots.txt", (_req: Request, res: Response) => {
+export function robotsTxtHandler(_req: Request, res: Response) {
   const robots = `User-agent: *
 Allow: /
 Allow: /businesses-directory
@@ -236,15 +236,22 @@ Allow: /divertissement
 Disallow: /api/
 Disallow: /auth/
 Disallow: /admin/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /geo-admin
+Disallow: /account/
+Disallow: /payments/
+Disallow: /contracts
 
 Sitemap: https://verso-air.com/api/seo/sitemap.xml
 
-# Verso Air — Multi-sector business intelligence platform
-# Contact: info@verso-air.com
+# Pre-beta public demo: private app content remains hidden from search engines.
 `;
 
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
-});
+}
+
+router.get("/robots.txt", robotsTxtHandler);
 
 export default router;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as schema from "@shared/schema";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 
@@ -25,7 +25,7 @@ router.get(
       sort_by,
     });
 
-    const conditions: any[] = [];
+    const conditions: any[] = [eq(schema.businesses.isActive, true)];
 
     if (query && typeof query === "string") {
       const searchCondition = or(
@@ -47,7 +47,8 @@ router.get(
       }
     }
 
-    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereCondition =
+      conditions.length > 0 ? and(...conditions) : undefined;
 
     let baseQuery = db
       .select({
@@ -81,18 +82,24 @@ router.get(
 
     const totalCount = countResult[0]?.count || 0;
     const sortMap: Record<string, any> = {
-      rating_desc: schema.businesses.createdAt,
-      newest: schema.businesses.createdAt,
-      oldest: schema.businesses.createdAt,
-      name_asc: schema.businesses.name,
-      name_desc: schema.businesses.name,
+      rating_desc: desc(schema.businesses.rating),
+      newest: desc(schema.businesses.createdAt),
+      oldest: asc(schema.businesses.createdAt),
+      name_asc: asc(schema.businesses.name),
+      name_desc: desc(schema.businesses.name),
     };
 
-    const orderBy = sortMap[sort_by as string] || schema.businesses.createdAt;
+    const orderBy =
+      sortMap[sort_by as string] || desc(schema.businesses.createdAt);
     baseQuery = (baseQuery as any).orderBy(orderBy);
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
+    const parsedPage = Number.parseInt(page as string, 10);
+    const parsedLimit = Number.parseInt(limit as string, 10);
+    const pageNum =
+      Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const limitNum = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), 50)
+      : 9;
     const offset = (pageNum - 1) * limitNum;
 
     baseQuery = (baseQuery as any).limit(limitNum).offset(offset);
@@ -129,9 +136,9 @@ router.get(
         ctr:
           realReviews > 0
             ? parseFloat(
-                ((((realReviews * 30) / (realReviews * 200 + 1)) * 100).toFixed(
+                (((realReviews * 30) / (realReviews * 200 + 1)) * 100).toFixed(
                   2,
-                )),
+                ),
               )
             : 5.0,
         roi: realRating > 3 ? parseFloat((realRating * 0.9).toFixed(1)) : 2.5,
@@ -153,8 +160,10 @@ router.get(
         verified: true,
         featured: isFeatured,
         promoted: business.isAdvertiser || false,
-        created_at: business.createdAt?.toISOString() || new Date().toISOString(),
-        updated_at: business.createdAt?.toISOString() || new Date().toISOString(),
+        created_at:
+          business.createdAt?.toISOString() || new Date().toISOString(),
+        updated_at:
+          business.createdAt?.toISOString() || new Date().toISOString(),
         business: {
           name: businessName,
           logo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${businessName}`,
@@ -305,11 +314,31 @@ router.get(
     }));
 
     const platformStats = [
-      { platform: "Facebook", ads_count: Math.floor(totalAds * 0.35), avg_ctr: 5.4 },
-      { platform: "Instagram", ads_count: Math.floor(totalAds * 0.28), avg_ctr: 7.1 },
-      { platform: "Google", ads_count: Math.floor(totalAds * 0.22), avg_ctr: 4.5 },
-      { platform: "LinkedIn", ads_count: Math.floor(totalAds * 0.1), avg_ctr: 3.9 },
-      { platform: "TikTok", ads_count: Math.floor(totalAds * 0.05), avg_ctr: 7.5 },
+      {
+        platform: "Facebook",
+        ads_count: Math.floor(totalAds * 0.35),
+        avg_ctr: 5.4,
+      },
+      {
+        platform: "Instagram",
+        ads_count: Math.floor(totalAds * 0.28),
+        avg_ctr: 7.1,
+      },
+      {
+        platform: "Google",
+        ads_count: Math.floor(totalAds * 0.22),
+        avg_ctr: 4.5,
+      },
+      {
+        platform: "LinkedIn",
+        ads_count: Math.floor(totalAds * 0.1),
+        avg_ctr: 3.9,
+      },
+      {
+        platform: "TikTok",
+        ads_count: Math.floor(totalAds * 0.05),
+        avg_ctr: 7.5,
+      },
     ];
 
     res.json({

@@ -413,6 +413,8 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
       <Route path="/demo" component={Demo} />
+      <Route path="/preview" component={Demo} />
+      <Route path="/tour" component={Demo} />
       <Route path="/industries" component={Industries} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/blog" component={Blog} />

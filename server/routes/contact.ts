@@ -2,11 +2,13 @@ import { Router } from "express";
 import * as schema from "@shared/schema";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { contactFormLimiter } from "../middleware/rate-limiter";
 
 const router = Router();
 
 router.post(
   "/",
+  contactFormLimiter,
   asyncHandler(async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
 

@@ -90,6 +90,38 @@ export const registerLimiter = rateLimit({
   },
 });
 
+// Public contact form limiter: very low threshold to prevent spam bots
+export const contactFormLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    console.warn(`[RATE_LIMIT] Contact form limit exceeded for: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      message: "Too many contact requests. Please try again in 15 minutes.",
+    });
+  },
+});
+
+// Public newsletter limiter: low threshold to prevent spam subscriptions
+export const newsletterLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    console.warn(
+      `[RATE_LIMIT] Newsletter request limit exceeded for: ${req.ip}`,
+    );
+    res.status(429).json({
+      success: false,
+      message: "Too many newsletter requests. Please try again in 15 minutes.",
+    });
+  },
+});
+
 // Forgot-password rate limiter: max 5 requests per hour per IP
 // Prevents email flooding attacks
 export const forgotPasswordLimiter = rateLimit({

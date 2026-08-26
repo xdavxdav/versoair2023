@@ -39,7 +39,14 @@ export default function ImpersonatePanel() {
   }
 
   return (
-    <div style={{ padding: "1rem", border: "1px solid #ccc", borderRadius: 8, marginTop: "1rem" }}>
+    <div
+      style={{
+        padding: "1rem",
+        border: "1px solid #ccc",
+        borderRadius: 8,
+        marginTop: "1rem",
+      }}
+    >
       <h3>Impersonation utilisateur</h3>
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         <input
@@ -56,7 +63,11 @@ export default function ImpersonatePanel() {
           Stop
         </button>
       </div>
-      {message && <p style={{ color: message.startsWith("Erreur") ? "red" : "green" }}>{message}</p>}
+      {message && (
+        <p style={{ color: message.startsWith("Erreur") ? "red" : "green" }}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }
