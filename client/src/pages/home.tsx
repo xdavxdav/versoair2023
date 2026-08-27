@@ -2658,8 +2658,7 @@ export default function Home() {
               <Link key={i} to={item.href}>
                 <motion.div
                   whileHover={{ y: -4, scale: 1.05 }}
-                  className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
-                  data-reveal="up"
+                  className="home-nav-card bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
                 >
                   <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mb-2 md:mb-3 flex-shrink-0" />
                   <p
