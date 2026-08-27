@@ -830,6 +830,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <BetaBanner />
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
