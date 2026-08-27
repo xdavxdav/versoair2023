@@ -44,7 +44,14 @@ function parseBusinessId(value: unknown): number | null {
 
 async function writeAudit(action: string, campaignId: string, changes: any) {
   try {
-    await db.insert(auditLogs).values({ action, entityType: "campaign", entityId: campaignId, changes });
+    await db
+      .insert(auditLogs)
+      .values({
+        action,
+        entityType: "campaign",
+        entityId: campaignId,
+        changes,
+      });
   } catch (error) {
     console.warn("Campaign audit log unavailable:", (error as Error).message);
   }
@@ -62,12 +69,18 @@ router.get(
     try {
       const { page = "1", limit = "20", search } = req.query;
       const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10) || 20));
+      const limitNum = Math.min(
+        100,
+        Math.max(1, parseInt(limit as string, 10) || 20),
+      );
       const offset = (pageNum - 1) * limitNum;
       const searchValue = typeof search === "string" ? search.trim() : "";
       const filter = searchValue ? " WHERE name ILIKE $1" : "";
       const filterParams = searchValue ? [`${searchValue}%`] : [];
-      const totalResult = await pool.query(`SELECT COUNT(*)::int AS total FROM ad_campaigns${filter}`, filterParams);
+      const totalResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ad_campaigns${filter}`,
+        filterParams,
+      );
       const dataResult = await pool.query(
         `${campaignSelect}${filter} ORDER BY created_at DESC NULLS LAST LIMIT $${filterParams.length + 1} OFFSET $${filterParams.length + 2}`,
         [...filterParams, limitNum, offset],
@@ -121,7 +134,6 @@ router.post(
         objective,
         budget,
         dailyBudget,
-        dailyBudget,
         startDate,
         endDate,
         status,
@@ -144,11 +156,16 @@ router.post(
         return res.status(400).json({
           success: false,
           status: 400,
-          error: { code: "VALIDATION_ERROR", message: "businessId must be a positive integer" },
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "businessId must be a positive integer",
+          },
         });
       }
 
-      const budgetValue = Number.parseFloat(String(budget ?? dailyBudget ?? "0"));
+      const budgetValue = Number.parseFloat(
+        String(budget ?? dailyBudget ?? "0"),
+      );
       const result = await pool.query(
         `INSERT INTO ad_campaigns
            (business_id, name, objective, daily_budget, status, start_date, end_date)
@@ -213,9 +230,17 @@ router.get(
   asyncHandler(async (req, res) => {
     const campaignId = parseCampaignId(req.params.id);
     if (!campaignId) {
-      return res.status(400).json({ success: false, status: 400, error: { code: "INVALID_ID", message: "Invalid campaign ID" } });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          status: 400,
+          error: { code: "INVALID_ID", message: "Invalid campaign ID" },
+        });
     }
-    const result = await pool.query(`${campaignSelect} WHERE id = $1 LIMIT 1`, [campaignId]);
+    const result = await pool.query(`${campaignSelect} WHERE id = $1 LIMIT 1`, [
+      campaignId,
+    ]);
     const campaign = result.rows[0];
 
     if (!campaign) {
@@ -253,6 +278,7 @@ router.put(
         businessId,
         objective,
         budget,
+        dailyBudget,
         startDate,
         endDate,
         status,
@@ -273,10 +299,22 @@ router.put(
 
       const parsedBusinessId = parseBusinessId(businessId);
       if (!campaignId || !parsedBusinessId) {
-        return res.status(400).json({ success: false, status: 400, error: { code: "VALIDATION_ERROR", message: "Invalid campaign or business ID" } });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            status: 400,
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Invalid campaign or business ID",
+            },
+          });
       }
 
-      const existingResult = await pool.query(`${campaignSelect} WHERE id = $1 LIMIT 1`, [campaignId]);
+      const existingResult = await pool.query(
+        `${campaignSelect} WHERE id = $1 LIMIT 1`,
+        [campaignId],
+      );
       const existing = existingResult.rows[0];
 
       if (!existing) {
@@ -292,7 +330,9 @@ router.put(
 
       console.log("📝 Updating campaign ID:", campaignId);
 
-      const budgetValue = Number.parseFloat(String(budget ?? dailyBudget ?? "0"));
+      const budgetValue = Number.parseFloat(
+        String(budget ?? dailyBudget ?? "0"),
+      );
       const updatedResult = await pool.query(
         `UPDATE ad_campaigns
          SET business_id = $1, name = $2, objective = $3, daily_budget = $4,
@@ -301,7 +341,16 @@ router.put(
          RETURNING id, business_id, name, objective, daily_budget, status,
                    start_date, end_date, impressions, clicks, conversions,
                    created_at, created_at AS updated_at`,
-        [parsedBusinessId, name.trim(), objective || null, Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0, status || "active", startDate || existing.start_date, endDate || null, campaignId],
+        [
+          parsedBusinessId,
+          name.trim(),
+          objective || null,
+          Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0,
+          status || "active",
+          startDate || existing.start_date,
+          endDate || null,
+          campaignId,
+        ],
       );
       const updatedCampaign = updatedResult.rows[0];
 
@@ -312,7 +361,10 @@ router.put(
       console.log("✅ Campaign updated successfully:", campaignId);
 
       // Audit log
-      await writeAudit("UPDATE", String(campaignId), { before: toCampaign(existing), after: toCampaign(updatedCampaign) });
+      await writeAudit("UPDATE", String(campaignId), {
+        before: toCampaign(existing),
+        after: toCampaign(updatedCampaign),
+      });
 
       res.json({
         success: true,
@@ -346,9 +398,18 @@ router.delete(
     try {
       const campaignId = parseCampaignId(req.params.id);
       if (!campaignId) {
-        return res.status(400).json({ success: false, status: 400, error: { code: "INVALID_ID", message: "Invalid campaign ID" } });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            status: 400,
+            error: { code: "INVALID_ID", message: "Invalid campaign ID" },
+          });
       }
-      const existingResult = await pool.query(`${campaignSelect} WHERE id = $1 LIMIT 1`, [campaignId]);
+      const existingResult = await pool.query(
+        `${campaignSelect} WHERE id = $1 LIMIT 1`,
+        [campaignId],
+      );
       const campaign = existingResult.rows[0];
 
       if (!campaign) {
@@ -364,7 +425,10 @@ router.delete(
 
       console.log("🗑️ Deleting campaign ID:", campaignId);
 
-      const deletedResult = await pool.query("DELETE FROM ad_campaigns WHERE id = $1 RETURNING id", [campaignId]);
+      const deletedResult = await pool.query(
+        "DELETE FROM ad_campaigns WHERE id = $1 RETURNING id",
+        [campaignId],
+      );
       const deletedCampaign = deletedResult.rows[0];
 
       if (!deletedCampaign) {
@@ -374,7 +438,9 @@ router.delete(
       console.log("✅ Campaign deleted successfully:", campaignId);
 
       // Audit log
-      await writeAudit("DELETE", String(campaignId), { deleted: toCampaign(campaign) });
+      await writeAudit("DELETE", String(campaignId), {
+        deleted: toCampaign(campaign),
+      });
 
       res.json({
         success: true,
