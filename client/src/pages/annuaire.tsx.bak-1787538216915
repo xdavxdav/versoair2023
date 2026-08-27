@@ -1,0 +1,1384 @@
+interface DirectoryProfile {
+  id: number;
+  name: string;
+  category: string | null;
+  description: string | null;
+  cityName: string | null;
+  countryCode: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  rating: string | null;
+  reviewCount: number | null;
+  isVerified: boolean;
+  slug: string | null;
+  metadata: Record<string, unknown>;
+}
+import { useEffect, useState, useRef } from "react";
+import { useCountry } from "@/contexts/CountryContext";
+import {
+  Search,
+  Filter,
+  Loader2,
+  X,
+  Building,
+  Database,
+  MapPin,
+  Star,
+  ChevronDown,
+  CheckCircle,
+  Phone,
+  Check,
+  Globe,
+  RefreshCw,
+} from "lucide-react";
+
+// Country code → flag emoji
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: "🇺🇸",
+  CA: "🇨🇦",
+  MX: "🇲🇽",
+  BR: "🇧🇷",
+  HT: "🇭🇹",
+  FR: "🇫🇷",
+  DE: "🇩🇪",
+  GB: "🇬🇧",
+  BE: "🇧🇪",
+  CH: "🇨🇭",
+  ES: "🇪🇸",
+  IT: "🇮🇹",
+  PT: "🇵🇹",
+  CI: "🇨🇮",
+  SN: "🇸🇳",
+  CM: "🇨🇲",
+  ML: "🇲🇱",
+  BF: "🇧🇫",
+  GN: "🇬🇳",
+  TG: "🇹🇬",
+  BJ: "🇧🇯",
+  NE: "🇳🇪",
+  MG: "🇲🇬",
+  CD: "🇨🇩",
+  CG: "🇨🇬",
+  GA: "🇬🇦",
+  MA: "🇲🇦",
+  DZ: "🇩🇿",
+  TN: "🇹🇳",
+  ZA: "🇿🇦",
+  NG: "🇳🇬",
+  JP: "🇯🇵",
+  CN: "🇨🇳",
+  IN: "🇮🇳",
+  AE: "🇦🇪",
+  GH: "🇬🇭",
+  KE: "🇰🇪",
+  TZ: "🇹🇿",
+  UG: "🇺🇬",
+  ET: "🇪🇹",
+  RW: "🇷🇼",
+  EG: "🇪🇬",
+  LY: "🇱🇾",
+  SD: "🇸🇩",
+  AO: "🇦🇴",
+  MZ: "🇲🇿",
+  ZM: "🇿🇲",
+  ZW: "🇿🇼",
+  MW: "🇲🇼",
+  NA: "🇳🇦",
+  BW: "🇧🇼",
+  SZ: "🇸🇿",
+  LS: "🇱🇸",
+  MU: "🇲🇺",
+  SC: "🇸🇨",
+  DJ: "🇩🇯",
+  SO: "🇸🇴",
+  ER: "🇪🇷",
+  LR: "🇱🇷",
+  SL: "🇸🇱",
+  GW: "🇬🇼",
+  CV: "🇨🇻",
+  GM: "🇬🇲",
+  MR: "🇲🇷",
+  TD: "🇹🇩",
+  CF: "🇨🇫",
+  GQ: "🇬🇶",
+  ST: "🇸🇹",
+  BI: "🇧🇮",
+  KM: "🇰🇲",
+  AU: "🇦🇺",
+  NZ: "🇳🇿",
+  AR: "🇦🇷",
+  CO: "🇨🇴",
+  CL: "🇨🇱",
+  PE: "🇵🇪",
+  VE: "🇻🇪",
+  EC: "🇪🇨",
+  BO: "🇧🇴",
+  PY: "🇵🇾",
+  UY: "🇺🇾",
+  CR: "🇨🇷",
+  PA: "🇵🇦",
+  CU: "🇨🇺",
+  DO: "🇩🇴",
+  JM: "🇯🇲",
+  TT: "🇹🇹",
+  KR: "🇰🇷",
+  PH: "🇵🇭",
+  TH: "🇹🇭",
+  VN: "🇻🇳",
+  MY: "🇲🇾",
+  SG: "🇸🇬",
+  ID: "🇮🇩",
+  PK: "🇵🇰",
+  BD: "🇧🇩",
+  LK: "🇱🇰",
+  SA: "🇸🇦",
+  QA: "🇶🇦",
+  KW: "🇰🇼",
+  BH: "🇧🇭",
+  OM: "🇴🇲",
+  JO: "🇯🇴",
+  LB: "🇱🇧",
+  IL: "🇮🇱",
+  TR: "🇹🇷",
+  RU: "🇷🇺",
+  UA: "🇺🇦",
+  PL: "🇵🇱",
+  CZ: "🇨🇿",
+  RO: "🇷🇴",
+  HU: "🇭🇺",
+  NL: "🇳🇱",
+  AT: "🇦🇹",
+  SE: "🇸🇪",
+  NO: "🇳🇴",
+  DK: "🇩🇰",
+  FI: "🇫🇮",
+  IE: "🇮🇪",
+  GR: "🇬🇷",
+  HR: "🇭🇷",
+  RS: "🇷🇸",
+  BG: "🇧🇬",
+  SK: "🇸🇰",
+  SI: "🇸🇮",
+  LT: "🇱🇹",
+  LV: "🇱🇻",
+  EE: "🇪🇪",
+};
+
+// Country code → display name
+const COUNTRY_NAMES: Record<string, string> = {
+  US: "United States",
+  CA: "Canada",
+  MX: "Mexico",
+  BR: "Brazil",
+  HT: "Haïti",
+  FR: "France",
+  DE: "Germany",
+  GB: "United Kingdom",
+  BE: "Belgium",
+  CH: "Switzerland",
+  ES: "Spain",
+  IT: "Italy",
+  PT: "Portugal",
+  CI: "Côte d'Ivoire",
+  SN: "Sénégal",
+  CM: "Cameroun",
+  ML: "Mali",
+  BF: "Burkina Faso",
+  GN: "Guinée",
+  TG: "Togo",
+  BJ: "Bénin",
+  NE: "Niger",
+  MG: "Madagascar",
+  CD: "Congo (RDC)",
+  CG: "Congo (Brazzaville)",
+  GA: "Gabon",
+  MA: "Maroc",
+  DZ: "Algérie",
+  TN: "Tunisie",
+  ZA: "South Africa",
+  NG: "Nigeria",
+  JP: "Japan",
+  CN: "China",
+  IN: "India",
+  AE: "United Arab Emirates",
+  GH: "Ghana",
+  KE: "Kenya",
+  TZ: "Tanzania",
+  UG: "Uganda",
+  ET: "Ethiopia",
+  RW: "Rwanda",
+  EG: "Egypt",
+  LY: "Libya",
+  SD: "Sudan",
+  AO: "Angola",
+  MZ: "Mozambique",
+  ZM: "Zambia",
+  ZW: "Zimbabwe",
+  MW: "Malawi",
+  NA: "Namibia",
+  BW: "Botswana",
+  SZ: "Eswatini",
+  LS: "Lesotho",
+  MU: "Mauritius",
+  SC: "Seychelles",
+  DJ: "Djibouti",
+  SO: "Somalia",
+  ER: "Eritrea",
+  LR: "Liberia",
+  SL: "Sierra Leone",
+  GW: "Guinea-Bissau",
+  CV: "Cabo Verde",
+  GM: "Gambia",
+  MR: "Mauritania",
+  TD: "Chad",
+  CF: "Central African Republic",
+  GQ: "Equatorial Guinea",
+  ST: "São Tomé and Príncipe",
+  BI: "Burundi",
+  KM: "Comoros",
+  AU: "Australia",
+  NZ: "New Zealand",
+  AR: "Argentina",
+  CO: "Colombia",
+  CL: "Chile",
+  PE: "Peru",
+  VE: "Venezuela",
+  EC: "Ecuador",
+  BO: "Bolivia",
+  PY: "Paraguay",
+  UY: "Uruguay",
+  CR: "Costa Rica",
+  PA: "Panama",
+  CU: "Cuba",
+  DO: "Dominican Republic",
+  JM: "Jamaica",
+  TT: "Trinidad & Tobago",
+  KR: "South Korea",
+  PH: "Philippines",
+  TH: "Thailand",
+  VN: "Vietnam",
+  MY: "Malaysia",
+  SG: "Singapore",
+  ID: "Indonesia",
+  PK: "Pakistan",
+  BD: "Bangladesh",
+  LK: "Sri Lanka",
+  SA: "Saudi Arabia",
+  QA: "Qatar",
+  KW: "Kuwait",
+  BH: "Bahrain",
+  OM: "Oman",
+  JO: "Jordan",
+  LB: "Lebanon",
+  IL: "Israel",
+  TR: "Turkey",
+  RU: "Russia",
+  UA: "Ukraine",
+  PL: "Poland",
+  CZ: "Czech Republic",
+  RO: "Romania",
+  HU: "Hungary",
+  NL: "Netherlands",
+  AT: "Austria",
+  SE: "Sweden",
+  NO: "Norway",
+  DK: "Denmark",
+  FI: "Finland",
+  IE: "Ireland",
+  GR: "Greece",
+  HR: "Croatia",
+  RS: "Serbia",
+  BG: "Bulgaria",
+  SK: "Slovakia",
+  SI: "Slovenia",
+  LT: "Lithuania",
+  LV: "Latvia",
+  EE: "Estonia",
+};
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+
+const API_BASE_URL = "";
+
+// Category groups for better visual hierarchy
+const CATEGORY_GROUPS = {
+  "Commerce & Retail": [
+    "Commerce",
+    "Shopping",
+    "Retail Stores",
+    "Supermarkets",
+    "Markets",
+    "Department Stores",
+    "Fashion & Clothing",
+    "Jewelry & Accessories",
+    "Electronics & Technology",
+    "Home & Garden",
+    "Books & Media",
+    "Sports & Outdoors",
+  ],
+  "Food & Beverage": [
+    "Restaurants",
+    "Fast Food",
+    "Cafes",
+    "Bakeries",
+    "Bars & Pubs",
+    "Coffee Shops",
+    "Juice Bars",
+    "Ice Cream Parlors",
+  ],
+  "Hospitality & Tourism": [
+    "Hotels",
+    "Hostels",
+    "Resorts",
+    "Lodges",
+    "Tourism & Leisure",
+    "Travel Agencies",
+    "Tour Operators",
+  ],
+  "Construction & Real Estate": [
+    "Building & Construction",
+    "Construction Companies",
+    "Construction Materials",
+    "Architecture & Design",
+    "Real Estate Agencies",
+    "Property Management",
+  ],
+  Automotive: [
+    "Automotive & Motorbike",
+    "Car Dealers",
+    "Auto Repair",
+    "Gas Stations",
+    "Motorcycle Shops",
+    "Car Rental",
+  ],
+  "Finance & Insurance": [
+    "Finance",
+    "Banks",
+    "Insurance",
+    "Investment Services",
+    "Accounting",
+  ],
+  Healthcare: [
+    "Health",
+    "Hospitals",
+    "Clinics",
+    "Medical Labs",
+    "Pharmacies",
+    "Dental Clinics",
+    "Veterinary",
+  ],
+  "Education & Professional": [
+    "Education",
+    "Schools",
+    "Universities",
+    "Training Centers",
+    "Libraries",
+    "Professional Services",
+  ],
+  "Entertainment & Arts": [
+    "Entertainment",
+    "Cinemas",
+    "Theaters",
+    "Music Venues",
+    "Art Galleries",
+    "Museums",
+    "Nightclubs",
+    "Gaming",
+  ],
+  "Personal Services": [
+    "Beauty & Wellness",
+    "Salons",
+    "Spas",
+    "Fitness Centers",
+    "Gyms",
+    "Tailors & Laundry",
+    "Cleaning Services",
+  ],
+};
+
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Commerce & Retail": "🛍️",
+  "Food & Beverage": "🍽️",
+  "Hospitality & Tourism": "🏨",
+  "Construction & Real Estate": "🏗️",
+  Automotive: "🚗",
+  "Finance & Insurance": "💰",
+  Healthcare: "⚕️",
+  "Education & Professional": "📚",
+  "Entertainment & Arts": "🎭",
+  "Personal Services": "💇",
+};
+
+// Flattened list of all categories for backward compatibility
+const ALL_CATEGORIES = [
+  "Commerce",
+  "Hotels",
+  "Restaurants",
+  "Building & Construction",
+  "Construction Companies",
+  "Construction Materials",
+  "Automotive & Motorbike",
+  "Finance",
+  "Banks",
+  "Insurance",
+  "Entertainment",
+  "Tourism & Leisure",
+  "Health",
+  "Hospitals",
+  "Medical Labs",
+  "Pharmacies",
+  "Dental",
+  "Mental Health Services",
+  "Veterinary Services",
+  "Food & Beverage",
+  "Food Processing",
+  "Agri-Food & Agribusiness",
+  "Bakeries",
+  "Telecommunications",
+  "Real Estate",
+  "Real Estate Agencies",
+  "Real Estate Developers",
+  "Electrical Installation",
+  "Plumbing Services",
+  "HVAC Services",
+  "Carpentry",
+  "Welding Services",
+  "Painting Services",
+  "Roofing",
+  "Flooring Services",
+  "Landscaping",
+  "Pest Control",
+  "Cleaning Services",
+  "Maintenance Services",
+  "Security Services",
+  "Transportation & Logistics",
+  "Shipping & Courier",
+  "Warehousing",
+  "Storage Facilities",
+  "IT Services",
+  "Software Development",
+  "Web Design & Development",
+  "Cloud Services",
+  "Data Analytics",
+  "Cybersecurity",
+  "Business Consulting",
+  "Management Consulting",
+  "Financial Consulting",
+  "Legal Services",
+  "Accounting Services",
+  "Auditing Services",
+  "Tax Consulting",
+  "Education",
+  "Schools",
+  "Universities",
+  "Training Centers",
+  "Online Education",
+  "Language Schools",
+  "Beauty & Personal Care",
+  "Hair Salons",
+  "Spa & Wellness",
+  "Fitness Centers",
+  "Gym",
+  "Yoga Studios",
+  "Personal Training",
+  "Massage Therapy",
+  "Travel & Tourism",
+  "Travel Agencies",
+  "Hostels & Guesthouses",
+  "Tour Operators",
+  "Car Rental",
+  "Media & Entertainment",
+  "Publishing",
+  "Broadcasting",
+  "Music Production",
+  "Photography Services",
+  "Video Production",
+  "Advertising Agencies",
+  "Marketing Agencies",
+  "PR & Communications",
+  "Graphic Design",
+  "Interior Design",
+  "Architecture",
+  "Engineering Services",
+  "Manufacturing",
+  "Automotive Manufacturing",
+  "Electronics Manufacturing",
+  "Textile Manufacturing",
+  "Furniture Manufacturing",
+  "Retail",
+  "Department Stores",
+  "Specialty Retail",
+  "E-commerce",
+  "Wholesale",
+  "Distribution Centers",
+  "Hospitality",
+  "Catering Services",
+  "Event Planning",
+  "Banquet Halls",
+  "Conference Centers",
+  "Hotels & Resorts",
+  "Automotive",
+  "Car Dealerships",
+  "Auto Repair Shops",
+  "Auto Parts",
+  "Gas Stations",
+  "Car Wash",
+  "Tire Services",
+  "Rental Services",
+  "Equipment Rental",
+  "Tool Rental",
+  "Party Supplies Rental",
+  "Costume Rental",
+  "Vehicle Rental",
+  "Energy & Utilities",
+  "Electric Companies",
+  "Water Companies",
+  "Gas Companies",
+  "Renewable Energy",
+  "Solar Services",
+  "Agriculture",
+  "Crop Production",
+  "Livestock Farming",
+  "Aquaculture",
+  "Forestry",
+  "Mining & Quarrying",
+  "Construction & Aggregates",
+  "Precious Metals & Gems",
+  "Environmental Services",
+  "Waste Management",
+  "Recycling Services",
+  "Environmental Consulting",
+  "Government & Administration",
+  "Local Government",
+  "National Government",
+  "Public Administration",
+  "Social Services",
+  "NGO & Non-Profit",
+  "Charity Organizations",
+  "Relief Organizations",
+  "Community Services",
+  "Professional Services",
+  "Staffing & Recruitment",
+  "Temporary Staffing",
+  "Executive Search",
+  "Payroll Services",
+  "HR Consulting",
+  "Testing & Certification",
+  "Inspection Services",
+  "Appraisal Services",
+  "Notary Services",
+  "Translation Services",
+  "Interpretation Services",
+  "Personal Services",
+  "Laundry Services",
+  "Tailoring & Alterations",
+  "Shoe Repair",
+  "Watch Repair",
+  "Jewelry Repair",
+  "Furniture Repair",
+  "Appliance Repair",
+  "Electronics Repair",
+  "Printing & Publishing",
+  "Commercial Printing",
+  "Digital Printing",
+  "Bookbinding",
+  "Office Supplies",
+  "Office Equipment",
+  "Office Furniture",
+  "Stationery",
+  "Packaging & Supplies",
+  "Industrial Supplies",
+  "Safety Equipment",
+  "Tools & Hardware",
+  "Building Materials",
+  "Lumber Yard",
+  "Paint & Finishing",
+  "Plumbing Supplies",
+  "Electrical Supplies",
+  "HVAC Supplies",
+  "Home Improvement",
+  "Appliances",
+  "Kitchen Equipment",
+  "Bathroom Fixtures",
+  "Doors & Windows",
+  "Lighting Fixtures",
+  "Garden & Outdoor",
+  "Plants & Nursery",
+  "Garden Equipment",
+  "Outdoor Furniture",
+  "Pools & Spas",
+  "Veterinary Supplies",
+  "Pet Stores",
+  "Pet Grooming",
+  "Pet Boarding",
+  "Animal Training",
+];
+
+const statusOptions = [
+  { value: "active", label: "Active" },
+  { value: "verified", label: "Verified" },
+  { value: "premium", label: "Premium" },
+  { value: "inactive", label: "Inactive" },
+];
+
+type TabType = "businesses" | "categories" | "database";
+
+export default function Annuaire() {
+  const [activeTab, setActiveTab] = useState<TabType>("businesses");
+  const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry, detecting, reloadDetection } = useCountry();
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<DirectoryProfile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [activeFilters, setActiveFilters] = useState({
+    minRating: "",
+    minRevenue: "",
+    status: "",
+    sort_by: "rating_desc",
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] =
+    useState<DirectoryProfile | null>(null);
+  const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  useScrollLock(showBusinessDetails);
+
+  // Database connection test
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/health`);
+        const result = await response.json();
+        setDatabaseConnected(result.success === true);
+      } catch {
+        setDatabaseConnected(false);
+      }
+    };
+    checkConnection();
+  }, []);
+
+  // Auto-load businesses when country is detected (initial load)
+  useEffect(() => {
+    if (!detecting && selectedCountry && !initialLoadDone) {
+      setInitialLoadDone(true);
+      handleSearch(1);
+    }
+  }, [detecting, selectedCountry, initialLoadDone]);
+
+  // Debounced search - auto-fetch after user stops typing or country changes
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    // Always search when country is available (businesses are country-scoped)
+    if (
+      selectedCountry ||
+      searchQuery.trim() ||
+      locationQuery.trim() ||
+      selectedCategory ||
+      Object.values(activeFilters).some((f) => f && f !== "rating_desc")
+    ) {
+      searchTimerRef.current = setTimeout(() => {
+        handleSearch(1);
+      }, 300);
+    }
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [
+    searchQuery,
+    locationQuery,
+    selectedCategory,
+    selectedCountry,
+    activeFilters,
+  ]);
+
+  // Search handler
+  const handleSearch = async (page: number = 1, categoryOverride?: string) => {
+    setIsSearching(true);
+    setCurrentPage(page);
+
+    const category = categoryOverride ?? selectedCategory;
+    // Combine name query + location text so cityName is searched server-side
+    const q =
+      [searchQuery.trim(), locationQuery.trim()].filter(Boolean).join(" ") ||
+      undefined;
+
+    try {
+      const params = new URLSearchParams({
+        accountType: "business",
+        limit: "12",
+      });
+      if (q) params.set("q", q);
+      if (category) params.set("category", category);
+      if (selectedCountry) params.set("countryCode", selectedCountry);
+
+      const res = await fetch(`/api/profiles/search?${params}`);
+      if (!res.ok) throw new Error("Search failed");
+      const data = await res.json();
+      const results: DirectoryProfile[] = data.data ?? [];
+
+      setSearchResults(results);
+      setTotalResults(results.length);
+      setHasSearched(true);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+      setTotalResults(0);
+    }
+    setIsSearching(false);
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters({
+      minRating: "",
+      minRevenue: "",
+      status: "",
+      sort_by: "rating_desc",
+    });
+    setSearchQuery("");
+    setLocationQuery("");
+    setSelectedCategory("");
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white">
+      {/* Database Connection Status */}
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Connecté" : "Déconnecté"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative h-[400px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-purple-900/90"></div>
+
+        <div className="relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="mb-4"
+          >
+            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
+              🌍 Annuaire des Entreprises
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-2xl"
+          >
+            Répertoire Complet des Entreprises
+          </motion.h1>
+
+          {/* Detected country indicator */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mb-4"
+          >
+            {detecting ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm border border-white/20">
+                <Globe className="h-4 w-4 animate-spin" />
+                Détection du pays…
+              </span>
+            ) : selectedCountry ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-full text-base font-semibold border border-white/30">
+                <span className="text-xl">
+                  {COUNTRY_FLAGS[selectedCountry] || "🌍"}
+                </span>
+                <span>{COUNTRY_NAMES[selectedCountry] || selectedCountry}</span>
+                <button
+                  onClick={() => reloadDetection()}
+                  className="ml-1 text-white/60 hover:text-white transition-colors"
+                  title="Recharger la détection"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-full text-sm border border-red-400/30">
+                <Globe className="h-4 w-4" />
+                Pays non détecté — utilisez le sélecteur dans la barre de
+                navigation
+              </span>
+            )}
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="text-xl mb-4 text-white/90"
+          >
+            {selectedCountry
+              ? `${totalResults.toLocaleString()} entreprises en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
+              : `Explorez ${totalResults.toLocaleString()}+ entreprises dans 195 catégories`}
+          </motion.p>
+        </div>
+      </div>
+
+      {/* Search Section */}
+      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
+        <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 backdrop-blur-md border-blue-700 shadow-2xl">
+          <CardContent className="p-6">
+            {/* Active country filter badge */}
+            {selectedCountry && (
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <MapPin className="h-4 w-4 text-blue-400" />
+                <span className="text-sm text-blue-300">Filtré par pays :</span>
+                <span className="text-sm font-semibold text-white flex items-center gap-1">
+                  {COUNTRY_FLAGS[selectedCountry] || "🌍"}{" "}
+                  {COUNTRY_NAMES[selectedCountry] || selectedCountry}
+                </span>
+                <span className="text-xs text-blue-400/60 ml-auto">
+                  Auto-détecté
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Recherchez des entreprises..."
+                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                />
+              </div>
+
+              <div className="relative flex-1 w-full">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
+                <Input
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  placeholder="Ville, région..."
+                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                />
+              </div>
+
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+              )}
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="border-blue-600 hover:bg-blue-800"
+                >
+                  <Filter size={16} className="mr-2" />
+                  {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
+                </Button>
+              </div>
+
+              <div className="text-sm text-blue-300">
+                {totalResults.toLocaleString()} résultats
+              </div>
+            </div>
+
+            {/* Category Filter with Groups */}
+            <div className="mt-4 pt-4 border-t border-blue-700">
+              <Label className="text-sm font-medium mb-3 block text-blue-300">
+                Catégorie (195 disponibles)
+              </Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-blue-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                  >
+                    <span className="text-sm">
+                      {selectedCategory || "Toutes les catégories"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-slate-800 border-blue-600 w-[400px] max-h-[500px] overflow-y-auto">
+                  <DropdownMenuItem onClick={() => setSelectedCategory("")}>
+                    <span
+                      className={
+                        !selectedCategory
+                          ? "font-semibold text-blue-300"
+                          : "text-blue-200"
+                      }
+                    >
+                      Toutes les catégories
+                    </span>
+                  </DropdownMenuItem>
+
+                  {/* Organized by category groups */}
+                  {Object.entries(CATEGORY_GROUPS).map(
+                    ([groupName, categories]) => (
+                      <div key={groupName}>
+                        <div className="px-2 py-2 text-xs font-bold text-blue-400 border-t border-blue-700 mt-2 pt-2 flex items-center gap-2">
+                          <span>
+                            {
+                              (CATEGORY_ICONS as Record<string, string>)[
+                                groupName
+                              ]
+                            }
+                          </span>
+                          <span>{groupName}</span>
+                        </div>
+                        {categories.map((cat) => (
+                          <DropdownMenuItem
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className="pl-8"
+                          >
+                            {selectedCategory === cat && (
+                              <Check className="h-4 w-4 mr-2" />
+                            )}
+                            <span
+                              className={
+                                selectedCategory === cat
+                                  ? "font-semibold text-blue-300"
+                                  : "text-blue-200"
+                              }
+                            >
+                              {cat}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    ),
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-6 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-800/50 rounded-lg border border-blue-700">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                      Note minimale
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={activeFilters.minRating}
+                      onChange={(e) =>
+                        setActiveFilters({
+                          ...activeFilters,
+                          minRating: e.target.value,
+                        })
+                      }
+                      placeholder="Aucune"
+                      className="bg-slate-700 border-blue-600"
+                    />
+                  </div>
+
+                  <div className="lg:col-span-2 flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="border-blue-600 hover:bg-blue-800"
+                    >
+                      Réinitialiser les filtres
+                    </Button>
+                    <Button
+                      onClick={() => handleSearch()}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      Appliquer les filtres
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-[95vw] mx-auto px-4 py-12">
+        {/* Tabs */}
+        <div className="flex space-x-2 mb-8">
+          {(["businesses", "categories", "database"] as TabType[]).map(
+            (tab) => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "default" : "outline"}
+                onClick={() => setActiveTab(tab)}
+                className={`capitalize ${
+                  activeTab === tab
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "border-blue-600 hover:bg-blue-800"
+                }`}
+              >
+                {tab === "businesses" && "Entreprises"}
+                {tab === "categories" && "Catégories"}
+                {tab === "database" && "Base de données"}
+              </Button>
+            ),
+          )}
+        </div>
+
+        {activeTab === "businesses" && (
+          <div>
+            {hasSearched ? (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Database className="h-6 w-6 text-blue-400" />
+                    <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      Résultats ({searchResults.length} de{" "}
+                      {totalResults.toLocaleString()})
+                    </span>
+                  </h2>
+                </div>
+
+                {searchResults.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnimatePresence>
+                      {searchResults.map((business, index) => {
+                        const locationStr = [
+                          business.cityName,
+                          business.countryCode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
+                        const ratingNum = business.rating
+                          ? parseFloat(business.rating)
+                          : null;
+                        return (
+                          <motion.div
+                            key={business.id}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
+                            onClick={() => {
+                              setSelectedBusiness(business);
+                              setShowBusinessDetails(true);
+                            }}
+                          >
+                            <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
+                            <div className="p-6">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
+                                  {business.name}
+                                </h4>
+                                {business.isVerified && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                              {locationStr && (
+                                <div className="flex items-center gap-2 text-gray-400 mb-3">
+                                  <Building className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm font-medium">
+                                    {locationStr}
+                                  </span>
+                                </div>
+                              )}
+                              <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                                {business.description}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                {ratingNum != null ? (
+                                  <div className="flex items-center gap-1 bg-blue-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                                    <Star className="h-3 w-3 fill-current" />
+                                    <span className="font-bold">
+                                      {ratingNum.toFixed(1)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span />
+                                )}
+                                {business.phone ? (
+                                  <a
+                                    href={`tel:${business.phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Button
+                                      size="sm"
+                                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    >
+                                      <Phone className="h-4 w-4" />
+                                    </Button>
+                                  </a>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    disabled
+                                    className="bg-gradient-to-r from-blue-600 to-purple-600 opacity-40"
+                                  >
+                                    <Phone className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      Aucune entreprise trouvée
+                    </h3>
+                    <p className="text-gray-400">Essayez une autre recherche</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                {detecting ? (
+                  <>
+                    <Loader2 className="h-16 w-16 mx-auto text-blue-400 mb-4 animate-spin" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      Détection de votre pays…
+                    </h3>
+                    <p className="text-gray-400">
+                      Les entreprises de votre région apparaîtront
+                      automatiquement
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                      {selectedCountry
+                        ? `Aucune entreprise trouvée en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
+                        : "Explorez l'annuaire"}
+                    </h3>
+                    <p className="text-gray-400">
+                      {selectedCountry
+                        ? "Essayez une catégorie ou élargissez votre recherche"
+                        : "Sélectionnez une catégorie et lancez votre recherche"}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "categories" && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">
+              195 Catégories disponibles
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ALL_CATEGORIES.map((category, index) => (
+                <motion.div
+                  key={category}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-blue-500/20 hover:border-blue-500/50 cursor-pointer transition-all"
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setActiveTab("businesses");
+                    handleSearch(1, category);
+                  }}
+                >
+                  <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 mb-2">
+                    {category}
+                  </Badge>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "database" && (
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 border border-white/20">
+            <h2 className="text-2xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+              <Database className="h-6 w-6" />
+              Informations sur la base de données
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-blue-200">
+                  Statistiques
+                </h3>
+                <ul className="space-y-2">
+                  <li className="flex items-center justify-between">
+                    <span className="text-blue-300">Total des catégories</span>
+                    <span className="font-semibold text-white">195</span>
+                  </li>
+                  <li className="flex items-center justify-between">
+                    <span className="text-blue-300">Entreprises chargées</span>
+                    <span className="font-semibold text-white">
+                      {searchResults.length}
+                    </span>
+                  </li>
+                  <li className="flex items-center justify-between">
+                    <span className="text-blue-300">Statut</span>
+                    <span
+                      className={`font-semibold ${
+                        databaseConnected ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      {databaseConnected ? "Connecté ✅" : "Déconnecté ❌"}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Business Details Modal */}
+      <AnimatePresence>
+        {showBusinessDetails && selectedBusiness && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowBusinessDetails(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-blue-500/30"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white">
+                  {selectedBusiness.name}
+                </h2>
+                <button
+                  onClick={() => setShowBusinessDetails(false)}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    {(selectedBusiness.cityName ||
+                      selectedBusiness.countryCode) && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-300">
+                          {[
+                            selectedBusiness.cityName,
+                            selectedBusiness.countryCode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    )}
+                    {selectedBusiness.category && (
+                      <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30">
+                        {selectedBusiness.category}
+                      </Badge>
+                    )}
+                  </div>
+                  {selectedBusiness.isVerified && (
+                    <Badge className="bg-emerald-900/30 text-emerald-300 border-emerald-500/30">
+                      ✓ Vérifié
+                    </Badge>
+                  )}
+                </div>
+
+                {selectedBusiness.description && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Description
+                    </h3>
+                    <p className="text-gray-300">
+                      {selectedBusiness.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {selectedBusiness.phone && (
+                    <a
+                      href={`tel:${selectedBusiness.phone}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <Phone className="h-4 w-4" />
+                      {selectedBusiness.phone}
+                    </a>
+                  )}
+                  {selectedBusiness.email && (
+                    <a
+                      href={`mailto:${selectedBusiness.email}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      {selectedBusiness.email}
+                    </a>
+                  )}
+                  {selectedBusiness.website && (
+                    <a
+                      href={selectedBusiness.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Site web
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ScrollToTop />
+    </div>
+  );
+}

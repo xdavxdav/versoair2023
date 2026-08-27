@@ -1,0 +1,365 @@
+import { Helmet } from 'react-helmet-async';
+import { useRoute, Link } from "wouter";
+import {
+  Linkedin,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Award,
+  ExternalLink,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const teamMembers = {
+  "sarah-johnson": {
+    name: "Sarah Johnson",
+    role: "Chief Executive Officer",
+    department: "Executive Leadership",
+    image:
+      "https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&w=400&h=400&fit=crop",
+    bio: "Sarah is a visionary leader with over 15 years of experience in business intelligence and data analytics. She founded Verso Air with the mission to democratize business insights for companies of all sizes. Under her leadership, the company has grown from a small startup to a leading BI platform serving thousands of businesses worldwide.",
+    experience: "15+ years",
+    location: "San Francisco, CA",
+    email: "sarah.johnson@versoair.com",
+    phone: "+1 (555) 123-4567",
+    linkedin: "https://linkedin.com/in/sarah-johnson-ceo",
+    joinDate: "January 2020",
+    achievements: [
+      "Founded Verso Air in 2020",
+      "Scaled company to 10,000+ active users",
+      "Raised $50M in Series B funding",
+      'Named "Tech Entrepreneur of the Year" 2024',
+      "Featured in Forbes 30 Under 30",
+    ],
+    expertise: [
+      "Business Strategy",
+      "Data Analytics",
+      "Team Leadership",
+      "Product Vision",
+      "Fundraising",
+    ],
+    education: "MBA from Stanford University, BS in Computer Science from MIT",
+  },
+  "michael-chen": {
+    name: "Michael Chen",
+    role: "Chief Technology Officer",
+    department: "Engineering",
+    image:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=400&h=400&fit=crop",
+    bio: "Michael leads our engineering team with a passion for scalable architecture and innovative solutions. Previously at Google and Amazon, he brings deep expertise in distributed systems and machine learning to drive our platform's technical excellence.",
+    experience: "12+ years",
+    location: "Seattle, WA",
+    email: "michael.chen@versoair.com",
+    phone: "+1 (555) 234-5678",
+    linkedin: "https://linkedin.com/in/michael-chen-cto",
+    joinDate: "March 2020",
+    achievements: [
+      "Built systems handling 100M+ daily requests",
+      "Led migration to microservices architecture",
+      "Reduced platform latency by 60%",
+      "Published 15+ papers on distributed systems",
+      "Patent holder for ML optimization algorithms",
+    ],
+    expertise: [
+      "Distributed Systems",
+      "Machine Learning",
+      "Cloud Architecture",
+      "Database Design",
+      "API Development",
+    ],
+    education:
+      "PhD in Computer Science from Carnegie Mellon, MS from UC Berkeley",
+  },
+  "emma-rodriguez": {
+    name: "Emma Rodriguez",
+    role: "Head of Marketing",
+    department: "Marketing",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&w=400&h=400&fit=crop",
+    bio: "Emma drives our brand strategy and customer acquisition with creative campaigns that resonate with business owners. Her data-driven approach to marketing has helped Verso Air achieve 300% year-over-year growth in customer acquisition.",
+    experience: "10+ years",
+    location: "Austin, TX",
+    email: "emma.rodriguez@versoair.com",
+    phone: "+1 (555) 345-6789",
+    linkedin: "https://linkedin.com/in/emma-rodriguez-marketing",
+    joinDate: "June 2020",
+    achievements: [
+      "Increased brand awareness by 400%",
+      "300% growth in customer acquisition",
+      "Launched successful international campaigns",
+      "Built marketing team from 2 to 25 people",
+      'Won "Digital Marketing Excellence" award',
+    ],
+    expertise: [
+      "Digital Marketing",
+      "Brand Strategy",
+      "Content Marketing",
+      "Customer Acquisition",
+      "Analytics",
+    ],
+    education:
+      "MBA in Marketing from Northwestern Kellogg, BA in Communications",
+  },
+  "david-kim": {
+    name: "David Kim",
+    role: "VP of Customer Success",
+    department: "Customer Success",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&w=400&h=400&fit=crop",
+    bio: "David ensures our customers achieve maximum value from the Verso Air platform. His customer-first approach has resulted in industry-leading retention rates and countless success stories from businesses transforming their operations.",
+    experience: "8+ years",
+    location: "Chicago, IL",
+    email: "david.kim@versoair.com",
+    phone: "+1 (555) 456-7890",
+    linkedin: "https://linkedin.com/in/david-kim-customer-success",
+    joinDate: "September 2020",
+    achievements: [
+      "Achieved 95% customer retention rate",
+      "Built customer success framework",
+      "Launched enterprise onboarding program",
+      "Reduced time-to-value by 50%",
+      "Customer satisfaction score: 4.8/5",
+    ],
+    expertise: [
+      "Customer Success",
+      "Account Management",
+      "Training & Onboarding",
+      "Customer Analytics",
+      "Relationship Building",
+    ],
+    education:
+      "MBA from University of Chicago Booth, BS in Business Administration",
+  },
+};
+
+export default function TeamMember() {
+  const [, params] = useRoute("/team/:memberId");
+  const memberParams = params as unknown as { memberId?: string } | null;
+  const memberId = memberParams?.memberId ?? null;
+
+  if (!memberId || !teamMembers[memberId as keyof typeof teamMembers]) {
+    return (
+    <>
+      <Helmet>
+        <title>team-member — Verso Air</title>
+        <meta name="description" content="team-member — Verso Air" />
+      </Helmet>
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Team Member Not Found
+          </h1>
+          <p className="text-gray-600 mb-8">
+            The team member you're looking for doesn't exist.
+          </p>
+          <Link href="/about">
+            <Button className="bg-[#bf831c] hover:bg-[#a6701a] text-white">
+              ← Back to Our Team
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const member = teamMembers[memberId as keyof typeof teamMembers];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5]">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <img
+                src={member.image}
+                alt={member.name}
+                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+              />
+              <div className="text-center md:text-left">
+                <h1 className="text-4xl font-bold mb-2">{member.name}</h1>
+                <p className="text-xl opacity-90 mb-2">{member.role}</p>
+                <p className="text-lg opacity-75">{member.department}</p>
+                <div className="flex items-center justify-center md:justify-start mt-4 space-x-4">
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {member.location}
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    Joined {member.joinDate}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Bio */}
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  About {member.name.split(" ")[0]}
+                </h2>
+                <p className="text-gray-600 leading-relaxed">{member.bio}</p>
+              </div>
+
+              {/* Achievements */}
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Key Achievements
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {member.achievements.map((achievement, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-[#bf831c] rounded-full mt-2 flex-shrink-0"></div>
+                      <p className="text-gray-600">{achievement}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expertise */}
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Areas of Expertise
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  {member.expertise.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 bg-[#bf831c] text-white rounded-full text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Contact Info */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Contact Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Mail className="h-5 w-5 text-[#bf831c]" />
+                    <a
+                      href={`mailto:${member.email}`}
+                      className="text-gray-600 hover:text-[#bf831c] transition-colors"
+                    >
+                      {member.email}
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="h-5 w-5 text-[#bf831c]" />
+                    <a
+                      href={`tel:${member.phone}`}
+                      className="text-gray-600 hover:text-[#bf831c] transition-colors"
+                    >
+                      {member.phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Linkedin className="h-5 w-5 text-[#bf831c]" />
+                    <a
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-[#bf831c] transition-colors flex items-center"
+                    >
+                      LinkedIn Profile
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Quick Stats
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Experience</span>
+                    <span className="font-semibold text-[#bf831c]">
+                      {member.experience}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Department</span>
+                    <span className="font-semibold text-gray-900">
+                      {member.department}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Location</span>
+                    <span className="font-semibold text-gray-900">
+                      {member.location}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Education */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Education
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {member.education}
+                </p>
+              </div>
+
+              {/* Connect */}
+              <div className="bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-xl p-6 text-white">
+                <h3 className="text-lg font-bold mb-4">
+                  Connect with {member.name.split(" ")[0]}
+                </h3>
+                <p className="text-sm opacity-90 mb-4">
+                  Interested in learning more about{" "}
+                  {member.department.toLowerCase()}? Connect directly through
+                  LinkedIn.
+                </p>
+                <a
+                  href={member.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button className="w-full bg-white text-[#bf831c] hover:bg-gray-100">
+                    <Linkedin className="mr-2 h-4 w-4" />
+                    Connect on LinkedIn
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Back to Team */}
+          <div className="text-center mt-12">
+            <Link href="/about">
+              <Button
+                variant="outline"
+                className="border-[#bf831c] text-[#bf831c] hover:bg-[#bf831c] hover:text-white"
+              >
+                ← Back to Our Team
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
+  );
+}

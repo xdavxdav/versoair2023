@@ -1,0 +1,933 @@
+import { Helmet } from 'react-helmet-async';
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState, useCallback } from "react";
+import AnalyticsCard from "@/components/ui/analytics-card";
+import {
+  Search,
+  Filter,
+  Loader2,
+  X,
+  Building,
+  Database,
+  ExternalLink,
+  MapPin,
+  Star,
+  Users,
+  Tag,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle,
+  Heart,
+  Phone,
+  Check,
+  Home,
+  DollarSign,
+  TrendingUp,
+  BarChart3,
+  Calendar,
+  Eye,
+  MessageCircle,
+  Badge as BadgeIcon,
+  Crown,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  staggerContainer,
+  staggerItem,
+  defaultViewport,
+} from "@/lib/animations";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useCountry } from "@/contexts/CountryContext";
+
+const API_BASE_URL = "";
+
+interface LogementAnalytics {
+  total_revenue: number;
+  total_properties: number;
+  average_rating: number;
+  occupancy_rate: number;
+  year_over_year_growth: number;
+  top_categories: Array<{
+    category: string;
+    revenue: number;
+    properties_count: number;
+  }>;
+  monthly_trends: Array<{
+    month: string;
+    revenue: number;
+    bookings: number;
+  }>;
+  top_regions: Array<{ region: string; revenue: number; percentage: number }>;
+  property_types?: Array<{ type: string; count: number; percentage: number }>;
+}
+
+interface Property {
+  id: number;
+  name: string;
+  description: string;
+  type: string;
+  category: string;
+  location: string;
+  city: string;
+  address: string;
+  image: string;
+  images: string[];
+  price: string;
+  rating: string;
+  reviews: number;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  guests: number;
+  amenities: string[];
+  verified: boolean;
+  instantBook: boolean;
+  freeCancellation: boolean;
+  discount: number;
+  featured: boolean;
+  tags: string[];
+  hostName: string;
+  hostPhone: string;
+  hostEmail: string;
+  superhost: boolean;
+  responseRate: number;
+  responseTime: string;
+}
+
+async function searchLogementProperties(params: {
+  query?: string;
+  city?: string;
+  type?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  countryCode?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  order?: string;
+}): Promise<{ data: Property[]; total: number; success: boolean }> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params.query) searchParams.set("search", params.query);
+    if (params.city) searchParams.set("city", params.city);
+    if (params.type) searchParams.set("type", params.type);
+    if (params.category) searchParams.set("category", params.category);
+    if (params.minPrice) searchParams.set("minPrice", String(params.minPrice));
+    if (params.maxPrice) searchParams.set("maxPrice", String(params.maxPrice));
+    if (params.minRating)
+      searchParams.set("minRating", String(params.minRating));
+    if (params.countryCode) searchParams.set("countryCode", params.countryCode);
+    if (params.page) searchParams.set("page", String(params.page));
+    if (params.limit) searchParams.set("limit", String(params.limit));
+    if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+    if (params.order) searchParams.set("order", params.order);
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/properties?${searchParams.toString()}`,
+    );
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const result = await response.json();
+    return {
+      data: result.data || [],
+      total: result.total || 0,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Properties search failed:", error);
+    return { data: [], total: 0, success: false };
+  }
+}
+
+async function fetchLogementAnalytics(): Promise<LogementAnalytics> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/analytics/logement`);
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch logement analytics:", error);
+    return {
+      total_revenue: 3200000,
+      total_properties: 890,
+      average_rating: 4.6,
+      occupancy_rate: 87,
+      year_over_year_growth: 12.5,
+      top_categories: [
+        { category: "Apartments", revenue: 1200000, properties_count: 450 },
+        { category: "Houses", revenue: 1100000, properties_count: 280 },
+        { category: "Studios", revenue: 600000, properties_count: 160 },
+      ],
+      monthly_trends: [
+        { month: "Jan", revenue: 250000, bookings: 150 },
+        { month: "Feb", revenue: 280000, bookings: 165 },
+        { month: "Mar", revenue: 300000, bookings: 180 },
+      ],
+      top_regions: [
+        { region: "Abidjan", revenue: 1600000, percentage: 50 },
+        { region: "Yamoussoukro", revenue: 800000, percentage: 25 },
+        { region: "Bouaké", revenue: 640000, percentage: 20 },
+      ],
+      property_types: [
+        { type: "Apartment", count: 450, percentage: 50 },
+        { type: "House", count: 280, percentage: 32 },
+        { type: "Studio", count: 160, percentage: 18 },
+      ],
+    };
+  }
+}
+
+async function testDatabaseConnection(): Promise<{
+  success: boolean;
+  database?: { connected: boolean; database?: string };
+}> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/health`);
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Database connection test failed:", error);
+    return { success: false };
+  }
+}
+
+const propertyTypeOptions = [
+  { value: "apartment", label: "Apartments" },
+  { value: "house", label: "Houses" },
+  { value: "studio", label: "Studios" },
+  { value: "villa", label: "Villas" },
+  { value: "land", label: "Land" },
+  { value: "commercial", label: "Commercial" },
+];
+
+const statusOptions = [
+  { value: "available", label: "Available" },
+  { value: "rented", label: "Rented" },
+  { value: "sold", label: "Sold" },
+  { value: "pending", label: "Pending" },
+];
+
+type TabType = "analytics" | "businesses" | "finance" | "database";
+
+export default function Logement() {
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstanceRef = useRef<any>(null);
+  const barChartRef = useRef<HTMLCanvasElement>(null);
+  const barChartInstanceRef = useRef<any>(null);
+  const [activeTab, setActiveTab] = useState<TabType>("businesses");
+  const [showFilters, setShowFilters] = useState(false);
+  const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const { selectedCountry } = useCountry();
+  const [searchResults, setSearchResults] = useState<Property[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [activeFilters, setActiveFilters] = useState({
+    propertyType: "",
+    minPrice: "",
+    maxPrice: "",
+    minRating: "",
+    status: "",
+    sort_by: "rating_desc",
+  });
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [selectedBusiness, setSelectedBusiness] = useState<Property | null>(
+    null,
+  );
+  const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      const result = await testDatabaseConnection();
+      const connected = result.success === true;
+      setDatabaseConnected(connected);
+    };
+    checkConnection();
+  }, []);
+
+  const { data: analytics, isLoading } = useQuery({
+    queryKey: ["logement-analytics"],
+    queryFn: fetchLogementAnalytics,
+    refetchInterval: autoRefresh ? 300000 : false,
+    staleTime: 60000,
+  });
+
+  const fetchProperties = useCallback(async () => {
+    setIsInitialLoading(true);
+    const [sortBy, order] =
+      activeFilters.sort_by === "rating_desc"
+        ? ["rating", "DESC"]
+        : activeFilters.sort_by === "price_asc"
+          ? ["price", "ASC"]
+          : activeFilters.sort_by === "price_desc"
+            ? ["price", "DESC"]
+            : ["rating", "DESC"];
+    const result = await searchLogementProperties({
+      limit: 9,
+      sortBy,
+      order,
+      countryCode: selectedCountry || undefined,
+    });
+    if (result.success) {
+      setSearchResults(result.data);
+      setTotalResults(result.total);
+      setHasSearched(true);
+    }
+    setIsInitialLoading(false);
+  }, [activeFilters.sort_by, selectedCountry]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
+
+  // Debounced search - auto-fetch after user stops typing
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (
+      searchQuery.trim() ||
+      locationQuery.trim() ||
+      Object.values(activeFilters).some((f) => f && f !== "rating_desc")
+    ) {
+      searchTimerRef.current = setTimeout(() => {
+        handleSearch(1);
+      }, 300);
+    }
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery, locationQuery, selectedCountry, activeFilters]);
+
+  const handleSearch = async (page: number = 1) => {
+    setIsSearching(true);
+    setCurrentPage(page);
+    const [sortBy, order] =
+      activeFilters.sort_by === "rating_desc"
+        ? ["rating", "DESC"]
+        : activeFilters.sort_by === "price_asc"
+          ? ["price", "ASC"]
+          : activeFilters.sort_by === "price_desc"
+            ? ["price", "DESC"]
+            : ["rating", "DESC"];
+
+    const result = await searchLogementProperties({
+      query: searchQuery || undefined,
+      city: locationQuery || undefined,
+      type: activeFilters.propertyType || undefined,
+      minPrice: activeFilters.minPrice
+        ? parseInt(activeFilters.minPrice)
+        : undefined,
+      maxPrice: activeFilters.maxPrice
+        ? parseInt(activeFilters.maxPrice)
+        : undefined,
+      minRating: activeFilters.minRating
+        ? parseFloat(activeFilters.minRating)
+        : undefined,
+      countryCode: selectedCountry || undefined,
+      limit: 9,
+      page,
+      sortBy,
+      order,
+    });
+    if (result.success) {
+      setSearchResults(result.data);
+      setTotalResults(result.total);
+      setHasSearched(true);
+    }
+    setIsSearching(false);
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters({
+      propertyType: "",
+      minPrice: "",
+      maxPrice: "",
+      minRating: "",
+      status: "",
+      sort_by: "rating_desc",
+    });
+    setSearchQuery("");
+    setLocationQuery("");
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>logement — Verso Air</title>
+        <meta name="description" content="logement — Verso Air" />
+      </Helmet>
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-cyan-900 to-slate-900 text-white">
+      {/* Database Connection Status */}
+      <div
+        className="fixed bottom-4 right-4 z-50"
+        title={databaseConnected ? "Database connected" : "Database offline"}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
+        />
+      </div>
+
+      <div className="relative h-[400px] flex flex-col justify-center items-center text-center px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-900/90 to-teal-900/90"></div>
+
+        <div className="relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="mb-4"
+          >
+            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
+              🏠 Real Estate Platform
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-2xl"
+          >
+            Répertoire Immobilier
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="text-xl mb-4 text-white/90"
+          >
+            Discover residential and commercial properties across Côte d'Ivoire
+          </motion.p>
+
+          {/* Quick navigation row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.6 }}
+            className="flex flex-wrap justify-center gap-3 mt-4"
+          >
+            <a href="/">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-xs gap-1.5"
+              >
+                <Home className="h-3.5 w-3.5" /> Accueil
+              </Button>
+            </a>
+            <a href="/reservations">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-xs gap-1.5"
+              >
+                <Calendar className="h-3.5 w-3.5" /> Réservations
+              </Button>
+            </a>
+            <a href="/businesses-directory">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-xs gap-1.5"
+              >
+                <Building className="h-3.5 w-3.5" /> Annuaire
+              </Button>
+            </a>
+            <a href="/geo-admin">
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/20 hover:bg-white/20 text-white text-xs gap-1.5"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Geo Admin
+              </Button>
+            </a>
+            <a href="/geo-admin/immobilier">
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs gap-1.5 border-0"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Portail Immobilier
+              </Button>
+            </a>
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20 mb-12">
+        <Card className="bg-gradient-to-br from-slate-800/90 to-cyan-900/90 backdrop-blur-md border-cyan-700 shadow-2xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search properties, apartments, villas..."
+                  className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
+                />
+              </div>
+
+              <div className="relative flex-1 w-full">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
+                <Input
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  placeholder="City, region..."
+                  className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
+                />
+              </div>
+
+              {isSearching && (
+                <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+              )}
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="border-cyan-600 hover:bg-cyan-800"
+              >
+                <Filter size={16} className="mr-2" />
+                {showFilters ? "Hide Filters" : "Advanced Filters"}
+              </Button>
+
+              <div className="text-sm text-cyan-300">
+                {totalResults.toLocaleString()} results
+              </div>
+            </div>
+
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-6 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-800/50 rounded-lg border border-cyan-700">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                      Property Type
+                    </Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="border-cyan-600 bg-slate-700 hover:bg-slate-600 w-full justify-between"
+                        >
+                          <span className="text-sm">
+                            {propertyTypeOptions.find(
+                              (t) => t.value === activeFilters.propertyType,
+                            )?.label || "All Types"}
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-slate-800 border-cyan-600">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setActiveFilters({
+                              ...activeFilters,
+                              propertyType: "",
+                            })
+                          }
+                        >
+                          <span className="text-cyan-200">All Types</span>
+                        </DropdownMenuItem>
+                        {propertyTypeOptions.map((type) => (
+                          <DropdownMenuItem
+                            key={type.value}
+                            onClick={() =>
+                              setActiveFilters({
+                                ...activeFilters,
+                                propertyType: type.value,
+                              })
+                            }
+                          >
+                            {activeFilters.propertyType === type.value && (
+                              <Check className="h-4 w-4 mr-2" />
+                            )}
+                            <span className="text-cyan-200">{type.label}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                      Min Price
+                    </Label>
+                    <Input
+                      type="number"
+                      value={activeFilters.minPrice}
+                      onChange={(e) =>
+                        setActiveFilters({
+                          ...activeFilters,
+                          minPrice: e.target.value,
+                        })
+                      }
+                      placeholder="Min price"
+                      className="bg-slate-700 border-cyan-600"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                      Max Price
+                    </Label>
+                    <Input
+                      type="number"
+                      value={activeFilters.maxPrice}
+                      onChange={(e) =>
+                        setActiveFilters({
+                          ...activeFilters,
+                          maxPrice: e.target.value,
+                        })
+                      }
+                      placeholder="Max price"
+                      className="bg-slate-700 border-cyan-600"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                      Min Rating
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={activeFilters.minRating}
+                      onChange={(e) =>
+                        setActiveFilters({
+                          ...activeFilters,
+                          minRating: e.target.value,
+                        })
+                      }
+                      placeholder="0-5"
+                      className="bg-slate-700 border-cyan-600"
+                    />
+                  </div>
+
+                  <div className="lg:col-span-2 flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="border-cyan-600 hover:bg-cyan-800"
+                    >
+                      Reset Filters
+                    </Button>
+                    <Button
+                      onClick={() => handleSearch()}
+                      className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
+                    >
+                      Apply Filters
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="max-w-[95vw] mx-auto px-4 py-12">
+        <div className="flex space-x-2 mb-8">
+          {(
+            ["analytics", "businesses", "finance", "database"] as TabType[]
+          ).map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? "default" : "outline"}
+              onClick={() => setActiveTab(tab)}
+              className={`capitalize ${
+                activeTab === tab
+                  ? "bg-cyan-600 hover:bg-cyan-700"
+                  : "border-cyan-600 hover:bg-cyan-800"
+              }`}
+            >
+              {tab === "analytics" && "Analytics"}
+              {tab === "businesses" && "Properties"}
+              {tab === "finance" && "Finance"}
+              {tab === "database" && "Database"}
+            </Button>
+          ))}
+        </div>
+
+        {activeTab === "analytics" && (
+          <div>
+            <div className="grid lg:grid-cols-4 gap-6 mb-8">
+              <AnalyticsCard
+                title="Total Revenue"
+                value={
+                  analytics
+                    ? `XOF ${(analytics.total_revenue / 1000000).toFixed(1)}M`
+                    : "Loading..."
+                }
+                change={
+                  analytics ? `${analytics.year_over_year_growth}% YoY` : ""
+                }
+                trend="up"
+                color="green"
+                icon={DollarSign}
+              />
+              <AnalyticsCard
+                title="Total Properties"
+                value={analytics?.total_properties || 0}
+                change="Across all types"
+                color="blue"
+                icon={Home}
+              />
+              <AnalyticsCard
+                title="Average Rating"
+                value={analytics?.average_rating || 0}
+                change="From reviews"
+                color="purple"
+                icon={Star}
+              />
+              <AnalyticsCard
+                title="Occupancy Rate"
+                value={`${analytics?.occupancy_rate || 0}%`}
+                change="Current"
+                trend="up"
+                color="cyan"
+                icon={TrendingUp}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === "businesses" && (
+          <div>
+            {isInitialLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto" />
+                <p className="text-cyan-200 mt-4">Loading properties...</p>
+              </div>
+            ) : searchResults.length > 0 ? (
+              <div>
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <Home className="h-6 w-6 text-cyan-400" />
+                  <span className="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">
+                    Properties ({searchResults.length})
+                  </span>
+                </h2>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <AnimatePresence>
+                    {searchResults.map((property, index) => (
+                      <motion.div
+                        key={property.id}
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-cyan-500/30 cursor-pointer group"
+                        onClick={() => {
+                          setSelectedBusiness(property);
+                          setShowBusinessDetails(true);
+                        }}
+                      >
+                        <div className="h-2 bg-gradient-to-r from-cyan-600 to-teal-600" />
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge className="bg-cyan-900/60 text-cyan-300 border-cyan-600 text-xs capitalize">
+                              {property.type || "property"}
+                            </Badge>
+                            {property.verified && (
+                              <Badge className="bg-green-900/60 text-green-300 border-green-600 text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />{" "}
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                          <h4 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors mb-2 line-clamp-1">
+                            {property.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-gray-400 mb-2">
+                            <MapPin className="h-4 w-4 text-cyan-500" />
+                            <span className="text-sm font-medium">
+                              {property.city}
+                              {property.location
+                                ? `, ${property.location}`
+                                : ""}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                            {property.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {property.bedrooms > 0 && (
+                              <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-600 text-xs">
+                                <Home className="h-3 w-3 mr-1" />{" "}
+                                {property.bedrooms} bed
+                                {property.bedrooms > 1 ? "s" : ""}
+                              </Badge>
+                            )}
+                            {property.bathrooms > 0 && (
+                              <Badge className="bg-teal-500/20 text-teal-300 border-teal-600 text-xs">
+                                🚿 {property.bathrooms} bath
+                                {property.bathrooms > 1 ? "s" : ""}
+                              </Badge>
+                            )}
+                            {property.area > 0 && (
+                              <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-600 text-xs">
+                                📐 {property.area} m²
+                              </Badge>
+                            )}
+                            {property.rating && Number(property.rating) > 0 && (
+                              <Badge className="bg-amber-500/20 text-amber-300 border-amber-600 text-xs">
+                                <Star className="h-3 w-3 mr-1" />{" "}
+                                {Number(property.rating).toFixed(1)}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-cyan-300 font-bold text-lg">
+                              {Number(property.price).toLocaleString()}{" "}
+                              <span className="text-xs text-gray-400 font-normal">
+                                XOF
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 bg-cyan-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                                <Star className="h-3 w-3 fill-current" />
+                                <span className="font-bold">
+                                  {Number(property.rating).toFixed(1)}
+                                </span>
+                              </div>
+                              <Button
+                                size="sm"
+                                className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (property.hostPhone) {
+                                    window.open(`tel:${property.hostPhone}`);
+                                  }
+                                }}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ) : hasSearched ? (
+              <div className="text-center py-12">
+                <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                  No properties found
+                </h3>
+                <p className="text-gray-400 mb-6">Try a different search</p>
+                <Button
+                  onClick={clearAllFilters}
+                  className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Home className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                  Explore properties
+                </h3>
+                <p className="text-gray-400">
+                  Search for real estate listings in your area
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "finance" && (
+          <div className="text-center py-12 text-gray-300">
+            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <p>Financial overview coming soon</p>
+          </div>
+        )}
+
+        {activeTab === "database" && (
+          <div className="text-center py-12">
+            <Database className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-300">
+              Database Status:{" "}
+              {databaseConnected ? "✅ Connected" : "❌ Offline"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Premium CTA: Immobilier Portal ──────────────────────────── */}
+      <div className="max-w-[95vw] mx-auto px-4 pb-12">
+        <Card className="bg-gradient-to-r from-emerald-900/40 via-teal-900/30 to-amber-900/30 border-emerald-500/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <CardContent className="p-8 relative">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20">
+                <Home className="h-10 w-10 text-emerald-400" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                  <h3 className="text-xl font-bold text-white">
+                    Vous avez un bien à vendre ou louer ?
+                  </h3>
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Premium
+                  </Badge>
+                </div>
+                <p className="text-slate-400 text-sm">
+                  Accédez au Portail Immobilier et publiez vos offres pour
+                  trouver des locataires et acheteurs qualifiés en Côte
+                  d'Ivoire.
+                </p>
+              </div>
+              <a href="/geo-admin/immobilier">
+                <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-3 gap-2 whitespace-nowrap">
+                  <Sparkles className="h-4 w-4" />
+                  Portail Immobilier →
+                </Button>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <ScrollToTop />
+    </div>
+  </>
+  );
+}

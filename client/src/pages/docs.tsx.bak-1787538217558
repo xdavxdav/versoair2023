@@ -1,0 +1,145 @@
+import {
+  BookOpen,
+  Code2,
+  Video,
+  MessageSquare,
+  Download,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import ScrollToTop from "@/components/ScrollToTop";
+import { useState } from "react";
+
+export default function Documentation() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const docs = [
+    {
+      title: "Getting Started",
+      description: "Introduction to Verso Air and basic setup",
+      icon: <BookOpen className="h-6 w-6" />,
+    },
+    {
+      title: "Installation Guide",
+      description: "Step-by-step installation instructions",
+      icon: <Download className="h-6 w-6" />,
+    },
+    {
+      title: "API Reference",
+      description: "Complete API documentation",
+      icon: <Code2 className="h-6 w-6" />,
+    },
+    {
+      title: "Video Tutorials",
+      description: "Learn through our video guides",
+      icon: <Video className="h-6 w-6" />,
+    },
+    {
+      title: "FAQ",
+      description: "Frequently asked questions",
+      icon: <MessageSquare className="h-6 w-6" />,
+    },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Hero Section */}
+      <div className="relative pt-20 pb-16 px-4">
+        <div className="max-w-[95vw] mx-auto">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+            Documentation
+          </h1>
+          <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
+            Everything you need to master Verso Air
+          </p>
+
+          {/* Search */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-4 top-3 h-5 w-5 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search documentation..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Documentation Grid */}
+      <div className="max-w-[95vw] mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {docs.map((doc, idx) => (
+            <div
+              key={idx}
+              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group cursor-pointer"
+            >
+              <div className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+                {doc.icon}
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">{doc.title}</h3>
+              <p className="text-slate-400 text-sm">{doc.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Knowledge Base */}
+        <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6">Knowledge Base</h2>
+
+          <div className="space-y-4">
+            {[
+              "How do I create a dashboard?",
+              "How do I integrate with external APIs?",
+              "What are the system requirements?",
+              "How do I troubleshoot connection issues?",
+              "Can I export my data?",
+              "How do I manage user permissions?",
+            ].map((question, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-4 bg-slate-900/30 rounded-lg hover:bg-slate-900/50 transition-all cursor-pointer"
+              >
+                <p className="text-slate-300">{question}</p>
+                <span className="text-slate-500">→</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Still Need Help?
+          </h2>
+          <p className="text-slate-300 mb-8">
+            Our support team is ready to assist you
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/contact">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+                Contact Support
+              </Button>
+            </Link>
+            <Link href="/help">
+              <Button
+                variant="outline"
+                className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
+              >
+                Help Center
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <ScrollToTop />
+    </div>
+  );
+}

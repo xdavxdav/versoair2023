@@ -1,0 +1,2388 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import ScrollToTop from "@/components/ScrollToTop";
+import AuthModal from "@/components/AuthModal";
+import ViewOnlyGate from "@/components/ViewOnlyGate";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch, checkAuth } from "@/lib/auth";
+import {
+  Search,
+  Heart,
+  Share2,
+  MessageCircle,
+  Filter,
+  X,
+  MapPin,
+  Clock,
+  DollarSign,
+  Plus,
+  Grid3X3,
+  List,
+  ChevronDown,
+  Star,
+  Eye,
+  Bookmark,
+  BookmarkCheck,
+  TrendingUp,
+  Users,
+  Palette,
+  Home as HomeIcon,
+  Briefcase,
+  Car,
+  Dumbbell,
+  Smartphone,
+  Music,
+  Shirt,
+  Sparkles,
+  Sun,
+  Moon,
+  Globe,
+  Package,
+  Camera,
+  Video,
+  Trash2,
+  SlidersHorizontal,
+  BadgeCheck,
+  CheckCircle,
+  ClipboardList,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+
+// ─── Artisan-focused categories (community, not dating) ───
+const CATEGORIES = [
+  {
+    id: "all",
+    label: "Browse All",
+    icon: Grid3X3,
+    color: "from-amber-500 to-orange-500",
+  },
+  {
+    id: "handmade",
+    label: "Handmade Art",
+    icon: Palette,
+    color: "from-purple-500 to-pink-500",
+  },
+  {
+    id: "fashion",
+    label: "Fashion & Textiles",
+    icon: Shirt,
+    color: "from-rose-500 to-red-500",
+  },
+  {
+    id: "home",
+    label: "Home & Living",
+    icon: HomeIcon,
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    id: "instruments",
+    label: "Instruments",
+    icon: Music,
+    color: "from-blue-500 to-indigo-500",
+  },
+  {
+    id: "photography",
+    label: "Photography",
+    icon: Camera,
+    color: "from-cyan-500 to-blue-500",
+  },
+  {
+    id: "electronics",
+    label: "Electronics",
+    icon: Smartphone,
+    color: "from-slate-500 to-gray-500",
+  },
+  {
+    id: "vehicles",
+    label: "Vehicles",
+    icon: Car,
+    color: "from-orange-500 to-amber-500",
+  },
+  {
+    id: "services",
+    label: "Services",
+    icon: Briefcase,
+    color: "from-violet-500 to-purple-500",
+  },
+  {
+    id: "sports",
+    label: "Sports & Outdoors",
+    icon: Dumbbell,
+    color: "from-green-500 to-emerald-500",
+  },
+  {
+    id: "community",
+    label: "Community Hub",
+    icon: Users,
+    color: "from-sky-500 to-cyan-500",
+  },
+];
+
+// ─── Listings (populated from API / user submissions) ───
+const generateListings = (): any[] => [];
+
+// ─── Community activity feed (populated from real events) ───
+const COMMUNITY_ACTIVITY: {
+  user: string;
+  action: string;
+  time: string;
+  avatar: string;
+}[] = [];
+
+// ─── Condition badge colors ───
+const conditionStyle = (c: string) => {
+  switch (c) {
+    case "New":
+      return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+    case "Like New":
+      return "bg-green-500/20 text-green-400 border-green-500/30";
+    case "Very Good":
+      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    case "Good":
+      return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    case "Service":
+      return "bg-violet-500/20 text-violet-400 border-violet-500/30";
+    case "Free":
+      return "bg-pink-500/20 text-pink-400 border-pink-500/30";
+    default:
+      return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// MARKETPLACE PAGE
+// ═══════════════════════════════════════════════════
+export default function MarketplacePage() {
+  // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
+  const { user: globalUser, login: setGlobalLogin } = useAuthContext();
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("blog_community_auth") === "true";
+  });
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem("blog_community_user") || "User";
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  const promptMarketplaceAuth = (reason?: string) => {
+    if (reason) setAuthError(reason);
+    setIsAuthModalOpen(true);
+  };
+
+  // Auto-auth if user is already signed in via any portal
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncAuth = async () => {
+      if (globalUser) {
+        const name =
+          globalUser.name || globalUser.email?.split("@")[0] || "User";
+        if (cancelled) return;
+        setIsAuthenticated(true);
+        setUserName(name);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+        return;
+      }
+
+      try {
+        const verifiedUser = await checkAuth();
+        if (!verifiedUser) {
+          if (cancelled) return;
+          setIsAuthenticated(false);
+          setUserName("User");
+          localStorage.removeItem("blog_community_auth");
+          localStorage.removeItem("blog_community_user");
+          return;
+        }
+
+        if (cancelled) return;
+        const name = verifiedUser.email?.split("@")[0] || "User";
+        setIsAuthenticated(true);
+        setUserName(name);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+      } catch {
+        if (cancelled) return;
+        setIsAuthenticated(false);
+      }
+    };
+
+    syncAuth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [globalUser]);
+
+  // Auth handlers — real community auth endpoints (same as Blog)
+  const handleAuthenticate = async (
+    identifier: string,
+    password: string,
+    isSignUp: boolean,
+  ) => {
+    setIsAuthLoading(true);
+    setAuthError("");
+    try {
+      const isStaffLogin =
+        !isSignUp && ["joel_007", "admin_025"].includes(identifier);
+      const endpoint = isStaffLogin
+        ? "/auth/admin-gate"
+        : isSignUp
+          ? "/auth/community/register"
+          : "/auth/community/login";
+      const body: Record<string, any> = isStaffLogin
+        ? { username: identifier, password }
+        : { email: identifier, password };
+      if (isSignUp) {
+        body.displayName =
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+          identifier.split("@")[0].slice(1);
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.token) {
+          const { setAuthToken } = await import("@/lib/auth");
+          setAuthToken(data.token);
+        }
+        const name =
+          data.user?.displayName ||
+          data.user?.username ||
+          identifier.split("@")[0].charAt(0).toUpperCase() +
+            identifier.split("@")[0].slice(1);
+        if (data.token && data.user) {
+          setGlobalLogin(data.token, { ...data.user, name });
+        }
+        setUserName(name);
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+        localStorage.setItem("blog_community_auth", "true");
+        localStorage.setItem("blog_community_user", name);
+      } else {
+        setAuthError(data.message || "Authentication failed");
+      }
+    } catch (error: any) {
+      console.error("Auth error:", error);
+      setAuthError(error.message || "Network error. Please try again.");
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import("@/lib/auth");
+      await logout();
+    } catch {
+      /* logout anyway */
+    }
+    setIsAuthenticated(false);
+    setUserName("User");
+    localStorage.removeItem("blog_community_auth");
+    localStorage.removeItem("blog_community_user");
+  };
+
+  // ═══ MARKETPLACE STATE ═══
+  const [darkMode, setDarkMode] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<
+    "recent" | "price_low" | "price_high" | "popular"
+  >("recent");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [saved, setSaved] = useState<number[]>([]);
+  const [showCreateListing, setShowCreateListing] = useState(false);
+  const [listingForm, setListingForm] = useState({
+    title: "",
+    price: "",
+    category: "",
+    description: "",
+    guestName: "",
+    guestContact: "",
+  });
+  const [listingImages, setListingImages] = useState<File[]>([]);
+  const [listingVideos, setListingVideos] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
+  const [listingSubmitState, setListingSubmitState] = useState<
+    "idle" | "submitting" | "submitted" | "error"
+  >("idle");
+  const [listingSubmitError, setListingSubmitError] = useState<string | null>(
+    null,
+  );
+
+  const resetListingForm = () => {
+    setListingForm({
+      title: "",
+      price: "",
+      category: "",
+      description: "",
+      guestName: "",
+      guestContact: "",
+    });
+    // Revoke object URLs to avoid memory leaks
+    imagePreviews.forEach((u) => URL.revokeObjectURL(u));
+    videoPreviews.forEach((u) => URL.revokeObjectURL(u));
+    setListingImages([]);
+    setListingVideos([]);
+    setImagePreviews([]);
+    setVideoPreviews([]);
+    setListingSubmitState("idle");
+  };
+
+  const handlePublishListing = async () => {
+    if (!listingForm.title.trim()) return;
+    setListingSubmitState("submitting");
+    setListingSubmitError(null);
+    try {
+      const formData = new FormData();
+      formData.append("title", listingForm.title);
+      formData.append("category", listingForm.category || "other");
+      formData.append("description", listingForm.description);
+      if (listingForm.price) formData.append("price", listingForm.price);
+      if (listingForm.guestName)
+        formData.append("contact_email", listingForm.guestContact);
+      // Attach image files
+      listingImages.forEach((file) => formData.append("images", file));
+      // Attach video files
+      listingVideos.forEach((file) => formData.append("videos", file));
+
+      // Must use authenticatedFetch — a bare fetch() only relied on cookies,
+      // which the server's requireAuth() doesn't accept (it expects a Bearer
+      // token). That silently 401'd and the listing was never saved, even
+      // though the UI used to show "submitted" anyway.
+      const res = await authenticatedFetch("/api/marketing/journal/listings", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to publish listing");
+      }
+      setListingSubmitState("submitted");
+      refetchMyListings();
+    } catch (err: any) {
+      console.error("Publish listing error:", err);
+      // Surface the real failure instead of pretending it worked — a fake
+      // "submitted" state left users thinking their listing was under review
+      // when it was never saved to the database.
+      setListingSubmitState("error");
+      setListingSubmitError(
+        err?.message || "Something went wrong. Please try again.",
+      );
+    }
+  };
+
+  // Image file handler
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 10 - listingImages.length;
+    const toAdd = files.slice(0, remaining);
+    setListingImages((prev) => [...prev, ...toAdd]);
+    setImagePreviews((prev) => [
+      ...prev,
+      ...toAdd.map((f) => URL.createObjectURL(f)),
+    ]);
+    e.target.value = "";
+  };
+
+  // Video file handler
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 3 - listingVideos.length;
+    const toAdd = files.slice(0, remaining);
+    setListingVideos((prev) => [...prev, ...toAdd]);
+    setVideoPreviews((prev) => [
+      ...prev,
+      ...toAdd.map((f) => URL.createObjectURL(f)),
+    ]);
+    e.target.value = "";
+  };
+
+  // Remove image
+  const removeImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setListingImages((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // Remove video
+  const removeVideo = (idx: number) => {
+    URL.revokeObjectURL(videoPreviews[idx]);
+    setListingVideos((prev) => prev.filter((_, i) => i !== idx));
+    setVideoPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [marketplaceView, setMarketplaceView] = useState<
+    "browse" | "my-listings"
+  >("browse");
+
+  // Fetch user's own listings
+  const {
+    data: myListings,
+    isLoading: myListingsLoading,
+    refetch: refetchMyListings,
+  } = useQuery<any[]>({
+    queryKey: ["my-marketplace-listings"],
+    queryFn: async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("authToken");
+        if (!token) return [];
+        const res = await fetch("/api/marketing/journal/my-listings", {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.data || data.listings || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  });
+  useScrollLock(showCreateListing || showMobileSidebar);
+
+  // Open create-listing modal when dock Sell button fires marketplace:sell
+  useEffect(() => {
+    const handler = () => {
+      if (!isAuthenticated) {
+        promptMarketplaceAuth("Sign in to sell on Marketplace.");
+        return;
+      }
+      setShowCreateListing(true);
+    };
+    window.addEventListener("marketplace:sell", handler);
+    return () => window.removeEventListener("marketplace:sell", handler);
+  }, [isAuthenticated]);
+
+  // Reset form state when modal is closed
+  useEffect(() => {
+    if (!showCreateListing) resetListingForm();
+  }, [showCreateListing]);
+
+  // Dispatch event to hide BlogNavbar when create listing modal is open
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("marketplace-modal", {
+        detail: { open: showCreateListing },
+      }),
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("marketplace-modal", { detail: { open: false } }),
+      );
+    };
+  }, [showCreateListing]);
+
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // ═══ LIVE LISTINGS (public browse feed) ═══
+  const { data: liveListings = [] } = useQuery<any[]>({
+    queryKey: ["public-marketplace-listings", activeCategory],
+    queryFn: async () => {
+      try {
+        const url =
+          activeCategory === "all"
+            ? "/api/marketing/journal/listings?status=active&limit=60"
+            : `/api/marketing/journal/listings?status=active&limit=60&category=${encodeURIComponent(activeCategory)}`;
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) return [];
+        const json = await res.json();
+        const rows = json.data || json.listings || [];
+        // Normalize DB row → UI card shape
+        return rows.map((r: any) => {
+          let images: string[] = [];
+          try {
+            images =
+              typeof r.images === "string"
+                ? JSON.parse(r.images)
+                : r.images || [];
+          } catch {
+            images = [];
+          }
+          const createdAt = r.created_at ? new Date(r.created_at) : null;
+          const days = createdAt
+            ? Math.floor((Date.now() - createdAt.getTime()) / 86400000)
+            : null;
+          return {
+            id: r.id,
+            title: r.title || "Untitled listing",
+            description: r.description || "",
+            category: r.category || "community",
+            price: Number(r.price) || 0,
+            image:
+              images[0] ||
+              "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect fill='%23334155' width='400' height='400'/><text x='50%25' y='50%25' fill='%236b7280' font-size='28' font-family='sans-serif' text-anchor='middle' dy='.3em'>No image</text></svg>",
+            images,
+            location: r.location || r.business_name || "—",
+            posted:
+              days === null
+                ? "recently"
+                : days === 0
+                  ? "today"
+                  : `${days}d ago`,
+            condition: r.condition || "New",
+            views: r.views ?? 0,
+            saves: r.saves ?? 0,
+            messages: r.message_count ?? 0,
+            owner_id: r.user_id,
+            owner_name: r.owner_name || r.business_name || "Seller",
+            owner_email: r.owner_email || null,
+            seller: {
+              name: r.owner_name || r.business_name || "Seller",
+              verified: !!r.owner_verified,
+            },
+          };
+        });
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30_000,
+  });
+  const listings = liveListings;
+
+  // ═══ MESSAGE SELLER (marketplace DMs — free/ungated for all tiers) ═══
+  const [messageTarget, setMessageTarget] = useState<any | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [messageState, setMessageState] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  const openMessageSeller = (listing: any) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setMessageTarget(listing);
+    setMessageText(
+      `Hi! I'm interested in your listing "${listing.title}". Is it still available?`,
+    );
+    setMessageState("idle");
+    setMessageError(null);
+  };
+
+  const sendSellerMessage = async () => {
+    if (!messageTarget || !messageText.trim()) return;
+    setMessageState("sending");
+    setMessageError(null);
+    try {
+      // 1. Create or reuse marketplace conversation with the seller
+      const convRes = await authenticatedFetch("/api/inbox/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: String(messageTarget.owner_id ?? messageTarget.id),
+          participantName: messageTarget.owner_name || "Seller",
+          type: "marketplace",
+        }),
+      });
+      const convJson = await convRes.json();
+      if (!convRes.ok || !convJson.success) {
+        throw new Error(convJson.error || "Could not open conversation");
+      }
+      const convId = convJson.conversation?.id;
+      if (!convId) throw new Error("Missing conversation id");
+
+      // 2. Send the message
+      const msgRes = await authenticatedFetch(
+        `/api/inbox/conversations/${convId}/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: messageText.trim() }),
+        },
+      );
+      const msgJson = await msgRes.json();
+      if (!msgRes.ok || !msgJson.success) {
+        throw new Error(msgJson.error || "Could not send message");
+      }
+      setMessageState("sent");
+    } catch (err: any) {
+      setMessageState("error");
+      setMessageError(err?.message || "Something went wrong. Try again.");
+    }
+  };
+
+  // Theme classes
+  const t = {
+    bg: darkMode ? "bg-[#18191a]" : "bg-gray-100",
+    bgCard: darkMode ? "bg-[#242526]" : "bg-white",
+    bgHover: darkMode ? "hover:bg-[#3a3b3c]" : "hover:bg-gray-100",
+    bgSidebar: darkMode ? "bg-[#242526]" : "bg-white",
+    bgInput: darkMode ? "bg-[#3a3b3c]" : "bg-gray-100",
+    text: darkMode ? "text-[#e4e6eb]" : "text-gray-900",
+    textSecondary: darkMode ? "text-[#b0b3b8]" : "text-gray-600",
+    textMuted: darkMode ? "text-[#8a8d91]" : "text-gray-400",
+    border: darkMode ? "border-[#3a3b3c]" : "border-gray-200",
+    accent: "text-cyan-500",
+    accentBg: "bg-cyan-500",
+    accentHover: "hover:bg-cyan-600",
+  };
+
+  // Filter & sort
+  const filtered = listings
+    .filter((item) => {
+      const matchSearch =
+        item.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().startsWith(searchQuery.toLowerCase());
+      const matchCat =
+        activeCategory === "all" || item.category === activeCategory;
+      const matchPrice =
+        item.price >= priceRange[0] && item.price <= priceRange[1];
+      return matchSearch && matchCat && matchPrice;
+    })
+    .sort((a, b) => {
+      if (sortBy === "price_low") return a.price - b.price;
+      if (sortBy === "price_high") return b.price - a.price;
+      if (sortBy === "popular") return b.views - a.views;
+      return 0;
+    });
+
+  const toggleFav = (id: number) =>
+    setFavorites((p) =>
+      p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+    );
+  const toggleSave = (id: number) =>
+    setSaved((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
+  // Keyboard shortcut: / to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape") {
+        setShowMobileSidebar(false);
+        setShowCreateListing(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // ═══ AUTH GATE: Block unauthenticated users ═══
+  if (!isAuthenticated) {
+    return (
+      <>
+        <ViewOnlyGate
+          onSignIn={() => setIsAuthModalOpen(true)}
+          onSignUp={() => setIsAuthModalOpen(true)}
+          showProfessionalSSO={false}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setAuthError("");
+          }}
+          onAuthenticate={handleAuthenticate}
+          isLoading={isAuthLoading}
+          error={authError}
+          showProfessionalSSO={false}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div
+      className={`min-h-screen transition-colors duration-300 ${t.bg} font-handstyle`}
+    >
+      <ScrollToTop />
+
+      {/* ═══ MAIN LAYOUT: FB-STYLE 3 COLUMNS ═══ */}
+      <div className="flex max-w-[1920px] mx-auto">
+        {/* ═══════════════════════════════════════
+            LEFT SIDEBAR — Categories + Filters
+            ═══════════════════════════════════════ */}
+        <aside
+          className={`hidden lg:block w-[360px] flex-shrink-0 h-[calc(100vh-64px)] sticky top-16 overflow-y-auto ${t.bgSidebar} border-r ${t.border}`}
+        >
+          <div className="p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h1 className={`text-2xl font-bold ${t.text} notranslate`}>
+                Marketplace
+              </h1>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 180 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-full ${t.bgInput} ${t.textSecondary} transition-colors`}
+              >
+                {darkMode ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </motion.button>
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-4">
+              <Search
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search Marketplace…  /"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full ${t.bgInput} ${t.text} rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all`}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${t.textMuted} hover:text-cyan-500`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Create Listing Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  promptMarketplaceAuth("Sign in to sell on Marketplace.");
+                  return;
+                }
+                setShowCreateListing(true);
+              }}
+              className={`w-full flex items-center justify-center gap-2 ${t.accentBg} text-white font-semibold py-3 rounded-xl mb-6 shadow-lg shadow-cyan-500/20 ${t.accentHover} transition-all`}
+            >
+              <Plus className="w-5 h-5" />
+              Create New Listing
+            </motion.button>
+
+            {/* Categories */}
+            <div className="mb-6">
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
+              >
+                Categories
+              </h3>
+              <div className="space-y-0.5">
+                {CATEGORIES.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  const Icon = cat.icon;
+                  return (
+                    <motion.button
+                      key={cat.id}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        isActive
+                          ? `bg-gradient-to-r ${cat.color} text-white shadow-md`
+                          : `${t.textSecondary} ${t.bgHover}`
+                      }`}
+                    >
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                          isActive
+                            ? "bg-white/20"
+                            : `bg-gradient-to-br ${cat.color}`
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      {cat.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeCatDot"
+                          className="ml-auto w-2 h-2 bg-white rounded-full"
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Price Filter */}
+            <div className="mb-6">
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
+              >
+                Price Range
+              </h3>
+              <div className={`${t.bgInput} rounded-xl p-4`}>
+                <div className="flex gap-3 mb-3">
+                  <div className="flex-1">
+                    <label className={`text-xs ${t.textMuted} mb-1 block`}>
+                      Min
+                    </label>
+                    <div
+                      className={`flex items-center gap-1 ${t.bgCard} rounded-lg px-3 py-2 border ${t.border}`}
+                    >
+                      <DollarSign className={`w-3.5 h-3.5 ${t.textMuted}`} />
+                      <input
+                        type="number"
+                        value={priceRange[0]}
+                        onChange={(e) =>
+                          setPriceRange([Number(e.target.value), priceRange[1]])
+                        }
+                        className={`w-full bg-transparent ${t.text} text-sm focus:outline-none`}
+                      />
+                    </div>
+                  </div>
+                  <div className={`flex items-end pb-2 ${t.textMuted}`}>—</div>
+                  <div className="flex-1">
+                    <label className={`text-xs ${t.textMuted} mb-1 block`}>
+                      Max
+                    </label>
+                    <div
+                      className={`flex items-center gap-1 ${t.bgCard} rounded-lg px-3 py-2 border ${t.border}`}
+                    >
+                      <DollarSign className={`w-3.5 h-3.5 ${t.textMuted}`} />
+                      <input
+                        type="number"
+                        value={priceRange[1]}
+                        onChange={(e) =>
+                          setPriceRange([priceRange[0], Number(e.target.value)])
+                        }
+                        className={`w-full bg-transparent ${t.text} text-sm focus:outline-none`}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={5000}
+                  value={priceRange[1]}
+                  onChange={(e) =>
+                    setPriceRange([priceRange[0], Number(e.target.value)])
+                  }
+                  className="w-full accent-cyan-500 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Quick Filters */}
+            <div>
+              <h3
+                className={`text-xs font-bold uppercase tracking-wider ${t.textMuted} mb-3 px-1`}
+              >
+                Quick Filters
+              </h3>
+              <div className="space-y-2">
+                {[
+                  {
+                    label: "Free Items",
+                    icon: Sparkles,
+                    color: "text-pink-400",
+                  },
+                  {
+                    label: "Verified Sellers",
+                    icon: BadgeCheck,
+                    color: "text-blue-400",
+                  },
+                  { label: "Nearby", icon: MapPin, color: "text-emerald-400" },
+                  {
+                    label: "Trending",
+                    icon: TrendingUp,
+                    color: "text-cyan-400",
+                  },
+                ].map((f) => (
+                  <motion.button
+                    key={f.label}
+                    whileHover={{ x: 4 }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm ${t.textSecondary} ${t.bgHover} transition-all`}
+                  >
+                    <f.icon className={`w-4 h-4 ${f.color}`} />
+                    {f.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* ═══════════════════════════════════════
+            CENTER — Main Feed
+            ═══════════════════════════════════════ */}
+        <main className="flex-1 min-w-0">
+          {/* Top Bar */}
+          <div
+            className={`sticky top-16 z-30 ${t.bgCard} border-b ${t.border}`}
+          >
+            <div className="px-4 lg:px-6 py-3">
+              <div className="flex items-center gap-3">
+                {/* Mobile menu toggle */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowMobileSidebar(true)}
+                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
+                >
+                  <SlidersHorizontal className="w-5 h-5" />
+                </motion.button>
+
+                {/* Browse / My Listings tabs */}
+                <div
+                  className={`flex items-center gap-1 ${t.bgInput} rounded-xl p-0.5`}
+                >
+                  <button
+                    onClick={() => setMarketplaceView("browse")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      marketplaceView === "browse"
+                        ? `${t.accentBg} text-white`
+                        : `${t.textSecondary} hover:${t.text}`
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Browse</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMarketplaceView("my-listings");
+                      refetchMyListings();
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      marketplaceView === "my-listings"
+                        ? `${t.accentBg} text-white`
+                        : `${t.textSecondary} hover:${t.text}`
+                    }`}
+                  >
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">My Listings</span>
+                    {myListings && myListings.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-400">
+                        {myListings.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Mobile search */}
+                <div className="lg:hidden flex-1 relative">
+                  <Search
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50`}
+                  />
+                </div>
+
+                {/* Results count */}
+                <div
+                  className={`hidden lg:flex items-center gap-2 ${t.textSecondary} text-sm`}
+                >
+                  <Package className="w-4 h-4" />
+                  <span>
+                    <strong className={t.text}>{filtered.length}</strong>{" "}
+                    listings
+                  </span>
+                  {activeCategory !== "all" && (
+                    <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-500 rounded-full text-xs font-medium">
+                      {CATEGORIES.find((c) => c.id === activeCategory)?.label}
+                      <button
+                        onClick={() => setActiveCategory("all")}
+                        className="ml-1.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1" />
+
+                {/* Sort */}
+                <div className="relative">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all`}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {sortBy === "recent"
+                        ? "Most Recent"
+                        : sortBy === "price_low"
+                          ? "Price: Low"
+                          : sortBy === "price_high"
+                            ? "Price: High"
+                            : "Popular"}
+                    </span>
+                    <ChevronDown className="w-3 h-3" />
+                  </motion.button>
+                  <AnimatePresence>
+                    {showSortMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        className={`absolute right-0 top-full mt-2 w-48 ${t.bgCard} rounded-xl shadow-2xl border ${t.border} overflow-hidden z-50`}
+                      >
+                        {(
+                          [
+                            { id: "recent", label: "Most Recent" },
+                            { id: "popular", label: "Most Popular" },
+                            { id: "price_low", label: "Price: Low to High" },
+                            { id: "price_high", label: "Price: High to Low" },
+                          ] as const
+                        ).map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => {
+                              setSortBy(s.id);
+                              setShowSortMenu(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
+                              sortBy === s.id
+                                ? `${t.accent} bg-cyan-500/10 font-medium`
+                                : `${t.textSecondary} ${t.bgHover}`
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* View mode */}
+                <div
+                  className={`hidden sm:flex items-center ${t.bgInput} rounded-xl overflow-hidden`}
+                >
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 transition-all ${viewMode === "grid" ? `${t.accentBg} text-white` : t.textMuted}`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 transition-all ${viewMode === "list" ? `${t.accentBg} text-white` : t.textMuted}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Theme toggle (mobile) */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
+                >
+                  {darkMode ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ LISTINGS GRID / MY LISTINGS ═══ */}
+          <div className="px-4 lg:px-6 py-6">
+            {marketplaceView === "my-listings" ? (
+              /* ═══ MY LISTINGS VIEW ═══ */
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className={`text-xl font-bold ${t.text}`}>My Listings</h2>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        promptMarketplaceAuth(
+                          "Sign in to sell on Marketplace.",
+                        );
+                        return;
+                      }
+                      setShowCreateListing(true);
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 ${t.accentBg} text-white rounded-xl text-sm font-medium ${t.accentHover} transition-all`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Listing
+                  </motion.button>
+                </div>
+
+                {myListingsLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className={`w-6 h-6 animate-spin ${t.accent}`} />
+                    <span className={`ml-2 text-sm ${t.textSecondary}`}>
+                      Loading your listings...
+                    </span>
+                  </div>
+                ) : !myListings || myListings.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center py-16 text-center"
+                  >
+                    <div
+                      className={`w-16 h-16 rounded-full ${t.bgInput} flex items-center justify-center mb-4`}
+                    >
+                      <ClipboardList className={`w-7 h-7 ${t.textMuted}`} />
+                    </div>
+                    <p className={`text-lg font-semibold ${t.text} mb-1`}>
+                      No listings yet
+                    </p>
+                    <p className={`text-sm ${t.textMuted} mb-4`}>
+                      Create your first listing to start selling on the
+                      marketplace.
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          promptMarketplaceAuth(
+                            "Sign in to sell on Marketplace.",
+                          );
+                          return;
+                        }
+                        setShowCreateListing(true);
+                      }}
+                      className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
+                    >
+                      Create First Listing
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-3">
+                    {myListings.map((listing: any) => {
+                      const statusColors: Record<string, string> = {
+                        pending:
+                          "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        approved:
+                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                        rejected:
+                          "bg-red-500/20 text-red-400 border-red-500/30",
+                        active:
+                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                        draft:
+                          "bg-slate-500/20 text-slate-400 border-slate-500/30",
+                      };
+                      const status =
+                        listing.approval_status || listing.status || "pending";
+                      const statusLabel =
+                        status.charAt(0).toUpperCase() + status.slice(1);
+                      const createdAt = listing.created_at
+                        ? new Date(listing.created_at)
+                        : null;
+                      const daysAgo = createdAt
+                        ? Math.floor(
+                            (Date.now() - createdAt.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          )
+                        : null;
+
+                      return (
+                        <motion.div
+                          key={listing.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`${t.bgCard} rounded-xl border ${t.border} p-4 flex items-center gap-4 hover:border-cyan-500/30 transition-all`}
+                        >
+                          {/* Thumbnail */}
+                          <div
+                            className={`w-16 h-16 rounded-lg ${t.bgInput} flex-shrink-0 overflow-hidden flex items-center justify-center`}
+                          >
+                            {listing.image_url || listing.images?.[0] ? (
+                              <img
+                                src={listing.image_url || listing.images[0]}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className={`w-6 h-6 ${t.textMuted}`} />
+                            )}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`font-semibold ${t.text} truncate`}>
+                              {listing.title || "Untitled"}
+                            </h3>
+                            <div
+                              className={`flex items-center gap-3 mt-1 text-xs ${t.textMuted}`}
+                            >
+                              {listing.price && (
+                                <span className="font-medium text-cyan-400">
+                                  ${listing.price}
+                                </span>
+                              )}
+                              {listing.category && (
+                                <span>{listing.category}</span>
+                              )}
+                              {daysAgo !== null && (
+                                <span>
+                                  {daysAgo === 0 ? "Today" : `${daysAgo}d ago`}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          <div
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[status] || statusColors.pending}`}
+                          >
+                            {status === "pending" && "⏳ "}
+                            {status === "approved" || status === "active"
+                              ? "✅ "
+                              : ""}
+                            {status === "rejected" && "❌ "}
+                            {statusLabel}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : filtered.length > 0 ? (
+              <motion.div
+                layout
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                    : "space-y-3"
+                }
+              >
+                <AnimatePresence mode="popLayout">
+                  {filtered.map((item, idx) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{
+                        delay: idx * 0.04,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                      onMouseEnter={() => setHoveredCard(item.id)}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      className={
+                        viewMode === "list"
+                          ? `flex gap-4 ${t.bgCard} rounded-2xl p-3 border ${t.border} hover:border-cyan-500/40 ${t.bgHover} transition-all cursor-pointer`
+                          : ""
+                      }
+                    >
+                      {viewMode === "grid" ? (
+                        /* ═══ GRID CARD ═══ */
+                        <div
+                          className={`group ${t.bgCard} rounded-2xl overflow-hidden border ${t.border} hover:border-cyan-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/10`}
+                        >
+                          {/* Image */}
+                          <div className="relative aspect-square overflow-hidden">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                            {/* Overlay on hover */}
+                            <motion.div
+                              initial={false}
+                              animate={{
+                                opacity: hoveredCard === item.id ? 1 : 0,
+                              }}
+                              className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3"
+                            >
+                              <div className="flex gap-2 w-full">
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openMessageSeller(item);
+                                  }}
+                                  className="flex-1 py-2 bg-cyan-600 text-white text-sm font-semibold rounded-xl hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                  Message Seller
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.15 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSave(item.id);
+                                  }}
+                                  className="p-2 bg-white/20 backdrop-blur-sm rounded-xl text-white hover:bg-white/30 transition-colors"
+                                >
+                                  {saved.includes(item.id) ? (
+                                    <BookmarkCheck className="w-5 h-5 text-cyan-400" />
+                                  ) : (
+                                    <Bookmark className="w-5 h-5" />
+                                  )}
+                                </motion.button>
+                              </div>
+                            </motion.div>
+                            {/* Top badges */}
+                            <div className="absolute top-3 left-3 flex gap-2">
+                              <span
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-lg border backdrop-blur-sm ${conditionStyle(item.condition)}`}
+                              >
+                                {item.condition}
+                              </span>
+                            </div>
+                            {/* Fav */}
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.8 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFav(item.id);
+                              }}
+                              className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"
+                            >
+                              <Heart
+                                className={`w-4 h-4 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-white"}`}
+                              />
+                            </motion.button>
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-4">
+                            {/* Price */}
+                            <p className={`text-xl font-bold ${t.text} mb-1`}>
+                              {item.price === 0 ? (
+                                <span className="text-pink-500">Free</span>
+                              ) : (
+                                <>${item.price.toLocaleString()}</>
+                              )}
+                            </p>
+                            {/* Title */}
+                            <h3
+                              className={`text-sm ${t.textSecondary} line-clamp-2 mb-2`}
+                            >
+                              {item.title}
+                            </h3>
+                            {/* Location & time */}
+                            <div
+                              className={`flex items-center gap-1.5 text-xs ${t.textMuted}`}
+                            >
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{item.location}</span>
+                              <span className="mx-1">·</span>
+                              <Clock className="w-3 h-3" />
+                              <span>{item.posted}</span>
+                            </div>
+                            {/* Stats */}
+                            <div
+                              className={`flex items-center gap-3 mt-3 pt-3 border-t ${t.border} text-xs ${t.textMuted}`}
+                            >
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {item.views}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Heart className="w-3 h-3" />
+                                {item.saves}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="w-3 h-3" />
+                                {item.messages}
+                              </span>
+                              {item.seller.verified && (
+                                <span className="ml-auto flex items-center gap-1 text-blue-400">
+                                  <BadgeCheck className="w-3.5 h-3.5" />{" "}
+                                  Verified
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* ═══ LIST VIEW ROW ═══ */
+                        <>
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-xl flex-shrink-0"
+                            loading="lazy"
+                          />
+                          <div className="flex-1 min-w-0 py-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className={`text-lg font-bold ${t.text}`}>
+                                  {item.price === 0 ? (
+                                    <span className="text-pink-500">Free</span>
+                                  ) : (
+                                    <>${item.price.toLocaleString()}</>
+                                  )}
+                                </p>
+                                <h3
+                                  className={`text-sm ${t.textSecondary} line-clamp-1 mb-1`}
+                                >
+                                  {item.title}
+                                </h3>
+                                <p
+                                  className={`text-xs ${t.textMuted} line-clamp-2 mb-2`}
+                                >
+                                  {item.description}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openMessageSeller(item);
+                                  }}
+                                  className="px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-600 text-white hover:bg-cyan-700 transition-colors flex items-center gap-1"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  Message
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => toggleFav(item.id)}
+                                  className={`p-2 rounded-full ${t.bgInput}`}
+                                >
+                                  <Heart
+                                    className={`w-4 h-4 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : t.textMuted}`}
+                                  />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  onClick={() => toggleSave(item.id)}
+                                  className={`p-2 rounded-full ${t.bgInput}`}
+                                >
+                                  {saved.includes(item.id) ? (
+                                    <BookmarkCheck className="w-4 h-4 text-cyan-400" />
+                                  ) : (
+                                    <Bookmark
+                                      className={`w-4 h-4 ${t.textMuted}`}
+                                    />
+                                  )}
+                                </motion.button>
+                              </div>
+                            </div>
+                            <div
+                              className={`flex items-center gap-3 text-xs ${t.textMuted}`}
+                            >
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {item.location}
+                              </span>
+                              <span>·</span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full border ${conditionStyle(item.condition)} text-xs`}
+                              >
+                                {item.condition}
+                              </span>
+                              {item.seller.verified && (
+                                <span className="flex items-center gap-1 text-blue-400">
+                                  <BadgeCheck className="w-3.5 h-3.5" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-20 text-center"
+              >
+                <div
+                  className={`w-20 h-20 rounded-full ${t.bgInput} flex items-center justify-center mb-4`}
+                >
+                  <Search className={`w-8 h-8 ${t.textMuted}`} />
+                </div>
+                <p className={`text-lg font-semibold ${t.text} mb-1`}>
+                  {listings.length === 0
+                    ? "Marketplace is ready!"
+                    : "No listings found"}
+                </p>
+                <p className={`text-sm ${t.textMuted} mb-4`}>
+                  {listings.length === 0
+                    ? "Be the first to create a listing and start the community."
+                    : "Try adjusting your filters or search query"}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    if (listings.length === 0) {
+                      if (!isAuthenticated) {
+                        promptMarketplaceAuth(
+                          "Sign in to sell on Marketplace.",
+                        );
+                        return;
+                      }
+                      setShowCreateListing(true);
+                    } else {
+                      setActiveCategory("all");
+                      setSearchQuery("");
+                      setPriceRange([0, 5000]);
+                    }
+                  }}
+                  className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
+                >
+                  {listings.length === 0
+                    ? "Create First Listing"
+                    : "Clear All Filters"}
+                </motion.button>
+              </motion.div>
+            )}
+          </div>
+        </main>
+
+        {/* ═══════════════════════════════════════
+            RIGHT SIDEBAR — Community + Activity
+            ═══════════════════════════════════════ */}
+        <aside
+          className={`hidden xl:block w-[320px] flex-shrink-0 h-screen sticky top-0 overflow-y-auto border-l ${t.border}`}
+        >
+          <div className="p-4 space-y-4">
+            {/* Community Hub — live thread feed (reuses the social-blog engine), */}
+            {/* replaces the previously-empty static COMMUNITY_ACTIVITY list. */}
+            <ThreadFeedWidget
+              postType="marketplace"
+              title="Marketplace — Community"
+              composerPlaceholder="Ask about an item, share a find…"
+              variant={darkMode ? "dark" : "light"}
+              limit={6}
+            />
+
+            {/* Artisan Spotlight */}
+            <div className={`${t.bgCard} rounded-2xl p-4 border ${t.border}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <h3 className={`font-bold ${t.text}`}>Artisan Spotlight</h3>
+              </div>
+              <div className="space-y-3">
+                {listings.length > 0 ? (
+                  listings.slice(0, 3).map((item) => (
+                    <motion.div
+                      key={item.id}
+                      whileHover={{ x: 4 }}
+                      className={`flex items-center gap-3 p-2 rounded-xl ${t.bgHover} cursor-pointer transition-all`}
+                    >
+                      <img
+                        src={item.seller.avatar}
+                        alt={item.seller.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium ${t.text} flex items-center gap-1`}
+                        >
+                          {item.seller.name}
+                          {item.seller.verified && (
+                            <BadgeCheck className="w-3.5 h-3.5 text-blue-400" />
+                          )}
+                        </p>
+                        <p className={`text-xs ${t.textMuted}`}>
+                          Member since {item.seller.memberSince}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Star className="w-3 h-3 fill-cyan-400 text-cyan-400" />
+                        <span
+                          className={`text-xs font-medium ${t.textSecondary}`}
+                        >
+                          {item.seller.rating}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className={`text-xs ${t.textMuted} text-center py-4`}>
+                    Artisan spotlight will appear as sellers join the
+                    marketplace.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Verso Air Info Card */}
+            <div className="bg-gradient-to-br from-cyan-500/20 to-teal-500/20 rounded-2xl p-4 border border-cyan-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="w-5 h-5 text-cyan-500" />
+                <h3 className={`font-bold ${t.text} notranslate`}>
+                  Verso Air Marketplace
+                </h3>
+              </div>
+              <p className={`text-xs ${t.textMuted} mb-3`}>
+                A trusted space for artisans to share their craft, connect with
+                their community, and grow together.
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  {
+                    label: "Artisans",
+                    value:
+                      listings.filter((l) => l.seller?.verified).length || "—",
+                  },
+                  { label: "Listings", value: listings.length || "—" },
+                  { label: "Categories", value: CATEGORIES.length - 1 },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className={`${t.bgCard} rounded-xl py-2`}
+                  >
+                    <p className={`text-sm font-bold ${t.accent}`}>
+                      {stat.value}
+                    </p>
+                    <p className={`text-[10px] ${t.textMuted}`}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* ═══ MOBILE SIDEBAR OVERLAY ═══ */}
+      <AnimatePresence>
+        {showMobileSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileSidebar(false)}
+              className="fixed inset-0 bg-black/60 z-50 lg:hidden backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className={`fixed left-0 top-0 bottom-0 w-[320px] ${t.bgSidebar} z-50 overflow-y-auto shadow-2xl`}
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-xl font-bold ${t.text}`}>Filters</h2>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowMobileSidebar(false)}
+                    className={`p-2 rounded-full ${t.bgInput}`}
+                  >
+                    <X className={`w-5 h-5 ${t.textSecondary}`} />
+                  </motion.button>
+                </div>
+
+                {/* Categories */}
+                <div className="space-y-1 mb-6">
+                  {CATEGORIES.map((cat) => {
+                    const isActive = activeCategory === cat.id;
+                    const Icon = cat.icon;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setActiveCategory(cat.id);
+                          setShowMobileSidebar(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          isActive
+                            ? `bg-gradient-to-r ${cat.color} text-white`
+                            : `${t.textSecondary} ${t.bgHover}`
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? "bg-white/20" : `bg-gradient-to-br ${cat.color}`}`}
+                        >
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Price */}
+                <div className="mb-4">
+                  <h3
+                    className={`text-xs font-bold uppercase ${t.textMuted} mb-3`}
+                  >
+                    Price Range
+                  </h3>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      value={priceRange[0]}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
+                      placeholder="Min"
+                      className={`flex-1 ${t.bgInput} ${t.text} rounded-lg px-3 py-2 text-sm focus:outline-none`}
+                    />
+                    <input
+                      type="number"
+                      value={priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([priceRange[0], Number(e.target.value)])
+                      }
+                      placeholder="Max"
+                      className={`flex-1 ${t.bgInput} ${t.text} rounded-lg px-3 py-2 text-sm focus:outline-none`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ CREATE LISTING MODAL ═══ */}
+      <AnimatePresence>
+        {showCreateListing && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCreateListing(false)}
+              className="fixed inset-0 bg-black/60 z-[70] backdrop-blur-md"
+            />
+            <motion.div
+              drag
+              dragMomentum={false}
+              dragElastic={0.05}
+              initial={{ opacity: 0, scale: 0.92, x: "-50%", y: "-50%" }}
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              style={{ top: "50%", left: "50%" }}
+              className={`fixed z-[70] w-[calc(100%-1.5rem)] sm:w-[calc(100%-3rem)] md:w-[440px] max-h-[calc(100vh-2rem)] ${
+                t.bgCard
+              } rounded-2xl shadow-2xl border ${t.border} flex flex-col`}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3 shrink-0 cursor-grab active:cursor-grabbing select-none">
+                <div>
+                  <h2 className={`text-base font-bold ${t.text}`}>
+                    New Listing
+                  </h2>
+                  <p className={`text-xs ${t.textMuted} mt-0.5`}>
+                    {listingSubmitState === "submitted"
+                      ? "Submitted for review"
+                      : "Share with the community · drag to move"}
+                  </p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowCreateListing(false)}
+                  className={`p-1.5 rounded-full ${t.bgInput} hover:opacity-80 transition-opacity`}
+                >
+                  <X className={`w-4 h-4 ${t.textSecondary}`} />
+                </motion.button>
+              </div>
+
+              <div className={`mx-4 sm:mx-5 border-t ${t.border}`} />
+
+              {/* ── SUCCESS STATE ── */}
+              {listingSubmitState === "submitted" ? (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center flex-1">
+                  <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-8 h-8 text-cyan-400" />
+                  </div>
+                  <h3 className={`text-base font-bold ${t.text} mb-1`}>
+                    Listing submitted!
+                  </h3>
+                  <p
+                    className={`text-sm ${t.textMuted} max-w-[260px] leading-relaxed`}
+                  >
+                    Your listing is{" "}
+                    <span className="text-amber-400 font-semibold">
+                      under review
+                    </span>
+                    . We'll verify it before it goes live — usually within 24
+                    hours.
+                  </p>
+                  <div
+                    className="mt-4 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{
+                      background: "rgba(251,191,36,0.1)",
+                      border: "1px solid rgba(251,191,36,0.25)",
+                      color: "#fbbf24",
+                    }}
+                  >
+                    ⏳ Pending verification
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowCreateListing(false)}
+                    className={`mt-6 px-5 py-2 rounded-xl text-sm font-semibold ${t.bgInput} ${t.textSecondary} hover:opacity-80 transition-opacity`}
+                  >
+                    Close
+                  </motion.button>
+                </div>
+              ) : (
+                <>
+                  {/* Scrollable form */}
+                  <div className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
+                    {/* ── SELLER IDENTITY PILL ── */}
+                    <div
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+                      style={{
+                        background: isAuthenticated
+                          ? "rgba(34,211,238,0.06)"
+                          : "rgba(251,191,36,0.06)",
+                        border: isAuthenticated
+                          ? "1px solid rgba(34,211,238,0.15)"
+                          : "1px solid rgba(251,191,36,0.2)",
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{
+                          background: isAuthenticated ? "#22d3ee" : "#fbbf24",
+                          boxShadow: isAuthenticated
+                            ? "0 0 6px rgba(34,211,238,0.5)"
+                            : "0 0 6px rgba(251,191,36,0.5)",
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="text-xs font-semibold truncate"
+                          style={{
+                            color: isAuthenticated ? "#22d3ee" : "#fbbf24",
+                          }}
+                        >
+                          {isAuthenticated
+                            ? `Listing as ${userName}`
+                            : "Listing as Guest"}
+                        </p>
+                        <p className={`text-[10px] ${t.textMuted}`}>
+                          {isAuthenticated
+                            ? "Connected · listing will be linked to your account"
+                            : "Not signed in · listing goes under verification"}
+                        </p>
+                      </div>
+                      {!isAuthenticated && (
+                        <button
+                          onClick={() => {
+                            setShowCreateListing(false);
+                            setIsAuthModalOpen(true);
+                          }}
+                          className="text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 whitespace-nowrap flex-shrink-0 transition-colors"
+                        >
+                          Sign in
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Title
+                      </label>
+                      <input
+                        value={listingForm.title}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            title: e.target.value,
+                          }))
+                        }
+                        className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition-shadow`}
+                        placeholder="What are you selling?"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-1 min-w-0">
+                        <label
+                          className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                        >
+                          Price
+                        </label>
+                        <div
+                          className={`flex items-center gap-2 ${t.bgInput} rounded-lg px-3.5 py-2`}
+                        >
+                          <DollarSign
+                            className={`w-3.5 h-3.5 shrink-0 ${t.textMuted}`}
+                          />
+                          <input
+                            value={listingForm.price}
+                            onChange={(e) =>
+                              setListingForm((f) => ({
+                                ...f,
+                                price: e.target.value,
+                              }))
+                            }
+                            className={`flex-1 bg-transparent ${t.text} text-sm focus:outline-none w-0`}
+                            placeholder="0.00"
+                            type="number"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <label
+                          className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                        >
+                          Category
+                        </label>
+                        <select
+                          value={listingForm.category}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              category: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none cursor-pointer`}
+                        >
+                          <option value="">Select…</option>
+                          {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Description
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={listingForm.description}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            description: e.target.value,
+                          }))
+                        }
+                        className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-none transition-shadow`}
+                        placeholder="Describe your item…"
+                      />
+                    </div>
+
+                    {/* Guest-only contact fields */}
+                    {!isAuthenticated && (
+                      <div className="space-y-3">
+                        <div
+                          className="h-px"
+                          style={{
+                            background:
+                              "linear-gradient(90deg,transparent,rgba(251,191,36,0.2),transparent)",
+                          }}
+                        />
+                        <p
+                          className={`text-[10px] font-semibold uppercase tracking-wider`}
+                          style={{ color: "#fbbf24" }}
+                        >
+                          Guest info (so buyers can reach you)
+                        </p>
+                        <input
+                          value={listingForm.guestName}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              guestName: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none`}
+                          placeholder="Your name (optional)"
+                        />
+                        <input
+                          value={listingForm.guestContact}
+                          onChange={(e) =>
+                            setListingForm((f) => ({
+                              ...f,
+                              guestContact: e.target.value,
+                            }))
+                          }
+                          className={`w-full ${t.bgInput} ${t.text} rounded-lg px-3.5 py-2 text-sm focus:outline-none`}
+                          placeholder="Email or phone (optional)"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Photos ({listingImages.length}/10)
+                      </label>
+                      {/* Image previews */}
+                      {imagePreviews.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {imagePreviews.map((src, i) => (
+                            <div
+                              key={i}
+                              className="relative w-16 h-16 rounded-lg overflow-hidden group"
+                            >
+                              <img
+                                src={src}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                onClick={() => removeImage(i)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3 text-red-400" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {listingImages.length < 10 && (
+                        <label
+                          className={`border border-dashed ${t.border} rounded-lg p-3 text-center cursor-pointer ${t.bgHover} transition-colors group block`}
+                        >
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            onChange={handleImageSelect}
+                            className="hidden"
+                          />
+                          <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                            <Camera className="w-4 h-4 text-cyan-500" />
+                          </div>
+                          <p
+                            className={`text-xs font-medium ${t.textSecondary}`}
+                          >
+                            Tap to add photos
+                          </p>
+                          <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                            Up to 10 · JPG, PNG, WebP, GIF
+                          </p>
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Video Upload */}
+                    <div>
+                      <label
+                        className={`text-xs font-semibold uppercase tracking-wider ${t.textMuted} block mb-1.5`}
+                      >
+                        Videos ({listingVideos.length}/3)
+                      </label>
+                      {/* Video previews */}
+                      {videoPreviews.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {videoPreviews.map((src, i) => (
+                            <div
+                              key={i}
+                              className="relative w-24 h-16 rounded-lg overflow-hidden group bg-black"
+                            >
+                              <video
+                                src={src}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Video className="w-5 h-5 text-white/70" />
+                              </div>
+                              <button
+                                onClick={() => removeVideo(i)}
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3 text-red-400" />
+                              </button>
+                              <span
+                                className={`absolute bottom-0.5 left-1 text-[9px] ${t.textMuted} truncate max-w-[80px]`}
+                              >
+                                {listingVideos[i]?.name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {listingVideos.length < 3 && (
+                        <label
+                          className={`border border-dashed ${t.border} rounded-lg p-3 text-center cursor-pointer ${t.bgHover} transition-colors group block`}
+                        >
+                          <input
+                            type="file"
+                            accept="video/mp4,video/webm,video/quicktime"
+                            multiple
+                            onChange={handleVideoSelect}
+                            className="hidden"
+                          />
+                          <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                            <Video className="w-4 h-4 text-purple-500" />
+                          </div>
+                          <p
+                            className={`text-xs font-medium ${t.textSecondary}`}
+                          >
+                            Tap to add videos
+                          </p>
+                          <p className={`text-[10px] ${t.textMuted} mt-0.5`}>
+                            Up to 3 · MP4, WebM, MOV · 100MB max
+                          </p>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    className={`px-4 sm:px-5 py-3 border-t ${t.border} shrink-0`}
+                  >
+                    {listingSubmitState === "error" && (
+                      <div
+                        className="mb-2 px-3 py-2 rounded-lg text-xs font-medium"
+                        style={{
+                          background: "rgba(239,68,68,0.1)",
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          color: "#f87171",
+                        }}
+                      >
+                        ⚠️ {listingSubmitError || "Failed to submit listing."}
+                      </div>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handlePublishListing}
+                      disabled={
+                        !listingForm.title.trim() ||
+                        listingSubmitState === "submitting"
+                      }
+                      className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-semibold py-2.5 rounded-xl hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/15 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {listingSubmitState === "submitting" ? (
+                        <>
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 0.8,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          />
+                          Submitting…
+                        </>
+                      ) : isAuthenticated ? (
+                        "Publish Listing"
+                      ) : (
+                        "Submit for Review"
+                      )}
+                    </motion.button>
+                    {!isAuthenticated && (
+                      <p
+                        className={`text-center text-[10px] ${t.textMuted} mt-2`}
+                      >
+                        Guest listings are reviewed before going live
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ MOBILE FAB ═══ */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => {
+          if (!isAuthenticated) {
+            promptMarketplaceAuth("Sign in to sell on Marketplace.");
+            return;
+          }
+          setShowCreateListing(true);
+        }}
+        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center hover:bg-cyan-700 transition-colors"
+      >
+        <Plus className="w-6 h-6" />
+      </motion.button>
+
+      {/* ═══ MESSAGE SELLER MODAL ═══ */}
+      <AnimatePresence>
+        {messageTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => messageState !== "sending" && setMessageTarget(null)}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full max-w-md rounded-2xl border ${t.border} ${t.bgCard} shadow-2xl overflow-hidden`}
+            >
+              {/* Header */}
+              <div
+                className={`px-5 py-4 border-b ${t.border} flex items-center justify-between`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cyan-500/20 flex items-center justify-center">
+                    {messageTarget.image ? (
+                      <img
+                        src={messageTarget.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="w-5 h-5 text-cyan-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-semibold ${t.text} truncate`}>
+                      Message {messageTarget.owner_name || "Seller"}
+                    </p>
+                    <p className={`text-xs ${t.textMuted} truncate`}>
+                      About: {messageTarget.title}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMessageTarget(null)}
+                  disabled={messageState === "sending"}
+                  className={`${t.textMuted} hover:${t.text} disabled:opacity-40 p-1`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5">
+                {messageState === "sent" ? (
+                  <div className="text-center py-6">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
+                      <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <p className={`text-base font-semibold ${t.text} mb-1`}>
+                      Message sent!
+                    </p>
+                    <p className={`text-sm ${t.textMuted} mb-5`}>
+                      {messageTarget.owner_name || "The seller"} will see your
+                      message in their inbox.
+                    </p>
+                    <button
+                      onClick={() => setMessageTarget(null)}
+                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-medium"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label
+                      className={`text-xs font-medium ${t.textSecondary} mb-2 block`}
+                    >
+                      Your message
+                    </label>
+                    <textarea
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      disabled={messageState === "sending"}
+                      rows={5}
+                      maxLength={1000}
+                      placeholder="Ask a question, propose a price, arrange pickup…"
+                      className={`w-full rounded-xl px-3 py-2.5 text-sm resize-none border ${t.border} ${t.bgInput} ${t.text} placeholder:${t.textMuted} focus:outline-none focus:border-cyan-500/60`}
+                    />
+                    <div className={`mt-1 text-xs ${t.textMuted} text-right`}>
+                      {messageText.length}/1000
+                    </div>
+                    {messageState === "error" && messageError && (
+                      <div
+                        className="mt-2 px-3 py-2 rounded-lg text-xs font-medium flex items-start gap-2"
+                        style={{
+                          background: "rgba(239,68,68,0.1)",
+                          border: "1px solid rgba(239,68,68,0.25)",
+                          color: "#f87171",
+                        }}
+                      >
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>{messageError}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => setMessageTarget(null)}
+                        disabled={messageState === "sending"}
+                        className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border ${t.border} ${t.text} ${t.bgHover} disabled:opacity-40`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={sendSellerMessage}
+                        disabled={
+                          messageState === "sending" || !messageText.trim()
+                        }
+                        className="flex-1 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
+                      >
+                        {messageState === "sending" ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Sending…
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="w-4 h-4" />
+                            Send message
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <p
+                      className={`mt-3 text-[11px] ${t.textMuted} text-center`}
+                    >
+                      Marketplace messaging is free for all users.
+                    </p>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -1,0 +1,256 @@
+import { Helmet } from 'react-helmet-async';
+import { Link } from "wouter";
+import {
+  ShoppingCart,
+  Trash2,
+  Minus,
+  Plus,
+  CreditCard,
+  ArrowLeft,
+  Package,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+
+export default function CartPage() {
+  const {
+    items,
+    totalCents,
+    itemCount,
+    isLoading,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    checkout,
+    isCheckingOut,
+  } = useCart();
+  const { toast } = useToast();
+  const token =
+    localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+  const isLoggedIn = !!token;
+
+  const handleCheckout = async () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to complete your purchase.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await checkout();
+    } catch (err: any) {
+      toast({
+        title: "Checkout failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+    <>
+      <Helmet>
+        <title>marketing-cart — Verso Air</title>
+        <meta name="description" content="marketing-cart — Verso Air" />
+      </Helmet>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-400">Loading cart...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <ShoppingCart className="h-8 w-8 text-amber-400" />
+            Shopping Cart
+          </h1>
+          <Link href="/marketing">
+            <Button variant="ghost" className="text-gray-400 hover:text-white">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Continue Shopping
+            </Button>
+          </Link>
+        </div>
+
+        {itemCount === 0 ? (
+          <Card className="bg-gray-800/50 border-gray-700">
+            <CardContent className="p-12 text-center">
+              <Package className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h2 className="text-xl text-white font-semibold mb-2">
+                Your cart is empty
+              </h2>
+              <p className="text-gray-400 mb-6">
+                Browse our marketing packs and print services to get started.
+              </p>
+              <div className="flex justify-center gap-3">
+                <Link href="/marketing/packs">
+                  <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+                    View Packs
+                  </Button>
+                </Link>
+                <Link href="/marketing/print">
+                  <Button
+                    variant="outline"
+                    className="border-gray-600 text-white"
+                  >
+                    Print Services
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Cart Items */}
+            <div className="lg:col-span-2 space-y-3">
+              {items.map((item, idx) => (
+                <Card
+                  key={`${item.item_type}-${item.item_id}-${idx}`}
+                  className="bg-gray-800/50 border-gray-700"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-white font-medium">
+                          {item.item_name ||
+                            `${item.item_type} #${item.item_id}`}
+                        </h3>
+                        <p className="text-gray-400 text-sm capitalize">
+                          {item.item_type.replace(/_/g, " ")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {/* Quantity controls */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 border-gray-600"
+                            onClick={() =>
+                              updateQuantity(
+                                item.item_type,
+                                item.item_id,
+                                item.quantity - 1,
+                              )
+                            }
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-white w-8 text-center">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 border-gray-600"
+                            onClick={() =>
+                              updateQuantity(
+                                item.item_type,
+                                item.item_id,
+                                item.quantity + 1,
+                              )
+                            }
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {/* Price */}
+                        <span className="text-amber-400 font-semibold w-20 text-right">
+                          $
+                          {((item.price_cents * item.quantity) / 100).toFixed(
+                            2,
+                          )}
+                        </span>
+
+                        {/* Remove */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          onClick={() =>
+                            removeItem(item.item_type, item.item_id)
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <div className="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-red-400"
+                  onClick={clearCart}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear Cart
+                </Button>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div>
+              <Card className="bg-gray-800/50 border-gray-700 sticky top-24">
+                <CardHeader>
+                  <CardTitle className="text-white">Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between text-gray-400">
+                    <span>Subtotal ({itemCount} items)</span>
+                    <span className="text-white">
+                      ${(totalCents / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>Shipping</span>
+                    <span className="text-green-400">Free</span>
+                  </div>
+                  <hr className="border-gray-700" />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span className="text-white">Total</span>
+                    <span className="text-amber-400">
+                      ${(totalCents / 100).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <Button
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
+                    size="lg"
+                    onClick={handleCheckout}
+                    disabled={isCheckingOut}
+                  >
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    {isCheckingOut ? "Processing..." : "Checkout"}
+                  </Button>
+
+                  {!isLoggedIn && (
+                    <p className="text-yellow-400 text-xs text-center">
+                      ⚠️ Sign in to complete your purchase. Your cart is saved
+                      locally.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </>
+  );
+}

@@ -1,10 +1,30 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const FEEDBACK_URL = "https://forms.gle/LPQgujfxdn1nHNw97";
 
 export default function BetaBanner() {
   const [closed, setClosed] = useState(false);
+  const [showBubble, setShowBubble] = useState(true);
+
+  useEffect(() => {
+    let previousScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY <= 8) {
+        setShowBubble(true);
+      } else if (currentScrollY > previousScrollY + 2) {
+        setShowBubble(false);
+      } else if (currentScrollY < previousScrollY - 2) {
+        setShowBubble(true);
+      }
+      previousScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const openFeedback = () => {
     window.open(FEEDBACK_URL, "_blank", "noopener,noreferrer");
@@ -15,7 +35,7 @@ export default function BetaBanner() {
       <button
         type="button"
         onClick={() => setClosed(false)}
-        className="fixed right-3 top-3 z-[60] rounded-full border border-[#d4a74e]/60 bg-[#1a140d]/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f7d98b] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#241b12]"
+        className={`fixed right-3 top-3 z-[60] rounded-full border border-[#d4a74e]/60 bg-[#1a140d]/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f7d98b] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#241b12] ${showBubble ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0"}`}
         aria-label="Reopen Beta banner"
       >
         Beta

@@ -1,0 +1,1117 @@
+import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
+import {
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  staggerItemScale,
+  defaultViewport,
+} from "@/lib/animations";
+import AnalyticsCard from "@/components/ui/analytics-card";
+import ProgressBar from "@/components/ui/progress-bar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Phone,
+  Mail,
+  MessageSquare,
+  Clock,
+  Shield,
+  Users,
+  TrendingUp,
+  Award,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Wrench,
+  Package,
+  Music,
+  Globe,
+  Headphones,
+  FileText,
+  Download,
+  Calendar,
+  Zap,
+  BarChart,
+  Target,
+  Star,
+  ExternalLink,
+  Search,
+  Filter,
+  DownloadCloud,
+  UserCheck,
+  Settings,
+  HelpCircle,
+  Bell,
+  ShieldCheck,
+} from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
+
+export default function SAV() {
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstanceRef = useRef<any>(null);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  useScrollLock(showTicketForm);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [chartPeriod, setChartPeriod] = useState("week");
+
+  const serviceCategories = [
+    {
+      id: "technical",
+      name: "Technical Support",
+      icon: <Settings className="h-6 w-6" />,
+      color: "from-blue-500 to-blue-600",
+      services: [
+        "Software troubleshooting and bug fixes",
+        "Hardware diagnostics and repair",
+        "Firmware updates and installation",
+        "Connectivity issues (Bluetooth, WiFi, USB)",
+        "Mobile app synchronization problems",
+        "Device calibration and setup",
+        "Performance optimization",
+        "Compatibility issues resolution",
+      ],
+      stats: {
+        responseTime: "15min",
+        resolutionRate: "92%",
+        satisfaction: "4.7",
+      },
+    },
+    {
+      id: "physical",
+      name: "Physical Product Services",
+      icon: <Package className="h-6 w-6" />,
+      color: "from-green-500 to-green-600",
+      services: [
+        "Product replacement for manufacturing defects",
+        "Warranty claims processing",
+        "Size exchange and fit adjustments",
+        "Material quality issues resolution",
+        "Component replacement (laces, soles, accessories)",
+        "Cleaning and maintenance guidance",
+        "Product authenticity verification",
+        "Customization error corrections",
+      ],
+      stats: {
+        responseTime: "30min",
+        resolutionRate: "88%",
+        satisfaction: "4.5",
+      },
+    },
+    {
+      id: "digital",
+      name: "Digital Services",
+      icon: <Music className="h-6 w-6" />,
+      color: "from-purple-500 to-purple-600",
+      services: [
+        "Music streaming account recovery",
+        "Digital content access issues",
+        "Subscription management and billing",
+        "Content synchronization across devices",
+        "Playlist restoration and backup",
+        "Audio quality troubleshooting",
+        "Download and offline access problems",
+        "Family plan management support",
+      ],
+      stats: {
+        responseTime: "10min",
+        resolutionRate: "95%",
+        satisfaction: "4.8",
+      },
+    },
+    {
+      id: "online",
+      name: "Online Services",
+      icon: <Globe className="h-6 w-6" />,
+      color: "from-orange-500 to-orange-600",
+      services: [
+        "Account security and password recovery",
+        "Order tracking and delivery issues",
+        "Return and refund processing",
+        "Website navigation assistance",
+        "Payment gateway problems resolution",
+        "Gift card and voucher redemption",
+        "Membership benefits support",
+        "Personal data management requests",
+      ],
+      stats: {
+        responseTime: "8min",
+        resolutionRate: "90%",
+        satisfaction: "4.6",
+      },
+    },
+  ];
+
+  const supportChannels = [
+    {
+      name: "Live Chat",
+      icon: <MessageSquare className="h-8 w-8" />,
+      availability: "24/7",
+      response: "Instant",
+      description: "Real-time chat with support agents",
+      color: "bg-green-100 text-green-700",
+    },
+    {
+      name: "Phone Support",
+      icon: <Phone className="h-8 w-8" />,
+      availability: "8AM-10PM",
+      response: "< 2min",
+      description: "Direct phone support in multiple languages",
+      color: "bg-blue-100 text-blue-700",
+    },
+    {
+      name: "Email Support",
+      icon: <Mail className="h-8 w-8" />,
+      availability: "24/7",
+      response: "< 4 hours",
+      description: "Detailed written support with attachments",
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      name: "Help Center",
+      icon: <HelpCircle className="h-8 w-8" />,
+      availability: "24/7",
+      response: "Immediate",
+      description: "Self-service knowledge base and guides",
+      color: "bg-orange-100 text-orange-700",
+    },
+  ];
+
+  const commonIssues = [
+    {
+      issue: "Login & Account Access",
+      percentage: "32%",
+      color: "bg-blue-500",
+      width: "32%",
+      resolution: "15min avg",
+      trend: "down",
+    },
+    {
+      issue: "Payment & Billing",
+      percentage: "24%",
+      color: "bg-green-500",
+      width: "24%",
+      resolution: "25min avg",
+      trend: "stable",
+    },
+    {
+      issue: "Technical Support",
+      percentage: "18%",
+      color: "bg-purple-500",
+      width: "18%",
+      resolution: "45min avg",
+      trend: "down",
+    },
+    {
+      issue: "Product Defects",
+      percentage: "12%",
+      color: "bg-orange-500",
+      width: "12%",
+      resolution: "2hr avg",
+      trend: "up",
+    },
+    {
+      issue: "General Inquiries",
+      percentage: "14%",
+      color: "bg-gray-500",
+      width: "14%",
+      resolution: "10min avg",
+      trend: "stable",
+    },
+  ];
+
+  const performanceMetrics = [
+    {
+      metric: "First Response Time",
+      value: "1.2min",
+      target: "2min",
+      status: "excellent",
+    },
+    {
+      metric: "First Contact Resolution",
+      value: "89%",
+      target: "85%",
+      status: "excellent",
+    },
+    {
+      metric: "Customer Satisfaction",
+      value: "4.8/5",
+      target: "4.5",
+      status: "excellent",
+    },
+    {
+      metric: "Ticket Volume",
+      value: "1,240",
+      target: "1,500",
+      status: "good",
+    },
+    {
+      metric: "Resolution Time",
+      value: "4.2hr",
+      target: "6hr",
+      status: "excellent",
+    },
+    {
+      metric: "Agent Utilization",
+      value: "78%",
+      target: "75%",
+      status: "good",
+    },
+  ];
+
+  useEffect(() => {
+    if (chartRef.current && window.Chart) {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+
+      const ctx = chartRef.current.getContext("2d");
+      if (ctx) {
+        chartInstanceRef.current = new window.Chart(ctx, {
+          type: "line",
+          data: {
+            labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            datasets: [
+              {
+                label: "Tickets Opened",
+                data: [45, 52, 48, 61, 55, 38, 25],
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                tension: 0.3,
+                borderWidth: 3,
+                fill: true,
+              },
+              {
+                label: "Tickets Resolved",
+                data: [42, 48, 46, 58, 52, 36, 24],
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                tension: 0.3,
+                borderWidth: 3,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+                labels: {
+                  font: {
+                    size: 12,
+                    family: "'Inter', sans-serif",
+                  },
+                  padding: 20,
+                },
+              },
+              tooltip: {
+                mode: "index",
+                intersect: false,
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: "rgba(0,0,0,0.05)",
+                },
+                ticks: {
+                  callback: function (value: string | number) {
+                    return value + " tickets";
+                  },
+                },
+              },
+              x: {
+                grid: {
+                  display: false,
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
+        <div className="relative max-w-[95vw] mx-auto px-6">
+          <div className="text-center">
+            <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                <ShieldCheck className="h-4 w-4 text-white" />
+                <span className="text-sm font-medium text-white">
+                  Premium Support Guarantee
+                </span>
+              </div>
+            </motion.div>
+            <motion.h1
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-6xl font-bold text-white mb-6"
+            >
+              Service Après-Vente
+              <br />
+              <span className="text-yellow-300">Premium Support 24/7</span>
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.2 }}
+              className="text-xl text-white/90 max-w-3xl mx-auto mb-10"
+            >
+              Comprehensive customer support ecosystem delivering exceptional
+              service across all products and digital platforms with
+              industry-leading response times.
+            </motion.p>
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.3 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Link href="/tickets">
+                <Button className="bg-white text-blue-600 px-8 py-6 text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                  <Headphones className="mr-2 h-5 w-5" />
+                  Submit Support Ticket
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="border-white bg-white/10 text-white px-8 py-6 text-lg hover:bg-white/20 backdrop-blur-sm"
+              >
+                <Phone className="mr-2 h-5 w-5" />
+                Call Support Now
+              </Button>
+            </motion.div>
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.4 }}
+              className="flex items-center justify-center gap-3 mt-6"
+            >
+              <Link href="/help">
+                <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+                  📚 Centre d'aide
+                </span>
+              </Link>
+              <Link href="/contact">
+                <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+                  ✉️ Contact
+                </span>
+              </Link>
+              <Link href="/">
+                <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+                  🏠 Accueil
+                </span>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
+        <div className="max-w-[95vw] mx-auto px-6">
+          <div className="flex overflow-x-auto">
+            {[
+              "overview",
+              "services",
+              "performance",
+              "resources",
+              "contact",
+            ].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-4 font-medium text-sm transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-[95vw] mx-auto px-6 py-12">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Search for solutions, guides, or contact support..."
+              className="pl-12 py-6 text-lg rounded-full border-gray-300 shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <Button className="rounded-full bg-blue-600 hover:bg-blue-700">
+                Search
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === "overview" && (
+          <>
+            {/* Enhanced Analytics Cards */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              className="grid lg:grid-cols-4 gap-6 mb-12"
+            >
+              <AnalyticsCard
+                title="Average Response Time"
+                value="1.2 min"
+                change="-30s improvement"
+                trend="up"
+                color="green"
+              />
+              <AnalyticsCard
+                title="First Contact Resolution"
+                value="89%"
+                change="+3% this month"
+                trend="up"
+                color="blue"
+              />
+              <AnalyticsCard
+                title="Customer Satisfaction"
+                value="4.8/5"
+                change="+0.2 improvement"
+                trend="up"
+                color="purple"
+              />
+              <AnalyticsCard
+                title="Active Support Cases"
+                value="18"
+                change="-8 from last week"
+                trend="down"
+                color="orange"
+              />
+            </motion.div>
+
+            {/* Charts Section */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              className="grid lg:grid-cols-2 gap-8 mb-12"
+            >
+              <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <TrendingUp className="h-6 w-6 text-blue-600" />
+                    Support Ticket Trends
+                  </h3>
+                  <Select value={chartPeriod} onValueChange={setChartPeriod}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">Today</SelectItem>
+                      <SelectItem value="week">This Week</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                      <SelectItem value="quarter">This Quarter</SelectItem>
+                      <SelectItem value="year">This Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="relative w-full h-[300px]">
+                  <canvas ref={chartRef} className="absolute inset-0"></canvas>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Target className="h-6 w-6 text-green-600" />
+                  Issue Distribution & Resolution
+                </h3>
+                <div className="space-y-6">
+                  {commonIssues.map((item, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-gray-700">
+                            {item.issue}
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              item.trend === "up"
+                                ? "bg-red-100 text-red-700"
+                                : item.trend === "down"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {item.trend === "up"
+                              ? "↗ Increasing"
+                              : item.trend === "down"
+                                ? "↘ Decreasing"
+                                : "→ Stable"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm text-gray-500">
+                            {item.resolution}
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            {item.percentage}
+                          </span>
+                        </div>
+                      </div>
+                      <ProgressBar
+                        percent={parseInt(item.width, 10) || 0}
+                        className={`h-3 ${item.color}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+
+        {/* Services Tab */}
+        {activeTab === "services" && (
+          <div className="space-y-12">
+            {/* Service Categories Filter */}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Support Service Categories
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto mb-8">
+                Select a category to view specific support services and
+                resolution details
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 mb-12">
+                <button
+                  onClick={() => setActiveCategory("all")}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all duration-200 flex items-center gap-2 ${
+                    activeCategory === "all"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                      : "bg-white text-gray-700 shadow-md hover:shadow-lg border"
+                  }`}
+                >
+                  <Users className="h-5 w-5" />
+                  All Services
+                </button>
+                {serviceCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`px-6 py-3 rounded-full font-semibold transition-all duration-200 flex items-center gap-2 ${
+                      activeCategory === category.id
+                        ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
+                        : "bg-white text-gray-700 shadow-md hover:shadow-lg border"
+                    }`}
+                  >
+                    {category.icon}
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Services Grid */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              {(activeCategory === "all"
+                ? serviceCategories
+                : serviceCategories.filter((cat) => cat.id === activeCategory)
+              ).map((category) => (
+                <div
+                  key={category.id}
+                  className={`bg-gradient-to-br ${category.color} rounded-2xl p-8 text-white hover:shadow-2xl transition-all duration-300`}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        {category.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold">{category.name}</h3>
+                        <div className="flex items-center gap-4 mt-2 text-white/80">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm">
+                              {category.stats.responseTime} response
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-sm">
+                              {category.stats.resolutionRate} resolution
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4" />
+                            <span className="text-sm">
+                              {category.stats.satisfaction}/5 rating
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {category.services.map((service, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <CheckCircle className="h-5 w-5 text-green-300 mt-0.5 flex-shrink-0" />
+                        <span className="text-white/90">{service}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Performance Tab */}
+        {activeTab === "performance" && (
+          <div className="space-y-12">
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
+                <BarChart className="h-6 w-6 text-blue-600" />
+                Performance Metrics Dashboard
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {performanceMetrics.map((metric, index) => (
+                  <div key={index} className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
+                          {metric.metric}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-2xl font-bold text-gray-900">
+                            {metric.value}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            Target: {metric.target}
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          metric.status === "excellent"
+                            ? "bg-green-100 text-green-700"
+                            : metric.status === "good"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {metric.status.charAt(0).toUpperCase() +
+                          metric.status.slice(1)}
+                      </div>
+                    </div>
+                    <ProgressBar percent={90} className="h-2" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Support Channels */}
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+                Support Channels & Availability
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {supportChannels.map((channel, index) => (
+                  <div
+                    key={index}
+                    className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow"
+                  >
+                    <div
+                      className={`w-14 h-14 ${
+                        channel.color.split(" ")[0]
+                      } rounded-xl flex items-center justify-center mb-4`}
+                    >
+                      {channel.icon}
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">
+                      {channel.name}
+                    </h4>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {channel.description}
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Availability:</span>
+                        <span className="font-semibold">
+                          {channel.availability}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Avg. Response:</span>
+                        <span className="font-semibold">
+                          {channel.response}
+                        </span>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-6" variant="outline">
+                      Access Channel
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Contact Tab */}
+        {activeTab === "contact" && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+                Contact Our Support Team
+              </h3>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Contact Info */}
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-xl">
+                    <Phone className="h-6 w-6 text-blue-600 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        Phone Support
+                      </h4>
+                      <p className="text-gray-600 text-sm mt-1">
+                        Available 8AM-10PM, 7 days a week
+                      </p>
+                      <a
+                        href="tel:+18001234567"
+                        className="text-blue-600 font-bold text-lg mt-2 block"
+                      >
+                        +1 (800) 123-4567
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-4 bg-green-50 rounded-xl">
+                    <Mail className="h-6 w-6 text-green-600 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        Email Support
+                      </h4>
+                      <p className="text-gray-600 text-sm mt-1">
+                        Response within 4 hours, 24/7
+                      </p>
+                      <a
+                        href="mailto:support@company.com"
+                        className="text-green-600 font-bold text-lg mt-2 block"
+                      >
+                        support@company.com
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 p-4 bg-purple-50 rounded-xl">
+                    <MessageSquare className="h-6 w-6 text-purple-600 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Live Chat</h4>
+                      <p className="text-gray-600 text-sm mt-1">
+                        Instant response, 24/7 availability
+                      </p>
+                      <Button className="mt-3 bg-purple-600 hover:bg-purple-700">
+                        Start Live Chat
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ticket Form */}
+                <div className="space-y-6">
+                  <h4 className="text-xl font-bold text-gray-900">
+                    Submit a Support Ticket
+                  </h4>
+                  <form className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Your Name *</label>
+                      <Input placeholder="John Doe" required />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Email Address *
+                      </label>
+                      <Input
+                        type="email"
+                        placeholder="john@example.com"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Issue Category *
+                      </label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="technical">
+                            Technical Support
+                          </SelectItem>
+                          <SelectItem value="physical">
+                            Product Issue
+                          </SelectItem>
+                          <SelectItem value="digital">
+                            Digital Service
+                          </SelectItem>
+                          <SelectItem value="online">Online Account</SelectItem>
+                          <SelectItem value="billing">
+                            Billing & Payment
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Description *
+                      </label>
+                      <Textarea
+                        placeholder="Please describe your issue in detail..."
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Attachments (Optional)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <DownloadCloud className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">
+                          Drag & drop files or click to browse
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Max file size: 10MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      Submit Ticket
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Action Banner */}
+        <div className="mt-12">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 text-white relative overflow-hidden">
+            <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
+            <div className="relative z-10">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    Need Immediate Assistance?
+                  </h3>
+                  <p className="text-white/90">
+                    Our premium support team is available 24/7 to resolve your
+                    issues
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <Button className="bg-white text-blue-600 hover:bg-gray-100">
+                    <Phone className="mr-2 h-5 w-5" />
+                    Call Now
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-white bg-white/10 text-white hover:bg-white/20"
+                  >
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Live Chat
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-white bg-white/10 text-white hover:bg-white/20"
+                    onClick={() => setShowTicketForm(true)}
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    Submit Ticket
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ticket Form Modal */}
+      {showTicketForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold">Submit Support Ticket</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTicketForm(false)}
+                  className="hover:bg-gray-100"
+                >
+                  ✕
+                </Button>
+              </div>
+              <form className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Full Name *</label>
+                    <Input placeholder="John Doe" required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Email Address *
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="john@example.com"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Issue Category *
+                  </label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serviceCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Priority Level</label>
+                  <Select defaultValue="medium">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          Low Priority
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          Medium Priority
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="high">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          High Priority
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Description *</label>
+                  <Textarea
+                    placeholder="Please provide detailed information about your issue..."
+                    rows={6}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Attachments</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer">
+                    <DownloadCloud className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-700 font-medium">
+                      Drag & drop files or click to browse
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Support files, screenshots, or documents (Max 20MB)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    required
+                    className="rounded"
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-600">
+                    I agree to the terms of service and privacy policy
+                  </label>
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Submit Ticket
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowTicketForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
