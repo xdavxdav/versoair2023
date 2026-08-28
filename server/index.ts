@@ -5,21 +5,34 @@ dotenv.config();
 // CRITICAL: Prevents localhost:5004 from leaking to production users on Render
 // Priority: SIBLING_URL > MUSIC_APP_URL > PRODUCTION_URL/APP_PUBLIC_URL (fallback)
 const isProdEnv = process.env.NODE_ENV === "production";
-if (!process.env.SIBLING_URL && !isProdEnv) {
-  // Try MUSIC_APP_URL first, then fallback to PRODUCTION_URL/APP_PUBLIC_URL
-  const musicUrl =
-    process.env.MUSIC_APP_URL ||
+const isLocalUrl = (url?: string) =>
+  !!url && /^https?:\/\/(?:localhost|127(?:\.\d+){3})(?::\d+)?(?:\/|$)/i.test(url);
+const configuredSiblingUrl = process.env.SIBLING_URL?.trim();
+
+// Never inject a local development URL into a production deployment.
+if (!configuredSiblingUrl || (isProdEnv && isLocalUrl(configuredSiblingUrl))) {
+  const configuredMusicUrl = process.env.MUSIC_APP_URL?.trim();
+  const publicAppUrl = (
+    process.env.RENDER_EXTERNAL_URL ||
     process.env.PRODUCTION_URL ||
     process.env.APP_PUBLIC_URL ||
-    (isProdEnv
-      ? "https://verso-air-online.onrender.com"
-      : "http://localhost:5004");
+    process.env.VERSOAIR_URL
+  )?.trim();
+  const musicUrl =
+    (configuredMusicUrl && !(isProdEnv && isLocalUrl(configuredMusicUrl))
+      ? configuredMusicUrl
+      : publicAppUrl) ||
+    (!isProdEnv ? "http://localhost:5004" : undefined);
 
-  // On production, append /music if not already present
-  if (isProdEnv && musicUrl && !musicUrl.includes("/music")) {
-    process.env.SIBLING_URL = musicUrl + "/music";
-  } else {
-    process.env.SIBLING_URL = musicUrl;
+  if (musicUrl) {
+    const cleanMusicUrl = musicUrl.replace(/\/+$/, "");
+    process.env.SIBLING_URL =
+      isProdEnv && !cleanMusicUrl.endsWith("/music")
+        ? cleanMusicUrl + "/music"
+        : cleanMusicUrl;
+  } else if (isProdEnv) {
+    // Let the client safely fall back to the current origin.
+    delete process.env.SIBLING_URL;
   }
 }
 
