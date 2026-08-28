@@ -173,6 +173,51 @@ function loadGTScript(): Promise<void> {
  * Switch GT language at runtime using the hidden <select> combo.
  * Returns true if the combo switch succeeded.
  */
+function normalizeGoogleTranslateLangCode(lang: string): string | null {
+  const value = (lang || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value === "fr" || value === "select language") return "fr";
+  if (value.startsWith("fr")) return "fr";
+  if (value.startsWith("en")) return "en";
+  if (value.startsWith("es")) return "es";
+  if (value.startsWith("pt")) return "pt";
+  if (value.startsWith("de")) return "de";
+  if (value.startsWith("ar")) return "ar";
+  if (value.startsWith("zh-cn") || value.startsWith("zh-cn")) return "zh-CN";
+  if (value.startsWith("zh-tw")) return "zh-TW";
+  if (value.startsWith("ja")) return "ja";
+  if (value.startsWith("ko")) return "ko";
+  if (value.startsWith("ru")) return "ru";
+  if (value.startsWith("it")) return "it";
+  if (value.startsWith("nl")) return "nl";
+  return value;
+}
+
+function readActiveGoogleTranslateLanguage(): string | null {
+  const combo =
+    document.querySelector<HTMLSelectElement>(".goog-te-combo") ||
+    document.querySelector<HTMLSelectElement>(".skiptranslate select");
+
+  if (combo && combo.value) {
+    const normalized = normalizeGoogleTranslateLangCode(combo.value);
+    if (normalized) return normalized;
+  }
+
+  const cookie = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("googtrans="));
+  if (cookie) {
+    const raw = decodeURIComponent(cookie.split("=")[1] ?? "");
+    const match = raw.match(/\/fr\/(.+)$/i) || raw.match(/\/([a-z-]+)$/i);
+    if (match?.[1]) {
+      const normalized = normalizeGoogleTranslateLangCode(match[1]);
+      if (normalized) return normalized;
+    }
+  }
+
+  return null;
+}
+
 function switchLanguageViaCombo(lang: string): boolean {
   const combo =
     document.querySelector<HTMLSelectElement>(".goog-te-combo") ||
@@ -478,6 +523,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
   }, []);
+
+  const syncCurrentLangFromGT = useCallback(() => {
+    const actualLang = readActiveGoogleTranslateLanguage();
+    if (!actualLang) return;
+
+    const normalized = normalizeGoogleTranslateLangCode(actualLang);
+    if (!normalized || normalized === currentLang) return;
+
+    setCurrentLang(normalized);
+    localStorage.setItem(LANG_CACHE_KEY, normalized);
+    if (normalized !== "fr") {
+      setIsManualOverride(true);
+      localStorage.setItem(LANG_OVERRIDE_KEY, "true");
+    }
+  }, [currentLang]);
+
+  useEffect(() => {
+    if (!gtLoaded.current) return;
+    syncCurrentLangFromGT();
+  }, [syncCurrentLangFromGT]);
 
   // ── Clean up GT visual junk periodically ──
   useEffect(() => {

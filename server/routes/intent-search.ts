@@ -25,6 +25,7 @@ const router = Router();
 const intentSearchSchema = z.object({
   query: z.string().min(2).max(500),
   limit: z.number().min(1).max(20).optional().default(5),
+  language: z.string().optional(),
 });
 
 const emergencyAlertSchema = z.object({
@@ -47,16 +48,22 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
       });
     }
 
-    const { query, limit } = parsed.data;
+    const { query, limit, language } = parsed.data;
     const startTime = Date.now();
 
     // Step 1: Parse intent from natural language
-    const intent = await parseUserIntent(query);
+    const intent = await parseUserIntent(query, language);
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);
 
     const elapsed = Date.now() - startTime;
+    const needsClarification = !intent.sector && !intent.location;
+    const clarification = needsClarification
+      ? intent.language === "fr"
+        ? "Que recherchez-vous exactement : une entreprise, un service, un lieu ou un professionnel ?"
+        : "What are you looking for exactly: a business, a service, a place, or a professional?"
+      : null;
 
     return res.json({
       success: true,
@@ -75,6 +82,10 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
         businesses: results.businesses,
         totalMatches: results.totalMatches,
         searchMethod: results.searchMethod,
+      },
+      discovery: {
+        needsClarification,
+        clarification,
       },
       emergency: results.isEmergency
         ? {

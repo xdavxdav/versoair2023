@@ -1221,7 +1221,50 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const { selectedCountry } = useCountry();
+  const { currentLang } = useLanguage();
+  const [aiLanguageFilter, setAiLanguageFilter] = useState("fr");
   const countryMeta = getCountryMeta(selectedCountry || "");
+
+  useEffect(() => {
+    if (currentLang) {
+      setAiLanguageFilter(currentLang);
+    }
+  }, [currentLang]);
+
+  const aiLanguageOptions = [
+    { value: "fr", label: "Français" },
+    { value: "en", label: "English" },
+    { value: "es", label: "Español" },
+    { value: "de", label: "Deutsch" },
+    { value: "pt", label: "Português" },
+    { value: "ar", label: "العربية" },
+  ];
+
+  const aiSearchPlaceholderByLang: Record<string, string> = {
+    fr: "J'ai besoin d'un plombier urgent à Montréal...",
+    en: "I need an urgent plumber in Montreal...",
+    es: "Necesito un fontanero urgente en Montreal...",
+    de: "Ich brauche dringend einen Klempner in Montreal...",
+    pt: "Preciso de um encanador urgente em Montreal...",
+    ar: "أحتاج إلى سباك عاجل في مونتريال...",
+  };
+
+  const classicSearchPlaceholderByLang: Record<string, string> = {
+    fr: "Rechercher des communautés, programmes...",
+    en: "Search communities, programs...",
+    es: "Buscar comunidades, programas...",
+    de: "Gemeinschaften, Programme suchen...",
+    pt: "Pesquisar comunidades, programas...",
+    ar: "ابحث عن المجتمعات والبرامج...",
+  };
+
+  const effectiveAiLanguage = aiLanguageFilter || currentLang || "fr";
+  const activeAiSearchPlaceholder =
+    aiSearchPlaceholderByLang[effectiveAiLanguage] ||
+    aiSearchPlaceholderByLang.fr;
+  const activeClassicSearchPlaceholder =
+    classicSearchPlaceholderByLang[effectiveAiLanguage] ||
+    classicSearchPlaceholderByLang.fr;
 
   // Dynamic home stats from API
   const [homeStats, setHomeStats] = useState<{
@@ -1275,7 +1318,7 @@ export default function Home() {
   );
 
   // ═══ AI Search Mode (Shared Brain) ═══
-  const [searchMode, setSearchMode] = useState<"classic" | "ai">("classic");
+  const [searchMode, setSearchMode] = useState<"classic" | "ai">("ai");
   const [aiResults, setAiResults] = useState<any>(null);
   const [isAiSearching, setIsAiSearching] = useState(false);
 
@@ -1731,7 +1774,11 @@ export default function Home() {
       const response = await fetch(`${API_BASE_URL}/api/search/intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, limit: 5 }),
+        body: JSON.stringify({
+          query,
+          limit: 5,
+          language: effectiveAiLanguage,
+        }),
       });
 
       if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -1773,7 +1820,7 @@ export default function Home() {
     } finally {
       setIsAiSearching(false);
     }
-  }, [debouncedSearchQuery, searchMode]);
+  }, [debouncedSearchQuery, searchMode, effectiveAiLanguage]);
 
   // Trigger AI search when mode is AI and query changes
   useEffect(() => {
@@ -2060,8 +2107,8 @@ export default function Home() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={
                         searchMode === "ai"
-                          ? "J'ai besoin d'un plombier urgent à Montréal..."
-                          : "Rechercher des communautés, programmes..."
+                          ? activeAiSearchPlaceholder
+                          : activeClassicSearchPlaceholder
                       }
                       className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                     />
@@ -2152,6 +2199,12 @@ export default function Home() {
                       . Essayez un autre secteur ou une autre ville.
                     </>
                   )}
+                  {aiResults.discovery?.needsClarification &&
+                    aiResults.discovery.clarification && (
+                      <p className="mt-2 text-amber-200/90">
+                        {aiResults.discovery.clarification}
+                      </p>
+                    )}
                 </motion.div>
               )}
 
@@ -2263,59 +2316,233 @@ export default function Home() {
                 className="max-w-[95vw] mx-auto mb-8 md:mb-12 overflow-hidden"
               >
                 <div className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl md:rounded-[2rem] p-6 md:p-10 shadow-2xl border border-emerald-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                    {[
-                      {
-                        label: "Catégorie artisanale",
-                        options: categoryOptions,
-                        type: "category",
-                      },
-                      {
-                        label: "Type de programme",
-                        options: categoryOptions,
-                        type: "program-type",
-                      },
-                      {
-                        label: "Lieu",
-                        options: locationOptions,
-                        type: "location",
-                      },
-                      {
-                        label: "Distance",
-                        options: rangeOptions,
-                        type: "range",
-                      },
-                    ].map((section) => (
-                      <div key={section.type}>
+                  {searchMode === "ai" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                      <div>
                         <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
-                          {section.label}
+                          Langue
                         </label>
                         <select
                           className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
-                          onChange={(e) =>
-                            e.target.value &&
+                          value={effectiveAiLanguage}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            setAiLanguageFilter(next);
                             addFilter(
-                              section.type,
-                              e.target.value,
-                              `${section.label}: ${e.target.selectedOptions[0].text}`,
-                            )
-                          }
-                          value={
-                            activeFilters.find((f) =>
-                              f.id.startsWith(section.type),
-                            )?.value || ""
-                          }
+                              "language",
+                              next,
+                              `Langue: ${aiLanguageOptions.find((opt) => opt.value === next)?.label || next}`,
+                            );
+                          }}
                         >
-                          <option value="">Sélectionner {section.label}</option>
-                          {section.options.map((opt) => (
+                          {aiLanguageOptions.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
                             </option>
                           ))}
                         </select>
                       </div>
-                    ))}
-                  </div>
+
+                      <div>
+                        <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                          Service
+                        </label>
+                        <select
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          onChange={(e) =>
+                            e.target.value &&
+                            addFilter(
+                              "service",
+                              e.target.value,
+                              `Service: ${e.target.selectedOptions[0].text}`,
+                            )
+                          }
+                          value={
+                            activeFilters.find((f) =>
+                              f.id.startsWith("service-"),
+                            )?.value || ""
+                          }
+                        >
+                          <option value="">Sélectionner un service</option>
+                          <option value="plumbing">
+                            Plomberie / réparation
+                          </option>
+                          <option value="electrical">Électricité</option>
+                          <option value="bike-shop">Magasin de vélos</option>
+                          <option value="clothing-store">
+                            Magasin de vêtements
+                          </option>
+                          <option value="restaurant">Restaurant</option>
+                          <option value="healthcare">Santé</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                          Emplacement
+                        </label>
+                        <select
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          onChange={(e) =>
+                            e.target.value &&
+                            addFilter(
+                              "location",
+                              e.target.value,
+                              `Lieu: ${e.target.selectedOptions[0].text}`,
+                            )
+                          }
+                          value={
+                            activeFilters.find((f) =>
+                              f.id.startsWith("location-"),
+                            )?.value || ""
+                          }
+                        >
+                          <option value="">Sélectionner un lieu</option>
+                          <option value="Toronto">Toronto</option>
+                          <option value="Windsor">Windsor</option>
+                          <option value="Montreal">Montréal</option>
+                          <option value="Vancouver">Vancouver</option>
+                          <option value="Ottawa">Ottawa</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                          Urgence
+                        </label>
+                        <select
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          onChange={(e) =>
+                            e.target.value &&
+                            addFilter(
+                              "urgency",
+                              e.target.value,
+                              `Urgence: ${e.target.selectedOptions[0].text}`,
+                            )
+                          }
+                          value={
+                            activeFilters.find((f) =>
+                              f.id.startsWith("urgency-"),
+                            )?.value || ""
+                          }
+                        >
+                          <option value="">Sélectionner</option>
+                          <option value="low">Faible</option>
+                          <option value="medium">Moyenne</option>
+                          <option value="high">Élevée</option>
+                          <option value="emergency">Urgence</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                          Action
+                        </label>
+                        <select
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          onChange={(e) =>
+                            e.target.value &&
+                            addFilter(
+                              "action",
+                              e.target.value,
+                              `Action: ${e.target.selectedOptions[0].text}`,
+                            )
+                          }
+                          value={
+                            activeFilters.find((f) =>
+                              f.id.startsWith("action-"),
+                            )?.value || ""
+                          }
+                        >
+                          <option value="">Sélectionner</option>
+                          <option value="find-service-provider">
+                            Trouver un prestataire
+                          </option>
+                          <option value="compare-options">
+                            Comparer les options
+                          </option>
+                          <option value="get-info">
+                            Obtenir de l'information
+                          </option>
+                          <option value="emergency-blast">
+                            Urgence immédiate
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                          Mots-clés
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="plombier, fuite, tuyau, réparation"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          onChange={(e) => {
+                            const value = e.target.value.trim();
+                            if (!value) return;
+                            addFilter("keywords", value, `Mots-clés: ${value}`);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                      {[
+                        {
+                          label: "Catégorie artisanale",
+                          options: categoryOptions,
+                          type: "category",
+                        },
+                        {
+                          label: "Type de programme",
+                          options: categoryOptions,
+                          type: "program-type",
+                        },
+                        {
+                          label: "Lieu",
+                          options: locationOptions,
+                          type: "location",
+                        },
+                        {
+                          label: "Distance",
+                          options: rangeOptions,
+                          type: "range",
+                        },
+                      ].map((section) => (
+                        <div key={section.type}>
+                          <label className="block text-sm md:text-base font-semibold text-gray-700 mb-2 md:mb-3">
+                            {section.label}
+                          </label>
+                          <select
+                            className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                            onChange={(e) =>
+                              e.target.value &&
+                              addFilter(
+                                section.type,
+                                e.target.value,
+                                `${section.label}: ${e.target.selectedOptions[0].text}`,
+                              )
+                            }
+                            value={
+                              activeFilters.find((f) =>
+                                f.id.startsWith(section.type),
+                              )?.value || ""
+                            }
+                          >
+                            <option value="">
+                              Sélectionner {section.label}
+                            </option>
+                            {section.options.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-6 md:mt-8 flex flex-wrap gap-4 justify-center">
                     <button
                       onClick={getUserLocation}

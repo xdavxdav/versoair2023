@@ -130,6 +130,7 @@ const PUBLIC_PATHS: string[] = [
   "/api/marketing/newsletters/archive",
   // VersoAI chat — public so the assistant works before login
   // NOTE: /api/ai/support/stream is intentionally EXCLUDED — it requires auth (JWT cookie)
+  "/api/search/intent",
   "/api/ai/status",
   "/api/ai/chat",
   "/api/ai/ask",

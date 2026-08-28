@@ -145,7 +145,7 @@ const SECTOR_TO_CATEGORIES: Record<string, string[]> = {
  * Query the businesses database based on parsed intent.
  * Sorting strategy changes based on urgency:
  *   urgency >= 8 → sort by response_time ASC (fastest responders first)
- *   urgency <= 3 → sort by rating DESC + review_count DESC
+ *   urgency <= 3 → sort by rating DESC + reviews_count DESC
  *   default → sort by tier rank (enterprise > premium > free) then rating
  */
 export async function searchRelevantBusinesses(
@@ -174,7 +174,7 @@ export async function searchRelevantBusinesses(
   if (intent.location) {
     params.push(`%${intent.location}%`);
     whereClauses.push(
-      `(b.location ILIKE $${params.length} OR b.city ILIKE $${params.length} OR c.name ILIKE $${params.length})`,
+      `(b.location ILIKE $${params.length} OR b.city_name ILIKE $${params.length} OR c.name ILIKE $${params.length})`,
     );
     searchMethod += "+location";
   }
@@ -214,7 +214,7 @@ export async function searchRelevantBusinesses(
     // Comparison shopping: best rated first
     orderClause = `
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC,
+      COALESCE(b.reviews_count, 0) DESC,
       CASE WHEN b.is_verified = true THEN 0 ELSE 1 END ASC
     `;
   } else {
@@ -225,7 +225,7 @@ export async function searchRelevantBusinesses(
            WHEN COALESCE(b.tier, 'free') = 'premium' THEN 1
            ELSE 2 END ASC,
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC
+      COALESCE(b.reviews_count, 0) DESC
     `;
   }
 
@@ -255,7 +255,7 @@ export async function searchRelevantBusinesses(
         COALESCE(b.country_code, c.code, '') AS country_code,
         COALESCE(LEFT(b.description, 200), '') AS description,
         b.rating,
-        COALESCE(b.review_count, 0) AS review_count,
+        COALESCE(b.reviews_count, 0) AS review_count,
         b.phone,
         b.website,
         COALESCE(b.is_verified, false) AS is_verified,
@@ -329,7 +329,7 @@ export async function searchRelevantBusinesses(
                 COALESCE(c.name, '') AS country,
                 COALESCE(b.country_code, c.code, '') AS country_code,
                 COALESCE(LEFT(b.description, 200), '') AS description,
-                b.rating, COALESCE(b.review_count, 0) AS review_count,
+                b.rating, COALESCE(b.reviews_count, 0) AS review_count,
                 b.phone, b.website,
                 COALESCE(b.is_verified, false) AS is_verified,
                 COALESCE(b.tier, 'free') AS tier,

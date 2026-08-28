@@ -38,6 +38,7 @@ const CSRF_EXEMPT_PATHS = [
   "/api/ai/chat", // VersoAI chat — same-origin, uses credentials:include
   "/api/ai/ask", // VersoAI grounded ask — same-origin, uses credentials:include
   "/api/ai/status", // VersoAI status check
+  "/api/search/intent", // Read-only natural-language search
   // GeoAdmin submission requests — email-only, no DB writes
   "/api/request/business",
   "/api/request/artist",

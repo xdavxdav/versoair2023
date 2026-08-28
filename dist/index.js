@@ -6309,6 +6309,7 @@ var PUBLIC_PATHS = [
   "/api/marketing/newsletters/archive",
   // VersoAI chat — public so the assistant works before login
   // NOTE: /api/ai/support/stream is intentionally EXCLUDED — it requires auth (JWT cookie)
+  "/api/search/intent",
   "/api/ai/status",
   "/api/ai/chat",
   "/api/ai/ask",
@@ -28693,6 +28694,15 @@ function ruleParse(query) {
     "best",
     "good",
     "top",
+    "someone",
+    "somebody",
+    "who",
+    "what",
+    "services",
+    "servicing",
+    "serve",
+    "serves",
+    "exactly",
     "je",
     "mon",
     "ma",
@@ -28891,7 +28901,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
   if (intent.location) {
     params.push(`%${intent.location}%`);
     whereClauses.push(
-      `(b.location ILIKE $${params.length} OR b.city ILIKE $${params.length} OR c.name ILIKE $${params.length})`
+      `(b.location ILIKE $${params.length} OR b.city_name ILIKE $${params.length} OR c.name ILIKE $${params.length})`
     );
     searchMethod += "+location";
   }
@@ -28923,7 +28933,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
   } else if (intent.urgency <= 3) {
     orderClause = `
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC,
+      COALESCE(b.reviews_count, 0) DESC,
       CASE WHEN b.is_verified = true THEN 0 ELSE 1 END ASC
     `;
   } else {
@@ -28933,7 +28943,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
            WHEN COALESCE(b.tier, 'free') = 'premium' THEN 1
            ELSE 2 END ASC,
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC
+      COALESCE(b.reviews_count, 0) DESC
     `;
   }
   const whereSQL = whereClauses.join(" AND ");
@@ -28958,7 +28968,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
         COALESCE(b.country_code, c.code, '') AS country_code,
         COALESCE(LEFT(b.description, 200), '') AS description,
         b.rating,
-        COALESCE(b.review_count, 0) AS review_count,
+        COALESCE(b.reviews_count, 0) AS review_count,
         b.phone,
         b.website,
         COALESCE(b.is_verified, false) AS is_verified,
@@ -29017,7 +29027,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
                 COALESCE(c.name, '') AS country,
                 COALESCE(b.country_code, c.code, '') AS country_code,
                 COALESCE(LEFT(b.description, 200), '') AS description,
-                b.rating, COALESCE(b.review_count, 0) AS review_count,
+                b.rating, COALESCE(b.reviews_count, 0) AS review_count,
                 b.phone, b.website,
                 COALESCE(b.is_verified, false) AS is_verified,
                 COALESCE(b.tier, 'free') AS tier,
@@ -38687,6 +38697,8 @@ router56.post("/intent", optionalAuth, async (req, res) => {
     const intent = await parseUserIntent(query);
     const results = await searchRelevantBusinesses(intent, limit);
     const elapsed = Date.now() - startTime;
+    const needsClarification = !intent.sector && !intent.location;
+    const clarification = needsClarification ? intent.language === "fr" ? "Que recherchez-vous exactement : une entreprise, un service, un lieu ou un professionnel ?" : "What are you looking for exactly: a business, a service, a place, or a professional?" : null;
     return res.json({
       success: true,
       intent: {
@@ -38704,6 +38716,10 @@ router56.post("/intent", optionalAuth, async (req, res) => {
         businesses: results.businesses,
         totalMatches: results.totalMatches,
         searchMethod: results.searchMethod
+      },
+      discovery: {
+        needsClarification,
+        clarification
       },
       emergency: results.isEmergency ? {
         isEmergency: true,
@@ -48253,6 +48269,8 @@ var CSRF_EXEMPT_PATHS = [
   // VersoAI grounded ask — same-origin, uses credentials:include
   "/api/ai/status",
   // VersoAI status check
+  "/api/search/intent",
+  // Read-only natural-language search
   // GeoAdmin submission requests — email-only, no DB writes
   "/api/request/business",
   "/api/request/artist",

@@ -252,6 +252,17 @@ const MAJOR_CITIES: Record<string, string> = {
 
 // ─── Language detection ───────────────────────────────────────────────────────
 
+function normalizeSelectedLanguage(
+  language?: string | null,
+): "en" | "fr" | "es" | "other" {
+  const normalized = (language ?? "").trim().toLowerCase();
+  if (!normalized) return "other";
+  if (normalized.startsWith("fr")) return "fr";
+  if (normalized.startsWith("en")) return "en";
+  if (normalized.startsWith("es")) return "es";
+  return "other";
+}
+
 function detectLanguage(text: string): "en" | "fr" | "es" | "other" {
   const fr =
     /\b(je|mon|ma|mes|nous|vous|dans|pour|avec|est|sont|les|des|une|cherche|trouver|besoin|près|chez|où)\b/i;
@@ -351,9 +362,11 @@ async function aiParse(query: string): Promise<Partial<IntentContext> | null> {
 
 // ─── Rule-Based Parse (instant, no LLM needed) ──────────────────────────────
 
-function ruleParse(query: string): IntentContext {
+function ruleParse(query: string, selectedLanguage?: string): IntentContext {
   const lower = query.toLowerCase().trim();
-  const language = detectLanguage(lower);
+  const language = selectedLanguage
+    ? normalizeSelectedLanguage(selectedLanguage)
+    : detectLanguage(lower);
   let sector: string | null = null;
   let sectorLabel: string | null = null;
   let urgency = 3; // default: moderate interest
@@ -419,6 +432,15 @@ function ruleParse(query: string): IntentContext {
     "best",
     "good",
     "top",
+    "someone",
+    "somebody",
+    "who",
+    "what",
+    "services",
+    "servicing",
+    "serve",
+    "serves",
+    "exactly",
     "je",
     "mon",
     "ma",
@@ -470,7 +492,10 @@ function ruleParse(query: string): IntentContext {
  * Parse a raw natural language query into a structured IntentContext.
  * Tries AI (Groq/Ollama) first for higher accuracy, falls back to rule-based.
  */
-export async function parseUserIntent(query: string): Promise<IntentContext> {
+export async function parseUserIntent(
+  query: string,
+  selectedLanguage?: string,
+): Promise<IntentContext> {
   if (!query || query.trim().length < 2) {
     return {
       sector: null,
@@ -480,14 +505,14 @@ export async function parseUserIntent(query: string): Promise<IntentContext> {
       countryCode: null,
       action: "info",
       keywords: [],
-      language: "en",
+      language: normalizeSelectedLanguage(selectedLanguage),
       confidence: 0,
       rawQuery: query,
     };
   }
 
   // Always do rule-based first (instant) as baseline
-  const ruleResult = ruleParse(query);
+  const ruleResult = ruleParse(query, selectedLanguage);
 
   // If query is short or simple, rule-based is sufficient
   if (query.trim().split(/\s+/).length <= 4 && ruleResult.confidence >= 0.7) {
@@ -528,6 +553,9 @@ export async function parseUserIntent(query: string): Promise<IntentContext> {
  * Quick sync parse (rule-based only, no network calls).
  * Use for instant UI feedback while AI parse runs in background.
  */
-export function parseUserIntentSync(query: string): IntentContext {
-  return ruleParse(query);
+export function parseUserIntentSync(
+  query: string,
+  selectedLanguage?: string,
+): IntentContext {
+  return ruleParse(query, selectedLanguage);
 }
