@@ -223,30 +223,34 @@ router.get("/sitemap.xml", async (_req: Request, res: Response) => {
 
 // ─── Robots.txt ──────────────────────────────────────────────────────────────
 
-export function robotsTxtHandler(_req: Request, res: Response) {
-  const robots = `User-agent: *
-Allow: /
-Allow: /businesses-directory
-Allow: /commerce
-Allow: /hotellerie
-Allow: /batiment
-Allow: /automobile
-Allow: /finances
-Allow: /divertissement
-Disallow: /api/
-Disallow: /auth/
-Disallow: /admin/
-Disallow: /dashboard
-Disallow: /profile
-Disallow: /geo-admin
-Disallow: /account/
-Disallow: /payments/
-Disallow: /contracts
-
-Sitemap: https://verso-air.com/api/seo/sitemap.xml
-
-# Pre-beta public demo: private app content remains hidden from search engines.
-`;
+export function robotsTxtHandler(req: Request, res: Response) {
+  const configuredUrl = (
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.PRODUCTION_URL ||
+    process.env.APP_PUBLIC_URL ||
+    process.env.VERSOAIR_URL
+  )?.trim();
+  const origin = (configuredUrl || req.protocol + "://" + req.get("host")).replace(/\/+$/, "");
+  const robots = "User-agent: *\n" +
+    "Allow: /\n" +
+    "Allow: /businesses-directory\n" +
+    "Allow: /commerce\n" +
+    "Allow: /hotellerie\n" +
+    "Allow: /batiment\n" +
+    "Allow: /automobile\n" +
+    "Allow: /finances\n" +
+    "Allow: /divertissement\n" +
+    "Disallow: /api/\n" +
+    "Allow: /api/seo/sitemap.xml\n" +
+    "Disallow: /auth/\n" +
+    "Disallow: /admin/\n" +
+    "Disallow: /dashboard\n" +
+    "Disallow: /profile\n" +
+    "Disallow: /geo-admin\n" +
+    "Disallow: /account/\n" +
+    "Disallow: /payments/\n" +
+    "Disallow: /contracts\n" +
+    "\nSitemap: " + origin + "/api/seo/sitemap.xml\n";
 
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
