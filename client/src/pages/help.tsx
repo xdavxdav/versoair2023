@@ -237,7 +237,7 @@ export default function HelpCenter() {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/contact">
-              <Button className="bg-slate-950 text-white hover:bg-slate-800">
+              <Button className="bg-amber-600 text-white hover:bg-amber-500">
                 Contact Us
               </Button>
             </Link>

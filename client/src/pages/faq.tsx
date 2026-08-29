@@ -401,15 +401,15 @@ export default function FaqPage() {
     const CatIcon = CATEGORY_ICONS[selectedTopic.faqCategory] || HelpCircle;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-[#f3efe9] text-slate-900">
         <ScrollToTop />
 
         {/* Back Header */}
-        <div className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-white/10">
+        <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
               onClick={closeTopic}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-slate-600 transition-colors hover:text-slate-900"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm">Back to FAQ</span>
@@ -436,9 +436,9 @@ export default function FaqPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-b from-slate-900/80 to-slate-800/50 rounded-xl border border-white/10 p-6 mb-6"
+            className="mb-6 rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_20px_45px_rgba(15,23,42,0.04)]"
           >
-            <h1 className="text-2xl font-bold text-white mb-4">
+            <h1 className="mb-4 text-2xl font-bold text-slate-900">
               {selectedTopic.title}
             </h1>
 
@@ -449,14 +449,14 @@ export default function FaqPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-medium text-sm">
+                  <span className="text-sm font-medium text-slate-900">
                     {selectedTopic.author.displayName}
                   </span>
                   {selectedTopic.author.verifiedBadge && (
                     <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
                   )}
                 </div>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {selectedTopic.author.profession} ·{" "}
                   {timeAgo(selectedTopic.createdAt)}
                 </span>
@@ -464,7 +464,7 @@ export default function FaqPage() {
             </div>
 
             {/* Content */}
-            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap leading-relaxed text-slate-700">
               {selectedTopic.content}
             </p>
 
@@ -882,7 +882,7 @@ export default function FaqPage() {
               </p>
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-800"
+                className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-amber-500"
               >
                 <Plus className="h-4 w-4" />
                 New Topic
@@ -1097,7 +1097,7 @@ export default function FaqPage() {
                 <button
                   onClick={handleCreateTopic}
                   disabled={!newTitle.trim() || !newContent.trim()}
-                  className="w-full rounded-xl bg-slate-950 px-4 py-3 font-medium text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="w-full rounded-xl bg-amber-600 px-4 py-3 font-medium text-white transition-all hover:bg-amber-500 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   Post Topic
                 </button>

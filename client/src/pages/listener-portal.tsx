@@ -13,10 +13,10 @@ export default function ListenerPortal() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-[#f3efe9] flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-400">Redirecting to Stream...</p>
+        <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-amber-200 border-t-amber-600" />
+        <p className="text-slate-600">Redirecting to Stream...</p>
       </div>
     </div>
   );

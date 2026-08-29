@@ -291,7 +291,7 @@ export default function Contact() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-semibold text-white transition-all hover:bg-slate-800"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-500"
               >
                 {isSubmitting ? (
                   <>

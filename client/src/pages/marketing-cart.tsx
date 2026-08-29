@@ -52,14 +52,14 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">Loading cart...</p>
+      <div className="min-h-screen bg-[#f3efe9] flex items-center justify-center">
+        <p className="text-slate-600">Loading cart...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-[#f3efe9] p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

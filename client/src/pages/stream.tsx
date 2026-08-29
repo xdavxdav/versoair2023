@@ -96,9 +96,9 @@ function ImmersiveBackground() {
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Solid dark base */}
-      <div className="absolute inset-0 bg-gray-950" />
-      {/* Deep space gradients */}
+      {/* Warm light base */}
+      <div className="absolute inset-0 bg-[#f3efe9]" />
+      {/* Soft ambient gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,60,20,0.15),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(80,40,120,0.08),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_20%_80%,rgba(20,80,120,0.06),transparent)]" />
@@ -386,7 +386,7 @@ export default function StreamPage() {
       <div className="md:hidden">
         <MusicMobileDock />
       </div>
-      <div className="min-h-screen bg-gray-950 text-white relative pb-32 overflow-x-hidden md:ml-16">
+      <div className="min-h-screen bg-[#f3efe9] text-slate-900 relative pb-32 overflow-x-hidden md:ml-16">
         <ImmersiveBackground />
 
         {/* ========================================= */}

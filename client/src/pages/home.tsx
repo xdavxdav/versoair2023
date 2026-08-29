@@ -537,9 +537,9 @@ const ResponsiveFooter = ({
   const { isAuthenticated } = useSubscription();
 
   return (
-    <footer className="relative bg-slate-950 text-white overflow-hidden">
-      <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-emerald-500/[0.03] blur-3xl rounded-full pointer-events-none" />
+    <footer className="relative overflow-hidden border-t border-slate-200 bg-[#f3efe9] text-slate-900">
+      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-amber-500/[0.03] blur-3xl rounded-full pointer-events-none" />
 
       <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         {/* Impact Metrics */}
@@ -1914,13 +1914,13 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
       <div className="relative flex min-h-[78vh] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.18),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f3efe9_25%,#efe7dd_100%)]" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="absolute h-2 w-2 rounded-full bg-white/20"
+              className="absolute h-2 w-2 rounded-full bg-slate-400/30"
               style={{
                 left: `${15 + i * 15}%`,
                 top: `${20 + (i % 3) * 25}%`,
@@ -1931,15 +1931,15 @@ export default function Home() {
           <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1400px] rounded-[30px] border border-white/10 bg-slate-950/90 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.5)] backdrop-blur-sm sm:p-8 lg:p-12">
-          <div className="mx-auto max-w-5xl text-center text-white">
+        <div className="relative z-10 mx-auto w-full max-w-[1400px] rounded-[30px] border border-slate-200 bg-white/80 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8 lg:p-12">
+          <div className="mx-auto max-w-5xl text-center text-slate-900">
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8 }}
               className="mb-4 md:mb-6"
             >
-              <span className="inline-flex rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200 md:px-4 md:py-2 md:text-sm">
+              <span className="inline-flex rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 md:px-4 md:py-2 md:text-sm">
                 🎨 Soutien aux artisans {countryMeta.nameIn}
               </span>
             </motion.div>
@@ -1948,7 +1948,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="mb-4 px-2 text-3xl font-bold tracking-tight sm:text-4xl md:text-6xl lg:text-7xl notranslate"
+              className="mb-4 px-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
               ArtiHuman Foundation
             </motion.h1>
@@ -1957,7 +1957,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
-              className="mx-auto max-w-3xl px-2 text-base text-slate-200 sm:text-lg md:text-xl lg:text-2xl"
+              className="mx-auto max-w-3xl px-2 text-base text-slate-600 sm:text-lg md:text-xl lg:text-2xl"
             >
               Soutenir les artisans et élever les communautés grâce à
               l'innovation humanitaire à travers {countryMeta.nameFr}

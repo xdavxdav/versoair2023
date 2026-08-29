@@ -3873,10 +3873,10 @@ export default function ArtistPortal() {
           if (!open) setEditingTrack(null);
         }}
       >
-        <DialogContent className="bg-gray-950 border-purple-500/30 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-slate-200 bg-white text-slate-900 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Edit className="h-5 w-5 text-purple-400" />
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
+              <Edit className="h-5 w-5 text-amber-600" />
               Modifier le titre
             </DialogTitle>
             <DialogDescription className="text-purple-200/60">

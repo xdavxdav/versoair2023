@@ -172,9 +172,9 @@ export default function JournalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* ── Sticky compact header with logo ── */}
-      <div className="sticky top-0 z-40 bg-gray-950/90 backdrop-blur-md border-b border-gray-800/60">
+      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
           {/* Left: logo + title */}
           <div className="flex items-center gap-2.5 min-w-0">
@@ -196,7 +196,11 @@ export default function JournalPage() {
               target="_blank"
               rel="noopener"
             >
-              <Button size="sm" variant="outline" className="border-gray-700 text-xs h-8">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-700 text-xs h-8"
+              >
                 <Download className="h-3.5 w-3.5 mr-1" />
                 <span className="hidden sm:inline">Weekly PDF</span>
               </Button>
@@ -204,7 +208,10 @@ export default function JournalPage() {
             {isLoggedIn && (
               <Dialog open={showCreate} onOpenChange={setShowCreate}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black text-xs h-8">
+                  <Button
+                    size="sm"
+                    className="bg-amber-500 hover:bg-amber-600 text-black text-xs h-8"
+                  >
                     <Plus className="h-3.5 w-3.5 mr-1" />
                     Submit Ad
                   </Button>
@@ -228,7 +235,9 @@ export default function JournalPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-gray-300 text-xs">Description *</Label>
+                      <Label className="text-gray-300 text-xs">
+                        Description *
+                      </Label>
                       <Textarea
                         className="bg-gray-800 border-gray-600 text-white min-h-[80px]"
                         value={form.description}
@@ -239,7 +248,9 @@ export default function JournalPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-gray-300 text-xs">Category *</Label>
+                      <Label className="text-gray-300 text-xs">
+                        Category *
+                      </Label>
                       <Select
                         value={form.category}
                         onValueChange={(v) => setForm({ ...form, category: v })}
@@ -325,7 +336,11 @@ export default function JournalPage() {
               </Dialog>
             )}
             <Link href="/marketing">
-              <Button size="sm" variant="ghost" className="text-gray-400 text-xs h-8 px-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-gray-400 text-xs h-8 px-2"
+              >
                 <ArrowLeft className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -380,7 +395,10 @@ export default function JournalPage() {
                       </h3>
                       <div className="flex items-center gap-1 shrink-0">
                         {statusIcon(listing.status)}
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                        >
                           {listing.status}
                         </Badge>
                       </div>
@@ -476,7 +494,8 @@ export default function JournalPage() {
                         {ed.type}
                       </p>
                       <p className="text-gray-500 text-[10px]">
-                        {new Date(ed.generated_at).toLocaleDateString()} · {ed.listing_count} ads
+                        {new Date(ed.generated_at).toLocaleDateString()} ·{" "}
+                        {ed.listing_count} ads
                       </p>
                     </div>
                     <a

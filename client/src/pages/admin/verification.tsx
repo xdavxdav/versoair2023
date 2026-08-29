@@ -129,25 +129,25 @@ export default function VerificationPage() {
   const pendingCount = data?.count || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#f3efe9] p-6 text-slate-900">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="mb-2 text-4xl font-bold text-slate-900">
             Business Verification
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600">
             Review and approve new property listings
           </p>
         </div>
 
         {/* Stats Card */}
-        <Card className="mb-6 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+        <Card className="mb-6 border border-amber-200 bg-amber-50/80 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl text-slate-900">
               {pendingCount} Pending Review
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600">
               {pendingCount === 0
                 ? "All properties have been verified!"
                 : `${pendingCount} ${pendingCount === 1 ? "property" : "properties"} waiting for approval`}
@@ -156,37 +156,37 @@ export default function VerificationPage() {
         </Card>
 
         {/* Properties Table */}
-        <Card>
+        <Card className="border border-slate-200 bg-white shadow-sm">
           <CardHeader>
-            <CardTitle>Pending Properties</CardTitle>
+            <CardTitle className="text-slate-900">Pending Properties</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-slate-500">
                 Loading pending properties...
               </div>
             ) : !data?.data?.length ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-slate-500">
                 <p>No pending properties for review</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800/50">
-                      <TableHead>Property</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead>Action</TableHead>
+                    <TableRow className="bg-slate-50">
+                      <TableHead className="text-slate-700">Property</TableHead>
+                      <TableHead className="text-slate-700">Location</TableHead>
+                      <TableHead className="text-slate-700">Type</TableHead>
+                      <TableHead className="text-slate-700">Price</TableHead>
+                      <TableHead className="text-slate-700">Rating</TableHead>
+                      <TableHead className="text-slate-700">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data?.data?.map((property) => (
                       <TableRow
                         key={property.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition"
+                        className="transition hover:bg-slate-50"
                       >
                         <TableCell className="font-medium">
                           {property.name}

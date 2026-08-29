@@ -8,7 +8,6 @@ import {
   Zap,
   TrendingUp,
 } from "lucide-react";
-import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
 
 interface Post {
   id: number;
@@ -47,6 +46,8 @@ const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes);
+  const [commentCount, setCommentCount] = useState(post.comments);
+  const [shareCount, setShareCount] = useState(post.shares);
   const [showParticles, setShowParticles] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState("");
@@ -55,13 +56,13 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleLike = () => {
     if (!isLiked) {
       setIsLiked(true);
-      setLikeCount(likeCount + 1);
+      setLikeCount((value) => value + 1);
       setShowParticles(true);
       setTimeout(() => setShowParticles(false), 600);
       onLike?.(post.id);
     } else {
       setIsLiked(false);
-      setLikeCount(likeCount - 1);
+      setLikeCount((value) => Math.max(0, value - 1));
       onLike?.(post.id);
     }
   };
@@ -85,6 +86,7 @@ const PostCard: React.FC<PostCardProps> = ({
     setIsSubmittingComment(true);
     try {
       await onComment?.(post.id, content);
+      setCommentCount((value) => value + 1);
       setComment("");
       setIsCommenting(false);
     } finally {
@@ -92,65 +94,65 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  const handleShare = () => {
+    onShare?.(post.id);
+    setShareCount((value) => value + 1);
+  };
+
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-br from-slate-900 to-slate-800 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-all duration-200 mb-4 group font-handstyle"
+      className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
-      {/* Header with author info */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
           <img
             src={post.author.avatar}
             alt={post.author.name}
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-cyan-500/20"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-cyan-100"
           />
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-white text-sm font-handstyle">
+              <p className="text-sm font-semibold text-slate-800">
                 {post.author.name}
               </p>
               {post.author.verified && (
-                <span className="text-cyan-400 text-xs font-handstyle">✓</span>
+                <span className="text-xs text-cyan-600">✓</span>
               )}
             </div>
-            <p className="text-xs text-slate-400 font-handstyle">
-              {post.author.profession}
-            </p>
-            <p className="text-xs text-slate-500 font-handstyle">
+            <p className="text-xs text-slate-500">{post.author.profession}</p>
+            <p className="text-xs text-slate-400">
               {formatTime(post.timestamp)}
             </p>
           </div>
         </div>
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.96 }}
+          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100"
+          aria-label="More actions"
         >
-          <MoreHorizontal className="w-4 h-4 text-slate-400" />
+          <MoreHorizontal className="h-4 w-4" />
         </motion.button>
       </div>
 
-      {/* Trending badge */}
       {post.isTrending && (
-        <div className="flex items-center gap-1 mb-3 text-xs text-amber-400 font-handstyle">
-          <Zap className="w-3 h-3" />
+        <div className="mb-3 flex items-center gap-1 text-xs font-medium text-amber-600">
+          <Zap className="h-3 w-3" />
           Trending
         </div>
       )}
 
-      {/* Content */}
-      <p className="text-slate-200 text-sm mb-4 leading-relaxed font-handstyle">
+      <p className="mb-4 text-[15px] leading-7 text-slate-700">
         {post.content}
       </p>
 
-      {/* Images */}
       {post.images && post.images.length > 0 && (
         <div
-          className={`grid gap-2 mb-4 rounded-lg overflow-hidden ${
+          className={`mb-4 grid gap-2 overflow-hidden rounded-xl ${
             post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"
           }`}
         >
@@ -159,20 +161,19 @@ const PostCard: React.FC<PostCardProps> = ({
               key={idx}
               src={image}
               alt={`Post image ${idx + 1}`}
-              whileHover={{ scale: 1.02 }}
-              className="w-full h-48 object-cover cursor-pointer"
+              whileHover={{ scale: 1.01 }}
+              className="h-48 w-full cursor-pointer object-cover"
             />
           ))}
         </div>
       )}
 
-      {/* Tags */}
       {post.tags && post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="mb-4 flex flex-wrap gap-2">
           {post.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition-colors cursor-pointer font-handstyle"
+              className="cursor-pointer rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
             >
               #{tag}
             </span>
@@ -180,117 +181,120 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      {/* Engagement score */}
       {post.engagementScore && post.engagementScore > 0 && (
-        <div className="flex items-center gap-1 mb-4 text-xs text-green-400 font-handstyle">
-          <TrendingUp className="w-3 h-3" />
+        <div className="mb-4 flex items-center gap-1 text-xs font-medium text-emerald-600">
+          <TrendingUp className="h-3 w-3" />
           {post.engagementScore.toFixed(1)} engagement score
         </div>
       )}
 
-      {/* Interaction stats */}
-      <div className="flex justify-between text-xs text-slate-400 mb-4 pb-4 border-b border-white/5 font-handstyle">
-        <span>{likeCount} likes</span>
-        <span>{post.comments} comments</span>
-        <span>{post.shares} shares</span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-4 text-xs text-slate-500">
+        <button
+          type="button"
+          onClick={handleLike}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+        >
+          <Heart
+            className={`h-3.5 w-3.5 ${isLiked ? "fill-pink-500 text-pink-500" : ""}`}
+          />
+          {likeCount} likes
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsCommenting((current) => !current)}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          {commentCount} comments
+        </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          {shareCount} shares
+        </button>
       </div>
 
-      {/* Like particles effect */}
       <AnimatePresence>
         {showParticles &&
           [0, 1, 2, 3, 4].map((i) => (
             <motion.div
               key={`particle-${i}`}
-              initial={{
-                x: 0,
-                y: 0,
-                opacity: 1,
-                scale: 1,
-              }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
               animate={{
                 x: (Math.random() - 0.5) * 100,
                 y: -100,
                 opacity: 0,
                 scale: 0,
               }}
-              transition={{
-                duration: 0.6,
-                ease: "easeOut",
-              }}
-              className="fixed pointer-events-none"
-              style={{
-                left: "50%",
-                top: "50%",
-              }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="pointer-events-none fixed"
+              style={{ left: "50%", top: "50%" }}
             >
               <span className="text-2xl">❤️</span>
             </motion.div>
           ))}
       </AnimatePresence>
 
-      {/* Action buttons */}
       <div className="flex gap-2">
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           onClick={handleLike}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all duration-200 ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
             isLiked
-              ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
-              : "bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10"
+              ? "border-pink-200 bg-pink-50 text-pink-600"
+              : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
           }`}
         >
-          <motion.div
-            animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
-            transition={{ duration: 0.3 }}
-          >
-            <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-          </motion.div>
-          <span className="text-xs font-medium font-handstyle">Like</span>
+          <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+          Like
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => setIsCommenting((current) => !current)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10 transition-all duration-200"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
         >
-          <MessageCircle className="w-4 h-4" />
-          <span className="text-xs font-medium font-handstyle">Comment</span>
+          <MessageCircle className="h-4 w-4" />
+          Comment
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onShare?.(post.id)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10 transition-all duration-200"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleShare}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
         >
-          <Share2 className="w-4 h-4" />
-          <span className="text-xs font-medium font-handstyle">Share</span>
+          <Share2 className="h-4 w-4" />
+          Share
         </motion.button>
       </div>
 
       {isCommenting && (
-        <div className="mt-3 flex gap-2 border-t border-white/5 pt-3">
+        <div className="mt-3 flex gap-2 border-t border-slate-200 pt-3">
           <input
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") submitComment();
+              if (event.key === "Enter") void submitComment();
             }}
             placeholder="Write a reply..."
-            className="min-w-0 flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/50"
+            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
           />
           <button
-            onClick={submitComment}
+            onClick={() => void submitComment()}
             disabled={!comment.trim() || isSubmittingComment}
-            className="px-3 py-2 rounded-lg bg-cyan-500 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Reply
           </button>
         </div>
       )}
-    </motion.div>
+    </motion.article>
   );
 };
 

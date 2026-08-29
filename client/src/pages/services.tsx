@@ -275,15 +275,15 @@ export default function Services() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="flex min-h-screen flex-col bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-primary via-primary/90 to-secondary py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
-        <div className="relative max-w-[95vw] mx-auto px-6 text-center">
+      <div className="relative overflow-hidden bg-[linear-gradient(135deg,#f8f5f1_0%,#f3efe9_28%,#efe7dd_100%)] py-24">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),transparent_30%)]" />
+        <div className="relative mx-auto max-w-[95vw] px-6 text-center">
           <motion.div variants={fadeInUp} initial="hidden" animate="visible">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-              <Award className="h-4 w-4 text-white" />
-              <span className="text-sm font-medium text-white">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/70 px-4 py-2 backdrop-blur-sm">
+              <Award className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-700">
                 Trusted by 500+ Enterprises
               </span>
             </div>
@@ -293,11 +293,11 @@ export default function Services() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-6xl font-bold text-white mb-6"
+            className="mb-6 text-5xl font-bold text-slate-900 md:text-6xl"
           >
             Verso Air Services
             <br />
-            <span className="text-yellow-300">
+            <span className="text-amber-600">
               Business Intelligence Solutions
             </span>
           </motion.h1>
@@ -306,7 +306,7 @@ export default function Services() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.2 }}
-            className="text-xl text-white/90 max-w-3xl mx-auto mb-10"
+            className="mx-auto mb-10 max-w-3xl text-xl text-slate-600"
           >
             Comprehensive analytics platform serving multiple industries with
             enterprise-grade security, real-time insights, and scalable
@@ -320,7 +320,7 @@ export default function Services() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link href="/signin">
-              <Button className="bg-white text-primary px-8 py-6 text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+              <Button className="bg-amber-600 px-8 py-6 text-lg text-white hover:bg-amber-500 hover:shadow-xl">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -328,7 +328,7 @@ export default function Services() {
             <Link href="/demo">
               <Button
                 variant="outline"
-                className="border-2 border-white bg-white/10 text-white px-8 py-6 text-lg hover:bg-white/20 backdrop-blur-sm"
+                className="border-2 border-slate-300 bg-white px-8 py-6 text-lg text-slate-800 hover:bg-slate-100"
               >
                 Request Demo
                 <ExternalLink className="ml-2 h-5 w-5" />
@@ -339,7 +339,7 @@ export default function Services() {
       </div>
 
       {/* Platform Overview */}
-      <section className="py-20 bg-white">
+      <section className="bg-white py-20">
         <div className="max-w-[95vw] mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -790,19 +790,19 @@ export default function Services() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-br from-primary via-primary/90 to-secondary">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12">
-            <h2 className="text-4xl font-bold text-white mb-6">
+      <section className="bg-[linear-gradient(135deg,#f8f5f1_0%,#f3efe9_28%,#efe7dd_100%)] py-20">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <div className="rounded-3xl border border-amber-200 bg-white/80 p-12 shadow-[0_20px_45px_rgba(15,23,42,0.04)] backdrop-blur-sm">
+            <h2 className="mb-6 text-4xl font-bold text-slate-900">
               Ready to Transform Your Business?
             </h2>
-            <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            <p className="mx-auto mb-10 max-w-2xl text-xl text-slate-600">
               Schedule a personalized demo to see how Verso Air can solve your
               specific business challenges.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/demo">
-                <Button className="bg-white text-primary px-10 py-6 text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all">
+                <Button className="bg-amber-600 px-10 py-6 text-lg text-white hover:bg-amber-500 hover:shadow-2xl">
                   Request Personalized Demo
                   <ExternalLink className="ml-2 h-5 w-5" />
                 </Button>
@@ -810,7 +810,7 @@ export default function Services() {
               <Link href="/sav">
                 <Button
                   variant="outline"
-                  className="border-2 border-white bg-white/10 text-white px-10 py-6 text-lg hover:bg-white/20"
+                  className="border-2 border-slate-300 bg-white px-10 py-6 text-lg text-slate-800 hover:bg-slate-100"
                 >
                   <MessageSquare className="mr-2 h-5 w-5" />
                   Contact Support

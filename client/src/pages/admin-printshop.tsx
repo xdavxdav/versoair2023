@@ -177,13 +177,13 @@ export default function AdminPrintshop() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
-      <div className="max-w-[95vw] mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Printer className="h-8 w-8 text-amber-400" />
+    <div className="min-h-screen bg-[#f3efe9] p-4 text-slate-900 md:p-8">
+      <div className="mx-auto max-w-[95vw]">
+        <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold text-slate-900">
+          <Printer className="h-8 w-8 text-amber-600" />
           Marketing Admin — Printshop Dashboard
         </h1>
-        <p className="text-gray-400 mb-8">
+        <p className="mb-8 text-slate-600">
           Manage print jobs, orders, journal listings, and marketing analytics
         </p>
 
@@ -216,13 +216,16 @@ export default function AdminPrintshop() {
                 color: "text-purple-400",
               },
             ].map((kpi) => (
-              <Card key={kpi.label} className="bg-gray-800/50 border-gray-700">
+              <Card
+                key={kpi.label}
+                className="border border-slate-200 bg-white shadow-sm"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <kpi.icon className={`h-8 w-8 ${kpi.color}`} />
                     <div>
-                      <p className="text-gray-400 text-xs">{kpi.label}</p>
-                      <p className="text-white text-2xl font-bold">
+                      <p className="text-xs text-slate-500">{kpi.label}</p>
+                      <p className="text-2xl font-bold text-slate-900">
                         {kpi.value}
                       </p>
                     </div>
@@ -235,11 +238,11 @@ export default function AdminPrintshop() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Print Queue */}
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="border border-slate-200 bg-white shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white flex items-center justify-between">
+              <CardTitle className="flex items-center justify-between text-slate-900">
                 <span className="flex items-center gap-2">
-                  <Printer className="h-5 w-5 text-amber-400" />
+                  <Printer className="h-5 w-5 text-amber-600" />
                   Print Queue ({queueData?.total_active || 0})
                 </span>
               </CardTitle>

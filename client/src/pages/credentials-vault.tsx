@@ -391,9 +391,9 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
           <motion.div
             animate={shake ? { x: [-12, 12, -8, 8, -4, 4, 0] } : {}}
             transition={{ duration: 0.5 }}
-            className="bg-gray-950 border border-gray-800 rounded-lg p-4 font-mono text-xs"
+            className="rounded-lg border border-slate-200 bg-white p-4 font-mono text-xs shadow-[0_20px_45px_rgba(15,23,42,0.04)]"
           >
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-800">
+            <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2">
               <div className="w-3 h-3 rounded-full bg-red-500" />
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
               <div className="w-3 h-3 rounded-full bg-green-500" />
@@ -536,8 +536,8 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
         </div>
 
         {/* Terminal log */}
-        <div className="bg-gray-950 border border-gray-800 rounded-lg p-4 font-mono text-xs max-h-64 overflow-y-auto">
-          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-800">
+        <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 font-mono text-xs shadow-[0_20px_45px_rgba(15,23,42,0.04)]">
+          <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-2">
             <div className="w-3 h-3 rounded-full bg-red-500" />
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
             <div className="w-3 h-3 rounded-full bg-green-500" />

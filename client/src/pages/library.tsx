@@ -73,9 +73,26 @@ export default function LibraryPage() {
   const { data: historyData } = useListeningHistory();
   const createPlaylist = useCreatePlaylist();
 
-  const playlists = playlistsData || [];
-  const likedTracks = likedData || [];
-  const history = historyData || [];
+  // Defensive normalization: ensure we always have arrays
+  const playlists = Array.isArray(playlistsData)
+    ? playlistsData
+    : Array.isArray(playlistsData?.playlists)
+      ? playlistsData.playlists
+      : [];
+  const likedTracks = Array.isArray(likedData)
+    ? likedData
+    : Array.isArray(likedData?.tracks)
+      ? likedData.tracks
+      : [];
+  const history = Array.isArray(historyData)
+    ? historyData
+    : Array.isArray(historyData?.history)
+      ? historyData.history
+      : [];
+  const selectedPlaylistMeta =
+    selectedPlaylistData?.playlist ?? selectedPlaylistData ?? null;
+  const selectedPlaylistTracks =
+    selectedPlaylistData?.tracks ?? selectedPlaylistMeta?.tracks ?? [];
 
   const handleCreatePlaylist = () => {
     if (!newPlaylistName.trim()) return;
@@ -259,7 +276,7 @@ export default function LibraryPage() {
       {/* Selected playlist detail */}
       {activeTab === "playlists" &&
         selectedPlaylist &&
-        selectedPlaylistData && (
+        selectedPlaylistMeta && (
           <div className="max-w-[95vw] mx-auto px-4">
             <button
               onClick={() => setSelectedPlaylist(null)}
@@ -275,21 +292,21 @@ export default function LibraryPage() {
               </div>
               <div className="flex-1">
                 <h2 className="text-xl font-bold">
-                  {selectedPlaylistData.name}
+                  {selectedPlaylistMeta.name}
                 </h2>
-                {selectedPlaylistData.description && (
+                {selectedPlaylistMeta.description && (
                   <p className="text-gray-500 text-sm mt-1">
-                    {selectedPlaylistData.description}
+                    {selectedPlaylistMeta.description}
                   </p>
                 )}
                 <p className="text-gray-600 text-xs mt-1">
-                  {selectedPlaylistData.tracks?.length || 0} titres
+                  {selectedPlaylistTracks.length} titres
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() =>
-                      selectedPlaylistData.tracks?.length &&
-                      audio.playTracks(selectedPlaylistData.tracks)
+                      selectedPlaylistTracks.length &&
+                      audio.playTracks(selectedPlaylistTracks)
                     }
                     className="px-4 py-2 bg-amber-500 text-black font-medium rounded-lg hover:bg-amber-400 text-sm flex items-center gap-1.5"
                   >
@@ -300,52 +317,50 @@ export default function LibraryPage() {
             </div>
 
             <div className="space-y-0.5">
-              {(selectedPlaylistData.tracks || []).map(
-                (track: any, i: number) => {
-                  const isCurrent = audio.currentTrack?.id === track.id;
-                  return (
-                    <div
-                      key={`${track.id}-${i}`}
-                      onClick={() => audio.playTrack(track)}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer group transition-all ${
-                        isCurrent ? "bg-amber-500/10" : "hover:bg-gray-800/50"
-                      }`}
+              {selectedPlaylistTracks.map((track: any, i: number) => {
+                const isCurrent = audio.currentTrack?.id === track.id;
+                return (
+                  <div
+                    key={`${track.id}-${i}`}
+                    onClick={() => audio.playTrack(track)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer group transition-all ${
+                      isCurrent ? "bg-amber-500/10" : "hover:bg-gray-800/50"
+                    }`}
+                  >
+                    <span
+                      className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-600"}`}
                     >
-                      <span
-                        className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-600"}`}
-                      >
-                        {i + 1}
-                      </span>
-                      <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
-                        {track.cover_art ? (
-                          <img
-                            src={track.cover_art}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                            <Music className="w-4 h-4 text-white/40" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm truncate ${isCurrent ? "text-amber-400" : "text-white"}`}
-                        >
-                          {track.title}
-                        </p>
-                        <p className="text-gray-500 text-xs truncate">
-                          {track.artist_name}
-                        </p>
-                      </div>
-                      <span className="text-gray-600 text-xs w-10 text-right">
-                        {formatDuration(track.duration)}
-                      </span>
+                      {i + 1}
+                    </span>
+                    <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                      {track.cover_art ? (
+                        <img
+                          src={track.cover_art}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
+                          <Music className="w-4 h-4 text-white/40" />
+                        </div>
+                      )}
                     </div>
-                  );
-                },
-              )}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-sm truncate ${isCurrent ? "text-amber-400" : "text-white"}`}
+                      >
+                        {track.title}
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {track.artist_name}
+                      </p>
+                    </div>
+                    <span className="text-gray-600 text-xs w-10 text-right">
+                      {formatDuration(track.duration)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

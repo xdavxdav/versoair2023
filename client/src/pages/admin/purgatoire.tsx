@@ -138,69 +138,69 @@ export default function PurgatoirePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-[#f3efe9] p-6 text-slate-900">
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <Shield className="w-6 h-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
+              <Shield className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Purgatoire</h1>
-              <p className="text-sm text-gray-400">Track Moderation Queue</p>
+              <h1 className="text-2xl font-bold text-slate-900">Purgatoire</h1>
+              <p className="text-sm text-slate-600">Track Moderation Queue</p>
             </div>
           </div>
           <button
             onClick={() =>
               queryClient.invalidateQueries({ queryKey: ["purgatoire"] })
             }
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
         </div>
 
         {/* ═══ STATS BANNER ═══ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             {
               label: "Pending Review",
               value: stats.pending || 0,
-              color: "text-amber-400",
-              bg: "bg-amber-500/10",
+              color: "text-amber-600",
+              bg: "bg-amber-50",
               icon: Clock,
             },
             {
               label: "Approved Today",
               value: stats.approved_today || 0,
-              color: "text-emerald-400",
-              bg: "bg-emerald-500/10",
+              color: "text-emerald-600",
+              bg: "bg-emerald-50",
               icon: CheckCircle2,
             },
             {
               label: "Rejected Today",
               value: stats.rejected_today || 0,
-              color: "text-red-400",
-              bg: "bg-red-500/10",
+              color: "text-red-600",
+              bg: "bg-red-50",
               icon: XCircle,
             },
             {
               label: "Artists Waiting",
               value: stats.artists_waiting || 0,
-              color: "text-blue-400",
-              bg: "bg-blue-500/10",
+              color: "text-blue-600",
+              bg: "bg-blue-50",
               icon: User,
             },
           ].map((s) => (
             <div
               key={s.label}
-              className={`${s.bg} border border-white/5 rounded-xl p-4`}
+              className={`${s.bg} rounded-xl border border-slate-200 p-4 shadow-sm`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <s.icon className={`w-4 h-4 ${s.color}`} />
-                <span className="text-xs text-gray-400 uppercase tracking-wider">
+              <div className="mb-1 flex items-center gap-2">
+                <s.icon className={`h-4 w-4 ${s.color}`} />
+                <span className="text-xs uppercase tracking-wider text-slate-600">
                   {s.label}
                 </span>
               </div>

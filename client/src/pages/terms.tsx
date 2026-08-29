@@ -21,7 +21,9 @@ export default function TermsOfService() {
             <FileText className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Terms of Service</h1>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Terms of Service
+            </h1>
             <p className="text-sm text-slate-500">
               Last updated: March 13, 2026
             </p>
@@ -321,7 +323,9 @@ export default function TermsOfService() {
             </h2>
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">Verso Air™ — Legal Team</p>
-              <p className="text-slate-500 text-sm">Email: legal@versoair.com</p>
+              <p className="text-slate-500 text-sm">
+                Email: legal@versoair.com
+              </p>
               <p className="text-slate-500 text-sm">
                 Platform:{" "}
                 <Link href="/contact" className="text-amber-600 underline">

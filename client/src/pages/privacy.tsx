@@ -21,7 +21,9 @@ export default function PrivacyPolicy() {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Privacy Policy</h1>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Privacy Policy
+            </h1>
             <p className="text-sm text-slate-500">
               Last updated: March 13, 2026
             </p>

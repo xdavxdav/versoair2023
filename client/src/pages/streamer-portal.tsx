@@ -904,15 +904,15 @@ export default function StreamerPortal() {
   const allArtists = artistsData?.artists || [];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,80,200,0.15),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(160,60,180,0.08),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(245,158,11,0.12),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(251,191,36,0.08),transparent)]" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-950/80 backdrop-blur-xl border-b border-white/5">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 py-4">
           {/* Back button */}
           <button
@@ -929,8 +929,10 @@ export default function StreamerPortal() {
                 <Radio className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Streamer Portal</h1>
-                <p className="text-xs text-gray-500">
+                <h1 className="text-xl font-bold text-slate-900">
+                  Streamer Portal
+                </h1>
+                <p className="text-xs text-slate-500">
                   Comment & react to music
                 </p>
               </div>
@@ -938,7 +940,11 @@ export default function StreamerPortal() {
 
             <div className="flex items-center gap-2">
               <Link href="/stream">
-                <Button variant="ghost" size="sm" className="text-gray-400">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-600 hover:text-slate-900"
+                >
                   <Music className="w-4 h-4 mr-1" />
                   Browse
                 </Button>

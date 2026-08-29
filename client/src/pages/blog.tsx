@@ -386,7 +386,76 @@ export default function BlogPage() {
     }
   };
 
-  const handleShareUser = (userId: number) => {};
+  const handleSharePost = async (postId: number) => {
+    const shareTarget = posts.find((post) => post.id === postId);
+    const shareText = shareTarget?.content
+      ? `${shareTarget.content.slice(0, 120)}${shareTarget.content.length > 120 ? "…" : ""}`
+      : "Check out this community post on Verso Air";
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Verso Air community post",
+          text: shareText,
+          url: `${window.location.origin}/blog`,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(
+          `${shareText} — ${window.location.origin}/blog`,
+        );
+      }
+
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? { ...post, shareCount: (post.shareCount || 0) + 1 }
+            : post,
+        ),
+      );
+
+      toast({
+        title: "Post shared",
+        description: "The link is ready to send or copy.",
+      });
+    } catch {
+      toast({
+        title: "Share cancelled",
+        description: "You can still copy the link manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareUser = async (userId: number) => {
+    const account = TEST_ACCOUNTS.find((item) => item.id === userId);
+    if (!account) return;
+
+    const shareText = `Meet ${account.name} on Verso Air`;
+    const shareUrl = `${window.location.origin}/user/${userId}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: account.name,
+          text: shareText,
+          url: shareUrl,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareText} — ${shareUrl}`);
+      }
+
+      toast({
+        title: "Profile shared",
+        description: `You shared ${account.name}'s profile.`,
+      });
+    } catch {
+      toast({
+        title: "Share cancelled",
+        description: "Your profile link was not sent.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCreatePost = (postData: {
     content: string;
@@ -426,48 +495,50 @@ export default function BlogPage() {
       : posts;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br linear-gradient(135deg,#f8f5f1 0%,#f2ede6 25%,#efe7dd 100%) font-handstyle">
+    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(86,155,255,0.12),_transparent_34%),linear-gradient(135deg,#f8f5f1_0%,#f2ede6_38%,#efe7dd_100%)] text-slate-800 antialiased">
       <ScrollToTop />
       {isContentNavPath(currentPath) && (
         <div className="px-4 pt-4">
           <Link href="/">
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/20 transition-colors text-sm font-medium">
+            <button className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/15">
               <span aria-hidden="true">←</span>
-              Retour à l'accueil
+              Back to home
             </button>
           </Link>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="mx-auto w-full max-w-[95vw] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Feed Column */}
-          <div className="lg:col-span-2 space-y-6">
-            <p className="text-sm text-slate-400">
-              Keep threads private, then publish your own sent message when it
-              deserves a wider audience.
-            </p>
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur-sm">
+              <p className="text-sm leading-6 text-slate-600">
+                Keep threads private, then publish your own updates when they
+                deserve a wider audience.
+              </p>
+            </div>
 
             {/* Sort Controls */}
-            <div className="flex items-center gap-2 pb-4 border-b border-white/10">
-              <Filter className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
+              <Filter className="h-4 w-4 text-slate-500" />
               <button
                 onClick={() => setSortBy("recent")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-handstyle ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "recent"
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "text-slate-400 hover:text-slate-900"
+                    ? "bg-cyan-500 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Recent
               </button>
               <button
                 onClick={() => setSortBy("trending")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all font-handstyle ${
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "trending"
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "text-slate-400 hover:text-slate-900"
+                    ? "bg-cyan-500 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Trending
@@ -476,9 +547,9 @@ export default function BlogPage() {
                 onClick={() =>
                   window.dispatchEvent(new Event("messenger:open"))
                 }
-                className="ml-auto flex items-center gap-2 px-3 py-2 bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 hover:bg-cyan-500/25 rounded-lg text-sm font-medium transition-colors"
+                className="ml-auto flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="h-4 w-4" />
                 Messages
               </button>
             </div>
@@ -528,6 +599,7 @@ export default function BlogPage() {
                     onComment={(postId, content) =>
                       handleComment(postId, content)
                     }
+                    onShare={handleSharePost}
                   />
                 </motion.div>
               );
@@ -553,9 +625,9 @@ export default function BlogPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+              className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition-colors"
             >
-              <h2 className="text-lg font-semibold text-slate-900 mb-3 font-handstyle">
+              <h2 className="mb-3 text-lg font-semibold text-slate-800">
                 Who to Follow
               </h2>
               <div className="space-y-3">
@@ -582,7 +654,7 @@ export default function BlogPage() {
                     />
                     <p className="mt-1 text-xs text-slate-500">
                       Staff test sign-in:{" "}
-                      <span className="text-cyan-300">{user.loginName}</span>
+                      <span className="text-cyan-700">{user.loginName}</span>
                     </p>
                   </motion.div>
                 ))}
@@ -594,9 +666,9 @@ export default function BlogPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+              className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition-colors"
             >
-              <h3 className="text-lg font-semibold text-slate-900 mb-3 font-handstyle">
+              <h3 className="mb-3 text-lg font-semibold text-slate-800">
                 Trends
               </h3>
               <div className="space-y-2">
@@ -609,13 +681,13 @@ export default function BlogPage() {
                   <motion.button
                     key={trend.tag}
                     whileHover={{ x: 4 }}
-                    className="w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors font-handstyle"
+                    className="w-full rounded-lg p-2 text-left transition-colors hover:bg-slate-100"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-cyan-400 font-medium">
+                      <span className="font-medium text-cyan-700">
                         {trend.tag}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-500">
                         {trend.posts}
                       </span>
                     </div>

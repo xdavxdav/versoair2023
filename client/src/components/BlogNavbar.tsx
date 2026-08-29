@@ -263,8 +263,8 @@ export default function BlogNavbar({
               )}
             </div>
 
-            {/* ── Centered nav (desktop only) ── */}
-            <div className="hidden md:flex items-center gap-1 flex-1 justify-center min-w-0">
+            {/* ── Centered nav (desktop only) — scrollable when content overflows ── */}
+            <div className="hidden md:flex items-center gap-1 flex-1 justify-center min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-2">
               {/* Entreprises */}
               <div
                 className="relative"
