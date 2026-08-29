@@ -363,27 +363,24 @@ export default function BlogPage() {
   };
 
   const handleComment = async (postId: number, content: string) => {
-    try {
-      const response = await authenticatedFetch(
-        `/api/social/posts/${postId}/comments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content }),
-        },
-      );
-      if (response.ok) {
-        setPosts((current) =>
-          current.map((post) =>
-            post.id === postId
-              ? { ...post, commentCount: (post.commentCount || 0) + 1 }
-              : post,
-          ),
-        );
-      }
-    } catch {
-      // A failed comment stays unsent and can be retried.
-    }
+    const response = await authenticatedFetch(
+      `/api/social/posts/${postId}/comments`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      },
+    );
+    if (!response.ok) throw new Error("Comment could not be posted");
+  };
+
+  const handleFetchComments = async (postId: number) => {
+    const response = await authenticatedFetch(
+      `/api/social/posts/${postId}/comments?limit=50`,
+    );
+    if (!response.ok) throw new Error("Comments could not be loaded");
+    const payload = await response.json();
+    return payload.data || [];
   };
 
   const handleSharePost = async (postId: number) => {
@@ -404,6 +401,12 @@ export default function BlogPage() {
           `${shareText} — ${window.location.origin}/blog`,
         );
       }
+
+      const shareRecord = await authenticatedFetch(
+        `/api/social/posts/${postId}/share`,
+        { method: "POST" },
+      );
+      if (!shareRecord.ok) throw new Error("Share could not be recorded");
 
       setPosts((current) =>
         current.map((post) =>
@@ -460,11 +463,15 @@ export default function BlogPage() {
   const handleCreatePost = (postData: {
     content: string;
     imageUrls?: string[];
+    videoUrl?: string;
+    allowMediaDownload?: boolean;
     tags?: string[];
   }) => {
     apiCreatePost({
       content: postData.content,
       imageUrls: postData.imageUrls,
+      videoUrl: postData.videoUrl,
+      allowMediaDownload: postData.allowMediaDownload,
       tags: postData.tags,
     });
     setIsCreatePostOpen(false);
@@ -570,6 +577,8 @@ export default function BlogPage() {
                 },
                 content: post.content,
                 images: post.imageUrls,
+                videoUrl: post.videoUrl,
+                allowMediaDownload: post.allowMediaDownload,
                 timestamp: post.createdAt,
                 likes: post.likeCount || 0,
                 comments: post.commentCount || 0,
@@ -599,6 +608,7 @@ export default function BlogPage() {
                     onComment={(postId, content) =>
                       handleComment(postId, content)
                     }
+                    onFetchComments={handleFetchComments}
                     onShare={handleSharePost}
                   />
                 </motion.div>

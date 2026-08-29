@@ -128,6 +128,7 @@ export async function ensureAllTables(): Promise<void> {
     const INBOX_MESSAGES_ADDITIONS = [
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+      `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`,
     ];
     for (const alt of INBOX_MESSAGES_ADDITIONS) {
       try {
@@ -499,6 +500,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       image_urls TEXT[],
       video_url TEXT,
       media_type TEXT,
+      allow_media_download BOOLEAN DEFAULT false,
       post_type TEXT DEFAULT 'discussion',
       faq_category TEXT,
       is_resolved BOOLEAN DEFAULT false,
@@ -537,6 +539,18 @@ const TABLE_STATEMENTS: TableDef[] = [
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW(),
       deleted_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "social_audit_events",
+    sql: `CREATE TABLE IF NOT EXISTS social_audit_events (
+      id SERIAL PRIMARY KEY,
+      actor_user_id INTEGER,
+      post_id INTEGER,
+      event_type TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      metadata JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
   {

@@ -23,6 +23,27 @@ import {
 
 const router = Router();
 
+async function recordSocialAudit(event: {
+  actorUserId?: number | string;
+  postId?: number;
+  eventType: string;
+  outcome: string;
+  metadata?: Record<string, unknown>;
+}) {
+  await pool.query(
+    `INSERT INTO social_audit_events
+      (actor_user_id, post_id, event_type, outcome, metadata)
+     VALUES ($1, $2, $3, $4, $5::jsonb)`,
+    [
+      event.actorUserId || null,
+      event.postId || null,
+      event.eventType,
+      event.outcome,
+      JSON.stringify(event.metadata || {}),
+    ],
+  );
+}
+
 /**
  * Allowed `postType` values. Extended beyond the original
  * discussion/job/trend/announcement/faq set to cover the thread feeds
@@ -310,6 +331,8 @@ router.post("/posts", async (req: Request, res: Response) => {
     const {
       content,
       imageUrls,
+      videoUrl,
+      allowMediaDownload = false,
       tags,
       postType = "discussion",
       trackId,
@@ -354,12 +377,27 @@ router.post("/posts", async (req: Request, res: Response) => {
         authorId: Number(authorId),
         content,
         imageUrls,
+        videoUrl: videoUrl || null,
+        allowMediaDownload: Boolean(allowMediaDownload),
         tags,
         postType,
         trackId: trackId ? Number(trackId) : null,
-        mediaType: trackId ? "audio" : imageUrls ? "image" : "text",
+        mediaType: trackId
+          ? "audio"
+          : videoUrl
+            ? "video"
+            : imageUrls
+              ? "image"
+              : "text",
       })
       .returning();
+
+    await recordSocialAudit({
+      actorUserId: appUserId,
+      postId: newPost[0]?.id,
+      eventType: "media_download_permission",
+      outcome: allowMediaDownload ? "enabled" : "disabled",
+    });
 
     res.status(201).json({
       success: true,
@@ -369,6 +407,145 @@ router.post("/posts", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error creating post:", error);
     res.status(500).json({ success: false, error: "Failed to create post" });
+  }
+});
+
+// POST /api/social/audit/screenshot - record a visual audit capture
+router.post("/audit/screenshot", async (req: Request, res: Response) => {
+  try {
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      eventType: "screenshot_capture",
+      outcome: "captured",
+      metadata: {
+        path: typeof req.body?.path === "string" ? req.body.path : "unknown",
+        viewport:
+          typeof req.body?.viewport === "string"
+            ? req.body.viewport
+            : "unknown",
+        theme: typeof req.body?.theme === "string" ? req.body.theme : "unknown",
+      },
+    });
+    return res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("Error recording screenshot audit:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to record screenshot audit" });
+  }
+});
+
+// GET /api/social/posts/:postId/media-download - authorize post media download
+router.get(
+  "/posts/:postId/media-download",
+  async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db
+        .select({
+          imageUrls: socialPosts.imageUrls,
+          videoUrl: socialPosts.videoUrl,
+          allowMediaDownload: socialPosts.allowMediaDownload,
+        })
+        .from(socialPosts)
+        .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+        .limit(1);
+
+      if (!post || !post.allowMediaDownload) {
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads",
+        });
+      }
+
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res
+          .status(404)
+          .json({ success: false, error: "No downloadable media found" });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to authorize media download" });
+    }
+  },
+);
+
+// GET /api/social/posts/:postId/media-download - authorize post media download
+router.get(
+  "/posts/:postId/media-download",
+  async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db
+        .select({
+          imageUrls: socialPosts.imageUrls,
+          videoUrl: socialPosts.videoUrl,
+          allowMediaDownload: socialPosts.allowMediaDownload,
+        })
+        .from(socialPosts)
+        .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+        .limit(1);
+      if (!post || !post.allowMediaDownload) {
+        await recordSocialAudit({
+          actorUserId: req.user?.userId,
+          postId,
+          eventType: "media_download",
+          outcome: "denied",
+        });
+        return res
+          .status(403)
+          .json({
+            success: false,
+            error: "The author has disabled media downloads",
+          });
+      }
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res
+          .status(404)
+          .json({ success: false, error: "No downloadable media found" });
+      await recordSocialAudit({
+        actorUserId: req.user?.userId,
+        postId,
+        eventType: "media_download",
+        outcome: "allowed",
+      });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to authorize media download" });
+    }
+  },
+);
+
+// POST /api/social/posts/:postId/share - record a successful share
+router.post("/posts/:postId/share", async (req: Request, res: Response) => {
+  try {
+    const postId = Number(req.params.postId);
+    const [updatedPost] = await db
+      .update(socialPosts)
+      .set({ shareCount: sql`COALESCE(${socialPosts.shareCount}, 0) + 1` })
+      .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+      .returning({ shareCount: socialPosts.shareCount });
+    if (!updatedPost)
+      return res.status(404).json({ success: false, error: "Post not found" });
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      postId,
+      eventType: "post_share",
+      outcome: "success",
+    });
+    return res.json({ success: true, shareCount: updatedPost.shareCount });
+  } catch (error) {
+    console.error("Error recording share:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to record share" });
   }
 });
 

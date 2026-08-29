@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
@@ -20,6 +20,8 @@ interface Post {
   };
   content: string;
   images?: string[];
+  videoUrl?: string;
+  allowMediaDownload?: boolean;
   timestamp: string;
   likes: number;
   comments: number;
@@ -29,11 +31,22 @@ interface Post {
   tags?: string[];
 }
 
+interface PostComment {
+  id: number;
+  content: string;
+  createdAt?: string;
+  author?: {
+    name?: string;
+    avatar?: string;
+  };
+}
+
 interface PostCardProps {
   post: Post;
   onLike?: (postId: number) => void;
   onComment?: (postId: number, content: string) => Promise<void> | void;
-  onShare?: (postId: number) => void;
+  onFetchComments?: (postId: number) => Promise<PostComment[]>;
+  onShare?: (postId: number) => Promise<void> | void;
   liked?: boolean;
 }
 
@@ -42,6 +55,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onLike,
   onComment,
   onShare,
+  onFetchComments,
   liked = false,
 }) => {
   const [isLiked, setIsLiked] = useState(liked);
@@ -52,6 +66,24 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsError, setCommentsError] = useState("");
+  const [showAllComments, setShowAllComments] = useState(false);
+
+  useEffect(() => {
+    if (!isCommenting || !onFetchComments || commentsLoaded) return;
+    setIsLoadingComments(true);
+    setCommentsError("");
+    onFetchComments(post.id)
+      .then((loadedComments) => {
+        setComments(loadedComments);
+        setCommentsLoaded(true);
+      })
+      .catch(() => setCommentsError("Comments could not be loaded."))
+      .finally(() => setIsLoadingComments(false));
+  }, [commentsLoaded, isCommenting, onFetchComments, post.id]);
 
   const handleLike = () => {
     if (!isLiked) {
@@ -87,6 +119,15 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       await onComment?.(post.id, content);
       setCommentCount((value) => value + 1);
+      setComments((current) => [
+        {
+          id: Date.now(),
+          content,
+          author: { name: "You" },
+          createdAt: new Date().toISOString(),
+        },
+        ...current,
+      ]);
       setComment("");
       setIsCommenting(false);
     } finally {
@@ -94,8 +135,8 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleShare = () => {
-    onShare?.(post.id);
+  const handleShare = async () => {
+    await onShare?.(post.id);
     setShareCount((value) => value + 1);
   };
 
@@ -168,6 +209,26 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
+      {post.videoUrl && (
+        <div className="mb-4 overflow-hidden rounded-xl">
+          <video
+            src={post.videoUrl}
+            controls
+            className="max-h-[28rem] w-full bg-slate-950"
+          />
+        </div>
+      )}
+
+      {post.allowMediaDownload && (post.images?.length || post.videoUrl) && (
+        <a
+          href={`/api/social/posts/${post.id}/media-download`}
+          className="mb-4 inline-flex rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          download
+        >
+          Download media
+        </a>
+      )}
+
       {post.tags && post.tags.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
           {post.tags.map((tag) => (
@@ -201,7 +262,10 @@ const PostCard: React.FC<PostCardProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setIsCommenting((current) => !current)}
+          onClick={() => {
+            setIsCommenting((current) => !current);
+            setShowAllComments(false);
+          }}
           className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
         >
           <MessageCircle className="h-3.5 w-3.5" />
@@ -209,7 +273,7 @@ const PostCard: React.FC<PostCardProps> = ({
         </button>
         <button
           type="button"
-          onClick={handleShare}
+          onClick={() => void handleShare()}
           className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
         >
           <Share2 className="h-3.5 w-3.5" />
@@ -266,7 +330,7 @@ const PostCard: React.FC<PostCardProps> = ({
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          onClick={handleShare}
+          onClick={() => void handleShare()}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
         >
           <Share2 className="h-4 w-4" />
@@ -275,23 +339,55 @@ const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {isCommenting && (
-        <div className="mt-3 flex gap-2 border-t border-slate-200 pt-3">
-          <input
-            value={comment}
-            onChange={(event) => setComment(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void submitComment();
-            }}
-            placeholder="Write a reply..."
-            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
-          />
-          <button
-            onClick={() => void submitComment()}
-            disabled={!comment.trim() || isSubmittingComment}
-            className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Reply
-          </button>
+        <div className="mt-3 border-t border-slate-200 pt-3">
+          <div className="mb-3 space-y-2">
+            {isLoadingComments && (
+              <p className="text-sm text-slate-500">Loading comments...</p>
+            )}
+            {commentsError && (
+              <p className="text-sm text-rose-600">{commentsError}</p>
+            )}
+            {!isLoadingComments && !commentsError && comments.length === 0 && (
+              <p className="text-sm text-slate-500">No comments yet.</p>
+            )}
+            {comments.slice(0, showAllComments ? undefined : 3).map((item) => (
+              <div key={item.id} className="rounded-xl bg-slate-50 px-3 py-2">
+                <p className="text-xs font-semibold text-slate-700">
+                  {item.author?.name || "Community member"}
+                </p>
+                <p className="text-sm text-slate-700">{item.content}</p>
+              </div>
+            ))}
+            {comments.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setShowAllComments((current) => !current)}
+                className="text-sm font-medium text-cyan-700 hover:text-cyan-600"
+              >
+                {showAllComments
+                  ? "Show fewer comments"
+                  : `View all ${comments.length} comments`}
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void submitComment();
+              }}
+              placeholder="Write a comment..."
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
+            />
+            <button
+              onClick={() => void submitComment()}
+              disabled={!comment.trim() || isSubmittingComment}
+              className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Comment
+            </button>
+          </div>
         </div>
       )}
     </motion.article>

@@ -14,6 +14,8 @@ interface CreatePostModalProps {
   onSubmit: (postData: {
     content: string;
     imageUrls?: string[];
+    videoUrl?: string;
+    allowMediaDownload?: boolean;
     tags?: string[];
   }) => void;
   isLoading?: boolean;
@@ -29,6 +31,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [content, setContent] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [allowMediaDownload, setAllowMediaDownload] = useState(false);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -46,10 +49,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       onSubmit({
         content: content.trim(),
         tags: tags.length > 0 ? tags : undefined,
+        allowMediaDownload,
       });
       setContent("");
       setTags([]);
       setTagInput("");
+      setAllowMediaDownload(false);
       onClose();
     }
   };
@@ -157,6 +162,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 </div>
 
                 {/* Character Count */}
+                <label className="flex items-center gap-2 text-sm text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={allowMediaDownload}
+                    onChange={(event) =>
+                      setAllowMediaDownload(event.target.checked)
+                    }
+                    disabled={isLoading}
+                    className="h-4 w-4 accent-cyan-500"
+                  />
+                  Allow visitors to download this post's media
+                </label>
+
                 <div className="text-xs text-slate-400 text-right font-handstyle">
                   {content.length} characters
                 </div>

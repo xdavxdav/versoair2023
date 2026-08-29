@@ -78,6 +78,7 @@ export const socialPosts = pgTable(
     imageUrls: text("image_urls").array(), // Array of image URLs
     videoUrl: text("video_url"),
     mediaType: text("media_type"), // text, image, video, link
+    allowMediaDownload: boolean("allow_media_download").default(false),
     postType: text("post_type").default("discussion"), // discussion, job, trend, announcement, faq
     faqCategory: text("faq_category"), // For FAQ posts: general, account, billing, technical, business, platform
     isResolved: boolean("is_resolved").default(false), // For FAQ: mark as answered

@@ -27,22 +27,22 @@
   --verso-danger: #ef4444;
   --verso-text: #f8fafc;
   --verso-text-muted: #94a3b8;
-  --background: var(--verso-navy);
-  --foreground: var(--verso-text);
-  --muted: var(--verso-navy-muted);
-  --muted-foreground: var(--verso-text-muted);
-  --popover: var(--verso-navy-muted);
-  --popover-foreground: var(--verso-text);
-  --card: var(--verso-navy-muted);
-  --card-foreground: var(--verso-text);
-  --border: #334155;
-  --input: #334155;
-  --primary: var(--verso-amber);
-  --primary-foreground: var(--verso-text);
-  --secondary: var(--verso-violet);
-  --secondary-foreground: var(--verso-text);
-  --accent: #334155;
-  --accent-foreground: var(--verso-text);
+  --background: #f8f5f1;
+  --foreground: #0f172a;
+  --muted: #f1ece5;
+  --muted-foreground: #475569;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --primary: #b45309;
+  --primary-foreground: #ffffff;
+  --secondary: #0e7490;
+  --secondary-foreground: #ffffff;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
   --destructive: var(--verso-danger);
   --destructive-foreground: var(--verso-text);
   --ring: var(--verso-amber-bright);
@@ -70,6 +70,10 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+}
+
+.light {
+  color-scheme: light;
 }
 
 @layer base {

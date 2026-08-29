@@ -406,6 +406,11 @@ export function AccountSettingsModal({
   const updatePref = (key: keyof UserPreferences, value: any) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
     setPrefsChanged(true);
+    if (key === "theme") {
+      window.dispatchEvent(
+        new CustomEvent("verso:theme-change", { detail: value }),
+      );
+    }
   };
 
   const roleLabel = (role: string) => {

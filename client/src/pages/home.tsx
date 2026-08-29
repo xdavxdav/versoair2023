@@ -1914,7 +1914,22 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
       <div className="relative flex min-h-[78vh] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f3efe9_25%,#efe7dd_100%)]" />
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/Logo-page.png"
+          aria-hidden="true"
+        >
+          <source
+            src="https://videos.pexels.com/video-files/3195394/3195394-hd_1920_1080_25fps.mp4"
+            type="video/mp4"
+          />
+        </video>
+        <div className="absolute inset-0 bg-slate-950/45 dark:bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.2),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.08),rgba(15,23,42,0.42))]" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -1931,8 +1946,8 @@ export default function Home() {
           <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1400px] rounded-[30px] border border-slate-200 bg-white/80 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8 lg:p-12">
-          <div className="mx-auto max-w-5xl text-center text-slate-900">
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-2 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
+          <div className="mx-auto max-w-5xl text-center text-white drop-shadow-[0_2px_18px_rgba(15,23,42,0.45)]">
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1948,7 +1963,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="mb-4 px-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-6xl lg:text-7xl notranslate"
+              className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
               ArtiHuman Foundation
             </motion.h1>
@@ -1957,7 +1972,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
-              className="mx-auto max-w-3xl px-2 text-base text-slate-600 sm:text-lg md:text-xl lg:text-2xl"
+              className="mx-auto max-w-3xl px-2 text-base text-white/90 sm:text-lg md:text-xl lg:text-2xl"
             >
               Soutenir les artisans et élever les communautés grâce à
               l'innovation humanitaire à travers {countryMeta.nameFr}
@@ -1972,13 +1987,13 @@ export default function Home() {
                 <div
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
                     databaseConnected
-                      ? "bg-emerald-500/15 text-emerald-200"
-                      : "bg-yellow-500/15 text-yellow-200"
+                      ? "bg-emerald-950/55 text-emerald-100 ring-1 ring-emerald-200/30"
+                      : "bg-yellow-950/55 text-yellow-100 ring-1 ring-yellow-200/30"
                   }`}
                 >
                   <div
                     className={`h-2.5 w-2.5 rounded-full ${
-                      databaseConnected ? "bg-emerald-400" : "bg-yellow-400"
+                      databaseConnected ? "bg-emerald-300" : "bg-yellow-300"
                     }`}
                   />
                   <span>

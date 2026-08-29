@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
+import { useLocation } from "wouter";
+import { isContentNavPath } from "@/components/ContentNav";
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
+  const [location] = useLocation();
+  const isContentNavigationPage = isContentNavPath(location);
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -31,7 +35,7 @@ export default function ScrollToTop() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !isContentNavigationPage && (
         <motion.button
           initial={{ opacity: 0, scale: 0, y: 20 }}
           animate={{

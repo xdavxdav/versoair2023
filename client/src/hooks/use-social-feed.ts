@@ -10,6 +10,8 @@ interface PostData {
   authorId: number;
   content: string;
   imageUrls?: string[];
+  videoUrl?: string;
+  allowMediaDownload?: boolean;
   tags?: string[];
   likeCount: number;
   commentCount: number;
@@ -112,6 +114,8 @@ export const useSocialFeed = (
       authorId?: number;
       content: string;
       imageUrls?: string[];
+      videoUrl?: string;
+      allowMediaDownload?: boolean;
       tags?: string[];
       postType?: string;
     }) => {

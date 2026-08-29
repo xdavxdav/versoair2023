@@ -634,7 +634,7 @@ export default function ContentNav() {
           animate={{ y: dockY, opacity: visible ? 1 : 0 }}
           initial={{ y: 120, opacity: 0 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="pointer-events-auto mx-auto mb-4 flex items-center gap-1 px-3 py-2 w-fit max-w-[96vw]"
+          className="pointer-events-auto mx-auto mb-4 flex max-w-[96vw] items-center justify-start gap-1 overflow-x-auto px-3 py-2 scrollbar-hide"
           style={{
             background: "rgba(6, 3, 14, 0.97)",
             backdropFilter: "blur(28px) saturate(200%)",

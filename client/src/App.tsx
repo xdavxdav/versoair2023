@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { CountryProvider } from "@/contexts/CountryContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider, useAudio } from "@/lib/audio-context";
 import AudioPlayer from "@/components/audio/AudioPlayer";
 import BetaBanner from "@/components/BetaBanner";
@@ -1097,25 +1098,27 @@ function App() {
         }
       `}</style>
       <QueryClientProvider client={queryClient}>
-        <CountryProvider>
-          <LanguageProvider>
-            <AuthProvider>
-              <TooltipProvider>
-                <LoadingProvider>
-                  <AudioProvider>
-                    <NavigationProgress />
-                    <AppContent />
-                    {/* Global "Now Playing" bar — renders itself only when a
-                        track is loaded. artist-portal.tsx depends on this. */}
-                    <AudioPlayer />
-                    <InactivityGuard />
-                    <Toaster />
-                  </AudioProvider>
-                </LoadingProvider>
-              </TooltipProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </CountryProvider>
+        <ThemeProvider>
+          <CountryProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <TooltipProvider>
+                  <LoadingProvider>
+                    <AudioProvider>
+                      <NavigationProgress />
+                      <AppContent />
+                      {/* Global "Now Playing" bar — renders itself only when a
+                          track is loaded. artist-portal.tsx depends on this. */}
+                      <AudioPlayer />
+                      <InactivityGuard />
+                      <Toaster />
+                    </AudioProvider>
+                  </LoadingProvider>
+                </TooltipProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </CountryProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </>
   );
