@@ -56,10 +56,10 @@ export function isContentNavPath(path: string): boolean {
 // ─── Shared style tokens ───────────────────────────────────────────────────
 
 const BASE =
-  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-2 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
+  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
 
 const ACTIVE =
-  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-2 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
+  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
 
 // ─── Desktop pill items ────────────────────────────────────────────────────
 
@@ -634,7 +634,7 @@ export default function ContentNav() {
           animate={{ y: dockY, opacity: visible ? 1 : 0 }}
           initial={{ y: 120, opacity: 0 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="content-nav-dock pointer-events-auto mx-auto mb-4 flex max-w-[96vw] items-center justify-start gap-1 overflow-x-auto px-3 py-2 scrollbar-hide"
+          className="content-nav-dock pointer-events-auto mx-auto mb-4 flex max-w-[96vw] items-center justify-start gap-0.5 overflow-x-auto px-2 py-2 scrollbar-hide"
           style={{
             background: "rgba(6, 3, 14, 0.97)",
             backdropFilter: "blur(28px) saturate(200%)",
@@ -831,18 +831,18 @@ export default function ContentNav() {
           {isAuth ? (
             <>
               <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] text-slate-400 flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] text-slate-400 flex-shrink-0"
                 style={{
                   background: "rgba(255,255,255,0.03)",
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="max-w-[72px] truncate">{userName}</span>
+                <span className="max-w-[72px] truncate md:max-lg:hidden">{userName}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"
+                className="p-2 md:max-lg:p-1 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"
                 title="Sign out"
               >
                 <LogOut className="h-3.5 w-3.5" />
