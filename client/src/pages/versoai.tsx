@@ -770,7 +770,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-950 via-blue-950/50 to-slate-950 relative overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#f3efe9] relative overflow-x-hidden">
       {/* Matrix Rain Background */}
       <canvas
         id="matrix-canvas"
@@ -824,7 +824,7 @@ export default function Home() {
                 animate="visible"
                 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
               >
-                <span className="block text-white mb-4">Decode Your</span>
+                <span className="block text-slate-900 mb-4">Decode Your</span>
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
                   Business Universe
                 </span>
@@ -881,7 +881,7 @@ export default function Home() {
                     }}
                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                       timePeriod === period.value
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-slate-900 shadow-lg"
                         : "bg-slate-900/30 text-blue-300 hover:bg-slate-800/50 border border-blue-500/20"
                     }`}
                   >
@@ -892,23 +892,23 @@ export default function Home() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-white mb-2">500+</div>
+                  <div className="text-3xl font-bold text-slate-900 mb-2">500+</div>
                   <div className="text-sm text-blue-400">
                     Enterprise Clients
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-white mb-2">
+                  <div className="text-3xl font-bold text-slate-900 mb-2">
                     99.9%
                   </div>
                   <div className="text-sm text-blue-400">Platform Uptime</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-white mb-2">45%</div>
+                  <div className="text-3xl font-bold text-slate-900 mb-2">45%</div>
                   <div className="text-sm text-blue-400">Faster Decisions</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-white mb-2">24/7</div>
+                  <div className="text-3xl font-bold text-slate-900 mb-2">24/7</div>
                   <div className="text-sm text-blue-400">AI Support</div>
                 </div>
               </div>
@@ -1574,10 +1574,10 @@ export default function Home() {
 
       {/* Features Section */}
       <section id="features" className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f5f1]/50 to-[#efe7dd]"></div>
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-6">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
               Enterprise-Grade Features
             </h2>
             <p className="text-xl text-blue-200/80 max-w-3xl mx-auto">
@@ -1595,16 +1595,16 @@ export default function Home() {
                 <div
                   className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
                 >
-                  <div className="text-white">{feature.icon}</div>
+                  <div className="text-slate-900">{feature.icon}</div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">
                   {feature.title}
                 </h3>
                 <p className="text-blue-200/70">{feature.description}</p>
                 <div className="mt-6 pt-6 border-t border-blue-500/20">
                   <Button
                     variant="ghost"
-                    className="text-blue-400 hover:text-white p-0 h-auto"
+                    className="text-blue-400 hover:text-slate-900 p-0 h-auto"
                   >
                     Learn more <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -1617,10 +1617,10 @@ export default function Home() {
 
       {/* Industries Section */}
       <section id="industries" className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/30 to-slate-950/50"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f5f1]/30 to-[#efe7dd]/50"></div>
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-6">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
               Serving All Major Industries
             </h2>
             <p className="text-xl text-blue-200/80 max-w-3xl mx-auto">
@@ -1635,7 +1635,7 @@ export default function Home() {
                 className={`${industry.color} rounded-xl p-6 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-2xl cursor-pointer`}
               >
                 <div className="text-3xl mb-3">{industry.icon}</div>
-                <h3 className="font-bold text-white">{industry.name}</h3>
+                <h3 className="font-bold text-slate-900">{industry.name}</h3>
               </div>
             ))}
           </div>
@@ -1647,7 +1647,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-cyan-600/20"></div>
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <div className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12">
-            <h2 className="text-4xl font-bold text-white mb-6">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
               Ready to Transform Your Business with VersoAI?
             </h2>
             <p className="text-xl text-blue-200/80 mb-10 max-w-2xl mx-auto">
@@ -1716,7 +1716,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">VERSO AIR</h3>
+                  <h3 className="text-xl font-bold text-slate-900">VERSO AIR</h3>
                   <p className="text-sm text-blue-400">Powered by VersoAI</p>
                 </div>
               </div>
@@ -1727,12 +1727,12 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Platform</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Platform</h4>
               <ul className="space-y-3">
                 <li>
                   <a
                     href="/services"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Services
                   </a>
@@ -1740,7 +1740,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/industries"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Industries
                   </a>
@@ -1748,7 +1748,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/pricing"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Pricing
                   </a>
@@ -1756,7 +1756,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/api"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     API & Integrations
                   </a>
@@ -1765,12 +1765,12 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Company</h4>
               <ul className="space-y-3">
                 <li>
                   <a
                     href="/about"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     About Us
                   </a>
@@ -1778,7 +1778,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/careers"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Careers
                   </a>
@@ -1786,7 +1786,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/blog"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Blog
                   </a>
@@ -1794,7 +1794,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/contact"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Contact
                   </a>
@@ -1803,12 +1803,12 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-white font-semibold mb-4">Resources</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Resources</h4>
               <ul className="space-y-3">
                 <li>
                   <a
                     href="/docs"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Documentation
                   </a>
@@ -1816,7 +1816,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/help"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Help Center
                   </a>
@@ -1824,7 +1824,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/partners"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     Partners
                   </a>
@@ -1832,7 +1832,7 @@ export default function Home() {
                 <li>
                   <a
                     href="/status"
-                    className="text-blue-200/70 hover:text-white transition-colors text-sm"
+                    className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
                     System Status
                   </a>

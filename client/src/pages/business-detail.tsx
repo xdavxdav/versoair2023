@@ -200,7 +200,7 @@ function GraffitiBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {/* Base dark gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]" />
 
       {/* Grunge / spray texture */}
       <div
@@ -212,7 +212,7 @@ function GraffitiBackground() {
       />
 
       {/* Graffiti spray elements */}
-      <div className="absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono text-white">
+      <div className="absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono text-slate-900">
         ✪
       </div>
       <div className="absolute bottom-[20%] right-[3%] text-7xl opacity-10 -rotate-6 select-none text-amber-400">
@@ -252,7 +252,7 @@ function GraffitiBackground() {
       </svg>
 
       {/* Graffiti tag mock */}
-      <div className="absolute bottom-8 right-8 font-mono text-xs text-white/5 tracking-widest select-none">
+      <div className="absolute bottom-8 right-8 font-mono text-xs text-slate-900/5 tracking-widest select-none">
         VERSO // AIR // DISCOVER
       </div>
     </div>
@@ -393,7 +393,7 @@ export default function BusinessDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100">
+      <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100">
         <GraffitiBackground />
         <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-16 space-y-6">
           <Skeleton className="h-10 w-2/3 bg-white/5" />
@@ -422,7 +422,7 @@ export default function BusinessDetailPage() {
       error,
     });
     return (
-      <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100 items-center justify-center px-4">
+      <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100 items-center justify-center px-4">
         <GraffitiBackground />
         <Card className="relative z-10 bg-white/5 backdrop-blur-xl border-white/10 max-w-md shadow-2xl">
           <CardHeader>
@@ -458,7 +458,7 @@ export default function BusinessDetailPage() {
   const biz = business!;
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-slate-950 text-slate-100">
+    <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100">
       <GraffitiBackground />
 
       <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
@@ -589,7 +589,7 @@ export default function BusinessDetailPage() {
                       <Button
                         asChild
                         size="sm"
-                        className="gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
+                        className="gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-slate-900 hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
                       >
                         <a href={`tel:${biz.phone}`}>
                           <Phone className="h-4 w-4" /> Call Now
@@ -1030,7 +1030,7 @@ export default function BusinessDetailPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#f3efe9] via-transparent to-transparent pointer-events-none z-10" />
                     <iframe
                       title="Business Location"
                       width="100%"
@@ -1060,7 +1060,7 @@ export default function BusinessDetailPage() {
                 {biz.phone && (
                   <Button
                     asChild
-                    className="w-full gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-white hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
+                    className="w-full gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-slate-900 hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
                     size="lg"
                   >
                     <a href={`tel:${biz.phone}`}>
@@ -1456,7 +1456,7 @@ export default function BusinessDetailPage() {
                   Close
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white hover:from-amber-500 hover:to-orange-500 gap-2 shadow-lg shadow-amber-500/20"
+                  className="bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-slate-900 hover:from-amber-500 hover:to-orange-500 gap-2 shadow-lg shadow-amber-500/20"
                   onClick={() => setShowProfitModal(false)}
                 >
                   <Sparkles className="h-4 w-4" /> Got it

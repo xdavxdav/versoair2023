@@ -4,14 +4,14 @@ import { Link } from "wouter";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col min-h-screen w-full items-center justify-center bg-slate-950 px-4 py-16">
-      <Card className="w-full max-w-lg border-slate-800 bg-slate-900/80 text-white shadow-2xl">
+    <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#f3efe9] px-4 py-16">
+      <Card className="w-full max-w-lg border-slate-800 bg-slate-900/80 text-slate-900 shadow-2xl">
         <CardContent className="pt-8 pb-8">
           <div className="flex items-center gap-3 mb-5">
             <div className="rounded-full bg-red-500/15 p-2">
               <AlertCircle className="h-7 w-7 text-red-400" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
               Page introuvable
             </h1>
           </div>
@@ -39,7 +39,7 @@ export default function NotFound() {
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-slate-900"
             >
               <ArrowLeft className="h-4 w-4" />
               Retour

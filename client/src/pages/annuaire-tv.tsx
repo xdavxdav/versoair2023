@@ -264,7 +264,7 @@ export default function AnnuaireTV() {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+      className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]"
     >
       {/* ── Top Bar ───────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-50 bg-slate-900/80 md:backdrop-blur-2xl border-b border-white/5 shadow-2xl">
@@ -464,7 +464,7 @@ export default function AnnuaireTV() {
                                     {ui.icon}
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-2">
-                                    <h2 className="text-3xl md:text-4xl font-bold text-slate-100 tracking-tight group-hover:text-white transition-colors leading-tight">
+                                    <h2 className="text-3xl md:text-4xl font-bold text-slate-100 tracking-tight group-hover:text-slate-900 transition-colors leading-tight">
                                       {biz.name}
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-2">

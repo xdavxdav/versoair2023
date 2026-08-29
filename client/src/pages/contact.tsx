@@ -39,12 +39,26 @@ export default function Contact() {
       if (data.success) {
         setSubmitted(true);
         toast({ title: "Message sent!", description: data.message });
-        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
       } else {
-        toast({ title: "Error", description: data.message || "Failed to send.", variant: "destructive" });
+        toast({
+          title: "Error",
+          description: data.message || "Failed to send.",
+          variant: "destructive",
+        });
       }
     } catch {
-      toast({ title: "Network error", description: "Please check your connection and try again.", variant: "destructive" });
+      toast({
+        title: "Network error",
+        description: "Please check your connection and try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -60,15 +74,15 @@ export default function Contact() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
-      <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-[95vw] mx-auto">
+      <div className="relative px-4 pb-16 pt-20">
+        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="text-5xl md:text-6xl font-bold text-white mb-6 text-center"
+            className="mb-6 text-center text-4xl font-bold text-white md:text-6xl"
           >
             Get in Touch
           </motion.h1>
@@ -77,24 +91,24 @@ export default function Contact() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="text-xl text-slate-300 text-center max-w-2xl mx-auto"
+            className="mx-auto max-w-2xl text-center text-base text-slate-200 md:text-xl"
           >
             Have questions? We'd love to hear from you. Send us a message and
             we'll respond as soon as possible.
           </motion.p>
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="/sav">
-              <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
                 🛡️ Service Après-Vente
               </span>
             </Link>
             <Link href="/help">
-              <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
                 📚 Centre d'aide
               </span>
             </Link>
             <Link href="/">
-              <span className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-colors cursor-pointer">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
                 🏠 Accueil
               </span>
             </Link>
@@ -103,56 +117,58 @@ export default function Contact() {
       </div>
 
       {/* Contact Content */}
-      <div className="max-w-[95vw] mx-auto px-4 py-16">
+      <div className="mx-auto max-w-[1400px] px-4 py-12 md:py-16">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
-          className="grid md:grid-cols-2 gap-12"
+          className="grid gap-8 md:grid-cols-2"
         >
           {/* Contact Info */}
           <motion.div variants={staggerItem} className="space-y-8">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-8">
+              <h2 className="mb-8 text-3xl font-bold text-slate-900">
                 Contact Information
               </h2>
 
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="bg-emerald-600/20 p-3 rounded-lg">
-                    <Phone className="h-6 w-6 text-emerald-400" />
+              <div className="space-y-5">
+                <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                    <Phone className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white mb-1">Phone</h3>
-                    <p className="text-slate-400">+1 (555) VERSO-AIR</p>
-                    <p className="text-slate-500 text-sm">
+                    <h3 className="mb-1 font-semibold text-slate-900">Phone</h3>
+                    <p className="text-slate-600">+1 (555) VERSO-AIR</p>
+                    <p className="text-sm text-slate-500">
                       Mon-Fri, 8AM-6PM EST
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="bg-emerald-600/20 p-3 rounded-lg">
-                    <Mail className="h-6 w-6 text-emerald-400" />
+                <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                    <Mail className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white mb-1">Email</h3>
-                    <p className="text-slate-400">support@versoair.com</p>
-                    <p className="text-slate-500 text-sm">
+                    <h3 className="mb-1 font-semibold text-slate-900">Email</h3>
+                    <p className="text-slate-600">support@versoair.com</p>
+                    <p className="text-sm text-slate-500">
                       We'll respond within 24 hours
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="bg-emerald-600/20 p-3 rounded-lg">
-                    <MapPin className="h-6 w-6 text-emerald-400" />
+                <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                    <MapPin className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white mb-1">Address</h3>
-                    <p className="text-slate-400">Verso Air Headquarters</p>
-                    <p className="text-slate-500 text-sm">
+                    <h3 className="mb-1 font-semibold text-slate-900">
+                      Address
+                    </h3>
+                    <p className="text-slate-600">Verso Air Headquarters</p>
+                    <p className="text-sm text-slate-500">
                       Global Operations Center
                     </p>
                   </div>
@@ -161,13 +177,13 @@ export default function Contact() {
             </div>
 
             {/* Quick Links */}
-            <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
-              <h3 className="font-semibold text-white mb-4">Need Help?</h3>
+            <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
+              <h3 className="mb-4 font-semibold text-slate-900">Need Help?</h3>
               <div className="space-y-2">
                 <Link href="/help/account">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
+                    className="w-full justify-start text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   >
                     Account Help
                   </Button>
@@ -175,7 +191,7 @@ export default function Contact() {
                 <Link href="/help/product">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
+                    className="w-full justify-start text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   >
                     Product Support
                   </Button>
@@ -183,7 +199,7 @@ export default function Contact() {
                 <Link href="/services/news">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
+                    className="w-full justify-start text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   >
                     Latest Updates
                   </Button>
@@ -195,11 +211,11 @@ export default function Contact() {
           {/* Contact Form */}
           <motion.div
             variants={staggerItem}
-            className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-8 rounded-xl border border-slate-700"
+            className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_35px_rgba(15,23,42,0.04)] md:p-8"
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Name
                 </label>
                 <input
@@ -208,13 +224,13 @@ export default function Contact() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   placeholder="Your name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Email
                 </label>
                 <input
@@ -223,13 +239,13 @@ export default function Contact() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Phone (Optional)
                 </label>
                 <input
@@ -237,13 +253,13 @@ export default function Contact() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   placeholder="+1 (555) 000-0000"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Subject
                 </label>
                 <input
@@ -252,13 +268,13 @@ export default function Contact() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   placeholder="How can we help?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Message
                 </label>
                 <textarea
@@ -267,7 +283,7 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none"
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   placeholder="Tell us more..."
                 />
               </div>
@@ -275,7 +291,7 @@ export default function Contact() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-semibold text-white transition-all hover:bg-slate-800"
               >
                 {isSubmitting ? (
                   <>

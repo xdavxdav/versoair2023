@@ -368,7 +368,7 @@ export function Tickets() {
         "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
       resolved:
         "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+      closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-slate-700",
     };
     return colors[status] || colors["open"];
   };
@@ -399,7 +399,7 @@ export function Tickets() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Quick Navigation Bar - Top Priority */}
-      <div className="bg-slate-900/50 border-b border-slate-700 backdrop-blur dark:bg-slate-950/50">
+      <div className="bg-slate-900/50 border-b border-slate-700 backdrop-blur dark:bg-[#f3efe9]/50">
         <div className="max-w-[95vw] mx-auto px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
@@ -511,7 +511,7 @@ export function Tickets() {
         {/* Header with Parallax Effect */}
         <div className="mb-8">
           <h1
-            className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 transition-all duration-300 ${scrollY > 0 ? "opacity-100" : "opacity-0"}`}
+            className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-900 mb-3 transition-all duration-300 ${scrollY > 0 ? "opacity-100" : "opacity-0"}`}
           >
             Ticket Management System
           </h1>
@@ -531,7 +531,7 @@ export function Tickets() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Total Tickets
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
                     {statsData?.total || 0}
                   </p>
                 </div>
@@ -547,7 +547,7 @@ export function Tickets() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Open
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
                     {statsData?.open || 0}
                   </p>
                 </div>
@@ -563,7 +563,7 @@ export function Tickets() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     In Progress
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
                     {statsData?.inProgress || 0}
                   </p>
                 </div>
@@ -579,7 +579,7 @@ export function Tickets() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Resolved
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
                     {statsData?.resolved || 0}
                   </p>
                 </div>
@@ -595,7 +595,7 @@ export function Tickets() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     SLA Breaches
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
                     {currentPermissions.canViewSla ? (
                       statsData?.slaBreaches || 0
                     ) : (
@@ -626,11 +626,11 @@ export function Tickets() {
                   placeholder="Search by title or description..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
                 />
               </div>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
@@ -642,7 +642,7 @@ export function Tickets() {
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
@@ -754,7 +754,7 @@ export function Tickets() {
                       >
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                           <div className="flex-1 min-w-0 w-full">
-                            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                            <h3 className="font-semibold text-gray-900 dark:text-slate-900 truncate">
                               {ticket.title}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
@@ -817,7 +817,7 @@ export function Tickets() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="dark:bg-slate-800 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle className="dark:text-white">New Ticket</DialogTitle>
+            <DialogTitle className="dark:text-slate-900">New Ticket</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
               Create a new support ticket
             </DialogDescription>
@@ -836,7 +836,7 @@ export function Tickets() {
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
           <DialogContent className="dark:bg-slate-800 dark:border-slate-700 max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="dark:text-white">
+              <DialogTitle className="dark:text-slate-900">
                 Ticket #{selectedTicket.id}
               </DialogTitle>
               <DialogDescription className="dark:text-gray-400">
@@ -866,7 +866,7 @@ export function Tickets() {
       <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
         <DialogContent className="dark:bg-slate-800 dark:border-slate-700 max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
+            <DialogTitle className="dark:text-slate-900 flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-500" />
               Upgrade Your Plan
             </DialogTitle>
@@ -893,7 +893,7 @@ export function Tickets() {
               <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg dark:text-white">
+                    <h3 className="font-semibold text-lg dark:text-slate-900">
                       Essential
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -902,7 +902,7 @@ export function Tickets() {
                   </div>
                   <Badge variant="secondary">48h SLA</Badge>
                 </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-gray-300">
+                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
                   <li>✅ Unlimited tickets</li>
                   <li>✅ Basic SLA (48h response)</li>
                   <li>✅ Email + Chat support</li>
@@ -914,7 +914,7 @@ export function Tickets() {
               <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg dark:text-white">
+                    <h3 className="font-semibold text-lg dark:text-slate-900">
                       Professional <Badge className="ml-2">Popular</Badge>
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -923,7 +923,7 @@ export function Tickets() {
                   </div>
                   <Badge className="bg-blue-600">24h SLA</Badge>
                 </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-gray-300">
+                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
                   <li>✅ Unlimited tickets</li>
                   <li>✅ Priority SLA (24h response)</li>
                   <li>✅ Team assignment (5 members)</li>
@@ -936,7 +936,7 @@ export function Tickets() {
               <div className="border border-purple-500 rounded-lg p-4 hover:border-purple-600 cursor-pointer transition">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-lg dark:text-white">
+                    <h3 className="font-semibold text-lg dark:text-slate-900">
                       Enterprise
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -950,7 +950,7 @@ export function Tickets() {
                     Guaranteed SLA
                   </Badge>
                 </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-gray-300">
+                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
                   <li>✅ Everything in Professional</li>
                   <li>✅ Unlimited team members</li>
                   <li>✅ Full API access</li>
@@ -988,7 +988,7 @@ export function Tickets() {
           <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
             Current Plan
           </div>
-          <Badge className="bg-blue-600 text-white capitalize">
+          <Badge className="bg-blue-600 text-slate-900 capitalize">
             {subscriptionTier}
           </Badge>
           <Button
@@ -1030,27 +1030,27 @@ function CreateTicketForm({
       className="space-y-4"
     >
       <div>
-        <Label className="dark:text-gray-300">Title *</Label>
+        <Label className="dark:text-slate-700">Title *</Label>
         <Input
           required
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
         />
       </div>
       <div>
-        <Label className="dark:text-gray-300">Description</Label>
+        <Label className="dark:text-slate-700">Description</Label>
         <Textarea
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
           }
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="dark:text-gray-300">Priority</Label>
+          <Label className="dark:text-slate-700">Priority</Label>
           <Select
             value={formData.priority}
             onValueChange={(priority) =>
@@ -1060,7 +1060,7 @@ function CreateTicketForm({
               })
             }
           >
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
@@ -1072,12 +1072,12 @@ function CreateTicketForm({
           </Select>
         </div>
         <div>
-          <Label className="dark:text-gray-300">Category</Label>
+          <Label className="dark:text-slate-700">Category</Label>
           <Select
             value={formData.category}
             onValueChange={(category) => setFormData({ ...formData, category })}
           >
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
@@ -1091,14 +1091,14 @@ function CreateTicketForm({
         </div>
       </div>
       <div>
-        <Label className="dark:text-gray-300">Requester Email</Label>
+        <Label className="dark:text-slate-700">Requester Email</Label>
         <Input
           type="email"
           value={formData.requesterEmail}
           onChange={(e) =>
             setFormData({ ...formData, requesterEmail: e.target.value })
           }
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
         />
       </div>
       <DialogFooter>
@@ -1193,7 +1193,7 @@ function TicketDetailView({
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
           <Select value={ticket.status} onValueChange={onStatusChange}>
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-white mt-1">
+            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900 mt-1">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
@@ -1206,7 +1206,7 @@ function TicketDetailView({
         </div>
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Priority</p>
-          <p className="font-semibold dark:text-white capitalize">
+          <p className="font-semibold dark:text-slate-900 capitalize">
             {ticket.priority}
           </p>
         </div>
@@ -1215,13 +1215,13 @@ function TicketDetailView({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Category</p>
-          <p className="font-semibold dark:text-white capitalize">
+          <p className="font-semibold dark:text-slate-900 capitalize">
             {ticket.category}
           </p>
         </div>
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Source</p>
-          <p className="font-semibold dark:text-white capitalize">
+          <p className="font-semibold dark:text-slate-900 capitalize">
             {ticket.source}
           </p>
         </div>
@@ -1250,7 +1250,7 @@ function TicketDetailView({
 
       <div>
         <p className="text-sm text-gray-600 dark:text-gray-400">Description</p>
-        <p className="mt-2 text-gray-900 dark:text-white">
+        <p className="mt-2 text-gray-900 dark:text-slate-900">
           {ticket.description || "No description provided"}
         </p>
       </div>
@@ -1258,13 +1258,13 @@ function TicketDetailView({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Created At</p>
-          <p className="font-semibold dark:text-white">
+          <p className="font-semibold dark:text-slate-900">
             {new Date(ticket.created_at).toLocaleDateString()}
           </p>
         </div>
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Reporter</p>
-          <p className="font-semibold dark:text-white">
+          <p className="font-semibold dark:text-slate-900">
             {ticket.reporter || "Unknown"}
           </p>
         </div>
@@ -1291,7 +1291,7 @@ function TicketDetailView({
                 className="text-sm bg-white dark:bg-slate-800 rounded-lg p-3 border dark:border-slate-700"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold dark:text-white">
+                  <span className="font-semibold dark:text-slate-900">
                     {c.author_name || "Anonymous"}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1310,7 +1310,7 @@ function TicketDetailView({
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Leave a comment..."
-            className="dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+            className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
             rows={2}
           />
           <Button

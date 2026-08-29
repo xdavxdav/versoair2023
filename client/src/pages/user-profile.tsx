@@ -189,7 +189,7 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-[#f3efe9]">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="mb-6">
             <div className="w-24 h-8 bg-white/5 rounded-lg animate-pulse" />
@@ -228,15 +228,15 @@ export default function UserProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#f3efe9] flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <User className="w-16 h-16 text-slate-600 mx-auto" />
-          <h2 className="text-white text-xl font-bold">User not found</h2>
+          <h2 className="text-slate-900 text-xl font-bold">User not found</h2>
           <p className="text-slate-400">
             This profile doesn&apos;t exist or was removed.
           </p>
           <Link href="/">
-            <button className="px-6 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors">
+            <button className="px-6 py-2 bg-amber-500 text-slate-900 rounded-lg font-medium hover:bg-amber-600 transition-colors">
               Go Home
             </button>
           </Link>
@@ -255,17 +255,17 @@ export default function UserProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#f3efe9]">
       <div className="relative h-40 md:h-56 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-700/20 via-violet-600/15 to-slate-950" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-700/20 via-violet-600/15 to-[#efe7dd]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#efe7dd]" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10 pb-16">
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-all text-white mb-6"
+          className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-all text-slate-900 mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -276,7 +276,7 @@ export default function UserProfilePage() {
           className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6 md:p-8 mb-6"
         >
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-900 bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-white text-3xl font-bold shrink-0 ring-2 ring-amber-500/50 overflow-hidden">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-900 bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-slate-900 text-3xl font-bold shrink-0 ring-2 ring-amber-500/50 overflow-hidden">
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
@@ -292,7 +292,7 @@ export default function UserProfilePage() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
                 {profile.name}
               </h1>
               <p className="text-slate-400 text-sm mb-3">@{profile.username}</p>
@@ -362,7 +362,7 @@ export default function UserProfilePage() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleMessage}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 text-slate-900 border border-white/10 hover:bg-white/10 transition-all text-sm font-medium"
                   >
                     <MessageCircle className="w-4 h-4" />
                     Message
@@ -387,7 +387,7 @@ export default function UserProfilePage() {
                 className="bg-white/[0.03] backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center hover:border-amber-500/30 transition-colors"
               >
                 <Icon className="w-4 h-4 text-amber-500 mx-auto mb-2" />
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-slate-900">
                   {formatCompact(stat.value)}
                 </p>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider">
@@ -413,7 +413,7 @@ export default function UserProfilePage() {
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    : "text-slate-400 hover:text-slate-900 hover:bg-white/5"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -435,13 +435,13 @@ export default function UserProfilePage() {
             </div>
           ) : activeTab === "overview" ? (
             <div className="space-y-4">
-              <h3 className="text-white font-semibold">About</h3>
+              <h3 className="text-slate-900 font-semibold">About</h3>
               <p className="text-slate-400 text-sm">
                 {profile.bio || "No bio yet."}
               </p>
               {tracks.length > 0 && profile.isArtist && (
                 <>
-                  <h3 className="text-white font-semibold pt-4">
+                  <h3 className="text-slate-900 font-semibold pt-4">
                     Latest Track
                   </h3>
                   <motion.div
@@ -467,7 +467,7 @@ export default function UserProfilePage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
+                      <p className="text-slate-900 text-sm font-medium truncate">
                         {tracks[0].title}
                       </p>
                       <p className="text-slate-500 text-xs">
@@ -517,7 +517,7 @@ export default function UserProfilePage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-medium text-sm truncate group-hover:text-amber-400 transition-colors">
+                      <h4 className="text-slate-900 font-medium text-sm truncate group-hover:text-amber-400 transition-colors">
                         {track.title}
                       </h4>
                       <p className="text-slate-500 text-xs">
@@ -554,7 +554,7 @@ export default function UserProfilePage() {
                     className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-all"
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-slate-900 text-xs font-bold overflow-hidden shrink-0">
                         {profile?.avatar ? (
                           <img
                             src={profile.avatar}
@@ -570,7 +570,7 @@ export default function UserProfilePage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
+                        <p className="text-slate-900 text-sm font-medium truncate">
                           {profile?.name}
                         </p>
                         <p className="text-slate-500 text-[11px]">
@@ -605,7 +605,7 @@ export default function UserProfilePage() {
                       <div className="mt-3 p-3 rounded-lg bg-white/[0.05] border border-amber-500/20 flex items-center gap-3">
                         <Music className="w-5 h-5 text-amber-500 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium truncate">
+                          <p className="text-slate-900 text-sm font-medium truncate">
                             {post.track.title}
                           </p>
                           <p className="text-slate-500 text-xs">

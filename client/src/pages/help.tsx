@@ -59,15 +59,15 @@ export default function HelpCenter() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
-      <div className="relative pt-20 pb-16 px-4">
-        <div className="max-w-[95vw] mx-auto">
+      <div className="relative px-4 pb-16 pt-20">
+        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="text-5xl md:text-6xl font-bold text-white mb-6 text-center"
+            className="mb-6 text-center text-4xl font-bold text-white md:text-6xl"
           >
             Help Center
           </motion.h1>
@@ -76,7 +76,7 @@ export default function HelpCenter() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="text-xl text-slate-300 text-center max-w-2xl mx-auto"
+            className="mx-auto max-w-2xl text-center text-base text-slate-200 md:text-xl"
           >
             Find answers and get support when you need it
           </motion.p>
@@ -84,38 +84,40 @@ export default function HelpCenter() {
       </div>
 
       {/* Help Categories */}
-      <div className="max-w-[95vw] mx-auto px-4 py-16">
+      <div className="mx-auto max-w-[1400px] px-4 py-12 md:py-16">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"
+          className="mb-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {helpCategories.map((category, idx) => (
             <Link key={idx} href={category.link}>
               <motion.div
                 variants={staggerItem}
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group cursor-pointer h-full"
+                className="group h-full cursor-pointer rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_20px_40px_rgba(15,23,42,0.04)] transition-all hover:border-amber-400/50"
               >
-                <div className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+                <div className="mb-4 text-amber-500 transition-transform group-hover:scale-110">
                   {category.icon}
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">
+                <h3 className="mb-2 text-lg font-bold text-slate-900">
                   {category.title}
                 </h3>
-                <p className="text-slate-400 text-sm">{category.description}</p>
+                <p className="text-sm text-slate-600">{category.description}</p>
               </motion.div>
             </Link>
           ))}
         </motion.div>
 
         {/* Popular Topics */}
-        <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Popular Topics</h2>
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_20px_45px_rgba(15,23,42,0.04)] md:p-8">
+          <h2 className="mb-6 text-2xl font-bold text-slate-900">
+            Popular Topics
+          </h2>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {[
               {
                 title: "Getting Started",
@@ -150,15 +152,15 @@ export default function HelpCenter() {
                 ],
               },
             ].map((section, idx) => (
-              <div key={idx} className="bg-slate-900/30 rounded-lg p-6">
-                <h3 className="font-semibold text-white mb-4">
+              <div key={idx} className="rounded-2xl bg-slate-50 p-6">
+                <h3 className="mb-4 font-semibold text-slate-900">
                   {section.title}
                 </h3>
                 <ul className="space-y-2">
                   {section.items.map((item, i) => (
                     <li
                       key={i}
-                      className="text-slate-400 text-sm hover:text-emerald-400 transition-colors cursor-pointer"
+                      className="cursor-pointer text-sm text-slate-600 transition-colors hover:text-amber-600"
                     >
                       → {item}
                     </li>
@@ -171,8 +173,8 @@ export default function HelpCenter() {
       </div>
 
       {/* Support Options */}
-      <div className="max-w-[95vw] mx-auto px-4 py-16">
-        <h2 className="text-2xl font-bold text-white mb-8 text-center">
+      <div className="mx-auto max-w-[1400px] px-4 py-12 md:py-16">
+        <h2 className="mb-8 text-center text-2xl font-bold text-slate-900">
           How Can We Help?
         </h2>
 
@@ -181,7 +183,7 @@ export default function HelpCenter() {
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
-          className="grid md:grid-cols-3 gap-6"
+          className="grid gap-6 md:grid-cols-3"
         >
           {[
             {
@@ -207,16 +209,16 @@ export default function HelpCenter() {
               key={idx}
               variants={staggerItem}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 text-center"
+              className="rounded-[24px] border border-slate-200 bg-white p-6 text-center shadow-[0_20px_35px_rgba(15,23,42,0.04)]"
             >
-              <div className="text-emerald-400 mb-4 flex justify-center">
+              <div className="mb-4 flex justify-center text-amber-500">
                 {option.icon}
               </div>
-              <h3 className="font-bold text-white mb-2">{option.title}</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <h3 className="mb-2 font-bold text-slate-900">{option.title}</h3>
+              <p className="mb-4 text-sm text-slate-600">
                 {option.description}
               </p>
-              <p className="text-emerald-400 font-semibold text-sm">
+              <p className="text-sm font-semibold text-amber-600">
                 {option.contact}
               </p>
             </motion.div>
@@ -225,27 +227,29 @@ export default function HelpCenter() {
       </div>
 
       {/* CTA */}
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+      <div className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_20px_45px_rgba(15,23,42,0.04)] md:p-12">
+          <h2 className="mb-4 text-3xl font-bold text-slate-900">
             Didn't Find Your Answer?
           </h2>
-          <p className="text-slate-300 mb-8">
+          <p className="mb-8 text-slate-600">
             Our support team is always ready to help
           </p>
-          <Link href="/contact">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-              Contact Us
-            </Button>
-          </Link>
-          <Link href="/sav">
-            <Button
-              variant="outline"
-              className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 font-semibold ml-3"
-            >
-              Service Après-Vente
-            </Button>
-          </Link>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/contact">
+              <Button className="bg-slate-950 text-white hover:bg-slate-800">
+                Contact Us
+              </Button>
+            </Link>
+            <Link href="/sav">
+              <Button
+                variant="outline"
+                className="border-slate-300 text-slate-700 hover:bg-slate-100"
+              >
+                Service Après-Vente
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

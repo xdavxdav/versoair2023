@@ -9,7 +9,7 @@ export default function Impact() {
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
         <div className="max-w-[95vw] mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 text-center">
             Our Impact
           </h1>
           <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
@@ -53,7 +53,7 @@ export default function Impact() {
             >
               <div className="text-emerald-400 mb-4">{metric.icon}</div>
               <p className="text-slate-400 text-sm mb-2">{metric.label}</p>
-              <p className="text-4xl font-bold text-white mb-2">
+              <p className="text-4xl font-bold text-slate-900 mb-2">
                 {metric.value}
               </p>
               <p className="text-slate-500 text-xs">{metric.desc}</p>
@@ -63,7 +63,7 @@ export default function Impact() {
 
         {/* Case Studies */}
         <div>
-          <h2 className="text-3xl font-bold text-white mb-8">
+          <h2 className="text-3xl font-bold text-slate-900 mb-8">
             Client Success Stories
           </h2>
 
@@ -94,7 +94,7 @@ export default function Impact() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-slate-900">
                       {study.company}
                     </h3>
                     <p className="text-emerald-400 font-semibold mt-1">
@@ -116,7 +116,7 @@ export default function Impact() {
 
         {/* Industry Impact */}
         <div className="mt-16 bg-slate-800/30 border border-slate-700 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">
             Industry Impact
           </h2>
 
@@ -136,7 +136,7 @@ export default function Impact() {
                 key={idx}
                 className="flex items-center justify-between p-4 bg-slate-900/30 rounded-lg"
               >
-                <p className="font-semibold text-white">{item.sector}</p>
+                <p className="font-semibold text-slate-900">{item.sector}</p>
                 <p className="text-emerald-400 text-sm font-bold">
                   {item.impact}
                 </p>
@@ -149,14 +149,14 @@ export default function Impact() {
       {/* CTA */}
       <div className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">
             Ready to Create Impact?
           </h2>
           <p className="text-slate-300 mb-8">
             Join thousands of organizations transforming with Verso Air
           </p>
           <Link href="/demo">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold">
               Schedule Demo
             </Button>
           </Link>

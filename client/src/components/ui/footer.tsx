@@ -68,43 +68,43 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative bg-gray-950 text-white overflow-hidden">
+    <footer className="relative overflow-hidden border-t border-slate-200 bg-[#f5f1ea] text-slate-900">
       {/* Gradient top accent */}
-      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
       {/* Subtle ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-40 bg-amber-500/[0.03] blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-40 bg-amber-500/[0.08] blur-3xl rounded-full pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-8">
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-8 pt-16 sm:px-6 lg:px-8">
         {/* ── Brand Hero ── */}
         <div className="mb-16">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <div>
-              <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-7xl">
+                <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent">
                   Verso Air
                 </span>
-                <span className="text-amber-400 text-3xl lg:text-4xl align-super ml-1">
+                <span className="ml-1 align-super text-3xl text-amber-500 lg:text-4xl">
                   ™
                 </span>
               </h2>
-              <p className="text-gray-500 text-base sm:text-lg mt-4 max-w-md leading-relaxed">
+              <p className="mt-4 max-w-md text-base leading-relaxed text-slate-600 sm:text-lg">
                 L'intelligence d'affaires, réinventée.
                 <br />
                 De l'analyse à l'action — nous propulsons ce qui vous anime.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/pricing"
-                className="group inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-semibold px-7 py-3.5 rounded-full transition-all duration-200"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-7 py-3.5 font-semibold text-white transition-all duration-200 hover:bg-slate-800"
               >
                 Commencer
-                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-medium px-7 py-3.5 rounded-full transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-7 py-3.5 font-medium text-slate-700 transition-all duration-200 hover:border-slate-400 hover:text-slate-900"
               >
                 Nous contacter
               </Link>
@@ -115,10 +115,10 @@ export default function Footer() {
         <div className="h-px bg-gray-800/60 mb-12" />
 
         {/* ── Navigation Grid ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-10 mb-16">
+        <div className="mb-16 grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
           {navSections.map(({ title, links }) => (
             <div key={title}>
-              <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              <h4 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                 {title}
               </h4>
               <ul className="space-y-3">
@@ -126,10 +126,10 @@ export default function Footer() {
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-gray-400 hover:text-white text-sm transition-colors duration-200 inline-flex items-center gap-1 group"
+                      className="inline-flex items-center gap-1 text-sm text-slate-600 transition-colors duration-200 hover:text-slate-900 group"
                     >
                       {label}
-                      <ChevronRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                      <ChevronRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
                     </Link>
                   </li>
                 ))}
@@ -139,10 +139,10 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+            <h4 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
               Restez informé
             </h4>
-            <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+            <p className="mb-4 text-sm leading-relaxed text-slate-600">
               Mises à jour produit, analyses sectorielles et plus encore.
             </p>
             <div className="flex gap-2">
@@ -151,19 +151,19 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="flex-1 min-w-0 bg-white/[0.03] border border-gray-800 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/10 transition-all"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-all"
               />
               <button
-                className="bg-white/[0.06] hover:bg-white/[0.1] border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white px-3.5 py-2.5 rounded-lg transition-all duration-200"
+                className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-slate-600 transition-all duration-200 hover:border-slate-400 hover:text-slate-900"
                 aria-label="Subscribe"
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="h-px bg-gray-800/60 mb-8" />
+        <div className="mb-8 h-px bg-slate-300/80" />
 
         {/* ── Bottom Bar ── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -174,19 +174,19 @@ export default function Footer() {
                   key={label}
                   href={href}
                   title={label}
-                  className="w-9 h-9 rounded-full bg-white/[0.04] border border-gray-800 flex items-center justify-center text-gray-600 hover:text-white hover:bg-white/[0.08] hover:border-gray-700 transition-all duration-200"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-all duration-200 hover:border-slate-400 hover:text-slate-900"
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="h-3.5 w-3.5" />
                 </Link>
               ))}
             </div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-gray-500">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500">
               Réseaux bientôt disponibles
             </p>
           </div>
 
           <p
-            className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"
+            className="select-none bg-gradient-to-r from-amber-500 via-slate-700 to-amber-500 bg-clip-text text-[11px] font-light uppercase tracking-[0.35em] text-transparent sm:text-xs notranslate"
             style={{
               fontFamily: "'Caveat', cursive",
               fontSize: "clamp(0.85rem, 2vw, 1.1rem)",
@@ -196,7 +196,7 @@ export default function Footer() {
             STRΔΦGHT TΩ THΞ PΩΦΠT
           </p>
 
-          <p className="text-gray-600 text-xs">
+          <p className="text-xs text-slate-600">
             © {new Date().getFullYear()}{" "}
             <span className="notranslate">Verso Air™</span>. Tous droits
             réservés.

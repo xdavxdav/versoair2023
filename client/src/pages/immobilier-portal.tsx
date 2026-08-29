@@ -297,7 +297,7 @@ export default function ImmobilierPortal() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 items-center justify-center">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950 to-[#efe7dd] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
           <p className="text-slate-400 text-sm">Vérification de l'accès…</p>
@@ -329,7 +329,7 @@ export default function ImmobilierPortal() {
   const verifiedCount = myListings.filter((p) => p.verified).length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950 to-[#efe7dd] text-slate-900">
       {/* ─── Premium Header ────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-teal-600/10 to-amber-600/20" />
@@ -341,7 +341,7 @@ export default function ImmobilierPortal() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-400 hover:text-white mb-4"
+              className="text-slate-400 hover:text-slate-900 mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au Geo Admin
@@ -352,7 +352,7 @@ export default function ImmobilierPortal() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
-                  <Home className="h-6 w-6 text-white" />
+                  <Home className="h-6 w-6 text-slate-900" />
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -439,8 +439,8 @@ export default function ImmobilierPortal() {
               size="sm"
               className={`gap-1.5 whitespace-nowrap shrink-0 text-xs sm:text-sm ${
                 activeTab === tab.key
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-slate-900"
+                  : "text-slate-400 hover:text-slate-900 hover:bg-white/5"
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -469,7 +469,7 @@ export default function ImmobilierPortal() {
                         <p className="text-xs text-slate-400 mb-1">
                           Mes Offres
                         </p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="text-2xl font-bold text-slate-900">
                           {totalListings}
                         </p>
                       </div>
@@ -487,7 +487,7 @@ export default function ImmobilierPortal() {
                         <p className="text-xs text-slate-400 mb-1">
                           Note Moyenne
                         </p>
-                        <p className="text-2xl font-bold text-white flex items-center gap-1">
+                        <p className="text-2xl font-bold text-slate-900 flex items-center gap-1">
                           <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                           {avgRating}
                         </p>
@@ -506,7 +506,7 @@ export default function ImmobilierPortal() {
                         <p className="text-xs text-slate-400 mb-1">
                           Valeur Totale
                         </p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="text-2xl font-bold text-slate-900">
                           {(totalRevenue / 1000000).toFixed(1)}M
                         </p>
                         <p className="text-xs text-slate-500">XOF</p>
@@ -523,7 +523,7 @@ export default function ImmobilierPortal() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Vérifiés</p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="text-2xl font-bold text-slate-900">
                           {verifiedCount}
                         </p>
                         <p className="text-xs text-emerald-400">propriétés</p>
@@ -607,7 +607,7 @@ export default function ImmobilierPortal() {
                         key={pt.value}
                         className="p-3 rounded-lg bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-colors"
                       >
-                        <div className="font-medium text-sm text-white">
+                        <div className="font-medium text-sm text-slate-900">
                           {pt.label}
                         </div>
                         <div className="text-xs text-slate-400 mt-1">
@@ -691,7 +691,7 @@ export default function ImmobilierPortal() {
                             </div>
                           </div>
 
-                          <h3 className="font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-1 mb-2">
+                          <h3 className="font-bold text-slate-900 group-hover:text-emerald-300 transition-colors line-clamp-1 mb-2">
                             {property.name}
                           </h3>
 
@@ -862,7 +862,7 @@ export default function ImmobilierPortal() {
                           setNewListing({ ...newListing, name: e.target.value })
                         }
                         placeholder="Ex: Villa 4 chambres à Cocody Riviera"
-                        className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                        className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                       />
                     </div>
 
@@ -881,7 +881,7 @@ export default function ImmobilierPortal() {
                         }
                         placeholder="Décrivez votre bien, ses atouts, le quartier..."
                         rows={4}
-                        className="w-full rounded-md bg-white/5 border border-white/10 text-white placeholder-slate-500 p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/50"
+                        className="w-full rounded-md bg-white/5 border border-white/10 text-slate-900 placeholder-slate-500 p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/50"
                       />
                     </div>
 
@@ -930,7 +930,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="Ex: Riviera Faya, Zone 4..."
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                     </div>
@@ -949,7 +949,7 @@ export default function ImmobilierPortal() {
                           })
                         }
                         placeholder="Adresse détaillée du bien"
-                        className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                        className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                       />
                     </div>
 
@@ -969,7 +969,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="15000000"
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                       <div>
@@ -986,7 +986,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="120"
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                       <div>
@@ -1003,7 +1003,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="3"
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                       <div>
@@ -1020,7 +1020,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="2"
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                     </div>
@@ -1040,7 +1040,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="Piscine, Garage, Gardien, Climatisation..."
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                       <div>
@@ -1056,7 +1056,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="+225 07 XX XX XX XX"
-                          className="bg-white/5 border-white/10 text-white placeholder-slate-500"
+                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>
                     </div>

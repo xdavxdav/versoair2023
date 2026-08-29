@@ -276,7 +276,7 @@ export default function Partners() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 leading-tight"
+            className="text-5xl sm:text-6xl md:text-7xl font-black text-slate-900 mb-6 leading-tight"
           >
             Build Africa's Future{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
@@ -303,7 +303,7 @@ export default function Partners() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <a href="#become-partner">
-              <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-emerald-500/30 hover:scale-105 transition-all">
+              <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-900 font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-emerald-500/30 hover:scale-105 transition-all">
                 Become a Partner
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -311,7 +311,7 @@ export default function Partners() {
             <Link to="/contact">
               <Button
                 variant="outline"
-                className="border-white/30 bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 rounded-2xl text-lg"
+                className="border-white/30 bg-white/10 text-slate-900 hover:bg-white/20 font-bold px-8 py-6 rounded-2xl text-lg"
               >
                 Contact Us
               </Button>
@@ -404,7 +404,7 @@ export default function Partners() {
                       <div
                         className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center mb-4 shadow-md group-hover:scale-110 transition-transform`}
                       >
-                        <p.icon className="w-6 h-6 text-white" />
+                        <p.icon className="w-6 h-6 text-slate-900" />
                       </div>
                       <h3 className="text-base font-black text-slate-900 mb-1">
                         {p.name}
@@ -446,7 +446,7 @@ export default function Partners() {
             <span className="text-emerald-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Partner Voices
             </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
               What Our Partners Say
             </h2>
           </motion.div>
@@ -469,7 +469,7 @@ export default function Partners() {
                   {[...Array(5)].map((_, j) => (
                     <Star
                       key={j}
-                      className="w-4 h-4 fill-amber-400 text-amber-400"
+                      className="w-4 h-4 fill-amber-400 text-amber-600"
                     />
                   ))}
                 </div>
@@ -478,12 +478,12 @@ export default function Partners() {
                 </p>
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-black flex-shrink-0`}
+                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-slate-900 text-xs font-black flex-shrink-0`}
                   >
                     {t.avatar}
                   </div>
                   <div>
-                    <div className="font-bold text-white text-sm">
+                    <div className="font-bold text-slate-900 text-sm">
                       {t.author}
                     </div>
                     <div className="text-emerald-400 text-xs">
@@ -536,7 +536,7 @@ export default function Partners() {
                 <div
                   className={`w-12 h-12 rounded-xl bg-gradient-to-br ${b.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
                 >
-                  <b.icon className="w-6 h-6 text-white" />
+                  <b.icon className="w-6 h-6 text-slate-900" />
                 </div>
                 <h3 className="text-base font-black text-slate-900 mb-2">
                   {b.title}
@@ -595,10 +595,10 @@ export default function Partners() {
                   </div>
                 )}
                 <div
-                  className={`bg-gradient-to-r ${tier.color} p-6 text-white`}
+                  className={`bg-gradient-to-r ${tier.color} p-6 text-slate-900`}
                 >
                   <h3 className="text-xl font-black mb-1">{tier.name}</h3>
-                  <p className="text-white/80 text-sm font-semibold">
+                  <p className="text-slate-900/80 text-sm font-semibold">
                     {tier.price}
                   </p>
                 </div>
@@ -616,7 +616,7 @@ export default function Partners() {
                   </ul>
                   <Link to="/contact">
                     <Button
-                      className={`w-full font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"}`}
+                      className={`w-full font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-slate-900"}`}
                     >
                       Apply for {tier.name}
                       <ChevronRight className="ml-1 w-4 h-4" />
@@ -647,12 +647,12 @@ export default function Partners() {
             viewport={viewport}
           >
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Handshake className="w-8 h-8 text-white" />
+              <Handshake className="w-8 h-8 text-slate-900" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
               Ready to Make an Impact?
             </h2>
-            <p className="text-white/85 text-lg mb-8 max-w-2xl mx-auto">
+            <p className="text-slate-900/85 text-lg mb-8 max-w-2xl mx-auto">
               Let's build something extraordinary together. Our partnership team
               is ready to craft a program that aligns with your organisation's
               values and goals.
@@ -667,13 +667,13 @@ export default function Partners() {
               <Link to="/sponsorship">
                 <Button
                   variant="outline"
-                  className="border-white/40 bg-white/10 text-white hover:bg-white/20 font-black px-8 py-6 rounded-2xl text-lg"
+                  className="border-white/40 bg-white/10 text-slate-900 hover:bg-white/20 font-black px-8 py-6 rounded-2xl text-lg"
                 >
                   Interested in Sponsorship?
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <div className="flex flex-col sm:flex-row gap-4 text-white/80 text-sm">
+              <div className="flex flex-col sm:flex-row gap-4 text-slate-900/80 text-sm">
                 <span className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   partners@artihuman.ci

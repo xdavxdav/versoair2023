@@ -220,7 +220,7 @@ function DetailModal({
                   transition={{ delay: 0.1 }}
                   className="mb-6"
                 >
-                  <h2 className="text-3xl font-bold text-white mb-2">
+                  <h2 className="text-3xl font-bold text-slate-900 mb-2">
                     {activity.title}
                   </h2>
                   <p className="text-emerald-400 text-lg font-medium">
@@ -244,7 +244,7 @@ function DetailModal({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Button className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-8 rounded-lg">
+                  <Button className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
                     {activity.cta}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -305,7 +305,7 @@ export default function GetInvolved() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold text-white mb-6 text-center leading-tight"
+            className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 text-center leading-tight"
           >
             Get Involved
           </motion.h1>
@@ -333,7 +333,7 @@ export default function GetInvolved() {
             viewport={defaultViewport}
             className="text-center"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
               Découvrez Notre ONG Culturelle
             </h2>
             <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
@@ -341,7 +341,7 @@ export default function GetInvolved() {
               à travers la musique, l'art et la tradition.
             </p>
             <Link href="/ong-culturelle">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-8 rounded-lg">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
                 En Savoir Plus
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
@@ -381,7 +381,7 @@ export default function GetInvolved() {
                     >
                       <Button
                         variant="outline"
-                        className="border-white text-white bg-white/10 hover:bg-white/20 backdrop-blur"
+                        className="border-white text-slate-900 bg-white/10 hover:bg-white/20 backdrop-blur"
                       >
                         View Details
                         <ChevronRight className="ml-2 h-4 w-4" />
@@ -391,7 +391,7 @@ export default function GetInvolved() {
 
                   {/* Text Content - Minimalist */}
                   <div className="space-y-2 px-1">
-                    <h3 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-400 transition-colors">
                       {activity.title}
                     </h3>
                     <p className="text-emerald-400 text-sm font-medium">
@@ -416,7 +416,7 @@ export default function GetInvolved() {
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="text-3xl md:text-4xl font-bold text-white text-center mb-16"
+            className="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-16"
           >
             Community Benefits
           </motion.h2>
@@ -465,14 +465,14 @@ export default function GetInvolved() {
             </div>
 
             <div className="relative z-10 text-center">
-              <h2 className="text-3xl font-bold text-white mb-4">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
                 Ready to Make an Impact?
               </h2>
               <p className="text-slate-300 mb-8 text-lg">
                 Join thousands of community members making a real difference
               </p>
               <Link href="/contact">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all">
                   Get Started
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

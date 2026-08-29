@@ -325,7 +325,7 @@ export default function Pricing() {
   // ─── RENDER ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-24">
+    <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-24">
       {/* Hero */}
       <div className="relative pt-20 pb-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -334,7 +334,7 @@ export default function Pricing() {
             GeoAdmin Subscriptions
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
             Grow Your Visibility
           </h1>
           <p className="text-lg text-slate-300 max-w-xl mx-auto mb-2">
@@ -366,7 +366,7 @@ export default function Pricing() {
               onClick={() => setBillingCycle("monthly")}
               className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 billingCycle === "monthly"
-                  ? "bg-white/10 text-white shadow-lg"
+                  ? "bg-white/10 text-slate-900 shadow-lg"
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
@@ -376,7 +376,7 @@ export default function Pricing() {
               onClick={() => setBillingCycle("annual")}
               className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 billingCycle === "annual"
-                  ? "bg-white/10 text-white shadow-lg"
+                  ? "bg-white/10 text-slate-900 shadow-lg"
                   : "text-slate-500 hover:text-slate-300"
               }`}
             >
@@ -423,21 +423,21 @@ export default function Pricing() {
 
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-emerald-500 text-white border-0 shadow-lg text-[10px]">
+                    <Badge className="bg-emerald-500 text-slate-900 border-0 shadow-lg text-[10px]">
                       Current Plan
                     </Badge>
                   </div>
                 )}
                 {isPopular && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-emerald-500 text-white border-0 shadow-lg text-[10px]">
+                    <Badge className="bg-emerald-500 text-slate-900 border-0 shadow-lg text-[10px]">
                       Most Popular
                     </Badge>
                   </div>
                 )}
                 {isHighlighted && !isPopular && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-500 text-white border-0 shadow-lg text-[10px]">
+                    <Badge className="bg-blue-500 text-slate-900 border-0 shadow-lg text-[10px]">
                       Recommended
                     </Badge>
                   </div>
@@ -446,17 +446,17 @@ export default function Pricing() {
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl">{tier.icon}</span>
-                  <h3 className="text-lg font-bold text-white">{tier.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">{tier.name}</h3>
                 </div>
                 <p className="text-slate-500 text-xs mb-3">{tier.tagline}</p>
 
                 {/* Price */}
                 <div className="mb-1">
                   {tier.monthlyPrice === 0 ? (
-                    <span className="text-2xl font-bold text-white">Free</span>
+                    <span className="text-2xl font-bold text-slate-900">Free</span>
                   ) : (
                     <>
-                      <span className="text-2xl font-bold text-white">
+                      <span className="text-2xl font-bold text-slate-900">
                         ${price}
                       </span>
                       <span className="text-slate-500 text-sm ml-1">/mo</span>
@@ -487,10 +487,10 @@ export default function Pricing() {
                     isCurrent
                       ? "bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 cursor-default"
                       : isHighlighted || isPopular
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-slate-900"
                         : tierKey === "free"
-                          ? "bg-white/10 hover:bg-white/15 text-white border border-white/10"
-                          : "bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                          ? "bg-white/10 hover:bg-white/15 text-slate-900 border border-white/10"
+                          : "bg-white/10 hover:bg-white/15 text-slate-900 border border-white/10"
                   }`}
                 >
                   {startingTrial && (
@@ -519,7 +519,7 @@ export default function Pricing() {
       {/* ═══ PAYMENT METHODS OVERVIEW ═══ */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-xl font-bold text-slate-900 mb-2">
             Accepted Payment Methods
           </h2>
           <p className="text-sm text-slate-400">
@@ -534,7 +534,7 @@ export default function Pricing() {
               key={m.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
                 m.available
-                  ? "bg-white/[0.04] border-white/[0.08] text-white"
+                  ? "bg-white/[0.04] border-white/[0.08] text-slate-900"
                   : "bg-white/[0.02] border-white/[0.04] text-slate-600"
               }`}
             >
@@ -558,7 +558,7 @@ export default function Pricing() {
 
       {/* ═══ FAQ ═══ */}
       <div className="max-w-3xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">
           Frequently Asked Questions
         </h2>
 
@@ -589,7 +589,7 @@ export default function Pricing() {
               key={idx}
               className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5 hover:bg-white/[0.05] transition-all"
             >
-              <p className="font-semibold text-white text-sm mb-1.5">
+              <p className="font-semibold text-slate-900 text-sm mb-1.5">
                 {item.q}
               </p>
               <p className="text-slate-400 text-xs leading-relaxed">{item.a}</p>
@@ -615,17 +615,17 @@ export default function Pricing() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-slate-900 border border-white/10 shadow-2xl"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-slate-100 border border-white/10 shadow-2xl"
             >
               {/* Modal Header */}
-              <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-white/10 p-5">
+              <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur border-b border-white/10 p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-slate-900">
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-base">
+                      <h3 className="text-slate-900 font-bold text-base">
                         Subscribe to {TIERS[checkoutTier].name}
                       </h3>
                       <p className="text-slate-400 text-xs">
@@ -635,7 +635,7 @@ export default function Pricing() {
                   </div>
                   <button
                     onClick={() => setCheckoutTier(null)}
-                    className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                    className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-900 transition-all"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -649,7 +649,7 @@ export default function Pricing() {
                     <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
                       <AlertCircle className="h-7 w-7 text-amber-400" />
                     </div>
-                    <h4 className="text-white font-semibold mb-2">
+                    <h4 className="text-slate-900 font-semibold mb-2">
                       Sign in required
                     </h4>
                     <p className="text-slate-400 text-sm mb-4">
@@ -661,7 +661,7 @@ export default function Pricing() {
                           `/apply?redirect=/pricing&plan=${checkoutTier}`,
                         )
                       }
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-slate-900"
                     >
                       Sign up as Premium Subscriber
                     </Button>
@@ -675,7 +675,7 @@ export default function Pricing() {
                     <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm text-slate-300">Plan</span>
-                        <span className="text-sm text-white font-semibold">
+                        <span className="text-sm text-slate-900 font-semibold">
                           {TIERS[checkoutTier].icon} {TIERS[checkoutTier].name}
                         </span>
                       </div>
@@ -686,8 +686,8 @@ export default function Pricing() {
                             onClick={() => setBillingCycle("monthly")}
                             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                               billingCycle === "monthly"
-                                ? "bg-white/10 text-white"
-                                : "text-slate-500 hover:text-white"
+                                ? "bg-white/10 text-slate-900"
+                                : "text-slate-500 hover:text-slate-900"
                             }`}
                           >
                             Monthly
@@ -696,8 +696,8 @@ export default function Pricing() {
                             onClick={() => setBillingCycle("annual")}
                             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                               billingCycle === "annual"
-                                ? "bg-white/10 text-white"
-                                : "text-slate-500 hover:text-white"
+                                ? "bg-white/10 text-slate-900"
+                                : "text-slate-500 hover:text-slate-900"
                             }`}
                           >
                             Annual –17%
@@ -706,11 +706,11 @@ export default function Pricing() {
                       </div>
                       <div className="h-px bg-white/10 my-3" />
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-white font-semibold">
+                        <span className="text-sm text-slate-900 font-semibold">
                           Total
                         </span>
                         <div className="text-right">
-                          <span className="text-xl font-bold text-white">
+                          <span className="text-xl font-bold text-slate-900">
                             $
                             {billingCycle === "monthly"
                               ? TIERS[checkoutTier].monthlyPrice
@@ -737,7 +737,7 @@ export default function Pricing() {
                         <div className="flex items-start gap-3">
                           <Zap className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
                           <div className="flex-1">
-                            <p className="text-white font-semibold text-sm">
+                            <p className="text-slate-900 font-semibold text-sm">
                               Start with a free 7-day trial
                             </p>
                             <p className="text-emerald-300/70 text-xs mt-0.5">
@@ -749,7 +749,7 @@ export default function Pricing() {
                         <Button
                           onClick={() => handleStartTrial(checkoutTier)}
                           disabled={startingTrial}
-                          className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                          className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold"
                         >
                           {startingTrial && (
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -787,7 +787,7 @@ export default function Pricing() {
                         <Button
                           onClick={handleCheckout}
                           disabled={checkoutLoading}
-                          className="w-full py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-base rounded-xl shadow-lg shadow-emerald-500/20"
+                          className="w-full py-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-900 font-bold text-base rounded-xl shadow-lg shadow-emerald-500/20"
                         >
                           {checkoutLoading ? (
                             <>

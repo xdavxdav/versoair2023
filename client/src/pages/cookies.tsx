@@ -4,37 +4,37 @@ import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function CookiePolicy() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+          <a className="mb-8 inline-flex items-center gap-2 text-amber-600 transition-colors hover:text-amber-700">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
         </Link>
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <Cookie className="w-6 h-6 text-white" />
+        <div className="mb-10 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+            <Cookie className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Cookie Policy</h1>
-            <p className="text-gray-400 text-sm">
+            <h1 className="text-3xl font-bold text-slate-900">Cookie Policy</h1>
+            <p className="text-sm text-slate-500">
               Last updated: March 13, 2026
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="prose prose-invert prose-amber max-w-none space-y-8">
+        <div className="prose max-w-none space-y-8 text-slate-700">
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               1. What Are Cookies?
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               Cookies are small text files stored on your device when you visit
               a website. They help the website remember your preferences, keep
               you logged in, and understand how you interact with the site.
@@ -44,7 +44,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               2. Cookies We Use
             </h2>
 
@@ -53,22 +53,22 @@ export default function CookiePolicy() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-2 text-amber-400 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
                       Cookie
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-400 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
                       Type
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-400 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
                       Purpose
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-400 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
                       Duration
                     </th>
                   </tr>
                 </thead>
-                <tbody className="text-gray-300">
-                  <tr className="border-b border-gray-800/50">
+                <tbody className="text-slate-700">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       connect.sid
                     </td>
@@ -83,7 +83,7 @@ export default function CookiePolicy() {
                     </td>
                     <td className="py-3 px-2">Session</td>
                   </tr>
-                  <tr className="border-b border-gray-800/50">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       token
                     </td>
@@ -98,7 +98,7 @@ export default function CookiePolicy() {
                     </td>
                     <td className="py-3 px-2">7 days</td>
                   </tr>
-                  <tr className="border-b border-gray-800/50">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       verso_portal
                     </td>
@@ -113,7 +113,7 @@ export default function CookiePolicy() {
                     </td>
                     <td className="py-3 px-2">30 days</td>
                   </tr>
-                  <tr className="border-b border-gray-800/50">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       verso_theme
                     </td>
@@ -127,7 +127,7 @@ export default function CookiePolicy() {
                     </td>
                     <td className="py-3 px-2">1 year</td>
                   </tr>
-                  <tr className="border-b border-gray-800/50">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       _ga / _gid
                     </td>
@@ -141,7 +141,7 @@ export default function CookiePolicy() {
                     </td>
                     <td className="py-3 px-2">2 years / 24h</td>
                   </tr>
-                  <tr className="border-b border-gray-800/50">
+                  <tr className="border-b border-slate-300/50">
                     <td className="py-3 px-2 font-mono text-xs text-white">
                       _gat
                     </td>
@@ -161,7 +161,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               3. Cookie Categories Explained
             </h2>
 
@@ -171,7 +171,7 @@ export default function CookiePolicy() {
                   <span className="w-2 h-2 rounded-full bg-red-500" />
                   Essential Cookies
                 </h3>
-                <p className="text-gray-300 text-sm mt-1">
+                <p className="text-slate-700 text-sm mt-1">
                   Required for the Platform to function. These handle
                   authentication, session management, and security (CSRF
                   protection). Disabling these would prevent login and core
@@ -185,7 +185,7 @@ export default function CookiePolicy() {
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Functional Cookies
                 </h3>
-                <p className="text-gray-300 text-sm mt-1">
+                <p className="text-slate-700 text-sm mt-1">
                   Enhance your experience by remembering preferences like portal
                   selection and theme. The Platform works without these, but
                   you'd need to re-select preferences each visit.
@@ -197,7 +197,7 @@ export default function CookiePolicy() {
                   <span className="w-2 h-2 rounded-full bg-yellow-500" />
                   Analytics Cookies
                 </h3>
-                <p className="text-gray-300 text-sm mt-1">
+                <p className="text-slate-700 text-sm mt-1">
                   Help us understand how visitors interact with the Platform via
                   Google Analytics. Data is anonymized — no personally
                   identifiable information is collected. Used to improve
@@ -208,13 +208,13 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               4. Local Storage & Session Storage
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               In addition to cookies, Verso Air uses browser local storage for:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 <strong className="text-white font-mono text-xs">
                   verso_favorites
@@ -240,20 +240,20 @@ export default function CookiePolicy() {
                 — React Query data cache for faster page loads
               </li>
             </ul>
-            <p className="text-gray-300 leading-relaxed mt-2">
+            <p className="text-slate-700 leading-relaxed mt-2">
               Local storage data never leaves your browser and is not
               transmitted to our servers.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               5. Managing Cookies
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               You can control cookies through your browser settings:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 <strong className="text-white">Chrome:</strong> Settings →
                 Privacy and Security → Cookies and Other Site Data
@@ -271,13 +271,13 @@ export default function CookiePolicy() {
                 Privacy, Search and Services → Cookies
               </li>
             </ul>
-            <p className="text-gray-300 leading-relaxed mt-2">
+            <p className="text-slate-700 leading-relaxed mt-2">
               To opt out of Google Analytics specifically, install the{" "}
               <a
                 href="https://tools.google.com/dlpage/gaoptout"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-400 underline"
+                className="text-amber-600 underline"
               >
                 Google Analytics Opt-out Browser Add-on
               </a>
@@ -286,33 +286,33 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               6. Changes to This Policy
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We may update this Cookie Policy to reflect changes in technology
               or legal requirements. Check this page periodically for updates.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               7. Contact
             </h2>
-            <div className="bg-white/5 rounded-xl p-4 border border-gray-800">
+            <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">
                 Verso Air™ — Privacy Team
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-500 text-sm">
                 Email: privacy@versoair.com
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-500 text-sm">
                 See also:{" "}
-                <Link href="/privacy" className="text-amber-400 underline">
+                <Link href="/privacy" className="text-amber-600 underline">
                   Privacy Policy
                 </Link>{" "}
                 ·{" "}
-                <Link href="/gdpr" className="text-amber-400 underline">
+                <Link href="/gdpr" className="text-amber-600 underline">
                   GDPR
                 </Link>
               </p>

@@ -184,7 +184,7 @@ export default function Navbar({
 
   const isPanelOpen = isLocationPanelOpen || mobileMenuOpen;
 
-  const navbarClasses = `bg-white shadow-lg sticky top-[4.5rem] z-40 transition-all duration-300 ${
+  const navbarClasses = `sticky top-[4.5rem] z-40 border-b border-slate-200/80 bg-[#f7f5f1]/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-300 ${
     isPanelOpen ? "opacity-60" : "opacity-100"
   } ${
     isMobile
@@ -197,11 +197,11 @@ export default function Navbar({
   return (
     <nav className={navbarClasses} style={{ overflow: "visible" }}>
       <div
-        className="max-w-full mx-auto px-2 md:px-4"
+        className="mx-auto max-w-[1600px] px-3 md:px-5"
         style={{ overflow: "visible" }}
       >
         <div
-          className="flex items-center justify-between h-16 gap-1"
+          className="flex items-center justify-between h-16 gap-2"
           style={{ overflow: "visible" }}
         >
           {/* 🔥 LOGO + BRAND (Clickable) - UPDATED */}

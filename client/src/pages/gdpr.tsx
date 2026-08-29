@@ -70,7 +70,7 @@ const REGIONS: Record<RegionKey, RegionInfo> = {
   global: {
     key: "global", flag: "🌍", label: "All Users", law: "Global Data Protection",
     description: "Verso Air respects data protection rights worldwide. Select your region below.",
-    color: "bg-amber-500/10", borderColor: "border-amber-500/30", textColor: "text-amber-400",
+    color: "bg-amber-500/10", borderColor: "border-amber-500/30", textColor: "text-amber-600",
   },
 };
 
@@ -246,11 +246,11 @@ export default function GDPRCompliance() {
   }, [activeRegion]);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="max-w-4xl mx-auto px-4 py-16">
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+          <a className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
@@ -258,11 +258,11 @@ export default function GDPRCompliance() {
 
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6 text-white" />
+            <ShieldCheck className="w-6 h-6 text-slate-900" />
           </div>
           <div>
             <h1 className="text-3xl font-bold">Data Protection & Compliance</h1>
-            <p className="text-gray-400 text-sm flex items-center gap-1.5">
+            <p className="text-slate-500 text-sm flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5" />
               Your rights under global data protection laws
             </p>
@@ -276,7 +276,7 @@ export default function GDPRCompliance() {
             <p className={`${regionInfo.textColor} font-semibold text-sm`}>
               {regionInfo.law} &mdash; For {regionInfo.label}
             </p>
-            <p className="text-gray-300 text-sm">{regionInfo.description}</p>
+            <p className="text-slate-700 text-sm">{regionInfo.description}</p>
           </div>
         </div>
 
@@ -288,8 +288,8 @@ export default function GDPRCompliance() {
               onClick={() => setSelectedRegion(r.key)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                 activeRegion === r.key
-                  ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                  : "bg-white/5 border-gray-700 text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-700"
+                  : "bg-slate-100 border-slate-300 text-slate-500 hover:bg-white/10 hover:text-gray-200"
               }`}
             >
               {r.flag} {r.law}
@@ -297,39 +297,39 @@ export default function GDPRCompliance() {
           ))}
         </div>
 
-        <div className="prose prose-invert prose-amber max-w-none space-y-8">
+        <div className="prose   max-w-none space-y-8">
           {/* Data Controller */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Controller</h2>
-            <p className="text-gray-300 leading-relaxed">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Data Controller</h2>
+            <p className="text-slate-700 leading-relaxed">
               Verso Air™ acts as the data controller for personal data processed through the Platform.
             </p>
-            <div className="bg-white/5 rounded-lg p-4 border border-gray-800 mt-3">
-              <p className="text-white font-medium">Data Controller</p>
-              <p className="text-gray-400 text-sm">Verso Air™</p>
-              <p className="text-gray-400 text-sm">Data Protection Officer: dpo@versoair.com</p>
+            <div className="bg-slate-100 rounded-lg p-4 border border-gray-800 mt-3">
+              <p className="text-slate-900 font-medium">Data Controller</p>
+              <p className="text-slate-500 text-sm">Verso Air™</p>
+              <p className="text-slate-500 text-sm">Data Protection Officer: dpo@versoair.com</p>
             </div>
           </section>
 
           {/* Lawful Basis */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Lawful Basis for Processing</h2>
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Lawful Basis for Processing</h2>
             <div className="space-y-3 mt-4">
               <div className="flex gap-3">
-                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Consent</span>
-                <p className="text-gray-300 text-sm">Analytics cookies, marketing emails &mdash; you can withdraw consent at any time</p>
+                <span className="text-amber-600 font-bold text-sm min-w-[80px]">Consent</span>
+                <p className="text-slate-700 text-sm">Analytics cookies, marketing emails &mdash; you can withdraw consent at any time</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Contract</span>
-                <p className="text-gray-300 text-sm">Account creation, subscription management, marketplace transactions</p>
+                <span className="text-amber-600 font-bold text-sm min-w-[80px]">Contract</span>
+                <p className="text-slate-700 text-sm">Account creation, subscription management, marketplace transactions</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Legitimate Interest</span>
-                <p className="text-gray-300 text-sm">Security (rate limiting, fraud detection), Platform improvement, internal analytics</p>
+                <span className="text-amber-600 font-bold text-sm min-w-[80px]">Legitimate Interest</span>
+                <p className="text-slate-700 text-sm">Security (rate limiting, fraud detection), Platform improvement, internal analytics</p>
               </div>
               <div className="flex gap-3">
-                <span className="text-amber-400 font-bold text-sm min-w-[80px]">Legal Obligation</span>
-                <p className="text-gray-300 text-sm">Financial record keeping, responding to legal requests, tax compliance</p>
+                <span className="text-amber-600 font-bold text-sm min-w-[80px]">Legal Obligation</span>
+                <p className="text-slate-700 text-sm">Financial record keeping, responding to legal requests, tax compliance</p>
               </div>
             </div>
           </section>
@@ -341,10 +341,10 @@ export default function GDPRCompliance() {
             return (
               <section key={section.regionKey} id={section.regionKey}>
                 <h2 className={`text-xl font-semibold border-b pb-2 ${
-                  isHighlighted ? `${sRegion.textColor} border-gray-700` : "text-gray-400 border-gray-800"
+                  isHighlighted ? `${sRegion.textColor} border-slate-300` : "text-slate-500 border-gray-800"
                 }`}>
                   {idx === 0 && isHighlighted && (
-                    <span className="text-[10px] font-medium uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full mr-2">
+                    <span className="text-[10px] font-medium uppercase tracking-wider bg-amber-500/20 text-amber-700 px-2 py-0.5 rounded-full mr-2">
                       Your Region
                     </span>
                   )}
@@ -352,24 +352,24 @@ export default function GDPRCompliance() {
                 </h2>
                 <div className={`grid gap-3 mt-4 ${isHighlighted ? "" : "opacity-80"}`}>
                   {section.rights.map((right, rIdx) => (
-                    <div key={rIdx} className={`bg-white/5 border rounded-lg p-4 ${
-                      isHighlighted ? "border-gray-700" : "border-gray-800"
+                    <div key={rIdx} className={`bg-slate-100 border rounded-lg p-4 ${
+                      isHighlighted ? "border-slate-300" : "border-gray-800"
                     }`}>
-                      <h3 className="text-white font-semibold flex items-center gap-2">
-                        <span className="text-amber-400">{right.icon}</span> {right.title}
+                      <h3 className="text-slate-900 font-semibold flex items-center gap-2">
+                        <span className="text-amber-600">{right.icon}</span> {right.title}
                       </h3>
-                      <p className="text-gray-400 text-sm mt-1">{right.description}</p>
+                      <p className="text-slate-500 text-sm mt-1">{right.description}</p>
                     </div>
                   ))}
                 </div>
                 {section.extraNote && (
-                  <p className="text-gray-400 text-sm mt-3 italic">{section.extraNote}</p>
+                  <p className="text-slate-500 text-sm mt-3 italic">{section.extraNote}</p>
                 )}
                 {section.authority && (
-                  <p className="text-gray-400 text-sm mt-3">
+                  <p className="text-slate-500 text-sm mt-3">
                     Supervisory Authority:{" "}
                     <a href={section.authority.url} target="_blank" rel="noopener noreferrer"
-                      className="text-amber-400 underline">{section.authority.name}</a>
+                      className="text-amber-600 underline">{section.authority.name}</a>
                   </p>
                 )}
               </section>
@@ -378,11 +378,11 @@ export default function GDPRCompliance() {
 
           {/* International Data Transfers */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">International Data Transfers</h2>
-            <p className="text-gray-300 leading-relaxed">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">International Data Transfers</h2>
+            <p className="text-slate-700 leading-relaxed">
               Verso Air's infrastructure is hosted on Render (US) and Neon PostgreSQL (US). Your data may be transferred to and processed in the United States. We ensure adequate safeguards through:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1 mt-2">
+            <ul className="list-disc list-inside text-slate-700 space-y-1 mt-2">
               <li>Standard Contractual Clauses (SCCs) with data processors</li>
               <li>Encryption in transit (TLS 1.3) and at rest (AES-256)</li>
               <li>Data minimization &mdash; we only transfer what is necessary</li>
@@ -392,22 +392,22 @@ export default function GDPRCompliance() {
 
           {/* Data Processors */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Processors</h2>
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Data Processors</h2>
             <div className="overflow-x-auto mt-3">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Processor</th>
-                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Purpose</th>
-                    <th className="text-left py-2 px-2 text-amber-400 font-semibold">Location</th>
+                  <tr className="border-b border-slate-300">
+                    <th className="text-left py-2 px-2 text-amber-600 font-semibold">Processor</th>
+                    <th className="text-left py-2 px-2 text-amber-600 font-semibold">Purpose</th>
+                    <th className="text-left py-2 px-2 text-amber-600 font-semibold">Location</th>
                   </tr>
                 </thead>
-                <tbody className="text-gray-300">
-                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Render</td><td className="py-2 px-2">Application hosting</td><td className="py-2 px-2">US</td></tr>
-                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Neon</td><td className="py-2 px-2">PostgreSQL database</td><td className="py-2 px-2">US</td></tr>
-                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Stripe</td><td className="py-2 px-2">Payment processing</td><td className="py-2 px-2">US / EU</td></tr>
-                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Groq</td><td className="py-2 px-2">AI inference (VersoAI)</td><td className="py-2 px-2">US</td></tr>
-                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-white">Google</td><td className="py-2 px-2">Analytics</td><td className="py-2 px-2">US / EU</td></tr>
+                <tbody className="text-slate-700">
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-slate-900">Render</td><td className="py-2 px-2">Application hosting</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-slate-900">Neon</td><td className="py-2 px-2">PostgreSQL database</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-slate-900">Stripe</td><td className="py-2 px-2">Payment processing</td><td className="py-2 px-2">US / EU</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-slate-900">Groq</td><td className="py-2 px-2">AI inference (VersoAI)</td><td className="py-2 px-2">US</td></tr>
+                  <tr className="border-b border-gray-800/50"><td className="py-2 px-2 text-slate-900">Google</td><td className="py-2 px-2">Analytics</td><td className="py-2 px-2">US / EU</td></tr>
                 </tbody>
               </table>
             </div>
@@ -415,46 +415,46 @@ export default function GDPRCompliance() {
 
           {/* Data Retention */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Data Retention</h2>
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Data Retention</h2>
             <div className="space-y-2 mt-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">Account data</span>
-                <span className="text-white text-sm">Until account deletion + 30 days</span>
+                <span className="text-slate-700">Account data</span>
+                <span className="text-slate-900 text-sm">Until account deletion + 30 days</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">Business listings</span>
-                <span className="text-white text-sm">Until removed by user</span>
+                <span className="text-slate-700">Business listings</span>
+                <span className="text-slate-900 text-sm">Until removed by user</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">Marketplace transactions</span>
-                <span className="text-white text-sm">7 years (legal requirement)</span>
+                <span className="text-slate-700">Marketplace transactions</span>
+                <span className="text-slate-900 text-sm">7 years (legal requirement)</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">VersoAI conversations</span>
-                <span className="text-white text-sm">Session only (not stored)</span>
+                <span className="text-slate-700">VersoAI conversations</span>
+                <span className="text-slate-900 text-sm">Session only (not stored)</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">Analytics data</span>
-                <span className="text-white text-sm">26 months (Google default)</span>
+                <span className="text-slate-700">Analytics data</span>
+                <span className="text-slate-900 text-sm">26 months (Google default)</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-800/50">
-                <span className="text-gray-300">Server logs</span>
-                <span className="text-white text-sm">90 days</span>
+                <span className="text-slate-700">Server logs</span>
+                <span className="text-slate-900 text-sm">90 days</span>
               </div>
             </div>
           </section>
 
           {/* Exercise Your Rights */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">How to Exercise Your Rights</h2>
-            <p className="text-gray-300 leading-relaxed">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">How to Exercise Your Rights</h2>
+            <p className="text-slate-700 leading-relaxed">
               Regardless of your location, you can exercise your data protection rights by contacting our Data Protection Officer:
             </p>
-            <div className="bg-white/5 rounded-xl p-4 mt-3 border border-gray-800">
-              <p className="text-white font-medium">Data Protection Officer</p>
-              <p className="text-gray-400 text-sm">Email: dpo@versoair.com</p>
-              <p className="text-gray-400 text-sm">Response time: Within 30 days (extendable by 60 days for complex requests)</p>
-              <p className="text-gray-400 text-sm mt-2">
+            <div className="bg-slate-100 rounded-xl p-4 mt-3 border border-gray-800">
+              <p className="text-slate-900 font-medium">Data Protection Officer</p>
+              <p className="text-slate-500 text-sm">Email: dpo@versoair.com</p>
+              <p className="text-slate-500 text-sm">Response time: Within 30 days (extendable by 60 days for complex requests)</p>
+              <p className="text-slate-500 text-sm mt-2">
                 We may verify your identity before processing. All requests are logged and handled in compliance with applicable law.
               </p>
             </div>
@@ -462,20 +462,20 @@ export default function GDPRCompliance() {
 
           {/* Related Policies */}
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">Related Policies</h2>
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Related Policies</h2>
             <div className="flex flex-wrap gap-3 mt-3">
               <Link href="/privacy">
-                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                <a className="bg-slate-100 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-600 hover:bg-white/10 transition-colors">
                   Privacy Policy →
                 </a>
               </Link>
               <Link href="/cookies">
-                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                <a className="bg-slate-100 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-600 hover:bg-white/10 transition-colors">
                   Cookie Policy →
                 </a>
               </Link>
               <Link href="/terms">
-                <a className="bg-white/5 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-400 hover:bg-white/10 transition-colors">
+                <a className="bg-slate-100 border border-gray-800 rounded-lg px-4 py-2 text-sm text-amber-600 hover:bg-white/10 transition-colors">
                   Terms of Service →
                 </a>
               </Link>

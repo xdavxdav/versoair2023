@@ -768,7 +768,7 @@ export default function Annuaire() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-slate-900">
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"
@@ -824,7 +824,7 @@ export default function Annuaire() {
                 <span>{COUNTRY_NAMES[selectedCountry] || selectedCountry}</span>
                 <button
                   onClick={() => reloadDetection()}
-                  className="ml-1 text-white/60 hover:text-white transition-colors"
+                  className="ml-1 text-slate-900/60 hover:text-slate-900 transition-colors"
                   title="Recharger la détection"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -843,7 +843,7 @@ export default function Annuaire() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-xl mb-4 text-white/90"
+            className="text-xl mb-4 text-slate-900/90"
           >
             {selectedCountry
               ? `${totalResults.toLocaleString()} entreprises en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
@@ -861,7 +861,7 @@ export default function Annuaire() {
               <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <MapPin className="h-4 w-4 text-blue-400" />
                 <span className="text-sm text-blue-300">Filtré par pays :</span>
-                <span className="text-sm font-semibold text-white flex items-center gap-1">
+                <span className="text-sm font-semibold text-slate-900 flex items-center gap-1">
                   {COUNTRY_FLAGS[selectedCountry] || "🌍"}{" "}
                   {COUNTRY_NAMES[selectedCountry] || selectedCountry}
                 </span>
@@ -879,7 +879,7 @@ export default function Annuaire() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Recherchez des entreprises..."
-                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                  className="pl-12 bg-slate-800/50 border-blue-600 text-slate-900 placeholder-blue-300/60"
                 />
               </div>
 
@@ -890,7 +890,7 @@ export default function Annuaire() {
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Ville, région..."
-                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                  className="pl-12 bg-slate-800/50 border-blue-600 text-slate-900 placeholder-blue-300/60"
                 />
               </div>
 
@@ -1096,7 +1096,7 @@ export default function Annuaire() {
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-blue-500/30 cursor-pointer group"
+                            className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-slate-300 hover:border-blue-500/30 cursor-pointer group"
                             onClick={() =>
                               setLocation(`/business/${business.id}`)
                             }
@@ -1104,7 +1104,7 @@ export default function Annuaire() {
                             <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
                             <div className="p-6">
                               <div className="flex items-center gap-2 mb-2">
-                                <h4 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
+                                <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-300 transition-colors line-clamp-1 flex-1">
                                   {business.name}
                                 </h4>
                                 {business.isVerified && (
@@ -1114,14 +1114,14 @@ export default function Annuaire() {
                                 )}
                               </div>
                               {locationStr && (
-                                <div className="flex items-center gap-2 text-gray-400 mb-3">
+                                <div className="flex items-center gap-2 text-slate-500 mb-3">
                                   <Building className="h-4 w-4 text-blue-500" />
                                   <span className="text-sm font-medium">
                                     {locationStr}
                                   </span>
                                 </div>
                               )}
-                              <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                              <p className="text-slate-700 text-sm mb-4 line-clamp-2">
                                 {business.description}
                               </p>
                               <div className="flex items-center justify-between">
@@ -1165,11 +1165,11 @@ export default function Annuaire() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                    <Search className="h-16 w-16 mx-auto text-slate-500 mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-700 mb-2">
                       Aucune entreprise trouvée
                     </h3>
-                    <p className="text-gray-400">Essayez une autre recherche</p>
+                    <p className="text-slate-500">Essayez une autre recherche</p>
                   </div>
                 )}
               </>
@@ -1178,23 +1178,23 @@ export default function Annuaire() {
                 {detecting ? (
                   <>
                     <Loader2 className="h-16 w-16 mx-auto text-blue-400 mb-4 animate-spin" />
-                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                    <h3 className="text-xl font-semibold text-slate-700 mb-2">
                       Détection de votre pays…
                     </h3>
-                    <p className="text-gray-400">
+                    <p className="text-slate-500">
                       Les entreprises de votre région apparaîtront
                       automatiquement
                     </p>
                   </>
                 ) : (
                   <>
-                    <Globe className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                    <Globe className="h-16 w-16 mx-auto text-slate-500 mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-700 mb-2">
                       {selectedCountry
                         ? `Aucune entreprise trouvée en ${COUNTRY_NAMES[selectedCountry] || selectedCountry}`
                         : "Explorez l'annuaire"}
                     </h3>
-                    <p className="text-gray-400">
+                    <p className="text-slate-500">
                       {selectedCountry
                         ? "Essayez une catégorie ou élargissez votre recherche"
                         : "Sélectionnez une catégorie et lancez votre recherche"}
@@ -1248,11 +1248,11 @@ export default function Annuaire() {
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <span className="text-blue-300">Total des catégories</span>
-                    <span className="font-semibold text-white">195</span>
+                    <span className="font-semibold text-slate-900">195</span>
                   </li>
                   <li className="flex items-center justify-between">
                     <span className="text-blue-300">Entreprises chargées</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {searchResults.length}
                     </span>
                   </li>
@@ -1291,14 +1291,14 @@ export default function Annuaire() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 bg-slate-800/90 backdrop-blur-md border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-2xl font-bold text-slate-900">
                   {selectedBusiness.name}
                 </h2>
                 <button
                   onClick={() => setShowBusinessDetails(false)}
                   className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  <X className="h-5 w-5 text-slate-500" />
                 </button>
               </div>
 
@@ -1308,8 +1308,8 @@ export default function Annuaire() {
                     {(selectedBusiness.cityName ||
                       selectedBusiness.countryCode) && (
                       <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-300">
+                        <MapPin className="h-4 w-4 text-slate-500" />
+                        <span className="text-slate-700">
                           {[
                             selectedBusiness.cityName,
                             selectedBusiness.countryCode,
@@ -1334,10 +1334,10 @@ export default function Annuaire() {
 
                 {selectedBusiness.description && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
                       Description
                     </h3>
-                    <p className="text-gray-300">
+                    <p className="text-slate-700">
                       {selectedBusiness.description}
                     </p>
                   </div>
@@ -1347,7 +1347,7 @@ export default function Annuaire() {
                   {selectedBusiness.phone && (
                     <a
                       href={`tel:${selectedBusiness.phone}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-slate-900 rounded-lg text-sm transition-colors"
                     >
                       <Phone className="h-4 w-4" />
                       {selectedBusiness.phone}
@@ -1356,7 +1356,7 @@ export default function Annuaire() {
                   {selectedBusiness.email && (
                     <a
                       href={`mailto:${selectedBusiness.email}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-900 rounded-lg text-sm transition-colors"
                     >
                       {selectedBusiness.email}
                     </a>
@@ -1366,7 +1366,7 @@ export default function Annuaire() {
                       href={selectedBusiness.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-900 rounded-lg text-sm transition-colors"
                     >
                       <Globe className="h-4 w-4" />
                       Site web

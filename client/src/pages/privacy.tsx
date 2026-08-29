@@ -4,37 +4,37 @@ import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+          <a className="mb-8 inline-flex items-center gap-2 text-amber-600 transition-colors hover:text-amber-700">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
         </Link>
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <Shield className="w-6 h-6 text-white" />
+        <div className="mb-10 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+            <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Privacy Policy</h1>
-            <p className="text-gray-400 text-sm">
+            <h1 className="text-3xl font-bold text-slate-900">Privacy Policy</h1>
+            <p className="text-sm text-slate-500">
               Last updated: March 13, 2026
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="prose prose-invert prose-amber max-w-none space-y-8">
+        <div className="prose max-w-none space-y-8 text-slate-700">
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               1. Introduction
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               Verso Air™ ("we," "our," or "us") operates the Verso Air business
               intelligence platform, including all related services such as the
               Business Directory, Geo Admin Portal, Artist Portal
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
               disclose, and safeguard your personal information when you use our
               Platform.
             </p>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               By accessing or using Verso Air, you agree to the terms of this
               Privacy Policy. If you do not agree, please discontinue use of the
               Platform immediately.
@@ -51,13 +51,13 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               2. Information We Collect
             </h2>
-            <h3 className="text-lg font-medium text-white mt-4">
+            <h3 className="text-lg font-medium text-slate-900 mt-4">
               2.1 Information You Provide
             </h3>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 <strong>Account Data:</strong> Email address, username, password
                 (hashed), display name when you register
@@ -82,10 +82,10 @@ export default function PrivacyPolicy() {
               </li>
             </ul>
 
-            <h3 className="text-lg font-medium text-white mt-4">
+            <h3 className="text-lg font-medium text-slate-900 mt-4">
               2.2 Information Collected Automatically
             </h3>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 <strong>Usage Data:</strong> Pages visited, features used,
                 search queries, session duration
@@ -101,7 +101,7 @@ export default function PrivacyPolicy() {
               <li>
                 <strong>Cookies:</strong> Session cookies for authentication,
                 preference cookies (see our{" "}
-                <Link href="/cookies" className="text-amber-400 underline">
+                <Link href="/cookies" className="text-amber-600 underline">
                   Cookie Policy
                 </Link>
                 )
@@ -110,10 +110,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               3. How We Use Your Information
             </h2>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 Provide, operate, and maintain the Platform (business directory,
                 analytics dashboards, reservations)
@@ -141,13 +141,13 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               4. Data Sharing & Third Parties
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We do not sell your personal data. We share data only with:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 <strong>Stripe:</strong> Payment processing (PCI-DSS compliant)
               </li>
@@ -173,10 +173,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               5. Data Retention
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We retain your account data for as long as your account is active.
               Business directory listings, reviews, and artist profiles remain
               on the Platform until you delete them or request removal. VersoAI
@@ -186,13 +186,13 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               6. Your Rights
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               Depending on your jurisdiction, you may have the right to:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>Access your personal data</li>
               <li>Correct inaccurate data</li>
               <li>Delete your account and associated data</li>
@@ -200,9 +200,9 @@ export default function PrivacyPolicy() {
               <li>Object to or restrict certain processing</li>
               <li>Withdraw consent at any time</li>
             </ul>
-            <p className="text-gray-300 leading-relaxed mt-2">
+            <p className="text-slate-700 leading-relaxed mt-2">
               For GDPR-specific rights, see our{" "}
-              <Link href="/gdpr" className="text-amber-400 underline">
+              <Link href="/gdpr" className="text-amber-600 underline">
                 GDPR page
               </Link>
               . To exercise any rights, contact us at{" "}
@@ -211,10 +211,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               7. Security
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We implement industry-standard security measures including bcrypt
               password hashing (12 salt rounds), JWT-based authentication with
               HTTP-only cookies, rate limiting on auth endpoints, CSRF
@@ -224,10 +224,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               8. Children's Privacy
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               Verso Air is not directed to individuals under 16. We do not
               knowingly collect data from children. If you believe a child has
               provided us with personal data, contact us and we will promptly
@@ -236,10 +236,10 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               9. Changes to This Policy
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We may update this Privacy Policy from time to time. Changes will
               be posted on this page with an updated "Last updated" date.
               Continued use after changes constitutes acceptance.
@@ -247,22 +247,22 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               10. Contact
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               For privacy inquiries, data requests, or complaints:
             </p>
-            <div className="bg-white/5 rounded-xl p-4 mt-2 border border-gray-800">
+            <div className="bg-white/5 rounded-xl p-4 mt-2 border border-slate-300">
               <p className="text-white font-medium">
                 Verso Air™ — Privacy Team
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-500 text-sm">
                 Email: privacy@versoair.com
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-500 text-sm">
                 Platform:{" "}
-                <Link href="/contact" className="text-amber-400 underline">
+                <Link href="/contact" className="text-amber-600 underline">
                   Contact Page
                 </Link>
               </p>

@@ -236,7 +236,7 @@ export default function GeoAdminPage() {
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 items-center justify-center">
+      <div className="flex flex-col min-h-screen bg-[#f3efe9] items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
           <p className="text-slate-400 text-sm">Verifying your access…</p>
@@ -259,7 +259,7 @@ export default function GeoAdminPage() {
 
   if (!isMaxOrEnterprise && !isSuperuser && !isGeoAdmin && !hasGateAccess) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
+      <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         {/* Connection status dot */}
         {isStillConnected && (
           <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
@@ -288,7 +288,7 @@ export default function GeoAdminPage() {
                   <Lock className="h-6 w-6 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white text-base sm:text-lg">
+                  <h3 className="font-semibold text-slate-900 text-base sm:text-lg">
                     GeoAdmin access requires an Enterprise plan
                   </h3>
                   <p className="text-red-200/80 text-sm sm:text-base mt-2">
@@ -303,7 +303,7 @@ export default function GeoAdminPage() {
               </div>
               <Button
                 onClick={() => setLocation("/pricing?plan=max")}
-                className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-6 py-2 text-sm font-semibold"
+                className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-slate-900 px-6 py-2 text-sm font-semibold"
               >
                 <TrendingUp className="h-4 w-4 mr-2" />
                 Upgrade Now
@@ -325,7 +325,7 @@ export default function GeoAdminPage() {
     gateBypass
   ) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 pb-20">
+      <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         {/* Connection status dot */}
         {isStillConnected && (
           <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
@@ -354,7 +354,7 @@ export default function GeoAdminPage() {
                   <Lock className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white text-sm sm:text-base">
+                  <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
                     Upgrade your plan to unlock full analytics
                   </h3>
                   <p className="text-amber-200/80 text-xs sm:text-sm mt-1">
@@ -366,7 +366,7 @@ export default function GeoAdminPage() {
               <Button
                 onClick={handleStartTrial}
                 disabled={startingTrial}
-                className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 text-sm"
+                className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 px-4 py-2 text-sm"
               >
                 {startingTrial ? (
                   <>
@@ -393,7 +393,7 @@ export default function GeoAdminPage() {
 
   // Signed in with paid tier → full dashboard
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+    <div className="flex flex-col min-h-screen bg-[#f3efe9]">
       {/* Connection status dot */}
       {isStillConnected && (
         <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>

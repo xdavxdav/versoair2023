@@ -92,7 +92,7 @@ export default function BlogPage() {
       : posts;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]">
       <ScrollToTop />
 
       {/* Navigation */}
@@ -111,13 +111,13 @@ export default function BlogPage() {
               <input
                 type="text"
                 placeholder="Search posts, users, topics..."
-                className="flex-1 bg-transparent text-white placeholder-slate-400 outline-none text-sm"
+                className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-sm"
               />
             </div>
 
             <button
               onClick={() => setIsCreatePostOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 font-medium rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
             >
               <Plus className="w-4 h-4" />
               Post
@@ -125,7 +125,7 @@ export default function BlogPage() {
 
             <button
               onClick={() => setIsCreatePostOpen(true)}
-              className="sm:hidden p-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg"
+              className="sm:hidden p-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-900 rounded-lg"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -146,7 +146,7 @@ export default function BlogPage() {
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                   sortBy === "recent"
                     ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-400 hover:text-slate-900"
                 }`}
               >
                 Recent
@@ -156,7 +156,7 @@ export default function BlogPage() {
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
                   sortBy === "trending"
                     ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                    : "text-slate-400 hover:text-white"
+                    : "text-slate-400 hover:text-slate-900"
                 }`}
               >
                 <Zap className="w-3 h-3" />
@@ -219,7 +219,7 @@ export default function BlogPage() {
           <div className="space-y-6">
             {/* Suggested Users */}
             <div>
-              <h2 className="text-lg font-semibold text-white mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
                 Who to Follow
               </h2>
               <div className="space-y-3">
@@ -243,7 +243,7 @@ export default function BlogPage() {
               transition={{ delay: 0.3 }}
               className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
             >
-              <h3 className="text-lg font-semibold text-white mb-3">Trends</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-3">Trends</h3>
               <div className="space-y-2">
                 {[
                   { tag: "#RealTimeAnalytics", posts: "2.3K" },

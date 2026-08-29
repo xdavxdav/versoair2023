@@ -92,12 +92,12 @@ function Accordion({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-gray-800 rounded-lg overflow-hidden">
+    <div className="border border-slate-300 rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/5 transition-colors"
       >
-        <span className="text-amber-300 font-medium">{title}</span>
+        <span className="text-amber-700 font-medium">{title}</span>
         {open ? (
           <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" />
         ) : (
@@ -113,7 +113,7 @@ function Accordion({
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 text-gray-300 leading-relaxed space-y-3">
+            <div className="px-5 pb-5 text-slate-700 leading-relaxed space-y-3">
               {children}
             </div>
           </motion.div>
@@ -129,7 +129,7 @@ function Accordion({
 
 function SectionHeading({ number, title }: { number: string; title: string }) {
   return (
-    <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2 mt-8 mb-4">
+    <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2 mt-8 mb-4">
       {number}. {title}
     </h2>
   );
@@ -137,7 +137,7 @@ function SectionHeading({ number, title }: { number: string; title: string }) {
 
 function SubHeading({ title }: { title: string }) {
   return (
-    <h3 className="text-lg font-medium text-amber-300/80 mt-5 mb-2">{title}</h3>
+    <h3 className="text-lg font-medium text-amber-700/80 mt-5 mb-2">{title}</h3>
   );
 }
 
@@ -153,14 +153,14 @@ function InfoCard({
   variant?: "default" | "warning" | "success" | "info";
 }) {
   const colors = {
-    default: "border-gray-800 bg-gray-900/50",
+    default: "border-slate-300 bg-gray-900/50",
     warning: "border-amber-500/30 bg-amber-500/5",
     success: "border-emerald-500/30 bg-emerald-500/5",
     info: "border-blue-500/30 bg-blue-500/5",
   };
   const iconColors = {
-    default: "text-amber-400",
-    warning: "text-amber-400",
+    default: "text-amber-600",
+    warning: "text-amber-600",
     success: "text-emerald-400",
     info: "text-blue-400",
   };
@@ -171,8 +171,8 @@ function InfoCard({
           className={`w-5 h-5 mt-0.5 flex-shrink-0 ${iconColors[variant]}`}
         />
         <div>
-          <p className="font-medium text-white mb-2">{title}</p>
-          <div className="text-gray-300 text-sm leading-relaxed space-y-2">
+          <p className="font-medium text-slate-900 mb-2">{title}</p>
+          <div className="text-slate-700 text-sm leading-relaxed space-y-2">
             {children}
           </div>
         </div>
@@ -188,9 +188,9 @@ function InfoCard({
 function OverviewTab() {
   return (
     <div className="space-y-6">
-      <p className="text-gray-300 leading-relaxed text-lg">
+      <p className="text-slate-700 leading-relaxed text-lg">
         Bienvenue au{" "}
-        <strong className="text-white">Centre d'Information Verso Air™</strong>{" "}
+        <strong className="text-slate-900">Centre d'Information Verso Air™</strong>{" "}
         — votre référence unique pour tous les documents juridiques, politiques
         de la plateforme, règles de concours, conditions des contrats artistes
         et informations de conformité réglementaire.
@@ -228,7 +228,7 @@ function OverviewTab() {
             porter vos données à tout moment. Contactez{" "}
             <a
               href="mailto:privacy@versoair.com"
-              className="text-amber-400 hover:underline"
+              className="text-amber-600 hover:underline"
             >
               privacy@versoair.com
             </a>{" "}
@@ -238,16 +238,16 @@ function OverviewTab() {
       </div>
 
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-amber-400 mb-3">
+        <h3 className="text-lg font-semibold text-amber-600 mb-3">
           Navigation Rapide
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {TABS.filter((t) => t.id !== "overview").map((tab) => (
             <span
               key={tab.id}
-              className="text-sm text-gray-300 flex items-center gap-2"
+              className="text-sm text-slate-700 flex items-center gap-2"
             >
-              <tab.icon className="w-3.5 h-3.5 text-amber-400/60" />
+              <tab.icon className="w-3.5 h-3.5 text-amber-600/60" />
               {tab.label}
             </span>
           ))}
@@ -281,12 +281,12 @@ function OverviewTab() {
 function TermsTab() {
   return (
     <div className="space-y-4">
-      <p className="text-gray-400 text-sm italic">
+      <p className="text-slate-500 text-sm italic">
         Last updated: March 22, 2026 — Effective immediately upon access.
       </p>
 
       <SectionHeading number="1" title="Acceptance of Terms" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         By accessing or using Verso Air™ (the "Platform"), including all
         sub-platforms (StreamRoyale, Marketplace, Geo Admin, VersoAI, Artist
         Portal), you agree to be bound by these Terms of Service ("Terms"). If
@@ -296,7 +296,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="2" title="Eligibility" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         You must be at least 16 years old to use the Platform. Users under 18
         require parental or guardian consent. By registering, you represent that
         all information provided is truthful and that you have the legal
@@ -304,7 +304,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="3" title="Account Registration & Security" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         You are responsible for maintaining the confidentiality of your account
         credentials. Sharing login information is prohibited. You must notify us
         immediately of unauthorized access. Accounts may be suspended or
@@ -315,11 +315,11 @@ function TermsTab() {
 
       <SectionHeading number="4" title="Services de la Plateforme" />
       <div className="space-y-3">
-        <p className="text-gray-300 leading-relaxed">
+        <p className="text-slate-700 leading-relaxed">
           Verso Air provides the following services, each subject to additional
           sector-specific terms:
         </p>
-        <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+        <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
           <li>
             <strong>Business Intelligence</strong> — Analytics dashboards across
             8+ sectors
@@ -355,7 +355,7 @@ function TermsTab() {
 
       <SectionHeading number="5" title="Niveaux d'Abonnement" />
       <div className="space-y-3">
-        <p className="text-gray-300 leading-relaxed">
+        <p className="text-slate-700 leading-relaxed">
           Access levels are tiered as follows:
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -371,17 +371,17 @@ function TermsTab() {
           ].map((tier) => (
             <div
               key={tier.name}
-              className="border border-gray-800 rounded-lg p-3"
+              className="border border-slate-300 rounded-lg p-3"
             >
-              <p className="text-amber-400 font-medium text-sm">{tier.name}</p>
-              <p className="text-gray-400 text-xs">{tier.desc}</p>
+              <p className="text-amber-600 font-medium text-sm">{tier.name}</p>
+              <p className="text-slate-500 text-xs">{tier.desc}</p>
             </div>
           ))}
         </div>
       </div>
 
       <SectionHeading number="6" title="Propriété Intellectuelle" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         All content, code, designs, trademarks, logos, and branding on the
         Platform are the property of Verso Air Inc. or its licensors. The Verso
         Air name, logo (eagle design), "STRΔΦGHT TΩ THΞ PΩΦΠT" tagline, and
@@ -393,7 +393,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="7" title="Contenu Artiste & Musique" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Artists uploading music to StreamRoyale represent and warrant that they
         own or have all necessary rights, licenses, and permissions for the
         content. Uploading copyrighted material without authorization is
@@ -404,7 +404,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="8" title="Conduite Interdite" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>
           Artificial stream inflation (bots, scripts, loops, VPN manipulation)
         </li>
@@ -420,7 +420,7 @@ function TermsTab() {
       </ul>
 
       <SectionHeading number="9" title="Paiement & Remboursements" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Subscription fees are billed in advance on a monthly or annual basis.
         Refunds are available within 14 days of initial purchase if no
         significant platform usage has occurred. Artist royalty payouts require
@@ -431,7 +431,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="10" title="Limitation de Responsabilité" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         TO THE MAXIMUM EXTENT PERMITTED BY LAW, VERSO AIR SHALL NOT BE LIABLE
         FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
         DAMAGES ARISING FROM YOUR USE OF THE PLATFORM. Our total liability for
@@ -441,7 +441,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="11" title="Résiliation" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         We may suspend or terminate your account at any time for violation of
         these Terms, with or without notice. Upon termination, your right to use
         the Platform ceases immediately. Data retention post-termination follows
@@ -450,7 +450,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="12" title="Modifications" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         We reserve the right to modify these Terms at any time. Material changes
         will be communicated via email or in-platform notification at least 30
         days before taking effect. Continued use after changes constitutes
@@ -458,7 +458,7 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="13" title="Droit Applicable" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Ces Conditions sont régies par les lois de la Province de l'Ontario,
         Canada, without regard to conflict of law principles. Any disputes shall
         be resolved in the courts of Toronto, Ontario, Canada. For users in the
@@ -468,11 +468,11 @@ function TermsTab() {
       </p>
 
       <SectionHeading number="14" title="Contact" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         For questions about these Terms, contact us at{" "}
         <a
           href="mailto:legal@versoair.com"
-          className="text-amber-400 hover:underline"
+          className="text-amber-600 hover:underline"
         >
           legal@versoair.com
         </a>{" "}
@@ -486,7 +486,7 @@ function TermsTab() {
 function PrivacyTab() {
   return (
     <div className="space-y-4">
-      <p className="text-gray-400 text-sm italic">
+      <p className="text-slate-500 text-sm italic">
         Last updated: March 22, 2026
       </p>
 
@@ -502,7 +502,7 @@ function PrivacyTab() {
       <SectionHeading number="1" title="Données Collectées" />
       <div className="space-y-3">
         <SubHeading title="Informations que Vous Fournissez" />
-        <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+        <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
           <li>Account details — name, email, password (bcrypt-hashed)</li>
           <li>
             Business profiles — company name, address, sector, description
@@ -514,7 +514,7 @@ function PrivacyTab() {
           <li>Messages, support tickets, and forum posts</li>
         </ul>
         <SubHeading title="Informations Collectées Automatiquement" />
-        <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+        <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
           <li>
             IP address and approximate geolocation (for country detection)
           </li>
@@ -528,7 +528,7 @@ function PrivacyTab() {
       </div>
 
       <SectionHeading number="2" title="Comment Nous Utilisons Vos Données" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Provide and maintain Platform services</li>
         <li>Calculate and distribute artist royalties accurately</li>
         <li>Detect and prevent fraud, bot activity, and stream manipulation</li>
@@ -540,11 +540,11 @@ function PrivacyTab() {
       </ul>
 
       <SectionHeading number="3" title="Partage des Données" />
-      <p className="text-gray-300 leading-relaxed">
-        We do <strong className="text-white">NOT</strong> sell personal data. We
+      <p className="text-slate-700 leading-relaxed">
+        We do <strong className="text-slate-900">NOT</strong> sell personal data. We
         may share data with:
       </p>
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>
           <strong>Service providers</strong> — hosting (Render/Neon), email
           delivery, payment processing
@@ -560,7 +560,7 @@ function PrivacyTab() {
       </ul>
 
       <SectionHeading number="4" title="Conservation des Données" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Account data is retained while your account is active. After deletion
         request, personal data is removed within 30 days. Anonymized analytics
         may be retained indefinitely. Financial records (royalties, payments)
@@ -604,21 +604,21 @@ function PrivacyTab() {
         ].map((item) => (
           <div
             key={item.right}
-            className="border border-gray-800 rounded-lg p-3 flex items-start gap-3"
+            className="border border-slate-300 rounded-lg p-3 flex items-start gap-3"
           >
-            <item.icon className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <item.icon className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-amber-300 font-medium text-sm">{item.right}</p>
-              <p className="text-gray-400 text-xs">{item.desc}</p>
+              <p className="text-amber-700 font-medium text-sm">{item.right}</p>
+              <p className="text-slate-500 text-xs">{item.desc}</p>
             </div>
           </div>
         ))}
       </div>
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Exercise any right by emailing{" "}
         <a
           href="mailto:privacy@versoair.com"
-          className="text-amber-400 hover:underline"
+          className="text-amber-600 hover:underline"
         >
           privacy@versoair.com
         </a>
@@ -626,7 +626,7 @@ function PrivacyTab() {
       </p>
 
       <SectionHeading number="6" title="Security" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         We employ industry-standard security measures: bcrypt password hashing
         (12 salt rounds), JWT authentication with HttpOnly secure cookies, CSRF
         token protection, rate limiting, SQL injection prevention via
@@ -634,7 +634,7 @@ function PrivacyTab() {
       </p>
 
       <SectionHeading number="7" title="Children's Privacy" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         The Platform is not intended for children under 16. We do not knowingly
         collect personal information from children. If we discover such data has
         been collected, it will be deleted immediately. Parents may contact us
@@ -776,10 +776,10 @@ function GdprTab() {
                   key={row.label}
                   className="flex flex-col sm:flex-row sm:gap-3"
                 >
-                  <span className="text-amber-400/70 text-sm font-medium sm:w-48 flex-shrink-0">
+                  <span className="text-amber-600/70 text-sm font-medium sm:w-48 flex-shrink-0">
                     {row.label}:
                   </span>
-                  <span className="text-gray-300 text-sm">{row.value}</span>
+                  <span className="text-slate-700 text-sm">{row.value}</span>
                 </div>
               ))}
             </div>
@@ -846,7 +846,7 @@ function CookiesTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Verso Air uses cookies and local storage to provide essential
         functionality, remember your preferences, and improve the platform.
       </p>
@@ -855,21 +855,21 @@ function CookiesTab() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800">
-              <th className="text-left text-amber-400 py-2 px-3">Cookie</th>
-              <th className="text-left text-amber-400 py-2 px-3">Purpose</th>
-              <th className="text-left text-amber-400 py-2 px-3">Duration</th>
-              <th className="text-left text-amber-400 py-2 px-3">Type</th>
+            <tr className="border-b border-slate-300">
+              <th className="text-left text-amber-600 py-2 px-3">Cookie</th>
+              <th className="text-left text-amber-600 py-2 px-3">Purpose</th>
+              <th className="text-left text-amber-600 py-2 px-3">Duration</th>
+              <th className="text-left text-amber-600 py-2 px-3">Type</th>
             </tr>
           </thead>
           <tbody>
             {cookies.map((c) => (
-              <tr key={c.name} className="border-b border-gray-800/50">
-                <td className="py-2 px-3 font-mono text-xs text-amber-300">
+              <tr key={c.name} className="border-b border-slate-300/50">
+                <td className="py-2 px-3 font-mono text-xs text-amber-700">
                   {c.name}
                 </td>
-                <td className="py-2 px-3 text-gray-300">{c.purpose}</td>
-                <td className="py-2 px-3 text-gray-400">{c.duration}</td>
+                <td className="py-2 px-3 text-slate-700">{c.purpose}</td>
+                <td className="py-2 px-3 text-slate-500">{c.duration}</td>
                 <td className="py-2 px-3">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
@@ -893,17 +893,17 @@ function CookiesTab() {
       <div className="space-y-2">
         {localStorage.map((item) => (
           <div key={item.name} className="flex items-center gap-3 text-sm">
-            <code className="text-amber-300 bg-gray-800/50 px-2 py-0.5 rounded text-xs">
+            <code className="text-amber-700 bg-gray-800/50 px-2 py-0.5 rounded text-xs">
               {item.name}
             </code>
-            <span className="text-gray-400">—</span>
-            <span className="text-gray-300">{item.purpose}</span>
+            <span className="text-slate-500">—</span>
+            <span className="text-slate-700">{item.purpose}</span>
           </div>
         ))}
       </div>
 
       <SectionHeading number="3" title="Managing Cookies" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         You can control cookies through your browser settings. Disabling
         essential cookies will prevent core functionality (authentication,
         sessions). Functional cookies can be disabled without breaking the
@@ -929,7 +929,7 @@ function TrademarkTab() {
       </InfoCard>
 
       <SectionHeading number="1" title="Registration Details" />
-      <div className="border border-gray-800 rounded-xl overflow-hidden">
+      <div className="border border-slate-300 rounded-xl overflow-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-800">
           {[
             { label: "Application Number", value: "2264074" },
@@ -951,15 +951,15 @@ function TrademarkTab() {
               <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">
                 {item.label}
               </p>
-              <p className="text-white font-medium text-sm">{item.value}</p>
+              <p className="text-slate-900 font-medium text-sm">{item.value}</p>
             </div>
           ))}
         </div>
       </div>
 
       <SectionHeading number="2" title="Services Covered (Nice Class 41)" />
-      <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-        <p className="text-gray-300 text-sm leading-relaxed">
+      <div className="bg-gray-900/50 border border-slate-300 rounded-lg p-4">
+        <p className="text-slate-700 text-sm leading-relaxed">
           Development, creation, production, distribution, and post-production
           of multimedia entertainment content, namely television series and
           documentaries; entertainment services, namely, a multimedia program
@@ -968,7 +968,7 @@ function TrademarkTab() {
       </div>
 
       <SectionHeading number="3" title="Design Description" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         The VERSO AIR trademark features a customized eagle design with color
         claimed as a feature. The design incorporates elements classified under
         the Vienna Classification: stars, luminous rays, eagles/birds in flight,
@@ -1008,9 +1008,9 @@ function TrademarkTab() {
           >
             <span className="text-lg leading-none">{item.status}</span>
             <div>
-              <span className="text-amber-400">{item.date}</span>
+              <span className="text-amber-600">{item.date}</span>
               <span className="text-gray-500 mx-2">—</span>
-              <span className="text-gray-300">{item.event}</span>
+              <span className="text-slate-700">{item.event}</span>
             </div>
           </div>
         ))}
@@ -1032,13 +1032,13 @@ function TrademarkTab() {
       </InfoCard>
 
       <SectionHeading number="6" title="CIPO Reference" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Official CIPO record:{" "}
         <a
           href="https://ised-isde.canada.ca/cipo/trademark-search/2264074?lang=eng"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-400 hover:underline inline-flex items-center gap-1"
+          className="text-amber-600 hover:underline inline-flex items-center gap-1"
         >
           View on CIPO
           <ExternalLink className="w-3 h-3" />
@@ -1064,7 +1064,7 @@ function CompetitionTab() {
       </InfoCard>
 
       <SectionHeading number="1" title="Eligibility" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>
           Open to artists aged 16+ in all countries where Verso Air operates
         </li>
@@ -1086,7 +1086,7 @@ function CompetitionTab() {
       <SectionHeading number="2" title="How It Works" />
       <div className="space-y-3">
         <SubHeading title="Weekly Pool Cycle" />
-        <p className="text-gray-300 leading-relaxed">
+        <p className="text-slate-700 leading-relaxed">
           Each competition week runs Sunday 00:00 UTC to Saturday 23:59 UTC.
           Listener contributions (tips, boosts, subscriptions) accumulate into a
           weekly pool. At the end of each week, the pool is distributed
@@ -1112,18 +1112,18 @@ function CompetitionTab() {
           ].map((split) => (
             <div
               key={split.label}
-              className="border border-gray-800 rounded-lg p-4"
+              className="border border-slate-300 rounded-lg p-4"
             >
-              <p className="text-2xl font-bold text-amber-400">{split.pct}</p>
-              <p className="text-white text-sm font-medium mt-1">
+              <p className="text-2xl font-bold text-amber-600">{split.pct}</p>
+              <p className="text-slate-900 text-sm font-medium mt-1">
                 {split.label}
               </p>
-              <p className="text-gray-400 text-xs mt-1">{split.desc}</p>
+              <p className="text-slate-500 text-xs mt-1">{split.desc}</p>
             </div>
           ))}
         </div>
-        <p className="text-gray-300 leading-relaxed text-sm">
-          <strong className="text-white">
+        <p className="text-slate-700 leading-relaxed text-sm">
+          <strong className="text-slate-900">
             90% of all listener contributions go directly to artists.
           </strong>{" "}
           Only 10% is retained by the platform.
@@ -1134,15 +1134,15 @@ function CompetitionTab() {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800">
-              <th className="text-left text-amber-400 py-2 px-3">
+            <tr className="border-b border-slate-300">
+              <th className="text-left text-amber-600 py-2 px-3">
                 Contract Grade
               </th>
-              <th className="text-left text-amber-400 py-2 px-3">Per Stream</th>
-              <th className="text-left text-amber-400 py-2 px-3">
+              <th className="text-left text-amber-600 py-2 px-3">Per Stream</th>
+              <th className="text-left text-amber-600 py-2 px-3">
                 Artist Share
               </th>
-              <th className="text-left text-amber-400 py-2 px-3">
+              <th className="text-left text-amber-600 py-2 px-3">
                 Platform Share
               </th>
             </tr>
@@ -1180,13 +1180,13 @@ function CompetitionTab() {
                 platform: "50%",
               },
             ].map((row) => (
-              <tr key={row.grade} className="border-b border-gray-800/50">
-                <td className="py-2 px-3 text-white font-medium">
+              <tr key={row.grade} className="border-b border-slate-300/50">
+                <td className="py-2 px-3 text-slate-900 font-medium">
                   {row.grade}
                 </td>
                 <td className="py-2 px-3 text-emerald-400">{row.rate}</td>
-                <td className="py-2 px-3 text-gray-300">{row.artist}</td>
-                <td className="py-2 px-3 text-gray-400">{row.platform}</td>
+                <td className="py-2 px-3 text-slate-700">{row.artist}</td>
+                <td className="py-2 px-3 text-slate-500">{row.platform}</td>
               </tr>
             ))}
           </tbody>
@@ -1201,7 +1201,7 @@ function CompetitionTab() {
             name: "Initiate",
             streams: "0+",
             boost: "0%",
-            color: "text-gray-400",
+            color: "text-slate-500",
           },
           {
             tier: 2,
@@ -1215,7 +1215,7 @@ function CompetitionTab() {
             name: "Silver Gladiator",
             streams: "10,000+",
             boost: "0%",
-            color: "text-gray-300",
+            color: "text-slate-700",
           },
           {
             tier: 4,
@@ -1248,7 +1248,7 @@ function CompetitionTab() {
         ].map((badge) => (
           <div
             key={badge.tier}
-            className="border border-gray-800 rounded-lg p-3 flex items-center gap-3"
+            className="border border-slate-300 rounded-lg p-3 flex items-center gap-3"
           >
             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-sm font-bold">
               <span className={badge.color}>{badge.tier}</span>
@@ -1266,14 +1266,14 @@ function CompetitionTab() {
       </div>
 
       <SectionHeading number="5" title="Stream Validation" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Streams are tracked via a heartbeat system — a listener's device sends a
         ping every 10 seconds during playback. Only validated streams (minimum
         30 seconds of continuous play from a unique session) count toward
         royalties and competition rankings. The following are automatically
         detected and excluded:
       </p>
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Duplicate sessions from the same IP within a 5-minute window</li>
         <li>Irregular heartbeat patterns (bot signatures)</li>
         <li>Bulk plays from a single account exceeding reasonable listening</li>
@@ -1281,10 +1281,10 @@ function CompetitionTab() {
       </ul>
 
       <SectionHeading number="6" title="Payouts" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>
           Minimum payout threshold:{" "}
-          <strong className="text-white">$10.00 USD</strong>
+          <strong className="text-slate-900">$10.00 USD</strong>
         </li>
         <li>Payout requests processed within 7–14 business days</li>
         <li>
@@ -1296,12 +1296,12 @@ function CompetitionTab() {
       </ul>
 
       <SectionHeading number="7" title="Disqualification" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         The following result in immediate disqualification from competition
         pools, potential account termination, and forfeiture of pending
         earnings:
       </p>
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Stream manipulation (bots, click farms, automated scripts)</li>
         <li>Copyright infringement (uploading content you don't own)</li>
         <li>Multi-account abuse for self-streaming</li>
@@ -1310,7 +1310,7 @@ function CompetitionTab() {
       </ul>
 
       <SectionHeading number="8" title="Governing Law" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         StreamRoyale competitions are governed by the laws of Ontario, Canada.
         For artists in the European Union, mandatory local consumer protection
         laws apply in addition. Competitions comply with promotional contest
@@ -1363,13 +1363,13 @@ function ContractsTab() {
         ].map((item) => (
           <div key={item.step} className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-400 text-sm font-bold">
+              <span className="text-amber-600 text-sm font-bold">
                 {item.step}
               </span>
             </div>
             <div>
-              <p className="text-white font-medium">{item.title}</p>
-              <p className="text-gray-400 text-sm">{item.desc}</p>
+              <p className="text-slate-900 font-medium">{item.title}</p>
+              <p className="text-slate-500 text-sm">{item.desc}</p>
             </div>
           </div>
         ))}
@@ -1411,9 +1411,9 @@ function ContractsTab() {
         ].map((contract) => (
           <div
             key={contract.grade}
-            className="border border-gray-800 rounded-xl p-5"
+            className="border border-slate-300 rounded-xl p-5"
           >
-            <h4 className="text-amber-400 font-semibold mb-3">
+            <h4 className="text-amber-600 font-semibold mb-3">
               {contract.grade}
             </h4>
             <div className="space-y-2 text-sm">
@@ -1425,11 +1425,11 @@ function ContractsTab() {
               </p>
               <p>
                 <span className="text-gray-500">Features:</span>{" "}
-                <span className="text-gray-300">{contract.features}</span>
+                <span className="text-slate-700">{contract.features}</span>
               </p>
               <p>
                 <span className="text-gray-500">Criteria:</span>{" "}
-                <span className="text-gray-300">{contract.criteria}</span>
+                <span className="text-slate-700">{contract.criteria}</span>
               </p>
             </div>
           </div>
@@ -1438,7 +1438,7 @@ function ContractsTab() {
 
       <SectionHeading number="3" title="Rights & Obligations" />
       <SubHeading title="Artist Rights" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Retain full ownership of all uploaded content</li>
         <li>
           Withdraw content at any time (subject to contractual notice period)
@@ -1448,7 +1448,7 @@ function ContractsTab() {
         <li>Dispute resolution through formal appeal process</li>
       </ul>
       <SubHeading title="Artist Obligations" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Upload only original content or properly licensed material</li>
         <li>Maintain accurate profile information</li>
         <li>Comply with community guidelines and platform rules</li>
@@ -1456,7 +1456,7 @@ function ContractsTab() {
         <li>Report copyright claims promptly</li>
       </ul>
       <SubHeading title="Platform Obligations" />
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>Process royalty payments within stated timeframes</li>
         <li>Provide transparent analytics and earnings reports</li>
         <li>Protect uploaded content with industry-standard security</li>
@@ -1465,7 +1465,7 @@ function ContractsTab() {
       </ul>
 
       <SectionHeading number="4" title="Termination" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Either party may terminate the contract with 30 days written notice.
         Upon termination: pending royalties will be paid out within 30 days
         (subject to minimum threshold), uploaded content will be removed from
@@ -1578,13 +1578,13 @@ function JurisdictionTab() {
 
       <SectionHeading number="1" title="Primary Jurisdiction" />
       <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5">
-        <p className="text-gray-300 leading-relaxed">
+        <p className="text-slate-700 leading-relaxed">
           Verso Air Inc. is incorporated in{" "}
-          <strong className="text-white">Ontario, Canada</strong>. Unless
+          <strong className="text-slate-900">Ontario, Canada</strong>. Unless
           overridden by mandatory local consumer protection laws, the laws of
           Ontario, Canada govern these Terms and the Platform's operation.
           Disputes are subject to the exclusive jurisdiction of the courts of
-          Toronto, Ontario — <strong className="text-white">except</strong>{" "}
+          Toronto, Ontario — <strong className="text-slate-900">except</strong>{" "}
           where local law grants you the right to bring proceedings in your own
           jurisdiction (e.g., EU Consumer Rights Directive).
         </p>
@@ -1596,28 +1596,28 @@ function JurisdictionTab() {
           <Accordion key={j.region} title={`${j.flag} ${j.region}`}>
             <div className="space-y-3">
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
                   Applicable Law
                 </p>
-                <p className="text-gray-300 text-sm">{j.law}</p>
+                <p className="text-slate-700 text-sm">{j.law}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
                   Competent Court
                 </p>
-                <p className="text-gray-300 text-sm">{j.court}</p>
+                <p className="text-slate-700 text-sm">{j.court}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
                   Key Notes
                 </p>
-                <p className="text-gray-300 text-sm">{j.notes}</p>
+                <p className="text-slate-700 text-sm">{j.notes}</p>
               </div>
               <div>
-                <p className="text-amber-400/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
                   Consumer Protection
                 </p>
-                <p className="text-gray-300 text-sm">{j.consumers}</p>
+                <p className="text-slate-700 text-sm">{j.consumers}</p>
               </div>
             </div>
           </Accordion>
@@ -1625,11 +1625,11 @@ function JurisdictionTab() {
       </div>
 
       <SectionHeading number="3" title="Competition Law Compliance" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         StreamRoyale competitions comply with promotional contest regulations in
         all participating countries. Key compliance points:
       </p>
-      <ul className="list-disc list-inside text-gray-300 space-y-1 ml-4">
+      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
         <li>
           <strong>No purchase necessary</strong> — artists earn through genuine
           streams, not entry fees
@@ -1654,7 +1654,7 @@ function JurisdictionTab() {
       </ul>
 
       <SectionHeading number="4" title="Dispute Resolution" />
-      <p className="text-gray-300 leading-relaxed">
+      <p className="text-slate-700 leading-relaxed">
         Before initiating legal proceedings, both parties agree to attempt
         resolution through: (1) direct communication with support@versoair.com,
         (2) formal complaint to legal@versoair.com with 30-day response window,
@@ -1762,7 +1762,7 @@ function FaqTab() {
     <div className="space-y-6">
       {faqs.map((category) => (
         <div key={category.category}>
-          <h3 className="text-lg font-semibold text-amber-400 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-amber-600 mb-3 flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
             {category.category}
           </h3>
@@ -1831,13 +1831,13 @@ export default function InformationHub() {
   const ActiveContent = TAB_CONTENT[activeTab];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
 
       <div className="max-w-5xl mx-auto px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+          <a className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Retour à l'Accueil
           </a>
@@ -1846,11 +1846,11 @@ export default function InformationHub() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <BookOpen className="w-6 h-6 text-white" />
+            <BookOpen className="w-6 h-6 text-slate-900" />
           </div>
           <div>
             <h1 className="text-3xl font-bold">Centre d'Information</h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-slate-500 text-sm">
               Documents juridiques, politiques, règles de concours & FAQ — Verso
               Air™
             </p>
@@ -1862,7 +1862,7 @@ export default function InformationHub() {
           {/* Left arrow */}
           <button
             onClick={() => scrollToTab("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-gray-900/90 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors -ml-1"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-gray-900/90 border border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-gray-500 transition-colors -ml-1"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -1881,8 +1881,8 @@ export default function InformationHub() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
                     isActive
-                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                      : "bg-gray-900/50 text-gray-400 border border-gray-800 hover:text-gray-200 hover:border-gray-700"
+                      ? "bg-amber-500/20 text-amber-600 border border-amber-500/40"
+                      : "bg-gray-900/50 text-slate-500 border border-slate-300 hover:text-gray-200 hover:border-slate-300"
                   }`}
                 >
                   <tab.icon className="w-3.5 h-3.5" />
@@ -1895,7 +1895,7 @@ export default function InformationHub() {
           {/* Right arrow */}
           <button
             onClick={() => scrollToTab("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-gray-900/90 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors -mr-1"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-gray-900/90 border border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-gray-500 transition-colors -mr-1"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -1909,14 +1909,14 @@ export default function InformationHub() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25 }}
-            className="prose prose-invert prose-amber max-w-none"
+            className="prose   max-w-none"
           >
             <ActiveContent />
           </motion.div>
         </AnimatePresence>
 
         {/* Footer note */}
-        <div className="mt-16 pt-8 border-t border-gray-800">
+        <div className="mt-16 pt-8 border-t border-slate-300">
           <p className="text-gray-500 text-sm text-center">
             © {new Date().getFullYear()} Verso Air Inc. Tous droits réservés.
             <br />
@@ -1924,14 +1924,14 @@ export default function InformationHub() {
             <br />
             <a
               href="mailto:legal@versoair.com"
-              className="text-amber-400/60 hover:text-amber-400 transition-colors"
+              className="text-amber-600/60 hover:text-amber-600 transition-colors"
             >
               legal@versoair.com
             </a>
             {" · "}
             <a
               href="mailto:privacy@versoair.com"
-              className="text-amber-400/60 hover:text-amber-400 transition-colors"
+              className="text-amber-600/60 hover:text-amber-600 transition-colors"
             >
               privacy@versoair.com
             </a>

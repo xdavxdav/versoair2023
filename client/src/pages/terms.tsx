@@ -4,37 +4,37 @@ import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm mb-8 transition-colors">
+          <a className="mb-8 inline-flex items-center gap-2 text-amber-600 transition-colors hover:text-amber-700">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
         </Link>
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <FileText className="w-6 h-6 text-white" />
+        <div className="mb-10 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+            <FileText className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Terms of Service</h1>
-            <p className="text-gray-400 text-sm">
+            <h1 className="text-3xl font-bold text-slate-900">Terms of Service</h1>
+            <p className="text-sm text-slate-500">
               Last updated: March 13, 2026
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="prose prose-invert prose-amber max-w-none space-y-8">
+        <div className="prose max-w-none space-y-8 text-slate-700">
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               1. Acceptance of Terms
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               By accessing or using the Verso Air™ platform ("Platform"),
               including the Business Directory, Analytics Dashboards,
               StreamRoyale Artist Portal, Marketplace, VersoAI assistant, and
@@ -45,10 +45,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               2. Eligibility
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               You must be at least 16 years old to use Verso Air. By creating an
               account, you represent that you meet this age requirement and have
               the legal authority to enter into these Terms. Business accounts
@@ -58,10 +58,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               3. User Accounts
             </h2>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 You are responsible for maintaining the confidentiality of your
                 password and account credentials
@@ -82,47 +82,47 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               4. Portal Access & Subscriptions
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               Verso Air offers multiple portal tiers:
             </p>
             <div className="grid gap-3 mt-3">
-              <div className="bg-white/5 border border-gray-800 rounded-lg p-3">
+              <div className="bg-white/5 border border-slate-300 rounded-lg p-3">
                 <p className="text-white font-medium">General Portal (Free)</p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   Browse businesses, view public analytics, basic search
                   functionality
                 </p>
               </div>
-              <div className="bg-white/5 border border-gray-800 rounded-lg p-3">
+              <div className="bg-white/5 border border-slate-300 rounded-lg p-3">
                 <p className="text-white font-medium">
                   Artist Portal — StreamRoyale
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   Artist profiles, release tracking, royalty analytics,
                   promotional tools
                 </p>
               </div>
-              <div className="bg-white/5 border border-gray-800 rounded-lg p-3">
+              <div className="bg-white/5 border border-slate-300 rounded-lg p-3">
                 <p className="text-white font-medium">
                   Geo Admin Portal (Premium)
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   Geographic data management, regional business oversight,
                   advanced analytics
                 </p>
               </div>
-              <div className="bg-white/5 border border-gray-800 rounded-lg p-3">
+              <div className="bg-white/5 border border-slate-300 rounded-lg p-3">
                 <p className="text-white font-medium">Contractor Portal</p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   Apply for projects, manage bids, track assignments across
                   sectors
                 </p>
               </div>
             </div>
-            <p className="text-gray-300 leading-relaxed mt-3">
+            <p className="text-slate-700 leading-relaxed mt-3">
               Premium subscriptions are billed monthly or annually via Stripe.
               Cancellations take effect at the end of the current billing
               period. No refunds are provided for partial months.
@@ -130,14 +130,14 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               5. Marketplace Rules
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               The Verso Air Marketplace connects buyers and sellers. By listing
               or purchasing:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>Listings must be accurate and not misleading</li>
               <li>
                 Prohibited items: counterfeit goods, illegal products, weapons,
@@ -162,15 +162,15 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               6. VersoAI Usage
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               VersoAI is an AI-powered assistant that uses large language models
               (powered by Groq and Ollama) to answer questions. You understand
               that:
             </p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 VersoAI responses are generated by AI and may not always be
                 accurate
@@ -195,10 +195,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               7. Content & Intellectual Property
             </h2>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 You retain ownership of content you upload (listings, reviews,
                 business profiles)
@@ -222,11 +222,11 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               8. Prohibited Conduct
             </h2>
-            <p className="text-gray-300 leading-relaxed">You agree not to:</p>
-            <ul className="list-disc list-inside text-gray-300 space-y-1">
+            <p className="text-slate-700 leading-relaxed">You agree not to:</p>
+            <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
                 Use bots, scrapers, or automated tools to access the Platform
                 without permission
@@ -249,16 +249,16 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               9. Termination
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We may suspend or terminate your account at any time for violation
               of these Terms or for any reason with reasonable notice. You may
               delete your account at any time through your account settings.
               Upon termination, your right to use the Platform ceases
               immediately. Data deletion follows our{" "}
-              <Link href="/privacy" className="text-amber-400 underline">
+              <Link href="/privacy" className="text-amber-600 underline">
                 Privacy Policy
               </Link>
               .
@@ -266,10 +266,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               10. Disclaimers
             </h2>
-            <p className="text-gray-300 leading-relaxed uppercase text-sm">
+            <p className="text-slate-700 leading-relaxed uppercase text-sm">
               The Platform is provided "as is" and "as available" without
               warranties of any kind, express or implied. Verso Air does not
               guarantee the accuracy, completeness, or reliability of business
@@ -279,10 +279,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               11. Limitation of Liability
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               To the maximum extent permitted by law, Verso Air shall not be
               liable for any indirect, incidental, special, consequential, or
               punitive damages arising from your use of the Platform, including
@@ -292,10 +292,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               12. Governing Law
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               These Terms are governed by and construed in accordance with the
               laws of the State of California, United States, without regard to
               conflict-of-law provisions. Any disputes shall be resolved in the
@@ -304,10 +304,10 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               13. Changes to Terms
             </h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed">
               We reserve the right to modify these Terms at any time. Material
               changes will be communicated via email or prominent Platform
               notice. Continued use after changes constitutes acceptance of the
@@ -316,15 +316,15 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-400 border-b border-gray-800 pb-2">
+            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
               14. Contact
             </h2>
-            <div className="bg-white/5 rounded-xl p-4 border border-gray-800">
+            <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">Verso Air™ — Legal Team</p>
-              <p className="text-gray-400 text-sm">Email: legal@versoair.com</p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-slate-500 text-sm">Email: legal@versoair.com</p>
+              <p className="text-slate-500 text-sm">
                 Platform:{" "}
-                <Link href="/contact" className="text-amber-400 underline">
+                <Link href="/contact" className="text-amber-600 underline">
                   Contact Page
                 </Link>
               </p>

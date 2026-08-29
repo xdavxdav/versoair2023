@@ -133,7 +133,7 @@ const TECH_STACK = [
   { name: "Vite", color: "text-yellow-400" },
   { name: "Drizzle ORM", color: "text-amber-400" },
   { name: "Tailwind CSS", color: "text-teal-400" },
-  { name: "shadcn/ui", color: "text-white" },
+  { name: "shadcn/ui", color: "text-slate-900" },
   { name: "Socket.io", color: "text-slate-300" },
   { name: "Framer Motion", color: "text-purple-400" },
   { name: "TanStack Query", color: "text-red-400" },
@@ -205,18 +205,18 @@ const SectorCard = ({
           <CardContent className="p-8 relative">
             <div className="flex items-start justify-between mb-6">
               <div className={`p-3 rounded-xl ${sector.gradient} shadow-lg`}>
-                <Icon className="h-7 w-7 text-white" />
+                <Icon className="h-7 w-7 text-slate-900" />
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
 
-            <h3 className="text-xl font-bold text-white mb-3">
+            <h3 className="text-xl font-bold text-slate-900 mb-3">
               {sector.title}
             </h3>
             <p className="text-slate-300 text-sm mb-4">{sector.description}</p>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400 group-hover:text-white/80 transition-colors">
+              <span className="text-sm text-slate-400 group-hover:text-slate-900/80 transition-colors">
                 Explorer le secteur →
               </span>
             </div>
@@ -247,7 +247,7 @@ const FeatureHighlight = ({
         <Icon className={`h-6 w-6 ${color}`} />
       </div>
       <div className="flex-1">
-        <h4 className="font-semibold text-white mb-2">{title}</h4>
+        <h4 className="font-semibold text-slate-900 mb-2">{title}</h4>
         <p className="text-slate-300 text-sm leading-relaxed">{description}</p>
       </div>
     </div>
@@ -310,7 +310,7 @@ export default function About() {
   const activeTables = dbStats?.activeTables ?? 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 overflow-hidden">
       {/* Enhanced Hero with Parallax */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}
@@ -430,7 +430,7 @@ export default function About() {
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                       <Icon className="h-7 w-7 text-slate-300" />
                     </div>
-                    <div className="text-2xl font-bold text-white mb-1">
+                    <div className="text-2xl font-bold text-slate-900 mb-1">
                       {displayValue}
                     </div>
                     <div className="text-sm text-slate-400">{stat.label}</div>
@@ -456,7 +456,7 @@ export default function About() {
               <Link href="/contact">
                 <Button
                   variant="outline"
-                  className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-white hover:bg-white/15 rounded-xl"
+                  className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15 rounded-xl"
                 >
                   Nous Contacter
                 </Button>
@@ -468,7 +468,7 @@ export default function About() {
 
       {/* Live Data Dashboard Strip */}
       {!loading && (
-        <section className="relative py-8 border-y border-slate-800/50 bg-slate-900/30 backdrop-blur-sm">
+        <section className="relative py-8 border-y border-slate-800/50 bg-slate-100/30 backdrop-blur-sm">
           <div className="max-w-[95vw] mx-auto px-4">
             <motion.div
               initial={{ opacity: 0 }}
@@ -571,12 +571,12 @@ export default function About() {
               onValueChange={setActiveSector}
               className="mb-20"
             >
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 p-2 bg-slate-900/50 rounded-2xl backdrop-blur-sm border border-slate-700/50">
+              <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 p-2 bg-slate-100/50 rounded-2xl backdrop-blur-sm border border-slate-700/50">
                 {PLATFORM_SECTORS.map((sector) => (
                   <TabsTrigger
                     key={sector.id}
                     value={sector.id}
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:border-0 data-[state=active]:text-white rounded-xl"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:border-0 data-[state=active]:text-slate-900 rounded-xl"
                     style={{
                       background:
                         sector.id === activeSector
@@ -613,10 +613,10 @@ export default function About() {
                               <div
                                 className={`p-4 rounded-2xl ${sector.gradient} shadow-xl`}
                               >
-                                <sector.icon className="h-8 w-8 text-white" />
+                                <sector.icon className="h-8 w-8 text-slate-900" />
                               </div>
                               <div className="flex-1">
-                                <h3 className="text-2xl font-bold text-white mb-4">
+                                <h3 className="text-2xl font-bold text-slate-900 mb-4">
                                   {sector.title}
                                 </h3>
                                 <div className="grid md:grid-cols-2 gap-6">
@@ -634,7 +634,7 @@ export default function About() {
                                         <Badge
                                           key={i}
                                           variant="secondary"
-                                          className="bg-white/10 text-white/90"
+                                          className="bg-white/10 text-slate-900/90"
                                         >
                                           {tag}
                                         </Badge>
@@ -643,7 +643,7 @@ export default function About() {
                                     <Link href={sector.route}>
                                       <Button
                                         variant="outline"
-                                        className="border-slate-700 bg-white/10 text-white hover:bg-white/15"
+                                        className="border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15"
                                       >
                                         Ouvrir {sector.title.split(" ")[0]}{" "}
                                         Tableau de Bord
@@ -653,7 +653,7 @@ export default function About() {
                                   </div>
                                   <div className="space-y-4">
                                     <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
-                                      <div className="text-2xl font-bold text-white mb-1">
+                                      <div className="text-2xl font-bold text-slate-900 mb-1">
                                         {loading
                                           ? "..."
                                           : totalBusinesses.toLocaleString()}
@@ -663,7 +663,7 @@ export default function About() {
                                       </div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
-                                      <div className="text-2xl font-bold text-white mb-1">
+                                      <div className="text-2xl font-bold text-slate-900 mb-1">
                                         {loading
                                           ? "..."
                                           : `${avgRating.toFixed(1)}★`}
@@ -691,7 +691,7 @@ export default function About() {
       {/* Top Categories from Database */}
       {categoryStats.length > 0 && (
         <section className="py-16 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-slate-900/50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#f3efe9] to-[#efe7dd]" />
           <div className="relative max-w-[95vw] mx-auto px-4">
             <FloatingElement>
               <div className="text-center mb-12">
@@ -729,20 +729,20 @@ export default function About() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                     viewport={{ once: true }}
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-900/40 border border-slate-800/50 hover:border-slate-700 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-xl bg-slate-100/40 border border-slate-800/50 hover:border-slate-700 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-sm font-bold text-purple-300">
                         {index + 1}
                       </div>
-                      <span className="text-white font-medium text-sm">
+                      <span className="text-slate-900 font-medium text-sm">
                         {cat.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge
                         variant="secondary"
-                        className="bg-white/10 text-white/80"
+                        className="bg-white/10 text-slate-900/80"
                       >
                         {cat.count} {cat.count === 1 ? "annonce" : "annonces"}
                       </Badge>
@@ -760,7 +760,7 @@ export default function About() {
                 <Link href="/businesses-directory">
                   <Button
                     variant="outline"
-                    className="border-slate-700 bg-white/10 text-white hover:bg-white/15"
+                    className="border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15"
                   >
                     Voir les {totalCategories} Catégories
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -803,7 +803,7 @@ export default function About() {
                   >
                     <MapPin className="h-5 w-5 text-amber-400" />
                     <div>
-                      <div className="text-white font-semibold">
+                      <div className="text-slate-900 font-semibold">
                         {loc.location}
                       </div>
                       <div className="text-xs text-slate-400">
@@ -821,7 +821,7 @@ export default function About() {
 
       {/* Core Features */}
       <section className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/30 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]" />
 
         <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
@@ -938,14 +938,14 @@ export default function About() {
           <FloatingElement>
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/10 mb-8">
               <Star className="h-4 w-4 text-purple-300" />
-              <span className="text-white/90">
+              <span className="text-slate-900/90">
                 La Plateforme d'Intelligence d'Affaires pour la Côte d'Ivoire
               </span>
             </div>
           </FloatingElement>
 
           <FloatingElement delay={0.2}>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
               Prêt à Explorer ?
             </h2>
           </FloatingElement>
@@ -976,7 +976,7 @@ export default function About() {
             <Link href="/contact">
               <Button
                 variant="outline"
-                className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-white hover:bg-white/15 rounded-xl"
+                className="px-8 py-6 text-lg border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15 rounded-xl"
               >
                 Nous Contacter
               </Button>

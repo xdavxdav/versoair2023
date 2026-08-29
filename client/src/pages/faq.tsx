@@ -326,8 +326,7 @@ export default function FaqPage() {
 
     try {
       const token =
-        localStorage.getItem("auth_token") ||
-        localStorage.getItem("authToken");
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
       const res = await fetch(`/api/faq/${selectedTopic.id}/reply`, {
         method: "POST",
         headers: {
@@ -363,8 +362,7 @@ export default function FaqPage() {
 
     try {
       const token =
-        localStorage.getItem("auth_token") ||
-        localStorage.getItem("authToken");
+        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
       const res = await fetch("/api/faq", {
         method: "POST",
         headers: {
@@ -659,26 +657,26 @@ export default function FaqPage() {
   // RENDER: List View
   // ═══════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollToTop />
 
       {/* Header */}
-      <div className="bg-gradient-to-b from-slate-900 to-transparent border-b border-white/5">
-        <div className="max-w-[95vw] mx-auto px-4 py-10 sm:py-14">
+      <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f2ede6_25%,#efe7dd_100%)]">
+        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:py-14">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <MessageCircleQuestion className="w-6 h-6 text-white" />
+            <div className="mb-4 flex items-center justify-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white">
+                <MessageCircleQuestion className="h-6 w-6" />
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
                 FAQ & Discussions
               </h1>
             </div>
-            <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base">
+            <p className="mx-auto max-w-lg text-sm text-slate-600 sm:text-base">
               Find answers, ask questions, and discuss topics with the
               community.
             </p>
@@ -690,15 +688,15 @@ export default function FaqPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             onSubmit={handleSearch}
-            className="max-w-xl mx-auto mt-6 relative"
+            className="relative mx-auto mt-6 max-w-xl"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search topics..."
-              className="w-full bg-slate-800/60 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -707,28 +705,28 @@ export default function FaqPage() {
                   setSearchQuery("");
                   setPage(1);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </motion.form>
         </div>
       </div>
 
-      <div className="max-w-[95vw] mx-auto px-4 py-6">
+      <div className="mx-auto max-w-[1400px] px-4 py-6">
         {/* Mobile/Tablet: Horizontal category pills */}
-        <div className="lg:hidden mb-4">
+        <div className="mb-4 lg:hidden">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => {
                 setSelectedCategory("all");
                 setPage(1);
               }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 selectedCategory === "all"
-                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                  : "bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700"
+                  ? "border border-amber-400 bg-amber-100 text-amber-700"
+                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
               }`}
             >
               All
@@ -744,20 +742,20 @@ export default function FaqPage() {
                     setSelectedCategory(cat.name);
                     setPage(1);
                   }}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     selectedCategory === cat.name
                       ? `${colors.badge} ${colors.text} border ${colors.border}`
-                      : "bg-slate-800 text-slate-400 border border-white/5 hover:bg-slate-700"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  <CatIcon className="w-3 h-3" />
+                  <CatIcon className="h-3 w-3" />
                   {cat.label}
                 </button>
               );
             })}
           </div>
           {/* Mobile sort */}
-          <div className="flex items-center gap-2 mt-2">
+          <div className="mt-2 flex items-center gap-2">
             {[
               { value: "recent", label: "Recent" },
               { value: "popular", label: "Popular" },
@@ -769,10 +767,10 @@ export default function FaqPage() {
                   setSortBy(value as any);
                   setPage(1);
                 }}
-                className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
+                className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
                   sortBy === value
-                    ? "bg-cyan-500/10 text-cyan-400"
-                    : "text-slate-500 hover:text-white"
+                    ? "bg-amber-100 text-amber-700"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {label}
@@ -781,7 +779,7 @@ export default function FaqPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
           {/* Sidebar - Categories (desktop only) */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
@@ -789,9 +787,9 @@ export default function FaqPage() {
             transition={{ delay: 0.15 }}
             className="hidden lg:block"
           >
-            <div className="bg-slate-900/60 rounded-xl border border-white/10 p-4 sticky top-20">
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <Filter className="w-4 h-4 text-cyan-400" />
+            <div className="sticky top-20 rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <Filter className="h-4 w-4 text-amber-600" />
                 Categories
               </h3>
 
@@ -800,10 +798,10 @@ export default function FaqPage() {
                   setSelectedCategory("all");
                   setPage(1);
                 }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+                className={`mb-1 w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                   selectedCategory === "all"
-                    ? "bg-cyan-500/10 text-cyan-400"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "bg-amber-100 text-amber-700"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 All Topics
@@ -820,21 +818,21 @@ export default function FaqPage() {
                       setSelectedCategory(cat.name);
                       setPage(1);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors mb-1 flex items-center gap-2 ${
+                    className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       selectedCategory === cat.name
                         ? `${colors.bg} ${colors.text}`
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                   >
-                    <CatIcon className="w-3.5 h-3.5" />
+                    <CatIcon className="h-3.5 w-3.5" />
                     {cat.label}
                   </button>
                 );
               })}
 
               {/* Sort Options */}
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <h3 className="text-sm font-semibold text-white mb-3">
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
                   Sort By
                 </h3>
                 {[
@@ -848,10 +846,10 @@ export default function FaqPage() {
                       setSortBy(value as any);
                       setPage(1);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+                    className={`mb-1 w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       sortBy === value
-                        ? "bg-cyan-500/10 text-cyan-400"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                        ? "bg-amber-100 text-amber-700"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                   >
                     {label}
@@ -860,12 +858,12 @@ export default function FaqPage() {
               </div>
 
               {/* Link to Blog */}
-              <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="mt-4 border-t border-slate-200 pt-4">
                 <Link
                   href="/blog"
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors rounded-lg hover:bg-white/5"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-amber-700 transition-colors hover:bg-slate-100"
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                   Community Blog
                 </Link>
               </div>
@@ -875,8 +873,8 @@ export default function FaqPage() {
           {/* Main Content */}
           <div className="space-y-3">
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-slate-400">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-slate-600">
                 {posts.length} topic{posts.length !== 1 ? "s" : ""}
                 {selectedCategory !== "all" &&
                   ` in ${categories.find((c) => c.name === selectedCategory)?.label}`}
@@ -884,9 +882,9 @@ export default function FaqPage() {
               </p>
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg transition-all"
+                className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-800"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
                 New Topic
               </button>
             </div>
@@ -897,20 +895,20 @@ export default function FaqPage() {
                 {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className="bg-slate-900/40 rounded-xl border border-white/5 p-5 animate-pulse"
+                    className="animate-pulse rounded-[22px] border border-slate-200 bg-white p-5"
                   >
-                    <div className="h-4 bg-slate-700/50 rounded w-3/4 mb-3" />
-                    <div className="h-3 bg-slate-700/30 rounded w-1/2" />
+                    <div className="mb-3 h-4 w-3/4 rounded bg-slate-200" />
+                    <div className="h-3 w-1/2 rounded bg-slate-200" />
                   </div>
                 ))}
               </div>
             ) : posts.length === 0 ? (
-              <div className="text-center py-16">
-                <MessageCircleQuestion className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-300 mb-2">
+              <div className="py-16 text-center">
+                <MessageCircleQuestion className="mx-auto mb-4 h-12 w-12 text-slate-400" />
+                <h3 className="mb-2 text-lg font-medium text-slate-700">
                   No topics found
                 </h3>
-                <p className="text-slate-500 text-sm">
+                <p className="text-sm text-slate-500">
                   {searchQuery
                     ? `No results for "${searchQuery}". Try a different search.`
                     : "Be the first to start a discussion!"}
@@ -932,33 +930,33 @@ export default function FaqPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.03 }}
                       onClick={() => openTopic(post)}
-                      className="w-full text-left bg-slate-900/40 hover:bg-slate-900/70 rounded-xl border border-white/5 hover:border-white/10 p-4 sm:p-5 transition-all group"
+                      className="group w-full rounded-[22px] border border-slate-200 bg-white p-4 text-left shadow-[0_18px_35px_rgba(15,23,42,0.04)] transition-all hover:border-amber-300 hover:bg-slate-50 sm:p-5"
                     >
                       <div className="flex items-start gap-3 sm:gap-4">
                         {/* Category Icon */}
                         <div
-                          className={`w-10 h-10 rounded-lg ${catColors.bg} flex items-center justify-center flex-shrink-0`}
+                          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${catColors.bg}`}
                         >
-                          <CatIcon className={`w-5 h-5 ${catColors.text}`} />
+                          <CatIcon className={`h-5 w-5 ${catColors.text}`} />
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="text-white font-medium text-sm sm:text-base group-hover:text-cyan-300 transition-colors truncate">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <h3 className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-amber-700 sm:text-base">
                               {post.title}
                             </h3>
                             {post.isResolved && (
-                              <span className="flex items-center gap-0.5 text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span className="flex flex-shrink-0 items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
                                 Resolved
                               </span>
                             )}
                           </div>
-                          <p className="text-slate-400 text-xs sm:text-sm line-clamp-1">
+                          <p className="line-clamp-1 text-xs text-slate-600 sm:text-sm">
                             {post.content}
                           </p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                             <span>{post.author.displayName}</span>
                             <span className={`${catColors.text}`}>
                               {categories.find(
@@ -966,14 +964,14 @@ export default function FaqPage() {
                               )?.label || post.faqCategory}
                             </span>
                             <span className="flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3" />{" "}
+                              <MessageSquare className="h-3 w-3" />{" "}
                               {post.commentCount}
                             </span>
                             <span className="flex items-center gap-1">
-                              <Eye className="w-3 h-3" /> {post.viewCount}
+                              <Eye className="h-3 w-3" /> {post.viewCount}
                             </span>
                             <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />{" "}
+                              <Clock className="h-3 w-3" />{" "}
                               {timeAgo(post.createdAt)}
                             </span>
                           </div>
@@ -991,19 +989,19 @@ export default function FaqPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg bg-white p-2 text-slate-600 shadow-sm transition-colors hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-sm text-slate-400 px-3">
+                <span className="px-3 text-sm text-slate-600">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg bg-white p-2 text-slate-600 shadow-sm transition-colors hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -1027,24 +1025,24 @@ export default function FaqPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border border-white/10 p-6 shadow-2xl"
+              className="relative w-full max-w-lg rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-cyan-400" />
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <Plus className="h-5 w-5 text-amber-600" />
                   New FAQ Topic
                 </h2>
                 <button
                   onClick={() => setIsCreateOpen(false)}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="text-slate-500 transition-colors hover:text-slate-900"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Title
                   </label>
                   <input
@@ -1052,12 +1050,12 @@ export default function FaqPage() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="What's your question?"
-                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Category
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -1069,13 +1067,13 @@ export default function FaqPage() {
                         <button
                           key={cat.name}
                           onClick={() => setNewCategory(cat.name)}
-                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition-all border ${
+                          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs transition-all ${
                             newCategory === cat.name
                               ? `${colors.bg} ${colors.text} ${colors.border}`
-                              : "border-white/5 text-slate-400 hover:bg-white/5"
+                              : "border-slate-200 text-slate-600 hover:bg-slate-100"
                           }`}
                         >
-                          <CatIcon className="w-3 h-3" />
+                          <CatIcon className="h-3 w-3" />
                           {cat.label}
                         </button>
                       );
@@ -1084,7 +1082,7 @@ export default function FaqPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Details
                   </label>
                   <textarea
@@ -1092,14 +1090,14 @@ export default function FaqPage() {
                     onChange={(e) => setNewContent(e.target.value)}
                     placeholder="Describe your question or topic in detail..."
                     rows={4}
-                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 resize-none"
+                    className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
                 <button
                   onClick={handleCreateTopic}
                   disabled={!newTitle.trim() || !newContent.trim()}
-                  className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white font-medium rounded-xl transition-all"
+                  className="w-full rounded-xl bg-slate-950 px-4 py-3 font-medium text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   Post Topic
                 </button>

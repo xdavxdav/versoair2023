@@ -1911,16 +1911,16 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 relative overflow-x-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
-      <div className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/80 via-emerald-700/80 to-emerald-800/80" />
+      <div className="relative flex min-h-[78vh] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.18),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)]" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 bg-white/20 rounded-full"
+              className="absolute h-2 w-2 rounded-full bg-white/20"
               style={{
                 left: `${15 + i * 15}%`,
                 top: `${20 + (i % 3) * 25}%`,
@@ -1931,91 +1931,93 @@ export default function Home() {
           <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
         </div>
 
-        <div className="relative z-10 text-center text-white max-w-[95vw] mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            className="mb-4 md:mb-6"
-          >
-            <span className="px-3 py-1 md:px-4 md:py-2 bg-white/10 rounded-full text-xs md:text-sm font-medium border border-white/20">
-              🎨 Soutien aux artisans {countryMeta.nameIn}
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 drop-shadow-2xl px-4 notranslate"
-          >
-            ArtiHuman Foundation
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-4 text-white/90 px-4"
-          >
-            Soutenir les artisans et élever les communautés grâce à l'innovation
-            humanitaire à travers {countryMeta.nameFr}
-          </motion.p>
-
-          {/* Database Connection Status */}
-          {databaseConnected !== null && (
+        <div className="relative z-10 mx-auto w-full max-w-[1400px] rounded-[30px] border border-white/10 bg-slate-950/90 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.5)] backdrop-blur-sm sm:p-8 lg:p-12">
+          <div className="mx-auto max-w-5xl text-center text-white">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mb-4"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="mb-4 md:mb-6"
             >
-              <div
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                  databaseConnected
-                    ? "bg-green-900/30 text-green-300"
-                    : "bg-yellow-900/30 text-yellow-300"
-                }`}
+              <span className="inline-flex rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200 md:px-4 md:py-2 md:text-sm">
+                🎨 Soutien aux artisans {countryMeta.nameIn}
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="mb-4 px-2 text-3xl font-bold tracking-tight sm:text-4xl md:text-6xl lg:text-7xl notranslate"
+            >
+              ArtiHuman Foundation
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="mx-auto max-w-3xl px-2 text-base text-slate-200 sm:text-lg md:text-xl lg:text-2xl"
+            >
+              Soutenir les artisans et élever les communautés grâce à
+              l'innovation humanitaire à travers {countryMeta.nameFr}
+            </motion.p>
+
+            {databaseConnected !== null && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-5"
               >
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    databaseConnected ? "bg-green-500" : "bg-yellow-500"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
+                    databaseConnected
+                      ? "bg-emerald-500/15 text-emerald-200"
+                      : "bg-yellow-500/15 text-yellow-200"
                   }`}
-                ></div>
-                <span className="text-sm font-medium">
-                  {databaseConnected
-                    ? "✅ Connecté à PostgreSQL"
-                    : "❌ Connexion à la base de données échouée"}
-                </span>
-              </div>
-            </motion.div>
-          )}
+                >
+                  <div
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      databaseConnected ? "bg-emerald-400" : "bg-yellow-400"
+                    }`}
+                  />
+                  <span>
+                    {databaseConnected
+                      ? "✅ Connecté à PostgreSQL"
+                      : "❌ Connexion à la base de données échouée"}
+                  </span>
+                </div>
+              </motion.div>
+            )}
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.8 }}
-            className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mt-6 md:mt-8 px-4"
-          >
-            <Link to="/get-involved">
-              <Button className="bg-white text-emerald-600 px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-gray-100 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto">
-                S'impliquer
-              </Button>
-            </Link>
-            <Button
-              asChild
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all text-base md:text-lg shadow-2xl hover:scale-105 w-full sm:w-auto"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-6 flex flex-col justify-center gap-3 px-2 sm:flex-row md:mt-8"
             >
-              <Link to="/apply">✨ Postuler</Link>
-            </Button>
-            <Link to="/ong-culturelle">
-              <Button className="border-2 border-white text-white px-6 py-4 md:px-10 md:py-6 rounded-xl md:rounded-2xl font-bold hover:bg-white/10 transition-all text-base md:text-lg w-full sm:w-auto">
-                En savoir plus
+              <Link to="/get-involved" className="w-full sm:w-auto">
+                <Button className="w-full rounded-xl bg-white px-6 py-4 text-base font-bold text-slate-900 shadow-2xl transition-all hover:scale-[1.02] hover:bg-slate-100 sm:w-auto md:px-10 md:py-6 md:text-lg">
+                  S'impliquer
+                </Button>
+              </Link>
+              <Button
+                asChild
+                className="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4 text-base font-bold text-slate-950 shadow-2xl transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-orange-400 sm:w-auto md:px-10 md:py-6 md:text-lg"
+              >
+                <Link to="/apply">✨ Postuler</Link>
               </Button>
-            </Link>
-          </motion.div>
+              <Link to="/ong-culturelle" className="w-full sm:w-auto">
+                <Button className="w-full rounded-xl border-2 border-white/60 bg-transparent px-6 py-4 text-base font-bold text-white transition-all hover:bg-white/5 sm:w-auto md:px-10 md:py-6 md:text-lg">
+                  En savoir plus
+                </Button>
+              </Link>
+            </motion.div>
 
-          {/* Signature watermark — flips between motto & translation */}
-          <MottoFlip />
+            <div className="mt-8">
+              <MottoFlip />
+            </div>
+          </div>
         </div>
 
         {showScrollIndicator && (
@@ -2023,11 +2025,11 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 cursor-pointer z-50"
+            className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 cursor-pointer"
             onClick={scrollToHelpSection}
           >
-            <div className="w-8 h-12 border-2 border-white/30 rounded-full flex justify-center">
-              <div className="w-1.5 h-4 bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-full mt-3"></div>
+            <div className="flex h-12 w-8 justify-center rounded-full border-2 border-white/30">
+              <div className="mt-3 h-4 w-1.5 rounded-full bg-gradient-to-b from-amber-300 to-orange-500"></div>
             </div>
           </motion.div>
         )}

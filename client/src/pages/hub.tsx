@@ -200,7 +200,7 @@ export default function HubPage() {
   const totalRecords = dbStats?.totalRecords ?? 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 overflow-hidden">
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative pt-24 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
@@ -297,7 +297,7 @@ export default function HubPage() {
               <motion.div key={stat.label} variants={staggerItem}>
                 <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors group">
                   <stat.icon className="h-5 w-5 text-slate-400 mb-2 group-hover:text-purple-400 transition-colors" />
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-2xl font-bold text-slate-900">
                     {stat.value}
                   </div>
                   <div className="text-xs text-slate-400">{stat.label}</div>
@@ -310,7 +310,7 @@ export default function HubPage() {
 
       {/* ── Sector Quick-Nav ─────────────────────────────────────── */}
       <section className="py-16 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f5f1]/50 to-transparent" />
         <div className="relative max-w-[95vw] mx-auto px-4">
           <motion.div
             variants={sectionReveal}
@@ -356,12 +356,12 @@ export default function HubPage() {
                           <div
                             className={`w-14 h-14 rounded-xl bg-gradient-to-br ${sector.color} flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}
                           >
-                            <Icon className="h-7 w-7 text-white" />
+                            <Icon className="h-7 w-7 text-slate-900" />
                           </div>
-                          <h3 className="text-lg font-semibold text-white mb-1">
+                          <h3 className="text-lg font-semibold text-slate-900 mb-1">
                             {sector.title}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-sm text-slate-400 group-hover:text-white/80 transition-colors">
+                          <div className="flex items-center justify-center gap-1 text-sm text-slate-400 group-hover:text-slate-900/80 transition-colors">
                             <span>Explore</span>
                             <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                           </div>
@@ -419,10 +419,10 @@ export default function HubPage() {
                           <div
                             className={`shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${svc.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
                           >
-                            <Icon className="h-6 w-6 text-white" />
+                            <Icon className="h-6 w-6 text-slate-900" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-white mb-1">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-1">
                               {svc.title}
                             </h3>
                             <p className="text-sm text-slate-400 mb-2">
@@ -482,7 +482,7 @@ export default function HubPage() {
                       <Icon className={`h-5 w-5 ${feat.color}`} />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white mb-1">
+                      <h4 className="font-semibold text-slate-900 mb-1">
                         {feat.title}
                       </h4>
                       <p className="text-sm text-slate-400 leading-relaxed">
@@ -507,7 +507,7 @@ export default function HubPage() {
             viewport={defaultViewport}
             className="p-10 rounded-3xl bg-gradient-to-br from-purple-900/30 to-pink-900/20 border border-white/10 backdrop-blur-sm"
           >
-            <h2 className="text-3xl font-bold text-white mb-4">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
               Ready to Dive In?
             </h2>
             <p className="text-slate-300 mb-8 max-w-xl mx-auto">

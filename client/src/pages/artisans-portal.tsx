@@ -181,7 +181,7 @@ function ProfileCard({
         <Button
           size="sm"
           variant="ghost"
-          className="absolute top-2 right-2 bg-black/30 hover:bg-black/50 text-white"
+          className="absolute top-2 right-2 bg-black/30 hover:bg-black/50 text-slate-900"
           onClick={onEdit}
         >
           <Edit3 className="w-4 h-4" />
@@ -206,7 +206,7 @@ function ProfileCard({
           </div>
           {profile.isVerified && (
             <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
+              <Check className="w-4 h-4 text-slate-900" />
             </div>
           )}
         </div>
@@ -215,7 +215,7 @@ function ProfileCard({
       <CardContent className="pt-4 pb-6">
         {/* Name & badge */}
         <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-bold text-slate-900">
             {profile.displayName}
           </h2>
           {profile.isVerified && (
@@ -264,20 +264,20 @@ function ProfileCard({
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 pt-4 border-t border-emerald-500/10">
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">{profile.rating}</p>
+            <p className="text-2xl font-bold text-slate-900">{profile.rating}</p>
             <p className="text-xs text-emerald-300/60 flex items-center justify-center gap-1">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
               Note
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900">
               {profile.portfolioCount}
             </p>
             <p className="text-xs text-emerald-300/60">Créations</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900">
               {profile.orderCount}
             </p>
             <p className="text-xs text-emerald-300/60">Commandes</p>
@@ -325,7 +325,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="flex items-center gap-3 text-white text-xs">
+                <div className="flex items-center gap-3 text-slate-900 text-xs">
                   <span className="flex items-center gap-1">
                     <Heart className="w-3 h-3" />
                     {item.likes}
@@ -338,7 +338,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
               </div>
             </div>
             <CardContent className="p-3">
-              <h3 className="font-semibold text-white text-sm mb-1 line-clamp-1">
+              <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-1">
                 {item.title}
               </h3>
               <Badge
@@ -390,7 +390,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-white text-sm">
+                  <h4 className="font-semibold text-slate-900 text-sm">
                     {review.authorName}
                   </h4>
                   <span className="text-xs text-emerald-300/60">
@@ -449,7 +449,7 @@ function OrdersTable({ orders }: { orders: Order[] }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-white text-sm mb-1">
+                <h4 className="font-semibold text-slate-900 text-sm mb-1">
                   {order.title}
                 </h4>
                 <p className="text-emerald-300/60 text-xs">
@@ -501,7 +501,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
     <div className="space-y-6">
       <Card className="bg-slate-800/50 border-emerald-500/20">
         <CardHeader>
-          <CardTitle className="text-white text-lg">
+          <CardTitle className="text-slate-900 text-lg">
             Informations personnelles
           </CardTitle>
         </CardHeader>
@@ -514,7 +514,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 onChange={(e) =>
                   setFormData({ ...formData, displayName: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-white"
+                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
@@ -524,7 +524,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-white"
+                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
               />
             </div>
           </div>
@@ -536,7 +536,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               onChange={(e) =>
                 setFormData({ ...formData, bio: e.target.value })
               }
-              className="bg-slate-900/50 border-emerald-500/30 text-white min-h-[100px]"
+              className="bg-slate-900/50 border-emerald-500/30 text-slate-900 min-h-[100px]"
               placeholder="Parlez de vous et de votre artisanat..."
             />
           </div>
@@ -549,7 +549,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-white"
+                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
@@ -559,7 +559,7 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
                 onChange={(e) =>
                   setFormData({ ...formData, website: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-white"
+                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
               />
             </div>
           </div>
@@ -572,14 +572,14 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
               onChange={(e) =>
                 setFormData({ ...formData, hourlyRate: e.target.value })
               }
-              className="bg-slate-900/50 border-emerald-500/30 text-white max-w-[200px]"
+              className="bg-slate-900/50 border-emerald-500/30 text-slate-900 max-w-[200px]"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-emerald-100">Spécialisations</Label>
             <Select>
-              <SelectTrigger className="bg-slate-900/50 border-emerald-500/30 text-white">
+              <SelectTrigger className="bg-slate-900/50 border-emerald-500/30 text-slate-900">
                 <SelectValue placeholder="Ajouter une spécialisation" />
               </SelectTrigger>
               <SelectContent>
@@ -640,7 +640,7 @@ export default function ArtisansPortal() {
   const activeTab = searchParams.get("tab") || "profile";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950/20 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950/20 to-[#efe7dd]">
       {/* Navigation */}
       <ArtisanNav />
 
@@ -669,7 +669,7 @@ export default function ArtisansPortal() {
                     <Briefcase className="w-4 h-4" />
                     Expérience
                   </span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-900 font-medium">
                     {profile.yearsExperience} ans
                   </span>
                 </div>
@@ -687,7 +687,7 @@ export default function ArtisansPortal() {
                     <Calendar className="w-4 h-4" />
                     Membre depuis
                   </span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-900 font-medium">
                     {new Date(profile.joinedDate).toLocaleDateString("fr-FR", {
                       month: "short",
                       year: "numeric",
@@ -752,7 +752,7 @@ export default function ArtisansPortal() {
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mon Profil
                   </h2>
                   <p className="text-emerald-300/60">
@@ -764,7 +764,7 @@ export default function ArtisansPortal() {
                 <Card className="bg-slate-800/50 border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-white">
+                      <CardTitle className="text-slate-900">
                         Dernières créations
                       </CardTitle>
                       <CardDescription className="text-emerald-300/60">
@@ -803,7 +803,7 @@ export default function ArtisansPortal() {
                 <Card className="bg-slate-800/50 border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-white">
+                      <CardTitle className="text-slate-900">
                         Derniers avis
                       </CardTitle>
                       <CardDescription className="text-emerald-300/60">
@@ -830,7 +830,7 @@ export default function ArtisansPortal() {
               <TabsContent value="portfolio" className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">
                       Mon Portfolio
                     </h2>
                     <p className="text-emerald-300/60">
@@ -848,7 +848,7 @@ export default function ArtisansPortal() {
               {/* Orders Tab */}
               <TabsContent value="orders" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mes Commandes
                   </h2>
                   <p className="text-emerald-300/60">
@@ -861,7 +861,7 @@ export default function ArtisansPortal() {
               {/* Reviews Tab */}
               <TabsContent value="reviews" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Avis Clients
                   </h2>
                   <p className="text-emerald-300/60">
@@ -874,7 +874,7 @@ export default function ArtisansPortal() {
               {/* Settings Tab */}
               <TabsContent value="settings" className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Paramètres
                   </h2>
                   <p className="text-emerald-300/60">
