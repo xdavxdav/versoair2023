@@ -838,7 +838,9 @@ export default function ContentNav() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="max-w-[72px] truncate md:max-lg:hidden">{userName}</span>
+                <span className="max-w-[72px] truncate md:max-lg:hidden">
+                  {userName}
+                </span>
               </div>
               <button
                 onClick={handleLogout}
