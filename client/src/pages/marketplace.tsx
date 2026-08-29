@@ -2234,7 +2234,7 @@ export default function MarketplacePage() {
           }
           setShowCreateListing(true);
         }}
-        className="lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center hover:bg-cyan-700 transition-colors"
+        className="lg:hidden fixed bottom-[5.5rem] right-6 z-40 w-14 h-14 bg-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/30 flex items-center justify-center hover:bg-cyan-700 transition-colors"
       >
         <Plus className="w-6 h-6" />
       </motion.button>
