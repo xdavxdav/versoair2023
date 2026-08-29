@@ -16,6 +16,12 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .content-nav-dock .content-nav-chevron {
+    display: none;
+  }
+}
+
 :root {
   --verso-navy: #0f172a;
   --verso-navy-muted: #1e293b;

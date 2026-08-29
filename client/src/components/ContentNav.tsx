@@ -56,10 +56,10 @@ export function isContentNavPath(path: string): boolean {
 // ─── Shared style tokens ───────────────────────────────────────────────────
 
 const BASE =
-  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
+  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-2 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
 
 const ACTIVE =
-  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
+  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-2 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
 
 // ─── Desktop pill items ────────────────────────────────────────────────────
 
@@ -634,7 +634,7 @@ export default function ContentNav() {
           animate={{ y: dockY, opacity: visible ? 1 : 0 }}
           initial={{ y: 120, opacity: 0 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="pointer-events-auto mx-auto mb-4 flex max-w-[96vw] items-center justify-start gap-1 overflow-x-auto px-3 py-2 scrollbar-hide"
+          className="content-nav-dock pointer-events-auto mx-auto mb-4 flex max-w-[96vw] items-center justify-start gap-1 overflow-x-auto px-3 py-2 scrollbar-hide"
           style={{
             background: "rgba(6, 3, 14, 0.97)",
             backdropFilter: "blur(28px) saturate(200%)",
@@ -727,7 +727,7 @@ export default function ContentNav() {
                   <group.Icon className="h-3.5 w-3.5" />
                   {group.label}
                   <ChevronDown
-                    className={`h-3 w-3 opacity-50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                    className={`content-nav-chevron h-3 w-3 opacity-50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -789,7 +789,7 @@ export default function ContentNav() {
                   <LifeBuoy className="h-3.5 w-3.5" />
                   Help
                   <ChevronDown
-                    className={`h-3 w-3 opacity-50 transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`}
+                    className={`content-nav-chevron h-3 w-3 opacity-50 transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 <AnimatePresence>
