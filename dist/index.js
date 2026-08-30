@@ -18885,6 +18885,7 @@ var socialPosts = pgTable2(
     videoUrl: text2("video_url"),
     mediaType: text2("media_type"),
     // text, image, video, link
+    allowMediaDownload: boolean2("allow_media_download").default(false),
     postType: text2("post_type").default("discussion"),
     // discussion, job, trend, announcement, faq
     faqCategory: text2("faq_category"),
@@ -19262,6 +19263,20 @@ var insertFaqCategorySchema = createInsertSchema2(faqCategories);
 init_schema();
 init_notification_service();
 var router25 = Router25();
+async function recordSocialAudit(event) {
+  await pool.query(
+    `INSERT INTO social_audit_events
+      (actor_user_id, post_id, event_type, outcome, metadata)
+     VALUES ($1, $2, $3, $4, $5::jsonb)`,
+    [
+      event.actorUserId || null,
+      event.postId || null,
+      event.eventType,
+      event.outcome,
+      JSON.stringify(event.metadata || {})
+    ]
+  );
+}
 var ALLOWED_POST_TYPES = [
   "discussion",
   "job",
@@ -19448,6 +19463,8 @@ router25.post("/posts", async (req, res) => {
     const {
       content,
       imageUrls,
+      videoUrl,
+      allowMediaDownload = false,
       tags,
       postType = "discussion",
       trackId
@@ -19484,11 +19501,19 @@ router25.post("/posts", async (req, res) => {
       authorId: Number(authorId),
       content,
       imageUrls,
+      videoUrl: videoUrl || null,
+      allowMediaDownload: Boolean(allowMediaDownload),
       tags,
       postType,
       trackId: trackId ? Number(trackId) : null,
-      mediaType: trackId ? "audio" : imageUrls ? "image" : "text"
+      mediaType: trackId ? "audio" : videoUrl ? "video" : imageUrls ? "image" : "text"
     }).returning();
+    await recordSocialAudit({
+      actorUserId: appUserId,
+      postId: newPost[0]?.id,
+      eventType: "media_download_permission",
+      outcome: allowMediaDownload ? "enabled" : "disabled"
+    });
     res.status(201).json({
       success: true,
       data: newPost[0],
@@ -19497,6 +19522,79 @@ router25.post("/posts", async (req, res) => {
   } catch (error) {
     console.error("Error creating post:", error);
     res.status(500).json({ success: false, error: "Failed to create post" });
+  }
+});
+router25.post("/audit/screenshot", async (req, res) => {
+  try {
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      eventType: "screenshot_capture",
+      outcome: "captured",
+      metadata: {
+        path: typeof req.body?.path === "string" ? req.body.path : "unknown",
+        viewport: typeof req.body?.viewport === "string" ? req.body.viewport : "unknown",
+        theme: typeof req.body?.theme === "string" ? req.body.theme : "unknown"
+      }
+    });
+    return res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("Error recording screenshot audit:", error);
+    return res.status(500).json({ success: false, error: "Failed to record screenshot audit" });
+  }
+});
+router25.get(
+  "/posts/:postId/media-download",
+  async (req, res) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db.select({
+        imageUrls: socialPosts.imageUrls,
+        videoUrl: socialPosts.videoUrl,
+        allowMediaDownload: socialPosts.allowMediaDownload
+      }).from(socialPosts).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+      if (!post || !post.allowMediaDownload) {
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads"
+        });
+      }
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res.status(404).json({ success: false, error: "No downloadable media found" });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res.status(500).json({ success: false, error: "Failed to authorize media download" });
+    }
+  }
+);
+router25.get("/posts/:postId/media-download", async (req, res) => {
+  try {
+    const postId = Number(req.params.postId);
+    const [post] = await db.select({ imageUrls: socialPosts.imageUrls, videoUrl: socialPosts.videoUrl, allowMediaDownload: socialPosts.allowMediaDownload }).from(socialPosts).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+    if (!post || !post.allowMediaDownload) {
+      await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "media_download", outcome: "denied" });
+      return res.status(403).json({ success: false, error: "The author has disabled media downloads" });
+    }
+    const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+    if (!mediaUrl) return res.status(404).json({ success: false, error: "No downloadable media found" });
+    await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "media_download", outcome: "allowed" });
+    return res.redirect(mediaUrl);
+  } catch (error) {
+    console.error("Error authorizing media download:", error);
+    return res.status(500).json({ success: false, error: "Failed to authorize media download" });
+  }
+});
+router25.post("/posts/:postId/share", async (req, res) => {
+  try {
+    const postId = Number(req.params.postId);
+    const [updatedPost] = await db.update(socialPosts).set({ shareCount: sql9`COALESCE(${socialPosts.shareCount}, 0) + 1` }).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).returning({ shareCount: socialPosts.shareCount });
+    if (!updatedPost) return res.status(404).json({ success: false, error: "Post not found" });
+    await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "post_share", outcome: "success" });
+    return res.json({ success: true, shareCount: updatedPost.shareCount });
+  } catch (error) {
+    console.error("Error recording share:", error);
+    return res.status(500).json({ success: false, error: "Failed to record share" });
   }
 });
 router25.get("/posts/:postId", async (req, res) => {
@@ -28552,6 +28650,14 @@ var MAJOR_CITIES = {
   doha: "QA",
   riyadh: "SA"
 };
+function normalizeSelectedLanguage(language) {
+  const normalized = (language ?? "").trim().toLowerCase();
+  if (!normalized) return "other";
+  if (normalized.startsWith("fr")) return "fr";
+  if (normalized.startsWith("en")) return "en";
+  if (normalized.startsWith("es")) return "es";
+  return "other";
+}
 function detectLanguage(text3) {
   const fr = /\b(je|mon|ma|mes|nous|vous|dans|pour|avec|est|sont|les|des|une|cherche|trouver|besoin|près|chez|où)\b/i;
   const es = /\b(yo|mi|mis|nosotros|busco|necesito|cerca|donde|para|con|estoy|están|los|las|una)\b/i;
@@ -28634,9 +28740,9 @@ async function aiParse(query) {
   }
   return null;
 }
-function ruleParse(query) {
+function ruleParse(query, selectedLanguage) {
   const lower = query.toLowerCase().trim();
-  const language = detectLanguage(lower);
+  const language = selectedLanguage ? normalizeSelectedLanguage(selectedLanguage) : detectLanguage(lower);
   let sector = null;
   let sectorLabel = null;
   let urgency = 3;
@@ -28742,7 +28848,7 @@ function ruleParse(query) {
     rawQuery: query
   };
 }
-async function parseUserIntent(query) {
+async function parseUserIntent(query, selectedLanguage) {
   if (!query || query.trim().length < 2) {
     return {
       sector: null,
@@ -28752,12 +28858,12 @@ async function parseUserIntent(query) {
       countryCode: null,
       action: "info",
       keywords: [],
-      language: "en",
+      language: normalizeSelectedLanguage(selectedLanguage),
       confidence: 0,
       rawQuery: query
     };
   }
-  const ruleResult = ruleParse(query);
+  const ruleResult = ruleParse(query, selectedLanguage);
   if (query.trim().split(/\s+/).length <= 4 && ruleResult.confidence >= 0.7) {
     return ruleResult;
   }
@@ -38674,7 +38780,8 @@ init_db();
 var router56 = Router56();
 var intentSearchSchema = z6.object({
   query: z6.string().min(2).max(500),
-  limit: z6.number().min(1).max(20).optional().default(5)
+  limit: z6.number().min(1).max(20).optional().default(5),
+  language: z6.string().optional()
 });
 var emergencyAlertSchema = z6.object({
   businessIds: z6.array(z6.number()).min(1).max(5),
@@ -38692,9 +38799,9 @@ router56.post("/intent", optionalAuth, async (req, res) => {
         error: "Invalid request: " + parsed.error.issues[0]?.message
       });
     }
-    const { query, limit } = parsed.data;
+    const { query, limit, language } = parsed.data;
     const startTime = Date.now();
-    const intent = await parseUserIntent(query);
+    const intent = await parseUserIntent(query, language);
     const results = await searchRelevantBusinesses(intent, limit);
     const elapsed = Date.now() - startTime;
     const needsClarification = !intent.sector && !intent.location;
@@ -39621,30 +39728,10 @@ router59.get("/sitemap.xml", async (_req, res) => {
     );
   }
 });
-function robotsTxtHandler(_req, res) {
-  const robots = `User-agent: *
-Allow: /
-Allow: /businesses-directory
-Allow: /commerce
-Allow: /hotellerie
-Allow: /batiment
-Allow: /automobile
-Allow: /finances
-Allow: /divertissement
-Disallow: /api/
-Disallow: /auth/
-Disallow: /admin/
-Disallow: /dashboard
-Disallow: /profile
-Disallow: /geo-admin
-Disallow: /account/
-Disallow: /payments/
-Disallow: /contracts
-
-Sitemap: https://verso-air.com/api/seo/sitemap.xml
-
-# Pre-beta public demo: private app content remains hidden from search engines.
-`;
+function robotsTxtHandler(req, res) {
+  const configuredUrl = (process.env.RENDER_EXTERNAL_URL || process.env.PRODUCTION_URL || process.env.APP_PUBLIC_URL || process.env.VERSOAIR_URL)?.trim();
+  const origin = (configuredUrl || req.protocol + "://" + req.get("host")).replace(/\/+$/, "");
+  const robots = "User-agent: *\nAllow: /\nAllow: /businesses-directory\nAllow: /commerce\nAllow: /hotellerie\nAllow: /batiment\nAllow: /automobile\nAllow: /finances\nAllow: /divertissement\nDisallow: /api/\nAllow: /api/seo/sitemap.xml\nDisallow: /auth/\nDisallow: /admin/\nDisallow: /dashboard\nDisallow: /profile\nDisallow: /geo-admin\nDisallow: /account/\nDisallow: /payments/\nDisallow: /contracts\n\nSitemap: " + origin + "/api/seo/sitemap.xml\n";
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
 }
@@ -45933,7 +46020,8 @@ async function ensureAllTables() {
     }
     const INBOX_MESSAGES_ADDITIONS = [
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
-      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+      `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`
     ];
     for (const alt of INBOX_MESSAGES_ADDITIONS) {
       try {
@@ -46283,6 +46371,7 @@ var TABLE_STATEMENTS = [
       image_urls TEXT[],
       video_url TEXT,
       media_type TEXT,
+      allow_media_download BOOLEAN DEFAULT false,
       post_type TEXT DEFAULT 'discussion',
       faq_category TEXT,
       is_resolved BOOLEAN DEFAULT false,
@@ -46321,6 +46410,18 @@ var TABLE_STATEMENTS = [
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW(),
       deleted_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_audit_events",
+    sql: `CREATE TABLE IF NOT EXISTS social_audit_events (
+      id SERIAL PRIMARY KEY,
+      actor_user_id INTEGER,
+      post_id INTEGER,
+      event_type TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      metadata JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
     )`
   },
   {
@@ -48367,12 +48468,17 @@ function csrfProtect(req, res, next) {
 // server/index.ts
 dotenv2.config();
 var isProdEnv = process.env.NODE_ENV === "production";
-if (!process.env.SIBLING_URL && !isProdEnv) {
-  const musicUrl = process.env.MUSIC_APP_URL || process.env.PRODUCTION_URL || process.env.APP_PUBLIC_URL || (isProdEnv ? "https://verso-air-online.onrender.com" : "http://localhost:5004");
-  if (isProdEnv && musicUrl && !musicUrl.includes("/music")) {
-    process.env.SIBLING_URL = musicUrl + "/music";
-  } else {
-    process.env.SIBLING_URL = musicUrl;
+var isLocalUrl = (url) => !!url && /^https?:\/\/(?:localhost|127(?:\.\d+){3})(?::\d+)?(?:\/|$)/i.test(url);
+var configuredSiblingUrl = process.env.SIBLING_URL?.trim();
+if (!configuredSiblingUrl || isProdEnv && isLocalUrl(configuredSiblingUrl)) {
+  const configuredMusicUrl = process.env.MUSIC_APP_URL?.trim();
+  const publicAppUrl = (process.env.RENDER_EXTERNAL_URL || process.env.PRODUCTION_URL || process.env.APP_PUBLIC_URL || process.env.VERSOAIR_URL)?.trim();
+  const musicUrl = (configuredMusicUrl && !(isProdEnv && isLocalUrl(configuredMusicUrl)) ? configuredMusicUrl : publicAppUrl) || (!isProdEnv ? "http://localhost:5004" : void 0);
+  if (musicUrl) {
+    const cleanMusicUrl = musicUrl.replace(/\/+$/, "");
+    process.env.SIBLING_URL = isProdEnv && !cleanMusicUrl.endsWith("/music") ? cleanMusicUrl + "/music" : cleanMusicUrl;
+  } else if (isProdEnv) {
+    delete process.env.SIBLING_URL;
   }
 }
 var isProd = isProdEnv;

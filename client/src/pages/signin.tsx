@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 import {
   isValidEmail,
   isPasswordStrong,
@@ -36,6 +37,16 @@ const getQueryParam = (param: string) => {
   const url = new URL(window.location.href);
   return url.searchParams.get(param);
 };
+
+const getLoginDashboardPath = (userData: any) =>
+  getDashboardDestination({
+    id: String(userData?.id || userData?.userId || ""),
+    email: String(userData?.email || ""),
+    role: userData?.role,
+    portals: userData?.portals,
+    hasArtistProfile: userData?.hasArtistProfile,
+    isContractor: userData?.isContractor,
+  }).path;
 
 const businessTypes = [
   {
@@ -311,22 +322,11 @@ export default function SignIn() {
           navigate(redirectTarget);
         } else {
           // Role-based dashboard routing — full priority chain
-          const role = (data.user.role || "user").toLowerCase();
           const portals = data.user.portals || [];
-          if (role === "superuser") {
-            navigate("/dashboard?from=sv");
-          } else if (role === "admin" || role === "moderator") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "tsr") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "artist" || portals.includes("artist")) {
-            navigate("/artist-portal/dashboard");
-          } else if (portals.includes("contractor")) {
-            navigate("/contracts");
-          } else if (portals.includes("community")) {
+          if (portals.includes("community") && !portals.includes("artist")) {
             navigate("/blog");
           } else {
-            navigate("/dashboard");
+            navigate(getLoginDashboardPath(data.user));
           }
         }
       } else if (!data.requiresVerification) {
@@ -395,22 +395,11 @@ export default function SignIn() {
         if (redirectTarget && redirectTarget.startsWith("/")) {
           navigate(redirectTarget);
         } else {
-          const role = (data.user.role || "user").toLowerCase();
           const portals = data.user.portals || [];
-          if (role === "superuser") {
-            navigate("/dashboard?from=sv");
-          } else if (role === "admin" || role === "moderator") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "tsr") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "artist" || portals.includes("artist")) {
-            navigate("/artist-portal/dashboard");
-          } else if (portals.includes("contractor")) {
-            navigate("/contracts");
-          } else if (portals.includes("community")) {
+          if (portals.includes("community") && !portals.includes("artist")) {
             navigate("/blog");
           } else {
-            navigate("/dashboard");
+            navigate(getLoginDashboardPath(data.user));
           }
         }
       } else {
@@ -480,12 +469,7 @@ export default function SignIn() {
         setStep("set-display-name");
         window.history.replaceState({}, "", "/signin");
       } else {
-        const role = verifiedRole.toLowerCase();
-        if (role === "superuser") navigate("/dashboard?from=sv");
-        else if (role === "admin" || role === "moderator")
-          navigate("/geo-admin/dashboard");
-        else if (role === "artist") navigate("/artist-portal/dashboard");
-        else navigate("/dashboard");
+        navigate(getLoginDashboardPath({ role: verifiedRole }));
       }
     }, 5000);
     return () => {
@@ -602,13 +586,7 @@ export default function SignIn() {
                 setStep("set-display-name");
                 window.history.replaceState({}, "", "/signin");
               } else {
-                const role = verifiedRole.toLowerCase();
-                if (role === "superuser") navigate("/dashboard?from=sv");
-                else if (role === "admin" || role === "moderator")
-                  navigate("/geo-admin/dashboard");
-                else if (role === "artist")
-                  navigate("/artist-portal/dashboard");
-                else navigate("/dashboard");
+                navigate(getLoginDashboardPath({ role: verifiedRole }));
               }
             }}
             className="mt-4 text-[#d4a037] hover:text-[#bf831c] text-sm font-medium transition-colors"
@@ -854,22 +832,11 @@ export default function SignIn() {
           });
 
           // Navigate to dashboard — full priority chain
-          const role = (pendingLoginData.user.role || "user").toLowerCase();
           const portals = pendingLoginData.user.portals || [];
-          if (role === "superuser") {
-            navigate("/dashboard?from=sv");
-          } else if (role === "admin" || role === "moderator") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "tsr") {
-            navigate("/geo-admin/dashboard");
-          } else if (role === "artist" || portals.includes("artist")) {
-            navigate("/artist-portal/dashboard");
-          } else if (portals.includes("contractor")) {
-            navigate("/contracts");
-          } else if (portals.includes("community")) {
+          if (portals.includes("community") && !portals.includes("artist")) {
             navigate("/blog");
           } else {
-            navigate("/dashboard");
+            navigate(getLoginDashboardPath(pendingLoginData.user));
           }
         } else {
           setOnboardingError(result.message || "Failed to save name");
@@ -1023,22 +990,11 @@ export default function SignIn() {
   // ── Forced Password Change (accounts on a temporary/shared password) ────
   if (step === "change-password") {
     const navigateAfterPasswordChange = () => {
-      const role = (pendingLoginData?.user?.role || "user").toLowerCase();
       const portals = pendingLoginData?.user?.portals || [];
-      if (role === "superuser") {
-        navigate("/dashboard?from=sv");
-      } else if (role === "admin" || role === "moderator") {
-        navigate("/geo-admin/dashboard");
-      } else if (role === "tsr") {
-        navigate("/geo-admin/dashboard");
-      } else if (role === "artist" || portals.includes("artist")) {
-        navigate("/artist-portal/dashboard");
-      } else if (portals.includes("contractor")) {
-        navigate("/contracts");
-      } else if (portals.includes("community")) {
+      if (portals.includes("community") && !portals.includes("artist")) {
         navigate("/blog");
       } else {
-        navigate("/dashboard");
+        navigate(getLoginDashboardPath(pendingLoginData?.user));
       }
     };
 

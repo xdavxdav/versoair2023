@@ -31,6 +31,7 @@ import type { PortalId } from "@/lib/portal-access";
 import styles from "./versoair-logo.module.css";
 import SearchModal from "@/components/SearchModal";
 import NotificationCenter from "@/components/NotificationCenter";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 // Portal metadata for the switcher dropdown
 const PORTAL_META: Record<
@@ -845,6 +846,8 @@ function PortalSwitcher({
   navigate: (to: string) => void;
 }) {
   const { accessiblePortals } = usePortalAccess();
+  const { user } = useAuthContext();
+  const dashboard = getDashboardDestination(user);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -863,9 +866,9 @@ function PortalSwitcher({
     if (currentPath === "/dashboard") return null;
     return (
       <button
-        onClick={() => navigate("/dashboard")}
+        onClick={() => navigate(dashboard.path)}
         className="flex-shrink-0 flex items-center gap-1 bg-slate-700 text-slate-200 px-2 py-2 rounded-md hover:bg-slate-600 transition-colors text-xs"
-        title="Dashboard"
+        title={dashboard.label}
       >
         <User className="h-3.5 w-3.5" />
       </button>

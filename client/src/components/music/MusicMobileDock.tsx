@@ -14,12 +14,14 @@ import {
   Music2,
   Bell,
   Search,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_MOBILE_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
 import { useState } from "react";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
@@ -36,6 +38,7 @@ interface MusicMobileDockProps {
 export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
   const [pathname] = useLocation();
   const { user } = useAuthContext();
+  const dashboard = getDashboardDestination(user);
   const activeItem = getActiveNavItem(pathname);
   const [fabExpanded, setFabExpanded] = useState(false);
 
@@ -142,6 +145,19 @@ export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
                 )}
               </AnimatePresence>
             </div>
+
+            {user && user.id && (
+              <Link href={dashboard.path}>
+                <motion.div
+                  className="flex flex-col items-center gap-0.5 px-2 py-1"
+                  whileTap={{ scale: 0.95 }}
+                  title={dashboard.label}
+                >
+                  <LayoutDashboard className="w-5 h-5 text-white/50" />
+                  <span className="text-[10px] text-white/50">Main</span>
+                </motion.div>
+              </Link>
+            )}
 
             {MUSIC_MOBILE_NAV_ITEMS.slice(2, 4).map((item) => (
               <NavItem

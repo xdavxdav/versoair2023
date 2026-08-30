@@ -31,7 +31,9 @@ import {
   Play,
   Tag,
   Loader2,
+  LayoutDashboard,
 } from "lucide-react";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 // ─── Route matching ────────────────────────────────────────────────────────
 
@@ -389,6 +391,7 @@ function SmartSearch({ onClose }: { onClose: () => void }) {
 export default function ContentNav() {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuthContext();
+  const dashboard = getDashboardDestination(user);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -697,6 +700,15 @@ export default function ContentNav() {
           </div>
 
           <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+
+          {user && (
+            <Link href={dashboard.path}>
+              <a className={BASE} title={dashboard.label}>
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Dashboard
+              </a>
+            </Link>
+          )}
 
           {/* ── Direct pills (Blog, Shop, Sell) ── */}
           {PILLS.filter((p) => p.href !== "/").map(
@@ -1094,6 +1106,24 @@ export default function ContentNav() {
                 </Link>
               );
             })}
+
+            {user && (
+              <Link href={dashboard.path}>
+                <motion.a
+                  whileTap={{ scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 600, damping: 25 }}
+                  className="relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl select-none cursor-pointer"
+                >
+                  <LayoutDashboard
+                    className="h-[20px] w-[20px]"
+                    style={{ color: "#475569" }}
+                  />
+                  <span className="text-[9px] font-semibold tracking-wide text-slate-600">
+                    Dashboard
+                  </span>
+                </motion.a>
+              </Link>
+            )}
 
             <motion.button
               whileTap={{ scale: 0.8 }}

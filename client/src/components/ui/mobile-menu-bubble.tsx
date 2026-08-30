@@ -41,6 +41,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 
 // ─── Grouped Navigation ────────────────────────────────────────
@@ -200,10 +201,10 @@ function SectionLabel({ text }: { text: string }) {
 
 export function MobileMenuBubble() {
   const [isOpen, setIsOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useSubscription();
   const { user, loading: authLoading } = useAuthContext();
+  const dashboard = getDashboardDestination(user);
   const isSuperuser = user?.role === "superuser";
   const isAdmin = user?.role === "admin" || user?.role === "moderator";
 
@@ -344,24 +345,8 @@ export function MobileMenuBubble() {
     return () => window.removeEventListener("resize", handleResize);
   }, [snapToEdge]);
 
-  // ── Hide bubble when any Radix Dialog/Sheet overlay is open ──
-  useEffect(() => {
-    const check = () => {
-      const overlay = document.querySelector(
-        "[data-state='open'][role='dialog'], [data-state='open'].fixed[data-radix-portal]",
-      );
-      setDialogOpen(!!overlay);
-    };
-    const observer = new MutationObserver(check);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["data-state"],
-    });
-    check();
-    return () => observer.disconnect();
-  }, []);
+  // Keep the mobile bubble visible even when other overlays are open;
+  // it should only disappear on route families that already have their own nav chrome.
 
   // Hide bubble on Blog & Musical Universe — they have their own navigation bars
   const isBlogPage = location === "/blog" || location.startsWith("/blog/");
@@ -379,7 +364,6 @@ export function MobileMenuBubble() {
   const isContentNavPage = isContentNavPath(location);
   if (isBlogPage || isMusicPage) return null;
   if (isContentNavPage && isAuth) return null;
-  if (dialogOpen) return null;
 
   return (
     <>
@@ -611,13 +595,15 @@ export function MobileMenuBubble() {
                   )}
 
                   {/* Dashboard link */}
-                  <Link href="/geo-admin/dashboard">
+                  <Link href={dashboard.path}>
                     <button
                       onClick={close}
                       className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
                     >
                       <Globe className="h-4 w-4 shrink-0 text-[#bf831c]" />
-                      <span className="text-[13px] font-medium">Dashboard</span>
+                      <span className="text-[13px] font-medium">
+                        {dashboard.label}
+                      </span>
                       <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                     </button>
                   </Link>

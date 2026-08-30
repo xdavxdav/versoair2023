@@ -374,6 +374,32 @@ export default function BlogPage() {
     if (!response.ok) throw new Error("Comment could not be posted");
   };
 
+  const handleEditComment = async (
+    postId: number,
+    commentId: number,
+    content: string,
+  ) => {
+    const response = await authenticatedFetch(
+      `/api/social/posts/${postId}/comments/${commentId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      },
+    );
+    if (!response.ok) throw new Error("Comment could not be updated");
+  };
+
+  const handleDeleteComment = async (postId: number, commentId: number) => {
+    const response = await authenticatedFetch(
+      `/api/social/posts/${postId}/comments/${commentId}`,
+      {
+        method: "DELETE",
+      },
+    );
+    if (!response.ok) throw new Error("Comment could not be deleted");
+  };
+
   const handleFetchComments = async (postId: number) => {
     const response = await authenticatedFetch(
       `/api/social/posts/${postId}/comments?limit=50`,
@@ -608,6 +634,8 @@ export default function BlogPage() {
                     onComment={(postId, content) =>
                       handleComment(postId, content)
                     }
+                    onEditComment={handleEditComment}
+                    onDeleteComment={handleDeleteComment}
                     onFetchComments={handleFetchComments}
                     onShare={handleSharePost}
                   />

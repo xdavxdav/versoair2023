@@ -567,7 +567,12 @@ router.get("/posts/:postId", async (req: Request, res: Response) => {
     const comments = await db
       .select()
       .from(socialComments)
-      .where(eq(socialComments.postId, parseInt(postId)))
+      .where(
+        and(
+          eq(socialComments.postId, parseInt(postId)),
+          isNull(socialComments.deletedAt),
+        ),
+      )
       .orderBy(desc(socialComments.createdAt));
 
     res.json({
@@ -757,20 +762,21 @@ router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
         .json({ success: false, error: "Authentication required" });
     }
 
-    if (!content) {
+    if (!content || !String(content).trim()) {
       return res.status(400).json({
         success: false,
         error: "Missing required field: content",
       });
     }
 
+    const trimmedContent = String(content).trim();
     const authorId = await getSocialProfileId(Number(appUserId));
     const newComment = await db
       .insert(socialComments)
       .values({
         postId: parseInt(postId),
         authorId,
-        content,
+        content: trimmedContent,
         parentCommentId,
       })
       .returning();
@@ -834,7 +840,7 @@ router.post("/posts/:postId/comments", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/social/posts/:postId/comments - Get all comments for post
+// GET /api/social/posts/:postId/comments - Get all active comments for post
 router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
@@ -847,7 +853,12 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
     const comments = await db
       .select()
       .from(socialComments)
-      .where(eq(socialComments.postId, parseInt(postId)))
+      .where(
+        and(
+          eq(socialComments.postId, parseInt(postId)),
+          isNull(socialComments.deletedAt),
+        ),
+      )
       .orderBy(desc(socialComments.createdAt))
       .limit(limitNum)
       .offset(offset);
@@ -863,6 +874,118 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching comments:", error);
     res.status(500).json({ success: false, error: "Failed to fetch comments" });
+  }
+});
+
+// PATCH /api/social/posts/:postId/comments/:commentId - Update a comment
+router.patch("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+    const { content } = req.body;
+
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
+    if (!trimmedContent) {
+      return res.status(400).json({ success: false, error: "Comment content is required" });
+    }
+
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db
+      .select()
+      .from(socialComments)
+      .where(
+        and(
+          eq(socialComments.id, commentId),
+          eq(socialComments.postId, postId),
+          eq(socialComments.authorId, authorProfileId),
+          isNull(socialComments.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+
+    const [updatedComment] = await db
+      .update(socialComments)
+      .set({
+        content: trimmedContent,
+        isEdited: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(socialComments.id, commentId))
+      .returning();
+
+    res.json({ success: true, data: updatedComment, message: "Comment updated" });
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res.status(500).json({ success: false, error: "Failed to update comment" });
+  }
+});
+
+// DELETE /api/social/posts/:postId/comments/:commentId - Soft delete a comment
+router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db
+      .select()
+      .from(socialComments)
+      .where(
+        and(
+          eq(socialComments.id, commentId),
+          eq(socialComments.postId, postId),
+          eq(socialComments.authorId, authorProfileId),
+          isNull(socialComments.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+
+    const [deletedComment] = await db
+      .update(socialComments)
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(socialComments.id, commentId))
+      .returning();
+
+    const [postRow] = await db
+      .select({ commentCount: socialPosts.commentCount })
+      .from(socialPosts)
+      .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+      .limit(1);
+
+    if (postRow) {
+      await db
+        .update(socialPosts)
+        .set({
+          commentCount: Math.max(0, (postRow.commentCount || 0) - 1),
+        })
+        .where(eq(socialPosts.id, postId));
+    }
+
+    res.json({ success: true, data: deletedComment, message: "Comment deleted" });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ success: false, error: "Failed to delete comment" });
   }
 });
 

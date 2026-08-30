@@ -37,6 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -50,6 +51,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export function MusicNavbar() {
   const [pathname, navigate] = useLocation();
   const { user, logout } = useAuthContext();
+  const dashboard = getDashboardDestination(user);
   const activeItem = getActiveNavItem(pathname);
   const activeLabel =
     MUSIC_NAV_ITEMS.find((i) => i.id === activeItem)?.label || "Menu";
@@ -269,6 +271,13 @@ export function MusicNavbar() {
                   })}
                   {user && user.id ? (
                     <>
+                      <DropdownMenuItem
+                        className="hover:bg-white/5 cursor-pointer"
+                        onClick={() => navigate(dashboard.path)}
+                      >
+                        <Home className="w-4 h-4 mr-2" />
+                        Main Dashboard
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-white/10" />
                       {/* User info */}
                       <div className="px-2 py-2 flex items-center gap-2">
@@ -437,6 +446,17 @@ export function MusicNavbar() {
 
             {/* Right side actions - hidden on mobile, in dropdown instead */}
             <div className="hidden md:flex items-center gap-2">
+              {user && user.id && (
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5"
+                  onClick={() => navigate(dashboard.path)}
+                  title={dashboard.label}
+                >
+                  <Home className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm">Main Dashboard</span>
+                </Button>
+              )}
               {/* Portal button */}
               {(() => {
                 const portalDisabled =

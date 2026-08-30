@@ -6,10 +6,12 @@ import {
   ShoppingBag,
   ChevronDown,
   Home,
+  LayoutDashboard,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -89,6 +91,7 @@ export default function BlogNavbar({
     userNameProp ??
     user?.email?.split("@")[0] ??
     (marketplaceAuth ? marketplaceUser : "User");
+  const dashboard = getDashboardDestination(user);
   const handleLogout = () => {
     if (onLogoutProp) {
       onLogoutProp();
@@ -432,6 +435,15 @@ export default function BlogNavbar({
             <div className="flex items-center gap-2 flex-shrink-0">
               {isAuthenticated && (
                 <>
+                  <Link href={dashboard.path}>
+                    <a
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[13px]"
+                      title={dashboard.label}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </a>
+                  </Link>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-[13px]">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
                     <span className="text-slate-300 truncate max-w-[80px]">

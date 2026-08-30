@@ -45,6 +45,12 @@ interface PostCardProps {
   post: Post;
   onLike?: (postId: number) => void;
   onComment?: (postId: number, content: string) => Promise<void> | void;
+  onEditComment?: (
+    postId: number,
+    commentId: number,
+    content: string,
+  ) => Promise<void> | void;
+  onDeleteComment?: (postId: number, commentId: number) => Promise<void> | void;
   onFetchComments?: (postId: number) => Promise<PostComment[]>;
   onShare?: (postId: number) => Promise<void> | void;
   liked?: boolean;
@@ -54,6 +60,8 @@ const PostCard: React.FC<PostCardProps> = ({
   post,
   onLike,
   onComment,
+  onEditComment,
+  onDeleteComment,
   onShare,
   onFetchComments,
   liked = false,
@@ -71,6 +79,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [isDeletingCommentId, setIsDeletingCommentId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isCommenting || !onFetchComments || commentsLoaded) return;
@@ -132,6 +143,42 @@ const PostCard: React.FC<PostCardProps> = ({
       setIsCommenting(false);
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  const saveEditedComment = async (commentId: number) => {
+    const content = editingCommentText.trim();
+    if (!content || !onEditComment) return;
+
+    try {
+      await onEditComment(post.id, commentId, content);
+      setComments((current) =>
+        current.map((item) =>
+          item.id === commentId ? { ...item, content } : item,
+        ),
+      );
+      setEditingCommentId(null);
+      setEditingCommentText("");
+    } catch {
+      setCommentsError("Comment could not be updated.");
+    }
+  };
+
+  const deleteComment = async (commentId: number) => {
+    if (!onDeleteComment) return;
+    setIsDeletingCommentId(commentId);
+    try {
+      await onDeleteComment(post.id, commentId);
+      setComments((current) => current.filter((item) => item.id !== commentId));
+      setCommentCount((value) => Math.max(0, value - 1));
+      if (editingCommentId === commentId) {
+        setEditingCommentId(null);
+        setEditingCommentText("");
+      }
+    } catch {
+      setCommentsError("Comment could not be deleted.");
+    } finally {
+      setIsDeletingCommentId(null);
     }
   };
 
@@ -352,10 +399,69 @@ const PostCard: React.FC<PostCardProps> = ({
             )}
             {comments.slice(0, showAllComments ? undefined : 3).map((item) => (
               <div key={item.id} className="rounded-xl bg-slate-50 px-3 py-2">
-                <p className="text-xs font-semibold text-slate-700">
-                  {item.author?.name || "Community member"}
-                </p>
-                <p className="text-sm text-slate-700">{item.content}</p>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-slate-700 notranslate">
+                    {item.author?.name || "Community member"}
+                  </p>
+                  {(onEditComment || onDeleteComment) && (
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                      {onEditComment && editingCommentId !== item.id && (
+                        <button
+                          type="button"
+                          className="hover:text-cyan-700"
+                          onClick={() => {
+                            setEditingCommentId(item.id);
+                            setEditingCommentText(item.content);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {onDeleteComment && (
+                        <button
+                          type="button"
+                          className="hover:text-rose-700 disabled:opacity-50"
+                          disabled={isDeletingCommentId === item.id}
+                          onClick={() => void deleteComment(item.id)}
+                        >
+                          {isDeletingCommentId === item.id ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {editingCommentId === item.id ? (
+                  <div className="space-y-2">
+                    <input
+                      value={editingCommentText}
+                      onChange={(event) => setEditingCommentText(event.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 notranslate focus:border-cyan-400 focus:outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void saveEditedComment(item.id)}
+                        className="rounded-lg bg-cyan-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditingCommentText("");
+                        }}
+                        className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-700 notranslate whitespace-pre-wrap">
+                    {item.content}
+                  </p>
+                )}
               </div>
             ))}
             {comments.length > 3 && (
@@ -378,7 +484,8 @@ const PostCard: React.FC<PostCardProps> = ({
                 if (event.key === "Enter") void submitComment();
               }}
               placeholder="Write a comment..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none notranslate"
+              translate="no"
             />
             <button
               onClick={() => void submitComment()}
