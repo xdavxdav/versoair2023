@@ -58,10 +58,10 @@ export function isContentNavPath(path: string): boolean {
 // ─── Shared style tokens ───────────────────────────────────────────────────
 
 const BASE =
-  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
+  "flex items-center gap-1.5 md:gap-1.5 lg:gap-2 px-3 md:px-3.5 lg:px-4 py-2 md:py-2.5 lg:py-3 md:max-lg:gap-1.5 md:max-lg:px-2.5 md:max-lg:text-xs rounded-full text-sm md:text-sm lg:text-base font-medium border border-transparent whitespace-nowrap transition-all duration-200 flex-shrink-0 text-slate-500 hover:text-cyan-300 hover:bg-cyan-500/[0.07] hover:border-cyan-500/20 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]";
 
 const ACTIVE =
-  "flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
+  "flex items-center gap-1.5 md:gap-1.5 lg:gap-2 px-3 md:px-3.5 lg:px-4 py-2 md:py-2.5 lg:py-3 md:max-lg:gap-1.5 md:max-lg:px-2.5 md:max-lg:text-xs rounded-full text-sm md:text-sm lg:text-base font-medium border whitespace-nowrap transition-all duration-200 flex-shrink-0 bg-cyan-500/10 text-cyan-300 border-cyan-500/25 shadow-[0_0_12px_rgba(34,211,238,0.12)]";
 
 // ─── Desktop pill items ────────────────────────────────────────────────────
 
@@ -637,7 +637,7 @@ export default function ContentNav() {
           animate={{ y: dockY, opacity: visible ? 1 : 0 }}
           initial={{ y: 120, opacity: 0 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="content-nav-dock pointer-events-auto mx-auto mb-4 flex w-[calc(100vw-24px)] max-w-[1400px] items-center justify-start gap-0.5 overflow-x-auto px-2 py-2 scrollbar-hide"
+          className="content-nav-dock pointer-events-auto mx-auto mb-4 md:mb-6 flex w-[calc(100vw-24px)] max-w-[1400px] items-center justify-start gap-1 md:gap-1.5 lg:gap-2 overflow-x-auto px-3 md:px-4 lg:px-5 py-3 md:py-4 lg:py-4 scrollbar-hide"
           style={{
             background: "rgba(6, 3, 14, 0.97)",
             backdropFilter: "blur(28px) saturate(200%)",
@@ -657,30 +657,30 @@ export default function ContentNav() {
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%,-50%)",
-                  width: "40px",
-                  height: "40px",
+                  width: "48px",
+                  height: "48px",
                 }}
-                viewBox="0 0 40 40"
+                viewBox="0 0 48 48"
               >
                 <circle
-                  cx="20"
-                  cy="20"
-                  r="17"
+                  cx="24"
+                  cy="24"
+                  r="20"
                   fill="none"
                   stroke="rgba(34,211,238,0.15)"
                   strokeWidth="1.5"
                 />
                 <circle
-                  cx="20"
-                  cy="20"
-                  r="17"
+                  cx="24"
+                  cy="24"
+                  r="20"
                   fill="none"
                   stroke="#22d3ee"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 17}`}
-                  strokeDashoffset={`${2 * Math.PI * 17 * (1 - holdProgress / 100)}`}
-                  transform="rotate(-90 20 20)"
+                  strokeDasharray={`${2 * Math.PI * 20}`}
+                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - holdProgress / 100)}`}
+                  transform="rotate(-90 24 24)"
                 />
               </svg>
             )}
@@ -694,17 +694,17 @@ export default function ContentNav() {
               className={location === "/" ? ACTIVE : BASE}
               title="Tap=Marketplace · Double-tap=Blog · Hold 3s=Home"
             >
-              <Home className="h-3.5 w-3.5" />
+              <Home className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
               Home
             </motion.button>
           </div>
 
-          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+          <div className="h-5 md:h-6 lg:h-7 w-px bg-white/[0.07] md:mx-1 lg:mx-1.5 flex-shrink-0" />
 
           {user && (
             <Link href={dashboard.path}>
               <a className={BASE} title={dashboard.label}>
-                <LayoutDashboard className="h-3.5 w-3.5" />
+                <LayoutDashboard className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
                 Dashboard
               </a>
             </Link>
@@ -715,14 +715,14 @@ export default function ContentNav() {
             ({ href, label, Icon, match }) => (
               <Link key={href} href={href}>
                 <a className={match(location) ? ACTIVE : BASE}>
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
                   {label}
                 </a>
               </Link>
             ),
           )}
 
-          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+          <div className="h-5 md:h-6 lg:h-7 w-px bg-white/[0.07] md:mx-1 lg:mx-1.5 flex-shrink-0" />
 
           {/* ── Dropdown groups (Discover, Create, Services) ── */}
           {GROUPS.filter((g) => g.key !== "help").map((group) => {
@@ -736,10 +736,10 @@ export default function ContentNav() {
                 onMouseLeave={() => setOpenGroup(null)}
               >
                 <button className={active || isOpen ? ACTIVE : BASE}>
-                  <group.Icon className="h-3.5 w-3.5" />
+                  <group.Icon className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
                   {group.label}
                   <ChevronDown
-                    className={`content-nav-chevron h-3 w-3 opacity-50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                    className={`content-nav-chevron h-3.5 md:h-4 lg:h-4.5 w-3.5 md:w-4 lg:w-4.5 opacity-50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -777,14 +777,14 @@ export default function ContentNav() {
             );
           })}
 
-          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+          <div className="h-5 md:h-6 lg:h-7 w-px bg-white/[0.07] md:mx-1 lg:mx-1.5 flex-shrink-0" />
 
           <button onClick={() => setSearchOpen(true)} className={BASE}>
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
             Search
           </button>
 
-          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+          <div className="h-5 md:h-6 lg:h-7 w-px bg-white/[0.07] md:mx-1 lg:mx-1.5 flex-shrink-0" />
 
           {/* ── Help dropdown (always visible at corner) ── */}
           {(() => {
@@ -798,10 +798,10 @@ export default function ContentNav() {
                 onMouseLeave={() => setOpenGroup(null)}
               >
                 <button className={helpActive || helpOpen ? ACTIVE : BASE}>
-                  <LifeBuoy className="h-3.5 w-3.5" />
+                  <LifeBuoy className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
                   Help
                   <ChevronDown
-                    className={`content-nav-chevron h-3 w-3 opacity-50 transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`}
+                    className={`content-nav-chevron h-3.5 md:h-4 lg:h-4.5 w-3.5 md:w-4 lg:w-4.5 opacity-50 transition-transform duration-200 ${helpOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 <AnimatePresence>
@@ -838,34 +838,34 @@ export default function ContentNav() {
             );
           })()}
 
-          <div className="h-4 w-px bg-white/[0.07] mx-0.5 flex-shrink-0" />
+          <div className="h-5 md:h-6 lg:h-7 w-px bg-white/[0.07] md:mx-1 lg:mx-1.5 flex-shrink-0" />
 
           {isAuth ? (
             <>
               <div
-                className="flex items-center gap-1.5 px-3 py-1.5 md:max-lg:gap-1 md:max-lg:px-1 md:max-lg:text-[10px] rounded-full text-[11px] text-slate-400 flex-shrink-0"
+                className="flex items-center gap-2 md:gap-2.5 lg:gap-3 px-3 md:px-3.5 lg:px-4 py-2 md:py-2.5 lg:py-3 md:max-lg:gap-2 md:max-lg:px-3 md:max-lg:text-xs rounded-full text-sm md:text-sm lg:text-base text-slate-400 flex-shrink-0"
                 style={{
                   background: "rgba(255,255,255,0.03)",
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="max-w-[72px] truncate md:max-lg:hidden">
+                <span className="w-2 h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="max-w-[80px] md:max-w-[100px] truncate md:max-lg:hidden">
                   {userName}
                 </span>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 md:max-lg:p-1 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"
+                className="p-2.5 md:p-3 lg:p-3.5 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"
                 title="Sign out"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
               </button>
             </>
           ) : !isOnAuthPage ? (
             <button
               onClick={() => setShowQuickSignIn(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold flex-shrink-0 transition-all hover:scale-105"
+              className="flex items-center gap-2 md:gap-2.5 lg:gap-3 px-3 md:px-3.5 lg:px-4 py-2 md:py-2.5 lg:py-3 rounded-full text-sm md:text-sm lg:text-base font-semibold flex-shrink-0 transition-all hover:scale-105"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(34,211,238,0.12))",
@@ -877,7 +877,7 @@ export default function ContentNav() {
               }}
             >
               <UserCircle2
-                className="h-3.5 w-3.5"
+                className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5"
                 style={{
                   filter: "drop-shadow(0 0 4px rgba(125,211,252,0.6))",
                 }}
