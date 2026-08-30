@@ -52,8 +52,9 @@ const MOBILE_PILLS = [
 ];
 
 /* ── shared dropdown style tokens ───────────────────────────── */
+/* Responsive button with fluid scaling */
 const BTN =
-  "flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium";
+  "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 lg:px-3.5 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium flex-shrink-0";
 const PANEL =
   "absolute top-full bg-slate-950 overflow-hidden shadow-2xl shadow-black/60 rounded-xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
 const PANEL_OPEN = "opacity-100 !visible";
@@ -194,8 +195,8 @@ export default function BlogNavbar({
         className="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 z-[100]"
         style={{ overflowX: "visible", overflowY: "visible" }}
       >
-        <div className="max-w-full mx-auto px-3 md:px-5 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center justify-between h-14 md:h-16 gap-2 md:gap-3 min-w-max md:min-w-0">
+        <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center justify-between h-12 sm:h-14 md:h-16 gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 min-w-max sm:min-w-max md:min-w-0">
             {/* Home button with gestures: tap=marketplace, double-tap=home, hold 2s=logout */}
             <div className="relative flex-shrink-0">
               {isHolding && (
@@ -239,25 +240,25 @@ export default function BlogNavbar({
                 onPointerLeave={handlePressEnd}
                 onPointerCancel={handlePressEnd}
                 onContextMenu={(e) => e.preventDefault()}
-                className="flex items-center gap-1.5 px-3 py-2 text-[13px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
                 title={
                   isAuthenticated
                     ? "Tap=Marketplace · Double-tap=Home · Hold 2s=Logout"
                     : "Tap=Marketplace · Double-tap=Home"
                 }
               >
-                <Home className="w-4 h-4" />
+                <Home className="w-3 sm:w-4 h-3 sm:h-4" />
                 <span className="hidden sm:inline">Accueil</span>
               </button>
             </div>
 
             {/* ── Mobile quick nav pills (Home button already covers Marketplace) ── */}
-            <div className="flex md:hidden items-center gap-1 flex-1 min-w-0 justify-end overflow-x-auto scrollbar-hide px-1">
+            <div className="flex md:hidden items-center gap-0.5 flex-1 min-w-0 justify-end overflow-x-auto scrollbar-hide px-1">
               {MOBILE_PILLS.filter((pill) => pill.href !== currentPath).map(
                 (pill) => (
                   <Link key={pill.href} href={pill.href}>
                     <a
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
+                      className={`px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
                     >
                       {pill.label}
                     </a>
@@ -266,8 +267,8 @@ export default function BlogNavbar({
               )}
             </div>
 
-            {/* ── Centered nav (desktop only) — scrollable when content overflows ── */}
-            <div className="hidden md:flex items-center gap-1 flex-1 justify-start min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-2">
+            {/* ── Desktop nav (scales with screen) — scrollable when content overflows ── */}
+            <div className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-start min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-1">
               {/* Entreprises */}
               <div
                 className="relative flex-shrink-0"
@@ -275,16 +276,17 @@ export default function BlogNavbar({
                 onMouseLeave={close}
               >
                 <button className={BTN}>
-                  <Store className="w-4 h-4" />
-                  Entreprises
+                  <Store className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                  <span className="hidden lg:inline">Entreprises</span>
+                  <span className="lg:hidden">Ent</span>
                   <ChevronDown
-                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "ent" ? "rotate-180" : ""}`}
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "ent" ? "rotate-180" : ""}`}
                   />
                 </button>
                 {/* invisible hover bridge */}
                 <div className="absolute top-full left-0 right-0 h-2" />
                 <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-64 ${openMenu === "ent" ? PANEL_OPEN : ""}`}
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-56 lg:w-64 ${openMenu === "ent" ? PANEL_OPEN : ""}`}
                   style={{ marginTop: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
@@ -329,14 +331,15 @@ export default function BlogNavbar({
                 onMouseLeave={close}
               >
                 <button className={BTN}>
-                  Services
+                  <span className="hidden lg:inline">Services</span>
+                  <span className="lg:hidden">Svc</span>
                   <ChevronDown
-                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "svc" ? "rotate-180" : ""}`}
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "svc" ? "rotate-180" : ""}`}
                   />
                 </button>
                 <div className="absolute top-full left-0 right-0 h-2" />
                 <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-52 ${openMenu === "svc" ? PANEL_OPEN : ""}`}
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-44 sm:w-48 lg:w-52 ${openMenu === "svc" ? PANEL_OPEN : ""}`}
                   style={{ marginTop: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
@@ -362,14 +365,15 @@ export default function BlogNavbar({
                 onMouseLeave={close}
               >
                 <button className={BTN}>
-                  Marketing
+                  <span className="hidden lg:inline">Marketing</span>
+                  <span className="lg:hidden">Mkt</span>
                   <ChevronDown
-                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "mkt" ? "rotate-180" : ""}`}
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "mkt" ? "rotate-180" : ""}`}
                   />
                 </button>
                 <div className="absolute top-full left-0 right-0 h-2" />
                 <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-56 ${openMenu === "mkt" ? PANEL_OPEN : ""}`}
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "mkt" ? PANEL_OPEN : ""}`}
                   style={{ marginTop: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
@@ -396,8 +400,9 @@ export default function BlogNavbar({
               {currentPath !== "/marketplace" && (
                 <Link href="/marketplace">
                   <a className={BTN}>
-                    <ShoppingBag className="w-4 h-4" />
-                    Marketplace
+                    <ShoppingBag className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                    <span className="hidden lg:inline">Marketplace</span>
+                    <span className="lg:hidden">Shop</span>
                   </a>
                 </Link>
               )}
@@ -409,15 +414,16 @@ export default function BlogNavbar({
                 onMouseLeave={close}
               >
                 <button className={BTN}>
-                  <Headphones className="w-4 h-4" />
-                  Support
+                  <Headphones className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                  <span className="hidden lg:inline">Support</span>
+                  <span className="lg:hidden">Help</span>
                   <ChevronDown
-                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${openMenu === "help" ? "rotate-180" : ""}`}
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "help" ? "rotate-180" : ""}`}
                   />
                 </button>
                 <div className="absolute top-full left-0 right-0 h-2" />
                 <div
-                  className={`${PANEL} right-0 w-48 ${openMenu === "help" ? PANEL_OPEN : ""}`}
+                  className={`${PANEL} right-0 w-44 sm:w-48 ${openMenu === "help" ? PANEL_OPEN : ""}`}
                   style={{ marginTop: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
@@ -431,31 +437,31 @@ export default function BlogNavbar({
               </div>
             </div>
 
-            {/* Auth section */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Auth section - responsive */}
+            <div className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 flex-shrink-0">
               {isAuthenticated && (
                 <>
                   <Link href={dashboard.path}>
                     <a
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[13px]"
+                      className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"
                       title={dashboard.label}
                     >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
+                      <LayoutDashboard className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                      <span className="hidden lg:inline">Dashboard</span>
                     </a>
                   </Link>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg text-[13px]">
-                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                    <span className="text-slate-300 truncate max-w-[80px]">
+                  <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 rounded-lg text-[9px] sm:text-xs lg:text-sm flex-shrink-0">
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-400 rounded-full" />
+                    <span className="text-slate-300 truncate max-w-[60px] sm:max-w-[80px] lg:max-w-[100px]">
                       {userName}
                     </span>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[13px]"
+                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
+                    <LogOut className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                    <span className="hidden sm:inline">Sign Out</span>
                   </button>
                 </>
               )}

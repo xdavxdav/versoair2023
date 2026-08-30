@@ -81,7 +81,9 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showAllComments, setShowAllComments] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
-  const [isDeletingCommentId, setIsDeletingCommentId] = useState<number | null>(null);
+  const [isDeletingCommentId, setIsDeletingCommentId] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isCommenting || !onFetchComments || commentsLoaded) return;
@@ -424,7 +426,9 @@ const PostCard: React.FC<PostCardProps> = ({
                           disabled={isDeletingCommentId === item.id}
                           onClick={() => void deleteComment(item.id)}
                         >
-                          {isDeletingCommentId === item.id ? "Deleting..." : "Delete"}
+                          {isDeletingCommentId === item.id
+                            ? "Deleting..."
+                            : "Delete"}
                         </button>
                       )}
                     </div>
@@ -434,7 +438,9 @@ const PostCard: React.FC<PostCardProps> = ({
                   <div className="space-y-2">
                     <input
                       value={editingCommentText}
-                      onChange={(event) => setEditingCommentText(event.target.value)}
+                      onChange={(event) =>
+                        setEditingCommentText(event.target.value)
+                      }
                       className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 notranslate focus:border-cyan-400 focus:outline-none"
                     />
                     <div className="flex gap-2">

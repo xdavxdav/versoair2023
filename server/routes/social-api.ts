@@ -495,12 +495,10 @@ router.get(
           eventType: "media_download",
           outcome: "denied",
         });
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: "The author has disabled media downloads",
-          });
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads",
+        });
       }
       const mediaUrl = post.videoUrl || post.imageUrls?.[0];
       if (!mediaUrl)
@@ -886,12 +884,16 @@ router.patch("/posts/:postId/comments/:commentId", async (req, res) => {
     const { content } = req.body;
 
     if (!appUserId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     const trimmedContent = typeof content === "string" ? content.trim() : "";
     if (!trimmedContent) {
-      return res.status(400).json({ success: false, error: "Comment content is required" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Comment content is required" });
     }
 
     const authorProfileId = await getSocialProfileId(Number(appUserId));
@@ -909,7 +911,9 @@ router.patch("/posts/:postId/comments/:commentId", async (req, res) => {
       .limit(1);
 
     if (!existingComment) {
-      return res.status(404).json({ success: false, error: "Comment not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Comment not found" });
     }
 
     const [updatedComment] = await db
@@ -922,7 +926,11 @@ router.patch("/posts/:postId/comments/:commentId", async (req, res) => {
       .where(eq(socialComments.id, commentId))
       .returning();
 
-    res.json({ success: true, data: updatedComment, message: "Comment updated" });
+    res.json({
+      success: true,
+      data: updatedComment,
+      message: "Comment updated",
+    });
   } catch (error) {
     console.error("Error updating comment:", error);
     res.status(500).json({ success: false, error: "Failed to update comment" });
@@ -937,7 +945,9 @@ router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
     const commentId = Number(req.params.commentId);
 
     if (!appUserId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
     }
 
     const authorProfileId = await getSocialProfileId(Number(appUserId));
@@ -955,7 +965,9 @@ router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
       .limit(1);
 
     if (!existingComment) {
-      return res.status(404).json({ success: false, error: "Comment not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Comment not found" });
     }
 
     const [deletedComment] = await db
@@ -982,7 +994,11 @@ router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
         .where(eq(socialPosts.id, postId));
     }
 
-    res.json({ success: true, data: deletedComment, message: "Comment deleted" });
+    res.json({
+      success: true,
+      data: deletedComment,
+      message: "Comment deleted",
+    });
   } catch (error) {
     console.error("Error deleting comment:", error);
     res.status(500).json({ success: false, error: "Failed to delete comment" });
