@@ -191,11 +191,11 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 z-[100] overflow-x-hidden"
-        style={{ overflowX: "hidden", overflowY: "visible" }}
+        className="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 z-[100]"
+        style={{ overflowX: "visible", overflowY: "visible" }}
       >
-        <div className="max-w-full mx-auto px-3 md:px-5">
-          <div className="flex items-center justify-between h-14 md:h-16 gap-2 md:gap-3">
+        <div className="max-w-full mx-auto px-3 md:px-5 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center justify-between h-14 md:h-16 gap-2 md:gap-3 min-w-max md:min-w-0">
             {/* Home button with gestures: tap=marketplace, double-tap=home, hold 2s=logout */}
             <div className="relative flex-shrink-0">
               {isHolding && (
@@ -267,10 +267,10 @@ export default function BlogNavbar({
             </div>
 
             {/* ── Centered nav (desktop only) — scrollable when content overflows ── */}
-            <div className="hidden md:flex items-center gap-1 flex-1 justify-center min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-2">
+            <div className="hidden md:flex items-center gap-1 flex-1 justify-start min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-2">
               {/* Entreprises */}
               <div
-                className="relative"
+                className="relative flex-shrink-0"
                 onMouseEnter={() => open("ent")}
                 onMouseLeave={close}
               >
@@ -324,7 +324,7 @@ export default function BlogNavbar({
 
               {/* Services */}
               <div
-                className="relative"
+                className="relative flex-shrink-0"
                 onMouseEnter={() => open("svc")}
                 onMouseLeave={close}
               >
@@ -357,7 +357,7 @@ export default function BlogNavbar({
 
               {/* Marketing */}
               <div
-                className="relative"
+                className="relative flex-shrink-0"
                 onMouseEnter={() => open("mkt")}
                 onMouseLeave={close}
               >
@@ -404,7 +404,7 @@ export default function BlogNavbar({
 
               {/* Support */}
               <div
-                className="relative"
+                className="relative flex-shrink-0"
                 onMouseEnter={() => open("help")}
                 onMouseLeave={close}
               >
