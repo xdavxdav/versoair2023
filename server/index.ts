@@ -92,8 +92,10 @@ import { setupRoyaltyEngine } from "./services/royalty-engine";
 import { setupJournalCron } from "./services/journal-cron";
 import { setupNewsletterCron } from "./services/newsletter-cron";
 import { setupMarketplaceAutoApprove } from "./services/marketplace-auto-approve";
+import { setupSessionCleanup } from "./services/session-cleanup";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 import { globalAuthGate } from "./middleware/auth";
+import { performanceMiddleware, startStatsReporter } from "./utils/performance-monitor";
 
 const app = express();
 
@@ -199,6 +201,12 @@ app.use(csrfProtect);
 // Superuser gets unrestricted free pass on all routes.
 app.use(globalAuthGate);
 
+// ─── Performance monitoring middleware ─────────────────────────────────────────
+// Tracks slow requests for debugging + optimization
+if (process.env.NODE_ENV === "production") {
+  app.use(performanceMiddleware());
+}
+
 // ---------- Logging middleware ----------
 app.use((req, res, next) => {
   const start = Date.now();
@@ -286,6 +294,16 @@ app.use((req, res, next) => {
   // Setup marketplace auto-approve (approves pending listings after 24h)
   setupMarketplaceAutoApprove();
   serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
+
+  // Setup session cleanup (removes expired sessions every 30 mins)
+  setupSessionCleanup();
+  serverLog.info("Session cleanup job scheduled (every 30 minutes)");
+
+  // Start performance monitoring in production
+  if (process.env.NODE_ENV === "production") {
+    startStatsReporter(5); // Report every 5 minutes
+    serverLog.info("Performance stats reporter started (every 5 minutes)");
+  }
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

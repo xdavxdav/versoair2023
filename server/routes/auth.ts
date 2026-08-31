@@ -521,7 +521,8 @@ router.post(
     const result = await db.execute(
       sql`SELECT id, username, email, password, role, is_verified, display_name,
                  failed_login_attempts, locked_until, must_change_password,
-                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at,
+                 oauth_provider
           FROM users WHERE LOWER(email) = LOWER(${email}) ORDER BY id`,
     );
 
@@ -576,11 +577,8 @@ router.post(
     }
 
     // Detect OAuth-only users (they have random hex passwords, not user-set)
-    const oauthCheck = await db.execute(
-      sql`SELECT oauth_provider FROM users WHERE id = ${user.id} AND oauth_provider IS NOT NULL LIMIT 1`,
-    );
-    if ((oauthCheck.rows?.length ?? 0) > 0) {
-      const provider = (oauthCheck.rows[0] as any).oauth_provider;
+    if (user?.oauth_provider) {
+      const provider = user.oauth_provider;
       res.status(400).json({
         success: false,
         message: `This account uses ${provider} sign-in. Please sign in with ${provider} instead.`,
@@ -1024,6 +1022,9 @@ router.get(
 router.get(
   "/session",
   asyncHandler(async (req: Request, res: Response) => {
+    // Cache session for 30 seconds to reduce database queries on rapid reloads
+    res.set("Cache-Control", "private, max-age=30");
+    
     const token = getTokenFromRequest(req);
     if (!token) {
       res.status(401).json({ success: false, message: "No token provided" });
