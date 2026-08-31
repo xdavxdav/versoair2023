@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
+import { useMusicAccess } from "@/hooks/useMusicAccess";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -51,12 +52,24 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export function MusicNavbar() {
   const [pathname, navigate] = useLocation();
   const { user, logout } = useAuthContext();
+  const { isArtist } = useMusicAccess();
   const dashboard = getDashboardDestination(user);
   const activeItem = getActiveNavItem(pathname);
   const activeLabel =
     MUSIC_NAV_ITEMS.find((i) => i.id === activeItem)?.label || "Menu";
 
-  // ── Home button: single-tap = /music/dashboard, double-tap = /, 3s hold = / with darken ──
+  // Route split: general website home is /, music universe home is /stream,
+  // artist dashboard is /music/dashboard. Streamers should not share the same
+  // shell or home config as artists.
+  const handlePrimaryHome = useCallback(() => {
+    navigate(isArtist ? "/music/dashboard" : "/stream");
+  }, [isArtist, navigate]);
+
+  const handlePublicHome = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  // ── Home button: single-tap = role-specific home, double-tap = public site home, 3s hold = public site home ──
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,12 +91,12 @@ export function MusicNavbar() {
       const count = tapCountRef.current;
       tapCountRef.current = 0;
       if (count >= 2) {
-        navigate("/"); // Double-tap → site home
+        handlePublicHome();
       } else {
-        navigate("/music/dashboard"); // Single-tap → music dashboard
+        handlePrimaryHome();
       }
     }, 300);
-  }, [navigate]);
+  }, [handlePrimaryHome, handlePublicHome]);
 
   const handleHomePressStart = useCallback(() => {
     holdCompletedRef.current = false;
@@ -102,9 +115,9 @@ export function MusicNavbar() {
       setIsHolding(false);
       setHoldProgress(0);
       holdCompletedRef.current = true;
-      navigate("/");
+      handlePublicHome();
     }, 3000);
-  }, [navigate]);
+  }, [handlePublicHome]);
 
   const handleHomePressEnd = useCallback(() => {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -186,7 +199,11 @@ export function MusicNavbar() {
               onPointerLeave={handleHomePressEnd}
               onPointerCancel={handleHomePressEnd}
               onContextMenu={(e) => e.preventDefault()}
-              title="Tap=Dashboard · Double-tap=Verso Air home · Hold 3s=Home"
+              title={
+                isArtist
+                  ? "Tap=Artist Dashboard · Double-tap=Public home · Hold 3s=Public home"
+                  : "Tap=Music Universe · Double-tap=Public home · Hold 3s=Public home"
+              }
             >
               <div className="relative w-8 h-8 sm:w-10 sm:h-10">
                 {/* Purple glow behind - always visible */}

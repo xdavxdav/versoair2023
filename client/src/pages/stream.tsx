@@ -1308,10 +1308,10 @@ export default function StreamPage() {
                 setActiveGenre("");
                 setPage(1);
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-base font-bold transition-all ${
                 !activeGenre
-                  ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
-                  : "bg-white/[0.04] text-gray-400 hover:bg-white/[0.08] border border-white/5"
+                  ? "bg-[#f4a028] text-slate-900 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/30"
+                  : "bg-[#f6f1ea] text-slate-700 hover:bg-[#eee5d8] border border-[#d9d0c6]"
               }`}
             >
               Tous
@@ -1323,10 +1323,10 @@ export default function StreamPage() {
                   setActiveGenre(g === activeGenre ? "" : g);
                   setPage(1);
                 }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-base font-bold transition-all ${
                   activeGenre === g
-                    ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
-                    : "bg-white/[0.04] text-gray-400 hover:bg-white/[0.08] border border-white/5"
+                    ? "bg-[#f4a028] text-slate-900 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/30"
+                    : "bg-[#f6f1ea] text-slate-700 hover:bg-[#eee5d8] border border-[#d9d0c6]"
                 }`}
               >
                 {g}
@@ -1409,10 +1409,10 @@ export default function StreamPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
               <Music className="w-4 h-4 text-amber-400" />
             </div>
-            <h2 className="text-xl font-bold tracking-tight">
+            <h2 className="text-[2rem] sm:text-[2.25rem] font-black tracking-[-0.05em] text-slate-900">
               {activeGenre ? activeGenre : "Tous les titres"}
             </h2>
-            <span className="text-gray-600 text-sm font-mono">
+            <span className="text-slate-600 text-sm font-semibold font-mono">
               ({totalTracks})
             </span>
             <div className="flex-1" />

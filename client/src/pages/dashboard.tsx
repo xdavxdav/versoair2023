@@ -2194,7 +2194,7 @@ export default function UserDashboard() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50/30">
       {/* NAVIGATION */}
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -2227,7 +2227,7 @@ export default function UserDashboard() {
                   <Globe className="h-5 w-5 text-white" />
                 </div>
                 <h1 className="text-lg font-bold text-slate-800">
-                  My Dashboard
+                  General Account
                 </h1>
               </div>
             </div>
@@ -2411,53 +2411,75 @@ export default function UserDashboard() {
               />
             )}
 
-            {/* WELCOME HEADER */}
+            {/* WELCOME HEADER — distinct General Account look */}
             <div className="mb-8">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-                    {userSession!.user.isFirstLogin
-                      ? "Welcome to Verso Air"
-                      : "Welcome back"}
-                    {userSession!.user.displayName || userSession!.user.name
-                      ? `, ${userSession!.user.displayName || userSession!.user.name}`
-                      : ""}
-                    !
-                  </h1>
-                  <p className="text-slate-500 mt-2 text-lg">
-                    {hasRealBusiness
-                      ? `${tierDef.icon} ${tierDef.name} Plan \u2014 ${business.category} sector dashboard`
-                      : "Browse businesses, make reservations, and explore everything Verso Air has to offer."}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1.5"
-                  >
-                    <Globe className="h-3.5 w-3.5 mr-1.5" />{" "}
-                    {hasRealBusiness ? tierDef.name : "General Account"}
-                  </Badge>
-                  {isStaffRole && (
-                    <Badge
-                      variant="outline"
-                      className="bg-red-50 text-red-700 border-red-200 px-3 py-1.5"
-                    >
-                      <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />{" "}
-                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                    </Badge>
-                  )}
-                  {hasRealBusiness &&
-                    !isStaffRole &&
-                    currentTier !== "enterprise" && (
-                      <Button
-                        onClick={() => setShowComparisonModal(true)}
-                        size="sm"
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold gap-1"
-                      >
-                        <Zap className="h-3.5 w-3.5" /> Upgrade
-                      </Button>
-                    )}
+              <div className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-sky-50 via-white to-amber-50 p-5 md:p-7 shadow-[0_20px_45px_rgba(59,130,246,0.08)]">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="max-w-3xl">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">
+                        <Globe className="h-3.5 w-3.5" />
+                        General account
+                      </span>
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-black tracking-[-0.04em] text-slate-900">
+                      {userSession!.user.isFirstLogin
+                        ? "Welcome to Verso Air"
+                        : "Welcome back"}
+                      {userSession!.user.displayName || userSession!.user.name
+                        ? `, ${userSession!.user.displayName || userSession!.user.name}`
+                        : ""}
+                      !
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-base md:text-xl text-slate-600">
+                      Browse trusted businesses, reserve places, discover
+                      communities, and keep your daily life connected in one
+                      place.
+                    </p>
+                  </div>
+
+                  <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-center justify-between text-sm text-slate-500">
+                      <span>Account status</span>
+                      <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+                        Active
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-sky-50 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                          Favorites
+                        </p>
+                        <p className="mt-2 text-2xl font-bold text-sky-700">
+                          24
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-amber-50 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                          Bookings
+                        </p>
+                        <p className="mt-2 text-2xl font-bold text-amber-700">
+                          8
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-violet-50 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                          Communities
+                        </p>
+                        <p className="mt-2 text-2xl font-bold text-violet-700">
+                          3
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-emerald-50 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                          Member
+                        </p>
+                        <p className="mt-2 text-lg font-bold text-emerald-700">
+                          {memberSince}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2493,6 +2515,133 @@ export default function UserDashboard() {
                     </div>
                   </Link>
                 </div>
+              </div>
+            )}
+
+            {/* GENERAL ACCOUNT QUICK ACTIONS */}
+            {!hasRealBusiness && (
+              <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    title: "Browse businesses",
+                    description: "Explore the directory",
+                    href: "/businesses-directory",
+                    icon: Search,
+                    color: "from-blue-500 to-cyan-600",
+                    accent: "text-blue-700",
+                    soft: "bg-blue-50",
+                  },
+                  {
+                    title: "Reservations",
+                    description: "Book and manage",
+                    href: "/reservations",
+                    icon: CalendarDays,
+                    color: "from-amber-500 to-orange-600",
+                    accent: "text-amber-700",
+                    soft: "bg-amber-50",
+                  },
+                  {
+                    title: "Marketplace",
+                    description: "Buy and sell locally",
+                    href: "/marketplace",
+                    icon: ShoppingCart,
+                    color: "from-emerald-500 to-green-600",
+                    accent: "text-emerald-700",
+                    soft: "bg-emerald-50",
+                  },
+                  {
+                    title: "Communities",
+                    description: "Connect and share",
+                    href: "/communities",
+                    icon: Users,
+                    color: "from-violet-500 to-purple-600",
+                    accent: "text-violet-700",
+                    soft: "bg-violet-50",
+                  },
+                ].map(
+                  ({
+                    title,
+                    description,
+                    href,
+                    icon: Icon,
+                    color,
+                    accent,
+                    soft,
+                  }) => (
+                    <Link key={title} href={href}>
+                      <div className="group h-full rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div
+                          className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${color} shadow-lg shadow-slate-200`}
+                        >
+                          <Icon className="h-7 w-7 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">
+                          {title}
+                        </h3>
+                        <p className={`mt-1 text-sm ${accent}`}>
+                          {description}
+                        </p>
+                      </div>
+                    </Link>
+                  ),
+                )}
+              </div>
+            )}
+
+            {!hasRealBusiness && (
+              <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    title: "Browse businesses",
+                    description: "Explore the directory",
+                    href: "/businesses-directory",
+                    icon: Search,
+                    color: "from-blue-500 to-cyan-600",
+                    accent: "text-blue-700",
+                  },
+                  {
+                    title: "Reservations",
+                    description: "Book and manage",
+                    href: "/reservations",
+                    icon: CalendarDays,
+                    color: "from-amber-500 to-orange-600",
+                    accent: "text-amber-700",
+                  },
+                  {
+                    title: "Marketplace",
+                    description: "Buy and sell locally",
+                    href: "/marketplace",
+                    icon: ShoppingCart,
+                    color: "from-emerald-500 to-green-600",
+                    accent: "text-emerald-700",
+                  },
+                  {
+                    title: "Communities",
+                    description: "Connect and share",
+                    href: "/communities",
+                    icon: Users,
+                    color: "from-violet-500 to-purple-600",
+                    accent: "text-violet-700",
+                  },
+                ].map(
+                  ({ title, description, href, icon: Icon, color, accent }) => (
+                    <Link key={title} href={href}>
+                      <div className="group h-full rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+                        <div
+                          className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${color} shadow-lg shadow-slate-200`}
+                        >
+                          <Icon className="h-7 w-7 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">
+                          {title}
+                        </h3>
+                        <p className={`mt-1 text-sm ${accent}`}>
+                          {description}
+                        </p>
+                      </div>
+                    </Link>
+                  ),
+                )}
               </div>
             )}
 

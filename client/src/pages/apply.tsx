@@ -77,7 +77,9 @@ const PORTALS: Portal[] = [
       "Access the full Verso Air platform — browse businesses, make reservations, and explore all services.",
     icon: Globe,
     color: "blue",
-    gradient: "from-blue-500 to-cyan-500",
+    gradient: "from-sky-500 to-cyan-500",
+    cardRing: "ring-sky-400/40 border-sky-400/30",
+    badge: "bg-sky-500/15 text-sky-200 border-sky-400/30",
     features: [
       "Browse business directory",
       "Make reservations",
@@ -98,6 +100,8 @@ const PORTALS: Portal[] = [
     icon: Crown,
     color: "amber",
     gradient: "from-amber-500 to-orange-500",
+    cardRing: "ring-amber-400/40 border-amber-400/30",
+    badge: "bg-amber-500/15 text-amber-100 border-amber-400/30",
     features: [
       "Priority customer support",
       "Advanced business analytics",
@@ -118,7 +122,9 @@ const PORTALS: Portal[] = [
       "Join the Verso Air community — write blog posts, connect with others, and share insights.",
     icon: MessageSquare,
     color: "green",
-    gradient: "from-green-500 to-emerald-500",
+    gradient: "from-emerald-500 to-teal-500",
+    cardRing: "ring-emerald-400/40 border-emerald-400/30",
+    badge: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
     features: [
       "Write & publish blog posts",
       "Comment & engage",
@@ -139,6 +145,8 @@ const PORTALS: Portal[] = [
     icon: Building2,
     color: "slate",
     gradient: "from-slate-600 to-slate-800",
+    cardRing: "ring-slate-300/40 border-slate-300/30",
+    badge: "bg-slate-200/10 text-slate-100 border-slate-300/20",
     features: [
       "Business listing & profile",
       "Respond to reviews",
@@ -159,6 +167,8 @@ const PORTALS: Portal[] = [
     icon: Briefcase,
     color: "orange",
     gradient: "from-orange-500 to-red-500",
+    cardRing: "ring-orange-400/40 border-orange-400/30",
+    badge: "bg-orange-500/15 text-orange-100 border-orange-400/30",
     features: [
       "Browse & apply to projects",
       "Contractor profile & portfolio",
@@ -182,7 +192,9 @@ const MUSICAL_PORTALS: Portal[] = [
       "Join Verso Air™ Music Label — upload tracks, track royalties, and compete in StreamRoyale.",
     icon: Music,
     color: "purple",
-    gradient: "from-purple-500 to-pink-500",
+    gradient: "from-violet-500 to-fuchsia-500",
+    cardRing: "ring-violet-400/40 border-violet-400/30",
+    badge: "bg-violet-500/15 text-violet-100 border-violet-400/30",
     features: [
       "Upload unlimited tracks",
       "Real-time streaming analytics",
@@ -202,7 +214,9 @@ const MUSICAL_PORTALS: Portal[] = [
       "Stream music, play Arcade duels, follow artists, and enjoy the full Verso Air audio experience.",
     icon: Headphones,
     color: "fuchsia",
-    gradient: "from-fuchsia-500 to-purple-600",
+    gradient: "from-fuchsia-500 to-violet-600",
+    cardRing: "ring-fuchsia-400/40 border-fuchsia-400/30",
+    badge: "bg-fuchsia-500/15 text-fuchsia-100 border-fuchsia-400/30",
     features: [
       "Unlimited music streaming",
       "Arcade PvP duels — free access",
@@ -530,12 +544,12 @@ export default function ApplyPage() {
                               transition={{ delay: index * 0.08 }}
                             >
                               <Card
-                                className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ring-amber-500/30"
+                                className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ${portal.cardRing || "ring-amber-500/30 border-white/10"} border`}
                                 onClick={() => setLocation(portal.redirectPath)}
                               >
                                 {/* Gold connected indicator */}
                                 <div className="absolute top-3 right-3 z-10">
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 shadow-lg shadow-amber-500/20">
+                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${portal.badge || "bg-amber-500/15 text-amber-100 border-amber-400/30"} shadow-lg shadow-white/5`}>
                                     <CheckCircle2 className="h-3 w-3" />
                                     Connected
                                   </span>
@@ -582,10 +596,10 @@ export default function ApplyPage() {
                         transition={{ delay: 0.2 }}
                       >
                         <Card
-                          className={`relative overflow-hidden border-white/10 transition-all duration-500 cursor-pointer group ${
+                          className={`relative overflow-hidden border-violet-400/20 transition-all duration-500 cursor-pointer group ${
                             musicUniverseOpen
-                              ? "bg-gradient-to-br from-purple-900/40 via-fuchsia-900/30 to-purple-900/40 border-purple-500/30"
-                              : "bg-white/5 hover:border-purple-400/40"
+                              ? "bg-gradient-to-br from-violet-950/50 via-fuchsia-950/40 to-purple-950/50 border-violet-400/30"
+                              : "bg-white/5 hover:border-violet-400/40"
                           }`}
                           onClick={() =>
                             !musicUniverseOpen && setMusicUniverseOpen(true)
@@ -595,7 +609,7 @@ export default function ApplyPage() {
 
                           <CardHeader>
                             <div className="flex items-start justify-between mb-2">
-                              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600">
+                              <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500">
                                 <Music className="h-6 w-6 text-white" />
                               </div>
                               <Badge
@@ -874,7 +888,7 @@ export default function ApplyPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
-                  className="relative overflow-hidden bg-white/5 border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full"
+                  className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full border ring-1 ${portal.cardRing || "ring-white/10 border-white/10"}`}
                   onClick={() => {
                     if (portal.id === "business") {
                       setLocation("/auth/signin");
@@ -898,9 +912,9 @@ export default function ApplyPage() {
                       {portal.badge && (
                         <Badge
                           variant="secondary"
-                          className="bg-white/10 text-white/80"
+                          className={portal.badge}
                         >
-                          {portal.badge}
+                          {portal.badge.includes("bg-") ? "" : portal.badge}
                         </Badge>
                       )}
                     </div>

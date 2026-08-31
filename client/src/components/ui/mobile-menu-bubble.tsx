@@ -43,6 +43,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
+import NotificationCenter from "@/components/NotificationCenter";
 
 // ─── Grouped Navigation ────────────────────────────────────────
 
@@ -544,15 +545,18 @@ export function MobileMenuBubble() {
                           : ""}
                       </p>
                     </div>
-                    <Shield
-                      className={`h-4 w-4 shrink-0 ${
-                        isSuperuser
-                          ? "text-amber-500"
-                          : isAdmin
-                            ? "text-blue-500"
-                            : "text-gray-400"
-                      }`}
-                    />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <NotificationCenter />
+                      <Shield
+                        className={`h-4 w-4 ${
+                          isSuperuser
+                            ? "text-amber-500"
+                            : isAdmin
+                              ? "text-blue-500"
+                              : "text-gray-400"
+                        }`}
+                      />
+                    </div>
                   </div>
 
                   {/* Billing & Card Vault */}

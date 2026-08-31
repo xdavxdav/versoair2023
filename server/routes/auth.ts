@@ -518,15 +518,42 @@ router.post(
 
     const { email, password } = parsed.data;
 
-    // Bypass Drizzle type issues with parameterized raw SQL query
     const result = await db.execute(
       sql`SELECT id, username, email, password, role, is_verified, display_name,
                  failed_login_attempts, locked_until, must_change_password,
                  subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
-          FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`,
+          FROM users WHERE LOWER(email) = LOWER(${email}) ORDER BY id`,
     );
 
-    const user = result.rows?.[0] as any;
+    const rows = (result.rows || []) as any[];
+    const requestedAccountId = req.body?.accountId
+      ? Number(req.body.accountId)
+      : null;
+    const selectedUser = requestedAccountId
+      ? rows.find((row) => Number(row.id) === Number(requestedAccountId)) ||
+        null
+      : rows[0] || null;
+
+    if (rows.length > 1 && !requestedAccountId) {
+      const accounts = rows.map((row) => ({
+        id: Number(row.id),
+        email: row.email,
+        username: row.username,
+        role: row.role || "user",
+        name: row.display_name || row.username || null,
+      }));
+
+      res.json({
+        success: true,
+        requiresAccountSelection: true,
+        accounts,
+        message:
+          "Multiple accounts were found for this email. Please choose one.",
+      });
+      return;
+    }
+
+    const user = selectedUser;
 
     // Account lockout check
     if (user?.lockedUntil && new Date(user.lockedUntil) > new Date()) {

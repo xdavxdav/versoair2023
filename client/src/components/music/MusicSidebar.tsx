@@ -188,7 +188,7 @@ export function MusicSidebar() {
     {
       id: "home",
       label: "Home",
-      href: "/music/dashboard",
+      href: "/stream",
       icon: "Home",
       section: "CORE",
     },

@@ -127,7 +127,7 @@ function ContractorDashboard() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-950 via-teal-900 to-amber-900">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4 py-8">
@@ -520,7 +520,7 @@ export default function Contracts() {
 
 function ArtistContractsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-950 via-teal-900 to-amber-900">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4 py-8">

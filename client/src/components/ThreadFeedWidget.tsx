@@ -179,50 +179,52 @@ export default function ThreadFeedWidget({
       ? "px-4 py-3 border-b border-[#e7dfd7] flex items-center justify-between"
       : "px-4 py-3 border-b border-white/10 flex items-center justify-between",
     title: isLight
-      ? "text-sm font-semibold text-slate-800"
+      ? "text-[1.8rem] sm:text-[2.1rem] font-black tracking-[-0.04em] text-slate-900"
       : "text-sm font-semibold text-white/90",
     link: isLight
-      ? "text-xs text-violet-600 hover:text-violet-700"
+      ? "text-sm font-semibold text-violet-700 hover:text-violet-800"
       : "text-xs text-purple-300 hover:text-purple-200",
     composerWrap: isLight
       ? "px-4 py-3 border-b border-[#e7dfd7] flex gap-2 bg-[#f4efe9]"
       : "px-4 py-3 border-b border-white/10 flex gap-2",
     input: isLight
-      ? "flex-1 bg-white border border-[#dcd4cb] rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-violet-500/60"
+      ? "flex-1 bg-white border border-[#dcd4cb] rounded-lg px-3 py-2 text-base font-medium text-slate-800 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/60"
       : "flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50",
     sendBtn: isLight
-      ? "shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-violet-100 text-violet-700 border border-violet-200 disabled:opacity-40 hover:bg-violet-200 transition-colors"
+      ? "shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-violet-600 text-white border border-violet-500 disabled:opacity-40 hover:bg-violet-700 transition-colors shadow-sm"
       : "shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 disabled:opacity-40 hover:bg-purple-500/30 transition-colors",
     list: isLight
       ? "divide-y divide-[#ece3db] max-h-[480px] overflow-y-auto bg-[#f7f4f0]"
       : "divide-y divide-white/5 max-h-[480px] overflow-y-auto",
     empty: isLight
-      ? "px-4 py-6 text-center text-slate-500 text-sm"
+      ? "px-4 py-6 text-left text-base font-medium text-slate-600"
       : "px-4 py-6 text-center text-white/40 text-sm",
     avatar: isLight
-      ? "w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-xs font-semibold text-violet-700 overflow-hidden"
+      ? "w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-700 overflow-hidden"
       : "w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-semibold text-purple-300 overflow-hidden",
     author: isLight
-      ? "text-sm font-medium text-slate-800 truncate"
+      ? "text-base font-semibold text-slate-800 truncate"
       : "text-sm font-medium text-white/90 truncate",
-    time: isLight ? "text-xs text-slate-400" : "text-xs text-white/30",
+    time: isLight
+      ? "text-xs font-medium text-slate-500"
+      : "text-xs text-white/30",
     content: isLight
-      ? "text-sm text-slate-700 whitespace-pre-wrap break-words"
+      ? "text-[15px] leading-6 font-medium text-slate-700 whitespace-pre-wrap break-words"
       : "text-sm text-white/80 whitespace-pre-wrap break-words",
     image: isLight
       ? "mt-2 rounded-lg max-h-48 w-full object-cover border border-[#e7dfd7]"
       : "mt-2 rounded-lg max-h-48 w-full object-cover border border-white/10",
     actions: isLight
-      ? "flex items-center gap-4 mt-3 text-xs text-slate-500"
+      ? "flex items-center gap-4 mt-3 text-sm font-medium text-slate-600"
       : "flex items-center gap-4 mt-2 text-xs text-white/40",
     actionBtn: isLight
-      ? "inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:bg-slate-200/60 transition-colors"
+      ? "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 hover:bg-slate-200/70 transition-colors font-medium text-slate-700"
       : "inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:bg-white/5 transition-colors",
     commentBox: isLight
-      ? "mt-3 rounded-xl border border-[#e7dfd7] bg-white p-2"
+      ? "mt-3 rounded-xl border border-[#e7dfd7] bg-[#f9f7f4] p-2.5"
       : "mt-3 rounded-xl border border-white/10 bg-white/5 p-2",
     commentInput: isLight
-      ? "w-full bg-[#f7f4f0] border border-[#e7dfd7] rounded-lg px-2.5 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-violet-500/60"
+      ? "w-full bg-white border border-[#e0d5cc] rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-700 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/60"
       : "w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50",
   };
 

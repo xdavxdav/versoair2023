@@ -1077,18 +1077,6 @@ function AppContent() {
       {/* Notification bell — fixed top-right, visible on all non-auth pages.
           Dropped below the bar on /blog & /marketplace since BlogNavbar has
           its own auth/Sign-Out controls anchored in that same corner. */}
-      {!isAuthPage && !isMusicPage && user && (
-        <div
-          className={`fixed right-4 z-[150] ${
-            currentPath === "/blog" || currentPath === "/marketplace"
-              ? "top-16 md:top-[4.5rem]"
-              : "top-3"
-          }`}
-        >
-          <NotificationCenter />
-        </div>
-      )}
-
       {/* Quick Sign In Modal — global shortcut */}
       <QuickSignIn
         open={showQuickSignIn}

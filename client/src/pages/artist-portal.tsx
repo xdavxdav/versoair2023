@@ -1298,7 +1298,7 @@ export default function ArtistPortal() {
   // Show loading spinner while checking auth
   if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-amber-950">
         <Loader2 className="h-12 w-12 animate-spin text-white mb-4" />
         <p className="text-purple-200 text-lg">
           Vérification de l'authentification...
@@ -3832,7 +3832,7 @@ export default function ArtistPortal() {
 
   return (
     <motion.div
-      className="flex flex-col min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900"
+      className="flex flex-col min-h-screen bg-gradient-to-br from-rose-950 via-fuchsia-950 to-amber-950"
       initial={{ opacity: 0, scale: 1.02, filter: "blur(8px)" }}
       animate={
         portalRevealed
