@@ -322,6 +322,17 @@ export default function ProfilePage() {
                 </motion.button>
               </Link>
 
+              <Link href="/pricing">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-5 py-2 bg-violet-500/15 text-violet-700 rounded-lg border border-violet-300/60 font-medium hover:bg-violet-500/20 transition-colors text-sm"
+                >
+                  <Crown className="w-4 h-4" />
+                  Jump to tiers
+                </motion.button>
+              </Link>
+
               {isAdmin && (
                 <Link href="/geo-admin">
                   <motion.button
@@ -577,7 +588,9 @@ export default function ProfilePage() {
                 <Link href="/dashboard">
                   <div className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl p-4 text-center cursor-pointer transition-all group">
                     <Settings className="w-6 h-6 text-cyan-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-slate-900 font-medium">Dashboard</p>
+                    <p className="text-sm text-slate-900 font-medium">
+                      Dashboard
+                    </p>
                   </div>
                 </Link>
                 <Link href="/marketplace">
@@ -599,7 +612,9 @@ export default function ProfilePage() {
                 <Link href="/contact">
                   <div className="bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-xl p-4 text-center cursor-pointer transition-all group">
                     <Mail className="w-6 h-6 text-pink-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-slate-900 font-medium">Contact</p>
+                    <p className="text-sm text-slate-900 font-medium">
+                      Contact
+                    </p>
                   </div>
                 </Link>
               </div>

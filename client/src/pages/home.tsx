@@ -1928,8 +1928,8 @@ export default function Home() {
             type="video/mp4"
           />
         </video>
-        <div className="absolute inset-0 bg-slate-950/45 dark:bg-slate-950/55" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.2),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.08),rgba(15,23,42,0.42))]" />
+        <div className="absolute inset-0 bg-slate-950/70 dark:bg-slate-950/75" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.12),rgba(15,23,42,0.7))]" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -1954,7 +1954,7 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="mb-4 md:mb-6"
             >
-              <span className="inline-flex rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 md:px-4 md:py-2 md:text-sm">
+              <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
                 🎨 Soutien aux artisans {countryMeta.nameIn}
               </span>
             </motion.div>
@@ -2052,7 +2052,7 @@ export default function Home() {
 
       {/* Help/Search Section with Cards */}
       <section
-        className="flex flex-col min-h-screen bg-gradient-to-br from-white to-emerald-50 items-center justify-center"
+        className="flex flex-col min-h-screen bg-gradient-to-br from-[#f6f1ea] via-white to-[#edfaf3] items-center justify-center"
         ref={helpSectionRef}
       >
         <div className="w-full max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">

@@ -144,15 +144,16 @@ export function useMusicAccess(): MusicAccessState {
       // Core access - most require authentication
       canViewMusicShell: true,
       canAccessDashboard: isAuthenticated,
-      canAccessVault: isAuthenticated && (isArtist || isPremium),
-      canAccessAnalytics: isAuthenticated && (isArtist || isPremium),
+      canAccessVault: isArtist,
+      canAccessAnalytics: isArtist,
       canAccessLive: true,
 
       // Beatmaker Studio access
       canAccessBeatmakerPreview: true, // Everyone can preview
-      canSubmitBeatmakerRequest: isPremium || isArtist, // Supporter+ or artist
-      canAccessProducerDirect: tierRank >= 2 || isAdmin, // Champion+ or admin
-      canSaveBriefs: isPremium || isArtist,
+      canSubmitBeatmakerRequest: isArtist,
+      canAccessProducerDirect:
+        isArtist || (tierRank >= 2 && !isAuthenticated ? false : false),
+      canSaveBriefs: isArtist,
 
       // Tier info
       userTier: subTier,

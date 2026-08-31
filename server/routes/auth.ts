@@ -58,6 +58,76 @@ function getTokenFromRequest(req: Request): string | null {
   return null;
 }
 
+function normalizeAccountRoleFromEmail(
+  email?: string,
+  fallbackRole?: string,
+): string {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+
+  if (
+    normalizedEmail.includes("@versoair-gu") ||
+    normalizedEmail.includes("@versoair.gu") ||
+    normalizedEmail.includes("@versoair-general") ||
+    normalizedEmail.includes("@versoair-generaluser")
+  ) {
+    return "user";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-geoa") ||
+    normalizedEmail.includes("@versoair.geoa") ||
+    normalizedEmail.includes("@versoair-geo-admin") ||
+    normalizedEmail.includes("@versoair-geo")
+  ) {
+    return "geo-admin";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-supa") ||
+    normalizedEmail.includes("@versoair.supa") ||
+    normalizedEmail.includes("@versoair-superadmin") ||
+    normalizedEmail.includes("@versoair-admin")
+  ) {
+    return "superuser";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-art") ||
+    normalizedEmail.includes("@versoair.art") ||
+    normalizedEmail.includes("@versoair-artist")
+  ) {
+    return "artist";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-cr") ||
+    normalizedEmail.includes("@versoair.cr") ||
+    normalizedEmail.includes("@versoair-creator") ||
+    normalizedEmail.includes("@versoair-creator-user")
+  ) {
+    return "creator";
+  }
+
+  if (
+    [
+      "admin",
+      "moderator",
+      "superuser",
+      "tsr",
+      "artist",
+      "creator",
+      "geo-admin",
+      "contractor",
+      "user",
+    ].includes(normalizedRole)
+  ) {
+    return normalizedRole;
+  }
+
+  return normalizedRole || "user";
+}
+
 function setAuthCookie(res: Response, token: string): void {
   res.cookie("auth_token", token, {
     httpOnly: true,
@@ -966,6 +1036,10 @@ router.get(
         ? Date.now() - createdAt.getTime() < 5 * 60 * 1000
         : false;
       const userDisplayName = dbUser?.display_name || null;
+      const effectiveRole = normalizeAccountRoleFromEmail(
+        dbUser?.email || decoded.email,
+        dbUser?.role || decoded.role || "user",
+      );
 
       res.json({
         success: true,
@@ -981,7 +1055,7 @@ router.get(
             decoded.email?.split("@")[0] ||
             "User",
           isAdmin,
-          role: dbUser?.role || decoded.role || "user",
+          role: effectiveRole,
           isFirstLogin: isNewAccount && !userDisplayName,
           needsDisplayName: !userDisplayName,
           subscriptionTier: dbUser?.subscription_tier || "free",
@@ -2699,8 +2773,10 @@ router.post(
     }
 
     // ── Common: Generate token and respond ──
-    const effectiveRole =
-      user.role === "artist" ? "artist" : user.role || "user";
+    const effectiveRole = normalizeAccountRoleFromEmail(
+      user.email,
+      user.role === "artist" ? "artist" : user.role || "user",
+    );
 
     let artistProfile: any = null;
     try {

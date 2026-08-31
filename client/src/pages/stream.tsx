@@ -1279,8 +1279,9 @@ export default function StreamPage() {
         <section className="max-w-[95vw] mx-auto px-4 mb-8 relative z-10">
           <ThreadFeedWidget
             postType="musical_universe"
-            title="Musical Universe — Community"
+            title="MU × Community talks"
             composerPlaceholder="Talk music, drops, collabs…"
+            variant="light"
           />
         </section>
 

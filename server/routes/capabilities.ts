@@ -20,6 +20,76 @@ const router = Router();
 
 // ─── Shared helper: compute capabilities for a user ────────────────────────
 
+function normalizeAccountRoleFromEmail(
+  email?: string,
+  fallbackRole?: string,
+): string {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+
+  if (
+    normalizedEmail.includes("@versoair-gu") ||
+    normalizedEmail.includes("@versoair.gu") ||
+    normalizedEmail.includes("@versoair-general") ||
+    normalizedEmail.includes("@versoair-generaluser")
+  ) {
+    return "user";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-geoa") ||
+    normalizedEmail.includes("@versoair.geoa") ||
+    normalizedEmail.includes("@versoair-geo-admin") ||
+    normalizedEmail.includes("@versoair-geo")
+  ) {
+    return "geo-admin";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-supa") ||
+    normalizedEmail.includes("@versoair.supa") ||
+    normalizedEmail.includes("@versoair-superadmin") ||
+    normalizedEmail.includes("@versoair-admin")
+  ) {
+    return "superuser";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-art") ||
+    normalizedEmail.includes("@versoair.art") ||
+    normalizedEmail.includes("@versoair-artist")
+  ) {
+    return "artist";
+  }
+
+  if (
+    normalizedEmail.includes("@versoair-cr") ||
+    normalizedEmail.includes("@versoair.cr") ||
+    normalizedEmail.includes("@versoair-creator") ||
+    normalizedEmail.includes("@versoair-creator-user")
+  ) {
+    return "creator";
+  }
+
+  if (
+    [
+      "admin",
+      "moderator",
+      "superuser",
+      "tsr",
+      "artist",
+      "creator",
+      "geo-admin",
+      "contractor",
+      "user",
+    ].includes(normalizedRole)
+  ) {
+    return normalizedRole;
+  }
+
+  return normalizedRole || "user";
+}
+
 export async function computeUserCapabilities(userId: number) {
   // 1. Fetch base user data
   const userResult = await db.execute(
@@ -30,6 +100,11 @@ export async function computeUserCapabilities(userId: number) {
   );
   const user = userResult.rows?.[0] as any;
   if (!user) return null;
+
+  const effectiveRole = normalizeAccountRoleFromEmail(
+    user.email,
+    user.role || "user",
+  );
 
   // 2. Check artist_profiles
   const artistResult = await db.execute(
@@ -60,8 +135,16 @@ export async function computeUserCapabilities(userId: number) {
   //    Base: every authenticated user gets general + streamer (additive model)
   const portals = new Set<string>(["general", "streamer"]);
 
-  if (hasArtistProfile || user.role === "artist") portals.add("artist");
+  if (hasArtistProfile || effectiveRole === "artist") portals.add("artist");
   if (isContractor) portals.add("contractor");
+  if (
+    effectiveRole === "creator" ||
+    effectiveRole === "geo-admin" ||
+    effectiveRole === "superuser" ||
+    effectiveRole === "admin"
+  ) {
+    portals.add("streamer");
+  }
   if (
     effectiveTier !== "free" &&
     ["active", "trialing"].includes(user.subscription_status || "active")
@@ -79,12 +162,12 @@ export async function computeUserCapabilities(userId: number) {
     portals.add("community");
   }
   // TSR (Technical Service Representative) always gets geo-admin
-  if (user.role === "tsr") {
+  if (user.role === "tsr" || effectiveRole === "geo-admin") {
     portals.add("geo-admin");
   }
 
   // Admin/moderator/superuser get all portals
-  if (["admin", "moderator", "superuser"].includes(user.role)) {
+  if (["admin", "moderator", "superuser"].includes(effectiveRole)) {
     portals.add("artist");
     portals.add("geo-admin");
     portals.add("contractor");
@@ -107,8 +190,8 @@ export async function computeUserCapabilities(userId: number) {
     canAccessBlog:
       portals.has("community") ||
       portals.has("geo-admin") ||
-      ["admin", "moderator", "superuser"].includes(user.role),
-    role: user.role || "user",
+      ["admin", "moderator", "superuser"].includes(effectiveRole),
+    role: effectiveRole,
   };
 }
 

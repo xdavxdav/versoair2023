@@ -8,6 +8,7 @@ import {
 } from "react";
 import { setAuthToken, clearCachedUser } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
+import { normalizeAccountRoleFromEmail } from "@/lib/dashboard-routes";
 
 export interface AuthUser {
   id: string;
@@ -41,6 +42,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_CACHE_KEY = "auth_user";
 
 function normalizeUser(u: Record<string, unknown>): AuthUser {
+  const normalizedRole = normalizeAccountRoleFromEmail(
+    String(u.email ?? ""),
+    String(u.role ?? ""),
+  );
+
   return {
     id: String((u.userId || u.id) ?? ""),
     email: String(u.email ?? ""),
@@ -48,8 +54,8 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
       | string
       | undefined,
     username: u.username as string | undefined,
-    role: u.role as string | undefined,
-    isAdmin: ["admin", "superuser", "moderator"].includes(String(u.role)),
+    role: normalizedRole || (u.role as string | undefined),
+    isAdmin: ["admin", "superuser", "moderator"].includes(normalizedRole),
     portals: (u.portals as string[]) || [],
     hasArtistProfile: Boolean(u.hasArtistProfile),
     isContractor: Boolean(u.isContractor),
