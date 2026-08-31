@@ -768,8 +768,11 @@ function AppContent() {
   const isFr = currentLang === "fr";
   const isAuthed =
     !!user || localStorage.getItem("blog_community_auth") === "true";
-  // Show ContentNav (bottom dock) on blog/marketplace pages only for authenticated users
-  const showContentNav = isContentNavPage && isAuthed;
+  // BlogNavbar owns the stable navigation for blog/marketplace pages.
+  // Keep ContentNav for the other content routes so the two nav systems never stack.
+  const isBlogOrMarketplace =
+    currentPath === "/blog" || currentPath === "/marketplace";
+  const showContentNav = isContentNavPage && isAuthed && !isBlogOrMarketplace;
   const isAuthPage = currentPath.startsWith("/auth");
   // Immersive pages — hide navbar, footer (keep motto), bubble menu
   const isImmersivePage =
@@ -830,8 +833,6 @@ function AppContent() {
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
       {!isMusicPage &&
-        currentPath !== "/blog" &&
-        currentPath !== "/marketplace" &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
         !currentPath.startsWith("/user/") &&
@@ -937,7 +938,7 @@ function AppContent() {
                 </div>
               )}
 
-            {/* Blog Navbar — shown on /blog and /marketplace when ContentNav is not active. */}
+            {/* Blog Navbar — stable navigation for /blog and /marketplace. */}
             {!isMusicPage &&
               !isImmersivePage &&
               (currentPath === "/blog" || currentPath === "/marketplace") &&
@@ -961,22 +962,26 @@ function AppContent() {
       )}
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
-      {!isAuthPage && !showContentNav && !isMusicPage && !isImmersivePage && (
-        <div
-          className={`hidden md:block transition-opacity duration-300 ${
-            isLoading && !isFadingOut
-              ? "opacity-0 pointer-events-none"
-              : "opacity-100"
-          }`}
-        >
-          <Navbar
-            onLocationPanelToggle={() =>
-              setIsLocationPanelOpen((prev) => !prev)
-            }
-            isLocationPanelOpen={isLocationPanelOpen}
-          />
-        </div>
-      )}
+      {!isAuthPage &&
+        !showContentNav &&
+        !isBlogOrMarketplace &&
+        !isMusicPage &&
+        !isImmersivePage && (
+          <div
+            className={`hidden md:block transition-opacity duration-300 ${
+              isLoading && !isFadingOut
+                ? "opacity-0 pointer-events-none"
+                : "opacity-100"
+            }`}
+          >
+            <Navbar
+              onLocationPanelToggle={() =>
+                setIsLocationPanelOpen((prev) => !prev)
+              }
+              isLocationPanelOpen={isLocationPanelOpen}
+            />
+          </div>
+        )}
 
       {/* Side Panels */}
       <Suspense fallback={null}>

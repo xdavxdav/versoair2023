@@ -29,6 +29,7 @@ import {
   ChevronRight,
   MessageCircle,
 } from "lucide-react";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 /* -------------------------------------------------------------------------- */
 /* CONFIG — map your routes & icons here */
@@ -125,6 +126,8 @@ export function SmartNavDock({
     typeof window !== "undefined" &&
     window.innerWidth >= 768 &&
     window.innerWidth < 1024;
+
+  useScrollLock(sheetOpen);
 
   /* ── Close dropdown on outside click ── */
   useEffect(() => {
@@ -256,7 +259,7 @@ export function SmartNavDock({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] touch-none bg-black/60 backdrop-blur-sm"
             onClick={() => setSheetOpen(false)}
           >
             <motion.div
@@ -264,8 +267,12 @@ export function SmartNavDock({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute bottom-0 left-0 right-0 rounded-t-3xl border-t border-white/10 bg-[#0b0b12] p-6 pb-10"
+              className="absolute bottom-0 left-0 right-0 max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-white/10 bg-[#0b0b12] p-6 pb-10 touch-pan-y"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
               onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               <div className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-white/20" />
               <div className="mb-4 flex items-center justify-between">
