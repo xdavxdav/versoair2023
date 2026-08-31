@@ -57,7 +57,7 @@ const MOBILE_PILLS = [
 const BTN =
   "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 lg:px-3.5 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium flex-shrink-0";
 const PANEL =
-  "absolute top-full bg-slate-950 overflow-hidden shadow-2xl shadow-black/60 rounded-xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
+  "absolute bottom-full bg-slate-950 overflow-hidden shadow-2xl shadow-black/60 rounded-xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
 const PANEL_OPEN = "opacity-100 !visible";
 const ITEM =
   "block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors whitespace-nowrap";
@@ -72,7 +72,26 @@ export default function BlogNavbar({
 }: BlogNavbarProps) {
   const { user, logout } = useAuthContext();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      } else if (currentScrollY > 24 && currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   // ─── Home button gesture state ───────────────────────────────────────
   const tapCountRef = useRef(0);
@@ -193,7 +212,11 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 z-[100]"
+        className={`fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-[100] transition-transform duration-300 ease-out ${
+          isVisible
+            ? "translate-y-0 pointer-events-auto"
+            : "translate-y-[120%] pointer-events-none"
+        }`}
         style={{ overflowX: "visible", overflowY: "visible" }}
       >
         <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 overflow-x-auto scrollbar-hide">
@@ -285,10 +308,10 @@ export default function BlogNavbar({
                   />
                 </button>
                 {/* invisible hover bridge */}
-                <div className="absolute top-full left-0 right-0 h-2" />
+                <div className="absolute bottom-full left-0 right-0 h-2" />
                 <div
                   className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-56 lg:w-64 ${openMenu === "ent" ? PANEL_OPEN : ""}`}
-                  style={{ marginTop: "8px" }}
+                  style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <div className="grid grid-cols-2 gap-0.5 px-0.5">
@@ -325,6 +348,77 @@ export default function BlogNavbar({
                 </div>
               </div>
 
+              {/* Discover */}
+              <div
+                className="relative flex-shrink-0"
+                onMouseEnter={() => open("discover")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  <span className="hidden lg:inline">Discover</span>
+                  <span className="lg:hidden">Disc</span>
+                  <ChevronDown
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "discover" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <div className="absolute bottom-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-52 sm:w-56 lg:w-60 ${openMenu === "discover" ? PANEL_OPEN : ""}`}
+                  style={{ marginBottom: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
+                  <Link href="/hub">
+                    <a className={ITEM_HEAD}>Community Hub</a>
+                  </Link>
+                  <Link href="/businesses-directory">
+                    <a className={ITEM}>Business Directory</a>
+                  </Link>
+                  <Link href="/artisans">
+                    <a className={ITEM}>Artisans</a>
+                  </Link>
+                  <Link href="/communities">
+                    <a className={ITEM}>Communities</a>
+                  </Link>
+                  <Link href="/partners">
+                    <a className={ITEM}>Partners</a>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Play */}
+              <div
+                className="relative flex-shrink-0"
+                onMouseEnter={() => open("play")}
+                onMouseLeave={close}
+              >
+                <button className={BTN}>
+                  <span className="hidden lg:inline">Play</span>
+                  <span className="lg:hidden">Play</span>
+                  <ChevronDown
+                    className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "play" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <div className="absolute bottom-full left-0 right-0 h-2" />
+                <div
+                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "play" ? PANEL_OPEN : ""}`}
+                  style={{ marginBottom: "8px" }}
+                >
+                  <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
+                  <Link href="/stream">
+                    <a className={ITEM_HEAD}>Music Stream</a>
+                  </Link>
+                  <Link href="/podcast">
+                    <a className={ITEM}>Podcasts</a>
+                  </Link>
+                  <Link href="/music">
+                    <a className={ITEM}>Library</a>
+                  </Link>
+                  <Link href="/arcade">
+                    <a className={ITEM}>Arcade</a>
+                  </Link>
+                </div>
+              </div>
+
               {/* Services */}
               <div
                 className="relative flex-shrink-0"
@@ -338,10 +432,10 @@ export default function BlogNavbar({
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "svc" ? "rotate-180" : ""}`}
                   />
                 </button>
-                <div className="absolute top-full left-0 right-0 h-2" />
+                <div className="absolute bottom-full left-0 right-0 h-2" />
                 <div
                   className={`${PANEL} left-1/2 -translate-x-1/2 w-44 sm:w-48 lg:w-52 ${openMenu === "svc" ? PANEL_OPEN : ""}`}
-                  style={{ marginTop: "8px" }}
+                  style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/services">
@@ -372,10 +466,10 @@ export default function BlogNavbar({
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "mkt" ? "rotate-180" : ""}`}
                   />
                 </button>
-                <div className="absolute top-full left-0 right-0 h-2" />
+                <div className="absolute bottom-full left-0 right-0 h-2" />
                 <div
                   className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "mkt" ? PANEL_OPEN : ""}`}
-                  style={{ marginTop: "8px" }}
+                  style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/marketing">
@@ -422,10 +516,10 @@ export default function BlogNavbar({
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "help" ? "rotate-180" : ""}`}
                   />
                 </button>
-                <div className="absolute top-full left-0 right-0 h-2" />
+                <div className="absolute bottom-full left-0 right-0 h-2" />
                 <div
                   className={`${PANEL} right-0 w-44 sm:w-48 ${openMenu === "help" ? PANEL_OPEN : ""}`}
-                  style={{ marginTop: "8px" }}
+                  style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/sav">
