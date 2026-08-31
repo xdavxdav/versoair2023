@@ -1474,6 +1474,7 @@ export default function UserDashboard() {
 
   // Account Settings Modal
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [accountSummaryOpen, setAccountSummaryOpen] = useState(true);
   const [accountSettingsTab, setAccountSettingsTab] = useState<
     "account" | "preferences"
   >("account");
@@ -1579,6 +1580,70 @@ export default function UserDashboard() {
       : (userSession?.user?.subscriptionTier as TierKey) || "free";
   const tierDef = TIERS[currentTier];
   const features = TIER_FEATURES[currentTier];
+
+  const accountFamilySummary = useMemo(() => {
+    const label =
+      userRole === "superuser" ||
+      userRole === "admin" ||
+      userRole === "moderator"
+        ? "Staff"
+        : userRole === "geo-admin"
+          ? "Geo Admin"
+          : userRole === "artist"
+            ? "Artist"
+            : userRole === "contractor"
+              ? "Contractor"
+              : userRole === "creator" || userRole === "streamer"
+                ? "Streamer"
+                : "General Account";
+
+    const summaryMap: Record<
+      string,
+      { title: string; description: string; why: string }
+    > = {
+      General: {
+        title: "Personal life and local discovery",
+        description:
+          "You browse trusted businesses, reserve places, and stay connected to your daily life.",
+        why: "This keeps the dashboard centered on discovery, convenience, and community access.",
+      },
+      "Geo Admin": {
+        title: "Regional oversight and network health",
+        description:
+          "You monitor regions, validate listings, and coordinate local operations across the platform.",
+        why: "This dashboard prioritizes action, oversight, and operational decisions.",
+      },
+      Artist: {
+        title: "Catalog, royalties, and creative control",
+        description:
+          "You manage releases, catalog content, royalties, fans, and studio-facing tools.",
+        why: "This profile is built for music ownership, visibility, and revenue control.",
+      },
+      Streamer: {
+        title: "Audience growth and music presence",
+        description:
+          "You publish content, grow an audience, and manage streaming-focused engagement.",
+        why: "This dashboard puts discoverability, live reach, and community growth first.",
+      },
+      Contractor: {
+        title: "Projects, contracts, and delivery",
+        description:
+          "You manage client work, quotes, jobs, and completion milestones from one place.",
+        why: "This view is organized around execution, availability, and contract flow.",
+      },
+      Staff: {
+        title: "Operations, safety, and platform governance",
+        description:
+          "You support moderation, approvals, triage, and the platform’s health across all portals.",
+        why: "This dashboard is designed for oversight, control, and intervention.",
+      },
+    };
+
+    return {
+      label,
+      ...summaryMap[label]!,
+    };
+  }, [userRole]);
 
   // Inbox unread badge — pulls from the same React Query cache as the Inbox component
   const inboxUnread = useInboxUnreadCount(isLoggedIn);
@@ -2419,7 +2484,7 @@ export default function UserDashboard() {
                     <div className="mb-3 flex items-center gap-2">
                       <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">
                         <Globe className="h-3.5 w-3.5" />
-                        General account
+                        {accountFamilySummary.label}
                       </span>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-black tracking-[-0.04em] text-slate-900">
@@ -2431,11 +2496,35 @@ export default function UserDashboard() {
                         : ""}
                       !
                     </h1>
-                    <p className="mt-3 max-w-2xl text-base md:text-xl text-slate-600">
-                      Browse trusted businesses, reserve places, discover
-                      communities, and keep your daily life connected in one
-                      place.
-                    </p>
+
+                    <div className="mt-3 rounded-2xl border border-slate-200 bg-white/70 p-3 shadow-sm backdrop-blur-sm">
+                      <button
+                        type="button"
+                        onClick={() => setAccountSummaryOpen((v) => !v)}
+                        className="flex w-full items-center justify-between gap-3 text-left"
+                      >
+                        <div>
+                          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                            Selected account
+                          </p>
+                          <p className="mt-1 text-base font-semibold text-slate-800">
+                            {accountFamilySummary.title}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
+                          {accountSummaryOpen ? "Hide" : "Show"}
+                        </span>
+                      </button>
+
+                      {accountSummaryOpen && (
+                        <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-sm text-slate-600">
+                          <p>{accountFamilySummary.description}</p>
+                          <p className="text-slate-500">
+                            Why this dashboard: {accountFamilySummary.why}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">

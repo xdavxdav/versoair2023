@@ -66,7 +66,9 @@ interface Portal {
   loginEndpoint: string;
   redirectPath: string;
   tier?: string;
-  badge?: string;
+  badgeLabel?: string;
+  badgeClassName?: string;
+  cardRing?: string;
 }
 
 const PORTALS: Portal[] = [
@@ -79,7 +81,8 @@ const PORTALS: Portal[] = [
     color: "blue",
     gradient: "from-sky-500 to-cyan-500",
     cardRing: "ring-sky-400/40 border-sky-400/30",
-    badge: "bg-sky-500/15 text-sky-200 border-sky-400/30",
+    badgeClassName: "bg-sky-500/15 text-sky-200 border-sky-400/30",
+    badgeLabel: "Free",
     features: [
       "Browse business directory",
       "Make reservations",
@@ -90,7 +93,6 @@ const PORTALS: Portal[] = [
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
     redirectPath: "/dashboard",
-    badge: "Free",
   },
   {
     id: "subscriber",
@@ -101,7 +103,7 @@ const PORTALS: Portal[] = [
     color: "amber",
     gradient: "from-amber-500 to-orange-500",
     cardRing: "ring-amber-400/40 border-amber-400/30",
-    badge: "bg-amber-500/15 text-amber-100 border-amber-400/30",
+    badgeClassName: "bg-amber-500/15 text-amber-100 border-amber-400/30",
     features: [
       "Priority customer support",
       "Advanced business analytics",
@@ -113,7 +115,7 @@ const PORTALS: Portal[] = [
     loginEndpoint: "/auth/subscriber/login",
     redirectPath: "/geo-admin?welcome=new",
     tier: "essential",
-    badge: "Premium",
+    badgeLabel: "Premium",
   },
   {
     id: "community",
@@ -124,7 +126,7 @@ const PORTALS: Portal[] = [
     color: "green",
     gradient: "from-emerald-500 to-teal-500",
     cardRing: "ring-emerald-400/40 border-emerald-400/30",
-    badge: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
+    badgeClassName: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
     features: [
       "Write & publish blog posts",
       "Comment & engage",
@@ -135,7 +137,7 @@ const PORTALS: Portal[] = [
     registerEndpoint: "/auth/community/register",
     loginEndpoint: "/auth/community/login",
     redirectPath: "/artisans-portal",
-    badge: "Community",
+    badgeLabel: "Community",
   },
   {
     id: "business",
@@ -146,7 +148,7 @@ const PORTALS: Portal[] = [
     color: "slate",
     gradient: "from-slate-600 to-slate-800",
     cardRing: "ring-slate-300/40 border-slate-300/30",
-    badge: "bg-slate-200/10 text-slate-100 border-slate-300/20",
+    badgeClassName: "bg-slate-200/10 text-slate-100 border-slate-300/20",
     features: [
       "Business listing & profile",
       "Respond to reviews",
@@ -157,7 +159,7 @@ const PORTALS: Portal[] = [
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
     redirectPath: "/profile",
-    badge: "Business",
+    badgeLabel: "Business",
   },
   {
     id: "contractor",
@@ -168,7 +170,7 @@ const PORTALS: Portal[] = [
     color: "orange",
     gradient: "from-orange-500 to-red-500",
     cardRing: "ring-orange-400/40 border-orange-400/30",
-    badge: "bg-orange-500/15 text-orange-100 border-orange-400/30",
+    badgeClassName: "bg-orange-500/15 text-orange-100 border-orange-400/30",
     features: [
       "Browse & apply to projects",
       "Contractor profile & portfolio",
@@ -179,7 +181,7 @@ const PORTALS: Portal[] = [
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
     redirectPath: "/services/contractors",
-    badge: "Contractor",
+    badgeLabel: "Contractor",
   },
 ];
 
@@ -194,7 +196,7 @@ const MUSICAL_PORTALS: Portal[] = [
     color: "purple",
     gradient: "from-violet-500 to-fuchsia-500",
     cardRing: "ring-violet-400/40 border-violet-400/30",
-    badge: "bg-violet-500/15 text-violet-100 border-violet-400/30",
+    badgeClassName: "bg-violet-500/15 text-violet-100 border-violet-400/30",
     features: [
       "Upload unlimited tracks",
       "Real-time streaming analytics",
@@ -205,7 +207,7 @@ const MUSICAL_PORTALS: Portal[] = [
     registerEndpoint: "/auth/artist/register",
     loginEndpoint: "/auth/artist/login",
     redirectPath: "/artist-portal",
-    badge: "Creator",
+    badgeLabel: "Creator",
   },
   {
     id: "streamer",
@@ -216,7 +218,7 @@ const MUSICAL_PORTALS: Portal[] = [
     color: "fuchsia",
     gradient: "from-fuchsia-500 to-violet-600",
     cardRing: "ring-fuchsia-400/40 border-fuchsia-400/30",
-    badge: "bg-fuchsia-500/15 text-fuchsia-100 border-fuchsia-400/30",
+    badgeClassName: "bg-fuchsia-500/15 text-fuchsia-100 border-fuchsia-400/30",
     features: [
       "Unlimited music streaming",
       "Arcade PvP duels — free access",
@@ -227,7 +229,7 @@ const MUSICAL_PORTALS: Portal[] = [
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
     redirectPath: "/stream",
-    badge: "Free",
+    badgeLabel: "Free",
   },
 ];
 
@@ -549,7 +551,9 @@ export default function ApplyPage() {
                               >
                                 {/* Gold connected indicator */}
                                 <div className="absolute top-3 right-3 z-10">
-                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${portal.badge || "bg-amber-500/15 text-amber-100 border-amber-400/30"} shadow-lg shadow-white/5`}>
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${portal.badgeClassName || "bg-amber-500/15 text-amber-100 border-amber-400/30"} shadow-lg shadow-white/5`}
+                                  >
                                     <CheckCircle2 className="h-3 w-3" />
                                     Connected
                                   </span>
@@ -564,7 +568,17 @@ export default function ApplyPage() {
                                     >
                                       <portal.icon className="h-6 w-6 text-white" />
                                     </div>
-                                    {/* Badge already replaced by gold Connected indicator above */}
+                                    {portal.badgeLabel && (
+                                      <Badge
+                                        variant="secondary"
+                                        className={
+                                          portal.badgeClassName ||
+                                          "bg-white/10 text-white/80"
+                                        }
+                                      >
+                                        {portal.badgeLabel}
+                                      </Badge>
+                                    )}
                                   </div>
                                   <CardTitle className="text-white text-xl">
                                     {portal.name}
@@ -689,12 +703,15 @@ export default function ApplyPage() {
                                               />
                                             </div>
                                             {isEligible ? (
-                                              portal.badge && (
+                                              portal.badgeLabel && (
                                                 <Badge
                                                   variant="secondary"
-                                                  className="bg-white/10 text-white/80"
+                                                  className={
+                                                    portal.badgeClassName ||
+                                                    "bg-white/10 text-white/80"
+                                                  }
                                                 >
-                                                  {portal.badge}
+                                                  {portal.badgeLabel}
                                                 </Badge>
                                               )
                                             ) : (
@@ -909,12 +926,14 @@ export default function ApplyPage() {
                       >
                         <portal.icon className="h-6 w-6 text-white" />
                       </div>
-                      {portal.badge && (
+                      {portal.badgeLabel && (
                         <Badge
                           variant="secondary"
-                          className={portal.badge}
+                          className={
+                            portal.badgeClassName || "bg-white/10 text-white/80"
+                          }
                         >
-                          {portal.badge.includes("bg-") ? "" : portal.badge}
+                          {portal.badgeLabel}
                         </Badge>
                       )}
                     </div>
@@ -1014,12 +1033,12 @@ export default function ApplyPage() {
 
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500">
                       <Music className="h-6 w-6 text-white" />
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-purple-500/20 text-purple-300 border-purple-500/30"
+                      className="bg-violet-500/15 text-violet-100 border-violet-400/30"
                     >
                       🎵 2 Portals
                     </Badge>
@@ -1077,12 +1096,15 @@ export default function ApplyPage() {
                                 >
                                   <portal.icon className="h-6 w-6 text-white" />
                                 </div>
-                                {portal.badge && (
+                                {portal.badgeLabel && (
                                   <Badge
                                     variant="secondary"
-                                    className="bg-white/10 text-white/80"
+                                    className={
+                                      portal.badgeClassName ||
+                                      "bg-white/10 text-white/80"
+                                    }
                                   >
-                                    {portal.badge}
+                                    {portal.badgeLabel}
                                   </Badge>
                                 )}
                               </div>

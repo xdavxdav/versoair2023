@@ -124,6 +124,11 @@ export default function SignIn() {
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
   const [accountChoices, setAccountChoices] = useState<any[]>([]);
   const [accountSelectionOpen, setAccountSelectionOpen] = useState(false);
+  const [authStatus, setAuthStatus] = useState<{
+    title: string;
+    detail: string;
+    visible: boolean;
+  }>({ title: "", detail: "", visible: false });
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null,
   );
@@ -325,6 +330,12 @@ export default function SignIn() {
           setStep("set-display-name");
           return;
         }
+
+        setAuthStatus({
+          title: "Auth to portal successful",
+          detail: `Redirecting to ${getLoginDashboardPath(data.user)}...`,
+          visible: true,
+        });
 
         // Normal login — user already has a display name
         authLogin(data.token, {
@@ -1872,6 +1883,11 @@ export default function SignIn() {
                     }
 
                     if (nextData.success && nextData.token && nextData.user) {
+                      setAuthStatus({
+                        title: "Auth to selected portal successful",
+                        detail: "Your chosen account is opening now.",
+                        visible: true,
+                      });
                       authLogin(nextData.token, {
                         id: nextData.user.id,
                         email: nextData.user.email,
@@ -1942,6 +1958,21 @@ export default function SignIn() {
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto">
               <div className="bg-white rounded-2xl shadow-xl p-8">
+                {authStatus.visible && (
+                  <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-left">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-800">
+                          {authStatus.title}
+                        </p>
+                        <p className="text-xs text-emerald-700">
+                          {authStatus.detail}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="text-center mb-8">
                   <div className="w-16 h-16 bg-gradient-to-r from-[#bf831c] to-[#d4941f] rounded-full flex items-center justify-center mx-auto mb-4">
                     <User className="h-8 w-8 text-white" />
