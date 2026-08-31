@@ -12,6 +12,7 @@ import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
+import { HeaderMessagesButton } from "@/components/TwitterMessenger";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -441,6 +442,7 @@ export default function BlogNavbar({
             <div className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 flex-shrink-0">
               {isAuthenticated && (
                 <>
+                  <HeaderMessagesButton />
                   <Link href={dashboard.path}>
                     <a
                       className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"

@@ -26,6 +26,7 @@ import { isContentNavPath } from "@/components/ContentNav";
 import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
+import { MessagesPage } from "@/components/TwitterMessenger";
 
 // ─────────────────────────────────────────────────────
 // 🏠 Public Pages (lazy-loaded — only fetched when navigated to)
@@ -351,26 +352,8 @@ function isBetaRoute(pathname: string) {
   );
 }
 
-function MessagesRoute() {
-  const [, navigate] = useLocation();
-
-  useEffect(() => {
-    const open = () => {
-      window.dispatchEvent(new Event("messenger:open"));
-    };
-
-    open();
-    const timer = window.setTimeout(() => {
-      if (window.location.pathname === "/messages") {
-        navigate("/", { replace: true });
-      }
-    }, 150);
-
-    return () => window.clearTimeout(timer);
-  }, [navigate]);
-
-  return null;
-}
+// MessagesRoute now uses the real MessagesPage component from TwitterMessenger
+// No need for a wrapper function — MessagesPage handles auth and rendering
 
 // Suspense fallback — matches the cinematic LoadingOverlay so there's
 // Main loader — shown while lazy chunks download and on every navigation.
@@ -420,7 +403,7 @@ function Router() {
           🏠 PUBLIC — Marketing & informational pages
           ═══════════════════════════════════════════════ */}
       <Route path="/" component={Home} />
-      <Route path="/messages" component={MessagesRoute} />
+      <Route path="/messages" component={MessagesPage} />
       <Route path="/hub" component={HubPage} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
