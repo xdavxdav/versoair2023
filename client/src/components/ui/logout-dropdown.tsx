@@ -101,6 +101,7 @@ function disconnectSession(id: SessionId) {
       localStorage.removeItem("authToken");
       localStorage.removeItem("verso_auth_token");
       localStorage.removeItem("auth_user");
+      localStorage.removeItem("signin_timestamp");
       break;
     case "geoadmin":
       localStorage.removeItem("geoadmin_session");

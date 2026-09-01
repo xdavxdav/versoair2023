@@ -34,8 +34,10 @@ export function validatePaginationParams(
   limit?: number | string,
   offset?: number | string,
 ): { limit: number; offset: number } {
-  let parsedLimit = typeof limit === "string" ? parseInt(limit, 10) : limit || 20;
-  let parsedOffset = typeof offset === "string" ? parseInt(offset, 10) : offset || 0;
+  let parsedLimit =
+    typeof limit === "string" ? parseInt(limit, 10) : limit || 20;
+  let parsedOffset =
+    typeof offset === "string" ? parseInt(offset, 10) : offset || 0;
 
   // Clamp to reasonable limits
   parsedLimit = Math.min(Math.max(1, parsedLimit), 100); // 1-100 items per page
@@ -83,7 +85,9 @@ export function preparePaginatedResponse<T extends { id?: string | number }>(
     limit: requestedLimit,
     hasMore,
     // Cursor is the ID of the last item (client sends this as "after" param next time)
-    cursor: hasMore ? String(trimmedResults[trimmedResults.length - 1]?.id) : undefined,
+    cursor: hasMore
+      ? String(trimmedResults[trimmedResults.length - 1]?.id)
+      : undefined,
   };
 }
 

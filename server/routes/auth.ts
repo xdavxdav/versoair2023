@@ -1024,7 +1024,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     // Cache session for 30 seconds to reduce database queries on rapid reloads
     res.set("Cache-Control", "private, max-age=30");
-    
+
     const token = getTokenFromRequest(req);
     if (!token) {
       res.status(401).json({ success: false, message: "No token provided" });

@@ -820,6 +820,23 @@
 			"type": "shell",
 			"command": "rm /Users/joe/Downloads/FSA/restore-result.txt",
 			"group": "build"
+		},
+		{
+			"label": "Commit menu fix",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--short",
+				"&&",
+				"git",
+				"diff",
+				"--",
+				"client/src/components/SmartNavDock.tsx",
+				"client/src/components/ui/navbar.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

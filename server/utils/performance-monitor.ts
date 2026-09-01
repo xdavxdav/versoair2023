@@ -161,15 +161,18 @@ export class Timer {
  * Periodic stats reporter (logs every N minutes)
  */
 export function startStatsReporter(intervalMinutes: number = 5): void {
-  setInterval(() => {
-    const stats = getPerformanceStats();
-    if (stats.totalQueries > 0) {
-      log.info("📊 Performance stats (last interval)", stats);
+  setInterval(
+    () => {
+      const stats = getPerformanceStats();
+      if (stats.totalQueries > 0) {
+        log.info("📊 Performance stats (last interval)", stats);
 
-      const slowQueries = getRecentSlowQueries(3);
-      if (slowQueries.length > 0) {
-        log.warn("🔴 Top slow queries:", slowQueries);
+        const slowQueries = getRecentSlowQueries(3);
+        if (slowQueries.length > 0) {
+          log.warn("🔴 Top slow queries:", slowQueries);
+        }
       }
-    }
-  }, intervalMinutes * 60 * 1000);
+    },
+    intervalMinutes * 60 * 1000,
+  );
 }

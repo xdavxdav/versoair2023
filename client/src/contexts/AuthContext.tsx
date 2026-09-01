@@ -77,9 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // One-time cleanup of legacy localStorage token keys (no longer used for storage)
     localStorage.removeItem("artist_token");
     localStorage.removeItem("artist_profile");
+    localStorage.removeItem("auth_user");
     localStorage.removeItem("authToken");
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("verso_auth_token");
     localStorage.removeItem("token");
+    localStorage.removeItem("signin_timestamp");
+    sessionStorage.removeItem("music_referrer");
 
     // Show cached user immediately while we verify in background (UX fast path).
     // We do NOT flip loading=false here — ProtectedRoute needs to keep waiting for
@@ -216,6 +220,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // full-clear helper below.
     clearCachedUser();
     localStorage.removeItem(USER_CACHE_KEY);
+    localStorage.removeItem("auth_user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("verso_auth_token");
+    localStorage.removeItem("signin_timestamp");
     setToken(null);
     setUser(null);
   }
@@ -224,14 +233,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearCachedUser();
     queryClient.clear();
     localStorage.removeItem(USER_CACHE_KEY);
+    localStorage.removeItem("auth_user");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("verso_auth_token");
     localStorage.removeItem("geoadmin_session");
     localStorage.removeItem("geoadmin_username");
     localStorage.removeItem("geoadmin_login_time");
     localStorage.removeItem("geoadmin_session_start");
     localStorage.removeItem("adminAccessTime");
     localStorage.removeItem("adminUsername");
+    localStorage.removeItem("artist_token");
+    localStorage.removeItem("artist_profile");
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
+    localStorage.removeItem("signin_timestamp");
     sessionStorage.removeItem("music_referrer");
     setToken(null);
     setUser(null);

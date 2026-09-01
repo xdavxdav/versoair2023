@@ -63,10 +63,13 @@ function cacheUser(user: AuthUser): void {
 /** Clear cached user info and in-memory tokens */
 export function clearCachedUser(): void {
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("auth_user");
   // Also clear legacy keys if present
   localStorage.removeItem("auth_token");
   localStorage.removeItem("authToken");
+  localStorage.removeItem("verso_auth_token");
   localStorage.removeItem("token");
+  localStorage.removeItem("signin_timestamp");
   _authToken = null;
 }
 

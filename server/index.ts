@@ -6,7 +6,8 @@ dotenv.config();
 // Priority: SIBLING_URL > MUSIC_APP_URL > PRODUCTION_URL/APP_PUBLIC_URL (fallback)
 const isProdEnv = process.env.NODE_ENV === "production";
 const isLocalUrl = (url?: string) =>
-  !!url && /^https?:\/\/(?:localhost|127(?:\.\d+){3})(?::\d+)?(?:\/|$)/i.test(url);
+  !!url &&
+  /^https?:\/\/(?:localhost|127(?:\.\d+){3})(?::\d+)?(?:\/|$)/i.test(url);
 const configuredSiblingUrl = process.env.SIBLING_URL?.trim();
 
 // Never inject a local development URL into a production deployment.
@@ -21,8 +22,7 @@ if (!configuredSiblingUrl || (isProdEnv && isLocalUrl(configuredSiblingUrl))) {
   const musicUrl =
     (configuredMusicUrl && !(isProdEnv && isLocalUrl(configuredMusicUrl))
       ? configuredMusicUrl
-      : publicAppUrl) ||
-    (!isProdEnv ? "http://localhost:5004" : undefined);
+      : publicAppUrl) || (!isProdEnv ? "http://localhost:5004" : undefined);
 
   if (musicUrl) {
     const cleanMusicUrl = musicUrl.replace(/\/+$/, "");
@@ -95,7 +95,10 @@ import { setupMarketplaceAutoApprove } from "./services/marketplace-auto-approve
 import { setupSessionCleanup } from "./services/session-cleanup";
 import { csrfSetCookie, csrfProtect } from "./middleware/csrf";
 import { globalAuthGate } from "./middleware/auth";
-import { performanceMiddleware, startStatsReporter } from "./utils/performance-monitor";
+import {
+  performanceMiddleware,
+  startStatsReporter,
+} from "./utils/performance-monitor";
 
 const app = express();
 
