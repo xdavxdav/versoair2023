@@ -934,7 +934,7 @@ export default function MarketplacePage() {
         <main className="flex-1 min-w-0">
           {/* Top Bar */}
           <div
-            className={`sticky top-16 z-30 ${t.bgCard} border-b ${t.border}`}
+            className={`relative z-20 ${t.bgCard} border-b ${t.border}`}
           >
             <div className="px-4 lg:px-6 py-3">
               <div className="flex items-center gap-3">
