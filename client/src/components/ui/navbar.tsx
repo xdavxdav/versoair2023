@@ -781,7 +781,9 @@ export default function Navbar({
             {/* Messages — opens the globally mounted MessengerPanel */}
             {user && (
               <button
-                onClick={() => window.dispatchEvent(new Event("messenger:open"))}
+                onClick={() =>
+                  window.dispatchEvent(new Event("messenger:open"))
+                }
                 className="text-gray-600 hover:text-primary p-2 rounded-md transition-colors flex-shrink-0"
                 aria-label="Messages"
               >

@@ -933,179 +933,181 @@ export default function MarketplacePage() {
             ═══════════════════════════════════════ */}
         <main className="flex-1 min-w-0">
           {/* Top Bar */}
-          <div
-            className={`relative z-20 ${t.bgCard} border-b ${t.border}`}
-          >
-            <div className="px-4 lg:px-6 py-3">
-              <div className="flex items-center gap-3">
-                {/* Mobile menu toggle */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowMobileSidebar(true)}
-                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
-                >
-                  <SlidersHorizontal className="w-5 h-5" />
-                </motion.button>
+          <div className="relative z-20 mb-4 px-2 sm:px-3 pt-2">
+            <div
+              className={`rounded-[26px] border border-white/10 bg-[#202123]/90 shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur-xl ${t.bgCard}`}
+            >
+              <div className="px-3 py-2 sm:px-4 lg:px-5">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Mobile menu toggle */}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowMobileSidebar(true)}
+                    className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
+                  >
+                    <SlidersHorizontal className="w-5 h-5" />
+                  </motion.button>
 
-                {/* Browse / My Listings tabs */}
-                <div
-                  className={`flex items-center gap-1 ${t.bgInput} rounded-xl p-0.5`}
-                >
-                  <button
-                    onClick={() => setMarketplaceView("browse")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      marketplaceView === "browse"
-                        ? `${t.accentBg} text-white`
-                        : `${t.textSecondary} hover:${t.text}`
-                    }`}
+                  {/* Browse / My Listings tabs */}
+                  <div
+                    className={`flex items-center gap-1 ${t.bgInput} rounded-full p-0.5 shadow-inner shadow-black/10`}
                   >
-                    <Package className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Browse</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMarketplaceView("my-listings");
-                      refetchMyListings();
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      marketplaceView === "my-listings"
-                        ? `${t.accentBg} text-white`
-                        : `${t.textSecondary} hover:${t.text}`
-                    }`}
+                    <button
+                      onClick={() => setMarketplaceView("browse")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        marketplaceView === "browse"
+                          ? `${t.accentBg} text-white shadow-sm`
+                          : `${t.textSecondary} hover:${t.text}`
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Browse</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMarketplaceView("my-listings");
+                        refetchMyListings();
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        marketplaceView === "my-listings"
+                          ? `${t.accentBg} text-white shadow-sm`
+                          : `${t.textSecondary} hover:${t.text}`
+                      }`}
+                    >
+                      <ClipboardList className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">My Listings</span>
+                      {myListings && myListings.length > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-400">
+                          {myListings.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Mobile search */}
+                  <div className="lg:hidden flex-1 relative">
+                    <Search
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50`}
+                    />
+                  </div>
+
+                  {/* Results count */}
+                  <div
+                    className={`hidden lg:flex items-center gap-2 ${t.textSecondary} text-sm`}
                   >
-                    <ClipboardList className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">My Listings</span>
-                    {myListings && myListings.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-400">
-                        {myListings.length}
+                    <Package className="w-4 h-4" />
+                    <span>
+                      <strong className={t.text}>{filtered.length}</strong>{" "}
+                      listings
+                    </span>
+                    {activeCategory !== "all" && (
+                      <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-500 rounded-full text-xs font-medium">
+                        {CATEGORIES.find((c) => c.id === activeCategory)?.label}
+                        <button
+                          onClick={() => setActiveCategory("all")}
+                          className="ml-1.5"
+                        >
+                          ×
+                        </button>
                       </span>
                     )}
-                  </button>
-                </div>
+                  </div>
 
-                {/* Mobile search */}
-                <div className="lg:hidden flex-1 relative">
-                  <Search
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${t.textMuted}`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full ${t.bgInput} ${t.text} rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50`}
-                  />
-                </div>
+                  <div className="flex-1" />
 
-                {/* Results count */}
-                <div
-                  className={`hidden lg:flex items-center gap-2 ${t.textSecondary} text-sm`}
-                >
-                  <Package className="w-4 h-4" />
-                  <span>
-                    <strong className={t.text}>{filtered.length}</strong>{" "}
-                    listings
-                  </span>
-                  {activeCategory !== "all" && (
-                    <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-500 rounded-full text-xs font-medium">
-                      {CATEGORIES.find((c) => c.id === activeCategory)?.label}
-                      <button
-                        onClick={() => setActiveCategory("all")}
-                        className="ml-1.5"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  )}
-                </div>
+                  {/* Sort */}
+                  <div className="relative">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowSortMenu(!showSortMenu)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all shadow-sm`}
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="hidden sm:inline">
+                        {sortBy === "recent"
+                          ? "Most Recent"
+                          : sortBy === "price_low"
+                            ? "Price: Low"
+                            : sortBy === "price_high"
+                              ? "Price: High"
+                              : "Popular"}
+                      </span>
+                      <ChevronDown className="w-3 h-3" />
+                    </motion.button>
+                    <AnimatePresence>
+                      {showSortMenu && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                          className={`absolute right-0 top-full mt-2 w-48 ${t.bgCard} rounded-xl shadow-2xl border ${t.border} overflow-hidden z-50`}
+                        >
+                          {(
+                            [
+                              { id: "recent", label: "Most Recent" },
+                              { id: "popular", label: "Most Popular" },
+                              { id: "price_low", label: "Price: Low to High" },
+                              { id: "price_high", label: "Price: High to Low" },
+                            ] as const
+                          ).map((s) => (
+                            <button
+                              key={s.id}
+                              onClick={() => {
+                                setSortBy(s.id);
+                                setShowSortMenu(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
+                                sortBy === s.id
+                                  ? `${t.accent} bg-cyan-500/10 font-medium`
+                                  : `${t.textSecondary} ${t.bgHover}`
+                              }`}
+                            >
+                              {s.label}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-                <div className="flex-1" />
+                  {/* View mode */}
+                  <div
+                    className={`hidden sm:flex items-center ${t.bgInput} rounded-full overflow-hidden shadow-inner shadow-black/10`}
+                  >
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 transition-all ${viewMode === "grid" ? `${t.accentBg} text-white` : t.textMuted}`}
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 transition-all ${viewMode === "list" ? `${t.accentBg} text-white` : t.textMuted}`}
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                {/* Sort */}
-                <div className="relative">
+                  {/* Theme toggle (mobile) */}
                   <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowSortMenu(!showSortMenu)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${t.bgInput} ${t.textSecondary} ${t.bgHover} transition-all`}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setDarkMode(!darkMode)}
+                    className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
                   >
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="hidden sm:inline">
-                      {sortBy === "recent"
-                        ? "Most Recent"
-                        : sortBy === "price_low"
-                          ? "Price: Low"
-                          : sortBy === "price_high"
-                            ? "Price: High"
-                            : "Popular"}
-                    </span>
-                    <ChevronDown className="w-3 h-3" />
-                  </motion.button>
-                  <AnimatePresence>
-                    {showSortMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                        className={`absolute right-0 top-full mt-2 w-48 ${t.bgCard} rounded-xl shadow-2xl border ${t.border} overflow-hidden z-50`}
-                      >
-                        {(
-                          [
-                            { id: "recent", label: "Most Recent" },
-                            { id: "popular", label: "Most Popular" },
-                            { id: "price_low", label: "Price: Low to High" },
-                            { id: "price_high", label: "Price: High to Low" },
-                          ] as const
-                        ).map((s) => (
-                          <button
-                            key={s.id}
-                            onClick={() => {
-                              setSortBy(s.id);
-                              setShowSortMenu(false);
-                            }}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
-                              sortBy === s.id
-                                ? `${t.accent} bg-cyan-500/10 font-medium`
-                                : `${t.textSecondary} ${t.bgHover}`
-                            }`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </motion.div>
+                    {darkMode ? (
+                      <Sun className="w-4 h-4" />
+                    ) : (
+                      <Moon className="w-4 h-4" />
                     )}
-                  </AnimatePresence>
+                  </motion.button>
                 </div>
-
-                {/* View mode */}
-                <div
-                  className={`hidden sm:flex items-center ${t.bgInput} rounded-xl overflow-hidden`}
-                >
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 transition-all ${viewMode === "grid" ? `${t.accentBg} text-white` : t.textMuted}`}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 transition-all ${viewMode === "list" ? `${t.accentBg} text-white` : t.textMuted}`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Theme toggle (mobile) */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`lg:hidden p-2 rounded-xl ${t.bgInput} ${t.textSecondary}`}
-                >
-                  {darkMode ? (
-                    <Sun className="w-4 h-4" />
-                  ) : (
-                    <Moon className="w-4 h-4" />
-                  )}
-                </motion.button>
               </div>
             </div>
           </div>
