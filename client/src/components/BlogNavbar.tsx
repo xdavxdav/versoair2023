@@ -55,9 +55,9 @@ const MOBILE_PILLS = [
 /* ── shared dropdown style tokens ───────────────────────────── */
 /* Responsive button with fluid scaling */
 const BTN =
-  "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 lg:px-3.5 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium flex-shrink-0";
+  "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 lg:px-3.5 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-full transition-all whitespace-nowrap font-medium flex-shrink-0 bg-slate-900/60 border border-cyan-500/15 shadow-[0_8px_20px_rgba(14,116,144,0.12)]";
 const PANEL =
-  "absolute bottom-full bg-slate-950 overflow-hidden shadow-2xl shadow-black/60 rounded-xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
+  "absolute bottom-full bg-slate-950/95 overflow-hidden shadow-[0_18px_42px_rgba(0,0,0,0.55)] rounded-2xl pt-2 pb-2.5 opacity-0 invisible transition-all duration-200 z-[9999] border border-cyan-500/20";
 const PANEL_OPEN = "opacity-100 !visible";
 const ITEM =
   "block px-4 py-2 text-sm text-slate-300 hover:text-cyan-200 hover:bg-cyan-400/10 rounded-lg mx-1 transition-colors whitespace-nowrap";
@@ -212,7 +212,7 @@ export default function BlogNavbar({
   return (
     <>
       <nav
-        className={`fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-[100] transition-transform duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 z-[100] transition-transform duration-300 ease-out ${
           isVisible
             ? "translate-y-0 pointer-events-auto"
             : "translate-y-[120%] pointer-events-none"
@@ -280,12 +280,12 @@ export default function BlogNavbar({
             <div className="flex md:hidden items-center gap-0.5 flex-1 min-w-0 justify-end overflow-x-auto scrollbar-hide px-1">
               {MOBILE_PILLS.filter((pill) => pill.href !== currentPath).map(
                 (pill) => (
-                  <Link key={pill.href} href={pill.href}>
-                    <a
-                      className={`px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
-                    >
-                      {pill.label}
-                    </a>
+                  <Link
+                    key={pill.href}
+                    href={pill.href}
+                    className={`px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
+                  >
+                    {pill.label}
                   </Link>
                 ),
               )}
@@ -315,34 +315,21 @@ export default function BlogNavbar({
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <div className="grid grid-cols-2 gap-0.5 px-0.5">
-                    <Link href="/sante">
-                      <a className={ITEM}>Santé</a>
-                    </Link>
-                    <Link href="/finances">
-                      <a className={ITEM}>Finance</a>
-                    </Link>
-                    <Link href="/batiment">
-                      <a className={ITEM}>Bâtiment</a>
-                    </Link>
-                    <Link href="/hotellerie">
-                      <a className={ITEM}>Hôtellerie</a>
-                    </Link>
-                    <Link href="/automobile">
-                      <a className={ITEM}>Automobile</a>
-                    </Link>
-                    <Link href="/commerce">
-                      <a className={ITEM}>Commerce</a>
-                    </Link>
-                    <Link href="/logement">
-                      <a className={ITEM}>Logement</a>
-                    </Link>
-                    <Link href="/divertissement">
-                      <a className={ITEM}>Divertissement</a>
-                    </Link>
+                    <Link href="/sante" className={ITEM}>Santé</Link>
+                    <Link href="/finances" className={ITEM}>Finance</Link>
+                    <Link href="/batiment" className={ITEM}>Bâtiment</Link>
+                    <Link href="/hotellerie" className={ITEM}>Hôtellerie</Link>
+                    <Link href="/automobile" className={ITEM}>Automobile</Link>
+                    <Link href="/commerce" className={ITEM}>Commerce</Link>
+                    <Link href="/logement" className={ITEM}>Logement</Link>
+                    <Link href="/divertissement" className={ITEM}>Divertissement</Link>
                   </div>
                   <div className="border-t border-cyan-500/10 mt-1.5 pt-1 px-0.5">
-                    <Link href="/businesses-directory">
-                      <a className={ITEM_HEAD + " text-center"}>Annuaire</a>
+                    <Link
+                      href="/businesses-directory"
+                      className={ITEM_HEAD + " text-center"}
+                    >
+                      Annuaire
                     </Link>
                   </div>
                 </div>
@@ -367,21 +354,11 @@ export default function BlogNavbar({
                   style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
-                  <Link href="/hub">
-                    <a className={ITEM_HEAD}>Community Hub</a>
-                  </Link>
-                  <Link href="/businesses-directory">
-                    <a className={ITEM}>Business Directory</a>
-                  </Link>
-                  <Link href="/artisans">
-                    <a className={ITEM}>Artisans</a>
-                  </Link>
-                  <Link href="/communities">
-                    <a className={ITEM}>Communities</a>
-                  </Link>
-                  <Link href="/partners">
-                    <a className={ITEM}>Partners</a>
-                  </Link>
+                  <Link href="/hub" className={ITEM_HEAD}>Community Hub</Link>
+                  <Link href="/businesses-directory" className={ITEM}>Business Directory</Link>
+                  <Link href="/artisans" className={ITEM}>Artisans</Link>
+                  <Link href="/communities" className={ITEM}>Communities</Link>
+                  <Link href="/partners" className={ITEM}>Partners</Link>
                 </div>
               </div>
 
@@ -404,18 +381,10 @@ export default function BlogNavbar({
                   style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
-                  <Link href="/stream">
-                    <a className={ITEM_HEAD}>Music Stream</a>
-                  </Link>
-                  <Link href="/podcast">
-                    <a className={ITEM}>Podcasts</a>
-                  </Link>
-                  <Link href="/music">
-                    <a className={ITEM}>Library</a>
-                  </Link>
-                  <Link href="/arcade">
-                    <a className={ITEM}>Arcade</a>
-                  </Link>
+                  <Link href="/stream" className={ITEM_HEAD}>Music Stream</Link>
+                  <Link href="/podcast" className={ITEM}>Podcasts</Link>
+                  <Link href="/music" className={ITEM}>Library</Link>
+                  <Link href="/arcade" className={ITEM}>Arcade</Link>
                 </div>
               </div>
 
@@ -438,18 +407,10 @@ export default function BlogNavbar({
                   style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
-                  <Link href="/services">
-                    <a className={ITEM_HEAD}>All Services</a>
-                  </Link>
-                  <Link href="/services/news">
-                    <a className={ITEM}>News & Updates</a>
-                  </Link>
-                  <Link href="/services/careers">
-                    <a className={ITEM}>Careers</a>
-                  </Link>
-                  <Link href="/services/contractors">
-                    <a className={ITEM}>Contractors</a>
-                  </Link>
+                  <Link href="/services" className={ITEM_HEAD}>All Services</Link>
+                  <Link href="/services/news" className={ITEM}>News & Updates</Link>
+                  <Link href="/services/careers" className={ITEM}>Careers</Link>
+                  <Link href="/services/contractors" className={ITEM}>Contractors</Link>
                 </div>
               </div>
 
@@ -472,33 +433,21 @@ export default function BlogNavbar({
                   style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
-                  <Link href="/marketing">
-                    <a className={ITEM_HEAD}>Marketing Hub</a>
-                  </Link>
+                  <Link href="/marketing" className={ITEM_HEAD}>Marketing Hub</Link>
                   <div className="border-t border-cyan-500/10 my-1 mx-3" />
-                  <Link href="/marketing/journal">
-                    <a className={ITEM}>Free Ad Journal</a>
-                  </Link>
-                  <Link href="/marketing/packs">
-                    <a className={ITEM}>Marketing Packs</a>
-                  </Link>
-                  <Link href="/marketing/print">
-                    <a className={ITEM}>Print Services</a>
-                  </Link>
-                  <Link href="/marketing/newsletters">
-                    <a className={ITEM}>Newsletter</a>
-                  </Link>
+                  <Link href="/marketing/journal" className={ITEM}>Free Ad Journal</Link>
+                  <Link href="/marketing/packs" className={ITEM}>Marketing Packs</Link>
+                  <Link href="/marketing/print" className={ITEM}>Print Services</Link>
+                  <Link href="/marketing/newsletters" className={ITEM}>Newsletter</Link>
                 </div>
               </div>
 
               {/* Marketplace (direct link) */}
               {currentPath !== "/marketplace" && (
-                <Link href="/marketplace">
-                  <a className={BTN}>
-                    <ShoppingBag className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
-                    <span className="hidden lg:inline">Marketplace</span>
-                    <span className="lg:hidden">Shop</span>
-                  </a>
+                <Link href="/marketplace" className={BTN}>
+                  <ShoppingBag className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                  <span className="hidden lg:inline">Marketplace</span>
+                  <span className="lg:hidden">Shop</span>
                 </Link>
               )}
 
@@ -522,12 +471,8 @@ export default function BlogNavbar({
                   style={{ marginBottom: "8px" }}
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
-                  <Link href="/sav">
-                    <a className={ITEM}>SAV 24/7</a>
-                  </Link>
-                  <Link href="/versoai">
-                    <a className={ITEM}>VersoAI</a>
-                  </Link>
+                  <Link href="/sav" className={ITEM}>SAV 24/7</Link>
+                  <Link href="/versoai" className={ITEM}>VersoAI</Link>
                 </div>
               </div>
             </div>
@@ -537,14 +482,13 @@ export default function BlogNavbar({
               {isAuthenticated && (
                 <>
                   <HeaderMessagesButton />
-                  <Link href={dashboard.path}>
-                    <a
-                      className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"
-                      title={dashboard.label}
-                    >
-                      <LayoutDashboard className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
-                      <span className="hidden lg:inline">Dashboard</span>
-                    </a>
+                  <Link
+                    href={dashboard.path}
+                    className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"
+                    title={dashboard.label}
+                  >
+                    <LayoutDashboard className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                    <span className="hidden lg:inline">Dashboard</span>
                   </Link>
                   <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 rounded-lg text-[9px] sm:text-xs lg:text-sm flex-shrink-0">
                     <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-400 rounded-full" />
