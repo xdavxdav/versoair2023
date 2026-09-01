@@ -1046,8 +1046,8 @@ function AppContent() {
         </div>
       )}
 
-      {/* Mobile Menu Bubble — hide on Blog & Musical Universe and immersive pages */}
-      {!isImmersivePage && !isMusicPage && (
+      {/* Mobile Menu Bubble — hide whenever the dedicated Blog/Marketplace nav is active. */}
+      {!isImmersivePage && !isMusicPage && !isBlogOrMarketplace && (
         <Suspense fallback={null}>
           <MobileMenuBubble />
         </Suspense>
