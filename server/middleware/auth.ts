@@ -146,6 +146,7 @@ const PUBLIC_PATHS: string[] = [
  */
 const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/home/", // Home page stats
+  "/api/profiles/", // Public artisan and unified profile directory
   "/api/faq", // FAQ browsing — GET only (list/search/detail)
   "/api/artists/", // Artist directory (search, genres, countries)
   "/api/music/", // Music artists, tracks, analytics (home page carousel)
