@@ -3121,6 +3121,7 @@ const communityRegisterSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number"),
   displayName: z.string().min(2, "Display name must be at least 2 characters"),
   interests: z.array(z.string()).optional(),
+  accountType: z.enum(["community", "artisan"]).optional(),
 });
 
 const communityLoginSchema = z.object({
@@ -3144,7 +3145,13 @@ router.post(
       return;
     }
 
-    const { email, password, displayName, interests } = parsed.data;
+    const {
+      email,
+      password,
+      displayName,
+      interests,
+      accountType = "community",
+    } = parsed.data;
 
     // Check duplicate email
     const existing = await db
@@ -3174,7 +3181,10 @@ router.post(
         password: hashedPassword,
         role: "user",
         subscriptionTier: "free", // community members start free
-        portalAccess: ["general", "community"],
+        portalAccess:
+          accountType === "artisan"
+            ? ["general", "community", "artisan"]
+            : ["general", "community"],
         isVerified: false,
       })
       .returning({

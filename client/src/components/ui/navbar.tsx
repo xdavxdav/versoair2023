@@ -11,6 +11,7 @@ import {
   User,
   LayoutDashboard,
   Mic2,
+  Palette,
   Radio,
   Shield,
   Users,
@@ -55,6 +56,12 @@ const PORTAL_META: Record<
     icon: <Mic2 className="w-3.5 h-3.5" />,
     path: "/artist-portal/welcome",
     color: "text-pink-400",
+  },
+  artisan: {
+    label: "Artisan",
+    icon: <Palette className="w-3.5 h-3.5" />,
+    path: "/artisans-portal",
+    color: "text-emerald-400",
   },
   "geo-admin": {
     label: "GeoAdmin",

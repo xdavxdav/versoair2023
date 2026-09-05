@@ -20,6 +20,7 @@ import {
   Zap,
   Heart,
   BookOpen,
+  Palette,
   Briefcase,
   Headphones,
   Phone,
@@ -119,7 +120,7 @@ const PORTALS: Portal[] = [
   },
   {
     id: "community",
-    name: "Artisans / Community",
+    name: "Community Member",
     description:
       "Join the Verso Air community — write blog posts, connect with others, and share insights.",
     icon: MessageSquare,
@@ -136,8 +137,30 @@ const PORTALS: Portal[] = [
     ],
     registerEndpoint: "/auth/community/register",
     loginEndpoint: "/auth/community/login",
-    redirectPath: "/artisans-portal",
+    redirectPath: "/blog",
     badgeLabel: "Community",
+  },
+  {
+    id: "artisan",
+    name: "Artisan / Craft Professional",
+    description:
+      "Create a public craft profile, showcase your work, and connect with customers and cultural communities.",
+    icon: Palette,
+    color: "emerald",
+    gradient: "from-emerald-500 to-teal-500",
+    cardRing: "ring-emerald-400/40 border-emerald-400/30",
+    badgeClassName: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
+    features: [
+      "Public artisan directory profile",
+      "Portfolio and craft specializations",
+      "Customer contact requests",
+      "Workshops and community events",
+      "Promote your craft business",
+    ],
+    registerEndpoint: "/auth/community/register",
+    loginEndpoint: "/auth/community/login",
+    redirectPath: "/artisans-portal",
+    badgeLabel: "Craft",
   },
   {
     id: "business",
@@ -264,6 +287,7 @@ const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
   artist: "artist",
   subscriber: "geo-admin",
   community: "community",
+  artisan: "artisan",
   streamer: "streamer",
   business: "general",
   contractor: "contractor",
@@ -400,8 +424,12 @@ export default function ApplyPage() {
       } else if (selectedPortal.id === "subscriber") {
         body.displayName = formData.displayName || formData.email.split("@")[0];
         body.tier = formData.tier;
-      } else if (selectedPortal.id === "community") {
+      } else if (
+        selectedPortal.id === "community" ||
+        selectedPortal.id === "artisan"
+      ) {
         body.displayName = formData.displayName || formData.email.split("@")[0];
+        if (selectedPortal.id === "artisan") body.accountType = "artisan";
       } else {
         // General / Business / Streamer / Contractor
         body.firstName = formData.displayName || formData.email.split("@")[0];
@@ -589,6 +617,11 @@ export default function ApplyPage() {
                                 </CardHeader>
                                 <CardContent>
                                   <Button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setLocation(portal.redirectPath);
+                                    }}
                                     className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
                                   >
                                     Enter Portal
@@ -735,6 +768,13 @@ export default function ApplyPage() {
                                         <CardContent>
                                           {isEligible ? (
                                             <Button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setLocation(
+                                                  portal.redirectPath,
+                                                );
+                                              }}
                                               className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
                                             >
                                               Enter Portal
@@ -818,8 +858,9 @@ export default function ApplyPage() {
                                   </CardHeader>
                                   <CardContent>
                                     <Button
+                                      type="button"
                                       variant="outline"
-                                      className="w-full border-white/10 bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60"
+                                      className="w-full cursor-pointer border-white/10 bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         // Allow applying for locked portals
@@ -1003,6 +1044,8 @@ export default function ApplyPage() {
                     </ul>
 
                     <Button
+                      type="button"
+                      onClick={() => setSelectedPortal(portal)}
                       className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
                     >
                       Get Started
@@ -1156,6 +1199,11 @@ export default function ApplyPage() {
                                 ))}
                               </ul>
                               <Button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedPortal(portal);
+                                }}
                                 className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
                               >
                                 Get Started

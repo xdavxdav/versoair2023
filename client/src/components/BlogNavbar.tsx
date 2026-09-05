@@ -7,6 +7,8 @@ import {
   ChevronDown,
   Home,
   LayoutDashboard,
+  UserRound,
+  Settings,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -74,6 +76,7 @@ export default function BlogNavbar({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const navRef = useRef<HTMLDivElement | null>(null);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -132,9 +135,20 @@ export default function BlogNavbar({
 
   const open = (key: string) => setOpenMenu(key);
   const close = () => setOpenMenu(null);
+  const toggleMenu = (key: string) =>
+    setOpenMenu((current) => (current === key ? null : key));
 
   useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        close();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
     return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
       if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
@@ -212,6 +226,7 @@ export default function BlogNavbar({
   return (
     <>
       <nav
+        ref={navRef}
         className={`fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-[100] transition-transform duration-300 ease-out ${
           isVisible
             ? "translate-y-0 pointer-events-auto"
@@ -299,7 +314,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("ent")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("ent")}
+                  onMouseEnter={() => open("ent")}
+                  onMouseLeave={close}
+                >
                   <Store className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                   <span className="hidden lg:inline">Entreprises</span>
                   <span className="lg:hidden">Ent</span>
@@ -354,7 +375,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("discover")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("discover")}
+                  onMouseEnter={() => open("discover")}
+                  onMouseLeave={close}
+                >
                   <span className="hidden lg:inline">Discover</span>
                   <span className="lg:hidden">Disc</span>
                   <ChevronDown
@@ -391,7 +418,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("play")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("play")}
+                  onMouseEnter={() => open("play")}
+                  onMouseLeave={close}
+                >
                   <span className="hidden lg:inline">Play</span>
                   <span className="lg:hidden">Play</span>
                   <ChevronDown
@@ -425,7 +458,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("svc")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("svc")}
+                  onMouseEnter={() => open("svc")}
+                  onMouseLeave={close}
+                >
                   <span className="hidden lg:inline">Services</span>
                   <span className="lg:hidden">Svc</span>
                   <ChevronDown
@@ -459,7 +498,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("mkt")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("mkt")}
+                  onMouseEnter={() => open("mkt")}
+                  onMouseLeave={close}
+                >
                   <span className="hidden lg:inline">Marketing</span>
                   <span className="lg:hidden">Mkt</span>
                   <ChevronDown
@@ -508,7 +553,13 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("help")}
                 onMouseLeave={close}
               >
-                <button className={BTN}>
+                <button
+                  type="button"
+                  className={BTN}
+                  onClick={() => toggleMenu("help")}
+                  onMouseEnter={() => open("help")}
+                  onMouseLeave={close}
+                >
                   <Headphones className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                   <span className="hidden lg:inline">Support</span>
                   <span className="lg:hidden">Help</span>
@@ -544,6 +595,15 @@ export default function BlogNavbar({
                     >
                       <LayoutDashboard className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                       <span className="hidden lg:inline">Dashboard</span>
+                    </a>
+                  </Link>
+                  <Link href="/profile">
+                    <a
+                      className="hidden md:flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-[9px] sm:text-xs lg:text-sm flex-shrink-0"
+                      title="Account settings"
+                    >
+                      <UserRound className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
+                      <span className="hidden lg:inline">Account</span>
                     </a>
                   </Link>
                   <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 rounded-lg text-[9px] sm:text-xs lg:text-sm flex-shrink-0">

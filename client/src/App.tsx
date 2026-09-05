@@ -774,6 +774,12 @@ function AppContent() {
     currentPath === "/blog" || currentPath === "/marketplace";
   const showContentNav = isContentNavPage && isAuthed && !isBlogOrMarketplace;
   const isAuthPage = currentPath.startsWith("/auth");
+  const showAccountBlogNavbar =
+    isAuthed &&
+    !isAuthPage &&
+    !isMusicPage &&
+    !currentPath.startsWith("/admin") &&
+    !currentPath.startsWith("/geo-admin");
   // Immersive pages — hide navbar, footer (keep motto), bubble menu
   const isImmersivePage =
     currentPath === "/dashboard" ||
@@ -937,25 +943,19 @@ function AppContent() {
                   </div>
                 </div>
               )}
-
-            {/* Blog Navbar — stable navigation for /blog and /marketplace. */}
-            {!isMusicPage &&
-              !isImmersivePage &&
-              (currentPath === "/blog" || currentPath === "/marketplace") &&
-              !marketplaceModalOpen &&
-              !showContentNav && (
-                <Suspense fallback={null}>
-                  <BlogNavbar />
-                </Suspense>
-              )}
           </div>
         )}
+      {showAccountBlogNavbar && (
+        <Suspense fallback={null}>
+          <BlogNavbar />
+        </Suspense>
+      )}
       {/* ── Music Universe Navbar — sits below the amber bar ── */}
 
       <Suspense fallback={null}>
         <PullToRefresh />
       </Suspense>
-      {showContentNav && (
+      {showContentNav && !showAccountBlogNavbar && (
         <Suspense fallback={null}>
           <ContentNav />
         </Suspense>

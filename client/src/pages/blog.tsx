@@ -577,9 +577,13 @@ export default function BlogPage() {
                 Trending
               </button>
               <button
-                onClick={() =>
-                  window.dispatchEvent(new Event("messenger:open"))
-                }
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    window.location.href = `/signin?returnTo=${encodeURIComponent(window.location.pathname)}`;
+                    return;
+                  }
+                  window.location.assign("/messages");
+                }}
                 className="ml-auto flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
               >
                 <MessageCircle className="h-4 w-4" />

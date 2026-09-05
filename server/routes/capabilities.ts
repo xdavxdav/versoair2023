@@ -161,6 +161,11 @@ export async function computeUserCapabilities(userId: number) {
   ) {
     portals.add("community");
   }
+  // Artisan accounts use the same registration endpoint as community members,
+  // so their portal_access membership is the account-type discriminator.
+  if (existingPortalAccess.includes("artisan")) {
+    portals.add("artisan");
+  }
   // TSR (Technical Service Representative) always gets geo-admin
   if (user.role === "tsr" || effectiveRole === "geo-admin") {
     portals.add("geo-admin");
