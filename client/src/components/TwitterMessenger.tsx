@@ -81,7 +81,6 @@ export function HeaderMessagesButton({
 }) {
   const { user, loading: isLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!user || isLoading) return;
@@ -110,29 +109,25 @@ export function HeaderMessagesButton({
       window.location.href = `/signin?returnTo=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
-    setPanelOpen(true);
-    window.dispatchEvent(new Event("messenger:open"));
+    window.location.assign("/messages");
   };
 
   if (isLoading) return null;
 
   return (
-    <>
-      <button
-        onClick={handleClick}
-        className={`relative flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100 ${className}`}
-        aria-label="Messages"
-      >
-        <MessageCircle className="h-4 w-4" />
-        <span className="hidden sm:inline">Messages</span>
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        )}
-      </button>
-      <TwitterMessenger open={panelOpen} onClose={() => setPanelOpen(false)} />
-    </>
+    <button
+      onClick={handleClick}
+      className={`relative flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100 ${className}`}
+      aria-label="Messages"
+    >
+      <MessageCircle className="h-4 w-4" />
+      <span className="hidden sm:inline">Messages</span>
+      {unreadCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </button>
   );
 }
 

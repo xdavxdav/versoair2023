@@ -43,7 +43,10 @@ export default function MessengerLauncher({
   useInboxSocket(user ? handleLiveMessage : undefined);
 
   useEffect(() => {
-    const openMessenger = () => setOpen(true);
+    const openMessenger = () => {
+      if (window.location.pathname === "/messages") return;
+      setOpen(true);
+    };
     window.addEventListener("messenger:open", openMessenger);
     return () => window.removeEventListener("messenger:open", openMessenger);
   }, []);

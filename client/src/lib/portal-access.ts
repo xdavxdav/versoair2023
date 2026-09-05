@@ -21,6 +21,7 @@ export type PortalId =
   | "general"
   | "streamer"
   | "artist"
+  | "artisan"
   | "geo-admin"
   | "community"
   | "contractor"
@@ -41,6 +42,7 @@ const ADMIN_ROLES = new Set(["admin", "moderator", "superuser"]);
 
 export const UNLOCK_REASONS: Record<string, string> = {
   artist: "Create an artist profile to unlock",
+  artisan: "Create an artisan craft profile to unlock",
   "geo-admin": "Upgrade to Premium to unlock",
   community: "Join the community to unlock",
   contractor: "Register as a contractor to unlock",
@@ -67,6 +69,7 @@ export function getPortalAccess(
       general: false,
       streamer: false,
       artist: false,
+      artisan: false,
       "geo-admin": false,
       community: false,
       contractor: false,
@@ -82,6 +85,7 @@ export function getPortalAccess(
       general: true,
       streamer: true,
       artist: true,
+      artisan: true,
       "geo-admin": true,
       community: true,
       contractor: true,
@@ -97,6 +101,7 @@ export function getPortalAccess(
     general: true,
     streamer: true,
     artist: false,
+    artisan: false,
     "geo-admin": false,
     community: false,
     contractor: false,

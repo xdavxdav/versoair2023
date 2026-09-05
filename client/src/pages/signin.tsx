@@ -55,6 +55,70 @@ const getLoginDashboardPath = (userData: any) =>
     isContractor: userData?.isContractor,
   }).path;
 
+const getPortalChoices = (userData: any) => {
+  const portals = new Set(
+    (userData?.portals || []).map((portal: string) => portal.toLowerCase()),
+  );
+  const choices = [
+    portals.has("general") || portals.size === 0
+      ? {
+          id: "general",
+          name: "General Account",
+          detail: "Business tools and your Verso Air dashboard",
+          path: "/dashboard",
+        }
+      : null,
+    portals.has("artist") || userData?.hasArtistProfile
+      ? {
+          id: "artist",
+          name: "Artist Portal",
+          detail: "Tracks, royalties, and artist analytics",
+          path: "/artist-portal/dashboard",
+        }
+      : null,
+    portals.has("community")
+      ? {
+          id: "community",
+          name: "Community Blog",
+          detail: "Join discussions and discover Verso Air stories",
+          path: "/blog",
+        }
+      : null,
+    portals.has("streamer") || portals.has("music") || portals.has("musical")
+      ? {
+          id: "streamer",
+          name: "Musical Universe",
+          detail: "Stream music, follow artists, and join the community",
+          path: "/stream",
+        }
+      : null,
+    portals.has("contractor") || userData?.isContractor
+      ? {
+          id: "contractor",
+          name: "Contractor Portal",
+          detail: "Projects, contracts, and client connections",
+          path: "/contracts",
+        }
+      : null,
+    portals.has("geo-admin") ||
+    userData?.role === "admin" ||
+    userData?.role === "superuser"
+      ? {
+          id: "geo-admin",
+          name: "GeoAdmin",
+          detail: "Geographic business intelligence tools",
+          path: "/geo-admin/dashboard",
+        }
+      : null,
+  ];
+  return choices.filter(Boolean) as Array<{
+    id: string;
+    name: string;
+    detail: string;
+    path: string;
+  }>;
+};
+
 const businessTypes = [
   {
     id: "business-owner",
@@ -132,6 +196,10 @@ export default function SignIn() {
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
     null,
   );
+  const [portalChoices, setPortalChoices] = useState<
+    Array<{ id: string; name: string; detail: string; path: string }>
+  >([]);
+  const [portalSelectionOpen, setPortalSelectionOpen] = useState(false);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
 
@@ -351,6 +419,13 @@ export default function SignIn() {
             ? `Welcome back, ${data.user.name || data.user.email}!`
             : `Welcome, ${data.user.name || data.user.email}!`,
         });
+
+        const availablePortals = getPortalChoices(data.user);
+        if (availablePortals.length > 1) {
+          setPortalChoices(availablePortals);
+          setPortalSelectionOpen(true);
+          return;
+        }
 
         const redirectTarget = getQueryParam("redirect");
         if (redirectTarget && redirectTarget.startsWith("/")) {
@@ -1898,6 +1973,12 @@ export default function SignIn() {
                         "signin_timestamp",
                         new Date().toISOString(),
                       );
+                      const availablePortals = getPortalChoices(nextData.user);
+                      if (availablePortals.length > 1) {
+                        setPortalChoices(availablePortals);
+                        setPortalSelectionOpen(true);
+                        return;
+                      }
                       toast({
                         title: "✅ Signed in",
                         description: `Welcome, ${nextData.user.name || nextData.user.email}!`,
@@ -1938,6 +2019,42 @@ export default function SignIn() {
                     <span className="rounded-full bg-[#bf831c]/10 px-2 py-1 text-xs font-medium text-[#a6701a]">
                       Open
                     </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={portalSelectionOpen}
+          onOpenChange={setPortalSelectionOpen}
+        >
+          <DialogContent className="max-w-md rounded-2xl border border-slate-200 bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900">
+                Choose where to go
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                This account has access to more than one Verso Air portal.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 space-y-3">
+              {portalChoices.map((portal) => (
+                <button
+                  key={portal.id}
+                  type="button"
+                  onClick={() => {
+                    setPortalSelectionOpen(false);
+                    navigate(portal.path);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-[#bf831c] hover:bg-amber-50"
+                >
+                  <div className="font-semibold text-gray-900">
+                    {portal.name}
+                  </div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    {portal.detail}
                   </div>
                 </button>
               ))}

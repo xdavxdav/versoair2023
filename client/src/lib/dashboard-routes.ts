@@ -17,6 +17,7 @@ export type AccountFamily =
   | "general"
   | "geo-admin"
   | "artist"
+  | "artisan"
   | "streamer"
   | "contractor"
   | "staff";
@@ -44,12 +45,14 @@ export function getAccountFamily(
   if (role === "geo-admin" || portals.includes("geo-admin")) return "geo-admin";
   if (role === "artist" || user?.hasArtistProfile || portals.includes("artist"))
     return "artist";
+  if (portals.includes("artisan")) return "artisan";
   if (
     role === "contractor" ||
     user?.isContractor ||
     portals.includes("contractor")
   )
     return "contractor";
+  if (portals.includes("community")) return "general";
   if (
     STREAMER_ALIASES.has(role) ||
     portals.includes("streamer") ||
@@ -91,13 +94,20 @@ export function getDashboardTheme(
         secondary: "text-amber-200",
         label: "Artist Portal",
       };
+    case "artisan":
+      return {
+        shell: "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
+        accent: "from-emerald-600 to-teal-600",
+        primary: "text-emerald-800",
+        secondary: "text-teal-700",
+        label: "Artisan Portal",
+      };
     case "streamer":
       return {
-        shell:
-          "bg-gradient-to-br from-violet-950 via-purple-950 to-fuchsia-950",
-        accent: "from-violet-500 to-fuchsia-500",
-        primary: "text-violet-200",
-        secondary: "text-fuchsia-200",
+        shell: "bg-gradient-to-br from-slate-50 via-white to-fuchsia-50",
+        accent: "from-violet-600 to-fuchsia-600",
+        primary: "text-violet-800",
+        secondary: "text-fuchsia-700",
         label: "Musical Universe",
       };
     case "contractor":
