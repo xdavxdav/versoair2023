@@ -8,30 +8,13 @@ const router = Router();
 router.get(
   "/status",
   asyncHandler(async (_req, res) => {
-    try {
-      const dbTest = await db.execute(sql`SELECT NOW() as time`);
-      return res.json({
-        status: "ok",
-        timestamp: new Date().toISOString(),
-        message: "Server is running",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: true,
-          time: dbTest.rows[0]?.time,
-        },
-      });
-    } catch (error: any) {
-      return res.json({
-        status: "warning",
-        timestamp: new Date().toISOString(),
-        message: "Server is running but database connection failed",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: false,
-          error: error.message,
-        },
-      });
-    }
+    return res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      message: "API is running",
+      environment: process.env.NODE_ENV || "development",
+      api: { connected: true },
+    });
   }),
 );
 
@@ -44,10 +27,13 @@ router.get(
         success: true,
         status: "ok",
         timestamp: new Date().toISOString(),
-        message: "Server is running",
+        message: "API and database are operational",
         environment: process.env.NODE_ENV || "development",
+        version: process.env.npm_package_version || "unknown",
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: true,
+          status: "connected",
           time: dbTest.rows[0]?.time,
         },
       });
@@ -56,11 +42,14 @@ router.get(
         success: false,
         status: "error",
         timestamp: new Date().toISOString(),
-        message: "Server is running but database connection failed",
+        message: "API is running but the database is unavailable",
         environment: process.env.NODE_ENV || "development",
+        version: process.env.npm_package_version || "unknown",
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: false,
-          error: error.message,
+          status: "unavailable",
+          error: error?.code || "connection_failed",
         },
       });
     }

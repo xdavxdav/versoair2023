@@ -19,6 +19,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { authenticatedFetch } from "@/lib/auth";
 import {
   Card,
   CardContent,
@@ -141,12 +142,56 @@ const COMMUNITIES: Community[] = [
 export default function Communities() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [filteredCommunities, setFilteredCommunities] = useState(COMMUNITIES);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [filteredCommunities, setFilteredCommunities] = useState<Community[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [joinMessage, setJoinMessage] = useState("");
 
-  const categories = ["all", ...new Set(COMMUNITIES.map((c) => c.category))];
+  const categories = ["all", ...new Set(communities.map((c) => c.category))];
+
+  useEffect(() => {
+    const loadCommunities = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await fetch("/api/communities");
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || "Unable to load communities");
+        setCommunities(
+          (data.data || []).map((community: any) => ({
+            id: String(community.id),
+            name: community.name,
+            region: community.region,
+            category: community.category,
+            members: Number(community.member_count || 0),
+            focus: community.focus,
+            image: community.image_url || undefined,
+            description: community.description,
+            activities: Array.isArray(community.activities)
+              ? community.activities
+              : [],
+          })),
+        );
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Unable to load communities",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCommunities();
+  }, []);
 
   const filterCommunities = () => {
-    let filtered = COMMUNITIES;
+    let filtered = communities;
 
     if (selectedCategory !== "all") {
       filtered = filtered.filter((c) => c.category === selectedCategory);
@@ -155,9 +200,9 @@ export default function Communities() {
     if (searchQuery) {
       filtered = filtered.filter(
         (c) =>
-          c.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-          c.region.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-          c.focus.toLowerCase().startsWith(searchQuery.toLowerCase()),
+          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.focus.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
@@ -166,7 +211,36 @@ export default function Communities() {
 
   useEffect(() => {
     filterCommunities();
-  }, [searchQuery, selectedCategory]);
+  }, [communities, searchQuery, selectedCategory]);
+
+  const joinCommunity = async (communityId: string) => {
+    setJoiningId(communityId);
+    setJoinMessage("");
+    try {
+      const response = await authenticatedFetch(
+        `/api/communities/${communityId}/join`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: "Je souhaite rejoindre cette communauté.",
+          }),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          data.error || "Connectez-vous pour rejoindre une communauté.",
+        );
+      setJoinMessage("Demande envoyée. La communauté vous répondra bientôt.");
+    } catch (joinError) {
+      setJoinMessage(
+        joinError instanceof Error ? joinError.message : "Demande impossible",
+      );
+    } finally {
+      setJoiningId(null);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -254,9 +328,29 @@ export default function Communities() {
           </div>
         </div>
 
+        {error && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="p-4 text-red-700">{error}</CardContent>
+          </Card>
+        )}
+        {joinMessage && (
+          <p
+            className="mb-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            role="status"
+          >
+            {joinMessage}
+          </p>
+        )}
+
         {/* Results Count */}
         <p className="text-gray-600 mb-6">
-          Found <strong>{filteredCommunities.length}</strong>{" "}
+          {loading ? (
+            "Loading communities..."
+          ) : (
+            <>
+              Found <strong>{filteredCommunities.length}</strong>{" "}
+            </>
+          )}
           {filteredCommunities.length === 1 ? "community" : "communities"}
         </p>
 
@@ -342,13 +436,23 @@ export default function Communities() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
-                      <Link href="/artisan-workshops" className="flex-1">
-                        <button className="w-full group bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 text-sm flex items-center justify-center gap-1 relative overflow-hidden">
-                          <span className="relative z-10 flex items-center gap-1">
-                            <Zap className="h-3 w-3 animate-pulse" />
-                            Partake
-                          </span>
-                        </button>
+                      <Button
+                        className="flex-1 bg-emerald-600 text-sm font-bold hover:bg-emerald-700"
+                        onClick={() => joinCommunity(community.id)}
+                        disabled={joiningId === community.id}
+                      >
+                        <Zap className="mr-1 h-3 w-3" />
+                        {joiningId === community.id ? "Sending..." : "Join"}
+                      </Button>
+                      <Link href="/artisan-workshops">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="border-emerald-200 hover:bg-emerald-50"
+                          title="Discover workshops"
+                        >
+                          <BookOpen className="h-4 w-4 text-emerald-600" />
+                        </Button>
                       </Link>
                       <Button
                         variant="outline"

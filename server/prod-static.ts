@@ -55,8 +55,17 @@ export function serveStatic(app: Express) {
   // SPA fallback — ONLY for requests that are NOT static assets
   // (i.e., navigation requests from the browser)
   app.use("*", (req, res, next) => {
-    // If the request looks like a file (has a dot extension), skip fallback
-    if (req.originalUrl.includes(".")) {
+    const acceptsHtml = req.accepts("html") === "html";
+    const isNavigation = req.method === "GET" || req.method === "HEAD";
+
+    // APIs and non-HTML requests must keep their normal 404 behavior. A valid
+    // SPA route may contain dots in a slug, so the URL itself is not enough to
+    // identify a static asset.
+    if (
+      !isNavigation ||
+      req.path.startsWith("/api/") ||
+      !acceptsHtml
+    ) {
       return next();
     }
 

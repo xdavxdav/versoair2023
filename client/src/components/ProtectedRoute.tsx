@@ -16,6 +16,7 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { useLayoutEffect, useRef } from "react";
+import { RefreshCw } from "lucide-react";
 
 interface ProtectedRouteProps {
   /** The page component to render when authorized (alternative to children) */
@@ -34,7 +35,7 @@ export default function ProtectedRoute({
   roles,
   unauthorizedRedirect = "/",
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuthContext();
+  const { user, loading, authError, restoreAuth } = useAuthContext();
   const [, setLocation] = useLocation();
   const redirectingRef = useRef(false);
 
@@ -66,6 +67,24 @@ export default function ProtectedRoute({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600" />
+      </div>
+    );
+  }
+
+  if (authError && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-slate-900">Connection problem</h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">{authError}</p>
+          <button
+            type="button"
+            onClick={() => restoreAuth()}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            <RefreshCw className="h-4 w-4" /> Retry
+          </button>
+        </div>
       </div>
     );
   }

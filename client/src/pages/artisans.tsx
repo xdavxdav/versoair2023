@@ -58,7 +58,10 @@ export default function ArtisansDirectory() {
       setLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({ accountType: "artisan", limit: "60" });
+        const params = new URLSearchParams({
+          accountType: "artisan",
+          limit: "60",
+        });
         if (searchQuery) params.set("q", searchQuery);
         const res = await fetch(`/api/profiles/search?${params}`, {
           signal: controller.signal,
@@ -104,29 +107,29 @@ export default function ArtisansDirectory() {
             Each artisan brings unique skills, cultural heritage, and a passion
             for their craft.
           </motion.p>
-          <div className="flex items-center gap-2 mt-6 overflow-x-auto">
+          <div className="scrollbar-hide flex items-center gap-2 mt-6 overflow-x-auto pb-1">
             <Link href="/">
-              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 🏠 Accueil
               </span>
             </Link>
             <Link href="/programs">
-              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 🎭 Programmes
               </span>
             </Link>
             <Link href="/communities">
-              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 👥 Communautés
               </span>
             </Link>
             <Link href="/artist-portal">
-              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 🎵 Portail Artiste
               </span>
             </Link>
             <Link href="/divertissement">
-              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 🎪 Divertissement
               </span>
             </Link>
@@ -153,9 +156,14 @@ export default function ArtisansDirectory() {
         {/* Results Count */}
         <p className="text-gray-600 mb-6">
           {loading ? (
-            <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</span>
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+            </span>
           ) : (
-            <>Found <strong>{artisans.length}</strong> {artisans.length === 1 ? "artisan" : "artisans"}</>
+            <>
+              Found <strong>{artisans.length}</strong>{" "}
+              {artisans.length === 1 ? "artisan" : "artisans"}
+            </>
           )}
         </p>
 
@@ -163,7 +171,13 @@ export default function ArtisansDirectory() {
         {error && (
           <Card className="text-center py-8 border-0 shadow-lg bg-red-50 mb-6">
             <p className="text-red-600">{error}</p>
-            <Button onClick={() => setSearchQuery("")} variant="outline" className="mt-3">Retry</Button>
+            <Button
+              onClick={() => setSearchQuery("")}
+              variant="outline"
+              className="mt-3"
+            >
+              Retry
+            </Button>
           </Card>
         )}
 
@@ -208,7 +222,9 @@ export default function ArtisansDirectory() {
                     {(artisan.cityName || artisan.countryCode) && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin className="h-4 w-4 text-emerald-600" />
-                        {[artisan.cityName, artisan.countryCode].filter(Boolean).join(", ")}
+                        {[artisan.cityName, artisan.countryCode]
+                          .filter(Boolean)
+                          .join(", ")}
                       </div>
                     )}
                   </CardHeader>

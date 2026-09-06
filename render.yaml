@@ -9,6 +9,7 @@ services:
     name: versoair
     runtime: node
     plan: free
+    healthCheckPath: /api/health
     buildCommand: npm ci && npm run build && (npm run db:push || echo 'db:push skipped') && npm run seed
     startCommand: npm start
     envVars:

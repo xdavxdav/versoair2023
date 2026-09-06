@@ -31,6 +31,7 @@ export interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
+  authError: string | null;
   token: string | null;
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
@@ -72,12 +73,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const restoreAuth = useCallback(async () => {
+    setAuthError(null);
+    setLoading(true);
+    const cachedRaw = localStorage.getItem(USER_CACHE_KEY);
+
     // One-time cleanup of legacy localStorage token keys (no longer used for storage)
     localStorage.removeItem("artist_token");
     localStorage.removeItem("artist_profile");
-    localStorage.removeItem("auth_user");
     localStorage.removeItem("authToken");
     localStorage.removeItem("auth_token");
     localStorage.removeItem("verso_auth_token");
@@ -89,10 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // We do NOT flip loading=false here — ProtectedRoute needs to keep waiting for
     // the real verify response, otherwise it races and redirects to /auth/signin
     // while a valid cookie is being confirmed.
-    const cachedRaw = localStorage.getItem(USER_CACHE_KEY);
     if (cachedRaw) {
       try {
-        setUser(JSON.parse(cachedRaw));
+        setUser(normalizeUser(JSON.parse(cachedRaw)));
       } catch {
         localStorage.removeItem(USER_CACHE_KEY);
       }
@@ -119,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data.user as Record<string, unknown>,
           );
           setUser(normalized);
+          setAuthError(null);
           setToken(data.token ?? null);
           if (data.token) setAuthToken(data.token);
           localStorage.setItem(USER_CACHE_KEY, JSON.stringify(normalized));
@@ -130,12 +135,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (response.status === 401) {
         // Server explicitly says unauthenticated → clear
         clearSession();
+      } else {
+        setAuthError("We could not verify your session. Check your connection and retry.");
       }
       // Any other status (5xx, 502, 503 during deploy) → keep cached user
     } catch {
       // Network error, abort, or timeout — keep cached display state.
       // Heartbeat will re-verify. DO NOT clearSession here (that was causing the
       // "logged in but pages think I'm not" bug on cold starts).
+      setAuthError("The authentication service is temporarily unavailable.");
     } finally {
       setLoading(false);
     }
@@ -200,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthToken(newToken);
     setToken(newToken);
     setUser(newUser);
+    setAuthError(null);
     // Cache non-sensitive display info for fast UI restore on next load
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(newUser));
   };
@@ -227,6 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("signin_timestamp");
     setToken(null);
     setUser(null);
+    setAuthError(null);
   }
 
   function fullClearOnLogout() {
@@ -255,7 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, logout, restoreAuth }}
+      value={{ user, token, loading, authError, login, logout, restoreAuth }}
     >
       {children}
     </AuthContext.Provider>

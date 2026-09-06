@@ -2894,7 +2894,7 @@ export default function Home() {
                   icon: Palette,
                   text: "Art & Artisanat",
                   desc: "Créations artisanales",
-                  href: "/marketplace",
+                  href: "/art-and-artisanat",
                   mood: {
                     border: "border-violet-200/80 hover:border-violet-300",
                     icon: "bg-violet-50 text-violet-700 group-hover:bg-violet-600 group-hover:rotate-6",

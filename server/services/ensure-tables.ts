@@ -1003,6 +1003,51 @@ const TABLE_STATEMENTS: TableDef[] = [
       created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
+  {
+    table: "artisan_communities",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_communities (
+      id SERIAL PRIMARY KEY,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      name VARCHAR(180) NOT NULL,
+      slug VARCHAR(220) UNIQUE NOT NULL,
+      region VARCHAR(120) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      focus TEXT NOT NULL,
+      description TEXT NOT NULL,
+      activities JSONB DEFAULT '[]',
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      member_count INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "artisan_community_join_requests",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_join_requests (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`,
+  },
+  {
+    table: "artisan_communities_seed",
+    sql: `INSERT INTO artisan_communities
+      (name, slug, region, category, focus, description, activities, status, member_count)
+      VALUES
+      ('Abidjan Textile Collective', 'abidjan-textile-collective-community', 'Abidjan', 'Textiles', 'Traditional weaving and fabric arts', 'A vibrant collective of weavers preserving traditional techniques while innovating with contemporary designs.', '["Weekly workshops","Market sales","Cultural exhibitions","Skill training"]', 'PUBLISHED', 245),
+      ('Yamoussoukro Ceramics Guild', 'yamoussoukro-ceramics-guild-community', 'Yamoussoukro', 'Ceramics', 'Pottery and clay crafts', 'Master potters teaching the next generation while creating stunning handcrafted pieces.', '["Pottery classes","Exhibitions","International orders","Apprenticeships"]', 'PUBLISHED', 156),
+      ('Korhogo Carvers Association', 'korhogo-carvers-association-community', 'Korhogo', 'Wood Carving', 'Traditional wood sculpture', 'Ancient wood carving traditions passed down through families, creating iconic African art.', '["Carving demonstrations","Art shows","Museum partnerships","Youth programs"]', 'PUBLISHED', 189),
+      ('Bouake Metalwork Artisans', 'bouake-metalwork-artisans-community', 'Bouake', 'Metalwork', 'Metal arts and sculpture', 'Skilled metalworkers creating decorative and functional pieces using traditional techniques.', '["Forging workshops","Large commissions","Art festivals","Technical training"]', 'PUBLISHED', 127),
+      ('San Pedro Leather Craftspeople', 'san-pedro-leather-craftspeople-community', 'San Pedro', 'Leather Work', 'Leather goods and accessories', 'Dedicated artisans crafting high-quality leather products with traditional methods.', '["Leather classes","Market participation","Custom orders","Sustainable practices"]', 'PUBLISHED', 98),
+      ('Daloa Jewelry Makers', 'daloa-jewelry-makers-community', 'Daloa', 'Jewelry', 'Traditional and contemporary jewelry', 'Gold, silver, and beaded jewelry artisans creating stunning wearable art.', '["Design workshops","Jewelry shows","International sales","Apprenticeships"]', 'PUBLISHED', 112)
+      ON CONFLICT (slug) DO NOTHING`,
+  },
 
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
