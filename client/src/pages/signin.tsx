@@ -204,7 +204,17 @@ export default function SignIn() {
   const { user: authUser, login: authLogin } = useAuthContext();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    const previousUrl = document.referrer;
+    const hasUsablePreviousPage =
+      window.history.length > 1 &&
+      (!previousUrl ||
+        (new URL(previousUrl, window.location.origin).origin ===
+          window.location.origin &&
+          !new URL(previousUrl, window.location.origin).pathname.startsWith(
+            "/auth/signin",
+          )));
+
+    if (hasUsablePreviousPage) {
       window.history.back();
     } else {
       navigate("/");
