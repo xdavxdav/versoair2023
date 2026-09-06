@@ -747,7 +747,7 @@ function AppContent() {
       currentPath.startsWith("/sante") ||
       currentPath.startsWith("/geo-admin")
     )
-      return "Business Intelligence";
+      return "Verso Air Business";
     if (currentPath.startsWith("/royal")) return "Royal";
     if (currentPath.startsWith("/vault") || currentPath.startsWith("/sys/"))
       return "Vault";
@@ -854,8 +854,7 @@ function AppContent() {
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isAuthed &&
-        !isMusicPage &&
+      {!isMusicPage &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
         !currentPath.startsWith("/user/") &&
@@ -883,7 +882,9 @@ function AppContent() {
                         ? "Plateforme Verso Air"
                         : "Verso Air Platform"
                       : isFr
-                        ? `Plateforme ${pageTitle === "Business Intelligence" ? "d'Intelligence d'Affaires" : pageTitle}`
+                        ? pageTitle === "Verso Air Business"
+                          ? "Verso Air Business"
+                          : `Plateforme ${pageTitle}`
                         : pageTitle}
                   </span>
                   <span
@@ -940,12 +941,17 @@ function AppContent() {
                   <div className="animate-scroll-continuous flex">
                     {[...Array(4)].map((_, i) => (
                       <div key={i} className="flex flex-shrink-0">
-                        <span className="flex-shrink-0 px-4 md:px-8">
-                          Bienvenue sur Verso Air ™️ — Plateforme d'Intelligence
-                          d'Affaires
+                        <span
+                          className="notranslate flex-shrink-0 px-4 md:px-8"
+                          translate="no"
+                        >
+                          Welcome to Verso Air™ — Verso Air Business
                         </span>
-                        <span className="flex-shrink-0 px-4 md:px-8">
-                          Analyser • Optimiser • Visualiser • Croître
+                        <span
+                          className="notranslate flex-shrink-0 px-4 md:px-8"
+                          translate="no"
+                        >
+                          Analyze • Optimize • Visualize • Grow
                         </span>
                         <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
                           24 Secteurs d'Industrie • Analytique en Direct •
@@ -1064,12 +1070,15 @@ function AppContent() {
         </div>
       )}
 
-      {/* Mobile Menu Bubble — hide whenever the dedicated Blog/Marketplace nav is active. */}
-      {!isImmersivePage && !isMusicPage && !isBlogOrMarketplace && (
-        <Suspense fallback={null}>
-          <MobileMenuBubble />
-        </Suspense>
-      )}
+      {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
+      {!isImmersivePage &&
+        !isMusicPage &&
+        !isBlogOrMarketplace &&
+        !showAccountBlogNavbar && (
+          <Suspense fallback={null}>
+            <MobileMenuBubble />
+          </Suspense>
+        )}
 
       {/* Messenger panel remains globally mounted so pages can open it via
           `messenger:open`, but the floating purple launcher button is hidden

@@ -186,7 +186,12 @@ router.get("/conversations", async (req: Request, res: Response) => {
       .where(eq(schema.inboxConversations.userId, Number(userId)))
       .orderBy(desc(schema.inboxConversations.updatedAt));
 
-    return res.json({ success: true, conversations: rows });
+    const conversations = rows.map((conversation) => ({
+      ...conversation,
+      portal: conversation.type === "music_artist" ? "music" : "community",
+    }));
+
+    return res.json({ success: true, conversations });
   } catch (err: any) {
     console.error("[Inbox] GET /conversations error:", err?.message);
     return res
