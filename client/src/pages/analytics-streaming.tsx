@@ -29,6 +29,7 @@ import {
   Crown,
   Zap,
   Play,
+  RefreshCw,
 } from "lucide-react";
 
 function formatNumber(n: number): string {
@@ -46,14 +47,19 @@ function formatCurrency(n: number): string {
 import { getFlag } from "@/utils/get-flag";
 
 export default function AnalyticsPage() {
-  const { data: analytics, isLoading } = useStreamingAnalytics();
+  const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "all">("30d");
+  const {
+    data: analytics,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useStreamingAnalytics(period);
   const { data: artistsData } = useStreamingArtists({
     limit: 10,
     sort: "streams",
   });
   const { data: plansData } = useSubscriptionPlans();
-  const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "all">("30d");
-
   const overview = analytics || {};
   const topArtists = artistsData?.artists || [];
   const benefitChart = plansData?.benefitChart;
@@ -93,7 +99,7 @@ export default function AnalyticsPage() {
     },
     {
       label: "Pays représentés",
-      value: overview.totalCountries || 10,
+      value: overview.totalCountries || 0,
       icon: Globe,
       color: "cyan",
     },
@@ -147,6 +153,30 @@ export default function AnalyticsPage() {
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="w-12 h-12 border-2 border-amber-500/30 border-t-amber-500 rounded-full"
         />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black px-4 text-white">
+        <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center text-center">
+          <BarChart3 className="h-12 w-12 text-amber-400/70" />
+          <h1 className="mt-5 text-2xl font-bold">Analytics unavailable</h1>
+          <p className="mt-3 text-sm leading-relaxed text-gray-400">
+            We couldn&apos;t retrieve the streaming analytics right now. Your data has not been changed.
+          </p>
+          <p className="mt-2 max-w-full break-all text-xs text-gray-600">
+            {error instanceof Error ? error.message : "The analytics service returned an error."}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-gray-950 hover:bg-amber-400"
+          >
+            <RefreshCw className="h-4 w-4" /> Retry
+          </button>
+        </div>
       </div>
     );
   }

@@ -53,12 +53,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ArtisanNav from "@/components/ArtisanNav";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 
 // ─────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────
 interface ArtisanProfile {
   id: string;
+  status: "DRAFT" | "PENDING" | "PUBLISHED" | "SUSPENDED";
+  slug?: string;
   displayName: string;
   email: string;
   phone?: string;
@@ -114,6 +118,7 @@ interface Order {
 // ─────────────────────────────────────────────────────
 const EMPTY_PROFILE: ArtisanProfile = {
   id: "",
+  status: "DRAFT",
   displayName: "",
   email: "",
   phone: "",
@@ -218,6 +223,15 @@ function ProfileCard({
           <h2 className="text-xl font-bold text-slate-900">
             {profile.displayName}
           </h2>
+          <Badge className="bg-emerald-500/20 text-emerald-300">
+            {profile.status === "PUBLISHED"
+              ? "Publié"
+              : profile.status === "PENDING"
+                ? "En vérification"
+                : profile.status === "SUSPENDED"
+                  ? "Suspendu"
+                  : "Brouillon"}
+          </Badge>
           {profile.isVerified && (
             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
               Vérifié
@@ -264,7 +278,9 @@ function ProfileCard({
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 pt-4 border-t border-emerald-500/10">
           <div className="text-center">
-            <p className="text-2xl font-bold text-slate-900">{profile.rating}</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {profile.rating}
+            </p>
             <p className="text-xs text-emerald-300/60 flex items-center justify-center gap-1">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
               Note
@@ -486,7 +502,13 @@ function OrdersTable({ orders }: { orders: Order[] }) {
 }
 
 // Settings Form
-function SettingsForm({ profile }: { profile: ArtisanProfile }) {
+function SettingsForm({
+  profile,
+  onSaved,
+}: {
+  profile: ArtisanProfile;
+  onSaved: (profile: ArtisanProfile) => void;
+}) {
   const [formData, setFormData] = useState({
     displayName: profile.displayName,
     bio: profile.bio || "",
@@ -496,6 +518,65 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
     hourlyRate: profile.hourlyRate?.toString() || "",
     specializations: profile.specializations,
   });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    setFormData({
+      displayName: profile.displayName,
+      bio: profile.bio || "",
+      location: profile.location || "",
+      phone: profile.phone || "",
+      website: profile.website || "",
+      hourlyRate: profile.hourlyRate?.toString() || "",
+      specializations: profile.specializations,
+    });
+  }, [profile]);
+
+  const saveProfile = async () => {
+    if (!formData.displayName.trim()) {
+      setMessage("Le nom d'affichage est obligatoire.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+    try {
+      const payload = {
+        name: formData.displayName.trim(),
+        displayName: formData.displayName.trim(),
+        bio: formData.bio,
+        cityName: formData.location,
+        phone: formData.phone,
+        website: formData.website,
+        category: formData.specializations[0] || null,
+        metadata: {
+          specializations: formData.specializations,
+          hourlyRate: formData.hourlyRate ? Number(formData.hourlyRate) : 0,
+        },
+      };
+      const response = await authenticatedFetch(
+        profile.id ? `/api/my/profiles/${profile.id}` : "/api/my/profiles",
+        {
+          method: profile.id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Échec de l'enregistrement");
+
+      onSaved(toArtisanProfile(data.data));
+      setMessage("Profil enregistré.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Échec de l'enregistrement",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -578,7 +659,20 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
 
           <div className="space-y-2">
             <Label className="text-emerald-100">Spécialisations</Label>
-            <Select>
+            <Select
+              value=""
+              onValueChange={(specialization) => {
+                if (!formData.specializations.includes(specialization)) {
+                  setFormData({
+                    ...formData,
+                    specializations: [
+                      ...formData.specializations,
+                      specialization,
+                    ],
+                  });
+                }
+              }}
+            >
               <SelectTrigger className="bg-slate-900/50 border-emerald-500/30 text-slate-900">
                 <SelectValue placeholder="Ajouter une spécialisation" />
               </SelectTrigger>
@@ -613,15 +707,54 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button className="bg-emerald-600 hover:bg-emerald-500">
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-500"
+              onClick={saveProfile}
+              disabled={saving}
+            >
               <Save className="w-4 h-4 mr-2" />
-              Enregistrer
+              {saving ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </div>
+          {message && (
+            <p className="text-sm text-emerald-300" role="status">
+              {message}
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+function toArtisanProfile(profile: any): ArtisanProfile {
+  const metadata = profile?.metadata || {};
+  return {
+    id: String(profile?.id || ""),
+    status: profile?.status || "DRAFT",
+    slug: profile?.slug || undefined,
+    displayName: profile?.displayName || profile?.name || "",
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+    bio: profile?.bio || profile?.description || "",
+    location: profile?.cityName || profile?.address || "",
+    website: profile?.website || "",
+    avatar: profile?.profileImageUrl || "",
+    coverImage: profile?.coverImageUrl || "",
+    specializations: Array.isArray(metadata.specializations)
+      ? metadata.specializations
+      : profile?.category
+        ? [profile.category]
+        : [],
+    yearsExperience: Number(metadata.yearsExperience || 0),
+    hourlyRate: Number(metadata.hourlyRate || 0),
+    isVerified: Boolean(profile?.isVerified),
+    rating: Number(profile?.rating || 0),
+    reviewCount: Number(profile?.reviewCount || 0),
+    portfolioCount: Number(metadata.portfolioCount || 0),
+    orderCount: Number(metadata.orderCount || 0),
+    joinedDate: profile?.createdAt || new Date().toISOString(),
+  };
 }
 
 // ─────────────────────────────────────────────────────
@@ -629,11 +762,83 @@ function SettingsForm({ profile }: { profile: ArtisanProfile }) {
 // ─────────────────────────────────────────────────────
 export default function ArtisansPortal() {
   const [location] = useLocation();
-  const [profile] = useState<ArtisanProfile>(EMPTY_PROFILE);
+  const [, setLocation] = useLocation();
+  const { user, loading: authLoading } = useAuthContext();
+  const [profile, setProfile] = useState<ArtisanProfile>(EMPTY_PROFILE);
   const [portfolio] = useState<PortfolioItem[]>(EMPTY_PORTFOLIO);
   const [reviews] = useState<Review[]>(EMPTY_REVIEWS);
   const [orders] = useState<Order[]>(EMPTY_ORDERS);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileMessage, setProfileMessage] = useState("");
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setLocation(
+        `/auth/signin?redirect=${encodeURIComponent("/artisans-portal")}`,
+      );
+      return;
+    }
+
+    const loadProfile = async () => {
+      try {
+        const response = await authenticatedFetch("/api/my/profiles");
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || "Impossible de charger le profil");
+        const artisanProfile = data.data?.[0];
+        if (artisanProfile) {
+          setProfile(toArtisanProfile(artisanProfile));
+        } else {
+          setProfile({ ...EMPTY_PROFILE, email: user.email });
+        }
+      } catch (error) {
+        setProfileMessage(
+          error instanceof Error
+            ? error.message
+            : "Impossible de charger le profil",
+        );
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [authLoading, user, setLocation]);
+
+  const submitProfile = async () => {
+    if (!profile.id) {
+      setProfileMessage("Enregistrez d'abord votre profil avant de l'envoyer.");
+      return;
+    }
+    try {
+      const response = await authenticatedFetch(
+        `/api/my/profiles/${profile.id}/submit`,
+        { method: "POST" },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Impossible d'envoyer le profil");
+      setProfile(toArtisanProfile(data.data));
+      setProfileMessage("Profil envoyé. Il sera visible après validation.");
+    } catch (error) {
+      setProfileMessage(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'envoyer le profil",
+      );
+    }
+  };
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Chargement du profil...
+      </div>
+    );
+  }
+  if (!user) return null;
 
   // Get active tab from URL
   const searchParams = new URLSearchParams(window.location.search);
@@ -759,6 +964,38 @@ export default function ArtisansPortal() {
                     Gérez votre présence sur la plateforme
                   </p>
                 </div>
+                <Card className="bg-white/10 border-emerald-500/20">
+                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {profile.status === "PUBLISHED"
+                          ? "Votre profil est public"
+                          : profile.status === "PENDING"
+                            ? "Votre profil est en cours de vérification"
+                            : "Votre profil est encore en brouillon"}
+                      </p>
+                      <p className="text-sm text-emerald-100/70">
+                        {profile.status === "PUBLISHED"
+                          ? "Les visiteurs peuvent maintenant vous trouver dans l'annuaire."
+                          : "Complétez vos informations puis envoyez-les à l'équipe Verso Air."}
+                      </p>
+                    </div>
+                    {profile.status === "DRAFT" && (
+                      <Button
+                        className="bg-emerald-600 hover:bg-emerald-500"
+                        onClick={submitProfile}
+                        disabled={!profile.id}
+                      >
+                        Envoyer pour validation
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+                {profileMessage && (
+                  <p className="text-sm text-emerald-200" role="status">
+                    {profileMessage}
+                  </p>
+                )}
 
                 {/* Recent portfolio preview */}
                 <Card className="bg-slate-800/50 border-emerald-500/20">
@@ -881,7 +1118,13 @@ export default function ArtisansPortal() {
                     Gérez vos informations et préférences
                   </p>
                 </div>
-                <SettingsForm profile={profile} />
+                <SettingsForm
+                  profile={profile}
+                  onSaved={(savedProfile) => {
+                    setProfile(savedProfile);
+                    setIsEditingProfile(false);
+                  }}
+                />
               </TabsContent>
             </Tabs>
           </div>

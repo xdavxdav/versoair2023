@@ -11,26 +11,89 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
 import { unifiedProfiles, profileApprovalActions } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth";
 import {
   getPublicProfiles,
   getPublicProfileBySlug,
   getAdminProfiles,
+  getPartnerProfiles,
 } from "../services/profile-queries";
-import { syncLegacyProfiles } from "../services/profile-migration";
+import {
+  generateUniqueSlug,
+  syncLegacyProfiles,
+} from "../services/profile-migration";
 
 const router = Router();
 
 const VALID_ACTIONS = ["approve", "reject", "suspend", "restore"] as const;
-type ApprovalAction = typeof VALID_ACTIONS[number];
+type ApprovalAction = (typeof VALID_ACTIONS)[number];
 
 // Status transitions enforced here — UI cannot bypass these rules
 const TRANSITIONS: Record<string, Record<ApprovalAction, string>> = {
-  DRAFT:     { approve: "DRAFT",     reject: "DRAFT",    suspend: "SUSPENDED", restore: "DRAFT" },
-  PENDING:   { approve: "PUBLISHED", reject: "DRAFT",    suspend: "SUSPENDED", restore: "PENDING" },
-  PUBLISHED: { approve: "PUBLISHED", reject: "DRAFT",    suspend: "SUSPENDED", restore: "PUBLISHED" },
-  SUSPENDED: { approve: "PUBLISHED", reject: "DRAFT",    suspend: "SUSPENDED", restore: "PUBLISHED" },
+  DRAFT: {
+    approve: "DRAFT",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "DRAFT",
+  },
+  PENDING: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PENDING",
+  },
+  PUBLISHED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED",
+  },
+  SUSPENDED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED",
+  },
 };
+
+const EDITABLE_PROFILE_FIELDS = [
+  "name",
+  "displayName",
+  "category",
+  "description",
+  "bio",
+  "email",
+  "phone",
+  "website",
+  "address",
+  "cityName",
+  "countryCode",
+  "profileImageUrl",
+  "coverImageUrl",
+  "socialLinks",
+  "metadata",
+] as const;
+
+function ownerId(req: Request): number {
+  return Number(req.user?.userId);
+}
+
+function pickEditableFields(body: Record<string, unknown>) {
+  return Object.fromEntries(
+    EDITABLE_PROFILE_FIELDS.filter((field) => body[field] !== undefined).map(
+      (field) => [field, body[field]],
+    ),
+  );
+}
+
+function profilePayload(body: Record<string, unknown>): Record<string, any> {
+  const fields = pickEditableFields(body);
+  if (fields.metadata !== undefined && typeof fields.metadata !== "object") {
+    delete fields.metadata;
+  }
+  return fields;
+}
 
 function requireAdmin(req: Request, res: Response): boolean {
   const user = (req as any).user;
@@ -40,6 +103,140 @@ function requireAdmin(req: Request, res: Response): boolean {
   }
   return true;
 }
+
+// ── Owner: artisan profile lifecycle ─────────────────────────────────────────
+router.get("/api/my/profiles", requireAuth(), async (req, res) => {
+  try {
+    const profiles = await getPartnerProfiles(ownerId(req));
+    res.json({ success: true, data: profiles });
+  } catch (err) {
+    console.error("[my/profiles]", err);
+    res.status(500).json({ error: "Failed to fetch your profiles" });
+  }
+});
+
+router.post("/api/my/profiles", requireAuth(), async (req, res) => {
+  const payload = profilePayload(req.body as Record<string, unknown>);
+  const name = String(payload.name || payload.displayName || "").trim();
+
+  if (!name) {
+    return res.status(400).json({ error: "Profile name is required" });
+  }
+
+  try {
+    const profile = await db
+      .insert(unifiedProfiles)
+      .values({
+        ...payload,
+        name,
+        ownerId: ownerId(req),
+        accountType: "artisan",
+        slug: await generateUniqueSlug(name, "artisan"),
+        status: "DRAFT",
+        verificationStatus: "pending",
+        isVerified: false,
+        metadata: payload.metadata || {},
+      })
+      .returning();
+
+    res.status(201).json({ success: true, data: profile[0] });
+  } catch (err) {
+    console.error("[my/profiles:create]", err);
+    res.status(500).json({ error: "Failed to create artisan profile" });
+  }
+});
+
+router.put("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  if (!Number.isInteger(profileId)) {
+    return res.status(400).json({ error: "Invalid profile id" });
+  }
+
+  const payload = profilePayload(req.body as Record<string, unknown>);
+  if (payload.name !== undefined && !String(payload.name).trim()) {
+    return res.status(400).json({ error: "Profile name cannot be empty" });
+  }
+
+  try {
+    const [profile] = await db
+      .update(unifiedProfiles)
+      .set({ ...payload, updatedAt: new Date() })
+      .where(
+        and(
+          eq(unifiedProfiles.id, profileId),
+          eq(unifiedProfiles.ownerId, ownerId(req)),
+          eq(unifiedProfiles.accountType, "artisan"),
+        ),
+      )
+      .returning();
+
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:update]", err);
+    res.status(500).json({ error: "Failed to update artisan profile" });
+  }
+});
+
+router.post("/api/my/profiles/:id/submit", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+
+  try {
+    const [profile] = await db
+      .update(unifiedProfiles)
+      .set({
+        status: "PENDING",
+        verificationStatus: "pending",
+        isVerified: false,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(unifiedProfiles.id, profileId),
+          eq(unifiedProfiles.ownerId, ownerId(req)),
+          eq(unifiedProfiles.accountType, "artisan"),
+          eq(unifiedProfiles.status, "DRAFT"),
+        ),
+      )
+      .returning();
+
+    if (!profile) {
+      return res.status(409).json({
+        error: "Only a draft artisan profile can be submitted",
+      });
+    }
+
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:submit]", err);
+    res.status(500).json({ error: "Failed to submit artisan profile" });
+  }
+});
+
+router.delete("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+
+  try {
+    const [profile] = await db
+      .update(unifiedProfiles)
+      .set({ status: "DRAFT", updatedAt: new Date() })
+      .where(
+        and(
+          eq(unifiedProfiles.id, profileId),
+          eq(unifiedProfiles.ownerId, ownerId(req)),
+          eq(unifiedProfiles.accountType, "artisan"),
+          eq(unifiedProfiles.status, "DRAFT"),
+        ),
+      )
+      .returning({ id: unifiedProfiles.id });
+
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, id: profile.id });
+  } catch (err) {
+    console.error("[my/profiles:archive]", err);
+    res.status(500).json({ error: "Failed to archive artisan profile" });
+  }
+});
 
 // ── Public: search verified+published profiles ────────────────────────────────
 router.get("/api/profiles/search", async (req: Request, res: Response) => {
@@ -92,8 +289,15 @@ router.get("/api/profiles/:slug", async (req: Request, res: Response) => {
 router.get("/api/admin/profiles", async (req: Request, res: Response) => {
   if (!requireAdmin(req, res)) return;
   try {
-    const { status, verificationStatus, accountType } = req.query as Record<string, string>;
-    const profiles = await getAdminProfiles({ status, verificationStatus, accountType });
+    const { status, verificationStatus, accountType } = req.query as Record<
+      string,
+      string
+    >;
+    const profiles = await getAdminProfiles({
+      status,
+      verificationStatus,
+      accountType,
+    });
     res.json({ success: true, data: profiles, count: profiles.length });
   } catch (err) {
     console.error("[admin/profiles]", err);
@@ -102,16 +306,19 @@ router.get("/api/admin/profiles", async (req: Request, res: Response) => {
 });
 
 // ── Admin: pending review queue ───────────────────────────────────────────────
-router.get("/api/admin/profiles/pending", async (req: Request, res: Response) => {
-  if (!requireAdmin(req, res)) return;
-  try {
-    const profiles = await getAdminProfiles({ status: "PENDING" });
-    res.json({ success: true, data: profiles, count: profiles.length });
-  } catch (err) {
-    console.error("[admin/profiles/pending]", err);
-    res.status(500).json({ error: "Failed to fetch pending profiles" });
-  }
-});
+router.get(
+  "/api/admin/profiles/pending",
+  async (req: Request, res: Response) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const profiles = await getAdminProfiles({ status: "PENDING" });
+      res.json({ success: true, data: profiles, count: profiles.length });
+    } catch (err) {
+      console.error("[admin/profiles/pending]", err);
+      res.status(500).json({ error: "Failed to fetch pending profiles" });
+    }
+  },
+);
 
 // ── Admin: approve / reject / suspend / restore ───────────────────────────────
 router.post(
@@ -124,7 +331,11 @@ router.post(
     const adminUser = (req as any).user;
 
     if (!VALID_ACTIONS.includes(action as ApprovalAction)) {
-      return res.status(400).json({ error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}` });
+      return res
+        .status(400)
+        .json({
+          error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}`,
+        });
     }
 
     try {
@@ -147,9 +358,11 @@ router.post(
 
       const isVerified = nextStatus === "PUBLISHED";
       const verificationStatus =
-        action === "approve" ? "approved" :
-        action === "reject"  ? "rejected" :
-        profile.verificationStatus;
+        action === "approve"
+          ? "approved"
+          : action === "reject"
+            ? "rejected"
+            : profile.verificationStatus;
 
       await db
         .update(unifiedProfiles)

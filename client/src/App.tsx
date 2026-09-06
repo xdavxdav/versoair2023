@@ -46,6 +46,8 @@ const FaqPage = lazy(() => import("@/pages/faq"));
 const Profile = lazy(() => import("@/pages/profile"));
 const UserProfile = lazy(() => import("@/pages/user-profile"));
 const Marketplace = lazy(() => import("@/pages/marketplace"));
+const ArtAndArtisanat = lazy(() => import("@/pages/art-and-artisanat"));
+const ArtisanProfilePage = lazy(() => import("@/pages/artisan-profile"));
 const Partners = lazy(() => import("@/pages/partners"));
 const SystemStatus = lazy(() => import("@/pages/status"));
 const GetInvolved = lazy(() => import("@/pages/get-involved"));
@@ -136,6 +138,7 @@ const VerificationPage = lazy(() => import("@/pages/admin/verification"));
 const AdminTicketManagement = lazy(
   () => import("@/pages/admin/ticket-management"),
 );
+const ProfileReviewPage = lazy(() => import("@/pages/admin/profile-review"));
 const StreamRoyaleAdmin = lazy(() => import("@/pages/streamroyale-admin"));
 const PurgatoireAdmin = lazy(() => import("@/pages/admin/purgatoire"));
 const ArtistContractsAdmin = lazy(
@@ -292,6 +295,8 @@ const BETA_ROUTE_PREFIXES = [
   "/messages",
   "/apply",
   "/marketplace",
+  "/art-and-artisanat",
+  "/profiles/",
   "/status",
   "/pricing",
   "/blog",
@@ -419,6 +424,8 @@ function Router() {
       </Route>
       <Route path="/user/:id" component={UserProfile} />
       <Route path="/marketplace" component={Marketplace} />
+      <Route path="/art-and-artisanat" component={ArtAndArtisanat} />
+      <Route path="/profiles/:slug" component={ArtisanProfilePage} />
       <Route path="/sell">{() => <Redirect to="/marketplace" />}</Route>
       <Route path="/orders">
         {() => <Redirect to="/marketing/order-tracking" />}
@@ -554,6 +561,11 @@ function Router() {
       <Route path="/admin/tickets">
         {() => (
           <ProtectedRoute component={AdminTicketManagement} roles={["admin"]} />
+        )}
+      </Route>
+      <Route path="/admin/profiles">
+        {() => (
+          <ProtectedRoute component={ProfileReviewPage} roles={["admin"]} />
         )}
       </Route>
       <Route path="/admin/streamroyale">
@@ -780,7 +792,10 @@ function AppContent() {
     !currentPath.startsWith("/admin") &&
     !currentPath.startsWith("/geo-admin");
   const showContentNav =
-    isContentNavPage && isAuthed && !isBlogOrMarketplace && !showAccountBlogNavbar;
+    isContentNavPage &&
+    isAuthed &&
+    !isBlogOrMarketplace &&
+    !showAccountBlogNavbar;
   // Immersive pages — hide navbar, footer (keep motto), bubble menu
   const isImmersivePage =
     currentPath === "/dashboard" ||

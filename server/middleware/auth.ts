@@ -138,6 +138,7 @@ const PUBLIC_PATHS: string[] = [
   "/api/ai/connectors",
   // FAQ read endpoints — public so anyone can browse (writes require auth)
   "/api/faq/categories",
+  "/api/communities",
 ];
 
 /**
@@ -164,6 +165,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/streaming/albums/", // Streaming browse — album details
   "/api/streaming/search", // Streaming search
   "/api/streaming/subscription/plans", // Subscription plan listing (public)
+  "/api/communities/", // Public artisan community discovery
 ];
 
 /**

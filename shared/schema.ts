@@ -1033,6 +1033,59 @@ export const profileApprovalActions = pgTable(
 export type UnifiedProfile = typeof unifiedProfiles.$inferSelect;
 export type InsertUnifiedProfile = typeof unifiedProfiles.$inferInsert;
 export type ProfileApprovalAction = typeof profileApprovalActions.$inferSelect;
+// ── ARTISAN COMMUNITIES ──────────────────────────────────────────────────────
+export const artisanCommunities = pgTable(
+  "artisan_communities",
+  {
+    id: serial("id").primaryKey(),
+    ownerId: integer("owner_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    name: varchar("name", { length: 180 }).notNull(),
+    slug: varchar("slug", { length: 220 }).unique().notNull(),
+    region: varchar("region", { length: 120 }).notNull(),
+    category: varchar("category", { length: 120 }).notNull(),
+    focus: text("focus").notNull(),
+    description: text("description").notNull(),
+    activities: jsonb("activities").$type<string[]>().default([]),
+    imageUrl: text("image_url"),
+    status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
+    memberCount: integer("member_count").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("artisan_communities_status_idx").on(t.status),
+    regionIdx: index("artisan_communities_region_idx").on(t.region),
+  }),
+);
+
+export const artisanCommunityJoinRequests = pgTable(
+  "artisan_community_join_requests",
+  {
+    id: serial("id").primaryKey(),
+    communityId: integer("community_id")
+      .references(() => artisanCommunities.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    message: text("message"),
+    status: varchar("status", { length: 30 }).default("PENDING").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    communityIdx: index("artisan_join_requests_community_idx").on(
+      t.communityId,
+    ),
+    userIdx: index("artisan_join_requests_user_idx").on(t.userId),
+  }),
+);
+
+export type ArtisanCommunity = typeof artisanCommunities.$inferSelect;
+export type ArtisanCommunityJoinRequest =
+  typeof artisanCommunityJoinRequests.$inferSelect;
 export const insertUnifiedProfileSchema = createInsertSchema(unifiedProfiles);
 
 export const ticketComments = pgTable(

@@ -267,10 +267,10 @@ export function useListeningHistory() {
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
 
-export function useStreamingAnalytics() {
+export function useStreamingAnalytics(period: "7d" | "30d" | "90d" | "all" = "30d") {
   return useQuery({
-    queryKey: ["streaming-analytics"],
-    queryFn: () => fetchJson(`${BASE}/analytics/overview`),
+    queryKey: ["streaming-analytics", period],
+    queryFn: () => fetchJson(`${BASE}/analytics/overview?period=${period}`),
     staleTime: 120_000,
   });
 }

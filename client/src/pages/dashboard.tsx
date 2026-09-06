@@ -1491,11 +1491,12 @@ export default function UserDashboard() {
         if (token) headers["Authorization"] = `Bearer ${token}`;
         const response = await fetch(`${API_BASE_URL}/auth/session`, {
           headers,
+          credentials: "include",
         });
-        if (!response.ok) return null;
+        if (!response.ok) throw new Error(`Session request failed (${response.status})`);
         return response.json();
-      } catch {
-        return null;
+      } catch (error) {
+        throw error;
       }
     },
     staleTime: 0,
@@ -1503,7 +1504,12 @@ export default function UserDashboard() {
   });
 
   // Public stats
-  const { data: stats, isLoading: statsLoading } = useQuery<PublicStats>({
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useQuery<PublicStats>({
     queryKey: ["public-dashboard-stats"],
     queryFn: async () => {
       try {
@@ -1512,8 +1518,8 @@ export default function UserDashboard() {
         );
         if (!response.ok) throw new Error("Failed");
         return response.json();
-      } catch {
-        return null;
+      } catch (error) {
+        throw error;
       }
     },
     retry: 2,
@@ -2462,6 +2468,22 @@ export default function UserDashboard() {
           )}
         </div>
       </div>
+
+      {statsError && (
+        <div className="mx-auto mt-4 flex w-full max-w-6xl items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+          <span>
+            We couldn&apos;t retrieve the latest platform statistics. The rest of your dashboard is still available.
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 border-amber-300 text-amber-900 hover:bg-amber-100"
+            onClick={() => refetchStats()}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
       {/* MAIN CONTENT */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
