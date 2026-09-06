@@ -30,7 +30,7 @@ const navLinks = [
   { href: "/sav", label: "SAV 24/7", icon: Headphones },
 ];
 
-/* ── mobile quick-nav pills (Marketplace is reached by tapping Home) ── */
+/* ── mobile quick-nav pills ── */
 const MOBILE_PILLS = [
   {
     href: "/blog",
@@ -97,8 +97,6 @@ export default function BlogNavbar({
   }, [lastScrollY]);
 
   // ─── Home button gesture state ───────────────────────────────────────
-  const tapCountRef = useRef(0);
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdStartRef = useRef(0);
@@ -149,37 +147,19 @@ export default function BlogNavbar({
 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
-      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
     };
   }, []);
 
-  // ─── Home button gestures: tap=marketplace, double-tap=home, hold 2s=logout ───
+  // A normal tap returns to the public home page; a long press still logs out.
   const handleHomeTap = useCallback(() => {
     if (holdCompletedRef.current) {
       holdCompletedRef.current = false;
       return;
     }
-    tapCountRef.current += 1;
-    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-    tapTimerRef.current = setTimeout(() => {
-      const count = tapCountRef.current;
-      tapCountRef.current = 0;
-      if (count >= 2) {
-        // Double-tap → full reload onto the public site root
-        window.location.assign("/");
-      } else {
-        // Single tap → marketplace or scroll to top
-        if (currentPath === "/marketplace") {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          window.dispatchEvent(new CustomEvent("marketplace:refresh"));
-        } else {
-          setLocation("/marketplace");
-        }
-      }
-    }, 300);
-  }, [currentPath, setLocation]);
+    setLocation("/");
+  }, [setLocation]);
 
   const handlePressStart = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -236,7 +216,7 @@ export default function BlogNavbar({
       >
         <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 overflow-x-auto scrollbar-hide">
           <div className="flex items-center justify-between h-12 sm:h-14 md:h-16 gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 min-w-max sm:min-w-max md:min-w-0">
-            {/* Home button with gestures: tap=marketplace, double-tap=home, hold 2s=logout */}
+            {/* Home button: tap=home, hold 2s=logout */}
             <div className="relative flex-shrink-0">
               {isHolding && (
                 <svg
@@ -282,8 +262,8 @@ export default function BlogNavbar({
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
                 title={
                   isAuthenticated
-                    ? "Tap=Marketplace · Double-tap=Home · Hold 2s=Logout"
-                    : "Tap=Marketplace · Double-tap=Home"
+                    ? "Home · Hold 2s=Logout"
+                    : "Home"
                 }
               >
                 <Home className="w-3 sm:w-4 h-3 sm:h-4" />
