@@ -58,6 +58,13 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
+      const errorMessage = this.state.error?.message || "";
+      const isChunkError =
+        this.state.error?.name === "ChunkLoadError" ||
+        errorMessage.includes("Loading chunk") ||
+        errorMessage.includes("dynamically imported module") ||
+        errorMessage.includes("Failed to fetch dynamically");
+
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
           <div className="max-w-md w-full bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/10 p-8 text-center space-y-6">
@@ -67,11 +74,12 @@ export default class ErrorBoundary extends Component<Props, State> {
 
             <div>
               <h2 className="text-white text-xl font-bold mb-2">
-                Something went wrong
+                {isChunkError ? "A new version is available" : "Something went wrong"}
               </h2>
               <p className="text-white/50 text-sm">
-                An unexpected error occurred. This has been logged
-                automatically.
+                {isChunkError
+                  ? "This page is using an outdated version. Reload to get the latest VersoAir release."
+                  : "An unexpected error occurred. This has been logged automatically."}
               </p>
             </div>
 

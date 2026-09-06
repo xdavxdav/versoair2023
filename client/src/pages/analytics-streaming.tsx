@@ -55,11 +55,19 @@ export default function AnalyticsPage() {
     error,
     refetch,
   } = useStreamingAnalytics(period);
-  const { data: artistsData } = useStreamingArtists({
+  const {
+    data: artistsData,
+    isError: artistsError,
+    refetch: refetchArtists,
+  } = useStreamingArtists({
     limit: 10,
     sort: "streams",
   });
-  const { data: plansData } = useSubscriptionPlans();
+  const {
+    data: plansData,
+    isError: plansError,
+    refetch: refetchPlans,
+  } = useSubscriptionPlans();
   const overview = analytics || {};
   const topArtists = artistsData?.artists || [];
   const benefitChart = plansData?.benefitChart;
@@ -164,10 +172,13 @@ export default function AnalyticsPage() {
           <BarChart3 className="h-12 w-12 text-amber-400/70" />
           <h1 className="mt-5 text-2xl font-bold">Analytics unavailable</h1>
           <p className="mt-3 text-sm leading-relaxed text-gray-400">
-            We couldn&apos;t retrieve the streaming analytics right now. Your data has not been changed.
+            We couldn&apos;t retrieve the streaming analytics right now. Your
+            data has not been changed.
           </p>
           <p className="mt-2 max-w-full break-all text-xs text-gray-600">
-            {error instanceof Error ? error.message : "The analytics service returned an error."}
+            {error instanceof Error
+              ? error.message
+              : "The analytics service returned an error."}
           </p>
           <button
             type="button"
@@ -201,6 +212,29 @@ export default function AnalyticsPage() {
             <p className="text-gray-500 text-sm">
               Statistiques de la plateforme Verso Air Stream
             </p>
+            {(artistsError || plansError) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-amber-300">
+                <span>Some supporting analytics could not be loaded.</span>
+                {artistsError && (
+                  <button
+                    type="button"
+                    onClick={() => refetchArtists()}
+                    className="rounded-md border border-amber-400/30 px-2 py-1 hover:bg-amber-400/10"
+                  >
+                    Retry artists
+                  </button>
+                )}
+                {plansError && (
+                  <button
+                    type="button"
+                    onClick={() => refetchPlans()}
+                    className="rounded-md border border-amber-400/30 px-2 py-1 hover:bg-amber-400/10"
+                  >
+                    Retry plans
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Period selector */}
