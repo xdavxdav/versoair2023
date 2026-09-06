@@ -809,22 +809,7 @@ export default function Navbar({
               </div>
             ) : hasPortalAuth ? (
               /* Logged in via another portal (artist, blog, etc.) but not general auth */
-              <div className="flex items-center gap-1">
-                <div className="relative group">
-                  <Button
-                    disabled
-                    aria-label="Already connected via another portal"
-                    className="h-8 bg-slate-800/50 text-slate-500 px-1.5 md:px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap border border-slate-700 cursor-not-allowed opacity-50"
-                  >
-                    <Lock className="h-3 w-3" />
-                    <span className="ml-1">Connecté</span>
-                  </Button>
-                  <span className="absolute -bottom-8 right-0 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                    Déjà connecté via un autre portail
-                  </span>
-                </div>
-                <LogoutDropdown variant="red-solid" />
-              </div>
+              <LogoutDropdown variant="red-solid" />
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">
                 <Button className="bg-slate-800 text-slate-200 px-2 md:px-4 py-2 rounded-md hover:bg-slate-700 transition-colors text-xs font-medium whitespace-nowrap border border-slate-600">
