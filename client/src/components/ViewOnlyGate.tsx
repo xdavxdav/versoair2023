@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Lock, Star, Users, Zap, Loader2 } from "lucide-react";
+import { ArrowLeft, Lock, Star, Users, Zap, Loader2 } from "lucide-react";
 
 interface ViewOnlyGateProps {
   onSignIn: () => void;
   onSignUp: () => void;
   showProfessionalSSO?: boolean;
+  onBack?: () => void;
 }
 
 function SsoProviderButtons() {
@@ -100,9 +101,20 @@ export default function ViewOnlyGate({
   onSignIn,
   onSignUp,
   showProfessionalSSO = true,
+  onBack,
 }: ViewOnlyGateProps) {
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 sm:px-4 py-8 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
+    <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-3 sm:px-4 py-8 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-handstyle">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-slate-900/70 px-3 py-2 text-sm font-medium text-cyan-300 transition-colors hover:bg-cyan-400/10 hover:text-cyan-100"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </button>
+      )}
       <div className="max-w-2xl w-full">
         {/* Main Content */}
         <motion.div

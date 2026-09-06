@@ -693,6 +693,7 @@ export default function MarketplacePage() {
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
           showProfessionalSSO={false}
+          onBack={() => window.location.assign("/")}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
