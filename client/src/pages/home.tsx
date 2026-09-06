@@ -2875,59 +2875,105 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 max-[380px]:grid-cols-1 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
               {[
-              {
-                icon: User,
-                text: "Profils artisans",
-                desc: "Artisans qualifiés",
-                href: "/artisans",
-              },
-              {
-                icon: Palette,
-                text: "Art & Artisanat",
-                desc: "Créations artisanales",
-                href: "/marketplace",
-              },
-              {
-                icon: ShoppingBag,
-                text: "Marché",
-                desc: "Parcourir & acheter",
-                notranslate: true,
-                href: "/marketplace",
-              },
-              {
-                icon: Users,
-                text: "Communautés",
-                desc: "Groupes locaux",
-                href: "/communities",
-              },
-              {
-                icon: Heart,
-                text: "Nous soutenir",
-                desc: "Financer la mission",
-                href: "/sponsorship",
-              },
-              {
-                icon: Calendar,
-                text: "Événements",
-                desc: "Ateliers & spectacles",
-                href: "/divertissement",
-              },
+                {
+                  icon: User,
+                  text: "Profils artisans",
+                  desc: "Artisans qualifiés",
+                  href: "/artisans",
+                  mood: {
+                    border: "border-emerald-200/80 hover:border-emerald-300",
+                    icon: "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:rotate-[-6deg]",
+                    arrow: "group-hover:text-emerald-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(16,185,129,0.14)]",
+                    focus: "focus-within:ring-emerald-400",
+                  },
+                },
+                {
+                  icon: Palette,
+                  text: "Art & Artisanat",
+                  desc: "Créations artisanales",
+                  href: "/marketplace",
+                  mood: {
+                    border: "border-violet-200/80 hover:border-violet-300",
+                    icon: "bg-violet-50 text-violet-700 group-hover:bg-violet-600 group-hover:rotate-6",
+                    arrow: "group-hover:text-violet-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(139,92,246,0.14)]",
+                    focus: "focus-within:ring-violet-400",
+                  },
+                },
+                {
+                  icon: ShoppingBag,
+                  text: "Marché",
+                  desc: "Parcourir & acheter",
+                  notranslate: true,
+                  href: "/marketplace",
+                  mood: {
+                    border: "border-amber-200/80 hover:border-amber-300",
+                    icon: "bg-amber-50 text-amber-700 group-hover:bg-amber-500 group-hover:scale-110",
+                    arrow: "group-hover:text-amber-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(245,158,11,0.16)]",
+                    focus: "focus-within:ring-amber-400",
+                  },
+                },
+                {
+                  icon: Users,
+                  text: "Communautés",
+                  desc: "Groupes locaux",
+                  href: "/communities",
+                  mood: {
+                    border: "border-sky-200/80 hover:border-sky-300",
+                    icon: "bg-sky-50 text-sky-700 group-hover:bg-sky-600 group-hover:translate-x-0.5",
+                    arrow: "group-hover:text-sky-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(14,165,233,0.14)]",
+                    focus: "focus-within:ring-sky-400",
+                  },
+                },
+                {
+                  icon: Heart,
+                  text: "Nous soutenir",
+                  desc: "Financer la mission",
+                  href: "/sponsorship",
+                  mood: {
+                    border: "border-rose-200/80 hover:border-rose-300",
+                    icon: "bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:scale-110",
+                    arrow: "group-hover:text-rose-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(244,63,94,0.14)]",
+                    focus: "focus-within:ring-rose-400",
+                  },
+                },
+                {
+                  icon: Calendar,
+                  text: "Événements",
+                  desc: "Ateliers & spectacles",
+                  href: "/divertissement",
+                  mood: {
+                    border: "border-blue-200/80 hover:border-blue-300",
+                    icon: "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:rotate-[-6deg]",
+                    arrow: "group-hover:text-blue-600",
+                    shadow: "hover:shadow-[0_14px_30px_rgba(59,130,246,0.14)]",
+                    focus: "focus-within:ring-blue-400",
+                  },
+                },
               ].map((item, i) => (
                 <Link key={i} to={item.href}>
                   <motion.div
-                    whileHover={{ y: -4 }}
+                    whileHover={{ y: -4, scale: 1.015 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group home-nav-card flex min-h-[156px] flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:border-emerald-300 hover:shadow-[0_14px_30px_rgba(16,185,129,0.14)] sm:min-h-[170px] sm:p-5"
+                    className={`group home-nav-card flex min-h-[148px] flex-col justify-between rounded-2xl border bg-white p-3 shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-offset-2 sm:min-h-[170px] sm:p-5 ${item.mood.border} ${item.mood.shadow} ${item.mood.focus}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-600 group-hover:text-white sm:h-12 sm:w-12">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 group-hover:text-white sm:h-12 sm:w-12 ${item.mood.icon}`}
+                      >
                         <item.icon className="h-6 w-6 sm:h-7 sm:w-7" />
                       </div>
-                      <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-emerald-600" />
+                      <ArrowRight
+                        className={`h-4 w-4 text-slate-300 transition-all group-hover:translate-x-1 ${item.mood.arrow}`}
+                      />
                     </div>
-                    <div className="mt-5">
+                    <div className="mt-4 sm:mt-5">
                       <p
                         className={`font-semibold leading-snug text-slate-900 sm:text-lg ${"notranslate" in item && item.notranslate ? "notranslate" : ""}`}
                       >
