@@ -2859,8 +2859,24 @@ export default function Home() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 mt-12 md:mt-16">
-            {[
+          <div className="mt-12 md:mt-16 rounded-[2rem] border border-emerald-100 bg-white/70 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-6 md:p-8">
+            <div className="mb-5 flex flex-col gap-2 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">
+                  Explorer Verso Air
+                </p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
+                  Vos points de départ
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm leading-relaxed text-slate-500 sm:text-right">
+                Accédez rapidement aux profils, aux créations et aux initiatives
+                de la communauté.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+              {[
               {
                 icon: User,
                 text: "Profils artisans",
@@ -2898,24 +2914,33 @@ export default function Home() {
                 desc: "Ateliers & spectacles",
                 href: "/divertissement",
               },
-            ].map((item, i) => (
-              <Link key={i} to={item.href}>
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.05 }}
-                  className="home-nav-card bg-white rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all cursor-pointer h-[120px] md:h-[140px] flex flex-col items-center justify-center"
-                >
-                  <item.icon className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 mb-2 md:mb-3 flex-shrink-0" />
-                  <p
-                    className={`font-semibold text-gray-800 text-sm md:text-base leading-tight ${"notranslate" in item && item.notranslate ? "notranslate" : ""}`}
+              ].map((item, i) => (
+                <Link key={i} to={item.href}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group home-nav-card flex min-h-[156px] flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:border-emerald-300 hover:shadow-[0_14px_30px_rgba(16,185,129,0.14)] sm:min-h-[170px] sm:p-5"
                   >
-                    {item.text}
-                  </p>
-                  <p className="text-gray-500 text-xs md:text-sm mt-1 leading-tight">
-                    {item.desc}
-                  </p>
-                </motion.div>
-              </Link>
-            ))}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-600 group-hover:text-white sm:h-12 sm:w-12">
+                        <item.icon className="h-6 w-6 sm:h-7 sm:w-7" />
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-emerald-600" />
+                    </div>
+                    <div className="mt-5">
+                      <p
+                        className={`font-semibold leading-snug text-slate-900 sm:text-lg ${"notranslate" in item && item.notranslate ? "notranslate" : ""}`}
+                      >
+                        {item.text}
+                      </p>
+                      <p className="mt-1.5 text-sm leading-snug text-slate-500">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
