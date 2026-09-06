@@ -772,7 +772,6 @@ function AppContent() {
   // Keep ContentNav for the other content routes so the two nav systems never stack.
   const isBlogOrMarketplace =
     currentPath === "/blog" || currentPath === "/marketplace";
-  const showContentNav = isContentNavPage && isAuthed && !isBlogOrMarketplace;
   const isAuthPage = currentPath.startsWith("/auth");
   const showAccountBlogNavbar =
     isAuthed &&
@@ -780,6 +779,8 @@ function AppContent() {
     !isMusicPage &&
     !currentPath.startsWith("/admin") &&
     !currentPath.startsWith("/geo-admin");
+  const showContentNav =
+    isContentNavPage && isAuthed && !isBlogOrMarketplace && !showAccountBlogNavbar;
   // Immersive pages — hide navbar, footer (keep motto), bubble menu
   const isImmersivePage =
     currentPath === "/dashboard" ||
@@ -838,7 +839,8 @@ function AppContent() {
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isMusicPage &&
+      {!isAuthed &&
+        !isMusicPage &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
         !currentPath.startsWith("/user/") &&
@@ -962,7 +964,8 @@ function AppContent() {
       )}
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
-      {!isAuthPage &&
+      {!isAuthed &&
+        !isAuthPage &&
         !showContentNav &&
         !isBlogOrMarketplace &&
         !isMusicPage &&
