@@ -42,6 +42,11 @@ export default function ProtectedRoute({
   useLayoutEffect(() => {
     if (loading) return;
 
+    if (authError && !user) {
+      redirectingRef.current = false;
+      return;
+    }
+
     if (!user) {
       if (redirectingRef.current) return;
       redirectingRef.current = true;
@@ -60,7 +65,7 @@ export default function ProtectedRoute({
         setLocation(unauthorizedRedirect);
       }
     }
-  }, [user, loading, roles, setLocation, unauthorizedRedirect]);
+  }, [user, loading, authError, roles, setLocation, unauthorizedRedirect]);
 
   // Still verifying — never redirect while loading, even if `user` is null
   if (loading) {
@@ -75,8 +80,12 @@ export default function ProtectedRoute({
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
         <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">Connection problem</h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">{authError}</p>
+          <h1 className="text-xl font-bold text-slate-900">
+            Connection problem
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            {authError}
+          </p>
           <button
             type="button"
             onClick={() => restoreAuth()}

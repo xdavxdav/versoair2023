@@ -129,6 +129,7 @@ import {
   getTierStatRecommendations,
 } from "@/lib/mock-stat-generator";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const API_BASE_URL = "";
 
@@ -1479,29 +1480,18 @@ export default function UserDashboard() {
     "account" | "preferences"
   >("account");
 
-  // Auth
-  const { data: userSession } = useQuery<{ user: CurrentUser } | null>({
-    queryKey: ["auth-session"],
-    queryFn: async () => {
-      try {
-        const token =
-          localStorage.getItem("auth_token") ||
-          localStorage.getItem("authToken");
-        const headers: Record<string, string> = { "Cache-Control": "no-cache" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const response = await fetch(`${API_BASE_URL}/auth/session`, {
-          headers,
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error(`Session request failed (${response.status})`);
-        return response.json();
-      } catch (error) {
-        throw error;
+  // AuthContext is the single source of truth for the authenticated session.
+  const { user: authUser } = useAuthContext();
+  const userSession = authUser
+    ? {
+        user: {
+          ...authUser,
+          name: authUser.name || authUser.email,
+          displayName: authUser.name || null,
+          isAdmin: Boolean(authUser.isAdmin),
+        } as CurrentUser,
       }
-    },
-    staleTime: 0,
-    refetchOnMount: "always" as const,
-  });
+    : null;
 
   // Public stats
   const {
@@ -2472,7 +2462,8 @@ export default function UserDashboard() {
       {statsError && (
         <div className="mx-auto mt-4 flex w-full max-w-6xl items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
           <span>
-            We couldn&apos;t retrieve the latest platform statistics. The rest of your dashboard is still available.
+            We couldn&apos;t retrieve the latest platform statistics. The rest
+            of your dashboard is still available.
           </span>
           <Button
             variant="outline"
