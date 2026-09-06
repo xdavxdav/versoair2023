@@ -70,6 +70,11 @@ const PORTALS = {
 
 type PortalKey = keyof typeof PORTALS;
 
+function resolvePortalKey(value: unknown, type?: string): PortalKey {
+  if (value === "music" || value === "community") return value;
+  return type === "music_artist" ? "music" : "community";
+}
+
 /* -------------------------------------------------------------------------- */
 /* 1. HEADER MESSAGES BUTTON (Twitter-style, minimal) */
 /* -------------------------------------------------------------------------- */
@@ -189,7 +194,7 @@ interface Conversation {
   participantName: string;
   participantAvatar?: string;
   type: "direct" | "group";
-  portal: PortalKey;
+  portal?: PortalKey;
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
@@ -246,7 +251,12 @@ export function TwitterMessenger({
           setConversations([]);
           return;
         }
-        setConversations(data.conversations || []);
+        setConversations(
+          (data.conversations || []).map((conversation: Conversation) => ({
+            ...conversation,
+            portal: resolvePortalKey(conversation.portal, conversation.type),
+          })),
+        );
       })
       .catch((err) => {
         setError(err?.message || "Network error. Please try again.");
@@ -409,7 +419,9 @@ export function TwitterMessenger({
     );
   }
 
-  const theme = selectedConv ? PORTALS[selectedConv.portal] : null;
+  const theme = selectedConv
+    ? PORTALS[resolvePortalKey(selectedConv.portal, selectedConv.type)]
+    : null;
 
   /* ── Panel Body ── */
   const panelBody = (
@@ -434,7 +446,7 @@ export function TwitterMessenger({
 
           {/* Portal Filter Tabs */}
           <div className="flex gap-1">
-            {(["all", "music", "community"] as const).map((key) => {
+            {(["music", "community", "all"] as const).map((key) => {
               const active = portalFilter === key;
               const portal = key === "all" ? null : PORTALS[key];
 
@@ -525,7 +537,7 @@ export function TwitterMessenger({
           )}
 
           {filtered.map((conv) => {
-            const portal = PORTALS[conv.portal];
+            const portal = PORTALS[resolvePortalKey(conv.portal, conv.type)];
             const isUnread = (conv.unreadCount || 0) > 0;
             const isSelected = selectedConv?.id === conv.id;
 
@@ -661,7 +673,8 @@ export function TwitterMessenger({
                 const showDate =
                   idx === 0 ||
                   dateDivider(messages[idx - 1]?.createdAt, msg.createdAt);
-                const msgPortal = PORTALS[msg.portal || selectedConv.portal];
+                const msgPortal =
+                  PORTALS[resolvePortalKey(msg.portal, selectedConv.type)];
 
                 return (
                   <React.Fragment key={msg.id}>

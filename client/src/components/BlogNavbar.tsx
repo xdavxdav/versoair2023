@@ -54,6 +54,74 @@ const MOBILE_PILLS = [
   },
 ];
 
+const MOBILE_MENU_GROUPS = [
+  {
+    key: "ent",
+    label: "Companies",
+    items: [
+      ["Health", "/sante"],
+      ["Finance", "/finances"],
+      ["Building", "/batiment"],
+      ["Hospitality", "/hotellerie"],
+      ["Automobile", "/automobile"],
+      ["Trade", "/commerce"],
+      ["Accommodation", "/logement"],
+      ["Entertainment", "/divertissement"],
+      ["Business Directory", "/businesses-directory"],
+    ],
+  },
+  {
+    key: "discover",
+    label: "Discover",
+    items: [
+      ["Community Hub", "/hub"],
+      ["Business Directory", "/businesses-directory"],
+      ["Artisans", "/artisans"],
+      ["Communities", "/communities"],
+      ["Partners", "/partners"],
+    ],
+  },
+  {
+    key: "play",
+    label: "Play",
+    items: [
+      ["Music Stream", "/stream"],
+      ["Podcasts", "/podcast"],
+      ["Library", "/music"],
+      ["Arcade", "/arcade"],
+    ],
+  },
+  {
+    key: "svc",
+    label: "Services",
+    items: [
+      ["All Services", "/services"],
+      ["News & Updates", "/services/news"],
+      ["Careers", "/services/careers"],
+      ["Contractors", "/services/contractors"],
+    ],
+  },
+  {
+    key: "mkt",
+    label: "Marketing",
+    items: [
+      ["Marketing Hub", "/marketing"],
+      ["Free Ad Journal", "/marketing/journal"],
+      ["Marketing Packs", "/marketing/packs"],
+      ["Print Services", "/marketing/print"],
+      ["Newsletter", "/marketing/newsletters"],
+    ],
+  },
+  {
+    key: "help",
+    label: "Support",
+    items: [
+      ["24/7 Customer Service", "/sav"],
+      ["VersoAI", "/versoai"],
+    ],
+  },
+] as const;
+
 /* ── shared dropdown style tokens ───────────────────────────── */
 /* Responsive button with fluid scaling */
 const BTN =
@@ -74,6 +142,7 @@ export default function BlogNavbar({
 }: BlogNavbarProps) {
   const { user, logout } = useAuthContext();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [mobileOpenGroup, setMobileOpenGroup] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLDivElement | null>(null);
@@ -152,6 +221,16 @@ export default function BlogNavbar({
     };
   }, []);
 
+  useEffect(() => {
+    if (openMenu !== "mobile") return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [openMenu]);
+
   // A normal tap returns to the public home page; a long press still logs out.
   const handleHomeTap = useCallback(() => {
     if (holdCompletedRef.current) {
@@ -207,15 +286,15 @@ export default function BlogNavbar({
     <>
       <nav
         ref={navRef}
-        className={`fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 z-[100] transition-transform duration-300 ease-out ${
+        className={`fixed bottom-3 left-2 right-2 md:bottom-4 md:left-4 md:right-4 md:max-w-[calc(100%-2rem)] md:mx-auto bg-slate-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_16px_45px_rgba(0,0,0,0.45)] z-[100] transition-transform duration-300 ease-out ${
           isVisible
             ? "translate-y-0 pointer-events-auto"
             : "translate-y-[120%] pointer-events-none"
         }`}
         style={{ overflowX: "visible", overflowY: "visible" }}
       >
-        <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center justify-between h-12 sm:h-14 md:h-16 gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 min-w-max sm:min-w-max md:min-w-0">
+        <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 overflow-visible">
+          <div className="flex items-center justify-between h-12 sm:h-14 md:h-16 gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 min-w-0 md:min-w-0">
             {/* Home button: tap=home, hold 2s=logout */}
             <div className="relative flex-shrink-0">
               {isHolding && (
@@ -260,30 +339,32 @@ export default function BlogNavbar({
                 onPointerCancel={handlePressEnd}
                 onContextMenu={(e) => e.preventDefault()}
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs lg:text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg transition-all whitespace-nowrap font-medium select-none"
-                title={
-                  isAuthenticated
-                    ? "Home · Hold 2s=Logout"
-                    : "Home"
-                }
+                title={isAuthenticated ? "Home · Hold 2s=Logout" : "Home"}
               >
                 <Home className="w-3 sm:w-4 h-3 sm:h-4" />
                 <span className="hidden sm:inline">Accueil</span>
               </button>
             </div>
 
-            {/* ── Mobile quick nav pills (Home button already covers Marketplace) ── */}
-            <div className="flex md:hidden items-center gap-0.5 flex-1 min-w-0 justify-end overflow-x-auto scrollbar-hide px-1">
-              {MOBILE_PILLS.filter((pill) => pill.href !== currentPath).map(
-                (pill) => (
-                  <Link key={pill.href} href={pill.href}>
-                    <a
-                      className={`px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-medium transition-all whitespace-nowrap text-slate-400 ${pill.hover}`}
-                    >
-                      {pill.label}
-                    </a>
-                  </Link>
-                ),
-              )}
+            {/* ── Mobile navigation: all sections stay available behind Menu ── */}
+            <div className="flex md:hidden items-center gap-1 flex-1 min-w-0 justify-end px-1">
+              <Link href="/blog">
+                <a className="px-2 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all">
+                  Blog
+                </a>
+              </Link>
+              <button
+                type="button"
+                onClick={() => toggleMenu("mobile")}
+                className={`${BTN} px-2 py-2 ${openMenu === "mobile" ? "bg-cyan-400/10 text-cyan-100" : ""}`}
+                aria-expanded={openMenu === "mobile"}
+                aria-controls="mobile-navigation-menu"
+              >
+                <span>Menu</span>
+                <ChevronDown
+                  className={`w-3 h-3 transition-transform ${openMenu === "mobile" ? "rotate-180" : ""}`}
+                />
+              </button>
             </div>
 
             {/* ── Desktop nav (scales with screen) — scrollable when content overflows ── */}
@@ -604,6 +685,70 @@ export default function BlogNavbar({
             </div>
           </div>
         </div>
+
+        {openMenu === "mobile" && (
+          <div
+            id="mobile-navigation-menu"
+            className="md:hidden absolute bottom-full left-0 right-0 mb-2 max-h-[min(70vh,30rem)] overflow-y-auto overscroll-contain touch-pan-y rounded-2xl border border-cyan-500/20 bg-slate-950 p-2 shadow-2xl shadow-black/60"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              backgroundColor: "#020617",
+              isolation: "isolate",
+            }}
+          >
+            <div className="grid grid-cols-2 gap-1 border-b border-white/10 pb-2 mb-2">
+              {MOBILE_PILLS.map((pill) => (
+                <Link key={pill.href} href={pill.href}>
+                  <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
+                    {pill.label === "🎵"
+                      ? "Music Stream"
+                      : pill.label === "🎮"
+                        ? "Arcade"
+                        : pill.label}
+                  </a>
+                </Link>
+              ))}
+              <Link href="/marketplace">
+                <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
+                  Marketplace
+                </a>
+              </Link>
+            </div>
+            {MOBILE_MENU_GROUPS.map((group) => (
+              <div
+                key={group.key}
+                className="border-b border-white/10 last:border-0"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileOpenGroup((current) =>
+                      current === group.key ? null : group.key,
+                    )
+                  }
+                  className="flex w-full items-center justify-between px-3 py-3 text-left text-sm font-semibold text-cyan-300"
+                  aria-expanded={mobileOpenGroup === group.key}
+                >
+                  {group.label}
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${mobileOpenGroup === group.key ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {mobileOpenGroup === group.key && (
+                  <div className="grid grid-cols-2 gap-1 px-1 pb-2">
+                    {group.items.map(([label, href]) => (
+                      <Link key={href} href={href}>
+                        <a className="rounded-lg px-3 py-2.5 text-xs text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-100">
+                          {label}
+                        </a>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </nav>
     </>
   );
