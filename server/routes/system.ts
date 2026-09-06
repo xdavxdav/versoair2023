@@ -1,9 +1,23 @@
 import { Router } from "express";
 import { sql } from "drizzle-orm";
+import fs from "node:fs";
+import path from "node:path";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
+
+function getAppVersion(): string {
+  if (process.env.APP_VERSION) return process.env.APP_VERSION;
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+    ) as { version?: string };
+    return packageJson.version || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
 
 router.get(
   "/status",
@@ -29,7 +43,7 @@ router.get(
         timestamp: new Date().toISOString(),
         message: "API and database are operational",
         environment: process.env.NODE_ENV || "development",
-        version: process.env.npm_package_version || "unknown",
+        version: getAppVersion(),
         frontend: { status: "served-by-api" },
         api: { status: "ok" },
         database: {
@@ -44,7 +58,7 @@ router.get(
         timestamp: new Date().toISOString(),
         message: "API is running but the database is unavailable",
         environment: process.env.NODE_ENV || "development",
-        version: process.env.npm_package_version || "unknown",
+        version: getAppVersion(),
         frontend: { status: "served-by-api" },
         api: { status: "ok" },
         database: {
@@ -73,12 +87,20 @@ router.get(
       allReservations,
     ] = await Promise.all([
       db.execute(sql`SELECT COUNT(*) as count FROM businesses`),
-      db.execute(sql`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`,
+      ),
       db.execute(sql`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
-      db.execute(sql`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`,
+      ),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`,
+      ),
       db.execute(sql`SELECT COUNT(*) as count FROM jobs`),
-      db.execute(sql`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(
+        sql`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`,
+      ),
       db.execute(
         sql`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`,
       ),
@@ -92,14 +114,20 @@ router.get(
       timestamp: new Date().toISOString(),
       counts: {
         businesses: {
-          total: parseInt(String((allBusinesses.rows[0] as any)?.count || 0), 10),
+          total: parseInt(
+            String((allBusinesses.rows[0] as any)?.count || 0),
+            10,
+          ),
           active: parseInt(
             String((activeBusinesses.rows[0] as any)?.count || 0),
             10,
           ),
         },
         categories: {
-          total: parseInt(String((allCategories.rows[0] as any)?.count || 0), 10),
+          total: parseInt(
+            String((allCategories.rows[0] as any)?.count || 0),
+            10,
+          ),
           mainCategories: parseInt(
             String((mainCategories.rows[0] as any)?.count || 0),
             10,
