@@ -36,9 +36,9 @@ export default function BetaBanner() {
         type="button"
         onClick={() => setClosed(false)}
         className={`fixed right-3 top-3 z-[60] rounded-full border border-[#d4a74e]/60 bg-[#1a140d]/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f7d98b] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#241b12] ${showBubble ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0"}`}
-        aria-label="Reopen Beta banner"
+        aria-label="Reopen product status banner"
       >
-        Beta
+        Post-beta
       </button>
     );
   }
@@ -48,13 +48,13 @@ export default function BetaBanner() {
       <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
           <span className="inline-flex items-center rounded-full border border-[#1a140d]/25 bg-[#1a140d]/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#1a140d]">
-            Beta
+            Post-beta
           </span>
 
           <p className="min-w-0 flex-1 text-center text-[13px] font-medium sm:text-left sm:text-sm">
             <span className="font-semibold">Verso Air</span>
             <span className="mx-1.5 text-[#3a2b14]">—</span>
-            <span>Report a bug or share your feedback</span>
+            <span>Production hardening in progress • Share feedback</span>
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function BetaBanner() {
           <button
             type="button"
             onClick={() => setClosed(true)}
-            aria-label="Close Beta banner"
+            aria-label="Close product status banner"
             title="Close"
             className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#1a140d]/15 bg-white/20 text-[#1a140d] transition-colors duration-200 hover:bg-white/35"
           >

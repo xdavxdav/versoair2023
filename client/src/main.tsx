@@ -44,7 +44,9 @@ function showBootstrapState(title: string, message: string, retry = true) {
     return;
   }
 
-  root.innerHTML = `<main style="min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#0f172a,#1e293b);color:white;padding:24px;font-family:system-ui,sans-serif"><section style="max-width:440px;text-align:center"><div style="width:48px;height:48px;margin:0 auto 20px;border:3px solid rgba(255,255,255,.25);border-top-color:#34d399;border-radius:50%;animation:spin 1s linear infinite"></div><h1 style="font-size:24px;margin:0 0 10px">${title}</h1><p style="color:#cbd5e1;line-height:1.6">${message}</p>${retry ? '<button id="verso-retry" style="margin-top:20px;border:0;border-radius:10px;background:#10b981;color:#06281d;padding:12px 20px;font-weight:700;cursor:pointer">Retry</button>' : ""}</section></main><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+  const gold = "#f4c95d";
+  const goldDark = "#d7a92b";
+  root.innerHTML = `<main style="min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#0f172a,#1e293b);color:white;padding:24px;font-family:system-ui,sans-serif"><section style="max-width:440px;text-align:center"><div style="width:48px;height:48px;margin:0 auto 20px;border:3px solid rgba(255,255,255,.22);border-top-color:${gold};border-radius:50%;animation:spin 1s linear infinite;box-shadow:0 0 20px rgba(244,201,93,.35)"></div><h1 style="font-size:24px;margin:0 0 10px;color:${gold}">${title}</h1><p style="color:#cbd5e1;line-height:1.6">${message}</p>${retry ? `<button id="verso-retry" style="margin-top:20px;border:0;border-radius:10px;background:linear-gradient(135deg,${gold},${goldDark});color:#111827;padding:12px 20px;font-weight:800;cursor:pointer;box-shadow:0 10px 25px rgba(244,201,93,.28)">Retry</button>` : ""}</section></main><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
   document
     .getElementById("verso-retry")
     ?.addEventListener("click", () => window.location.reload());
@@ -93,6 +95,9 @@ bootstrap().catch((error) => {
 // Register Service Worker for PWA background audio + offline caching
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update())
+      .catch(() => {});
   });
 }
