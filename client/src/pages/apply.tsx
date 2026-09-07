@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -294,8 +294,9 @@ const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
 };
 
 export default function ApplyPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [selectedPortal, setSelectedPortal] = useState<Portal | null>(null);
+  const [targetPortalId, setTargetPortalId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -306,6 +307,26 @@ export default function ApplyPage() {
   // ── Auth-aware portal access ──
   const { user } = useAuthContext();
   const { access, isLoading: portalLoading } = usePortalAccess();
+
+  useEffect(() => {
+    const requestedPortal = new URLSearchParams(
+      location.split("?")[1] || "",
+    ).get("portal");
+    if (!["artisan", "community"].includes(requestedPortal || "")) {
+      return;
+    }
+    setTargetPortalId(requestedPortal);
+  }, [location]);
+
+  useEffect(() => {
+    if (!targetPortalId || selectedPortal) return;
+    const target = document.getElementById(`portal-card-${targetPortalId}`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.focus({ preventScroll: true });
+    const timer = window.setTimeout(() => setTargetPortalId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [targetPortalId, selectedPortal, user]);
 
   // Track which fields the user has interacted with (for real-time validation)
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -480,7 +501,10 @@ export default function ApplyPage() {
         setSuccess(true);
         // Redirect after short delay
         setTimeout(() => {
-          setLocation(selectedPortal.redirectPath);
+          const redirect = new URLSearchParams(
+            location.split("?")[1] || "",
+          ).get("redirect");
+          setLocation(redirect || selectedPortal.redirectPath);
         }, 1500);
       } else {
         setError(data.message || "Registration failed");
@@ -574,7 +598,9 @@ export default function ApplyPage() {
                               transition={{ delay: index * 0.08 }}
                             >
                               <Card
-                                className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ${portal.cardRing || "ring-amber-500/30 border-white/10"} border`}
+                                id={`portal-card-${portal.id}`}
+                                tabIndex={0}
+                                className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ${portal.cardRing || "ring-amber-500/30 border-white/10"} border ${targetPortalId === portal.id ? "portal-target-glow" : ""}`}
                                 onClick={() => setLocation(portal.redirectPath)}
                               >
                                 {/* Gold connected indicator */}
@@ -946,7 +972,9 @@ export default function ApplyPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
-                  className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full border ring-1 ${portal.cardRing || "ring-white/10 border-white/10"}`}
+                  id={`portal-card-${portal.id}`}
+                  tabIndex={0}
+                  className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full border ring-1 ${portal.cardRing || "ring-white/10 border-white/10"} ${targetPortalId === portal.id ? "portal-target-glow" : ""}`}
                   onClick={() => {
                     if (portal.id === "business") {
                       setLocation("/auth/signin");

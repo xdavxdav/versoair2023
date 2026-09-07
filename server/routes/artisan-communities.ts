@@ -42,6 +42,57 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/me", requireAuth(), async (req, res) => {
+  const userId = Number(req.user?.userId);
+
+  try {
+    const [memberships, requests] = await Promise.all([
+      pool.query(
+        `SELECT m.id, m.community_id, m.status, m.joined_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus,
+                ac.description, ac.activities, ac.image_url, ac.member_count
+         FROM artisan_community_memberships m
+         JOIN artisan_communities ac ON ac.id = m.community_id
+         WHERE m.user_id = $1 AND m.status = 'ACTIVE'
+         ORDER BY m.joined_at DESC NULLS LAST, ac.name ASC`,
+        [userId],
+      ),
+      pool.query(
+        `SELECT jr.id, jr.community_id, jr.status, jr.message, jr.created_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus
+         FROM artisan_community_join_requests jr
+         JOIN artisan_communities ac ON ac.id = jr.community_id
+         WHERE jr.user_id = $1 AND jr.status = 'PENDING'
+         ORDER BY jr.created_at DESC`,
+        [userId],
+      ),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        memberships: memberships.rows,
+        pendingRequests: requests.rows,
+        counts: {
+          joined: memberships.rowCount || 0,
+          pending: requests.rowCount || 0,
+          activities: memberships.rows.reduce(
+            (total, community) =>
+              total +
+              (Array.isArray(community.activities)
+                ? community.activities.length
+                : 0),
+            0,
+          ),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("[artisan-communities:me]", error);
+    res.status(500).json({ error: "Failed to load your community activity" });
+  }
+});
+
 router.post("/:id/join", requireAuth(), async (req, res) => {
   const communityId = Number(req.params.id);
   const message = String(req.body?.message || "")
@@ -88,11 +139,9 @@ router.post("/", requireAuth(), async (req, res) => {
     imageUrl,
   } = req.body || {};
   if (!name || !region || !category || !focus || !description) {
-    return res
-      .status(400)
-      .json({
-        error: "Name, region, category, focus, and description are required",
-      });
+    return res.status(400).json({
+      error: "Name, region, category, focus, and description are required",
+    });
   }
 
   try {
@@ -100,7 +149,7 @@ router.post("/", requireAuth(), async (req, res) => {
     const result = await pool.query(
       `INSERT INTO artisan_communities
          (owner_id, name, slug, region, category, focus, description, activities, image_url, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, 'PUBLISHED')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, 'DRAFT')
        RETURNING *`,
       [
         Number(req.user?.userId),

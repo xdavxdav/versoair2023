@@ -1036,6 +1036,77 @@ const TABLE_STATEMENTS: TableDef[] = [
     )`,
   },
   {
+    table: "artisan_community_memberships",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_memberships (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+      joined_at TIMESTAMP DEFAULT NOW(),
+      removed_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`,
+  },
+  {
+    table: "community_operation_audit",
+    sql: `CREATE TABLE IF NOT EXISTS community_operation_audit (
+      id SERIAL PRIMARY KEY,
+      entity_type VARCHAR(40) NOT NULL,
+      entity_id INTEGER NOT NULL,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "events",
+    sql: `CREATE TABLE IF NOT EXISTS events (
+      id SERIAL PRIMARY KEY,
+      organizer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      community_id INTEGER REFERENCES artisan_communities(id) ON DELETE SET NULL,
+      title VARCHAR(220) NOT NULL,
+      slug VARCHAR(260) UNIQUE NOT NULL,
+      description TEXT NOT NULL,
+      event_type VARCHAR(40) NOT NULL DEFAULT 'COMMUNITY',
+      starts_at TIMESTAMP NOT NULL,
+      ends_at TIMESTAMP,
+      venue VARCHAR(220),
+      city VARCHAR(120),
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      published_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "event_audit",
+    sql: `CREATE TABLE IF NOT EXISTS event_audit (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "event_attendees",
+    sql: `CREATE TABLE IF NOT EXISTS event_attendees (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(20) NOT NULL DEFAULT 'GOING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (event_id, user_id)
+    )`,
+  },
+  {
     table: "artisan_communities_seed",
     sql: `INSERT INTO artisan_communities
       (name, slug, region, category, focus, description, activities, status, member_count)

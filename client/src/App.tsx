@@ -94,6 +94,8 @@ const CulturalPrograms = lazy(() => import("@/pages/programs"));
 const Communities = lazy(() => import("@/pages/communities"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
 const ArtisanWorkshops = lazy(() => import("@/pages/artisan-workshops"));
+const EventsPage = lazy(() => import("@/pages/events"));
+const EventDetailPage = lazy(() => import("@/pages/event-detail"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
 const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
@@ -502,6 +504,8 @@ function Router() {
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
       <Route path="/artisan-workshops" component={ArtisanWorkshops} />
+      <Route path="/events" component={EventsPage} />
+      <Route path="/events/:slug" component={EventDetailPage} />
 
       {/* ═══════════════════════════════════════════════
           🔐 AUTH — Sign in & registration

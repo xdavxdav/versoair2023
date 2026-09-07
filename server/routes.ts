@@ -95,6 +95,7 @@ import adCampaignsRouter from "./routes/ad-campaigns";
 import adminRouter from "./routes/admin";
 import profilesRouter from "./routes/profiles";
 import artisanCommunitiesRouter from "./routes/artisan-communities";
+import eventsRouter from "./routes/events";
 import astrologyRouter from "./routes/astrology";
 import businessSearchRouter from "./routes/business-search";
 import categoriesRouter from "./routes/categories";
@@ -270,6 +271,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
   app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
   app.use("/api/communities", artisanCommunitiesRouter);
+  app.use("/api/events", eventsRouter);
   app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
   app.use("/api/contractor-pipeline", contractorPipelineRouter); // Contractor Pipeline — apply → verify → assign
 

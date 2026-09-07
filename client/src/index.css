@@ -156,6 +156,23 @@
     }
   }
 
+  .portal-target-glow {
+    animation: portal-target-glow 700ms ease-in-out 3;
+    outline: 2px solid rgb(52 211 153 / 0.9);
+    outline-offset: 4px;
+  }
+
+  @keyframes portal-target-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(52 211 153 / 0.15); }
+    50% { box-shadow: 0 0 0 10px rgb(52 211 153 / 0.22); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portal-target-glow {
+      animation: none;
+    }
+  }
+
   /* Enhanced scrolling for webkit browsers */
   ::-webkit-scrollbar {
     width: 8px;
