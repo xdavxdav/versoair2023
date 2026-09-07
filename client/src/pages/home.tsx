@@ -1976,7 +1976,8 @@ export default function Home() {
               className="mb-4 md:mb-6"
             >
               <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
-                🎨 Soutien aux artisans {countryMeta.nameIn}
+                🎨 Soutien aux artisans{" "}
+                {countryMeta.nameIn}
               </span>
             </motion.div>
 
