@@ -2,9 +2,13 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const FEEDBACK_URL = "https://forms.gle/LPQgujfxdn1nHNw97";
+const CLOSED_STORAGE_KEY = "versoair_post_beta_banner_closed";
 
 export default function BetaBanner() {
-  const [closed, setClosed] = useState(false);
+  const [closed, setClosed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(CLOSED_STORAGE_KEY) === "true";
+  });
   const [showBubble, setShowBubble] = useState(true);
 
   useEffect(() => {
@@ -34,7 +38,10 @@ export default function BetaBanner() {
     return (
       <button
         type="button"
-        onClick={() => setClosed(false)}
+        onClick={() => {
+          localStorage.removeItem(CLOSED_STORAGE_KEY);
+          setClosed(false);
+        }}
         className={`fixed right-3 top-3 z-[60] rounded-full border border-[#d4a74e]/60 bg-[#1a140d]/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f7d98b] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#241b12] ${showBubble ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-3 opacity-0"}`}
         aria-label="Reopen product status banner"
       >
@@ -71,7 +78,10 @@ export default function BetaBanner() {
 
           <button
             type="button"
-            onClick={() => setClosed(true)}
+            onClick={() => {
+              localStorage.setItem(CLOSED_STORAGE_KEY, "true");
+              setClosed(true);
+            }}
             aria-label="Close product status banner"
             title="Close"
             className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#1a140d]/15 bg-white/20 text-[#1a140d] transition-colors duration-200 hover:bg-white/35"
