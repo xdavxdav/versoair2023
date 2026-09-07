@@ -915,7 +915,11 @@ export default function DatabaseExpert({
   role?: string | null;
 }) {
   const { logout } = useAuthContext();
-  const canManage = tier !== "free";
+  const normalizedRole = role?.toLowerCase() || "subscriber";
+  const isSuperAdmin = ["superadmin", "superuser", "admin"].includes(
+    normalizedRole,
+  );
+  const canManage = isSuperAdmin;
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -950,6 +954,23 @@ export default function DatabaseExpert({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const recordsPerPage = 20;
+
+  useEffect(() => {
+    if (
+      !canManage &&
+      [
+        "manage",
+        "tables",
+        "categories",
+        "sessions",
+        "payments",
+        "contracts",
+        "marketplace",
+      ].includes(activeTab)
+    ) {
+      setActiveTab("dashboard");
+    }
+  }, [activeTab, canManage]);
 
   // ── Business search state ──
   const [businessSearch, setBusinessSearch] = useState("");
@@ -1965,59 +1986,63 @@ export default function DatabaseExpert({
               <span className="hidden sm:inline">Jobs</span>
             </TabsTrigger>
             <TabsTrigger
-              value="tables"
-              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
-            >
-              <Table2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Tables</span>
-            </TabsTrigger>
-            <TabsTrigger
               value="analytics"
               className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
             >
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="categories"
-              className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
-            >
-              <Layers className="h-4 w-4" />
-              <span className="hidden sm:inline">Categories</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="sessions"
-              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
-            >
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Sessions</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="payments"
-              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">Payments</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="contracts"
-              className="gap-1.5 data-[state=active]:bg-purple-600/40 data-[state=active]:text-purple-200 text-slate-400 text-xs sm:text-sm relative"
-            >
-              <Music className="h-4 w-4" />
-              <span className="hidden sm:inline">Candidatures</span>
-              {contractPendingCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
-                  {contractPendingCount > 9 ? "9+" : contractPendingCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="marketplace"
-              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Marketplace</span>
-            </TabsTrigger>
+            {canManage && (
+              <>
+                <TabsTrigger
+                  value="tables"
+                  className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+                >
+                  <Table2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Tables</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="categories"
+                  className="gap-2 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400"
+                >
+                  <Layers className="h-4 w-4" />
+                  <span className="hidden sm:inline">Categories</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="sessions"
+                  className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sessions</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="payments"
+                  className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Payments</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="contracts"
+                  className="gap-1.5 data-[state=active]:bg-purple-600/40 data-[state=active]:text-purple-200 text-slate-400 text-xs sm:text-sm relative"
+                >
+                  <Music className="h-4 w-4" />
+                  <span className="hidden sm:inline">Candidatures</span>
+                  {contractPendingCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
+                      {contractPendingCount > 9 ? "9+" : contractPendingCount}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="marketplace"
+                  className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Marketplace</span>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -3933,13 +3958,21 @@ export default function DatabaseExpert({
                 ? [{ label: "Manage", tab: "manage", icon: Settings }]
                 : []),
               { label: "Businesses", tab: "businesses", icon: Building },
-              { label: "Tables", tab: "tables", icon: Table2 },
               { label: "Analytics", tab: "analytics", icon: BarChart3 },
-              { label: "Categories", tab: "categories", icon: Layers },
-              { label: "Sessions", tab: "sessions", icon: Shield },
-              { label: "Payments", tab: "payments", icon: Sparkles },
-              { label: "Candidatures", tab: "contracts", icon: Music },
-              { label: "Marketplace", tab: "marketplace", icon: ShoppingCart },
+              ...(canManage
+                ? [
+                    { label: "Tables", tab: "tables", icon: Table2 },
+                    { label: "Categories", tab: "categories", icon: Layers },
+                    { label: "Sessions", tab: "sessions", icon: Shield },
+                    { label: "Payments", tab: "payments", icon: Sparkles },
+                    { label: "Candidatures", tab: "contracts", icon: Music },
+                    {
+                      label: "Marketplace",
+                      tab: "marketplace",
+                      icon: ShoppingCart,
+                    },
+                  ]
+                : []),
             ].map((item) => (
               <Button
                 key={item.tab}
