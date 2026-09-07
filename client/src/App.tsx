@@ -899,9 +899,7 @@ function AppContent() {
                 >
                   <span className="hidden md:inline notranslate" translate="no">
                     {pageTitle === "Verso Air"
-                      ? isFr
-                        ? "Plateforme Verso Air"
-                        : "Verso Air Platform"
+                      ? "Business Intelligence Platform"
                       : isFr
                         ? pageTitle === "Verso Air Business"
                           ? "Verso Air Business"
@@ -919,7 +917,9 @@ function AppContent() {
                         : pageTitle.substring(0, 3)}
                   </span>
                   <span className="sm:hidden notranslate" translate="no">
-                    {pageTitle.substring(0, 2).toUpperCase()}
+                    {pageTitle === "Verso Air"
+                      ? "Business Intelligence Platform"
+                      : pageTitle.substring(0, 2).toUpperCase()}
                   </span>
                 </span>
 
