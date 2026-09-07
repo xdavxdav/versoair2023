@@ -171,6 +171,37 @@ interface BusinessData {
   logo_url?: string | null;
 }
 
+interface CommunityMembership {
+  id: number;
+  community_id: number;
+  joined_at: string | null;
+  name: string;
+  slug: string;
+  region: string;
+  category: string;
+  focus: string;
+  description: string;
+  activities: string[] | null;
+  member_count: number;
+}
+
+interface CommunityJoinRequest {
+  id: number;
+  community_id: number;
+  status: string;
+  created_at: string;
+  name: string;
+  region: string;
+  category: string;
+  focus: string;
+}
+
+interface MyCommunityData {
+  memberships: CommunityMembership[];
+  pendingRequests: CommunityJoinRequest[];
+  counts: { joined: number; pending: number; activities: number };
+}
+
 interface BusinessAnalytics {
   pageViews: number;
   uniqueVisitors: number;
@@ -1560,6 +1591,27 @@ export default function UserDashboard() {
     enabled: !!userSession?.user,
     staleTime: 60_000,
   });
+
+  // Community activity for the signed-in member
+  const { data: myCommunity, isLoading: communitiesLoading } =
+    useQuery<MyCommunityData>({
+      queryKey: ["my-community"],
+      queryFn: async () => {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/communities/me`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to load community activity");
+        const payload = await response.json();
+        return payload.data as MyCommunityData;
+      },
+      enabled: !!userSession?.user,
+      staleTime: 60_000,
+    });
 
   // Navigation context
   const fromParam = new URLSearchParams(window.location.search).get("from");
@@ -3213,13 +3265,19 @@ export default function UserDashboard() {
               onValueChange={setActiveTab}
             >
               <TabsList
-                className={`grid w-full ${hasRealBusiness ? "grid-cols-6" : "grid-cols-5"} bg-slate-100`}
+                className={`grid w-full ${hasRealBusiness ? "grid-cols-7" : "grid-cols-6"} bg-slate-100`}
               >
                 {hasRealBusiness && (
                   <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 )}
                 <TabsTrigger value="explore">Explore</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="community">
+                  <div className="flex items-center gap-2">
+                    <Users2 className="h-4 w-4" />
+                    Community
+                  </div>
+                </TabsTrigger>
                 <TabsTrigger value="inbox">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
@@ -3776,6 +3834,166 @@ export default function UserDashboard() {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* COMMUNITY TAB */}
+              <TabsContent value="community" className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Card className="border-emerald-100 bg-emerald-50/60 shadow-sm">
+                    <CardContent className="p-5">
+                      <Users2 className="h-5 w-5 text-emerald-600" />
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Joined communities
+                      </p>
+                      <p className="mt-1 text-3xl font-bold text-emerald-700">
+                        {myCommunity?.counts.joined ?? 0}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-amber-100 bg-amber-50/60 shadow-sm">
+                    <CardContent className="p-5">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Pending requests
+                      </p>
+                      <p className="mt-1 text-3xl font-bold text-amber-700">
+                        {myCommunity?.counts.pending ?? 0}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-sky-100 bg-sky-50/60 shadow-sm">
+                    <CardContent className="p-5">
+                      <Sparkles className="h-5 w-5 text-sky-600" />
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Activities available
+                      </p>
+                      <p className="mt-1 text-3xl font-bold text-sky-700">
+                        {myCommunity?.counts.activities ?? 0}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users2 className="h-5 w-5 text-emerald-600" /> My
+                        Community
+                      </CardTitle>
+                      <CardDescription>
+                        Your memberships, requests, and things to do next.
+                      </CardDescription>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/communities">Discover communities</Link>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {communitiesLoading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                      </div>
+                    ) : myCommunity?.memberships.length ? (
+                      <div className="space-y-3">
+                        {myCommunity.memberships.map((community) => (
+                          <div
+                            key={community.id}
+                            className="rounded-xl border border-slate-200 p-4"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className="font-semibold text-slate-900">
+                                  {community.name}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {community.region} · {community.category} ·{" "}
+                                  {community.member_count} members
+                                </p>
+                                <p className="mt-2 text-sm text-slate-600">
+                                  {community.focus}
+                                </p>
+                              </div>
+                              <Badge className="w-fit bg-emerald-50 text-emerald-700">
+                                Joined
+                              </Badge>
+                            </div>
+                            {community.activities?.length ? (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {community.activities
+                                  .slice(0, 6)
+                                  .map((activity) => (
+                                    <Badge key={activity} variant="outline">
+                                      {activity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            ) : null}
+                            {community.joined_at && (
+                              <p className="mt-3 text-xs text-slate-400">
+                                Member since{" "}
+                                {new Date(
+                                  community.joined_at,
+                                ).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
+                        <Users2 className="mx-auto h-8 w-8 text-slate-300" />
+                        <p className="mt-3 font-medium text-slate-700">
+                          You have not joined a community yet.
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Find a group around your interests and request to
+                          join.
+                        </p>
+                        <Button asChild className="mt-4">
+                          <Link href="/communities">Explore communities</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {!!myCommunity?.pendingRequests.length && (
+                  <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        Pending join requests
+                      </CardTitle>
+                      <CardDescription>
+                        These communities are reviewing your request.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {myCommunity.pendingRequests.map((request) => (
+                        <div
+                          key={request.id}
+                          className="flex flex-col gap-1 rounded-lg bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div>
+                            <p className="font-medium text-slate-800">
+                              {request.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {request.region} · {request.category}
+                            </p>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className="w-fit text-amber-700"
+                          >
+                            Pending review
+                          </Badge>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               {/* INBOX TAB */}

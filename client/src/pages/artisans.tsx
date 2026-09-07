@@ -103,10 +103,24 @@ export default function ArtisansDirectory() {
             transition={{ delay: 0.15 }}
             className="text-lg text-emerald-50 max-w-2xl"
           >
-            Discover talented craftspeople and artisans from across Ivory Coast.
-            Each artisan brings unique skills, cultural heritage, and a passion
-            for their craft.
+            Discover individual craft professionals and makers from across Ivory
+            Coast. Artisans create, teach, or sell a craft or traditional
+            practice, bringing skill, heritage, and a living creative business
+            to the public directory.
           </motion.p>
+          <p className="mt-4 max-w-2xl text-sm text-emerald-100">
+            Apply as an Artisan to create a public profile, showcase your
+            portfolio, access communities and workshops, and connect with
+            customers. Profiles are reviewed before publication; approved
+            artisans may later be selected for VersoAir partnership or
+            sponsorship opportunities.
+          </p>
+          <Link href="/apply?portal=artisan&redirect=/artisans-portal">
+            <Button className="mt-5 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg">
+              Apply as an artisan
+              <Briefcase className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
           <div className="scrollbar-hide flex items-center gap-2 mt-6 overflow-x-auto pb-1">
             <Link href="/">
               <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
@@ -131,6 +145,11 @@ export default function ArtisansDirectory() {
             <Link href="/divertissement">
               <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
                 🎪 Divertissement
+              </span>
+            </Link>
+            <Link href="/events">
+              <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85 backdrop-blur-sm transition-colors hover:border-white/35 hover:bg-white/18 hover:text-white cursor-pointer whitespace-nowrap">
+                📅 Events
               </span>
             </Link>
           </div>
@@ -260,15 +279,25 @@ export default function ArtisansDirectory() {
                       </div>
                     )}
 
-                    <Link href="/artisan-workshops">
-                      <button className="w-full mt-3 group bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
-                        <span className="relative z-10 flex items-center gap-2">
-                          <Zap className="h-4 w-4 animate-pulse" />
-                          Partake in Workshops
-                        </span>
-                        <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
-                      </button>
-                    </Link>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {artisan.slug ? (
+                        <Link href={`/profiles/${artisan.slug}`}>
+                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                            View profile
+                            <Globe className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                      ) : null}
+                      <Link href="/artisan-workshops">
+                        <button className="w-full group bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
+                          <span className="relative z-10 flex items-center gap-2">
+                            <Zap className="h-4 w-4 animate-pulse" />
+                            Partake in Workshops
+                          </span>
+                          <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                        </button>
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

@@ -330,12 +330,17 @@ router.post(
     const { action, notes } = req.body as { action: string; notes?: string };
     const adminUser = (req as any).user;
 
+    if (adminUser.role === "moderator" && action === "suspend") {
+      return res.status(403).json({
+        error:
+          "Moderators may recommend suspension, but only Admin or Superuser can execute it",
+      });
+    }
+
     if (!VALID_ACTIONS.includes(action as ApprovalAction)) {
-      return res
-        .status(400)
-        .json({
-          error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}`,
-        });
+      return res.status(400).json({
+        error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}`,
+      });
     }
 
     try {
@@ -395,6 +400,29 @@ router.post(
     } catch (err) {
       console.error("[admin/profiles/:id/action]", err);
       res.status(500).json({ error: "Action failed" });
+    }
+  },
+);
+
+router.get(
+  "/api/admin/profiles/:id/history",
+  async (req: Request, res: Response) => {
+    if (!requireAdmin(req, res)) return;
+
+    const profileId = Number(req.params.id);
+    if (!Number.isInteger(profileId)) {
+      return res.status(400).json({ error: "Invalid profile id" });
+    }
+
+    try {
+      const history = await db
+        .select()
+        .from(profileApprovalActions)
+        .where(eq(profileApprovalActions.profileId, profileId));
+      res.json({ success: true, data: history });
+    } catch (err) {
+      console.error("[admin/profiles/:id/history]", err);
+      res.status(500).json({ error: "Failed to fetch profile history" });
     }
   },
 );

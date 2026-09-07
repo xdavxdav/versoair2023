@@ -217,6 +217,9 @@ import { TSRWhitelistSection } from "@/components/sections/TSRWhitelistSection";
 import { ContractorApplicationsSection } from "@/components/sections/ContractorApplicationsSection";
 import { GeoActionQueueSection } from "@/components/sections/GeoActionQueueSection";
 import { ContractorAssignmentSection } from "@/components/sections/ContractorAssignmentSection";
+import { CommunityOperationsSection } from "@/components/sections/CommunityOperationsSection";
+import { ArtisanProfilesSection } from "@/components/sections/ArtisanProfilesSection";
+import { EventsModerationSection } from "@/components/sections/EventsModerationSection";
 import { useCountry } from "@/contexts/CountryContext";
 
 const API_BASE_URL = "";
@@ -452,6 +455,24 @@ const MAIN_SECTIONS = [
     description: "Review contractor applications",
   },
   {
+    id: "community-ops",
+    label: "Community Ops",
+    icon: Users,
+    description: "Manage communities and join requests",
+  },
+  {
+    id: "artisan-profiles",
+    label: "Artisan Profiles",
+    icon: FileText,
+    description: "Review artisan profiles and decisions",
+  },
+  {
+    id: "events",
+    label: "Events Review",
+    icon: Calendar,
+    description: "Review and publish event submissions",
+  },
+  {
     id: "geo-queue",
     label: "Geo-Action Queue",
     icon: Globe,
@@ -609,6 +630,44 @@ const DashboardStats = ({ stats, onRefresh, isRefreshing }: any) => (
     </Card>
   </div>
 );
+
+const GeoAdminSummary = () => {
+  const summaryQuery = useQuery({
+    queryKey: ["geo-admin-control-center-summary"],
+    queryFn: async () => {
+      const response = await authenticatedFetch(
+        "/api/v1/admin/control-center/summary",
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to load operations summary");
+      return data.data as Record<string, number>;
+    },
+    refetchInterval: 30000,
+  });
+
+  const cards = [
+    ["Pending Artisan Profiles", "pendingArtisanProfiles", "text-amber-700"],
+    ["Join Requests", "pendingJoinRequests", "text-emerald-700"],
+    ["Unpublished Communities", "unpublishedCommunities", "text-sky-700"],
+    ["Moderation Items", "moderationItems", "text-rose-700"],
+  ] as const;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map(([label, key, color]) => (
+        <Card key={key} className="border-slate-200 shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-sm text-slate-500">{label}</p>
+            <p className={`mt-2 text-3xl font-bold ${color}`}>
+              {summaryQuery.isLoading ? "-" : (summaryQuery.data?.[key] ?? "!")}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PENDING BUSINESS APPROVALS (SupUser / SuperUser review panel)
@@ -7200,6 +7259,7 @@ export default function AdminDashboard() {
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
             {activeSection === "dashboard" && (
               <>
+                <GeoAdminSummary />
                 <PendingApprovals />
                 <BusinessManagement />
                 <CategoryManagement />
@@ -7245,6 +7305,11 @@ export default function AdminDashboard() {
             {activeSection === "contractor-apps" && (
               <ContractorApplicationsSection />
             )}
+            {activeSection === "community-ops" && (
+              <CommunityOperationsSection />
+            )}
+            {activeSection === "artisan-profiles" && <ArtisanProfilesSection />}
+            {activeSection === "events" && <EventsModerationSection />}
             {activeSection === "geo-queue" && <GeoActionQueueSection />}
             {activeSection === "contractor-assign" && (
               <ContractorAssignmentSection />

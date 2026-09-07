@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   fadeInUp,
@@ -17,9 +17,11 @@ import {
   Search,
   ChevronRight,
   BookOpen,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authenticatedFetch } from "@/lib/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Card,
   CardContent,
@@ -140,6 +142,8 @@ const COMMUNITIES: Community[] = [
 ];
 
 export default function Communities() {
+  const [, setLocation] = useLocation();
+  const { user } = useAuthContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -150,6 +154,12 @@ export default function Communities() {
   const [error, setError] = useState("");
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [joinMessage, setJoinMessage] = useState("");
+  const [joinedCommunityIds, setJoinedCommunityIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [pendingCommunityIds, setPendingCommunityIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const categories = ["all", ...new Set(communities.map((c) => c.category))];
 
@@ -190,6 +200,43 @@ export default function Communities() {
     loadCommunities();
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setJoinedCommunityIds(new Set());
+      setPendingCommunityIds(new Set());
+      return;
+    }
+
+    const loadMemberships = async () => {
+      try {
+        const response = await authenticatedFetch("/api/communities/me");
+        if (!response.ok) return;
+        const payload = await response.json();
+        const data = payload.data || {};
+        setJoinedCommunityIds(
+          new Set(
+            (data.memberships || []).map(
+              (membership: { community_id: number }) =>
+                String(membership.community_id),
+            ),
+          ),
+        );
+        setPendingCommunityIds(
+          new Set(
+            (data.pendingRequests || []).map(
+              (request: { community_id: number }) =>
+                String(request.community_id),
+            ),
+          ),
+        );
+      } catch {
+        // The public community directory remains usable if member data is unavailable.
+      }
+    };
+
+    void loadMemberships();
+  }, [user]);
+
   const filterCommunities = () => {
     let filtered = communities;
 
@@ -214,6 +261,11 @@ export default function Communities() {
   }, [communities, searchQuery, selectedCategory]);
 
   const joinCommunity = async (communityId: string) => {
+    if (!user) {
+      setLocation("/apply?portal=community&redirect=/communities");
+      return;
+    }
+
     setJoiningId(communityId);
     setJoinMessage("");
     try {
@@ -232,6 +284,7 @@ export default function Communities() {
         throw new Error(
           data.error || "Connectez-vous pour rejoindre une communauté.",
         );
+      setPendingCommunityIds((current) => new Set(current).add(communityId));
       setJoinMessage("Demande envoyée. La communauté vous répondra bientôt.");
     } catch (joinError) {
       setJoinMessage(
@@ -265,6 +318,17 @@ export default function Communities() {
             Explore local artisan collectives and communities across Ivory
             Coast. Connect, collaborate, and support traditional crafts.
           </motion.p>
+          <p className="mt-4 max-w-2xl text-sm text-emerald-100">
+            Community is the base membership for conversations, workshops, and
+            connections. Craftspeople can apply directly for Artisan access;
+            Artisan accounts include Community access automatically.
+          </p>
+          <Link href="/apply?portal=community&redirect=/communities">
+            <Button className="mt-5 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg">
+              Join the Community
+              <Users className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
           <div className="flex items-center gap-2 mt-6 overflow-x-auto">
             <Link href="/">
               <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
@@ -289,6 +353,11 @@ export default function Communities() {
             <Link href="/divertissement">
               <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
                 🎪 Divertissement
+              </span>
+            </Link>
+            <Link href="/events">
+              <span className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm transition-colors cursor-pointer whitespace-nowrap">
+                📅 Events
               </span>
             </Link>
           </div>
@@ -435,14 +504,33 @@ export default function Communities() {
                     </div>
 
                     {/* Action Buttons */}
+                    {!user && (
+                      <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Lock className="h-3.5 w-3.5 text-emerald-600" />
+                        Create a free Community account to join or save this
+                        community.
+                      </p>
+                    )}
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
                       <Button
                         className="flex-1 bg-emerald-600 text-sm font-bold hover:bg-emerald-700"
                         onClick={() => joinCommunity(community.id)}
-                        disabled={joiningId === community.id}
+                        disabled={
+                          joiningId === community.id ||
+                          joinedCommunityIds.has(community.id) ||
+                          pendingCommunityIds.has(community.id)
+                        }
                       >
                         <Zap className="mr-1 h-3 w-3" />
-                        {joiningId === community.id ? "Sending..." : "Join"}
+                        {joiningId === community.id
+                          ? "Sending..."
+                          : joinedCommunityIds.has(community.id)
+                            ? "Already joined"
+                            : pendingCommunityIds.has(community.id)
+                              ? "Request pending"
+                              : user
+                                ? "Join"
+                                : "Create account to join"}
                       </Button>
                       <Link href="/artisan-workshops">
                         <Button
@@ -458,6 +546,27 @@ export default function Communities() {
                         variant="outline"
                         size="icon"
                         className="border-emerald-200 hover:bg-emerald-50"
+                        title={
+                          user
+                            ? "Save this community"
+                            : "Create an account to save this community"
+                        }
+                        aria-label={
+                          user
+                            ? "Save this community"
+                            : "Create an account to save this community"
+                        }
+                        onClick={() => {
+                          if (!user) {
+                            setLocation(
+                              "/apply?portal=community&redirect=/communities",
+                            );
+                            return;
+                          }
+                          setJoinMessage(
+                            "Your account is ready. Community saves will be available from your dashboard.",
+                          );
+                        }}
                       >
                         <Heart className="h-4 w-4 text-emerald-600" />
                       </Button>

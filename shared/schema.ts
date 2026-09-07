@@ -1086,6 +1086,136 @@ export const artisanCommunityJoinRequests = pgTable(
 export type ArtisanCommunity = typeof artisanCommunities.$inferSelect;
 export type ArtisanCommunityJoinRequest =
   typeof artisanCommunityJoinRequests.$inferSelect;
+
+export const artisanCommunityMemberships = pgTable(
+  "artisan_community_memberships",
+  {
+    id: serial("id").primaryKey(),
+    communityId: integer("community_id")
+      .references(() => artisanCommunities.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: varchar("status", { length: 30 }).default("ACTIVE").notNull(),
+    joinedAt: timestamp("joined_at").defaultNow(),
+    removedAt: timestamp("removed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    communityIdx: index("artisan_memberships_community_idx").on(t.communityId),
+    userIdx: index("artisan_memberships_user_idx").on(t.userId),
+    uniqueMember: unique("artisan_memberships_unique_member").on(
+      t.communityId,
+      t.userId,
+    ),
+  }),
+);
+
+export const communityOperationAudit = pgTable(
+  "community_operation_audit",
+  {
+    id: serial("id").primaryKey(),
+    entityType: varchar("entity_type", { length: 40 }).notNull(),
+    entityId: integer("entity_id").notNull(),
+    action: varchar("action", { length: 40 }).notNull(),
+    performedBy: integer("performed_by").references(() => users.id),
+    reason: text("reason"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    entityIdx: index("community_audit_entity_idx").on(t.entityType, t.entityId),
+    actorIdx: index("community_audit_actor_idx").on(t.performedBy),
+    createdIdx: index("community_audit_created_idx").on(t.createdAt),
+  }),
+);
+
+export type ArtisanCommunityMembership =
+  typeof artisanCommunityMemberships.$inferSelect;
+export type CommunityOperationAudit =
+  typeof communityOperationAudit.$inferSelect;
+
+export const events = pgTable(
+  "events",
+  {
+    id: serial("id").primaryKey(),
+    organizerId: integer("organizer_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    communityId: integer("community_id").references(
+      () => artisanCommunities.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+    title: varchar("title", { length: 220 }).notNull(),
+    slug: varchar("slug", { length: 260 }).unique().notNull(),
+    description: text("description").notNull(),
+    eventType: varchar("event_type", { length: 40 })
+      .default("COMMUNITY")
+      .notNull(),
+    startsAt: timestamp("starts_at").notNull(),
+    endsAt: timestamp("ends_at"),
+    venue: varchar("venue", { length: 220 }),
+    city: varchar("city", { length: 120 }),
+    imageUrl: text("image_url"),
+    status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    publishedAt: timestamp("published_at"),
+  },
+  (t) => ({
+    statusIdx: index("events_status_idx").on(t.status),
+    startsAtIdx: index("events_starts_at_idx").on(t.startsAt),
+    organizerIdx: index("events_organizer_idx").on(t.organizerId),
+  }),
+);
+
+export const eventAudit = pgTable(
+  "event_audit",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    action: varchar("action", { length: 40 }).notNull(),
+    performedBy: integer("performed_by").references(() => users.id),
+    reason: text("reason"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    eventIdx: index("event_audit_event_idx").on(t.eventId),
+    actorIdx: index("event_audit_actor_idx").on(t.performedBy),
+  }),
+);
+
+export type Event = typeof events.$inferSelect;
+export type EventAudit = typeof eventAudit.$inferSelect;
+
+export const eventAttendees = pgTable(
+  "event_attendees",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: varchar("status", { length: 20 }).default("GOING").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    eventIdx: index("event_attendees_event_idx").on(t.eventId),
+    userIdx: index("event_attendees_user_idx").on(t.userId),
+    uniqueAttendance: unique("event_attendees_unique").on(t.eventId, t.userId),
+  }),
+);
+
+export type EventAttendee = typeof eventAttendees.$inferSelect;
 export const insertUnifiedProfileSchema = createInsertSchema(unifiedProfiles);
 
 export const ticketComments = pgTable(

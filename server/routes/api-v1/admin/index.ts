@@ -18,6 +18,7 @@ import verificationRouter from "./verification";
 import securityRouter from "./security";
 import usersRouter from "./users";
 import rolesRouter from "./roles";
+import communitiesRouter from "./communities";
 
 const router = Router();
 
@@ -27,6 +28,34 @@ const ADMIN_ANALYTICS_PERIODS: Record<string, number> = {
   month: 30,
   year: 365,
 };
+
+router.get(
+  "/control-center/summary",
+  requireAuth(["admin", "moderator", "superuser"]),
+  async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM unified_profiles
+           WHERE account_type = 'artisan' AND status = 'PENDING') AS "pendingArtisanProfiles",
+          (SELECT COUNT(*)::int FROM artisan_community_join_requests
+           WHERE status = 'PENDING') AS "pendingJoinRequests",
+          (SELECT COUNT(*)::int FROM artisan_communities
+           WHERE status <> 'PUBLISHED') AS "unpublishedCommunities",
+          (SELECT COUNT(*)::int FROM community_posts
+           WHERE is_hidden = TRUE) AS "moderationItems"
+      `);
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("Failed to fetch GeoAdmin control-center summary:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch control-center summary",
+      });
+    }
+  },
+);
 
 router.get("/analytics", requireAuth(["admin"]), async (req, res) => {
   try {
@@ -95,6 +124,7 @@ router.use("/verification", verificationRouter);
 router.use("/security", securityRouter);
 router.use("/users", usersRouter);
 router.use("/roles", rolesRouter);
+router.use("/communities", communitiesRouter);
 
 /**
  * GET /api/v1/admin/stats
