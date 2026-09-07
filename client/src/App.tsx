@@ -913,9 +913,7 @@ function AppContent() {
                     translate="no"
                   >
                     {pageTitle === "Verso Air"
-                      ? isFr
-                        ? "Verso Air"
-                        : "VA"
+                      ? "Business Intelligence Platform"
                       : isFr
                         ? pageTitle.substring(0, 3)
                         : pageTitle.substring(0, 3)}

@@ -3,10 +3,10 @@
  * Caches app shell for offline-capable PWA + keeps audio alive in background
  */
 
-const CACHE_NAME = "versoair-v2";
+const CACHE_NAME = "versoair-v3";
 const APP_SHELL = ["/", "/index.html"];
 
-// Install: pre-cache app shell
+// Install: pre-cache a fallback shell, but always prefer the deployed version.
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
@@ -30,7 +30,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first with cache fallback for navigation
+// Fetch: network-first with cache fallback for navigation.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -55,21 +55,27 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     (isNavigation
-      ? fetch(request).then((response) => {
+      ? fetch(new Request(request, { cache: "no-store" })).then((response) => {
           if (response.ok && response.type === "basic") {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put("/index.html", clone));
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put("/index.html", clone));
           }
           return response;
         })
       : caches.match(request).then(
-          (cached) => cached || fetch(request).then((response) => {
-            if (response.ok && response.type === "basic") {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-            }
-            return response;
-          }),
+          (cached) =>
+            cached ||
+            fetch(request).then((response) => {
+              if (response.ok && response.type === "basic") {
+                const clone = response.clone();
+                caches
+                  .open(CACHE_NAME)
+                  .then((cache) => cache.put(request, clone));
+              }
+              return response;
+            }),
         )
     ).catch(() => caches.match(isNavigation ? "/index.html" : request)),
   );

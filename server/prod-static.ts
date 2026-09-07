@@ -49,6 +49,15 @@ export function serveStatic(app: Express) {
       maxAge: "1y",
       immutable: true,
       index: false, // Don't auto-serve index.html for directory requests
+      setHeaders: (res, filePath) => {
+        if (
+          filePath.endsWith("index.html") ||
+          filePath.endsWith("/sw.js") ||
+          filePath.endsWith("/service-worker.js")
+        ) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+      },
     }),
   );
 
@@ -61,11 +70,7 @@ export function serveStatic(app: Express) {
     // APIs and non-HTML requests must keep their normal 404 behavior. A valid
     // SPA route may contain dots in a slug, so the URL itself is not enough to
     // identify a static asset.
-    if (
-      !isNavigation ||
-      req.path.startsWith("/api/") ||
-      !acceptsHtml
-    ) {
+    if (!isNavigation || req.path.startsWith("/api/") || !acceptsHtml) {
       return next();
     }
 
