@@ -76,15 +76,75 @@ const ALLOWED_IMAGE = new Set([
   "image/webp",
   "image/avif",
 ]);
+const ALLOWED_AUDIO_EXTENSIONS = new Set([
+  ".mp3",
+  ".wav",
+  ".flac",
+  ".aac",
+  ".ogg",
+  ".mp4",
+  ".m4a",
+  ".webm",
+]);
+const ALLOWED_IMAGE_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+]);
 
 const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_COVER_SIZE = 10 * 1024 * 1024; // 10MB
+
+function sanitizeStoredName(originalName: string): string {
+  const safeBase = (originalName || "upload")
+    .replace(/[\\/]+/g, "/")
+    .split("/")
+    .pop()!
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .trim();
+
+  if (!safeBase || safeBase === "." || safeBase === "..") {
+    return "upload.bin";
+  }
+
+  return safeBase.length > 150 ? safeBase.slice(0, 150) : safeBase;
+}
+
+function validateUploadFile(
+  file: Express.Multer.File,
+  allowedMimeTypes: Set<string>,
+  allowedExtensions: Set<string>,
+) {
+  const extension = path.extname(file.originalname || "").toLowerCase();
+  const isMimeAllowed = allowedMimeTypes.has(file.mimetype);
+  const isExtAllowed = allowedExtensions.has(extension);
+
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid upload filename.");
+  }
+
+  if (!isMimeAllowed || !isExtAllowed) {
+    throw new Error(
+      `Invalid file format: ${file.mimetype || "unknown"}. Allowed types: ${[...allowedExtensions].join(", ")}`,
+    );
+  }
+
+  return sanitizeStoredName(file.originalname);
+}
 
 const audioStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
     const unique = crypto.randomBytes(8).toString("hex");
-    const ext = path.extname(file.originalname) || ".mp3";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_AUDIO,
+      ALLOWED_AUDIO_EXTENSIONS,
+    );
+    const ext = path.extname(safeName).toLowerCase() || ".mp3";
     cb(null, `${Date.now()}_${unique}${ext}`);
   },
 });
@@ -93,14 +153,11 @@ const uploadAudio = multer({
   storage: audioStorage,
   limits: { fileSize: MAX_AUDIO_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_AUDIO.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid audio format: ${file.mimetype}. Accepted: MP3, WAV, FLAC, AAC, OGG`,
-        ),
-      );
+    } catch (error: any) {
+      cb(new Error(error.message));
     }
   },
 });
@@ -109,7 +166,12 @@ const coverStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, COVER_DIR),
   filename: (_req, file, cb) => {
     const unique = crypto.randomBytes(8).toString("hex");
-    const ext = path.extname(file.originalname) || ".jpg";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_IMAGE,
+      ALLOWED_IMAGE_EXTENSIONS,
+    );
+    const ext = path.extname(safeName).toLowerCase() || ".jpg";
     cb(null, `cover_${Date.now()}_${unique}${ext}`);
   },
 });
@@ -118,14 +180,11 @@ const uploadCover = multer({
   storage: coverStorage,
   limits: { fileSize: MAX_COVER_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_IMAGE.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid image format: ${file.mimetype}. Accepted: JPEG, PNG, WebP`,
-        ),
-      );
+    } catch (error: any) {
+      cb(new Error(error.message));
     }
   },
 });
@@ -140,9 +199,12 @@ const uploadFields = multer({
     },
     filename: (_req, file, cb) => {
       const unique = crypto.randomBytes(8).toString("hex");
-      const ext = path.extname(file.originalname) || "";
+      const safeName = ALLOWED_IMAGE.has(file.mimetype)
+        ? validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS)
+        : validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
+      const ext = path.extname(safeName).toLowerCase();
       const prefix = ALLOWED_IMAGE.has(file.mimetype) ? "cover" : "track";
-      cb(null, `${prefix}_${Date.now()}_${unique}${ext}`);
+      cb(null, `${prefix}_${Date.now()}_${unique}${ext || ".mp3"}`);
     },
   }),
   limits: { fileSize: MAX_AUDIO_SIZE },

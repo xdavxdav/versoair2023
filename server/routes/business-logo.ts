@@ -28,11 +28,57 @@ try {
 }
 
 // ── Multer Configuration ──────────────────────────────────────────────────────
+const allowedLogoTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  "image/gif",
+]);
+const allowedLogoExtensions = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".svg",
+  ".gif",
+]);
+
+function sanitizeStoredName(originalName: string): string {
+  const safe = (originalName || "logo")
+    .replace(/[\\/]+/g, "/")
+    .split("/")
+    .pop()!
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .trim();
+
+  if (!safe || safe === "." || safe === "..") return "logo.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+
+function validateLogoFile(file: Express.Multer.File) {
+  const extension = path.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (
+    !allowedLogoTypes.has(file.mimetype) ||
+    !allowedLogoExtensions.has(extension)
+  ) {
+    throw new Error(
+      `Invalid file type: ${file.mimetype}. Accepted: JPEG, PNG, WebP, SVG, GIF`,
+    );
+  }
+  return sanitizeStoredName(file.originalname);
+}
+
 const logoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, LOGO_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = validateLogoFile(file);
+    const ext = path.extname(safeName).toLowerCase() || ".png";
     cb(null, `logo-${uniqueSuffix}${ext}`);
   },
 });
@@ -41,22 +87,11 @@ const logoUpload = multer({
   storage: logoStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max for logos
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/svg+xml",
-      "image/gif",
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
+    try {
+      validateLogoFile(file);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Invalid file type. Accepted: JPEG, PNG, WebP, SVG, GIF",
-        ) as any,
-        false,
-      );
+    } catch (error: any) {
+      cb(new Error(error.message));
     }
   },
 });

@@ -12,7 +12,6 @@ import AudioPlayer from "@/components/audio/AudioPlayer";
 import BetaBanner from "@/components/BetaBanner";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import ArtistPortalRedirect from "@/components/ArtistPortalRedirect";
 import {
   useState,
   useEffect,
@@ -357,6 +356,41 @@ function isBetaRoute(pathname: string) {
       ? pathname === "/"
       : pathname === prefix || pathname.startsWith(prefix),
   );
+}
+
+function getPageTitle(pathname: string) {
+  if (
+    pathname.startsWith("/music") ||
+    pathname.startsWith("/stream") ||
+    pathname.startsWith("/track") ||
+    pathname.startsWith("/artist-portal")
+  )
+    return "Musical Universe";
+  if (
+    pathname.startsWith("/community") ||
+    pathname.startsWith("/blog") ||
+    pathname.startsWith("/communities")
+  )
+    return "Community Hub";
+  if (
+    pathname.startsWith("/commerce") ||
+    pathname.startsWith("/business") ||
+    pathname.startsWith("/hotellerie") ||
+    pathname.startsWith("/batiment") ||
+    pathname.startsWith("/automobile") ||
+    pathname.startsWith("/finances") ||
+    pathname.startsWith("/divertissement") ||
+    pathname.startsWith("/sante") ||
+    pathname.startsWith("/geo-admin")
+  )
+    return "Verso Air Business";
+  if (pathname.startsWith("/vault") || pathname.startsWith("/sys/"))
+    return "Vault";
+  if (pathname.startsWith("/profile")) return "Profile";
+  if (pathname.startsWith("/user/")) return "Member Profile";
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin"))
+    return "Dashboard";
+  return "Verso Air";
 }
 
 // MessagesRoute now uses the real MessagesPage component from TwitterMessenger
@@ -726,49 +760,14 @@ function AppContent() {
   const isHomePage = currentPath === "/" || currentPath === "";
 
   // Contextual page title — read by any header/navbar that needs a dynamic title
-  const pageTitle = (() => {
-    if (
-      currentPath.startsWith("/music") ||
-      currentPath.startsWith("/stream") ||
-      currentPath.startsWith("/track") ||
-      currentPath.startsWith("/artist-portal")
-    )
-      return "Musical Universe";
-    if (
-      currentPath.startsWith("/community") ||
-      currentPath.startsWith("/blog") ||
-      currentPath.startsWith("/communities")
-    )
-      return "Community Hub";
-    if (
-      currentPath.startsWith("/commerce") ||
-      currentPath.startsWith("/business") ||
-      currentPath.startsWith("/hotellerie") ||
-      currentPath.startsWith("/batiment") ||
-      currentPath.startsWith("/automobile") ||
-      currentPath.startsWith("/finances") ||
-      currentPath.startsWith("/divertissement") ||
-      currentPath.startsWith("/sante") ||
-      currentPath.startsWith("/geo-admin")
-    )
-      return "Verso Air Business";
-    if (currentPath.startsWith("/royal")) return "Royal";
-    if (currentPath.startsWith("/vault") || currentPath.startsWith("/sys/"))
-      return "Vault";
-    if (currentPath.startsWith("/profile")) return "Profile";
-    if (currentPath.startsWith("/user/")) return "Member Profile";
-    if (
-      currentPath.startsWith("/dashboard") ||
-      currentPath.startsWith("/admin")
-    )
-      return "Dashboard";
-    return "Verso Air";
-  })();
+  const pageTitle = getPageTitle(currentPath);
 
-  // Expose as a data attribute so any child can read it without a context
-  if (typeof document !== "undefined")
+  useEffect(() => {
+    if (typeof document === "undefined") return;
     document.title =
       pageTitle === "Verso Air" ? "Verso Air" : `${pageTitle} — Verso Air`;
+  }, [pageTitle]);
+
   const isContentNavPage = isContentNavPath(currentPath);
   // Musical Universe pages have their own dedicated chrome (MusicSidebar /
   // MusicMobileDock for /music/*, /stream, /streamer-portal, /arcade, /arena,
@@ -782,8 +781,26 @@ function AppContent() {
   const { user, logout } = useAuthContext();
   const { currentLang } = useLanguage();
   const isFr = currentLang === "fr";
-  const isAuthed =
-    !!user || localStorage.getItem("blog_community_auth") === "true";
+  const [isAuthed, setIsAuthed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return Boolean(user);
+    return (
+      Boolean(user) || localStorage.getItem("blog_community_auth") === "true"
+    );
+  });
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      if (typeof window === "undefined") return;
+      setIsAuthed(
+        Boolean(user) || localStorage.getItem("blog_community_auth") === "true",
+      );
+    };
+
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    return () => window.removeEventListener("storage", syncAuthState);
+  }, [user]);
+
   // BlogNavbar owns the stable navigation for blog/marketplace pages.
   // Keep ContentNav for the other content routes so the two nav systems never stack.
   const isBlogOrMarketplace =
