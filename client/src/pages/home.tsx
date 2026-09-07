@@ -448,23 +448,44 @@ async function testDatabaseConnection(): Promise<{
     error?: string;
   };
 }> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/status`);
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+  let lastError = "connection_failed";
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/health`, {
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        lastError = `API error: ${response.status}`;
+        continue;
+      }
+      const data = await response.json();
+      const connected = data.database?.status === "connected";
+      if (connected) {
+        return {
+          success: true,
+          database: {
+            connected: true,
+            time: data.database?.time,
+          },
+        };
+      }
+      lastError = data.database?.error || "database_unavailable";
+    } catch (error: any) {
+      lastError = error?.message || "connection_failed";
     }
-    const data = await response.json();
-    return {
-      success: data.database?.connected === true,
-      database: data.database,
-    };
-  } catch (error: any) {
-    console.error("Database connection test failed:", error);
-    return {
-      success: false,
-      database: { connected: false, error: error.message },
-    };
+
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
   }
+
+  console.error("Database connection test failed:", lastError);
+  return {
+    success: false,
+    database: { connected: false, error: lastError },
+  };
 }
 
 // Testimonials data
