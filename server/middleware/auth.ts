@@ -41,8 +41,20 @@ function getJwtSecret(): string {
 
 function extractToken(req: Request): string | null {
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
-  if (req.cookies?.auth_token) return req.cookies.auth_token as string;
+  if (typeof authHeader === "string") {
+    const cleaned = authHeader.trim();
+    if (/^Bearer\s+/i.test(cleaned)) {
+      const token = cleaned.replace(/^Bearer\s+/i, "").trim();
+      return token.length > 0 ? token : null;
+    }
+  }
+
+  const cookieToken = req.cookies?.auth_token;
+  if (typeof cookieToken === "string") {
+    const token = cookieToken.trim();
+    return token.length > 0 ? token : null;
+  }
+
   return null;
 }
 
@@ -220,7 +232,7 @@ export async function globalAuthGate(
   // 3. Must have a valid JWT for any /api/* or /auth/* path
   try {
     const token = extractToken(req);
-    if (!token) {
+    if (!token || token.trim().length < 10) {
       return res.status(401).json({
         success: false,
         status: 401,
@@ -231,7 +243,24 @@ export async function globalAuthGate(
       });
     }
 
-    const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
+    const decoded = jwt.verify(token, getJwtSecret()) as Partial<AuthUser> & {
+      userId?: string | number;
+      id?: string | number;
+      email?: string;
+      role?: AuthUser["role"];
+    };
+
+    const userId = decoded.userId ?? decoded.id;
+    if (!userId || !decoded.email || !decoded.role) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired token. Please log in again.",
+        },
+      });
+    }
 
     // 3b. Check if this session has been revoked (concurrent login prevention)
     const revoked = await isSessionRevoked(token);
@@ -248,8 +277,8 @@ export async function globalAuthGate(
     }
 
     req.user = {
-      userId: decoded.userId,
-      id: decoded.userId,
+      userId: String(userId),
+      id: String(userId),
       email: decoded.email,
       role: decoded.role,
     };
@@ -278,7 +307,7 @@ export function requireAuth(allowedRoles?: string[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = extractToken(req);
-      if (!token) {
+      if (!token || token.trim().length < 10) {
         return res.status(401).json({
           success: false,
           status: 401,
@@ -289,11 +318,25 @@ export function requireAuth(allowedRoles?: string[]) {
         });
       }
 
-      const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
+      const decoded = jwt.verify(token, getJwtSecret()) as Partial<AuthUser> & {
+        userId?: string | number;
+        id?: string | number;
+        email?: string;
+        role?: AuthUser["role"];
+      };
+
+      const userId = decoded.userId ?? decoded.id;
+      if (!userId || !decoded.email || !decoded.role) {
+        return res.status(401).json({
+          success: false,
+          status: 401,
+          error: { code: "INVALID_TOKEN", message: "Invalid or expired token" },
+        });
+      }
 
       const user: AuthUser = {
-        userId: decoded.userId,
-        id: decoded.userId,
+        userId: String(userId),
+        id: String(userId),
         email: decoded.email,
         role: decoded.role,
       };

@@ -42,11 +42,59 @@ try {
   console.warn(`⚠️  Could not create print uploads dir: ${err.message}`);
 }
 
+const allowedPrintTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/svg+xml",
+  "application/postscript",
+]);
+const allowedPrintExtensions = new Set([
+  ".pdf",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".tif",
+  ".tiff",
+  ".svg",
+  ".eps",
+  ".ai",
+]);
+
+function sanitizeStoredName(originalName: string): string {
+  const safe = (originalName || "print-file")
+    .replace(/[\\/]+/g, "/")
+    .split("/")
+    .pop()!
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .trim();
+
+  if (!safe || safe === "." || safe === "..") return "print-file.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+
+function validatePrintFile(file: Express.Multer.File) {
+  const extension = path.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (
+    !allowedPrintTypes.has(file.mimetype) ||
+    !allowedPrintExtensions.has(extension)
+  ) {
+    throw new Error(`Unsupported print file format: ${file.mimetype}`);
+  }
+  return sanitizeStoredName(file.originalname);
+}
+
 const printStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, PRINT_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
+    const safeName = validatePrintFile(file);
+    const ext = path.extname(safeName).toLowerCase();
     cb(null, `print-${uniqueSuffix}${ext}`);
   },
 });
@@ -55,18 +103,11 @@ const printUpload = multer({
   storage: printStorage,
   limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB for print files
   fileFilter: (_req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/tiff",
-      "image/svg+xml",
-      "application/postscript", // .ai / .eps
-    ];
-    if (allowed.includes(file.mimetype)) {
+    try {
+      validatePrintFile(file);
       cb(null, true);
-    } else {
-      cb(new Error(`Unsupported print file format: ${file.mimetype}`));
+    } catch (error: any) {
+      cb(new Error(error.message));
     }
   },
 });
@@ -87,15 +128,6 @@ try {
   console.warn(`⚠️  Could not create listing uploads dir: ${err.message}`);
 }
 
-const listingStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `listing-${uniqueSuffix}${ext}`);
-  },
-});
-
 const ALLOWED_LISTING_IMAGES = new Set([
   "image/jpeg",
   "image/png",
@@ -109,22 +141,64 @@ const ALLOWED_LISTING_VIDEOS = new Set([
   "video/quicktime",
   "video/x-msvideo",
 ]);
+const ALLOWED_LISTING_IMAGE_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+  ".gif",
+]);
+const ALLOWED_LISTING_VIDEO_EXTENSIONS = new Set([
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".avi",
+]);
+
+function validateListingMedia(file: Express.Multer.File) {
+  const extension = path.extname(file.originalname || "").toLowerCase();
+  const isImage = ALLOWED_LISTING_IMAGES.has(file.mimetype);
+  const isVideo = ALLOWED_LISTING_VIDEOS.has(file.mimetype);
+  const isImageExtAllowed = ALLOWED_LISTING_IMAGE_EXTENSIONS.has(extension);
+  const isVideoExtAllowed = ALLOWED_LISTING_VIDEO_EXTENSIONS.has(extension);
+
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+
+  if (
+    (!isImage && !isVideo) ||
+    (isImage && !isImageExtAllowed) ||
+    (isVideo && !isVideoExtAllowed)
+  ) {
+    throw new Error(
+      `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`,
+    );
+  }
+
+  return sanitizeStoredName(file.originalname);
+}
+
+const listingStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const safeName = validateListingMedia(file);
+    const ext = path.extname(safeName).toLowerCase();
+    cb(null, `listing-${uniqueSuffix}${ext}`);
+  },
+});
 
 const listingUpload = multer({
   storage: listingStorage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB max per file
   fileFilter: (_req, file, cb) => {
-    if (
-      ALLOWED_LISTING_IMAGES.has(file.mimetype) ||
-      ALLOWED_LISTING_VIDEOS.has(file.mimetype)
-    ) {
+    try {
+      validateListingMedia(file);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`,
-        ),
-      );
+    } catch (error: any) {
+      cb(new Error(error.message));
     }
   },
 }).fields([
