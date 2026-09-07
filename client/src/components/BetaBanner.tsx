@@ -51,7 +51,7 @@ export default function BetaBanner() {
             Post-beta
           </span>
 
-          <p className="min-w-0 flex-1 text-center text-[13px] font-medium sm:text-left sm:text-sm">
+          <p className="min-w-0 flex-1 text-center text-[13px] font-medium sm:text-sm">
             <span className="font-semibold">Verso Air</span>
             <span className="mx-1.5 text-[#3a2b14]">—</span>
             <span>Production hardening in progress • Share feedback</span>
