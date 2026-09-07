@@ -9,7 +9,6 @@ import { CountryProvider } from "@/contexts/CountryContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider, useAudio } from "@/lib/audio-context";
 import AudioPlayer from "@/components/audio/AudioPlayer";
-import BetaBanner from "@/components/BetaBanner";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import {
@@ -870,7 +869,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BetaBanner />
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages

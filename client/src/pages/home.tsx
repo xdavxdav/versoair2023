@@ -1934,7 +1934,7 @@ export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
-      <div className="relative flex min-h-[78vh] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative flex min-h-[clamp(36rem,78vh,52rem)] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
         <video
           className="absolute inset-0 h-full w-full object-cover"
           autoPlay
@@ -2061,7 +2061,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5 }}
-            className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 cursor-pointer"
+            className="absolute bottom-8 left-1/2 z-50 -translate-x-1/2 cursor-pointer"
             onClick={scrollToHelpSection}
           >
             <div className="flex h-12 w-8 justify-center rounded-full border-2 border-white/30">
