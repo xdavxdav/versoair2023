@@ -899,27 +899,39 @@ function AppContent() {
                 >
                   <span className="hidden md:inline notranslate" translate="no">
                     {pageTitle === "Verso Air"
-                      ? "Business Intelligence Platform"
+                      ? isFr
+                        ? "Verso Air"
+                        : "Verso Air"
                       : isFr
                         ? pageTitle === "Verso Air Business"
                           ? "Verso Air Business"
                           : `Plateforme ${pageTitle}`
                         : pageTitle}
+                    {pageTitle === "Verso Air" && (
+                      <>
+                        <sup className="ml-0.5 align-super text-[7px]">™</sup>
+                        <span className="mx-1">
+                          {isFr
+                            ? "Plateforme d'intelligence d'affaires"
+                            : "Business Intelligence Platform"}
+                        </span>
+                      </>
+                    )}
                   </span>
                   <span
                     className="hidden sm:inline md:hidden notranslate"
                     translate="no"
                   >
                     {pageTitle === "Verso Air"
-                      ? "Business Intelligence Platform"
+                      ? isFr
+                        ? "Plateforme d'intelligence d'affaires"
+                        : "Business Intelligence Platform"
                       : isFr
                         ? pageTitle.substring(0, 3)
                         : pageTitle.substring(0, 3)}
                   </span>
                   <span className="sm:hidden notranslate" translate="no">
-                    {pageTitle === "Verso Air"
-                      ? "Business Intelligence Platform"
-                      : pageTitle.substring(0, 2).toUpperCase()}
+                    BIP
                   </span>
                 </span>
 
