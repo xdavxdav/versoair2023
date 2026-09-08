@@ -12,6 +12,8 @@ import {
   useToggleLike,
   useAddComment,
   useUserLikedTrackIds,
+  useTrackReactions,
+  useToggleTrackReaction,
 } from "@/hooks/use-streaming";
 import {
   Play,
@@ -67,9 +69,12 @@ export default function TrackDetailPage() {
   const { data: likedIds } = useUserLikedTrackIds();
   const likeMutation = useToggleLike();
   const commentMutation = useAddComment();
+  const { data: reactionData } = useTrackReactions(trackId);
+  const reactionMutation = useToggleTrackReaction();
 
   const [comment, setComment] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const track = data?.track;
   const comments = data?.comments || [];
@@ -78,6 +83,16 @@ export default function TrackDetailPage() {
 
   const isPlaying = audio.currentTrack?.id === trackId && audio.isPlaying;
   const isLiked = likedIds?.includes(trackId);
+  const reactions = [
+    { type: "fire", emoji: "🔥", label: "Fire" },
+    { type: "heart", emoji: "❤️", label: "Love" },
+    { type: "clap", emoji: "👏", label: "Clap" },
+    { type: "mindblown", emoji: "🤯", label: "Wow" },
+    { type: "party", emoji: "🎉", label: "Party" },
+    { type: "sad", emoji: "😢", label: "Sad" },
+  ];
+  const reactionCounts = reactionData?.reactions || {};
+  const userReactions = reactionData?.userReactions || [];
 
   if (isLoading) {
     return (
@@ -132,8 +147,6 @@ export default function TrackDetailPage() {
       audio.playTracks(albumTracks);
     }
   };
-
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -355,6 +368,44 @@ export default function TrackDetailPage() {
                 </a>
               )}
             </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+              <span className="mr-1 text-xs text-gray-500">Réagir</span>
+              {reactions.map((reaction) => {
+                const active = userReactions.includes(reaction.type);
+                const count = Number(reactionCounts[reaction.type] || 0);
+                return (
+                  <button
+                    key={reaction.type}
+                    type="button"
+                    onClick={() =>
+                      reactionMutation.mutate({
+                        trackId,
+                        reactionType: reaction.type,
+                      })
+                    }
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-sm transition-all ${
+                      active
+                        ? "border-amber-400/50 bg-amber-400/15"
+                        : "border-gray-700 bg-gray-800/50 hover:border-amber-400/40"
+                    }`}
+                    aria-label={`${reaction.label} reaction`}
+                  >
+                    <span>{reaction.emoji}</span>
+                    {count > 0 && (
+                      <span className="text-xs text-gray-400">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+              <a
+                href="#comments"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-700 bg-gray-800/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-amber-400/40 hover:text-amber-300"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                {comments.length} commentaires
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -433,7 +484,7 @@ export default function TrackDetailPage() {
       {/* ═══════════════════════════════════════════ */}
       {/* COMMENTS */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="max-w-[95vw] mx-auto px-4 mb-10">
+      <section id="comments" className="max-w-[95vw] mx-auto px-4 mb-10">
         <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-4">
           <MessageCircle className="w-4 h-4 text-amber-400" />
           Commentaires ({comments.length})

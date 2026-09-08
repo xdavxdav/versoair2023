@@ -16,6 +16,7 @@ import {
   lazy,
 } from "react";
 import QuickSignIn from "@/components/QuickSignIn";
+import BetaBanner from "@/components/BetaBanner";
 import { LanguageProvider } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import { AudioProvider } from "@/lib/audio-context";
@@ -140,6 +141,10 @@ function Router() {
         </MusicProtectedRoute>
       </Route>
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
+      <Route
+        path="/artist-portal/welcome"
+        component={ArtistPortalWelcomePage}
+      />
       <Route path="/music">
         <MusicProtectedRoute>
           <Suspense fallback={<PageLoader />}>
@@ -224,11 +229,16 @@ function Router() {
 }
 
 function AppContent() {
+  const [location] = useLocation();
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();
   const [pageEnter, setPageEnter] = useState(false);
   const wasLoading = useRef(false);
+  const hideMusicShell =
+    /^(\/|\/stream(?:\/.*)?(?:\?.*)?|\/artist-portal\/welcome(?:\/.*)?(?:\?.*)?)$/.test(
+      location,
+    );
 
   useEffect(() => {
     if (isLoading && !isFadingOut) wasLoading.current = true;
@@ -246,44 +256,47 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
-      <div
-        className="fixed top-0 left-0 right-0 z-[60] flex flex-col"
-        style={{ overflow: "visible" }}
-      >
-        <div className="bg-gradient-to-r from-purple-900 to-pink-900 text-white h-7 px-2 flex items-center">
-          <div
-            className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
-            style={{ overflow: "visible" }}
-          >
-            <span className="font-medium notranslate" translate="no">
-              🎵 Verso Air Musical Universe
-            </span>
-            <div className="flex-shrink-0" style={{ overflow: "visible" }}>
-              <CountryDropdown />
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
-              <button
-                onClick={() => {
-                  window.location.href = mainSiteUrl;
-                }}
-                className="hover:text-purple-200 transition-colors flex items-center space-x-1 text-[10px]"
-              >
-                <span>🏢</span>
-                <span className="hidden sm:inline">Business Platform</span>
-                <span className="sm:hidden">FSA</span>
-              </button>
-              <button
-                onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-                className="hover:text-purple-200 transition-colors flex items-center space-x-1"
-              >
-                <span>📍</span>
-                <span className="hidden sm:inline">GPS Services</span>
-              </button>
+      <BetaBanner />
+      {!hideMusicShell && (
+        <div
+          className="sticky top-0 left-0 right-0 z-[60] flex flex-col"
+          style={{ overflow: "visible" }}
+        >
+          <div className="bg-gradient-to-r from-purple-900 to-pink-900 text-white h-7 px-2 flex items-center">
+            <div
+              className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
+              style={{ overflow: "visible" }}
+            >
+              <span className="font-medium notranslate" translate="no">
+                🎵 Verso Air Musical Universe
+              </span>
+              <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+                <CountryDropdown />
+              </div>
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+                <button
+                  onClick={() => {
+                    window.location.href = mainSiteUrl;
+                  }}
+                  className="hover:text-purple-200 transition-colors flex items-center space-x-1 text-[10px]"
+                >
+                  <span>🏢</span>
+                  <span className="hidden sm:inline">Business Platform</span>
+                  <span className="sm:hidden">FSA</span>
+                </button>
+                <button
+                  onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
+                  className="hover:text-purple-200 transition-colors flex items-center space-x-1"
+                >
+                  <span>📍</span>
+                  <span className="hidden sm:inline">GPS Services</span>
+                </button>
+              </div>
             </div>
           </div>
+          <MusicNavbar />
         </div>
-        <MusicNavbar />
-      </div>
+      )}
 
       <PullToRefresh />
       <LocationPanel
