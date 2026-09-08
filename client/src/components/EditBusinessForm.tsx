@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { getCsrfToken, initializeCsrfToken } from "@/lib/auth";
 
 interface EditBusinessFormProps {
   business: {
@@ -128,9 +129,19 @@ export function EditBusinessForm({
         payload.categoryId = parseInt(formData.categoryId);
       }
 
-      const response = await fetch(`/api/businesses/${business.id}`, {
+      let csrf = getCsrfToken();
+      if (!csrf) {
+        await initializeCsrfToken();
+        csrf = getCsrfToken();
+      }
+
+      const response = await fetch(`/api/v1/admin/businesses/${business.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrf ? { "x-csrf-token": csrf } : {}),
+        },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 

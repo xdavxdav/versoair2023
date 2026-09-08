@@ -192,7 +192,7 @@ export function BusinessForm({
       // Otherwise, create the business directly
       const endpoint = requireApproval
         ? "/api/request/business"
-        : "/api/businesses";
+        : "/api/v1/admin/businesses";
 
       // Resolve category name for the email
       let categoryName = "";

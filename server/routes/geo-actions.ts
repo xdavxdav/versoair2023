@@ -25,6 +25,141 @@ import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
 
+const BUSINESS_CHANGE_FIELDS = [
+  "name",
+  "categoryId",
+  "email",
+  "phone",
+  "description",
+  "address",
+  "countryCode",
+  "cityName",
+  "regionId",
+  "latitude",
+  "longitude",
+  "website",
+  "businessType",
+  "tags",
+  "isActive",
+] as const;
+
+async function executeGeoAction(tx: any, action: any) {
+  if (action.entityType !== "business") {
+    throw new Error(`Unsupported geo action entity: ${action.entityType}`);
+  }
+
+  const entityId = action.entityId ? Number(action.entityId) : null;
+  const change = (action.requestedChange || {}) as Record<string, any>;
+
+  if (action.actionType === "create") {
+    if (!change.name || !change.categoryId) {
+      throw new Error("Business creation requires name and categoryId");
+    }
+    const category = await tx
+      .select({ id: schema.businessCategories.id })
+      .from(schema.businessCategories)
+      .where(eq(schema.businessCategories.id, Number(change.categoryId)))
+      .limit(1);
+    if (!category.length) throw new Error("Business category does not exist");
+
+    const countryCode = change.countryCode
+      ? String(change.countryCode).toUpperCase()
+      : null;
+    const cityName = change.cityName || null;
+    const [created] = await tx
+      .insert(schema.businesses)
+      .values({
+        name: String(change.name),
+        categoryId: Number(change.categoryId),
+        email: change.email || null,
+        phone: change.phone || null,
+        description: change.description || null,
+        address: change.address || null,
+        countryCode,
+        cityName,
+        regionId: change.regionId ? Number(change.regionId) : null,
+        latitude: change.latitude == null ? null : String(change.latitude),
+        longitude: change.longitude == null ? null : String(change.longitude),
+        website: change.website || null,
+        businessType: change.businessType || null,
+        location: [cityName, countryCode].filter(Boolean).join(", ") || null,
+        tags: change.tags
+          ? typeof change.tags === "string"
+            ? JSON.stringify(change.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean))
+            : change.tags
+          : null,
+      })
+      .returning({ id: schema.businesses.id });
+    return created;
+  }
+
+  if (!entityId) throw new Error("Business action requires entityId");
+
+  if (action.actionType === "delete") {
+    const deleted = await tx
+      .delete(schema.businesses)
+      .where(eq(schema.businesses.id, entityId))
+      .returning({ id: schema.businesses.id });
+    if (!deleted.length) throw new Error("Business not found");
+    return deleted[0];
+  }
+
+  if (action.actionType !== "edit") {
+    throw new Error(`Unsupported business action: ${action.actionType}`);
+  }
+
+  const updateFields: Record<string, any> = {};
+  for (const field of BUSINESS_CHANGE_FIELDS) {
+    if (change[field] !== undefined) updateFields[field] = change[field];
+  }
+  if (updateFields.categoryId !== undefined) {
+    updateFields.categoryId = Number(updateFields.categoryId);
+  }
+  if (updateFields.regionId !== undefined && updateFields.regionId !== null) {
+    updateFields.regionId = Number(updateFields.regionId);
+  }
+  if (updateFields.countryCode !== undefined) {
+    updateFields.countryCode = updateFields.countryCode
+      ? String(updateFields.countryCode).toUpperCase()
+      : null;
+  }
+  if (updateFields.latitude !== undefined && updateFields.latitude !== null) {
+    updateFields.latitude = String(updateFields.latitude);
+  }
+  if (updateFields.longitude !== undefined && updateFields.longitude !== null) {
+    updateFields.longitude = String(updateFields.longitude);
+  }
+  if (updateFields.businessType !== undefined) {
+    updateFields.attributes = updateFields.businessType
+      ? { type: updateFields.businessType }
+      : null;
+    delete updateFields.businessType;
+  }
+  if (updateFields.cityName !== undefined || updateFields.countryCode !== undefined) {
+    const current = await tx
+      .select({ cityName: schema.businesses.cityName, countryCode: schema.businesses.countryCode })
+      .from(schema.businesses)
+      .where(eq(schema.businesses.id, entityId))
+      .limit(1);
+    if (!current.length) throw new Error("Business not found");
+    const city = updateFields.cityName ?? current[0].cityName;
+    const country = updateFields.countryCode ?? current[0].countryCode;
+    updateFields.location = [city, country].filter(Boolean).join(", ") || null;
+  }
+  if (updateFields.tags !== undefined && typeof updateFields.tags === "string") {
+    updateFields.tags = JSON.stringify(updateFields.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean));
+  }
+  if (!Object.keys(updateFields).length) throw new Error("No business changes supplied");
+
+  const [updated] = await tx
+    .update(schema.businesses)
+    .set(updateFields)
+    .where(eq(schema.businesses.id, entityId))
+    .returning({ id: schema.businesses.id });
+  if (!updated) throw new Error("Business not found");
+  return updated;
+}
+
 // ─── Helper: determine geo-admin access level for a user ───────────────────
 
 type GeoAccessLevel = "full" | "read-only" | "none";
@@ -138,10 +273,11 @@ router.post(
 
     const { actionType, entityType, entityId, requestedChange } = req.body;
 
-    if (!actionType || !entityType || !entityId) {
+    if (!actionType || !entityType || (actionType !== "create" && !entityId)) {
       res.status(400).json({
         success: false,
-        message: "actionType, entityType, and entityId are required",
+        message:
+          "actionType and entityType are required; entityId is required for edit and delete",
       });
       return;
     }
@@ -157,27 +293,31 @@ router.post(
 
     // TSR/admin/mod — auto-approve immediately
     if (!access.requiresQueue) {
-      const [inserted] = await db
-        .insert(schema.geoActionRequests)
-        .values({
-          requestedBy: userId,
-          actionType,
-          entityType,
-          entityId: String(entityId),
-          requestedChange: requestedChange || null,
-          delayHours: 0,
-          status: "approved",
-          reviewedBy: userId,
-          reviewedAt: new Date(),
-          reviewNotes: "Auto-approved (staff)",
-          expiresAt: null,
-        })
-        .returning();
+      const result = await db.transaction(async (tx) => {
+        const [inserted] = await tx
+          .insert(schema.geoActionRequests)
+          .values({
+            requestedBy: userId,
+            actionType,
+            entityType,
+            entityId: entityId == null ? null : String(entityId),
+            requestedChange: requestedChange || null,
+            delayHours: 0,
+            status: "approved",
+            reviewedBy: userId,
+            reviewedAt: new Date(),
+            reviewNotes: "Auto-approved (staff)",
+            expiresAt: null,
+          })
+          .returning();
+        const result = await executeGeoAction(tx, inserted);
+        return { inserted, result };
+      });
 
       res.json({
         success: true,
         message: "Action approved immediately (staff access)",
-        request: inserted,
+        request: result.inserted,
         autoApproved: true,
       });
       return;
@@ -326,15 +466,25 @@ router.post(
       return;
     }
 
-    await db
-      .update(schema.geoActionRequests)
-      .set({
-        status: "approved",
-        reviewedBy: reviewerId,
-        reviewedAt: new Date(),
-        reviewNotes: reviewNotes || "Approved",
-      })
-      .where(eq(schema.geoActionRequests.id, requestId));
+    const result = await db.transaction(async (tx) => {
+      const [claimed] = await tx
+        .update(schema.geoActionRequests)
+        .set({
+          status: "approved",
+          reviewedBy: reviewerId,
+          reviewedAt: new Date(),
+          reviewNotes: reviewNotes || "Approved",
+        })
+        .where(
+          and(
+            eq(schema.geoActionRequests.id, requestId),
+            eq(schema.geoActionRequests.status, "pending"),
+          ),
+        )
+        .returning();
+      if (!claimed) throw new Error("Request is no longer pending");
+      return executeGeoAction(tx, claimed);
+    });
 
     console.log(
       `[GEO-ACTION] Request #${requestId} approved by user ${reviewerId}`,
@@ -342,8 +492,9 @@ router.post(
 
     res.json({
       success: true,
-      message: "Request approved",
+      message: "Request approved and applied",
       requestId,
+      result,
     });
   }),
 );
