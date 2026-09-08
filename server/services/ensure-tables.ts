@@ -105,6 +105,22 @@ export async function ensureAllTables(): Promise<void> {
         /* fine */
       }
     }
+
+    // ── Column drift: tier-weighted Arena voting ───────────────────────────
+    // Raw stream-votes remain available for lock/quota rules; weighted totals
+    // are persisted separately so contest scoring reflects listener tiers.
+    const ARENA_WEIGHT_ADDITIONS = [
+      `ALTER TABLE arena_votes ADD COLUMN IF NOT EXISTS vote_weight NUMERIC(6,4) DEFAULT 0.1`,
+      `ALTER TABLE arena_brackets ADD COLUMN IF NOT EXISTS weighted_vote_count NUMERIC(12,4) DEFAULT 0`,
+      `ALTER TABLE arena_contests ADD COLUMN IF NOT EXISTS weighted_total_votes NUMERIC(12,4) DEFAULT 0`,
+    ];
+    for (const alt of ARENA_WEIGHT_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+        /* Arena tables may not exist in older environments yet. */
+      }
+    }
     // Backfill known plan quotas (only touches rows that currently have 0/NULL)
     const PLAN_QUOTA_UPDATES: Array<[string, number]> = [
       ["Gratuit", 0],
@@ -354,6 +370,24 @@ const TABLE_STATEMENTS: TableDef[] = [
       price DECIMAL(10,2),
       category VARCHAR(50),
       description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "geo_action_requests",
+    sql: `CREATE TABLE IF NOT EXISTS geo_action_requests (
+      id SERIAL PRIMARY KEY,
+      requested_by INTEGER NOT NULL REFERENCES users(id),
+      action_type VARCHAR(50) NOT NULL,
+      entity_type VARCHAR(50),
+      entity_id TEXT,
+      requested_change JSONB,
+      delay_hours INTEGER NOT NULL DEFAULT 24,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      reviewed_by INTEGER REFERENCES users(id),
+      reviewed_at TIMESTAMP,
+      review_notes TEXT,
+      expires_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()
     )`,
   },

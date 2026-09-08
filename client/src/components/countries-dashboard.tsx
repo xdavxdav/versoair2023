@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import { BusinessForm } from "@/components/BusinessForm";
 import { EditBusinessForm } from "@/components/EditBusinessForm";
 import { SessionMonitorPanel } from "@/components/SessionMonitorPanel";
@@ -2471,8 +2472,8 @@ export default function DatabaseExpert({
                         if (!deleteTarget) return;
                         setIsDeleting(true);
                         try {
-                          const response = await fetch(
-                            `${API_BASE_URL}/api/businesses/${deleteTarget.id}`,
+                            const response = await authenticatedFetch(
+                            `${API_BASE_URL}/api/v1/admin/businesses/${deleteTarget.id}`,
                             {
                               method: "DELETE",
                             },
