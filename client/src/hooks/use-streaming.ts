@@ -251,6 +251,47 @@ export function useAddComment() {
   });
 }
 
+export function useTrackReactions(trackId: number | string | undefined) {
+  return useQuery({
+    queryKey: ["track-reactions", trackId],
+    queryFn: async () => {
+      const res = await fetch(`${BASE}/track/${trackId}/reactions`, {
+        credentials: "include",
+      });
+      if (!res.ok) return { reactions: {}, userReactions: [] };
+      return res.json();
+    },
+    enabled: !!trackId,
+    staleTime: 30_000,
+  });
+}
+
+export function useToggleTrackReaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      trackId,
+      reactionType,
+    }: {
+      trackId: number;
+      reactionType: string;
+    }) => {
+      const res = await fetch(`${BASE}/track/${trackId}/react`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionType }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle track reaction");
+      return res.json();
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["track-reactions", vars.trackId] });
+    },
+  });
+}
+
 // ═══════════════════════════════════════════════════════════
 // HISTORY
 // ═══════════════════════════════════════════════════════════
@@ -267,7 +308,9 @@ export function useListeningHistory() {
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
 
-export function useStreamingAnalytics(period: "7d" | "30d" | "90d" | "all" = "30d") {
+export function useStreamingAnalytics(
+  period: "7d" | "30d" | "90d" | "all" = "30d",
+) {
   return useQuery({
     queryKey: ["streaming-analytics", period],
     queryFn: () => fetchJson(`${BASE}/analytics/overview?period=${period}`),
