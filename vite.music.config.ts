@@ -32,7 +32,6 @@ export default defineConfig({
             "@tiptap/extension-color",
             "@tiptap/extension-text-style",
           ],
-          "vendor-quill": ["react-quill"],
         },
       },
     },
