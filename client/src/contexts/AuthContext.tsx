@@ -136,7 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Server explicitly says unauthenticated → clear
         clearSession();
       } else {
-        setAuthError("We could not verify your session. Check your connection and retry.");
+        setAuthError(
+          "We could not verify your session. Check your connection and retry.",
+        );
       }
       // Any other status (5xx, 502, 503 during deploy) → keep cached user
     } catch {

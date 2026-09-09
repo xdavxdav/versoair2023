@@ -45,6 +45,23 @@ const ROUND_DURATIONS_HOURS = [48, 48, 24, 72];
 const MAX_VOTES_PER_LISTENER = 100; // total stream-votes across all artists in one contest
 const SOFT_VOTE_WINDOW_HOURS = 6; // votes are changeable for this period
 const LOCK_STREAM_THRESHOLD = 3; // vote locks after N streams for the same artist
+
+const CONTEST_VOTE_WEIGHTS: Record<string, number> = {
+  free: 0.1,
+  guest: 0.1,
+  supporter: 0.35,
+  champion: 0.7,
+  patron: 1,
+};
+
+async function getContestVoteWeight(userId: number): Promise<number> {
+  const result = await pool.query(
+    `SELECT tier FROM streaming_subscriptions WHERE user_id = $1 LIMIT 1`,
+    [userId],
+  );
+  const tier = String(result.rows[0]?.tier || "free").toLowerCase();
+  return CONTEST_VOTE_WEIGHTS[tier] ?? CONTEST_VOTE_WEIGHTS.free;
+}
 const BADGE_HIERARCHY = [
   "initiate",
   "bronze",
@@ -416,6 +433,7 @@ router.post("/:id/vote", requireAuth(), async (req: Request, res: Response) => {
     const userId = parseInt(req.user!.userId);
     const contestId = parseInt(req.params.id);
     const { artistProfileId } = req.body;
+    const voteWeight = await getContestVoteWeight(userId);
 
     if (!artistProfileId) {
       return res
@@ -522,25 +540,32 @@ router.post("/:id/vote", requireAuth(), async (req: Request, res: Response) => {
 
     // Update arena_votes aggregate (upsert)
     await pool.query(
-      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked)
-       VALUES ($1, $2, $3, 1, $4)
+      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked, vote_weight)
+       VALUES ($1, $2, $3, 1, $4, $5)
        ON CONFLICT ON CONSTRAINT arena_votes_unique DO UPDATE
        SET stream_count = arena_votes.stream_count + 1,
+           vote_weight = EXCLUDED.vote_weight,
            locked = EXCLUDED.locked OR arena_votes.locked`,
-      [contestId, userId, artistProfileId, voteStatus === "locked"],
+      [contestId, userId, artistProfileId, voteStatus === "locked", voteWeight],
     );
 
     // Update bracket vote_count + streams for this artist in current round
     await pool.query(
-      `UPDATE arena_brackets SET vote_count = vote_count + 1, streams = streams + 1
+      `UPDATE arena_brackets
+       SET vote_count = vote_count + 1,
+           weighted_vote_count = COALESCE(weighted_vote_count, 0) + $4,
+           streams = streams + 1
        WHERE contest_id = $1 AND round = $2 AND artist_profile_id = $3`,
-      [contestId, currentRound, artistProfileId],
+      [contestId, currentRound, artistProfileId, voteWeight],
     );
 
     // Update total_votes on the contest
     await pool.query(
-      `UPDATE arena_contests SET total_votes = COALESCE(total_votes, 0) + 1 WHERE id = $1`,
-      [contestId],
+      `UPDATE arena_contests
+         SET total_votes = COALESCE(total_votes, 0) + 1,
+           weighted_total_votes = COALESCE(weighted_total_votes, 0) + $2
+         WHERE id = $1`,
+      [contestId, voteWeight],
     );
 
     // ── Award XP to listener for voting ──
@@ -584,6 +609,8 @@ router.post("/:id/vote", requireAuth(), async (req: Request, res: Response) => {
         : `Stream-vote recorded (${voteStatus})`,
       voteStatus,
       streamCount,
+      voteWeight,
+      voteWeightLabel: `${Math.round(voteWeight * 100)}% of 1 vote point`,
       isNewlyLocked,
       votesRemaining: MAX_VOTES_PER_LISTENER - totalUsed - 1,
       xpAwarded: existingVote.rows.length === 0 ? XP_REWARDS.VOTE : 0,

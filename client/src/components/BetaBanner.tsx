@@ -51,15 +51,15 @@ export default function BetaBanner() {
   }
 
   return (
-    <div className="relative z-[60] overflow-hidden border-b border-[#b67b1d]/60 bg-gradient-to-r from-[#f4d17a] via-[#e9b64d] to-[#d4902d] text-[#1a140d] shadow-[0_10px_30px_rgba(164,110,22,0.18)] transition-all duration-300 ease-out">
+    <div className="relative z-[120] overflow-hidden border-b border-[#8c5d17]/70 bg-gradient-to-r from-[#d99d34] via-[#f0b94b] to-[#be7418] text-[#17110c] shadow-[0_12px_30px_rgba(79,50,16,0.28)] transition-all duration-300 ease-out">
       <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-          <span className="inline-flex items-center rounded-full border border-[#1a140d]/25 bg-[#1a140d]/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#1a140d]">
+          <span className="inline-flex items-center rounded-full border border-[#1a140d]/25 bg-[#1a140d]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#1a140d]">
             Post-beta
           </span>
 
-          <p className="min-w-0 flex-1 text-center text-[13px] font-medium sm:text-sm">
-            <span className="font-semibold">Verso Air</span>
+          <p className="min-w-0 flex-1 text-center text-[13px] font-semibold sm:text-sm">
+            <span className="font-black">Verso Air</span>
             <span className="mx-1.5 text-[#3a2b14]">—</span>
             <span>Production hardening in progress • Share feedback</span>
           </p>
@@ -69,7 +69,7 @@ export default function BetaBanner() {
           <button
             type="button"
             onClick={openFeedback}
-            className="inline-flex items-center justify-center rounded-full bg-[#1a140d] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f8d98a] shadow-sm transition-transform duration-200 hover:scale-[1.02]"
+            className="inline-flex items-center justify-center rounded-full bg-[#1a140d] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#f9d98a] shadow-sm transition-transform duration-200 hover:scale-[1.02]"
           >
             <span className="underline decoration-2 underline-offset-2 decoration-current">
               Feedback

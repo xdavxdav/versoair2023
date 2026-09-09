@@ -32,7 +32,7 @@ export function errorHandler(
   }
 
   // Database errors
-  if (err.code?.startsWith("42")) {
+  if (err.code?.startsWith("42") || err.message?.startsWith("Failed query")) {
     return res.status(500).json({
       success: false,
       status: 500,

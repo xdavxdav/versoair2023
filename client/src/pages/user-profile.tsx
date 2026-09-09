@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -50,6 +51,7 @@ function formatCompact(value: number) {
 }
 
 export default function UserProfilePage() {
+  const [, navigate] = useLocation();
   const [match, params] = useRoute("/user/:id");
   const userId = params?.id;
   const { user: me } = useAuthContext();
@@ -143,8 +145,7 @@ export default function UserProfilePage() {
   }, [profile]);
 
   const handleBack = () => {
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = "/";
+    navigateBackSafely(navigate, "/");
   };
 
   const handleMessage = async () => {

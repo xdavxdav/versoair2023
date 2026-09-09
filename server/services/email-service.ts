@@ -2,6 +2,7 @@ import nodemailer, { Transporter } from "nodemailer";
 import { db } from "../db";
 import { auditLogs, systemSettings } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { decryptSetting } from "../utils/encrypted-settings";
 
 /**
  * Resolves the public-facing application URL, safe to embed in emails.
@@ -53,7 +54,14 @@ async function loadSmtpConfigFromDb() {
     ])) as any[];
 
     if (result[0]?.value) {
-      smtpCache = result[0].value;
+      const value = result[0].value as Record<string, unknown>;
+      smtpCache = {
+        ...value,
+        pass:
+          typeof value.pass === "string"
+            ? decryptSetting(value.pass)
+            : value.pass,
+      };
       cacheExpires = now + 5 * 60 * 1000; // Cache for 5 minutes
       return smtpCache;
     }

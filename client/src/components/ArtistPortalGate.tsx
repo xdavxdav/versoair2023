@@ -14,6 +14,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
@@ -109,7 +110,9 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
 
   const handleCancel = useCallback(() => {
     setCancelled(true);
-    window.history.back();
+    navigateBackSafely((path) => {
+      window.location.href = path;
+    }, "/stream");
   }, []);
 
   // ── 1. SuperAdmin / artist / session-passed → render children immediately ──
@@ -149,7 +152,11 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
           </p>
           <div className="flex gap-3">
             <button
-              onClick={() => window.history.back()}
+              onClick={() =>
+                navigateBackSafely((path) => {
+                  window.location.href = path;
+                }, "/stream")
+              }
               className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-all text-sm font-medium"
             >
               Go Back

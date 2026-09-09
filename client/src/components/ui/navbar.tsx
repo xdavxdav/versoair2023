@@ -179,7 +179,16 @@ export default function Navbar({
 
   // Don't render navbar on /blog, /marketplace, auth pages, or when ContentNav is active
   const navAuthed =
-    !!user || localStorage.getItem("blog_community_auth") === "true";
+    !!user ||
+    Boolean(
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("artist_token") ||
+      localStorage.getItem("geoadmin_session") ||
+      localStorage.getItem("adminAccessTime"),
+    ) ||
+    localStorage.getItem("blog_community_auth") === "true";
   if (location === "/blog" || location === "/marketplace") {
     return null;
   }

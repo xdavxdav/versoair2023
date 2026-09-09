@@ -2,8 +2,8 @@ import { Router } from "express";
 import { db } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
-import { users, auditLogs } from "../../../../shared/schema";
-import { eq, count } from "drizzle-orm";
+import { users, auditLogs, adminRoles } from "../../../../shared/schema";
+import { eq, count, asc } from "drizzle-orm";
 
 const router = Router();
 
@@ -96,6 +96,19 @@ const ROLE_DEFINITIONS: Record<
   },
 };
 
+const SYSTEM_ROLE_NAMES = [
+  "superuser",
+  "admin",
+  "moderator",
+  "business_owner",
+  "user",
+];
+
+async function getRoleEntries() {
+  const rows = await db.select().from(adminRoles).orderBy(asc(adminRoles.id));
+  return rows;
+}
+
 /**
  * GET /api/v1/admin/roles
  * List all roles with user counts
@@ -119,19 +132,16 @@ router.get(
         roleCountMap.set(rc.role || "user", Number(rc.userCount));
       }
 
-      // Build roles list from definitions + DB counts
-      const roles = Object.entries(ROLE_DEFINITIONS).map(
-        ([name, def], index) => ({
-          id: index + 1,
-          name,
-          description: def.description,
-          permissions: def.permissions,
-          color: def.color,
-          userCount: roleCountMap.get(name) || 0,
-          isSystem: ["superuser", "admin", "user"].includes(name),
-          createdAt: new Date().toISOString(),
-        }),
-      );
+      const roles = (await getRoleEntries()).map((role) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        permissions: role.permissions,
+        color: role.color,
+        userCount: roleCountMap.get(role.name) || 0,
+        isSystem: role.isSystem,
+        createdAt: role.createdAt?.toISOString() || new Date().toISOString(),
+      }));
 
       res.json({
         success: true,
@@ -165,9 +175,8 @@ router.get(
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
     const roleId = parseInt(req.params.id, 10);
-    const roleEntries = Object.entries(ROLE_DEFINITIONS);
-
-    if (roleId < 1 || roleId > roleEntries.length) {
+    const role = (await getRoleEntries()).find((entry) => entry.id === roleId);
+    if (!role) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -175,25 +184,23 @@ router.get(
       });
     }
 
-    const [name, def] = roleEntries[roleId - 1];
-
     // Get user count for this role
     const [result] = await db
       .select({ userCount: count() })
       .from(users)
-      .where(eq(users.role, name));
+      .where(eq(users.role, role.name));
 
     res.json({
       success: true,
       status: 200,
       data: {
         id: roleId,
-        name,
-        description: def.description,
-        permissions: def.permissions,
-        color: def.color,
+        name: role.name,
+        description: role.description,
+        permissions: role.permissions,
+        color: role.color,
         userCount: Number(result?.userCount || 0),
-        isSystem: ["superuser", "admin", "user"].includes(name),
+        isSystem: role.isSystem,
       },
       metadata: { timestamp: new Date().toISOString() },
     });
@@ -202,7 +209,7 @@ router.get(
 
 /**
  * POST /api/v1/admin/roles
- * Create a custom role (adds to in-memory definitions)
+ * Create a custom role
  */
 router.post(
   "/",
@@ -223,8 +230,11 @@ router.post(
 
     const roleName = name.toLowerCase().replace(/\s+/g, "_");
 
-    // Check if role already exists
-    if (ROLE_DEFINITIONS[roleName]) {
+    const existing = await db
+      .select({ id: adminRoles.id })
+      .from(adminRoles)
+      .where(eq(adminRoles.name, roleName));
+    if (existing.length > 0) {
       return res.status(409).json({
         success: false,
         status: 409,
@@ -240,21 +250,23 @@ router.post(
       AVAILABLE_PERMISSIONS.includes(p),
     );
 
-    // Add to definitions
-    ROLE_DEFINITIONS[roleName] = {
-      description: description || `Custom role: ${name}`,
-      permissions: validPermissions,
-      color: "bg-indigo-100 text-indigo-800",
-    };
-
-    const newId = Object.keys(ROLE_DEFINITIONS).length;
+    const [createdRole] = await db
+      .insert(adminRoles)
+      .values({
+        name: roleName,
+        description: description || `Custom role: ${name}`,
+        permissions: validPermissions,
+        color: "bg-indigo-100 text-indigo-800",
+        isSystem: false,
+      })
+      .returning();
 
     // Audit log
     try {
       await db.insert(auditLogs).values({
         action: "CREATE",
         entityType: "role",
-        entityId: String(newId),
+        entityId: String(createdRole.id),
         changes: { name: roleName, permissions: validPermissions },
       });
     } catch (e) {
@@ -265,7 +277,7 @@ router.post(
       success: true,
       status: 201,
       data: {
-        id: newId,
+        id: createdRole.id,
         name: roleName,
         description: description || `Custom role: ${name}`,
         permissions: validPermissions,
@@ -289,9 +301,8 @@ router.put(
   asyncHandler(async (req, res) => {
     const roleId = parseInt(req.params.id, 10);
     const { name, description, permissions } = req.body;
-    const roleEntries = Object.entries(ROLE_DEFINITIONS);
-
-    if (roleId < 1 || roleId > roleEntries.length) {
+    const role = (await getRoleEntries()).find((entry) => entry.id === roleId);
+    if (!role) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -299,14 +310,8 @@ router.put(
       });
     }
 
-    const [roleName, roleDef] = roleEntries[roleId - 1];
-
     // Prevent modifying system roles' names
-    if (
-      ["superuser", "admin", "user"].includes(roleName) &&
-      name &&
-      name !== roleName
-    ) {
+    if (role.isSystem && name && name !== role.name) {
       return res.status(403).json({
         success: false,
         status: 403,
@@ -317,14 +322,19 @@ router.put(
       });
     }
 
-    // Update the role definition
-    if (description !== undefined)
-      ROLE_DEFINITIONS[roleName].description = description;
-    if (permissions !== undefined) {
-      ROLE_DEFINITIONS[roleName].permissions = permissions.filter((p: string) =>
-        AVAILABLE_PERMISSIONS.includes(p),
-      );
-    }
+    const validPermissions =
+      permissions === undefined
+        ? role.permissions
+        : permissions.filter((p: string) => AVAILABLE_PERMISSIONS.includes(p));
+    const [updatedRole] = await db
+      .update(adminRoles)
+      .set({
+        description: description ?? role.description,
+        permissions: validPermissions,
+        updatedAt: new Date(),
+      })
+      .where(eq(adminRoles.id, roleId))
+      .returning();
 
     // Audit log
     try {
@@ -342,19 +352,19 @@ router.put(
     const [result] = await db
       .select({ userCount: count() })
       .from(users)
-      .where(eq(users.role, roleName));
+      .where(eq(users.role, role.name));
 
     res.json({
       success: true,
       status: 200,
       data: {
         id: roleId,
-        name: roleName,
-        description: ROLE_DEFINITIONS[roleName].description,
-        permissions: ROLE_DEFINITIONS[roleName].permissions,
-        color: ROLE_DEFINITIONS[roleName].color,
+        name: updatedRole.name,
+        description: updatedRole.description,
+        permissions: updatedRole.permissions,
+        color: updatedRole.color,
         userCount: Number(result?.userCount || 0),
-        isSystem: ["superuser", "admin", "user"].includes(roleName),
+        isSystem: updatedRole.isSystem,
       },
       metadata: { timestamp: new Date().toISOString() },
     });
@@ -370,9 +380,8 @@ router.delete(
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
     const roleId = parseInt(req.params.id, 10);
-    const roleEntries = Object.entries(ROLE_DEFINITIONS);
-
-    if (roleId < 1 || roleId > roleEntries.length) {
+    const role = (await getRoleEntries()).find((entry) => entry.id === roleId);
+    if (!role) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -380,10 +389,8 @@ router.delete(
       });
     }
 
-    const [roleName] = roleEntries[roleId - 1];
-
     // Prevent deleting system roles
-    if (["superuser", "admin", "user"].includes(roleName)) {
+    if (role.isSystem || SYSTEM_ROLE_NAMES.includes(role.name)) {
       return res.status(403).json({
         success: false,
         status: 403,
@@ -398,11 +405,10 @@ router.delete(
     const reassigned = await db
       .update(users)
       .set({ role: "user" })
-      .where(eq(users.role, roleName))
+      .where(eq(users.role, role.name))
       .returning({ id: users.id });
 
-    // Remove from definitions
-    delete ROLE_DEFINITIONS[roleName];
+    await db.delete(adminRoles).where(eq(adminRoles.id, role.id));
 
     // Audit log
     try {
@@ -411,7 +417,7 @@ router.delete(
         entityType: "role",
         entityId: String(roleId),
         changes: {
-          deleted: roleName,
+          deleted: role.name,
           reassignedUsers: reassigned.length,
         },
       });
@@ -423,7 +429,7 @@ router.delete(
       success: true,
       status: 200,
       data: {
-        deleted: roleName,
+        deleted: role.name,
         reassignedUsers: reassigned.length,
       },
       metadata: { timestamp: new Date().toISOString() },
@@ -441,9 +447,8 @@ router.post(
   asyncHandler(async (req, res) => {
     const roleId = parseInt(req.params.id, 10);
     const { userId } = req.body;
-    const roleEntries = Object.entries(ROLE_DEFINITIONS);
-
-    if (roleId < 1 || roleId > roleEntries.length) {
+    const role = (await getRoleEntries()).find((entry) => entry.id === roleId);
+    if (!role) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -462,7 +467,7 @@ router.post(
       });
     }
 
-    const [roleName] = roleEntries[roleId - 1];
+    const roleName = role.name;
 
     // Update user's role
     const [updated] = await db

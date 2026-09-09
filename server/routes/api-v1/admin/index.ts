@@ -117,6 +117,69 @@ router.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
   }
 });
 
+router.get("/pages", requireAuth(["admin", "superuser"]), async (_req, res) => {
+  const result = await pool.query(
+    `SELECT id, title, slug, content, is_published AS "isPublished", created_at AS "createdAt", updated_at AS "updatedAt"
+     FROM content_pages ORDER BY updated_at DESC NULLS LAST, created_at DESC`,
+  );
+  res.json({ success: true, data: result.rows });
+});
+
+router.post("/pages", requireAuth(["admin", "superuser"]), async (req, res) => {
+  const { title, slug, content = "", isPublished = false } = req.body || {};
+  if (!String(title || "").trim() || !String(slug || "").trim())
+    return res
+      .status(400)
+      .json({
+        success: false,
+        error: { message: "Title and slug are required" },
+      });
+  const result = await pool.query(
+    `INSERT INTO content_pages (title, slug, content, is_published) VALUES ($1, $2, $3, $4) RETURNING id, title, slug, content, is_published AS "isPublished"`,
+    [String(title).trim(), String(slug).trim(), content, Boolean(isPublished)],
+  );
+  res.status(201).json({ success: true, data: result.rows[0] });
+});
+
+router.put(
+  "/pages/:id",
+  requireAuth(["admin", "superuser"]),
+  async (req, res) => {
+    const { title, slug, content = "", isPublished = false } = req.body || {};
+    const result = await pool.query(
+      `UPDATE content_pages SET title = $1, slug = $2, content = $3, is_published = $4, updated_at = NOW() WHERE id = $5 RETURNING id, title, slug, content, is_published AS "isPublished"`,
+      [
+        String(title || "").trim(),
+        String(slug || "").trim(),
+        content,
+        Boolean(isPublished),
+        Number(req.params.id),
+      ],
+    );
+    if (!result.rowCount)
+      return res
+        .status(404)
+        .json({ success: false, error: { message: "Page not found" } });
+    res.json({ success: true, data: result.rows[0] });
+  },
+);
+
+router.delete(
+  "/pages/:id",
+  requireAuth(["admin", "superuser"]),
+  async (req, res) => {
+    const result = await pool.query(
+      `DELETE FROM content_pages WHERE id = $1 RETURNING id`,
+      [Number(req.params.id)],
+    );
+    if (!result.rowCount)
+      return res
+        .status(404)
+        .json({ success: false, error: { message: "Page not found" } });
+    res.json({ success: true, id: result.rows[0].id });
+  },
+);
+
 // Mount sub-routers
 router.use("/businesses", businessesRouter);
 router.use("/categories", categoriesRouter);

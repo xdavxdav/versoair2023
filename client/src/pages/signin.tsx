@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   isValidEmail,
   isPasswordStrong,
@@ -204,21 +205,7 @@ export default function SignIn() {
   const { user: authUser, login: authLogin } = useAuthContext();
 
   const handleBack = () => {
-    const previousUrl = document.referrer;
-    const hasUsablePreviousPage =
-      window.history.length > 1 &&
-      (!previousUrl ||
-        (new URL(previousUrl, window.location.origin).origin ===
-          window.location.origin &&
-          !new URL(previousUrl, window.location.origin).pathname.startsWith(
-            "/auth/signin",
-          )));
-
-    if (hasUsablePreviousPage) {
-      window.history.back();
-    } else {
-      navigate("/");
-    }
+    navigateBackSafely(navigate, "/stream");
   };
 
   // Onboarding: display name prompt after first login
@@ -430,6 +417,12 @@ export default function SignIn() {
             : `Welcome, ${data.user.name || data.user.email}!`,
         });
 
+        const redirectTarget = getQueryParam("redirect");
+        if (redirectTarget && redirectTarget.startsWith("/")) {
+          navigate(redirectTarget);
+          return;
+        }
+
         const availablePortals = getPortalChoices(data.user);
         if (availablePortals.length > 1) {
           setPortalChoices(availablePortals);
@@ -437,10 +430,7 @@ export default function SignIn() {
           return;
         }
 
-        const redirectTarget = getQueryParam("redirect");
-        if (redirectTarget && redirectTarget.startsWith("/")) {
-          navigate(redirectTarget);
-        } else {
+        {
           // Role-based dashboard routing — full priority chain
           const portals = data.user.portals || [];
           if (portals.includes("community") && !portals.includes("artist")) {
@@ -1493,7 +1483,7 @@ export default function SignIn() {
 
             <div className="text-center mt-8">
               <button
-                onClick={() => window.history.back()}
+                onClick={handleBack}
                 className="text-[#bf831c] hover:text-[#a6701a] text-sm font-medium"
               >
                 ← Back

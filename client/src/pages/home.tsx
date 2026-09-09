@@ -1976,8 +1976,7 @@ export default function Home() {
               className="mb-4 md:mb-6"
             >
               <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
-                🎨 Soutien aux artisans{" "}
-                {countryMeta.nameIn}
+                🎨 Soutien aux artisans {countryMeta.nameIn}
               </span>
             </motion.div>
 
@@ -2027,29 +2026,31 @@ export default function Home() {
               </motion.div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-6 flex flex-col justify-center gap-3 px-2 sm:flex-row md:mt-8"
-            >
-              <Link to="/get-involved" className="w-full sm:w-auto">
-                <Button className="w-full rounded-xl bg-white px-6 py-4 text-base font-bold text-slate-900 shadow-2xl transition-all hover:scale-[1.02] hover:bg-slate-100 sm:w-auto md:px-10 md:py-6 md:text-lg">
-                  S'impliquer
-                </Button>
-              </Link>
-              <Button
-                asChild
-                className="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4 text-base font-bold text-slate-950 shadow-2xl transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-orange-400 sm:w-auto md:px-10 md:py-6 md:text-lg"
+            {!isAuthenticated && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8 }}
+                className="mt-6 flex flex-col justify-center gap-3 px-2 sm:flex-row md:mt-8"
               >
-                <Link to="/apply">✨ Postuler</Link>
-              </Button>
-              <Link to="/ong-culturelle" className="w-full sm:w-auto">
-                <Button className="w-full rounded-xl border-2 border-white/60 bg-transparent px-6 py-4 text-base font-bold text-white transition-all hover:bg-white/5 sm:w-auto md:px-10 md:py-6 md:text-lg">
-                  En savoir plus
+                <Link to="/get-involved" className="w-full sm:w-auto">
+                  <Button className="w-full rounded-xl bg-white px-6 py-4 text-base font-bold text-slate-900 shadow-2xl transition-all hover:scale-[1.02] hover:bg-slate-100 sm:w-auto md:px-10 md:py-6 md:text-lg">
+                    S'impliquer
+                  </Button>
+                </Link>
+                <Button
+                  asChild
+                  className="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4 text-base font-bold text-slate-950 shadow-2xl transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-orange-400 sm:w-auto md:px-10 md:py-6 md:text-lg"
+                >
+                  <Link to="/apply">✨ Postuler</Link>
                 </Button>
-              </Link>
-            </motion.div>
+                <Link to="/ong-culturelle" className="w-full sm:w-auto">
+                  <Button className="w-full rounded-xl border-2 border-white/60 bg-transparent px-6 py-4 text-base font-bold text-white transition-all hover:bg-white/5 sm:w-auto md:px-10 md:py-6 md:text-lg">
+                    En savoir plus
+                  </Button>
+                </Link>
+              </motion.div>
+            )}
 
             <div className="mt-8">
               <MottoFlip />
@@ -2057,7 +2058,7 @@ export default function Home() {
           </div>
         </div>
 
-        {showScrollIndicator && (
+        {showScrollIndicator && !isAuthenticated && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2969,7 +2970,7 @@ export default function Home() {
                   icon: Calendar,
                   text: "Événements",
                   desc: "Ateliers & spectacles",
-                  href: "/divertissement",
+                  href: "/events",
                   mood: {
                     border: "border-blue-200/80 hover:border-blue-300",
                     icon: "bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:rotate-[-6deg]",

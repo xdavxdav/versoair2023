@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import GeoAdmin from "@/components/geo-admin";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
@@ -23,6 +24,7 @@ export default function GeoAdminPage() {
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
     useSubscription();
   const [, setLocation] = useLocation();
+  const { logout } = useAuthContext();
   const [startingTrial, setStartingTrial] = useState(false);
 
   // GeoAdmins are tech agents / moderators / IT staff — full access granted based on role
@@ -94,6 +96,22 @@ export default function GeoAdminPage() {
       description: "Your GeoAdmin session has ended. Please sign in again.",
     });
   }, []);
+
+  const handleGeoAdminLogout = useCallback(async () => {
+    await logout();
+    localStorage.removeItem("geoadmin_session");
+    localStorage.removeItem("geoadmin_username");
+    localStorage.removeItem("geoadmin_login_time");
+    localStorage.removeItem("geoadmin_session_start");
+    setGateBypass(false);
+    setIsStillConnected(false);
+    setUsername(null);
+    toast({
+      title: "Session déconnectée",
+      description: "Vous avez été déconnecté de GeoAdmin.",
+    });
+    setLocation("/");
+  }, [logout, setLocation]);
 
   const {
     sessionTimeLeft,
@@ -262,7 +280,16 @@ export default function GeoAdminPage() {
       <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         {/* Connection status dot */}
         {isStillConnected && (
-          <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleGeoAdminLogout}
+            >
+              Déconnexion
+            </Button>
+          </div>
         )}
 
         {/* Session Timer Bar */}
@@ -396,7 +423,16 @@ export default function GeoAdminPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-rose-50">
       {/* Connection status dot */}
       {isStillConnected && (
-        <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+          <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void handleGeoAdminLogout}
+          >
+            Déconnexion
+          </Button>
+        </div>
       )}
 
       {/* Session Timer Bar */}

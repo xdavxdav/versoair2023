@@ -24,6 +24,7 @@ export function ContractorAssignmentSection() {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAssignForm, setShowAssignForm] = useState(false);
+  const [editingContract, setEditingContract] = useState<any | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -130,16 +131,76 @@ export function ContractorAssignmentSection() {
       setFeedback({ type: "error", message: "Failed to assign contract" }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const res = await authenticatedFetch(
+        `/api/contractor-pipeline/contracts/${editingContract.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to update contract");
+      return res.json();
+    },
+    onSuccess: () => {
+      setEditingContract(null);
+      setShowAssignForm(false);
+      queryClient.invalidateQueries({ queryKey: ["contractor-assignments"] });
+    },
+    onError: () =>
+      setFeedback({ type: "error", message: "Failed to update contract" }),
+  });
+
+  const lifecycleMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await authenticatedFetch(
+        `/api/contractor-pipeline/contracts/${id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to update contract status");
+      return res.json();
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["contractor-assignments"] }),
+    onError: () =>
+      setFeedback({
+        type: "error",
+        message: "Failed to update contract status",
+      }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await authenticatedFetch(
+        `/api/contractor-pipeline/contracts/${id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("Failed to delete contract");
+      return res.json();
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["contractor-assignments"] }),
+    onError: () =>
+      setFeedback({ type: "error", message: "Failed to delete contract" }),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.contractorId || !formData.title) {
+    if (!editingContract && !formData.contractorId) {
       setFeedback({
         type: "error",
         message: "Contractor and title are required",
       });
       return;
     }
-    assignMutation.mutate(formData);
+    if (editingContract) updateMutation.mutate(formData);
+    else assignMutation.mutate(formData);
   };
 
   const statusBadge = (status: string) => {
@@ -207,59 +268,63 @@ export function ContractorAssignmentSection() {
           onSubmit={handleSubmit}
           className="bg-white border-2 border-purple-200 rounded-xl p-5 shadow-lg space-y-4"
         >
-          <h3 className="font-semibold text-lg">📝 Assign New Contract</h3>
+          <h3 className="font-semibold text-lg">
+            📝 {editingContract ? "Edit Contract" : "Assign New Contract"}
+          </h3>
 
           {/* Contractor Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contractor *
-            </label>
-            <input
-              type="text"
-              value={contractorSearch}
-              onChange={(e) => setContractorSearch(e.target.value)}
-              placeholder="Search contractors by name, email, or specialization..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
-            />
-            {contractors.length > 0 && (
-              <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
-                {contractors.map((c: any) => (
-                  <button
-                    type="button"
-                    key={c.id}
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        contractorId: String(c.id),
-                      }));
-                      setContractorSearch(
-                        `${c.name} (${c.specialization || "General"})`,
-                      );
-                    }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 transition-colors flex items-center justify-between ${
-                      formData.contractorId === String(c.id)
-                        ? "bg-purple-50 border-l-2 border-purple-500"
-                        : ""
-                    }`}
-                  >
-                    <div>
-                      <span className="font-medium">{c.name}</span>
-                      <span className="text-gray-500 ml-2">{c.email}</span>
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {c.specialization || "General"}
-                      {c.hourly_rate && ` • $${c.hourly_rate}/hr`}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-            {formData.contractorId && (
-              <p className="text-xs text-purple-600 mt-1">
-                ✓ Contractor #{formData.contractorId} selected
-              </p>
-            )}
-          </div>
+          {!editingContract && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contractor *
+              </label>
+              <input
+                type="text"
+                value={contractorSearch}
+                onChange={(e) => setContractorSearch(e.target.value)}
+                placeholder="Search contractors by name, email, or specialization..."
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
+              />
+              {contractors.length > 0 && (
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  {contractors.map((c: any) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          contractorId: String(c.id),
+                        }));
+                        setContractorSearch(
+                          `${c.name} (${c.specialization || "General"})`,
+                        );
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 transition-colors flex items-center justify-between ${
+                        formData.contractorId === String(c.id)
+                          ? "bg-purple-50 border-l-2 border-purple-500"
+                          : ""
+                      }`}
+                    >
+                      <div>
+                        <span className="font-medium">{c.name}</span>
+                        <span className="text-gray-500 ml-2">{c.email}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {c.specialization || "General"}
+                        {c.hourly_rate && ` • $${c.hourly_rate}/hr`}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {formData.contractorId && (
+                <p className="text-xs text-purple-600 mt-1">
+                  ✓ Contractor #{formData.contractorId} selected
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Title */}
           <div>
@@ -559,6 +624,80 @@ export function ContractorAssignmentSection() {
                           Completed:{" "}
                           {new Date(assign.completed_at).toLocaleDateString()}
                         </span>
+                      )}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                      <button
+                        className="rounded border border-gray-300 px-3 py-1.5 text-xs"
+                        onClick={() => {
+                          setEditingContract(assign);
+                          setFormData({
+                            contractorId: String(assign.contractor_id),
+                            title: assign.title || "",
+                            description: assign.description || "",
+                            terms: assign.terms || "",
+                            deadline: assign.deadline
+                              ? String(assign.deadline).slice(0, 10)
+                              : "",
+                            paymentAmount: assign.payment_amount || "",
+                          });
+                          setShowAssignForm(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      {assign.status !== "cancelled" &&
+                        assign.status !== "completed" && (
+                          <button
+                            className="rounded border border-amber-300 px-3 py-1.5 text-xs text-amber-700"
+                            onClick={() =>
+                              lifecycleMutation.mutate({
+                                id: assign.id,
+                                status: "cancelled",
+                              })
+                            }
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      {assign.status === "accepted" && (
+                        <button
+                          className="rounded border border-indigo-300 px-3 py-1.5 text-xs text-indigo-700"
+                          onClick={() =>
+                            lifecycleMutation.mutate({
+                              id: assign.id,
+                              status: "in_progress",
+                            })
+                          }
+                        >
+                          Start
+                        </button>
+                      )}
+                      {assign.status === "in_progress" && (
+                        <button
+                          className="rounded border border-emerald-300 px-3 py-1.5 text-xs text-emerald-700"
+                          onClick={() =>
+                            lifecycleMutation.mutate({
+                              id: assign.id,
+                              status: "completed",
+                            })
+                          }
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {["offered", "declined", "cancelled"].includes(
+                        assign.status,
+                      ) && (
+                        <button
+                          className="rounded border border-red-300 px-3 py-1.5 text-xs text-red-700"
+                          onClick={() => {
+                            if (window.confirm("Delete this contract?"))
+                              deleteMutation.mutate(assign.id);
+                          }}
+                        >
+                          Delete
+                        </button>
                       )}
                     </div>
                   </div>

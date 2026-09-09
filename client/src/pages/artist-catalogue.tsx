@@ -6,6 +6,14 @@ import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAudio } from "@/lib/audio-context";
+import ThreadFeedWidget from "@/components/ThreadFeedWidget";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   useArtistDetail,
   useToggleFollow,
@@ -42,6 +50,7 @@ import {
   MessageCircle,
   Send,
   X,
+  MessagesSquare,
 } from "lucide-react";
 
 function formatStreams(n: number): string {
@@ -81,6 +90,7 @@ export default function ArtistCataloguePage() {
     "idle" | "sending" | "sent" | "error"
   >("idle");
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [showDiscussions, setShowDiscussions] = useState(false);
 
   const artist = data?.artist;
   const topTracks = data?.topTracks || [];
@@ -197,7 +207,7 @@ export default function ArtistCataloguePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-slate-900 pb-28">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
       {/* ═══════════════════════════════════════════ */}
       {/* HERO BANNER */}
       {/* ═══════════════════════════════════════════ */}
@@ -216,7 +226,7 @@ export default function ArtistCataloguePage() {
 
         <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-8">
           <Link href="/stream">
-            <button className="flex items-center gap-1.5 text-gray-400 hover:text-slate-900 text-sm transition-colors mb-8">
+            <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-8">
               <ChevronLeft className="w-4 h-4" />
               Retour
             </button>
@@ -237,7 +247,7 @@ export default function ArtistCataloguePage() {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                  <span className="text-5xl font-bold text-slate-900/30">
+                  <span className="text-5xl font-bold text-white/30">
                     {artist.name?.[0]}
                   </span>
                 </div>
@@ -280,7 +290,7 @@ export default function ArtistCataloguePage() {
               {/* Stats row */}
               <div className="flex flex-wrap gap-4 justify-center md:justify-start mb-5">
                 <div className="text-center">
-                  <p className="text-slate-900 font-bold text-lg">
+                  <p className="text-white font-bold text-lg">
                     {formatStreams(artist.monthly_listeners || 0)}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
@@ -288,7 +298,7 @@ export default function ArtistCataloguePage() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-900 font-bold text-lg">
+                  <p className="text-white font-bold text-lg">
                     {formatStreams(artist.total_streams || 0)}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
@@ -296,7 +306,7 @@ export default function ArtistCataloguePage() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-900 font-bold text-lg">
+                  <p className="text-white font-bold text-lg">
                     {artist.followers || 0}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
@@ -304,7 +314,7 @@ export default function ArtistCataloguePage() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-900 font-bold text-lg">
+                  <p className="text-white font-bold text-lg">
                     {artist.total_tracks || topTracks.length}
                   </p>
                   <p className="text-gray-500 text-[10px] uppercase tracking-wider">
@@ -353,6 +363,15 @@ export default function ArtistCataloguePage() {
                   Message
                 </button>
 
+                <button
+                  onClick={() => setShowDiscussions(true)}
+                  className="px-4 py-2.5 rounded-xl flex items-center gap-1.5 border bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all"
+                  aria-label={`Open discussions about ${artist.name}`}
+                >
+                  <MessagesSquare className="w-4 h-4" />
+                  Discussions
+                </button>
+
                 {/* Social links */}
                 {artist.wiki_url && (
                   <a
@@ -360,7 +379,7 @@ export default function ArtistCataloguePage() {
                     target="_blank"
                     rel="noopener"
                     title="Wikipedia"
-                    className="px-3 py-2.5 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-400 hover:text-slate-900 transition-all"
+                    className="px-3 py-2.5 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-400 hover:text-white transition-all"
                   >
                     <Globe className="w-4 h-4" />
                   </a>
@@ -419,7 +438,7 @@ export default function ArtistCataloguePage() {
               className={`px-4 py-2 rounded-md text-sm transition-all ${
                 activeTab === tab.key
                   ? "bg-amber-500/20 text-amber-400"
-                  : "text-gray-400 hover:text-slate-900"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               {tab.label}
@@ -464,13 +483,13 @@ export default function ArtistCataloguePage() {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                          <Music className="w-4 h-4 text-slate-900/40" />
+                          <Music className="w-4 h-4 text-white/40" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-sm font-medium truncate ${isCurrent ? "text-amber-400" : "text-slate-900"}`}
+                        className={`text-sm font-medium truncate ${isCurrent ? "text-amber-400" : "text-white"}`}
                       >
                         {track.title}
                       </p>
@@ -522,7 +541,7 @@ export default function ArtistCataloguePage() {
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                            <Disc3 className="w-10 h-10 text-slate-900/20" />
+                            <Disc3 className="w-10 h-10 text-white/20" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
@@ -531,7 +550,7 @@ export default function ArtistCataloguePage() {
                           </div>
                         </div>
                       </div>
-                      <p className="text-slate-900 text-sm font-medium truncate">
+                      <p className="text-white text-sm font-medium truncate">
                         {album.title}
                       </p>
                       <p className="text-gray-500 text-xs">
@@ -598,7 +617,7 @@ export default function ArtistCataloguePage() {
             {artist.country && (
               <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
                 <p className="text-gray-500 text-xs mb-1">Pays</p>
-                <p className="text-slate-900 text-sm">
+                <p className="text-white text-sm">
                   {getFlag(artist.country_code)} {artist.country}
                 </p>
               </div>
@@ -606,30 +625,30 @@ export default function ArtistCataloguePage() {
             {artist.genre && (
               <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
                 <p className="text-gray-500 text-xs mb-1">Genre</p>
-                <p className="text-slate-900 text-sm">{artist.genre}</p>
+                <p className="text-white text-sm">{artist.genre}</p>
               </div>
             )}
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
               <p className="text-gray-500 text-xs mb-1">Écoutes totales</p>
-              <p className="text-slate-900 text-sm">
+              <p className="text-white text-sm">
                 {formatStreams(artist.total_streams || 0)}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
               <p className="text-gray-500 text-xs mb-1">Auditeurs mensuels</p>
-              <p className="text-slate-900 text-sm">
+              <p className="text-white text-sm">
                 {formatStreams(artist.monthly_listeners || 0)}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
               <p className="text-gray-500 text-xs mb-1">Albums</p>
-              <p className="text-slate-900 text-sm">
+              <p className="text-white text-sm">
                 {artist.total_albums || albums.length}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
               <p className="text-gray-500 text-xs mb-1">Abonnés</p>
-              <p className="text-slate-900 text-sm">
+              <p className="text-white text-sm">
                 {formatStreams(artist.followers || 0)}
               </p>
             </div>
@@ -644,7 +663,7 @@ export default function ArtistCataloguePage() {
                   href={artist.wiki_url}
                   target="_blank"
                   rel="noopener"
-                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-400 hover:text-slate-900 text-sm transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-400 hover:text-white text-sm transition-colors"
                 >
                   <Globe className="w-4 h-4" /> Wikipedia
                 </a>
@@ -716,13 +735,13 @@ export default function ArtistCataloguePage() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                        <span className="text-xl font-bold text-slate-900/40">
+                        <span className="text-xl font-bold text-white/40">
                           {ra.name?.[0]}
                         </span>
                       </div>
                     )}
                   </div>
-                  <p className="text-slate-900 text-xs font-medium truncate">
+                  <p className="text-white text-xs font-medium truncate">
                     {ra.name}
                   </p>
                   <p className="text-gray-500 text-[10px]">{ra.genre}</p>
@@ -732,6 +751,32 @@ export default function ArtistCataloguePage() {
           </div>
         </section>
       )}
+
+      <Sheet open={showDiscussions} onOpenChange={setShowDiscussions}>
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto border-white/10 bg-slate-950 p-4 text-white sm:max-w-xl sm:p-6"
+        >
+          <SheetHeader className="mb-4 pr-8">
+            <SheetTitle className="text-left text-white">
+              Discussions autour de {artist.name}
+            </SheetTitle>
+            <SheetDescription className="text-left text-slate-400">
+              Rejoignez les conversations de la communauté Musical Universe sans
+              quitter cette page.
+            </SheetDescription>
+          </SheetHeader>
+          <ThreadFeedWidget
+            postType="musical_universe"
+            title="Musical Universe Community"
+            composerPlaceholder={`Parlez de ${artist.name}...`}
+            limit={8}
+            variant="dark"
+            showViewAll={false}
+            className="border-white/10 bg-white/[0.04]"
+          />
+        </SheetContent>
+      </Sheet>
 
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* MESSAGE ARTIST MODAL — free/ungated music_artist DM         */}
@@ -743,20 +788,20 @@ export default function ArtistCataloguePage() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-4 h-4 text-slate-900" />
+                  <MessageCircle className="w-4 h-4 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-slate-900 font-semibold text-sm truncate">
+                  <p className="text-white font-semibold text-sm truncate">
                     Message {artist.name}
                   </p>
-                  <p className="text-slate-900/50 text-[10px]">
+                  <p className="text-white/50 text-[10px]">
                     Direct message — free for all fans
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowMessageModal(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-900/60 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -770,8 +815,8 @@ export default function ArtistCataloguePage() {
                   <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
                     <Send className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <p className="text-slate-900 font-semibold">Message sent!</p>
-                  <p className="text-slate-900/50 text-xs mt-1">
+                  <p className="text-white font-semibold">Message sent!</p>
+                  <p className="text-white/50 text-xs mt-1">
                     You&apos;ll see the reply in your inbox.
                   </p>
                 </div>
@@ -789,11 +834,11 @@ export default function ArtistCataloguePage() {
                     }
                     placeholder="Write a message…"
                     rows={5}
-                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-3 py-2.5 text-slate-900 text-sm placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none"
+                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none"
                     disabled={messageState === "sending"}
                   />
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-slate-900/40 text-[10px]">
+                    <span className="text-white/40 text-[10px]">
                       {messageText.length}/1000
                     </span>
                     <button
@@ -801,7 +846,7 @@ export default function ArtistCataloguePage() {
                       disabled={
                         !messageText.trim() || messageState === "sending"
                       }
-                      className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-slate-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       {messageState === "sending" ? "Sending…" : "Send"}
@@ -813,7 +858,7 @@ export default function ArtistCataloguePage() {
 
             {/* Footer */}
             <div className="px-5 py-2.5 bg-[#f3efe9]/50 border-t border-white/10">
-              <p className="text-slate-900/40 text-[10px] text-center">
+              <p className="text-white/40 text-[10px] text-center">
                 Direct messaging is free for all fans · Rate-limited to prevent
                 spam
               </p>

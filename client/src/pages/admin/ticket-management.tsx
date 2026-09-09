@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuth } from "@/hooks/use-auth";
@@ -330,9 +331,7 @@ export function AdminTicketManagement() {
             )}
             <Button
               onClick={() =>
-                window.history.length > 1
-                  ? window.history.back()
-                  : navigate("/geo-admin/dashboard")
+                navigateBackSafely(navigate, "/geo-admin/dashboard")
               }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
             >

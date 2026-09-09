@@ -32,6 +32,8 @@ interface ThreadFeedWidgetProps {
   composerPlaceholder?: string;
   limit?: number;
   className?: string;
+  viewAllHref?: string;
+  showViewAll?: boolean;
   /** "dark" (default) for dark-themed pages like /stream, "light" for white-background pages like careers/contractors. */
   variant?: "dark" | "light";
 }
@@ -53,6 +55,8 @@ export default function ThreadFeedWidget({
   composerPlaceholder = "Share something with the community…",
   limit = 8,
   className = "",
+  viewAllHref = "/blog",
+  showViewAll = true,
   variant = "dark",
 }: ThreadFeedWidgetProps) {
   const { user } = useAuthContext();
@@ -72,7 +76,16 @@ export default function ThreadFeedWidget({
   const [localPosts, setLocalPosts] = useState<any[]>(posts);
 
   useEffect(() => {
-    setLocalPosts(posts);
+    setLocalPosts((current) => {
+      if (posts.length === 0 && current.length === 0) return current;
+      if (
+        current.length === posts.length &&
+        current.every((post, index) => post.id === posts[index]?.id)
+      ) {
+        return current;
+      }
+      return posts;
+    });
   }, [posts]);
 
   const handlePost = () => {
@@ -232,9 +245,11 @@ export default function ThreadFeedWidget({
     <div className={`${t.wrap} ${className}`}>
       <div className={t.header}>
         <h3 className={t.title}>{title}</h3>
-        <Link href="/blog" className={t.link}>
-          View all
-        </Link>
+        {showViewAll && (
+          <Link href={viewAllHref} className={t.link}>
+            View all
+          </Link>
+        )}
       </div>
 
       {user ? (

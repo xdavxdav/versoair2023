@@ -391,7 +391,7 @@ export default function Home() {
     try {
       const res = await fetch(
         `/api/astrology?sign=${encodeURIComponent(sign)}`,
-        { method: "POST" },
+        { method: "GET" },
       );
 
       const cacheHeader = res.headers.get("x-cache") || null;

@@ -320,6 +320,46 @@ router.get(
   },
 );
 
+router.put("/api/admin/profiles/:id", async (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
+  const profileId = Number(req.params.id);
+  const {
+    name,
+    displayName,
+    category,
+    description,
+    bio,
+    email,
+    phone,
+    website,
+  } = req.body || {};
+  if (!Number.isInteger(profileId) || !String(name || "").trim()) {
+    return res.status(400).json({ error: "Profile id and name are required" });
+  }
+  try {
+    const [updated] = await db
+      .update(unifiedProfiles)
+      .set({
+        name: String(name).trim(),
+        displayName: displayName || null,
+        category: category || null,
+        description: description || null,
+        bio: bio || null,
+        email: email || null,
+        phone: phone || null,
+        website: website || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(unifiedProfiles.id, profileId))
+      .returning();
+    if (!updated) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error("[admin/profiles:update]", err);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 // ── Admin: approve / reject / suspend / restore ───────────────────────────────
 router.post(
   "/api/admin/profiles/:id/action",

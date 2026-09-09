@@ -66,7 +66,7 @@ async function fetchAstroWithRetries(sign: string) {
   throw lastErr || new Error("Unknown upstream error");
 }
 
-router.post(
+router.get(
   "/astrology",
   asyncHandler(async (req, res) => {
     const sign = (req.query.sign || req.body.sign || "")

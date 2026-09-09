@@ -30,6 +30,10 @@ import {
   Headphones,
   Radio,
   Heart,
+  Trophy,
+  MessageCircle,
+  Compass,
+  LayoutDashboard,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -55,6 +59,10 @@ const sidebarIconMap: Record<
   Headphones,
   Radio,
   Heart,
+  Trophy,
+  MessageCircle,
+  Compass,
+  LayoutDashboard,
 };
 
 /* ─── Logo with hold-to-go-home gesture ─── */
@@ -213,15 +221,70 @@ export function MusicSidebar() {
       icon: "Heart",
       section: "CORE",
     },
+    {
+      id: "arena",
+      label: "Arena",
+      href: "/arena?from=stream",
+      icon: "Trophy",
+      section: "COMMUNITY",
+    },
+    {
+      id: "community",
+      label: "Community",
+      href: "/streamer-portal?from=stream",
+      icon: "MessageCircle",
+      section: "COMMUNITY",
+    },
   ];
 
   // Filter items based on user role
   const coreItems = useMemo(() => {
     if (!isArtist) {
-      // Streamers see listen-only features
-      return STREAMER_CORE_ITEMS;
+      return [
+        {
+          id: "home",
+          label: "Home",
+          href: "/stream",
+          icon: "Home",
+          section: "CORE",
+        },
+        {
+          id: "discover",
+          label: "Discover",
+          href: "/stream",
+          icon: "Compass",
+          section: "CORE",
+        },
+        {
+          id: "library",
+          label: "Library",
+          href: "/music/library",
+          icon: "Library",
+          section: "CORE",
+        },
+        {
+          id: "favorites",
+          label: "Favorites",
+          href: "/music/favorites",
+          icon: "Heart",
+          section: "CORE",
+        },
+        {
+          id: "arena",
+          label: "Arena",
+          href: "/arena?from=stream",
+          icon: "Trophy",
+          section: "COMMUNITY",
+        },
+        {
+          id: "community",
+          label: "Community",
+          href: "/streamer-portal?from=stream",
+          icon: "MessageCircle",
+          section: "COMMUNITY",
+        },
+      ];
     }
-    // Artists see full creative suite
     return MUSIC_SIDEBAR_ITEMS.filter((i) => i.section === "CORE");
   }, [isArtist]);
 
@@ -235,14 +298,10 @@ export function MusicSidebar() {
   }, [isArtist]);
 
   return (
-    <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[95] w-16">
-      {/* Glass background */}
-      <div className="absolute inset-0 bg-[#0a0512] backdrop-blur-xl border-r border-white/[0.06]" />
-      {/* Purple glow edge - vertical */}
+    <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[90] w-16 shadow-[0_0_30px_rgba(168,85,247,0.18)]">
+      <div className="absolute inset-0 bg-[#0a0512]/90 backdrop-blur-xl border-r border-white/[0.08]" />
       <div className="absolute top-14 bottom-0 right-0 w-px bg-gradient-to-b from-purple-500/50 via-fuchsia-500/20 to-transparent" />
-      {/* Horizontal glow where sidebar header meets navbar - creates merge effect */}
       <div className="absolute top-14 left-0 right-0 h-px bg-gradient-to-r from-purple-500/30 via-purple-500/50 to-purple-500/60" />
-      {/* Corner accent - visual merge point */}
       <div className="absolute top-14 right-0 w-2 h-2 bg-purple-500/30 rounded-bl-full" />
 
       {/* Content */}
@@ -256,7 +315,10 @@ export function MusicSidebar() {
             const Icon = sidebarIconMap[item.icon];
             const isActive =
               pathname === item.href ||
-              (item.id === "home" && pathname === "/music/dashboard");
+              (item.id === "home" && pathname === "/music/dashboard") ||
+              (item.id === "arena" && pathname.startsWith("/arena")) ||
+              (item.id === "community" &&
+                pathname.startsWith("/streamer-portal"));
 
             return (
               <Link key={item.id} href={item.href}>
