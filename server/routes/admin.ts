@@ -4,7 +4,10 @@ import { sql, eq, ilike, and, or, gte, desc } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import * as os from "os";
 import { execSync } from "child_process";
-import { requireAuth } from "../middleware/auth";
+import {
+  requireAuth,
+  requireJoelSuperadminForMutations,
+} from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { notifyReservationUpdate } from "../services/notification-service";
 
@@ -48,6 +51,7 @@ const TABLE_NAME_MAP: Record<string, string> = {
 };
 
 const router = Router();
+router.use(requireJoelSuperadminForMutations);
 
 // ========== ADMIN DATABASE MANAGEMENT ENDPOINTS ==========
 
