@@ -2090,8 +2090,16 @@ export default function DatabaseExpert({
                     ["Artists", "Artist directory and profiles", true],
                     ["Jobs", "Job listings and public details", true],
                     ["Analytics", "Aggregated platform metrics", true],
-                    ["Advertising", "Campaign CRUD and billing controls", canManage],
-                    ["Marketplace", "Listing moderation and status changes", canManage],
+                    [
+                      "Advertising",
+                      "Campaign CRUD and billing controls",
+                      canManage,
+                    ],
+                    [
+                      "Marketplace",
+                      "Listing moderation and status changes",
+                      canManage,
+                    ],
                   ].map(([label, description, allowed]) => (
                     <div
                       key={label as string}
@@ -2111,7 +2119,9 @@ export default function DatabaseExpert({
                           {allowed ? (canManage ? "CRUD" : "View") : "IT only"}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-xs text-slate-400">{description}</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {description}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -2194,8 +2204,8 @@ export default function DatabaseExpert({
                         </div>
                         <p className="mt-2 text-xs leading-relaxed text-slate-400">
                           You have read-only access to platform data. Create,
-                          edit, and delete controls are reserved for the IT
-                          team dashboard.
+                          edit, and delete controls are reserved for the IT team
+                          dashboard.
                         </p>
                       </div>
                     )}
@@ -2604,26 +2614,16 @@ export default function DatabaseExpert({
                       Business Directory
                     </CardTitle>
                     <CardDescription className="text-slate-400">
-                      Browse and add businesses by category and country
+                      Browse businesses by category and country
                     </CardDescription>
                   </div>
-                  <BusinessForm
-                    defaultCountryCode={selectedCountryCode}
-                    requireApproval={true}
-                    username={username}
-                    onSuccess={() => {
-                      queryClient.invalidateQueries({
-                        queryKey: ["geo-businesses"],
-                      });
-                      queryClient.invalidateQueries({
-                        queryKey: ["businesses"],
-                      });
-                      queryClient.invalidateQueries({
-                        queryKey: ["business-categories"],
-                      });
-                    }}
-                  />
                 </div>
+                {!canManage && (
+                  <p className="mt-2 text-xs text-slate-400">
+                    Subscriber view is read-only. Business creation and
+                    changes are available only to Joel's superadmin account.
+                  </p>
+                )}
               </CardHeader>
               <CardContent>
                 {isCategoriesLoading ? (

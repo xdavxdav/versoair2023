@@ -14,7 +14,10 @@ import {
 } from "../../shared/schema";
 import { eq, like, count, desc, sql } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
-import { requireAuth } from "../middleware/auth";
+import {
+  requireAuth,
+  requireJoelSuperadminForMutations,
+} from "../middleware/auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -26,6 +29,7 @@ const router = Router();
 // 🔒 All routes require at least admin role
 // ═══════════════════════════════════════════════
 router.use(requireAuth(["admin", "superuser"]));
+router.use(requireJoelSuperadminForMutations);
 
 // Helper: log every mutation to audit_logs
 async function auditLog(

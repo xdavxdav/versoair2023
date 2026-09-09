@@ -370,6 +370,72 @@ export function requireAuth(allowedRoles?: string[]) {
 }
 
 /**
+ * Allow read-only admin-panel access to authorized roles, but reserve every
+ * mutation on admin/database routers for Joel's named superadmin account.
+ * The identity is resolved from the database, never from a client-provided
+ * username or localStorage value.
+ */
+export function requireJoelSuperadminForMutations(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method.toUpperCase())) {
+    return next();
+  }
+
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(401).json({
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "Authentication required" },
+    });
+  }
+
+  void db
+    .select({
+      username: schema.users.username,
+      gateUsername: schema.users.gateUsername,
+      role: schema.users.role,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1)
+    .then(([user]) => {
+      const username = String(user?.username || "").toLowerCase();
+      const gateUsername = String(user?.gateUsername || "").toLowerCase();
+      const role = String(user?.role || "").toLowerCase();
+      const isJoel =
+        ["superuser", "superadmin"].includes(role) &&
+        (username === "joel_007" || gateUsername === "joel_007");
+
+      if (!isJoel) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "JOEL_SUPERADMIN_ONLY",
+            message:
+              "Database mutations are restricted to Joel's superadmin account.",
+          },
+        });
+        return;
+      }
+
+      next();
+    })
+    .catch((error) => {
+      console.error("[AUTH] Failed to verify mutation owner:", error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: "AUTHORIZATION_CHECK_FAILED",
+          message: "Could not verify mutation access",
+        },
+      });
+    });
+}
+
+/**
  * Middleware for optional authentication.
  * Doesn't fail if no token, but attaches user if valid token provided.
  */

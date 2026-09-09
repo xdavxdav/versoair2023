@@ -20,10 +20,14 @@ import { Router, Request, Response } from "express";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
-import { requireAuth } from "../middleware/auth";
+import {
+  requireAuth,
+  requireJoelSuperadminForMutations,
+} from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
+router.use(requireJoelSuperadminForMutations);
 
 const BUSINESS_CHANGE_FIELDS = [
   "name",
@@ -85,7 +89,12 @@ async function executeGeoAction(tx: any, action: any) {
         location: [cityName, countryCode].filter(Boolean).join(", ") || null,
         tags: change.tags
           ? typeof change.tags === "string"
-            ? JSON.stringify(change.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean))
+            ? JSON.stringify(
+                change.tags
+                  .split(",")
+                  .map((tag: string) => tag.trim())
+                  .filter(Boolean),
+              )
             : change.tags
           : null,
       })
@@ -135,9 +144,15 @@ async function executeGeoAction(tx: any, action: any) {
       : null;
     delete updateFields.businessType;
   }
-  if (updateFields.cityName !== undefined || updateFields.countryCode !== undefined) {
+  if (
+    updateFields.cityName !== undefined ||
+    updateFields.countryCode !== undefined
+  ) {
     const current = await tx
-      .select({ cityName: schema.businesses.cityName, countryCode: schema.businesses.countryCode })
+      .select({
+        cityName: schema.businesses.cityName,
+        countryCode: schema.businesses.countryCode,
+      })
       .from(schema.businesses)
       .where(eq(schema.businesses.id, entityId))
       .limit(1);
@@ -146,10 +161,19 @@ async function executeGeoAction(tx: any, action: any) {
     const country = updateFields.countryCode ?? current[0].countryCode;
     updateFields.location = [city, country].filter(Boolean).join(", ") || null;
   }
-  if (updateFields.tags !== undefined && typeof updateFields.tags === "string") {
-    updateFields.tags = JSON.stringify(updateFields.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean));
+  if (
+    updateFields.tags !== undefined &&
+    typeof updateFields.tags === "string"
+  ) {
+    updateFields.tags = JSON.stringify(
+      updateFields.tags
+        .split(",")
+        .map((tag: string) => tag.trim())
+        .filter(Boolean),
+    );
   }
-  if (!Object.keys(updateFields).length) throw new Error("No business changes supplied");
+  if (!Object.keys(updateFields).length)
+    throw new Error("No business changes supplied");
 
   const [updated] = await tx
     .update(schema.businesses)
