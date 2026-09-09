@@ -383,7 +383,7 @@ export default function GeoAdminPage() {
 
         {/* Limited Geo Admin view */}
         <GeoAdmin
-          username={displayName || username}
+          username={username || displayName}
           tier={tier}
           role={displayRole}
         />
@@ -494,7 +494,7 @@ export default function GeoAdminPage() {
         </div>
       ) : null}
       <GeoAdmin
-        username={displayName || username}
+        username={username || displayName}
         tier={tier}
         role={displayRole}
       />
