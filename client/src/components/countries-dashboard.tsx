@@ -962,7 +962,6 @@ export default function DatabaseExpert({
       [
         "manage",
         "tables",
-        "categories",
         "sessions",
         "payments",
         "contracts",
@@ -1993,6 +1992,13 @@ export default function DatabaseExpert({
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="categories"
+              className="gap-1.5 data-[state=active]:bg-white/10 data-[state=active]:text-slate-100 text-slate-400 text-xs sm:text-sm"
+            >
+              <Layers className="h-4 w-4" />
+              <span className="hidden sm:inline">Categories</span>
+            </TabsTrigger>
             {canManage && (
               <>
                 <TabsTrigger
@@ -2064,6 +2070,54 @@ export default function DatabaseExpert({
               ))}
             </div>
 
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-100">
+                  <Shield className="h-5 w-5 text-emerald-400" />
+                  Access audit
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  {canManage
+                    ? "Your IT role includes the management actions shown in the Admin Dashboard."
+                    : "Your subscriber access is intentionally read-only. No data can be changed from this portal."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    ["Businesses", "Information and directory browsing", true],
+                    ["Categories", "Category tree and usage information", true],
+                    ["Artists", "Artist directory and profiles", true],
+                    ["Jobs", "Job listings and public details", true],
+                    ["Analytics", "Aggregated platform metrics", true],
+                    ["Advertising", "Campaign CRUD and billing controls", canManage],
+                    ["Marketplace", "Listing moderation and status changes", canManage],
+                  ].map(([label, description, allowed]) => (
+                    <div
+                      key={label as string}
+                      className="rounded-lg border border-white/10 bg-black/10 p-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-200">
+                          {label}
+                        </span>
+                        <Badge
+                          className={
+                            allowed
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                          }
+                        >
+                          {allowed ? (canManage ? "CRUD" : "View") : "IT only"}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-400">{description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
                 <CardHeader>
@@ -2116,22 +2170,35 @@ export default function DatabaseExpert({
                         </div>
                       </div>
                     </Button>
-                    <Link href="/geo-admin/dashboard">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start gap-3 h-auto py-4 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
-                      >
-                        <Shield className="h-5 w-5 text-amber-400" />
-                        <div className="text-left">
-                          <div className="font-medium">
-                            TAM (Ticket Assignment Management)
+                    {canManage ? (
+                      <Link href="/geo-admin/dashboard">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start gap-3 h-auto py-4 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
+                        >
+                          <Shield className="h-5 w-5 text-amber-400" />
+                          <div className="text-left">
+                            <div className="font-medium">
+                              TAM (Ticket Assignment Management)
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              Full CRUD access
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-400">
-                            Full CRUD access
-                          </div>
+                        </Button>
+                      </Link>
+                    ) : (
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-emerald-300">
+                          <Shield className="h-4 w-4" /> Subscriber access
                         </div>
-                      </Button>
-                    </Link>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                          You have read-only access to platform data. Create,
+                          edit, and delete controls are reserved for the IT
+                          team dashboard.
+                        </p>
+                      </div>
+                    )}
                     <Link href="/geo-admin/business-verification">
                       <Button
                         variant="outline"
@@ -2472,7 +2539,7 @@ export default function DatabaseExpert({
                         if (!deleteTarget) return;
                         setIsDeleting(true);
                         try {
-                            const response = await authenticatedFetch(
+                          const response = await authenticatedFetch(
                             `${API_BASE_URL}/api/v1/admin/businesses/${deleteTarget.id}`,
                             {
                               method: "DELETE",
