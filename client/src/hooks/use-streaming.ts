@@ -64,6 +64,7 @@ export function useTrackDetail(id: number | string | undefined) {
     queryFn: () => fetchJson(`${BASE}/tracks/${id}`),
     enabled: !!id,
     staleTime: 10_000,
+    refetchInterval: 5_000,
   });
 }
 
@@ -198,6 +199,7 @@ export function useToggleLike() {
       qc.invalidateQueries({ queryKey: ["streaming-tracks"] });
       qc.invalidateQueries({ queryKey: ["streaming-liked"] });
       qc.invalidateQueries({ queryKey: ["user-liked-tracks"] });
+      qc.invalidateQueries({ queryKey: ["streaming-track"] });
     },
   });
 }
@@ -263,6 +265,7 @@ export function useTrackReactions(trackId: number | string | undefined) {
     },
     enabled: !!trackId,
     staleTime: 30_000,
+    refetchInterval: 5_000,
   });
 }
 
