@@ -40,6 +40,8 @@ const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const PasswordPage = lazy(() => import("@/pages/password"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 const Profile = lazy(() => import("@/pages/profile"));
+const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
+const AdminDashboard = lazy(() => import("@/pages/dashboard-admin"));
 
 // Streaming
 const StreamPage = lazy(() => import("@/pages/stream"));
@@ -114,6 +116,21 @@ function Router() {
       <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/geo-admin">
+        <Suspense fallback={<PageLoader />}>
+          <GeoAdminPage />
+        </Suspense>
+      </Route>
+      <Route path="/geo-admin/dashboard">
+        <ProtectedRoute
+          roles={["admin", "superuser", "moderator", "tsr"]}
+          unauthorizedRedirect="/geo-admin"
+        >
+          <Suspense fallback={<PageLoader />}>
+            <AdminDashboard />
+          </Suspense>
+        </ProtectedRoute>
+      </Route>
       <Route path="/profile">
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
