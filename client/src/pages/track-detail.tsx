@@ -202,21 +202,21 @@ export default function TrackDetailPage() {
             className="flex-shrink-0"
           >
             <div className="w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl shadow-black/60 mx-auto md:mx-0 relative group">
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-900/50 via-gray-900 to-gray-950">
+                <Music className="h-20 w-20 text-amber-400/30" />
+              </div>
               <img
                 src={
                   track.cover_art ||
                   track.album_cover ||
-                  track.pochette ||
-                  "/default-music.png"
+                  (track.has_pochette
+                    ? `/api/streaming/tracks/${track.id}/pochette`
+                    : undefined)
                 }
                 alt=""
-                className="w-full h-full object-cover"
+                className="relative z-10 w-full h-full object-cover"
                 onError={(e) => {
-                  const img = e.currentTarget;
-                  if (!img.dataset.fb) {
-                    img.dataset.fb = "1";
-                    img.src = "/default-music.png";
-                  } else img.style.display = "none";
+                  e.currentTarget.style.display = "none";
                 }}
               />
               {/* Play overlay on art */}
